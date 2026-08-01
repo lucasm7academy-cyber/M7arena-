@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL e Next.js, sob o domínio m7arena.pro, mantendo o design idêntico e trocando só o motor.",
-  "updatedAt": "2026-08-01T03:33:41.687Z",
+  "updatedAt": "2026-08-01T03:41:20.085Z",
   "updatedBy": "claude",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -91,12 +91,12 @@
       "phase": "fase-1",
       "area": "banco",
       "name": "Drizzle + migrations versionadas",
-      "status": "todo",
-      "notes": "Invariante: as migrations reconstroem o banco INTEIRO. Hoje ~15 tabelas em produção nunca tiveram CREATE TABLE versionado.",
+      "status": "doing",
+      "notes": "Iniciando configuracao do Drizzle ORM e infraestrutura de migrations versionadas",
       "evidence": "",
-      "owner": "",
+      "owner": "gemini",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
+      "updatedAt": "2026-08-01T03:36:58.586Z"
     },
     {
       "id": "db.identidade",
@@ -144,7 +144,7 @@
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:31:37.485Z"
+      "updatedAt": "2026-08-01T03:40:58.482Z"
     },
     {
       "id": "db.matches",

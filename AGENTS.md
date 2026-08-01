@@ -64,6 +64,23 @@ Se você marcar como `doing` ou `done` algo cujas dependências não estão pron
 
 Ao criar um componente novo com `add_component`, adicione as dependências dele em `lib/plan.js`.
 
+### Se o MCP não estiver disponível na sua sessão
+
+Alguns harnesses não carregam MCP. **Não improvise** lendo o código do servidor e chamando funções com `node -e` — isso pula o lock de escrita e as validações, e pode corromper o estado se outro agente escrever ao mesmo tempo.
+
+Use o CLI oficial, que passa exatamente pelas mesmas checagens:
+
+```bash
+node mcp/status-server/scripts/cli.js brief
+node mcp/status-server/scripts/cli.js next fase-1
+node mcp/status-server/scripts/cli.js set db.setup doing --agent gemini --notes "..."
+node mcp/status-server/scripts/cli.js session --agent gemini --summary "..." --touched a,b
+node mcp/status-server/scripts/cli.js decision --agent gemini --title "..." --decision "..."
+node mcp/status-server/scripts/cli.js blocker --agent gemini --desc "..."
+```
+
+Rode sem argumento para ver a ajuda completa. E avise o usuário que o MCP não carregou, para ele corrigir a configuração.
+
 ### Nunca edite o `statusdoprojeto.md` à mão
 
 Ele é **gerado** a partir de `docs/project-state.json`. Qualquer edição manual é apagada na próxima escrita via MCP. Se você acha que falta alguma coisa nele, o caminho é uma tool, não o editor.

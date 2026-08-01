@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 01/08/2026 00:33 — por `claude`
+**Última atualização:** 01/08/2026 00:41 — por `claude`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL e Next.js, sob o domínio m7arena.pro, mantendo o design idêntico e trocando só o motor.
 
@@ -28,7 +28,7 @@
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
-| Fase 1 — Schema do banco | ░░░░░░░░░░░░ 0/11 | — | — |
+| Fase 1 — Schema do banco | ░░░░░░░░░░░░ 0/11 | 1 | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ░░░░░░░░░░░░ 0/7 | — | — |
 | Fase 3 — Aplicação (port visual 1:1) | ░░░░░░░░░░░░ 0/29 | — | — |
 | Fase 4 — MCP de operações da VPS | ░░░░░░░░░░░░ 0/2 | — | — |
@@ -39,7 +39,7 @@
 | Área | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Governança & Agentes | ████████████ 6/6 | — | — |
-| Banco de Dados | ░░░░░░░░░░░░ 0/11 | — | — |
+| Banco de Dados | ░░░░░░░░░░░░ 0/11 | 1 | — |
 | Infraestrutura (Docker/VPS) | ░░░░░░░░░░░░ 0/7 | — | — |
 | Aplicação (Next.js) | ░░░░░░░░░░░░ 0/19 | — | — |
 | Design & Paridade Visual | ░░░░░░░░░░░░ 0/6 | — | — |
@@ -53,7 +53,6 @@
 
 Componentes com todas as dependências satisfeitas. Marque como `doing` antes de começar.
 
-- `db.setup` **Drizzle + migrations versionadas** — Fase 1 — Schema do banco
 - `db.descarte` **Não migrar as 15 tabelas mortas** — Fase 1 — Schema do banco
 - `infra.vps` **VPS contratada e acessível** — Fase 2 — Infraestrutura (Docker/VPS)
 - `infra.compose` **docker-compose.yml (7 serviços)** — Fase 2 — Infraestrutura (Docker/VPS)
@@ -62,6 +61,10 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
 - `app.setup` **Next.js 15 App Router + Tailwind 4** — Fase 3 — Aplicação (port visual 1:1)
 - `mig.extract` **Extract do Supabase** — Fase 5 — Migração de dados e cutover
 - `sec.rotacao` **Rotacionar segredos antes do cutover** — Fase 5 — Migração de dados e cutover
+
+## Em andamento agora
+
+- `db.setup` **Drizzle + migrations versionadas** — gemini · Iniciando configuracao do Drizzle ORM e infraestrutura de migrations versionadas
 
 ## Componentes
 
@@ -78,7 +81,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 
 ### Fase 1 — Schema do banco
 
-- `[ ]` **Drizzle + migrations versionadas** `db.setup`<br>  Invariante: as migrations reconstroem o banco INTEIRO. Hoje ~15 tabelas em produção nunca tiveram CREATE TABLE versionado.
+- `[~]` **Drizzle + migrations versionadas** `db.setup`<br>  Iniciando configuracao do Drizzle ORM e infraestrutura de migrations versionadas
 - `[ ]` **Núcleo de identidade unificado** `db.identidade`<br>  users + user_identities + user_roles(N:N) + user_wallets + user_payout_info. Resolve a fragmentação em 8 tabelas sem FK entre si.<br>  _espera:_ `db.setup`
 - `[ ]` **Multi-jogo: games + game_accounts** `db.games`<br>  Substitui contas_riot. Já aceita um 2º jogo sem migration grande depois.<br>  _espera:_ `db.setup`
 - `[ ]` **teams + team_members + team_stats** `db.teams`<br>  team_stats separada porque recalcular_pdl_global hoje faz UPDATE na tabela times inteira. Ganha season_id.<br>  _espera:_ `db.identidade`, `db.games`
