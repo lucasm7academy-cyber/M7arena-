@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 01/08/2026 00:21 — por `claude`
+**Última atualização:** 01/08/2026 00:25 — por `claude`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL e Next.js, sob o domínio m7arena.pro, mantendo o design idêntico e trocando só o motor.
 
@@ -47,7 +47,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 - `[x]` **Registro do MCP nos clientes** `gov.mcp.registro`<br>  .mcp.json (Claude Code) + opencode.json + instruções para Gemini CLI.<br>  _evidência:_ `.mcp.json`<br>  _concluído 01/08/2026 00:18 por claude_
 - `[x]` **ARQUITETURA.md** `gov.docs.arquitetura`<br>  Modelo de domínio, camadas, invariantes e o que preservar do app atual.<br>  _evidência:_ `docs/ARQUITETURA.md`<br>  _concluído 01/08/2026 00:18 por claude_
 - `[x]` **PLANO_MIGRACAO.md** `gov.docs.plano`<br>  Documento central: fases, ordem de execução, mapeamento de dados e cutover.<br>  _evidência:_ `docs/PLANO_MIGRACAO.md`<br>  _concluído 01/08/2026 00:18 por claude_
-- `[x]` **Repositório git inicializado** `gov.repo`<br>  git init com branch main. .gitignore cobre .env, dumps de migração, node_modules e lock do MCP. Sem commit ainda — aguarda o usuário.<br>  _evidência:_ `.gitignore`<br>  _concluído 01/08/2026 00:21 por claude_
+- `[x]` **Repositório git inicializado** `gov.repo`<br>  Repo local + remoto github.com/lucasm7academy-cyber/M7arena- (branch main). Primeiro commit 68ceab1 com a Fase 0. .gitignore cobre .env, dumps de migracao, node_modules e o lock do MCP.<br>  _evidência:_ `git remote: origin/main`<br>  _concluído 01/08/2026 00:25 por claude_
 
 ### Banco de Dados
 

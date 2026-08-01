@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL e Next.js, sob o domínio m7arena.pro, mantendo o design idêntico e trocando só o motor.",
-  "updatedAt": "2026-08-01T03:21:11.774Z",
+  "updatedAt": "2026-08-01T03:25:16.505Z",
   "updatedBy": "claude",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -74,11 +74,11 @@
       "area": "governanca",
       "name": "Repositório git inicializado",
       "status": "done",
-      "notes": "git init com branch main. .gitignore cobre .env, dumps de migração, node_modules e lock do MCP. Sem commit ainda — aguarda o usuário.",
-      "evidence": ".gitignore",
+      "notes": "Repo local + remoto github.com/lucasm7academy-cyber/M7arena- (branch main). Primeiro commit 68ceab1 com a Fase 0. .gitignore cobre .env, dumps de migracao, node_modules e o lock do MCP.",
+      "evidence": "git remote: origin/main",
       "owner": "claude",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:21:11.769Z"
+      "updatedAt": "2026-08-01T03:25:16.500Z"
     },
     {
       "id": "db.setup",
