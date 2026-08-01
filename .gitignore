@@ -1,0 +1,52 @@
+# dependências
+node_modules/
+.pnp
+.pnp.js
+
+# build
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# ambiente — NUNCA versione segredo
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# runtime do MCP de status
+docs/.status.lock
+docs/*.tmp
+*.tmp
+
+# dados e dumps da migração (contêm dados pessoais de usuários reais)
+dump/
+backup/
+scripts/migrate/data/
+*.dump
+*.sql.gz
+
+# uploads locais
+uploads/
+public/uploads/
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# editores e SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ferramentas de agente com estado local
+.claude/
+.codex/
+.aider*

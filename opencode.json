@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "m7-status": {
+      "type": "local",
+      "command": ["node", "D:/Aplicativos/M7arenaSite/mcp/status-server/index.js"],
+      "environment": {
+        "M7_PROJECT_ROOT": "D:/Aplicativos/M7arenaSite"
+      },
+      "enabled": true
+    }
+  }
+}

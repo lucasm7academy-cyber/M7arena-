@@ -1,0 +1,16 @@
+{
+  "name": "m7-status-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server de status compartilhado do M7Arena. Fonte da verdade para todos os agentes (Claude, Gemini, DeepSeek).",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "render": "node scripts/render-only.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.76"
+  }
+}
