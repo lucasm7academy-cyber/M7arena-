@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL e Next.js, sob o domínio m7arena.pro, mantendo o design idêntico e trocando só o motor.",
-  "updatedAt": "2026-08-01T03:25:16.505Z",
+  "updatedAt": "2026-08-01T03:33:41.687Z",
   "updatedBy": "claude",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -16,6 +16,7 @@
   "components": [
     {
       "id": "gov.mcp.status",
+      "phase": "fase-0",
       "area": "governanca",
       "name": "MCP m7-status (este servidor)",
       "status": "done",
@@ -27,6 +28,7 @@
     },
     {
       "id": "gov.agents",
+      "phase": "fase-0",
       "area": "governanca",
       "name": "AGENTS.md — regras vinculantes para todo agente",
       "status": "done",
@@ -38,6 +40,7 @@
     },
     {
       "id": "gov.mcp.registro",
+      "phase": "fase-0",
       "area": "governanca",
       "name": "Registro do MCP nos clientes",
       "status": "done",
@@ -49,6 +52,7 @@
     },
     {
       "id": "gov.docs.arquitetura",
+      "phase": "fase-0",
       "area": "governanca",
       "name": "ARQUITETURA.md",
       "status": "done",
@@ -60,6 +64,7 @@
     },
     {
       "id": "gov.docs.plano",
+      "phase": "fase-0",
       "area": "governanca",
       "name": "PLANO_MIGRACAO.md",
       "status": "done",
@@ -71,17 +76,19 @@
     },
     {
       "id": "gov.repo",
+      "phase": "fase-0",
       "area": "governanca",
       "name": "Repositório git inicializado",
       "status": "done",
-      "notes": "Repo local + remoto github.com/lucasm7academy-cyber/M7arena- (branch main). Primeiro commit 68ceab1 com a Fase 0. .gitignore cobre .env, dumps de migracao, node_modules e o lock do MCP.",
+      "notes": "Repo local + remoto github.com/lucasm7academy-cyber/M7arena- (branch main). .gitignore cobre .env, dumps de migracao, node_modules e o lock do MCP.",
       "evidence": "git remote: origin/main",
       "owner": "claude",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:25:16.500Z"
+      "updatedAt": "2026-08-01T03:33:41.686Z"
     },
     {
       "id": "db.setup",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Drizzle + migrations versionadas",
       "status": "todo",
@@ -93,6 +100,7 @@
     },
     {
       "id": "db.identidade",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Núcleo de identidade unificado",
       "status": "todo",
@@ -104,6 +112,7 @@
     },
     {
       "id": "db.games",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Multi-jogo: games + game_accounts",
       "status": "todo",
@@ -115,6 +124,7 @@
     },
     {
       "id": "db.teams",
+      "phase": "fase-1",
       "area": "banco",
       "name": "teams + team_members + team_stats",
       "status": "todo",
@@ -126,6 +136,7 @@
     },
     {
       "id": "db.tournaments",
+      "phase": "fase-1",
       "area": "banco",
       "name": "tournaments normalizado (mata o JSONB gigante)",
       "status": "todo",
@@ -133,10 +144,11 @@
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
+      "updatedAt": "2026-08-01T03:31:37.485Z"
     },
     {
       "id": "db.matches",
+      "phase": "fase-1",
       "area": "banco",
       "name": "matches + match_players + match_results + match_codes",
       "status": "todo",
@@ -148,6 +160,7 @@
     },
     {
       "id": "db.economia",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Ledger: wallet_transactions + payments + referral_events",
       "status": "todo",
@@ -159,6 +172,7 @@
     },
     {
       "id": "db.conteudo",
+      "phase": "fase-1",
       "area": "banco",
       "name": "news + highlights + broadcasts + recruitment_posts + notifications",
       "status": "todo",
@@ -170,6 +184,7 @@
     },
     {
       "id": "db.indices",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Índices a partir das queries reais",
       "status": "todo",
@@ -181,6 +196,7 @@
     },
     {
       "id": "db.retencao",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Retenção: audit_log particionado + jobs de purge",
       "status": "todo",
@@ -192,6 +208,7 @@
     },
     {
       "id": "db.descarte",
+      "phase": "fase-1",
       "area": "banco",
       "name": "Não migrar as 15 tabelas mortas",
       "status": "todo",
@@ -203,6 +220,7 @@
     },
     {
       "id": "infra.vps",
+      "phase": "fase-2",
       "area": "infra",
       "name": "VPS contratada e acessível",
       "status": "todo",
@@ -214,6 +232,7 @@
     },
     {
       "id": "infra.compose",
+      "phase": "fase-2",
       "area": "infra",
       "name": "docker-compose.yml (7 serviços)",
       "status": "todo",
@@ -225,6 +244,7 @@
     },
     {
       "id": "infra.postgres",
+      "phase": "fase-2",
       "area": "infra",
       "name": "postgresql.conf tunado para 8GB / 2 vCPU",
       "status": "todo",
@@ -236,6 +256,7 @@
     },
     {
       "id": "infra.pgbouncer",
+      "phase": "fase-2",
       "area": "infra",
       "name": "PgBouncer em transaction mode",
       "status": "todo",
@@ -247,6 +268,7 @@
     },
     {
       "id": "infra.nginx",
+      "phase": "fase-2",
       "area": "infra",
       "name": "Nginx: proxy reverso + TLS + estáticos",
       "status": "todo",
@@ -258,6 +280,7 @@
     },
     {
       "id": "infra.backup",
+      "phase": "fase-2",
       "area": "infra",
       "name": "Backup com restore testado e cópia off-site",
       "status": "todo",
@@ -269,6 +292,7 @@
     },
     {
       "id": "infra.ci",
+      "phase": "fase-2",
       "area": "infra",
       "name": "Build da imagem no CI (não na VPS)",
       "status": "todo",
@@ -279,7 +303,20 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
+      "id": "app.setup",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Next.js 15 App Router + Tailwind 4",
+      "status": "todo",
+      "notes": "",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
       "id": "design.tokens",
+      "phase": "fase-3",
       "area": "design",
       "name": "Tokens, utilities, keyframes e scrollbar",
       "status": "todo",
@@ -291,6 +328,7 @@
     },
     {
       "id": "design.fontes",
+      "phase": "fase-3",
       "area": "design",
       "name": "Inter + Outfit via next/font",
       "status": "todo",
@@ -302,6 +340,7 @@
     },
     {
       "id": "design.libs",
+      "phase": "fase-3",
       "area": "design",
       "name": "motion v12 + lucide-react + react-icons",
       "status": "todo",
@@ -313,6 +352,7 @@
     },
     {
       "id": "design.assets",
+      "phase": "fase-3",
       "area": "design",
       "name": "public/ portado (40 imagens, lanes, ranks, sounds)",
       "status": "todo",
@@ -324,6 +364,7 @@
     },
     {
       "id": "design.ui",
+      "phase": "fase-3",
       "area": "design",
       "name": "ElectricBorder + VipBadge/VipCrown",
       "status": "todo",
@@ -335,6 +376,7 @@
     },
     {
       "id": "design.regressao",
+      "phase": "fase-3",
       "area": "design",
       "name": "Regressão visual antigo vs novo",
       "status": "todo",
@@ -345,18 +387,8 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
-      "id": "app.setup",
-      "area": "app",
-      "name": "Next.js 15 App Router + Tailwind 4",
-      "status": "todo",
-      "notes": "",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
       "id": "app.auth",
+      "phase": "fase-3",
       "area": "app",
       "name": "Auth.js v5 (Google + credenciais)",
       "status": "todo",
@@ -368,6 +400,7 @@
     },
     {
       "id": "app.data",
+      "phase": "fase-3",
       "area": "app",
       "name": "Camada de dados (features/*/server)",
       "status": "todo",
@@ -379,6 +412,7 @@
     },
     {
       "id": "app.perfil-context",
+      "phase": "fase-3",
       "area": "app",
       "name": "PerfilContext portado",
       "status": "todo",
@@ -390,6 +424,7 @@
     },
     {
       "id": "app.realtime",
+      "phase": "fase-3",
       "area": "app",
       "name": "Serviço WebSocket + NOTIFY",
       "status": "todo",
@@ -401,6 +436,7 @@
     },
     {
       "id": "app.workers",
+      "phase": "fase-3",
       "area": "app",
       "name": "Workers: Twitch cron, webhook MP, sync Riot",
       "status": "todo",
@@ -412,6 +448,7 @@
     },
     {
       "id": "app.riot-proxy",
+      "phase": "fase-3",
       "area": "app",
       "name": "Proxy /api/riot/* com cache",
       "status": "todo",
@@ -422,11 +459,12 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
-      "id": "app.port.lobby",
+      "id": "app.port.institucional",
+      "phase": "fase-3",
       "area": "app",
-      "name": "Port: Lobby / home",
+      "name": "Port: Quem Somos, Políticas, Tutorial, Minhas Partidas",
       "status": "todo",
-      "notes": "1.726 linhas, 10 cards inline, 4 caches manuais. fetchUpcoming baixa TODOS os campeonatos inteiros para montar um carrossel.",
+      "notes": "",
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",
@@ -434,6 +472,7 @@
     },
     {
       "id": "app.port.perfil",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Perfil",
       "status": "todo",
@@ -445,6 +484,7 @@
     },
     {
       "id": "app.port.players",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Players / ranking",
       "status": "todo",
@@ -455,40 +495,8 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
-      "id": "app.port.times",
-      "area": "app",
-      "name": "Port: Times (listagem + página do time)",
-      "status": "todo",
-      "notes": "TimePage 1.943 linhas com 40 useState e 5 modais embutidos. handleSairTime faz 6 writes não-transacionais.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "app.port.campeonatos",
-      "area": "app",
-      "name": "Port: Campeonatos",
-      "status": "todo",
-      "notes": "CampeonatoDetalhes 5.856 linhas (4.482 num componente, 2.674 de JSX num return) + createCampPage 2.044. Recorte em ~15 arquivos, JSX movido como está.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "app.port.salas",
-      "area": "app",
-      "name": "Port: Jogar / Sala / Lobby de partida",
-      "status": "todo",
-      "notes": "Preservar a arquitetura do useSalaSimples: servidor como única autoridade, timers derivados, tick idempotente. É o melhor código do projeto.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
       "id": "app.port.recrutamento",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Recrutamento",
       "status": "todo",
@@ -500,6 +508,7 @@
     },
     {
       "id": "app.port.streamers",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Streamers / transmissões",
       "status": "todo",
@@ -511,6 +520,7 @@
     },
     {
       "id": "app.port.carteira",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Carteira, depósito e VIP",
       "status": "todo",
@@ -522,6 +532,7 @@
     },
     {
       "id": "app.port.vincular",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Vincular Riot + Discord",
       "status": "todo",
@@ -532,7 +543,20 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
+      "id": "app.port.times",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Port: Times (listagem + página do time)",
+      "status": "todo",
+      "notes": "TimePage 1.943 linhas com 40 useState e 5 modais embutidos. handleSairTime faz 6 writes não-transacionais.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
       "id": "app.port.admin",
+      "phase": "fase-3",
       "area": "app",
       "name": "Port: Admin (saldos, ranking, notícias, cargos)",
       "status": "todo",
@@ -543,99 +567,36 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
-      "id": "app.port.institucional",
+      "id": "app.port.lobby",
+      "phase": "fase-3",
       "area": "app",
-      "name": "Port: Quem Somos, Políticas, Tutorial, Minhas Partidas",
+      "name": "Port: Lobby / home",
       "status": "todo",
-      "notes": "",
+      "notes": "1.726 linhas, 10 cards inline, 4 caches manuais. fetchUpcoming baixa TODOS os campeonatos inteiros para montar um carrossel.",
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
-      "id": "mcpops.server",
-      "area": "mcp-ops",
-      "name": "MCP de operações da VPS",
+      "id": "app.port.salas",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Port: Jogar / Sala / Lobby de partida",
       "status": "todo",
-      "notes": "vps_health, logs_tail, db_query (read-only), http_check, migration_status, deploy/rollback, metrics.",
+      "notes": "Preservar a arquitetura do useSalaSimples: servidor como única autoridade, timers derivados, tick idempotente. É o melhor código do projeto.",
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
-      "id": "mcpops.seguranca",
-      "area": "mcp-ops",
-      "name": "Blindagem do MCP de ops",
+      "id": "app.port.campeonatos",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Port: Campeonatos",
       "status": "todo",
-      "notes": "Bearer token + bind 127.0.0.1 + acesso por túnel SSH/Tailscale. Role Postgres read-only com statement_timeout. Isso é um shell remoto — nunca exposto na internet.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "mig.extract",
-      "area": "migracao",
-      "name": "Extract do Supabase",
-      "status": "todo",
-      "notes": "",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "mig.identidade",
-      "area": "migracao",
-      "name": "Transform: identidade",
-      "status": "todo",
-      "notes": "auth.users + profiles + contas_riot + wallets + platform_roles + discord_links → users e satélites.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "mig.campeonatos",
-      "area": "migracao",
-      "name": "Transform: explodir o JSONB de campeonatos",
-      "status": "todo",
-      "notes": "cronograma/bracket_data/classificacao → tournament_matches. O passo mais difícil; exige relatório de divergências, não conversão cega.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "mig.load",
-      "area": "migracao",
-      "name": "Load no Postgres da VPS",
-      "status": "todo",
-      "notes": "",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "mig.verify",
-      "area": "migracao",
-      "name": "verify-migration.sql",
-      "status": "todo",
-      "notes": "Contagens e somas de controle origem vs destino. Só aceita com divergência zero.",
-      "evidence": "",
-      "owner": "",
-      "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:18:26.214Z"
-    },
-    {
-      "id": "mig.cutover",
-      "area": "migracao",
-      "name": "Cutover: re-sync + DNS + TLS",
-      "status": "todo",
-      "notes": "Registro A de m7arena.pro na Hostinger. m7academy.pro fica no ar intacto como fallback.",
+      "notes": "CampeonatoDetalhes 5.856 linhas (4.482 num componente, 2.674 de JSX num return) + createCampPage 2.044. Recorte em ~15 arquivos, JSX movido como está.",
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",
@@ -643,6 +604,7 @@
     },
     {
       "id": "sec.riot-key",
+      "phase": "fase-3",
       "area": "seguranca",
       "name": "Tirar a chave da Riot do bundle",
       "status": "todo",
@@ -654,6 +616,7 @@
     },
     {
       "id": "sec.pix",
+      "phase": "fase-3",
       "area": "seguranca",
       "name": "Remover o PIX pessoal de fallback",
       "status": "todo",
@@ -665,6 +628,7 @@
     },
     {
       "id": "sec.regras-servidor",
+      "phase": "fase-3",
       "area": "seguranca",
       "name": "Mover regras de negócio para o servidor",
       "status": "todo",
@@ -676,6 +640,7 @@
     },
     {
       "id": "sec.upload",
+      "phase": "fase-3",
       "area": "seguranca",
       "name": "Upload restrito por dono",
       "status": "todo",
@@ -686,11 +651,108 @@
       "updatedAt": "2026-08-01T03:18:26.214Z"
     },
     {
+      "id": "mcpops.server",
+      "phase": "fase-4",
+      "area": "mcp-ops",
+      "name": "MCP de operações da VPS",
+      "status": "todo",
+      "notes": "vps_health, logs_tail, db_query (read-only), http_check, migration_status, deploy/rollback, metrics.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mcpops.seguranca",
+      "phase": "fase-4",
+      "area": "mcp-ops",
+      "name": "Blindagem do MCP de ops",
+      "status": "todo",
+      "notes": "Bearer token + bind 127.0.0.1 + acesso por túnel SSH/Tailscale. Role Postgres read-only com statement_timeout. Isso é um shell remoto — nunca exposto na internet.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mig.extract",
+      "phase": "fase-5",
+      "area": "migracao",
+      "name": "Extract do Supabase",
+      "status": "todo",
+      "notes": "",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mig.identidade",
+      "phase": "fase-5",
+      "area": "migracao",
+      "name": "Transform: identidade",
+      "status": "todo",
+      "notes": "auth.users + profiles + contas_riot + wallets + platform_roles + discord_links → users e satélites.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mig.campeonatos",
+      "phase": "fase-5",
+      "area": "migracao",
+      "name": "Transform: explodir o JSONB de campeonatos",
+      "status": "todo",
+      "notes": "cronograma/bracket_data/classificacao → tournament_matches. O passo mais difícil; exige relatório de divergências, não conversão cega.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mig.load",
+      "phase": "fase-5",
+      "area": "migracao",
+      "name": "Load no Postgres da VPS",
+      "status": "todo",
+      "notes": "",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mig.verify",
+      "phase": "fase-5",
+      "area": "migracao",
+      "name": "verify-migration.sql",
+      "status": "todo",
+      "notes": "Contagens e somas de controle origem vs destino. Só aceita com divergência zero.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
       "id": "sec.rotacao",
+      "phase": "fase-5",
       "area": "seguranca",
       "name": "Rotacionar segredos antes do cutover",
       "status": "todo",
       "notes": "Chave Riot (exposta no bundle), token Mercado Livre (commitado em opencode.json:15), e confirmar rotação das credenciais Supabase compartilhadas na migração US→BR.",
+      "evidence": "",
+      "owner": "",
+      "createdAt": "2026-08-01T03:18:26.214Z",
+      "updatedAt": "2026-08-01T03:18:26.214Z"
+    },
+    {
+      "id": "mig.cutover",
+      "phase": "fase-5",
+      "area": "migracao",
+      "name": "Cutover: re-sync + DNS + TLS",
+      "status": "todo",
+      "notes": "Registro A de m7arena.pro na Hostinger. m7academy.pro fica no ar intacto como fallback.",
       "evidence": "",
       "owner": "",
       "createdAt": "2026-08-01T03:18:26.214Z",

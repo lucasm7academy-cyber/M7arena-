@@ -23,6 +23,21 @@ export const STATUS_ICON = {
   deprecated: "[-]",
 };
 
+/**
+ * Fases do plano. Um componente pertence a exatamente uma fase.
+ * É o que faz "execute a Fase 1" ter significado preciso para qualquer agente.
+ */
+export const PHASES = ["fase-0", "fase-1", "fase-2", "fase-3", "fase-4", "fase-5"];
+
+export const PHASE_LABEL = {
+  "fase-0": "Fase 0 — Governança multi-agente",
+  "fase-1": "Fase 1 — Schema do banco",
+  "fase-2": "Fase 2 — Infraestrutura (Docker/VPS)",
+  "fase-3": "Fase 3 — Aplicação (port visual 1:1)",
+  "fase-4": "Fase 4 — MCP de operações da VPS",
+  "fase-5": "Fase 5 — Migração de dados e cutover",
+};
+
 export const AREAS = [
   "governanca",
   "banco",
@@ -55,4 +70,4 @@ export const MAX_SUMMARY = 1000;
 /** Quantas sessões o estado guarda antes de descartar as mais antigas. */
 export const MAX_SESSIONS = 30;
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;

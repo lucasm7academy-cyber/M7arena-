@@ -9,10 +9,13 @@
 import {
   AREA_LABEL,
   AREA_ORDER,
+  PHASES,
+  PHASE_LABEL,
   STATUS,
   STATUS_ICON,
   STATUS_LABEL,
 } from "./schema.js";
+import { blockingDeps, depsOf } from "./plan.js";
 
 const BANNER = `<!--
   ============================================================================
@@ -82,6 +85,22 @@ export function render(state) {
 
   out.push("## Panorama", "");
   out.push(`\`${progressBar(totalDone, totalActive, 28)}\` concluído`, "");
+
+  out.push("| Fase | Progresso | Em andamento | Bloqueado |");
+  out.push("|---|---|---|---|");
+  for (const p of PHASES) {
+    const items = components.filter((c) => c.phase === p && c.status !== "deprecated");
+    if (!items.length) continue;
+    const d = items.filter((c) => c.status === "done").length;
+    const doing = items.filter((c) => c.status === "doing").length;
+    const blk = items.filter((c) => c.status === "blocked").length;
+    out.push(
+      `| ${PHASE_LABEL[p]} | ${progressBar(d, items.length, 12)} | ${doing || "—"} | ${blk || "—"} |`
+    );
+  }
+  out.push("");
+
+  out.push("<details><summary>Progresso por área</summary>", "");
   out.push("| Área | Progresso | Em andamento | Bloqueado |");
   out.push("|---|---|---|---|");
   for (const area of AREA_ORDER) {
@@ -94,7 +113,24 @@ export function render(state) {
       } | ${c.blocked || "—"} |`
     );
   }
-  out.push("");
+  out.push("", "</details>", "");
+
+  // Fila de trabalho: o que qualquer agente pode pegar sem esperar ninguém.
+  const liberados = components.filter(
+    (c) => c.status === "todo" && blockingDeps(c.id, components).length === 0
+  );
+  if (liberados.length) {
+    out.push("## Pode pegar agora", "");
+    out.push(
+      "Componentes com todas as dependências satisfeitas. Marque como `doing` antes de começar.",
+      ""
+    );
+    for (const c of liberados.slice(0, 12)) {
+      out.push(`- \`${c.id}\` **${c.name}** — ${PHASE_LABEL[c.phase] || "?"}`);
+    }
+    if (liberados.length > 12) out.push(`- _...e mais ${liberados.length - 12}_`);
+    out.push("");
+  }
 
   // --------------------------------------------------------- bloqueios
   if (openBlockers.length) {
@@ -135,21 +171,39 @@ export function render(state) {
     ""
   );
 
-  for (const area of AREA_ORDER) {
-    const items = components.filter((c) => c.area === area);
-    if (!items.length) continue;
+  for (const p of PHASES) {
+    const phaseItems = components.filter((c) => c.phase === p);
+    if (!phaseItems.length) continue;
 
-    out.push(`### ${AREA_LABEL[area]}`, "");
-    for (const c of items) {
-      let line = `- \`${STATUS_ICON[c.status]}\` **${c.name}** \`${c.id}\``;
-      if (c.notes) line += `<br>  ${c.notes}`;
-      if (c.evidence) line += `<br>  _evidência:_ \`${c.evidence}\``;
-      if (c.status === "done" && c.updatedAt) {
-        line += `<br>  _concluído ${fmtDate(c.updatedAt)} por ${c.owner || "?"}_`;
+    out.push(`### ${PHASE_LABEL[p]}`, "");
+
+    for (const area of AREA_ORDER) {
+      const items = phaseItems.filter((c) => c.area === area);
+      if (!items.length) continue;
+
+      // Só mostra o subtítulo de área quando a fase tem mais de uma.
+      const areasNaFase = new Set(phaseItems.map((x) => x.area));
+      if (areasNaFase.size > 1) out.push(`**${AREA_LABEL[area]}**`, "");
+
+      for (const c of items) {
+        let line = `- \`${STATUS_ICON[c.status]}\` **${c.name}** \`${c.id}\``;
+        if (c.notes) line += `<br>  ${c.notes}`;
+
+        const blocking = blockingDeps(c.id, components);
+        if (blocking.length && c.status !== "done") {
+          line += `<br>  _espera:_ ${blocking.map((d) => `\`${d}\``).join(", ")}`;
+        } else if (c.status === "todo" && depsOf(c.id).length) {
+          line += `<br>  _dependências satisfeitas — liberado_`;
+        }
+
+        if (c.evidence) line += `<br>  _evidência:_ \`${c.evidence}\``;
+        if (c.status === "done" && c.updatedAt) {
+          line += `<br>  _concluído ${fmtDate(c.updatedAt)} por ${c.owner || "?"}_`;
+        }
+        out.push(line);
       }
-      out.push(line);
+      out.push("");
     }
-    out.push("");
   }
 
   // ---------------------------------------------------------- decisões

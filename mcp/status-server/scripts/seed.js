@@ -11,9 +11,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCHEMA_VERSION } from "../lib/schema.js";
 import { render } from "../lib/render.js";
+import { phaseOf } from "../lib/plan.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "..", "..", "..");
+const ROOT = process.env.M7_PROJECT_ROOT || path.resolve(__dirname, "..", "..", "..");
 const STATE_PATH = path.join(ROOT, "docs", "project-state.json");
 const MD_PATH = path.join(ROOT, "statusdoprojeto.md");
 const LOG_PATH = path.join(ROOT, "docs", "status-log.jsonl");
@@ -21,18 +22,28 @@ const LOG_PATH = path.join(ROOT, "docs", "status-log.jsonl");
 const NOW = new Date().toISOString();
 const AGENT = "claude";
 
-/** c(id, area, name, status, notes, evidence) */
-const c = (id, area, name, status = "todo", notes = "", evidence = "") => ({
-  id,
-  area,
-  name,
-  status,
-  notes,
-  evidence,
-  owner: status === "todo" ? "" : AGENT,
-  createdAt: NOW,
-  updatedAt: NOW,
-});
+/**
+ * c(id, area, name, status, notes, evidence)
+ * A fase vem de lib/plan.js — que é a fonte única da estrutura do plano.
+ */
+const c = (id, area, name, status = "todo", notes = "", evidence = "") => {
+  const phase = phaseOf(id);
+  if (!phase) {
+    throw new Error(`Componente "${id}" não tem fase em lib/plan.js. Adicione lá antes de semear.`);
+  }
+  return {
+    id,
+    phase,
+    area,
+    name,
+    status,
+    notes,
+    evidence,
+    owner: status === "todo" ? "" : AGENT,
+    createdAt: NOW,
+    updatedAt: NOW,
+  };
+};
 
 const components = [
   // ---------------------------------------------------------- governança

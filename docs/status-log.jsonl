@@ -2,3 +2,19 @@
 {"at":"2026-08-01T03:21:11.770Z","agent":"claude","event":"set_component_status","id":"gov.repo","from":"todo","to":"done"}
 {"at":"2026-08-01T03:21:11.774Z","agent":"claude","event":"log_session"}
 {"at":"2026-08-01T03:25:16.505Z","agent":"claude","event":"set_component_status","id":"gov.repo","to":"done","remote":"origin/main"}
+{"at":"2026-08-01T03:30:50.020Z","agent":"claude","event":"migrate_schema","from":1,"to":2,"components":62}
+{"at":"2026-08-01T03:31:10.529Z","agent":"gemini-simulado","event":"set_component_status","id":"db.tournaments","from":"todo","to":"doing"}
+{"at":"2026-08-01T03:31:37.485Z","agent":"claude","event":"set_component_status","id":"db.tournaments","from":"doing","to":"todo","motivo":"revert do teste"}
+{"at":"2026-08-01T03:32:08.140Z","agent":"smoke-test","event":"set_component_status","id":"gov.repo","from":"done","to":"doing","notes":"teste de escrita do smoke"}
+{"at":"2026-08-01T03:32:08.147Z","agent":"smoke-test","event":"add_decision","id":"ADR-009","title":"Decisão de teste"}
+{"at":"2026-08-01T03:32:08.152Z","agent":"smoke-test","event":"add_blocker","id":"BLK-001","component":"gov.repo","description":"bloqueio de teste"}
+{"at":"2026-08-01T03:32:08.156Z","agent":"smoke-test","event":"resolve_blocker","id":"BLK-001","resolution":"resolvido no smoke"}
+{"at":"2026-08-01T03:32:08.160Z","agent":"smoke-test","event":"log_session","summary":"smoke test completo","touched":["mcp/status-server"]}
+{"at":"2026-08-01T03:32:08.220Z","agent":"claude","event":"cleanup","motivo":"remove residuo do smoke test"}
+{"at":"2026-08-01T03:32:19.070Z","agent":"smoke-test","event":"set_component_status","id":"gov.repo","from":"done","to":"doing","notes":"teste de escrita do smoke"}
+{"at":"2026-08-01T03:32:19.077Z","agent":"smoke-test","event":"add_decision","id":"ADR-009","title":"Decisão de teste"}
+{"at":"2026-08-01T03:32:19.081Z","agent":"smoke-test","event":"add_blocker","id":"BLK-001","component":"gov.repo","description":"bloqueio de teste"}
+{"at":"2026-08-01T03:32:19.085Z","agent":"smoke-test","event":"resolve_blocker","id":"BLK-001","resolution":"resolvido no smoke"}
+{"at":"2026-08-01T03:32:19.088Z","agent":"smoke-test","event":"log_session","summary":"smoke test completo","touched":["mcp/status-server"]}
+{"at":"2026-08-01T03:33:29.361Z","agent":"claude","event":"cleanup","motivo":"remove residuo de teste; fases 1-5 voltam a todo"}
+{"at":"2026-08-01T03:33:41.687Z","agent":"claude","event":"set_component_status","id":"gov.repo","to":"done"}

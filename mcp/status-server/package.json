@@ -7,7 +7,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "render": "node scripts/render-only.js"
+    "seed": "node scripts/seed.js",
+    "render": "node scripts/render-only.js",
+    "test": "node scripts/smoke-test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

@@ -21,10 +21,13 @@ import {
   AREA_LABEL,
   MAX_NOTES,
   MAX_SUMMARY,
+  PHASES,
+  PHASE_LABEL,
   STATUS,
   STATUS_ICON,
   STATUS_LABEL,
 } from "./lib/schema.js";
+import { blockingDeps, depsOf, phaseOf } from "./lib/plan.js";
 
 const server = new McpServer({ name: "m7-status", version: "1.0.0" });
 
@@ -76,13 +79,24 @@ server.tool(
           : "- nenhum"
       );
 
-      L.push(`\n## Próximos a fazer (primeiros 8 de ${todo.length})`);
+      L.push(`\n## Progresso por fase`);
+      for (const p of PHASES) {
+        const inPhase = comps.filter((c) => c.phase === p && c.status !== "deprecated");
+        if (!inPhase.length) continue;
+        const d = inPhase.filter((c) => c.status === "done").length;
+        const marca = d === inPhase.length ? " ✅" : "";
+        L.push(`- **${PHASE_LABEL[p]}** — ${d}/${inPhase.length}${marca}`);
+      }
+
+      const liberados = todo.filter((c) => blockingDeps(c.id, comps).length === 0);
+      L.push(`\n## Pode pegar agora (${liberados.length} liberados de ${todo.length} pendentes)`);
       L.push(
-        todo
+        liberados
           .slice(0, 8)
-          .map((c) => `- \`${c.id}\` [${AREA_LABEL[c.area]}] ${c.name}`)
-          .join("\n") || "- nada pendente"
+          .map((c) => `- \`${c.id}\` [${PHASE_LABEL[c.phase]?.split("—")[0].trim() || "?"}] ${c.name}`)
+          .join("\n") || "- nada liberado"
       );
+      L.push(`\nUse \`next_task\` (com o parâmetro phase) para a lista completa e o que está travado.`);
 
       L.push(`\n## Decisões vigentes (${(s.decisions || []).length})`);
       L.push(
@@ -112,19 +126,88 @@ server.tool(
 );
 
 server.tool(
+  "next_task",
+  "Diz o que você pode pegar AGORA: componentes com todas as dependências satisfeitas. Use quando o usuário pedir uma fase inteira ('execute a Fase 1') ou quando não souber por onde começar.",
+  {
+    phase: z
+      .enum(PHASES)
+      .optional()
+      .describe("Limita a uma fase. Ex.: 'fase-1' para o schema do banco."),
+  },
+  async ({ phase }) => {
+    try {
+      const s = await loadState();
+      const comps = s.components || [];
+      const scope = phase ? comps.filter((c) => c.phase === phase) : comps;
+
+      const pending = scope.filter((c) => c.status === "todo" || c.status === "blocked");
+      const ready = [];
+      const waiting = [];
+      for (const c of pending) {
+        const blocking = blockingDeps(c.id, comps);
+        (blocking.length ? waiting : ready).push({ c, blocking });
+      }
+
+      const L = [];
+      if (phase) {
+        const inPhase = scope.filter((c) => c.status !== "deprecated");
+        const donePhase = scope.filter((c) => c.status === "done");
+        L.push(`# ${PHASE_LABEL[phase]}`);
+        L.push(`Progresso: ${donePhase.length}/${inPhase.length} concluídos.\n`);
+      }
+
+      L.push(`## Pode pegar agora (${ready.length})`);
+      L.push(
+        ready.length
+          ? ready
+              .map(({ c }) => `- \`${c.id}\` **${c.name}**${c.notes ? `\n    ${c.notes}` : ""}`)
+              .join("\n")
+          : "- nada liberado" +
+              (waiting.length ? " — tudo que resta depende de algo ainda não concluído." : " — fase concluída.")
+      );
+
+      if (waiting.length) {
+        L.push(`\n## Aguardando dependência (${waiting.length})`);
+        L.push(
+          waiting
+            .map(({ c, blocking }) => `- \`${c.id}\` ${c.name} — espera: ${blocking.join(", ")}`)
+            .join("\n")
+        );
+      }
+
+      const doing = scope.filter((c) => c.status === "doing");
+      if (doing.length) {
+        L.push(`\n## Já em andamento por outro agente (${doing.length}) — não pegue estes`);
+        L.push(doing.map((c) => `- \`${c.id}\` ${c.name} (${c.owner})`).join("\n"));
+      }
+
+      L.push(
+        `\n---\nAo escolher: \`set_component_status\` para \`doing\` com o seu nome, para outro agente não pegar o mesmo.`
+      );
+      return text(L.join("\n"));
+    } catch (err) {
+      return fail(err.message);
+    }
+  }
+);
+
+server.tool(
   "status_read",
   "Estado completo do projeto, opcionalmente filtrado. Use quando precisar de detalhe que o status_brief não traz.",
   {
+    phase: z.enum(PHASES).optional().describe("Filtra por fase do plano"),
     area: z.enum(AREAS).optional().describe("Filtra por área"),
     status: z.enum(STATUS).optional().describe("Filtra por status"),
     include_sessions: z.boolean().default(false).describe("Incluir histórico de sessões"),
   },
-  async ({ area, status, include_sessions }) => {
+  async ({ phase, area, status, include_sessions }) => {
     try {
       const s = await loadState();
       let comps = s.components || [];
+      if (phase) comps = comps.filter((c) => c.phase === phase);
       if (area) comps = comps.filter((c) => c.area === area);
       if (status) comps = comps.filter((c) => c.status === status);
+      comps = comps.map((c) => ({ ...c, dependsOn: depsOf(c.id) }));
 
       const payload = {
         project: s.project,
@@ -199,6 +282,20 @@ server.tool(
           );
         }
         const from = c.status;
+
+        // Avisa (sem impedir) quando a peça está sendo iniciada ou concluída
+        // antes das suas dependências. Não bloqueia: às vezes há motivo legítimo,
+        // e nesse caso o registro fica no log para quem revisar depois.
+        let aviso = "";
+        if (status === "doing" || status === "done") {
+          const blocking = blockingDeps(id, state.components);
+          if (blocking.length) {
+            aviso =
+              `\n\nATENÇÃO: este componente depende de ${blocking.join(", ")}, ` +
+              `que ainda não está concluído. Se isso é intencional, registre o motivo com add_decision.`;
+          }
+        }
+
         c.status = status;
         c.owner = agent;
         c.updatedAt = new Date().toISOString();
@@ -208,7 +305,7 @@ server.tool(
         return {
           event: "set_component_status",
           detail: { id, from, to: status, notes, evidence },
-          result: `\`${id}\` ${STATUS_ICON[from]} ${from} → ${STATUS_ICON[status]} ${status}`,
+          result: `\`${id}\` ${STATUS_ICON[from]} ${from} → ${STATUS_ICON[status]} ${status}${aviso}`,
         };
       });
       return text(`${result}\nstatusdoprojeto.md regenerado.`);
@@ -224,12 +321,13 @@ server.tool(
   {
     agent: agentArg,
     id: z.string().min(1).regex(/^[a-z0-9.\-_]+$/, "Use minúsculas, pontos e hífens: ex. app.perfil.port"),
+    phase: z.enum(PHASES).describe(PHASES.map((p) => `${p}=${PHASE_LABEL[p]}`).join(" | ")),
     area: z.enum(AREAS).describe(AREAS.map((a) => `${a}=${AREA_LABEL[a]}`).join(", ")),
     name: z.string().min(1).max(120),
     status: z.enum(STATUS).default("todo"),
     notes: z.string().max(MAX_NOTES).optional(),
   },
-  async ({ agent, id, area, name, status, notes }) => {
+  async ({ agent, id, phase, area, name, status, notes }) => {
     try {
       await mutateState(agent, (state) => {
         state.components = state.components || [];
@@ -238,17 +336,22 @@ server.tool(
         }
         state.components.push({
           id,
+          phase,
           area,
           name,
           status,
           notes: notes || "",
+          evidence: "",
           owner: agent,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-        return { event: "add_component", detail: { id, area, name, status } };
+        return { event: "add_component", detail: { id, phase, area, name, status } };
       });
-      return text(`Componente \`${id}\` criado em ${AREA_LABEL[area]} com status ${status}.`);
+      return text(
+        `Componente \`${id}\` criado em ${PHASE_LABEL[phase]} / ${AREA_LABEL[area]} com status ${status}.\n` +
+          `Se ele depende de outro componente, registre isso em mcp/status-server/lib/plan.js.`
+      );
     } catch (err) {
       return fail(err.message);
     }

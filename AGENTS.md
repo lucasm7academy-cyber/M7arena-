@@ -14,7 +14,26 @@ Você provavelmente está entrando neste projeto sem ter visto nada do que foi c
 chame a tool  status_brief
 ```
 
-Isso devolve, em um bloco curto: o que está em andamento, quais bloqueios estão abertos, os próximos passos e as decisões já tomadas. **Não comece a trabalhar sem isso.** Você vai refazer coisa pronta ou desfazer decisão de outro agente.
+Isso devolve, em um bloco curto: o progresso de cada fase, o que está em andamento, quais bloqueios estão abertos, o que você pode pegar agora e as decisões já tomadas. **Não comece a trabalhar sem isso.** Você vai refazer coisa pronta ou desfazer decisão de outro agente.
+
+**Quando o usuário pedir uma fase inteira** (ex.: "execute a Fase 1"):
+
+```
+chame  next_task  com phase="fase-1"
+```
+
+Isso devolve exatamente o que está liberado nessa fase, o que está esperando dependência e o que outro agente já está fazendo. As fases são:
+
+| | |
+|---|---|
+| `fase-0` | Governança multi-agente ✅ concluída |
+| `fase-1` | Schema do banco |
+| `fase-2` | Infraestrutura (Docker/VPS) |
+| `fase-3` | Aplicação (port visual 1:1) |
+| `fase-4` | MCP de operações da VPS |
+| `fase-5` | Migração de dados e cutover |
+
+**Antes de começar uma peça**, marque-a como `doing` com o seu nome — é assim que outro agente sabe que não deve pegar a mesma.
 
 **Ao terminar de trabalhar:**
 
@@ -36,6 +55,14 @@ chame  add_decision
 ```
 
 Toda tool de escrita pede um parâmetro `agent`. Preencha com o seu nome (`claude`, `gemini`, `deepseek`, `codex`). É como o usuário sabe quem fez o quê.
+
+### Dependências entre componentes
+
+Cada componente pode depender de outros — por exemplo, `db.identidade` exige `db.setup` (Drizzle configurado) antes. O mapa está em `mcp/status-server/lib/plan.js`.
+
+Se você marcar como `doing` ou `done` algo cujas dependências não estão prontas, a tool **avisa mas não impede**. Às vezes há motivo legítimo. Se for o caso, registre o porquê com `add_decision` — senão o próximo agente vai achar que foi descuido.
+
+Ao criar um componente novo com `add_component`, adicione as dependências dele em `lib/plan.js`.
 
 ### Nunca edite o `statusdoprojeto.md` à mão
 
