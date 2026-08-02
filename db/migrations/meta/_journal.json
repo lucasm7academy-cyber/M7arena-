@@ -36,6 +36,13 @@
       "when": 1785686844146,
       "tag": "0004_shiny_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785696179683,
+      "tag": "0005_campeonatos_normalize",
+      "breakpoints": true
     }
   ]
 }

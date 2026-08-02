@@ -186,6 +186,18 @@ export interface ApiTournamentsSdk {
   create: (data: Partial<ApiLegacyTournament>) => Promise<ApiLegacyTournament>;
   update: (id: string, data: Partial<ApiLegacyTournament>) => Promise<ApiLegacyTournament>;
   remove: (id: string) => Promise<{ ok: boolean }>;
+  /** Inscreve um time (substitui RPC registrar_time_campeonato). */
+  inscreverTime: (id: string, teamEntry: Record<string, unknown>) => Promise<ApiLegacyTournament>;
+  /** Aprova/rejeita um time inscrito (substitui RPC aprovar_time_campeonato). */
+  aprovarTime: (id: string, teamId: string, aprovar?: boolean) => Promise<ApiLegacyTournament>;
+  /** Reabre o campeonato (substitui RPC reabrir_campeonato). */
+  reabrir: (id: string) => Promise<ApiLegacyTournament>;
+  /** Atualiza o cronograma inteiro (substitui RPC atualizar_cronograma_campeonato). */
+  atualizarCronograma: (id: string, cronograma: any[]) => Promise<ApiLegacyTournament>;
+  /** Merge atômico de jogos no cronograma (substitui RPC merge_jogos_cronograma). */
+  mergeCronograma: (id: string, jogos: any[]) => Promise<ApiLegacyTournament>;
+  /** Recalcula PDL global (substitui RPC recalcular_pdl_global). */
+  recalcularPdl: (id: string) => Promise<{ ok: boolean }>;
 }
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -310,5 +322,17 @@ export const api = {
     create: (data: Partial<ApiLegacyTournament>) => api.post<ApiLegacyTournament>("/tournaments", data),
     update: (id: string, data: Partial<ApiLegacyTournament>) => api.put<ApiLegacyTournament>(`/tournaments/${id}`, data),
     remove: (id: string) => api.delete<{ ok: boolean }>(`/tournaments/${id}`),
+    inscreverTime: (id: string, teamEntry: Record<string, unknown>) =>
+      api.post<ApiLegacyTournament>(`/tournaments/${id}/inscricoes`, teamEntry),
+    aprovarTime: (id: string, teamId: string, aprovar = true) =>
+      api.post<ApiLegacyTournament>(`/tournaments/${id}/inscricoes/${teamId}/aprovar`, { p_aprovar: aprovar }),
+    reabrir: (id: string) =>
+      api.post<ApiLegacyTournament>(`/tournaments/${id}/reabrir`),
+    atualizarCronograma: (id: string, cronograma: any[]) =>
+      api.put<ApiLegacyTournament>(`/tournaments/${id}/cronograma`, { cronograma }),
+    mergeCronograma: (id: string, jogos: any[]) =>
+      api.put<ApiLegacyTournament>(`/tournaments/${id}/cronograma/merge`, { jogos }),
+    recalcularPdl: (id: string) =>
+      api.post<{ ok: boolean }>(`/tournaments/${id}/recalcular-pdl`),
   },
 };

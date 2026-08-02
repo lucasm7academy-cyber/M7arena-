@@ -556,20 +556,15 @@ export default function AdminPanel() {
 
     setMyTournaments(updatedTournaments);
 
-    // ➜ Chamada atômica (substitui saveToDB que sobrescrevia a tabela inteira)
-    supabase.rpc('aprovar_time_campeonato', {
-      p_campeonato_id: tournamentId,
-      p_team_id: teamId,
-      p_aprovar: true,
-    }).then(({ error }) => {
-      if (error) {
+    // ➜ Chamada atômica via API própria (substitui a RPC aprovar_time_campeonato)
+    api.tournaments.aprovarTime(tournamentId, teamId, true)
+      .catch((error: any) => {
         console.error('Erro ao aprovar time:', error);
         setPersistError(
           `Falha ao aprovar o time. Recarregue a página para sincronizar com o servidor. ` +
           `Detalhe: ${error.message || error}`
         );
-      }
-    });
+      });
 
     if (selectedTournament?.id === tournamentId) {
       setSelectedTournament(prev => {
@@ -1590,17 +1585,16 @@ export default function AdminPanel() {
                                 onClick={() => {
                                   if (!window.confirm('Tem certeza que deseja REABRIR este campeonato? Ele voltará ao status "em andamento" e poderá ser editado novamente.')) return;
                                   if (!window.confirm('Confirmação final: reabrir o campeonato "' + selectedTournament.titulo + '"?')) return;
-                                  supabase.rpc('reabrir_campeonato', { p_campeonato_id: selectedTournament.id })
-                                    .then(({ error }) => {
-                                      if (error) {
-                                        console.error('Erro ao reabrir campeonato:', error);
-                                        setPersistError(`Falha ao reabrir o campeonato. ${error.message || error}`);
-                                        return;
-                                      }
+                                  api.tournaments.reabrir(selectedTournament.id)
+                                    .then((reopened: any) => {
                                       // Atualiza estado local
-                                      const reopened = { ...selectedTournament, status: 'em_andamento' as const };
-                                      setSelectedTournament(reopened);
-                                      setMyTournaments(prev => prev.map(t => t.id === reopened.id ? reopened : t));
+                                      const reopenedLocal = { ...selectedTournament, status: 'em_andamento' as const };
+                                      setSelectedTournament(reopenedLocal);
+                                      setMyTournaments(prev => prev.map(t => t.id === reopenedLocal.id ? reopenedLocal : t));
+                                    })
+                                    .catch((error: any) => {
+                                      console.error('Erro ao reabrir campeonato:', error);
+                                      setPersistError(`Falha ao reabrir o campeonato. ${error.message || error}`);
                                     });
                                 }}
                                 className="w-full py-4 rounded-xl border border-amber-300 text-amber-700 bg-amber-50/50 font-black text-[10px] uppercase tracking-widest hover:bg-amber-50 transition-all flex items-center justify-center gap-2"

@@ -40,7 +40,6 @@ import {
   ChevronDown,
   RefreshCw,
 } from "lucide-react";
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 
 const BracketMatch = ({
@@ -2447,13 +2446,10 @@ const CampeonatoDetalhes = () => {
       whatsapp: registrationData.whatsapp,
     };
 
-    // Salva via RPC (append atômico, bypassa RLS com segurança)
-    const { error } = await supabase.rpc('registrar_time_campeonato', {
-      p_campeonato_id: id,
-      p_team_data: teamEntry,
-    });
-
-    if (error) {
+    // Salva via API própria (append atômico, substitui a RPC registrar_time_campeonato)
+    try {
+      await api.tournaments.inscreverTime(id, teamEntry);
+    } catch (error: any) {
       alert(error.message || 'Erro ao enviar inscrição. Tente novamente.');
       return;
     }
@@ -2779,13 +2775,10 @@ const CampeonatoDetalhes = () => {
     };
     setCampeonato(updated);
     saveToSupabase(updated);
-    // Salva cronograma via RPC para garantir persistência
-    supabase.rpc('atualizar_cronograma_campeonato', {
-      p_campeonato_id: id,
-      p_cronograma: newCronograma,
-    }).then(({ error }: any) => {
-      if (error) console.error('Erro ao salvar cronograma do chaveamento:', error.message);
-    });
+    // Salva cronograma via API própria (substitui a RPC atualizar_cronograma_campeonato)
+    api.tournaments.atualizarCronograma(id, newCronograma)
+      .catch((error: any) => console.error('Erro ao salvar cronograma do chaveamento:', error.message));
+
 
     setActiveTab("bracket");
   };
@@ -2855,28 +2848,23 @@ const CampeonatoDetalhes = () => {
     }
     setCampeonato(updatedCampeonato);
 
-    // ⚠️ RACE SAFETY: usa merge_jogos_cronograma com APENAS o jogo editado
+    // ⚠️ RACE SAFETY: usa mergeCronograma com APENAS o jogo editado
     // em vez de enviar o cronograma inteiro. Dois times editando jogos
     // diferentes ao mesmo tempo agora não se sobrescrevem mais.
     // O merge no servidor faz lookup por `id` (com fallback timeA+timeB+fase)
     // e substitui só o jogo correspondente.
-    supabase.rpc('merge_jogos_cronograma', {
-      p_campeonato_id: id,
-      p_jogos: [match],
-    }).then(({ error }) => {
-      if (error) {
+    api.tournaments.mergeCronograma(id, [match])
+      .then(() => {
+        // Jogo finalizado (ou placar editado) → recalcula PDL/V/D a partir dos
+        // jogos finalizados do cronograma. Idempotente: corrige sozinho.
+        if (match.status === "finalizado") {
+          api.tournaments.recalcularPdl(id).catch((e: any) => console.error('Erro ao recalcular PDL:', e.message));
+        }
+      })
+      .catch((error: any) => {
         console.error('Erro ao salvar cronograma:', error.message);
         alert(`Falha ao salvar o jogo. Recarregue a página.\n\nDetalhe: ${error.message}`);
-        return;
-      }
-      // Jogo finalizado (ou placar editado) → recalcula PDL/V/D a partir dos
-      // jogos finalizados do cronograma. Idempotente: corrige sozinho.
-      if (match.status === "finalizado") {
-        supabase.rpc('recalcular_pdl_global').then(({ error: e2 }: any) => {
-          if (e2) console.error('Erro ao recalcular PDL:', e2.message);
-        });
-      }
-    });
+      });
 
     // --- Lógica de Sincronização com Chaves ---
     if (match.status === "finalizado") {
@@ -2990,15 +2978,11 @@ const CampeonatoDetalhes = () => {
     setCampeonato(updatedCampeonato);
 
     // Envia só o jogo novo via merge atômico (substitui o write-all anterior)
-    supabase.rpc('merge_jogos_cronograma', {
-      p_campeonato_id: id,
-      p_jogos: [newMatch],
-    }).then(({ error }) => {
-      if (error) {
+    api.tournaments.mergeCronograma(id, [newMatch])
+      .catch((error: any) => {
         console.error('Erro ao criar jogo:', error.message);
         alert(`Falha ao criar o jogo. Recarregue a página.\n\nDetalhe: ${error.message}`);
-      }
-    });
+      });
 
     setIsAdminMatchModalOpen(false);
   };
@@ -3150,17 +3134,13 @@ const CampeonatoDetalhes = () => {
     );
     const updated = { ...campeonato, cronograma: newCronograma };
     setCampeonato(updated);
-    supabase.rpc('atualizar_cronograma_campeonato', {
-      p_campeonato_id: id,
-      p_cronograma: newCronograma,
-    }).then(({ error }: any) => {
-      if (error) { console.error('Erro ao excluir jogo:', error.message); return; }
-      // Recalcula PDL/V/D — se o jogo excluído estava finalizado, o time perde
-      // os pontos/vitória/derrota correspondentes automaticamente.
-      supabase.rpc('recalcular_pdl_global').then(({ error: e2 }: any) => {
-        if (e2) console.error('Erro ao recalcular PDL:', e2.message);
-      });
-    });
+    api.tournaments.atualizarCronograma(id, newCronograma)
+      .then(() => {
+        // Recalcula PDL/V/D — se o jogo excluído estava finalizado, o time perde
+        // os pontos/vitória/derrota correspondentes automaticamente.
+        return api.tournaments.recalcularPdl(id);
+      })
+      .catch((error: any) => console.error('Erro ao excluir jogo:', error.message));
   };
 
   if (campeonatoLoading || !campeonato) {
@@ -5420,12 +5400,8 @@ const CampeonatoDetalhes = () => {
                                 cronograma: [...campeonato.cronograma],
                               };
                               setCampeonato(updatedCampeonato);
-                              supabase.rpc('atualizar_cronograma_campeonato', {
-                                p_campeonato_id: id,
-                                p_cronograma: updatedCampeonato.cronograma,
-                              }).then(({ error }: any) => {
-                                if (error) console.error('Erro ao aceitar:', error.message);
-                              });
+                              api.tournaments.atualizarCronograma(id, updatedCampeonato.cronograma)
+                                .catch((error: any) => console.error('Erro ao aceitar:', error.message));
                               setIsScheduleEditModalOpen(false);
                             }}
                             className={`w-full py-4 font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
