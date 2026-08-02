@@ -257,6 +257,7 @@ export interface ApiWalletsSdk {
 }
 
 /**
+/**
  * Shape legado de `salas` que as telas de Jogar/SalaMod1 consomem (ADR-005/010).
  * `id` é o `sala_num` público (numérico) — o fork navega em `/sala-mod1/:id`,
  * faz parseInt e deriva o código `#${String(id).padStart(6,'0')}`.
@@ -338,6 +339,69 @@ export interface ApiMatchesSdk {
   start: (id: number) => Promise<ApiSalaResultado>;
   finalizar: (id: number) => Promise<ApiSalaResultado>;
   reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) => Promise<ApiSalaResultado>;
+}
+
+/**
+ * Shape legado de `contas_riot` que o fork consome (ADR-005/010). A API traduz
+ * game_accounts (handle/externalId/metadata) de volta para esses nomes para o
+ * JSX não mudar uma linha.
+ */
+export interface ApiLegacyRiotAccount {
+  user_id: string;
+  riot_id: string;
+  puuid: string;
+  summoner_id: string | null;
+  level: number | null;
+  profile_icon_id: number | null;
+  elo_cache: any;
+  champions_cache: any;
+  stats_updated_at: string | null;
+  verified_at: string | null;
+  created_at?: string;
+}
+
+/** Atualização do cache Riot da PRÓPRIA conta (elo, champions, ícone, nível). */
+export interface ApiRiotUpdate {
+  elo_cache?: any;
+  champions_cache?: any;
+  stats_updated_at?: string;
+  profile_icon_id?: number | null;
+  level?: number | null;
+  summoner_id?: string | null;
+}
+
+/** Perfil legado de `profiles` (lane, is_vip, redes, Pix) devolvido pela API. */
+export interface ApiLegacyProfile {
+  id: string;
+  bio: string;
+  lane_primaria: string | null;
+  lane_secundaria: string | null;
+  is_vip: boolean;
+  instagram: string;
+  twitch: string;
+  youtube: string;
+  discord: string;
+  chave_pix: string;
+  tipo_chave_pix: string;
+  nome_pix: string;
+}
+
+export interface ApiProfileMe {
+  id: string;
+  email: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  roles: string[];
+  profile: ApiLegacyProfile;
+  riotAccount: ApiLegacyRiotAccount | null;
+  discordAccount?: { providerAccountId?: string; discord_tag?: string | null } | null;
+}
+
+/** Resposta do estado OAuth do Discord (CSRF token, TTL 10min na API). */
+export interface ApiDiscordStateResult {
+  valid: boolean;
+  reason?: string;
+  userId?: string;
 }
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -559,4 +623,49 @@ export const api = {
     reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) =>
       api.post<ApiSalaResultado>(`/matches/${id}/report-result`, data),
   } as ApiMatchesSdk,
+
+  profiles: {
+    /** Perfil completo do usuário logado (roles + profile legado + riotAccount). */
+    me: () => api.get<ApiProfileMe>("/profiles/me"),
+    /** Perfil público de qualquer usuário (para cards de jogador). */
+    get: (id: string) => api.get<ApiProfileMe>(`/profiles/${id}`),
+    /** Atualiza campos legados do perfil (bio, lanes, redes sociais, Pix). */
+    update: (data: Record<string, unknown>) =>
+      api.put<{ id: string; profile: ApiLegacyProfile }>("/profiles/me", data),
+    /** Conta Riot do usuário logado no shape legado de contas_riot. */
+    getRiot: () => api.get<ApiLegacyRiotAccount | null>("/profiles/me/riot"),
+    /** Vincula a conta Riot do usuário logado (upsert em game_accounts). */
+    linkRiot: (data: Record<string, unknown>) =>
+      api.post<ApiLegacyRiotAccount>("/profiles/me/riot", data),
+    /** Atualiza o cache Riot (elo/champions) da própria conta. */
+    updateRiot: (data: ApiRiotUpdate) => api.put<ApiLegacyRiotAccount>("/profiles/me/riot", data),
+    /** Desvincula a conta Riot do usuário logado. */
+    unlinkRiot: () => api.delete<{ ok: boolean }>("/profiles/me/riot"),
+    /** Discord vinculado do usuário logado (tag de exibição). */
+    getDiscord: () => api.get<{ discord_tag: string | null }>("/profiles/me/discord"),
+  },
+
+  players: {
+    /** Busca jogadores pelo Riot ID (parcial) — substitui a leitura de contas_riot. */
+    search: (q: string) => api.get<ApiLegacyRiotAccount[]>(`/players/search?q=${encodeURIComponent(q)}`),
+    /** Lote de contas Riot por user_id (lista de times/painel). */
+    byIds: (ids: string[]) => api.get<ApiLegacyRiotAccount[]>(`/players/by-ids?ids=${ids.join(",")}`),
+    /** Conta Riot por PUUID (público) — checa vínculo já existente. */
+    byPuuid: (puuid: string) => api.get<ApiLegacyRiotAccount | null>(`/players/by-puuid/${puuid}`),
+    /** Total de contas Riot vinculadas (dashboard admin). */
+    count: () => api.get<{ count: number }>("/players/count"),
+    /** Grava elo_cache de contas exibidas (refresh de cache, autenticado). */
+    refreshElo: (updates: { userId: string; eloCache: any }[]) =>
+      api.post<{ ok: boolean }>("/players/refresh-elo", { updates }),
+  },
+
+  discord: {
+    /** Gera um estado OAuth (CSRF token) para vincular Discord. */
+    createState: () => api.post<{ state: string }>("/discord/state"),
+    /** Valida o estado OAuth (não usado e dentro do TTL). */
+    getState: (state: string) => api.get<ApiDiscordStateResult>(`/discord/state/${state}`),
+    /** Vincula o Discord do usuário logado (identidade + tag). */
+    link: (data: { state: string; discordId: string; discordTag: string }) =>
+      api.post<{ ok: boolean }>("/discord/link", data),
+  },
 };

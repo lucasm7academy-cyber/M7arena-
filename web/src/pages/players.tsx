@@ -109,29 +109,31 @@ async function atualizarElosNecessarios(contas: any[], force = false): Promise<n
       const flexEntry = ranqueadas?.find((r: any) => r.queueType === 'RANKED_FLEX_SR');
 
       // Sempre grava (mesmo quando ambos null) pra registrar que já buscamos
-      // — assim o TTL impede re-tentativa em loop.
-      const { error } = await supabase.from('contas_riot').update({
-        elo_cache: {
-          soloQ: soloEntry ? {
-            tier:   soloEntry.tier ?? 'IRON',
-            rank:   soloEntry.rank ?? 'IV',
-            lp:     soloEntry.leaguePoints ?? 0,
-            wins:   soloEntry.wins   ?? 0,
-            losses: soloEntry.losses ?? 0,
-          } : null,
-          flexQ: flexEntry ? {
-            tier:   flexEntry.tier ?? 'IRON',
-            rank:   flexEntry.rank ?? 'IV',
-            lp:     flexEntry.leaguePoints ?? 0,
-            wins:   flexEntry.wins   ?? 0,
-            losses: flexEntry.losses ?? 0,
-          } : null,
-        },
-        stats_updated_at: new Date().toISOString(),
-      }).eq('user_id', conta.user_id);
+      // — assim o TTL impede re-tentativa em loop. A escrita passa pela API
+      // (POST /players/refresh-elo), que seta stats_updated_at no servidor.
+      const eloCache = {
+        soloQ: soloEntry ? {
+          tier:   soloEntry.tier ?? 'IRON',
+          rank:   soloEntry.rank ?? 'IV',
+          lp:     soloEntry.leaguePoints ?? 0,
+          wins:   soloEntry.wins   ?? 0,
+          losses: soloEntry.losses ?? 0,
+        } : null,
+        flexQ: flexEntry ? {
+          tier:   flexEntry.tier ?? 'IRON',
+          rank:   flexEntry.rank ?? 'IV',
+          lp:     flexEntry.leaguePoints ?? 0,
+          wins:   flexEntry.wins   ?? 0,
+          losses: flexEntry.losses ?? 0,
+        } : null,
+      };
 
-      if (!error) atualizadas++;
-      else if (IS_DEV) console.warn('⚠️ update elo_cache falhou:', conta.user_id, error.message);
+      try {
+        await api.players.refreshElo([{ userId: conta.user_id, eloCache }]);
+        atualizadas++;
+      } catch (err: any) {
+        if (IS_DEV) console.warn('⚠️ refreshElo falhou:', conta.user_id, err?.message);
+      }
     } catch (err: any) {
       if (IS_DEV) console.warn('⚠️ buscarElo falhou:', conta.user_id, err?.message);
     }
@@ -178,11 +180,8 @@ async function carregarJogadores(
   // ✅ Dispara refresh da Riot API em BACKGROUND (não bloqueia render).
   //    Critério: TTL expirado, sem tier, OU sem wins/losses no cache antigo.
   if (opts.refreshElos !== false && userIds.length > 0) {
-    supabase
-      .from('contas_riot')
-      .select('user_id, puuid, stats_updated_at, elo_cache')
-      .in('user_id', userIds)
-      .then(({ data: contasFresh }) => {
+    api.players.byIds(userIds)
+      .then((contasFresh) => {
         if (!contasFresh) return;
         // Mescla com `rows` da RPC pra ter soloq_wins/losses + stats_updated_at
         const rowsMap = Object.fromEntries(rows.map((r: any) => [r.user_id, r]));
@@ -195,7 +194,8 @@ async function carregarJogadores(
           flexq_losses: rowsMap[c.user_id]?.flexq_losses,
         }));
         return atualizarElosNecessarios(contasMerged, opts.forceRefresh ?? false);
-      });
+      })
+      .catch((err) => { if (IS_DEV) console.warn('⚠️ players.byIds falhou:', err?.message); });
   }
 
   // ✅ Partidas/winRate agora vêm da ranqueada do LoL (RPC v3 entrega wins/losses).

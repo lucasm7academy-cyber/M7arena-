@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { FaDiscord } from 'react-icons/fa';
 import { useSound } from '../hooks/useSound';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilSafe, usePerfil } from '../contexts/PerfilContext';
@@ -231,8 +230,9 @@ export default function Equipes() {
   // Busca discord vinculado do usuário para pré-preencher no modal
   useEffect(() => {
     if (!user) return;
-    supabase.from('discord_links').select('discord_tag').eq('supabase_id', user.id).maybeSingle()
-      .then(({ data }) => { if (data?.discord_tag) setDiscordTag(data.discord_tag); });
+    api.profiles.getDiscord()
+      .then((data) => { if (data?.discord_tag) setDiscordTag(data.discord_tag); })
+      .catch((err) => console.error('❌ Erro ao buscar Discord:', err));
   }, [user]);
 
   // ── Scroll ao topo quando a página carrega ─────────────────

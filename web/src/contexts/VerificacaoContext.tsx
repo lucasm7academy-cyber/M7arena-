@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { buscarJogadorCompleto } from '../api/riot';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { sincronizarContaRiot } from '../api/player';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilSafe } from './PerfilContext';
@@ -70,20 +70,17 @@ export function VerificacaoProvider({ children }: { children: ReactNode }) {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
-        .from('contas_riot')
-        .upsert({
-          user_id: user.id,
+      // POST /api/profiles/me/riot — o user_id vem da sessão na API.
+      try {
+        await api.profiles.linkRiot({
           riot_id: verificacao.riotId,
           puuid: verificacao.puuid,
           nickname: verificacao.nickname,
           level: verificacao.nivel,
           profile_icon_id: iconeId,
-          validado: true,
-        }, { onConflict: 'user_id' });
-
-      if (error) {
-        console.error('❌ Erro ao salvar conta Riot:', error.message, error);
+        });
+      } catch (err) {
+        console.error('❌ Erro ao salvar conta Riot:', err);
         return false;
       }
 

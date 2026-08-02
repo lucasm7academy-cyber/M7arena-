@@ -1,9 +1,10 @@
 // src/pages/DiscordCallback.tsx
-// Recebe o ?code e ?state do Discord OAuth, troca pelo discord_id e salva em discord_links
+// Recebe o ?code e ?state do Discord OAuth, troca pelo discord_id e vincula na API própria.
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase'; // edge function discord-oauth-exchange (Task 7, app.edge-functions)
+import { api } from '../lib/api';
 
 export default function DiscordCallback() {
   const navigate = useNavigate();
@@ -26,27 +27,17 @@ export default function DiscordCallback() {
         return;
       }
 
-      // 1. Valida o state e pega o user_id
-      const { data: stateRow, error: stateErr } = await supabase
-        .from('discord_oauth_state')
-        .select('user_id, used')
-        .eq('state', state)
-        .maybeSingle();
-
-      if (stateErr || !stateRow || stateRow.used) {
+      // 1. Valida o state (CSRF token gerado e guardado pela API própria)
+      const stateResult = await api.discord.getState(state);
+      if (!stateResult?.valid) {
         if (cancelled) return;
         setStatus('error');
         setMsg('Link expirado ou já utilizado. Gere um novo link na página de vinculação.');
         return;
       }
 
-      // 2. Marca o state como usado
-      await supabase
-        .from('discord_oauth_state')
-        .update({ used: true })
-        .eq('state', state);
-
-      // 3. Troca o code pelo discord_id via edge function
+      // 2. Troca o code pelo discord_id via edge function (permanece no Supabase
+      //    até a Task 7 / app.edge-functions migrar o exchange para a API).
       const { data: fnData, error: fnErr } = await supabase.functions.invoke('discord-oauth-exchange', {
         body: { code, redirect_uri: `${window.location.origin}/auth/discord/callback` },
       });
@@ -58,26 +49,16 @@ export default function DiscordCallback() {
         return;
       }
 
-      // 4. Salva em discord_links e atualiza profiles.discord
-      const { error: linkErr } = await supabase
-        .from('discord_links')
-        .upsert({
-          discord_id:  fnData.discord_id,
-          supabase_id: stateRow.user_id,
-          discord_tag: fnData.discord_tag,
-        }, { onConflict: 'discord_id' });
-
-      if (linkErr) {
+      // 3. Vincula na API própria (user_identities + socials.discord) — a API
+      //    valida o state contra a sessão logada e o marca como usado.
+      try {
+        await api.discord.link({ state, discordId: fnData.discord_id, discordTag: fnData.discord_tag });
+      } catch {
         if (cancelled) return;
         setStatus('error');
         setMsg('Erro ao salvar vínculo. Tente novamente.');
         return;
       }
-
-      // Atualiza o campo discord no perfil do usuário automaticamente
-      await supabase
-        .from('profiles')
-        .upsert({ id: stateRow.user_id, discord: fnData.discord_tag }, { onConflict: 'id' });
 
       if (cancelled) return;
       setStatus('success');

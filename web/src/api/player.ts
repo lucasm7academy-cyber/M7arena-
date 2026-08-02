@@ -7,7 +7,6 @@
  * - Uso do PerfilContext quando disponível
  */
 
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { buscarElo, buscarTopChampions, buscarEstatisticasRecentes, buscarInvocadorPorPUUID } from './riot';
 import { ajustarMP, ajustarMC, buscarWallet, buscarWalletsEmLote } from './wallet';
@@ -90,13 +89,17 @@ function buildEloInfo(entry: any): EloInfo | null {
 // ── Função principal ──────────────────────────────────────────────────────────
 
 export async function buscarPerfilCompleto(userId: string): Promise<PerfilCompleto | null> {
-  // ✅ Schema novo: balance vem de `wallets.mc`, lane/lane2 de `profiles.lane_primaria/secundaria`.
-  const [{ data: conta }, { data: perfil }, userTeams, wallet] = await Promise.all([
-    supabase.from('contas_riot').select('riot_id, puuid, profile_icon_id, level').eq('user_id', userId).maybeSingle(),
-    supabase.from('profiles').select('lane_primaria, lane_secundaria').eq('id', userId).maybeSingle(),
+  // ✅ Schema novo: balance vem de `wallets.mc`, lane/lane2 de users
+  // (lanePrimary/laneSecondary) e a conta Riot de game_accounts — tudo via
+  // GET /profiles/:id (shape legado).
+  const [perfilPublico, userTeams, wallet] = await Promise.all([
+    api.profiles.get(userId),
     api.teams.byUser(userId),
     buscarWallet(userId),
   ]);
+
+  const conta = perfilPublico?.riotAccount ?? null;
+  const perfil = perfilPublico?.profile ?? null;
 
   if (!conta?.puuid) return null;
 
@@ -113,10 +116,9 @@ export async function buscarPerfilCompleto(userId: string): Promise<PerfilComple
   const flexEntry = ranqueadas.find((r: any) => r.queueType === 'RANKED_FLEX_SR');
 
   if (soloEntry || flexEntry) {
-    // ✅ Schema novo: tier/rank/lp/wins/losses viram parte de elo_cache (jsonb).
-    supabase
-      .from('contas_riot')
-      .update({
+    // ✅ Regra no servidor: elo_cache vive em metadata do game_account do dono.
+    api.profiles
+      .updateRiot({
         elo_cache: {
           soloQ: soloEntry ? {
             tier:   soloEntry.tier ?? 'IRON',
@@ -135,8 +137,7 @@ export async function buscarPerfilCompleto(userId: string): Promise<PerfilComple
         },
         stats_updated_at: new Date().toISOString(),
       })
-      .eq('user_id', userId)
-      .then();
+      .catch((e: any) => { if (IS_DEV) console.warn('⚠️ updateRiot falhou:', e?.message); });
   }
 
   const topChampions: CampeaoMaestria[] = (topChampionsRaw ?? []).map((c: any) => ({
@@ -157,6 +158,7 @@ export async function buscarPerfilCompleto(userId: string): Promise<PerfilComple
     lane2: perfil?.lane_secundaria ?? null,
     balance: wallet.mc,
     soloQ: buildEloInfo(soloEntry),
+
     flexQ: buildEloInfo(flexEntry),
     topChampions,
     timeTag,
@@ -181,22 +183,18 @@ export async function buscarElosJogador(puuid: string): Promise<{ soloQ: EloInfo
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 export async function buscarOuAtualizarStats(puuid: string): Promise<StatsCache> {
-  const { data } = await supabase
-    .from('contas_riot')
-    .select('elo_cache, champions_cache, stats_updated_at')
-    .eq('puuid', puuid)
-    .maybeSingle();
+  const conta = await api.players.byPuuid(puuid);
 
-  const updatedAt = data?.stats_updated_at ? new Date(data.stats_updated_at) : null;
+  const updatedAt = conta?.stats_updated_at ? new Date(conta.stats_updated_at) : null;
   const isFresh = !!updatedAt && (Date.now() - updatedAt.getTime()) < CACHE_TTL_MS;
 
-  if (isFresh && data?.elo_cache) {
+  if (isFresh && conta?.elo_cache) {
     return {
-      soloQ: data.elo_cache.soloQ ?? null,
-      flexQ: data.elo_cache.flexQ ?? null,
-      topChampions: data.champions_cache?.topChampions ?? [],
-      roles: data.champions_cache?.roles ?? [],
-      totalGames: data.champions_cache?.totalGames ?? 0,
+      soloQ: conta.elo_cache.soloQ ?? null,
+      flexQ: conta.elo_cache.flexQ ?? null,
+      topChampions: conta.champions_cache?.topChampions ?? [],
+      roles: conta.champions_cache?.roles ?? [],
+      totalGames: conta.champions_cache?.totalGames ?? 0,
     };
   }
 
@@ -209,15 +207,14 @@ export async function buscarOuAtualizarStats(puuid: string): Promise<StatsCache>
   const roles = statsRaw?.roles ?? [];
   const totalGames = statsRaw?.totalGames ?? 0;
 
-  supabase
-    .from('contas_riot')
-    .update({
+  // Cache do dono da conta — a API só aceita a própria conta (PUT /me/riot).
+  api.profiles
+    .updateRiot({
       elo_cache: { soloQ, flexQ },
       champions_cache: { topChampions, roles, totalGames },
       stats_updated_at: new Date().toISOString(),
     })
-    .eq('puuid', puuid)
-    .then();
+    .catch((e: any) => { if (IS_DEV) console.warn('⚠️ updateRiot falhou:', e?.message); });
 
   return { soloQ, flexQ, topChampions, roles, totalGames };
 }
@@ -247,7 +244,7 @@ export async function sincronizarContaRiot(puuid: string, userId: string): Promi
     if (iconeId !== null) update.profile_icon_id = iconeId;
     if (nivel !== null) update.level = nivel;
 
-    supabase.from('contas_riot').update(update).eq('user_id', userId).then();
+    await api.profiles.updateRiot(update);
     return result;
   } catch {
     return null;
@@ -257,13 +254,15 @@ export async function sincronizarContaRiot(puuid: string, userId: string): Promi
 // ── Perfil básico (sem Riot API) ─────────────────────────────────────────────
 
 export async function buscarPerfilBasico(userId: string): Promise<Omit<PerfilCompleto, 'soloQ' | 'flexQ' | 'topChampions'> | null> {
-  // ✅ Schema novo: balance via wallets.mc; lanes via lane_primaria/secundaria.
-  const [{ data: conta }, { data: perfil }, userTeams, wallet] = await Promise.all([
-    supabase.from('contas_riot').select('riot_id, puuid, profile_icon_id, level').eq('user_id', userId).maybeSingle(),
-    supabase.from('profiles').select('lane_primaria, lane_secundaria').eq('id', userId).maybeSingle(),
+  // ✅ Schema novo: balance via wallets.mc; lanes via users (lanePrimary/laneSecondary).
+  const [perfilPublico, userTeams, wallet] = await Promise.all([
+    api.profiles.get(userId),
     api.teams.byUser(userId),
     buscarWallet(userId),
   ]);
+
+  const conta = perfilPublico?.riotAccount ?? null;
+  const perfil = perfilPublico?.profile ?? null;
 
   if (!conta) return null;
 

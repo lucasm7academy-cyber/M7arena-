@@ -6,7 +6,6 @@ import { Search, CheckCircle, AlertCircle, RefreshCw, ShieldCheck, Timer, Unlink
 import { buscarJogadorCompleto, buscarSugestoes, buildProfileIconUrl } from '../api/riot';
 import { motion, AnimatePresence } from 'motion/react';
 import { useVerificacao } from '../contexts/VerificacaoContext';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -66,52 +65,46 @@ export default function Vincular() {
   // Carregar conta vinculada ao iniciar
   useEffect(() => {
     const carregarContaVinculada = async () => {
-      if (!supabase) { setCarregandoInicial(false); return; }
+      try {
+        if (user) {
+          const data = await api.profiles.getRiot();
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('contas_riot')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+          if (data) {
+            setContaVinculada(data);
+            setInvocador({
+              riotId: data.riot_id,
+              puuid: data.puuid,
+              summonerId: data.summoner_id,
+              nivel: data.level,
+              iconeId: data.profile_icon_id,
+              iconeUrl: getIconeUrl(data.profile_icon_id)
+            });
 
-        if (data && !error) {
-          setContaVinculada(data);
-          setInvocador({
-            riotId: data.riot_id,
-            puuid: data.puuid,
-            summonerId: data.summoner_id,
-            nivel: data.level,
-            iconeId: data.profile_icon_id,
-            iconeUrl: getIconeUrl(data.profile_icon_id)
-          });
+            // Verifica se já tem discord vinculado
+            const dl = await api.profiles.getDiscord();
 
-          // Verifica se já tem discord vinculado
-          const { data: dl } = await supabase
-            .from('discord_links')
-            .select('discord_tag')
-            .eq('supabase_id', user.id)
-            .maybeSingle();
+            if (dl?.discord_tag) {
+              // Riot + Discord vinculados → validação concluída
+              setDiscordVinculado(dl.discord_tag || 'Discord vinculado');
+              setPasso('sucesso');
+            } else {
+              // Riot vinculado, mas Discord ainda não → validação fica pendente
+              setPasso('validando');
+            }
 
-          if (dl) {
-            // Riot + Discord vinculados → validação concluída
-            setDiscordVinculado(dl.discord_tag || 'Discord vinculado');
-            setPasso('sucesso');
-          } else {
-            // Riot vinculado, mas Discord ainda não → validação fica pendente
-            setPasso('validando');
+            setCarregandoInicial(false);
+            return;
           }
-
-          setCarregandoInicial(false);
-          return;
         }
+
+        // Fluxo antigo de verificação por ícone foi aposentado — limpa qualquer
+        // estado remanescente para não reabrir a tela "Sincronizando Dados".
+        localStorage.removeItem('verificacao_ativa');
+      } catch (err) {
+        console.error('❌ Erro ao carregar conta vinculada:', err);
+      } finally {
+        setCarregandoInicial(false);
       }
-
-      // Fluxo antigo de verificação por ícone foi aposentado — limpa qualquer
-      // estado remanescente para não reabrir a tela "Sincronizando Dados".
-      localStorage.removeItem('verificacao_ativa');
-
-      setCarregandoInicial(false);
     };
 
     carregarContaVinculada();
@@ -120,10 +113,8 @@ export default function Vincular() {
   // Função para desvincular conta
   const handleDesvincular = async () => {
     setDesvinculando(true);
-    
-    try {
-      if (!supabase) return;
 
+    try {
       // A sessão vem do AuthContext (cookie httpOnly, ADR-011) — o cliente não
       // consulta mais o GoTrue para descobrir quem está logado.
       if (user) {
@@ -134,13 +125,8 @@ export default function Vincular() {
           // remoção de membros é best-effort; não impede a desvinculação
         }
 
-        const { error, count } = await supabase
-          .from('contas_riot')
-          .delete({ count: 'exact' })
-          .eq('user_id', user.id);
+        await api.profiles.unlinkRiot();
 
-        if (error) throw error;
-        
         setPopup({
           type: 'success',
           message: '✅ Conta desvinculada com sucesso!'
@@ -184,20 +170,17 @@ export default function Vincular() {
 
   useEffect(() => {
     const handleConcluida = async () => {
-      if (supabase) {
+      try {
         if (user) {
-          const { data, error } = await supabase
-            .from('contas_riot')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (data && !error) {
+          const data = await api.profiles.getRiot();
+          if (data) {
             setContaVinculada(data);
             setPasso('sucesso');
             return;
           }
         }
+      } catch (err) {
+        console.error('❌ Erro ao carregar conta após verificação:', err);
       }
       // Chegou aqui = não conseguiu carregar a conta do banco
       setPopup({
@@ -274,44 +257,37 @@ export default function Vincular() {
       return;
     }
 
-    // Verifica se conta já está vinculada a outro usuário
-    if (supabase) {
-      const { data: vinculoExistente, error: errorVinculo } = await supabase
-        .from('contas_riot')
-        .select('user_id, riot_id')
-        .eq('puuid', resultado.data.puuid)
-        .maybeSingle();
-
-      if (vinculoExistente && !errorVinculo) {
+    // Verifica se conta já está vinculada a outro usuário (API checa por PUUID)
+    if (user) {
+      const vinculoExistente = await api.players.byPuuid(resultado.data.puuid);
+      if (vinculoExistente) {
         setJaVinculadaInfo({ riotId: vinculoExistente.riot_id, email: 'outro usuário' });
         setPasso('ja_vinculada');
         setLoading(false);
         return;
       }
 
-      // Salva a conta Riot diretamente (sem verificação de ícone)
-      if (user) {
-        const contaData = {
-          user_id:         user.id,
-          riot_id:         resultado.data.riotId,
-          puuid:           resultado.data.puuid,
-          summoner_id:     resultado.data.summonerId,
-          level:           resultado.data.nivel,
-          profile_icon_id: resultado.data.iconeId,
-          nickname:        resultado.data.riotId.split('#')[0],
-        };
+      // Salva a conta Riot diretamente (sem verificação de ícone) — o user_id
+      // vem da sessão na API (POST /api/profiles/me/riot), nunca do cliente.
+      const contaData = {
+        riot_id:         resultado.data.riotId,
+        puuid:           resultado.data.puuid,
+        summoner_id:     resultado.data.summonerId,
+        level:           resultado.data.nivel,
+        profile_icon_id: resultado.data.iconeId,
+        nickname:        resultado.data.riotId.split('#')[0],
+      };
 
-        const { error: saveErr } = await supabase.from('contas_riot').upsert(contaData, { onConflict: 'user_id' });
-
-        if (saveErr) {
-          setErro('Erro ao salvar conta. Tente novamente.');
-          setLoading(false);
-          return;
-        }
-
-        setContaVinculada(contaData);
-        await refetch();
+      try {
+        await api.profiles.linkRiot(contaData);
+      } catch {
+        setErro('Erro ao salvar conta. Tente novamente.');
+        setLoading(false);
+        return;
       }
+
+      setContaVinculada(contaData);
+      await refetch();
     }
 
     setInvocador({
@@ -338,9 +314,8 @@ export default function Vincular() {
   const handleVincularDiscord = async () => {
     if (!user) return;
     setLoadingDiscord(true);
-    // Gera state aleatório e salva no banco
-    const state = crypto.randomUUID();
-    await supabase.from('discord_oauth_state').insert({ state, user_id: user.id });
+    // A API gera e guarda o state (CSRF token); o cliente só recebe e redireciona.
+    const { state } = await api.discord.createState();
     const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
     const redirect = encodeURIComponent(`${window.location.origin}/auth/discord/callback`);
     window.location.href = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect}&response_type=code&scope=identify&state=${state}`;

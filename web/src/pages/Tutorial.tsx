@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Tutorial() {
@@ -18,12 +18,12 @@ export default function Tutorial() {
 
     const carregarDados = async () => {
       if (user) {
-        const { data: riotData } = await supabase
-          .from('contas_riot')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        setContaRiot(riotData);
+        try {
+          const riotData = await api.profiles.getRiot();
+          setContaRiot(riotData);
+        } catch (err) {
+          console.error('❌ Erro ao buscar conta Riot:', err);
+        }
       }
       setLoading(false);
     };

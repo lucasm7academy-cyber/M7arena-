@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase'; // RPCs listar_admins/atualizar_cargo (app.swap.rpc)
+import { api } from '../lib/api';
 import { ArrowLeft, Shield, Search, Edit2, Save, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CARGO_LABELS, CARGO_COLORS, type CargoAdmin } from '../config/adminPermissoes';
@@ -30,15 +31,16 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
 
   const carregarUsuarios = async () => {
     try {
-      const [{ data: admins, error: adminError }, { data: contas }] = await Promise.all([
-        supabase.rpc('listar_admins_com_email'),
-        supabase.from('contas_riot').select('user_id, riot_id'),
-      ]);
+      const { data: admins, error: adminError } = await supabase.rpc('listar_admins_com_email');
       if (adminError) throw adminError;
       if (!admins) { setLoading(false); return; }
 
+      // Contas Riot via API própria (by-ids); o RPC listar_admins fica p/ app.swap.rpc.
+      const userIds = admins.map((a: any) => a.user_id).filter(Boolean);
+      const contas = userIds.length ? await api.players.byIds(userIds) : [];
+
       const riotIdMap: Record<string, string> = {};
-      contas?.forEach(c => { riotIdMap[c.user_id] = c.riot_id || 'Sem LOL'; });
+      (contas ?? []).forEach(c => { riotIdMap[c.user_id] = c.riot_id || 'Sem LOL'; });
 
       setUsuarios(admins.map((a: any) => ({
         id: a.id,
