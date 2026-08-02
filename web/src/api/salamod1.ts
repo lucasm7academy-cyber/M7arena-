@@ -1,48 +1,26 @@
 // src/api/salamod1.ts
+import { api, type ApiLegacySala, type ApiLegacySalaJogador } from '../lib/api';
+// ── VOTAÇÃO ──
+// `registrarVoto` / `buscarVotos` ainda leem `sala_votos` (supabase). Esse
+// domínio pertence ao app.swap.rpc (votação/arbitragem); aqui só o domínio
+// salas/sala_jogadores foi migrado para a API própria.
 import { supabase } from '../lib/supabase';
 
-export async function buscarsalas(salaId: number) {
-    const { data, error } = await supabase
-        .from('salas')
-        .select('*')
-        .eq('id', salaId)
-        .single();
-
-    if (error) {
+export async function buscarsalas(salaId: number): Promise<ApiLegacySala | null> {
+    try {
+        return await api.matches.detail(salaId);
+    } catch (error: any) {
         return null;
     }
-
-    return data;
 }
 
-export async function buscarJogadores(salaId: number) {
-    // Buscar jogadores na sala
-    const { data: jogadores, error: jogError } = await supabase
-        .from('sala_jogadores')
-        .select('*')
-        .eq('sala_id', salaId);
-
-    if (jogError || !jogadores) {
+export async function buscarJogadores(salaId: number): Promise<ApiLegacySalaJogador[]> {
+    try {
+        const sala = await api.matches.detail(salaId);
+        return sala?.jogadores ?? [];
+    } catch (error: any) {
         return [];
     }
-
-    // Buscar isVip dos usuários da sala via RPC (evita restrições de RLS)
-    const userIds = jogadores.map((j: any) => j.user_id);
-    const { data: profiles, error: profileError } = await supabase
-        .rpc('get_users_vip_status', { user_ids: userIds });
-
-    if (profileError) {
-    } else {
-    }
-
-    // Criar mapa de VIP por user_id
-    const vipMap = new Map(profiles?.map((p: any) => [p.id, p.is_vip]) ?? []);
-
-    // Adicionar isVip a cada jogador
-    return jogadores.map((jogador: any) => ({
-        ...jogador,
-        isVip: vipMap.get(jogador.user_id) ?? false,
-    }));
 }
 
 // ════════════════════════════════════════════════════
@@ -61,48 +39,40 @@ export interface ResultadoSalaRpc {
 
 const IS_DEV = import.meta.env.DEV;
 
-async function chamarRpcSala(
-    fn: string,
-    params: Record<string, any>
-): Promise<ResultadoSalaRpc> {
-    const { data, error } = await supabase.rpc(fn, params);
-
-    if (error) {
-        if (IS_DEV) console.error(`❌ [RPC ${fn}] ${error.message}`);
-        return { ok: false, erro: error.message || 'rpc_falhou', estado: null, mudou: false };
+/** Normaliza o retorno da API para o contrato `{ ok, erro, estado, mudou }`. */
+async function normalizarResultado(p: Promise<import('../lib/api').ApiSalaResultado>): Promise<ResultadoSalaRpc> {
+    try {
+        const r = await p;
+        return {
+            ok: r?.ok === true,
+            erro: r?.erro ?? null,
+            estado: r?.estado ?? null,
+            mudou: r?.mudou === true,
+        };
+    } catch (error: any) {
+        if (IS_DEV) console.error(`❌ [Sala] ${error?.message}`);
+        return { ok: false, erro: error?.message || 'rpc_falhou', estado: null, mudou: false };
     }
-
-    const r = (data ?? {}) as any;
-    return {
-        ok: r.ok === true,
-        erro: r.erro ?? null,
-        estado: r.estado ?? null,
-        mudou: r.mudou === true,
-    };
 }
 
 /** Entra (ou troca) de vaga. O servidor valida vaga ocupada / vínculo em outra sala. */
 export async function entrarNaVaga(salaId: number, role: string, isTimeA: boolean) {
-    return chamarRpcSala('sala_entrar', {
-        p_sala_id: salaId,
-        p_role: role,
-        p_is_time_a: isTimeA,
-    });
+    return normalizarResultado(api.matches.join(salaId, { roleSlot: role, is_time_a: isTimeA }));
 }
 
 /** Confirma presença durante o estado `confirmacao`. */
 export async function confirmarPresenca(salaId: number) {
-    return chamarRpcSala('sala_confirmar', { p_sala_id: salaId });
+    return normalizarResultado(api.matches.confirm(salaId));
 }
 
 /** Recusa a partida durante o estado `confirmacao` (reabre a sala). */
 export async function recusarPresenca(salaId: number) {
-    return chamarRpcSala('sala_recusar', { p_sala_id: salaId });
+    return normalizarResultado(api.matches.recusar(salaId));
 }
 
 /** Sai da vaga. O servidor decide se a saída é permitida. */
 export async function sairDaVaga(salaId: number) {
-    return chamarRpcSala('sala_sair', { p_sala_id: salaId });
+    return normalizarResultado(api.matches.leave(salaId));
 }
 
 /**
@@ -110,7 +80,7 @@ export async function sairDaVaga(salaId: number) {
  * Idempotente — vários clientes podem chamar; o lock do servidor resolve.
  */
 export async function tickSala(salaId: number) {
-    return chamarRpcSala('sala_tick', { p_sala_id: salaId });
+    return normalizarResultado(api.matches.tick(salaId));
 }
 
 /** Traduz os códigos de erro das RPCs para mensagens em português. */
@@ -173,23 +143,13 @@ export async function buscarVotos(salaId: number) {
     return data || [];
 }
 
-// ⚠️ FASE 2: ainda escreve direto em `salas`. Precisa virar RPC (`sala_encerrar`)
-// junto com o resto do fluxo de votação/finalização. Vai parar de funcionar
-// assim que o UPDATE em `salas` for revogado no RLS.
+/**
+ * Encerra a partida e paga o prêmio no servidor (regra de negócio na API).
+ * Substitui o antigo UPDATE direto em `salas` — o payout de MC decide na API.
+ */
 export async function encerrarSala(salaId: number, vencedor: 'A' | 'B' | 'empate') {
-    const { error } = await supabase
-        .from('salas')
-        .update({
-            estado: 'encerrada',
-            vencedor: vencedor,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', salaId);
-
-    if (error) {
-        return false;
-    }
-    return true;
+    const r = await normalizarResultado(api.matches.reportResult(salaId, { winnerSide: vencedor }));
+    return r.ok;
 }
 
 // ── CRIAR SALA ──────────────────────────────────────
@@ -209,50 +169,43 @@ export async function criarSala(
     },
     usuario: { id: string; nome: string; tag?: string; elo: string; role: string }
 ) {
-    const { data, error } = await supabase
-        .from('salas')
-        .insert({
+    try {
+        const data = await api.matches.create({
+            mode: dados.modo,
+            entryMp: dados.mpoints,
             nome: dados.nome,
             descricao: dados.descricao,
-            criador_id: usuario.id,
-            criador_nome: usuario.tag ? `${usuario.nome}#${usuario.tag}` : usuario.nome,
-            modo: dados.modo,
-            mpoints: dados.mpoints,
-            tem_senha: dados.temSenha,
-            senha: dados.temSenha ? dados.senha : null,
-            max_jogadores: dados.maxJogadores,
-            elo_minimo: dados.eloMinimo || null,
-            time_a_nome: dados.timeANome || null,
-            time_a_tag: dados.timeATag || null,
-            time_a_logo: dados.timeALogo || null,
-            estado: 'preenchendo',
-        })
-        .select('*')
-        .single();
+            temSenha: dados.temSenha,
+            senha: dados.temSenha ? dados.senha : undefined,
+            maxJogadores: dados.maxJogadores,
+            eloMinimo: dados.eloMinimo,
+            timeANome: dados.timeANome,
+            timeATag: dados.timeATag,
+            timeALogo: dados.timeALogo,
+        });
 
-    if (error || !data) {
+        return {
+            ...data,
+            codigo: `#${String(data.id).padStart(6, '0')}`,
+            jogadores: [],
+            criadorId: data.criador_id,
+            criadorNome: data.criador_nome,
+            timeANome: data.time_a_nome,
+            timeBNome: data.time_b_nome,
+            temSenha: data.tem_senha,
+            mpoints: data.mpoints,
+            modo: data.modo,
+            estado: data.estado,
+            nome: data.nome,
+            descricao: data.descricao || '',
+            maxJogadores: data.max_jogadores,
+            eloMinimo: data.elo_minimo,
+            vencedor: data.vencedor,
+            createdAt: new Date(data.created_at),
+        };
+    } catch (error: any) {
         return null;
     }
-
-    return {
-        ...data,
-        codigo: `#${String(data.id).padStart(6, '0')}`,
-        jogadores: [],
-        criadorId: data.criador_id,
-        criadorNome: data.criador_nome,
-        timeANome: data.time_a_nome,
-        timeBNome: data.time_b_nome,
-        temSenha: data.tem_senha,
-        mpoints: data.mpoints,
-        modo: data.modo,
-        estado: data.estado,
-        nome: data.nome,
-        descricao: data.descricao || '',
-        maxJogadores: data.max_jogadores,
-        eloMinimo: data.elo_minimo,
-        vencedor: data.vencedor,
-        createdAt: new Date(data.created_at),
-    };
 }
 
 // ============================================================

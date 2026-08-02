@@ -256,6 +256,90 @@ export interface ApiWalletsSdk {
   adminAdjust: (userId: string, deltaMC: number, deltaMP: number, motivo?: string) => Promise<ApiWalletAdjustResult>;
 }
 
+/**
+ * Shape legado de `salas` que as telas de Jogar/SalaMod1 consomem (ADR-005/010).
+ * `id` é o `sala_num` público (numérico) — o fork navega em `/sala-mod1/:id`,
+ * faz parseInt e deriva o código `#${String(id).padStart(6,'0')}`.
+ */
+export interface ApiLegacySala {
+  id: number;
+  nome: string;
+  descricao: string;
+  modo: string;
+  mpoints: number;
+  tem_senha: boolean;
+  senha?: string | null;
+  max_jogadores: number;
+  elo_minimo?: string | null;
+  estado: string;
+  vencedor?: 'A' | 'B' | 'empate' | null;
+  criador_id: string;
+  criador_nome: string;
+  time_a_nome?: string | null;
+  time_a_tag?: string | null;
+  time_a_logo?: string | null;
+  time_b_nome?: string | null;
+  time_b_tag?: string | null;
+  time_b_logo?: string | null;
+  codigo_partida?: string | null;
+  confirmacao_expires_at?: string | null;
+  iniciando_partida_at?: string | null;
+  created_at: string;
+  ended_at?: string | null;
+  jogadores: ApiLegacySalaJogador[];
+}
+
+export interface ApiLegacySalaJogador {
+  id: string;
+  sala_id: number;
+  user_id: string;
+  nome: string;
+  tag: string;
+  elo: string;
+  avatar?: string | null;
+  role: string;
+  is_time_a: boolean;
+  is_lider: boolean;
+  confirmado: boolean;
+  vinculado: boolean;
+  is_vip: boolean;
+  isVip: boolean;
+}
+
+/** Retorno das ações de sala `{ ok, erro, estado, mudou }` (códigos de ERROS_SALA). */
+export interface ApiSalaResultado {
+  ok: boolean;
+  erro: string | null;
+  estado: string | null;
+  mudou: boolean;
+}
+
+export interface ApiMatchesSdk {
+  list: (params?: { status?: string; limit?: number }) => Promise<ApiLegacySala[]>;
+  detail: (id: number | string) => Promise<ApiLegacySala>;
+  create: (data: {
+    mode: string;
+    entryMp?: number;
+    nome?: string;
+    descricao?: string;
+    temSenha?: boolean;
+    senha?: string;
+    eloMinimo?: string;
+    maxJogadores?: number;
+    timeANome?: string;
+    timeATag?: string;
+    timeALogo?: string;
+  }) => Promise<ApiLegacySala>;
+  join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean }) => Promise<ApiSalaResultado>;
+  leave: (id: number) => Promise<ApiSalaResultado>;
+  confirm: (id: number) => Promise<ApiSalaResultado>;
+  recusar: (id: number) => Promise<ApiSalaResultado>;
+  tick: (id: number) => Promise<ApiSalaResultado>;
+  start: (id: number) => Promise<ApiSalaResultado>;
+  finalizar: (id: number) => Promise<ApiSalaResultado>;
+  reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) => Promise<ApiSalaResultado>;
+}
+
 function qs(params: Record<string, string | number | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -446,4 +530,33 @@ export const api = {
     recordPlayerStats: (data: { userId: string; modo: string; vitoria: boolean }) =>
       api.post<ApiPlayerStats>("/content/player-stats", data),
   },
+
+  matches: {
+    list: (params: { status?: string; limit?: number } = {}) =>
+      api.get<ApiLegacySala[]>(`/matches${qs({ status: params.status, limit: params.limit })}`),
+    detail: (id: number | string) => api.get<ApiLegacySala>(`/matches/${id}`),
+    create: (data: {
+      mode: string;
+      entryMp?: number;
+      nome?: string;
+      descricao?: string;
+      temSenha?: boolean;
+      senha?: string;
+      eloMinimo?: string;
+      maxJogadores?: number;
+      timeANome?: string;
+      timeATag?: string;
+      timeALogo?: string;
+    }) => api.post<ApiLegacySala>("/matches", data),
+    join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean }) =>
+      api.post<ApiSalaResultado>(`/matches/${id}/join`, data),
+    leave: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/leave`),
+    confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),
+    recusar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/recusar`),
+    tick: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/tick`),
+    start: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/start`),
+    finalizar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/finalizar`),
+    reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) =>
+      api.post<ApiSalaResultado>(`/matches/${id}/report-result`, data),
+  } as ApiMatchesSdk,
 };

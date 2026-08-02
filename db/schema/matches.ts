@@ -17,18 +17,40 @@ export const matches = pgTable(
   "matches",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    // Número público da sala (herdado de `salas.id` bigint). O fork navega em
+    // `/sala-mod1/:id` e deriva o código de exibição `#${String(id).padStart(6,'0')}`,
+    // então o id público precisa ser numérico — o uuid fica interno.
+    salaNum: integer("sala_num").generatedByDefaultAsIdentity().notNull().unique(),
     gameId: varchar("game_id", { length: 50 })
       .notNull()
       .references(() => games.id, { onDelete: "restrict" }),
-    mode: varchar("mode", { length: 50 }).notNull(), // '5v5' | '1v1' | 'tournament'
+    mode: varchar("mode", { length: 50 }).notNull(), // '5v5' | 'aram' | '1v1' | 'time_vs_time'
     status: varchar("status", { length: 50 }).default("preenchendo").notNull(),
-    // 'preenchendo' | 'confirmacao' | 'iniciando' | 'em_andamento' | 'finalizacao' | 'encerrada' | 'cancelada'
+    // 'preenchendo' | 'confirmacao' | 'iniciando_partida' | 'partida_iniciada' | 'finalizacao' | 'encerrada' | 'cancelada'
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
     roomCode: varchar("room_code", { length: 20 }),
     winnerSide: varchar("winner_side", { length: 10 }), // 'blue' | 'red' | 'draw'
     entryMp: integer("entry_mp").default(0).notNull(),
+    // ── Shape legado de `salas` que o fork do front consome 1:1 (ADR-005/010).
+    //    Adicionado pelo swap app.swap.salas (migration 0006): a API devolve
+    //    estes nomes para o JSX não mudar uma linha.
+    nome: text("nome"),
+    descricao: text("descricao"),
+    maxJogadores: integer("max_jogadores").default(10).notNull(),
+    temSenha: boolean("tem_senha").default(false).notNull(),
+    senha: text("senha"),
+    eloMinimo: varchar("elo_minimo", { length: 50 }),
+    timeANome: text("time_a_nome"),
+    timeATag: text("time_a_tag"),
+    timeALogo: text("time_a_logo"),
+    timeBNome: text("time_b_nome"),
+    timeBTag: text("time_b_tag"),
+    timeBLogo: text("time_b_logo"),
+    codigoPartida: text("codigo_partida"),
+    confirmacaoExpiresAt: timestamp("confirmacao_expires_at", { mode: "date" }),
+    iniciandoPartidaAt: timestamp("iniciando_partida_at", { mode: "date" }),
     stateDeadlineAt: timestamp("state_deadline_at", { mode: "date" }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     endedAt: timestamp("ended_at", { mode: "date" }),
