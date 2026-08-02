@@ -3,9 +3,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePerfilSafe } from '../contexts/PerfilContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase'; // ainda usado em resultados_partidas (app.swap.salas)
 import { 
   Trophy, Crown, Swords, Users, Calendar, Clock, 
   ChevronRight, Medal, TrendingUp, TrendingDown, History,
@@ -26,6 +27,7 @@ interface Partida {
 
 export default function MinhasPartidas() {
   const { user } = useAuth();
+  const { perfil: perfilCtx } = usePerfilSafe();
   const navigate = useNavigate();
   const [partidas, setPartidas] = useState<Partida[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,21 +35,15 @@ export default function MinhasPartidas() {
   const [isVip, setIsVip] = useState(false);
   const [loadingVip, setLoadingVip] = useState(true);
 
+  // VIP vem do PerfilContext (cargo/perfil já carregado pela API própria).
+  useEffect(() => {
+    setIsVip(perfilCtx?.isVip || false);
+    setLoadingVip(false);
+  }, [perfilCtx?.isVip]);
+
   const carregarDados = React.useCallback(async () => {
     if (!user) return;
     try {
-      // Verificar se o usuário é VIP
-      const { data: perfil } = await supabase
-        .from('profiles')
-        .select('is_vip, vip_expira_em')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const perfilAny = perfil as any;
-      const vipAtivo = perfilAny?.is_vip || false;
-      setIsVip(vipAtivo);
-      setLoadingVip(false);
-
       // ✅ OTIMIZADO: Limitar a últimas 200 partidas (evita baixar todas)
       // Depois filtra em memória por user_id
       const { data, error } = await supabase

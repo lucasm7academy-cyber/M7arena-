@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
   Pencil, Trash2, Eye, EyeOff, Star, ExternalLink,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase'; // ainda usado em app.swap.salas / app.swap.rpc
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
 import { atualizarPontosPartida } from '../api/player';
@@ -120,9 +120,9 @@ function AbaSaldos({ adminCargo }: { adminCargo: CargoAdmin }) {
   const buscarJogadores = useCallback(async () => {
     if (busca.trim().length < 2) { setResultados([]); return; }
     setBuscando(true);
-    // ✅ Schema novo: lê de `wallets` (mc) em vez de `saldos`.
-    const [{ data: riotData }, balances] = await Promise.all([
-      supabase.from('contas_riot').select('user_id, riot_id, profile_icon_id').ilike('riot_id', `%${busca.trim()}%`).limit(8),
+    // ✅ Schema novo: lê de `wallets` (mc) em vez de `saldos`; contas via API própria.
+    const [riotData, balances] = await Promise.all([
+      api.players.search(busca.trim()),
       api.wallet.adminBalances(),
     ]);
     const saldoMap = Object.fromEntries((balances ?? []).map((w: any) => [w.userId, w.mc]));
@@ -989,7 +989,7 @@ function StatsCards() {
     (async () => {
       // ✅ Schema novo: salas em `salas`; saldo agregado em `wallets.mc`.
       const [jog, salas, timesCount, wallets] = await Promise.all([
-        supabase.from('contas_riot').select('user_id', { count: 'exact', head: true }),
+        api.players.count(),
         supabase.from('salas').select('id', { count: 'exact', head: true }).in('estado', ESTADOS_ATIVOS),
         api.teams.list({ limit: 1 }),
         api.wallet.adminBalances(),
@@ -997,7 +997,7 @@ function StatsCards() {
       if (cancelled) return;
       const totalMP = (wallets ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0), 0);
       setStats({
-        jogadores: jog.count ?? 0,
+        jogadores: jog?.count ?? 0,
         salasAtivas: salas.count ?? 0,
         times: timesCount.total ?? 0,
         mpDistribuido: totalMP,

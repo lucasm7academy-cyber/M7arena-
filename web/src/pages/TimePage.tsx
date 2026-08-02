@@ -7,8 +7,8 @@ import {
   UserPlus, UserX, Check, Plus, RefreshCw, X, Search, Upload,
   Copy, Phone, MessageCircle, MessageSquare,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
+import { supabase } from '../lib/supabase'; // ainda usado em supabase.rpc('salvar_lineup_time') (app.swap.rpc)
 import { useAuth } from '../contexts/AuthContext';
 import { buildProfileIconUrl, buscarElo, buscarJogadorCompleto } from '../api/riot';
 import { useSound } from '../hooks/useSound';
@@ -220,12 +220,13 @@ const InvitePlayerModal = ({
     if (query.length < 2) { setSearchResults([]); setNotFound(false); return; }
     setSearching(true); setNotFound(false);
     const timer = setTimeout(async () => {
-      // Buscar localmente em contas_riot (jogadores cadastrados)
-      const { data } = await supabase
-        .from('contas_riot')
-        .select('user_id, riot_id, profile_icon_id, level, puuid, elo_cache')
-        .ilike('riot_id', `%${query}%`)
-        .limit(5);
+      // Buscar localmente nas contas Riot via API própria (jogadores cadastrados)
+      let data: any[] = [];
+      try {
+        data = await api.players.search(query);
+      } catch (err) {
+        console.error('❌ Erro ao buscar jogadores:', err);
+      }
 
       if (data && data.length > 0) {
         setSearchResults(data.map(p => ({ ...p, is_guest: false })));
@@ -600,8 +601,12 @@ const RequestEntryModal = ({ team, onClose }: { team: TimeData; onClose: () => v
   useEffect(() => {
     const fetchMyAccount = async () => {
       if (!user) return;
-      const { data } = await supabase.from('contas_riot').select('*').eq('user_id', user.id).maybeSingle();
-      setMyRiotAccount(data);
+      try {
+        const data = await api.profiles.getRiot();
+        setMyRiotAccount(data);
+      } catch (err) {
+        console.error('❌ Erro ao buscar conta Riot:', err);
+      }
     };
     fetchMyAccount();
   }, [user]);
@@ -1226,11 +1231,8 @@ export default function TimePage() {
     // Buscar dados Riot + wallet de todos os membros em paralelo
     const userIds = membrosRaw.map(m => m.userId).filter(Boolean);
     if (userIds.length > 0) {
-      const [{ data: contas }, wallets] = await Promise.all([
-        supabase
-          .from('contas_riot')
-          .select('user_id, riot_id, profile_icon_id, level, puuid, elo_cache')
-          .in('user_id', userIds),
+      const [contas, wallets] = await Promise.all([
+        api.players.byIds(userIds),
         api.wallet.adminBalances(userIds),
       ]);
 

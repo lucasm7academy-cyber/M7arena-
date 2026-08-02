@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaTwitch, FaDiscord } from 'react-icons/fa6';
 import { FaYoutube } from 'react-icons/fa';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil, usePerfilSafe } from '../contexts/PerfilContext';
 import { getDDRVersion, buildProfileIconUrl } from '../api/riot';
@@ -272,14 +272,13 @@ export default function Perfil() {
   const lane2Ref = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Função única para salvar no banco
+  // ✅ Função única para salvar no banco (PUT /api/profiles/me — o user_id vem da sessão)
   const salvarCampo = async (campos: Record<string, any>) => {
     if (!user) return;
     try {
-      const { error } = await supabase.from('profiles').upsert({ id: user.id, ...campos }, { onConflict: 'id' });
-      if (error) console.error('❌ Erro ao salvar perfil:', error.message, campos, error);
+      await api.profiles.update(campos);
     } catch (error) {
-      console.error('❌ Exceção ao salvar perfil:', error);
+      console.error('❌ Erro ao salvar perfil:', error);
     }
   };
 
@@ -287,11 +286,7 @@ export default function Perfil() {
   const carregarDadosPesados = useCallback(async (isMounted: boolean) => {
     try {
       // Buscar dados detalhados da Riot (elo_cache completo)
-      const { data: riotCompleto } = await supabase
-        .from('contas_riot')
-        .select('elo_cache, champions_cache')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const riotCompleto = await api.profiles.getRiot();
 
       if (isMounted && riotCompleto) {
         setEloSolo(riotCompleto.elo_cache?.soloQ || null);
@@ -388,21 +383,13 @@ export default function Perfil() {
     setSincronizando(true);
     try {
       // Busca o PUUID real do banco — perfilContext.riotId é "Nome#TAG", não PUUID
-      const { data: contaRiot } = await supabase
-        .from('contas_riot')
-        .select('puuid')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const contaRiot = await api.profiles.getRiot();
       if (!contaRiot?.puuid) { setSincronizando(false); return; }
       await sincronizarContaRiot(contaRiot.puuid, user.id);
       refetchPerfil(); // recarrega contexto
       setLoadingDadosPesados(true);
       // recarrega dados pesados também
-      const { data: riotCompleto } = await supabase
-        .from('contas_riot')
-        .select('elo_cache, champions_cache')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const riotCompleto = await api.profiles.getRiot();
       if (riotCompleto) {
         setEloSolo(riotCompleto.elo_cache?.soloQ || null);
         setEloFlex(riotCompleto.elo_cache?.flexQ || null);

@@ -516,7 +516,8 @@ export const api = {
     /** Perfil público de qualquer usuário (para cards de jogador). */
     get: (id: string) => api.get<ApiProfileMe>(`/profiles/${id}`),
     /** Atualiza campos legados do perfil (bio, lanes, redes sociais, Pix). */
-    update: (data: Record<string, unknown>) => api.put<{ ok: boolean }>("/profiles/me", data),
+    update: (data: Record<string, unknown>) =>
+      api.put<{ id: string; profile: ApiLegacyProfile }>("/profiles/me", data),
     /** Conta Riot do usuário logado no shape legado de contas_riot. */
     getRiot: () => api.get<ApiLegacyRiotAccount | null>("/profiles/me/riot"),
     /** Vincula a conta Riot do usuário logado (upsert em game_accounts). */
