@@ -330,39 +330,9 @@ export async function atualizarPontosPartida(resultado: ResultadoPartida): Promi
 }
 
 async function atualizarStatsPorModo(userId: string, modo: string, vitoria: boolean): Promise<void> {
-  const { data: stats } = await supabase
-    .from('player_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('modo', modo)
-    .maybeSingle();
-
-  if (!stats) {
-    await supabase.from('player_stats').insert({
-      user_id: userId,
-      modo,
-      vitories: vitoria ? 1 : 0,
-      defeats: vitoria ? 0 : 1,
-      total_games: 1,
-      winrate: vitoria ? 100 : 0,
-    });
-  } else {
-    const novasVitorias = stats.vitories + (vitoria ? 1 : 0);
-    const novasDerrotas = stats.defeats + (vitoria ? 0 : 1);
-    const totalJogos = novasVitorias + novasDerrotas;
-    const novoWinrate = totalJogos > 0 ? (novasVitorias / totalJogos) * 100 : 0;
-
-    await supabase
-      .from('player_stats')
-      .update({
-        vitories: novasVitorias,
-        defeats: novasDerrotas,
-        total_games: totalJogos,
-        winrate: novoWinrate,
-      })
-      .eq('user_id', userId)
-      .eq('modo', modo);
-  }
+  // Regra de negócio no servidor: a API recalcula o agregado (vitórias/
+  // derrotas/total/winrate) de forma atômica; o cliente só informa o resultado.
+  await api.content.recordPlayerStats({ userId, modo, vitoria });
 }
 
 export async function buscarPontosJogador(userId: string): Promise<{ mp: number; mc: number } | null> {
@@ -372,8 +342,7 @@ export async function buscarPontosJogador(userId: string): Promise<{ mp: number;
 }
 
 export async function buscarStatsPorModo(userId: string): Promise<any[]> {
-  const { data } = await supabase.from('player_stats').select('*').eq('user_id', userId).order('total_games', { ascending: false });
-  return data ?? [];
+  return api.content.playerStats(userId);
 }
 
 // ── Apostas em M Coins ───────────────────────────────────────────────────────

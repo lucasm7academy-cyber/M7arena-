@@ -8,6 +8,8 @@ import {
   jsonb,
   index,
   integer,
+  primaryKey,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
 
@@ -27,6 +29,14 @@ export const news = pgTable(
     publishedAt: timestamp("published_at", { mode: "date" }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+    // Campos legados da tabela `noticias` do Supabase (ADR-005 — o fork consome
+    // snake_case: categoria/destaque/link_url/link_texto/autor). Sem eles a tela
+    // de Admin perde o badge de categoria e o Destaque no Lobby.
+    categoria: varchar("categoria", { length: 50 }).default("Torneios").notNull(),
+    destaque: boolean("destaque").default(false).notNull(),
+    linkUrl: text("link_url"),
+    linkText: text("link_texto"),
+    autor: varchar("autor", { length: 120 }),
   },
   (table) => [
     index("news_slug_idx").on(table.slug),
@@ -47,9 +57,36 @@ export const highlights = pgTable(
       .references(() => users.id, { onDelete: "restrict" }),
     active: boolean("active").default(true).notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    // Campos legados da tabela `highlights` do Supabase: `ordem` controla a
+    // ordem de exibição no Lobby/Streamers e `categoria` alimenta o badge.
+    ordem: integer("ordem").default(0).notNull(),
+    categoria: varchar("categoria", { length: 50 }).default("highlight").notNull(),
   },
   (table) => [
     index("highlights_active_idx").on(table.active),
+  ]
+);
+
+// Stats de jogador por modo de partida — espelha a tabela `player_stats` do
+// Supabase (swap app.swap.conteudo). `victories` corrige o typo `vitories`
+// legado; o adaptador do SDK mapeia. PK (user_id, modo) como no schema antigo.
+export const playerStats = pgTable(
+  "player_stats",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    modo: varchar("modo", { length: 20 }).notNull(),
+    victories: integer("victories").default(0).notNull(),
+    defeats: integer("defeats").default(0).notNull(),
+    totalGames: integer("total_games").default(0).notNull(),
+    winrate: doublePrecision("winrate").default(0).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.modo] }),
+    index("player_stats_user_idx").on(table.userId),
   ]
 );
 

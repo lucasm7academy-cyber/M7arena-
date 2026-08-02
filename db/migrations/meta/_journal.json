@@ -43,6 +43,13 @@
       "when": 1785696179683,
       "tag": "0005_campeonatos_normalize",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785700000000,
+      "tag": "0006_content_swap",
+      "breakpoints": true
     }
   ]
 }

@@ -428,15 +428,15 @@ export default function Streamers() {
   // ✅ Buscar highlights (clipes da comunidade)
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from('highlights')
-      .select('id, titulo, link, thumbnail_url, categoria')
-      .eq('ativo', true)
-      .order('ordem')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
+    api.content.highlights()
+      .then((data) => {
         if (cancelled) return;
-        if (data) setHighlights(data as any);
+        setHighlights(data);
+        setLoadingHighlights(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Erro ao buscar highlights:', err);
         setLoadingHighlights(false);
       });
     return () => { cancelled = true; };
