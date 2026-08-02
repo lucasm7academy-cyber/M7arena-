@@ -154,17 +154,6 @@ server.tool("browser_errors", "Lista todos os erros de console e rede capturados
   return { content: [{ type: "text", text: lines.join("\n") }] };
 });
 
-server.tool("browser_screenshot", "Tira screenshot da pagina atual", {}, async () => {
-  if (!page) return { content: [{ type: "text", text: "Erro: Navegador nao iniciado." }] };
-  const buf = await page.screenshot({ type: "png", fullPage: true });
-  return {
-    content: [
-      { type: "text", text: "Screenshot capturado." },
-      { type: "image", data: buf.toString("base64"), mimeType: "image/png" },
-    ],
-  };
-});
-
 server.tool("browser_url", "Retorna URL e titulo atuais", {}, async () => {
   if (!page) return { content: [{ type: "text", text: "Erro: Navegador nao iniciado." }] };
   return { content: [{ type: "text", text: `${page.url()}\nTitulo: ${await page.title()}` }] };
@@ -188,7 +177,7 @@ server.tool(
     if (!page) return { content: [{ type: "text", text: "Erro: Navegador nao iniciado." }] };
     const result = await page.evaluate((expr) => {
       // eslint-disable-next-line no-new-func
-      return new Function(`return (async () => { ${expr} })()`)();
+      return new Function(`return (async () => { return (${expr}) })()`)();
     }, expression);
     return { content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }] };
   }

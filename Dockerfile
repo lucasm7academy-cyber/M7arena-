@@ -29,6 +29,12 @@ ENV PORT 3000
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodeapp
 
+# O volume uploads_data é montado em /var/www/uploads. Se a pasta não existir
+# na imagem, o Docker cria o mountpoint como root e o nodeapp (uid 1001) não
+# consegue escrever → EACCES em todo upload. Criar aqui com o dono certo faz o
+# volume novo herdar a permissão.
+RUN mkdir -p /var/www/uploads && chown -R nodeapp:nogroup /var/www/uploads
+
 COPY --from=api-builder /app/api/node_modules ./node_modules
 COPY --from=api-builder /app/api/dist ./dist
 COPY --from=api-builder /app/api/package.json ./package.json

@@ -160,9 +160,11 @@ playersRouter.post("/refresh-elo", async (req, res) => {
   }
 });
 
-// ── GET /api/players/filtrados — busca paginada com filtros (elo/role/search) ─
-// Substitui a RPC buscar_jogadores_filtrados. Filtra contas Riot (game_accounts)
-// por elo_cache (tier), role (lane em users) e busca por handle/puuid.
+// GET /api/players/filtrados — busca paginada com filtros (elo/role/search) ─
+// Substitui a RPC buscar_jogadores_filtrados. Devolve o SHAPE LEGADO PLANO
+// (tier, soloq_wins/losses, flexq_wins/losses, lane, lane2, is_vip) que as
+// telas do fork (players.tsx) já consomem — mesmo que o dado viva aninhado em
+// game_accounts.metadata.elo_cache no schema novo.
 playersRouter.get("/filtrados", async (req, res) => {
   try {
     const user = await getAuthUser(req);
@@ -179,7 +181,7 @@ playersRouter.get("/filtrados", async (req, res) => {
       clauses.push(or(ilike(gameAccounts.handle, `%${search}%`), ilike(gameAccounts.externalId, `%${search}%`)));
     }
     if (eloTier) {
-      clauses.push(sql`${gameAccounts.metadata}->'elo_cache'->>'tier' ILIKE ${`%${eloTier}%`}`);
+      clauses.push(sql`${gameAccounts.metadata}->'elo_cache'->'soloQ'->>'tier' ILIKE ${`%${eloTier}%`}`);
     }
 
     const whereBase = and(...clauses);
@@ -203,8 +205,46 @@ playersRouter.get("/filtrados", async (req, res) => {
       result = rows.filter((r) => laneMap.get(r.userId) === roleLane);
     }
 
+    // Shape legado plano: join com users (lane/lane2/is_vip) e achatamento do
+    // elo_cache (soloQ/flexQ wins+losses+tier). Sem isso as telas do fork leem
+    // c.tier/c.soloq_wins como undefined → elo sem cor, winrate e partidas zerados.
+    const userIds = [...new Set(result.map((r) => r.userId).filter(Boolean))];
+    const userRows = userIds.length
+      ? await db.select().from(users).where(inArray(users.id, userIds))
+      : [];
+    const userMap = new Map(userRows.map((u) => [u.id, u]));
+
     return res.json(
-      result.map((r, i) => ({ ...toLegacyRiot(r), total_count: countRow?.total ?? 0, rank: offset + i + 1 }))
+      result.map((r, i) => {
+        const meta = (r.metadata as Record<string, any>) || {};
+        const eloCache = (meta.elo_cache as Record<string, any>) || {};
+        const soloQ = eloCache.soloQ as Record<string, any> | null | undefined;
+        const flexQ = eloCache.flexQ as Record<string, any> | null | undefined;
+        const u = userMap.get(r.userId);
+
+        return {
+          user_id: r.userId,
+          riot_id: r.handle,
+          level: meta.level ?? null,
+          profile_icon_id: meta.profile_icon_id ?? null,
+          tier: soloQ?.tier ?? null,
+          soloq_tier: soloQ?.tier ?? null,
+          soloq_wins: Number(soloQ?.wins ?? 0),
+          soloq_losses: Number(soloQ?.losses ?? 0),
+          flexq_tier: flexQ?.tier ?? null,
+          flexq_wins: Number(flexQ?.wins ?? 0),
+          flexq_losses: Number(flexQ?.losses ?? 0),
+          lane: u?.lanePrimary ?? null,
+          lane2: u?.laneSecondary ?? null,
+          is_vip: u?.isVip ?? false,
+          mp: 0,
+          mc: 0,
+          puuid: r.externalId,
+          stats_updated_at: meta.stats_updated_at ?? r.syncedAt ?? r.createdAt,
+          total_count: countRow?.total ?? 0,
+          rank: offset + i + 1,
+        };
+      })
     );
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar jogadores" });

@@ -18,7 +18,6 @@ import { VipLabel } from '../components/ui/VipBadge';
 // uploads (ADR-007). A URL /uploads/<bucket>/<arquivo> é servida pelo Nginx.
 const getImageUrl = (fileName: string) => `/uploads/public-images/${fileName}`;
 
-const BACKGROUND_URL = getImageUrl('background.png');
 const DDR_FALLBACK = '14.24.1';
 
 const ELO_COLORS: Record<string, string> = {
@@ -336,15 +335,17 @@ export default function Perfil() {
 
   // ✅ useEffect 2: Inicializar dados pesados que vêm da RPC (elo, champions)
   useEffect(() => {
-    if (!eloCache || !championsCache) return;
+    if (!eloCache) return;
 
-    // Os dados pesados já vêm da RPC, só precisa inicializar os estados
+    // Os dados pesados já vêm da RPC, só precisa inicializar os estados.
+    // champions_cache é opcional (null quando ainda não sincronizou) — o elo
+    // não pode ficar preso esperando ele, senão o bloco gira pra sempre.
     setEloSolo(eloCache.soloQ || null);
     setEloFlex(eloCache.flexQ || null);
     setStatsRecentes({
-      topChampions: championsCache.topChampions || [],
-      roles: championsCache.roles || [],
-      totalGames: championsCache.totalGames || 0,
+      topChampions: championsCache?.topChampions || [],
+      roles: championsCache?.roles || [],
+      totalGames: championsCache?.totalGames || 0,
     });
 
     // Carregar DDR version
@@ -352,6 +353,15 @@ export default function Perfil() {
 
     setLoadingDadosPesados(false);
   }, [eloCache, championsCache]);
+
+  // ✅ Sem conta Riot vinculada não há elo_cache para mostrar — sai do loading
+  //    e deixa o bloco de elo vazio em vez de girar pra sempre.
+  useEffect(() => {
+    if (perfilLoading || perfilContext === null) return;
+    if (perfilContext.contaVinculada === false && !eloCache) {
+      setLoadingDadosPesados(false);
+    }
+  }, [perfilLoading, perfilContext, eloCache]);
 
   // ✅ Click outside handlers
   useEffect(() => {
@@ -423,7 +433,6 @@ export default function Perfil() {
 
   return (
     <div className="relative min-h-screen w-full text-white font-sans overflow-x-hidden">
-      <div className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat scale-105 pointer-events-none" style={{ backgroundImage: `url(${BACKGROUND_URL})` }} />
       <div className="fixed inset-0 z-0 bg-black/90 backdrop-blur-[2px] pointer-events-none" />
       
       <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-32">

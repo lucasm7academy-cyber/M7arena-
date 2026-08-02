@@ -8,6 +8,11 @@
         "M7_PROJECT_ROOT": "D:/Aplicativos/M7arenaSite"
       },
       "enabled": true
+    },
+    "browser": {
+      "type": "local",
+      "command": ["node", "D:/Aplicativos/M7arenaSite/mcp/browser-server/server.js"],
+      "enabled": true
     }
   }
 }

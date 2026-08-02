@@ -14,6 +14,15 @@ Você provavelmente está entrando neste projeto sem ter visto nada do que foi c
 chame a tool  status_brief
 ```
 
+**Quando o usuário mandar `error`** (só essa palavra):
+
+O usuário está com o app aberto e viu um erro no console do navegador na tela atual. Use o browser MCP (`browser_url` + `browser_errors`) para identificar o erro na tela em que ele está, diagnostique e **corrija** — não apenas reporte.
+
+Duas regras obrigatórias:
+
+1. **NÃO recarregue a página antes de olhar o erro.** O erro pode ser causado por um botão/funcionalidade específico da página — recarregar faz ele sumir e você perde a causa. Primeiro capture o estado atual (`browser_errors` + `browser_url` + se precisar o que está na tela), só então recarregue se for necessário.
+2. **Depois de corrigir, NÃO saia testando de novo.** Peça ao usuário para testar — ele sabe qual botão/funcionalidade disparou o erro. Recarregar e "ver que passou" não prova nada quando o gatilho é uma ação do usuário.
+
 Isso devolve, em um bloco curto: o progresso de cada fase, o que está em andamento, quais bloqueios estão abertos, o que você pode pegar agora e as decisões já tomadas. **Não comece a trabalhar sem isso.** Você vai refazer coisa pronta ou desfazer decisão de outro agente.
 
 **Quando o usuário pedir uma fase inteira** (ex.: "execute a Fase 1"):

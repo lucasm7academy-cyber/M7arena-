@@ -1,0 +1,67 @@
+# M7Arena — stack LOCAL (localhost), espelho da produção mas sem SSL.
+# Sobe postgres + app (API) + nginx (Vite build) tudo servido em :3000,
+# para o callback do Google OAuth (http://localhost:3000/api/auth/google/callback) funcionar.
+#
+# Uso: docker compose --env-file .env.local -f infra/docker-compose.local.yml up -d --build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: m7arena_local_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: m7arena
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d m7arena"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: m7arena-app:local
+    container_name: m7arena_local_app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/m7arena"
+      AUTH_SECRET: ${AUTH_SECRET:-dev-secret-key-m7arena-local-environment-32bytes}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/auth/google/callback}
+      RIOT_API_KEY: ${RIOT_API_KEY:-dev_dummy_riot_key}
+    volumes:
+      - uploads_local_data:/var/www/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.nginx
+    image: m7arena-nginx:local
+    container_name: m7arena_local_nginx
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - uploads_local_data:/var/www/uploads:ro
+      - ./nginx.local.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+
+volumes:
+  postgres_local_data:
+  uploads_local_data:
