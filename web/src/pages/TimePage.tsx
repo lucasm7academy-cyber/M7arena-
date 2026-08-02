@@ -124,22 +124,19 @@ const ModalBase = ({ onClose, children, gradientFrom, title, transparent = false
   </motion.div>
 );
 
-// ── Upload de logo para Supabase Storage ───────────────────────────────────
+// ── Upload de logo para o disco local (ADR-007) ─────────────────────────────
 async function uploadLogoTime(file: File, timeId: string): Promise<string | null> {
   const ext = file.type === 'image/png' ? 'png' : 'jpg';
-  const path = `${timeId}-${Date.now()}.${ext}`;
+  const name = `${timeId}-${Date.now()}.${ext}`;
+  const renamed = new File([file], name, { type: file.type });
 
-  const { error } = await supabase.storage
-    .from('team-logos')
-    .upload(path, file, { upsert: true, contentType: file.type });
-
-  if (error) {
-    console.error('❌ Erro upload logo time:', error.message, error);
+  try {
+    const { url } = await api.upload(renamed, 'team-logos');
+    return `${url}?t=${Date.now()}`;
+  } catch (err) {
+    console.error('❌ Erro upload logo time:', err);
     return null;
   }
-
-  const { data } = supabase.storage.from('team-logos').getPublicUrl(path);
-  return `${data.publicUrl}?t=${Date.now()}`;
 }
 
 function validarImagem(file: File): Promise<string | null> {

@@ -9,7 +9,6 @@ import {
   CreditCard, Diamond, Copy
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useRole } from '../contexts/RoleContext';
@@ -129,26 +128,15 @@ const uploadBase64ToStorage = async (base64Str: string, folderName: string, pref
     const { blob, mime } = base64ToBlob(base64Str);
     const extension = mime.split('/')[1] || 'jpeg';
     const fileName = `${prefixName}-${Date.now()}.${extension}`;
-    const filePath = `${folderName}/${fileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('public-images')
-      .upload(filePath, blob, {
-        contentType: mime,
-        upsert: true
-      });
+    // O bucket vira pasta no volume (public-images/) e folderName vira subpasta
+    // (campeonatos/). O servidor devolve a URL pronta: /uploads/... (ADR-007).
+    const file = new File([blob], fileName, { type: mime });
+    const { url } = await api.upload(file, 'public-images', folderName);
 
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    const { data } = supabase.storage
-      .from('public-images')
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
+    return url;
   } catch (err) {
-    console.error('Falha ao enviar imagem para o Supabase Storage:', err);
+    console.error('Falha ao enviar imagem para o servidor:', err);
     return base64Str; // Fallback para base64 em caso de erro
   }
 };

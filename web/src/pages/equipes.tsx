@@ -289,14 +289,17 @@ export default function Equipes() {
     }
 
     if (newTeamData._logoFile) {
+      // Envia o logo para /api/upload (disco local, ADR-007). O nome preserva o
+      // padrão antigo (<timeId>-<timestamp>.ext) para não quebrar URLs antigas.
       const ext = newTeamData._logoFile.type === 'image/png' ? 'png' : 'jpg';
-      const path = `${novoTime.id}-${Date.now()}.${ext}`;
-      await supabase.storage.from('team-logos').upload(path, newTeamData._logoFile, { upsert: true });
-      const { data: { publicUrl } } = supabase.storage.from('team-logos').getPublicUrl(path);
+      const name = `${novoTime.id}-${Date.now()}.${ext}`;
+      const file = new File([newTeamData._logoFile], name, { type: newTeamData._logoFile.type });
       try {
-        await api.teams.update(novoTime.id, { logo_url: publicUrl });
-      } catch {
+        const { url } = await api.upload(file, 'team-logos');
+        await api.teams.update(novoTime.id, { logo_url: url });
+      } catch (err) {
         // logo é acessório; falha não deve impedir o time criado
+        console.error('Falha ao enviar/atualizar logo do time:', err);
       }
     }
 

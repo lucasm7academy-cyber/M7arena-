@@ -15,6 +15,7 @@
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.1",
     "express": "^4.21.2",
+    "multer": "^2.2.0",
     "pg": "^8.13.1"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.13.1",
     "@types/pg": "^8.11.11",
     "tsx": "^4.19.2",

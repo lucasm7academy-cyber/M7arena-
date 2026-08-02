@@ -25,7 +25,6 @@ import {
 import { FaTwitch, FaDiscord } from 'react-icons/fa6';
 import { SiLeagueoflegends } from 'react-icons/si';
 import { FaFontAwesomeFlag } from 'react-icons/fa';
-import { supabase } from '../../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useSound } from '../../hooks/useSound';
@@ -42,12 +41,9 @@ const DISCORD_URL = 'https://discord.gg/E5crDcKqnt';
 // Link do chat de tickets de suporte no Discord
 const SUPORTE_URL = 'https://discord.gg/kz6p2zAvfc';
 
-const getImageUrl = (fileName: string) => {
-  const { data } = supabase.storage
-    .from('public-images')
-    .getPublicUrl(fileName);
-  return data.publicUrl;
-};
+// As imagens estáticas do layout vivem na pasta 'public-images' do volume de
+// uploads (ADR-007). A URL /uploads/<bucket>/<arquivo> é servida pelo Nginx.
+const getImageUrl = (fileName: string) => `/uploads/public-images/${fileName}`;
 
 const LOGO_URL = getImageUrl('logo-m7.png');
 
