@@ -119,22 +119,46 @@ team_stats            team_id, season_id, pdl, wins, losses, ranking
 
 ```sql
 tournaments           id, game_id, slug, name, format, status, organizer_id,
-                      prize jsonb, registration_opens_at, starts_at, ends_at
+                      prize jsonb, registration_opens_at, starts_at, ends_at,
+                      frase, logo_url, banner_url, org_photo_url, theme_color,
+                      regulamento, vagas, times_por_grupo, classificados_por_grupo,
+                      tier, data, premiacao, taxa, tem_outros_premios,
+                      outros_premios, organizacao,
+                      seed_order text[], grupos_sorteados bool, chaves_sorteados bool
 
-tournament_teams      tournament_id, team_id, status ('registered'|'approved'|'rejected')
+tournament_teams      tournament_id, team_id, status ('registered'|'approved'|'rejected'),
+                      paid, discord, whatsapp, group_id
 
 tournament_groups     id, tournament_id, name
 
 tournament_matches    id, tournament_id, phase, round, group_id,
                       team_a_id, team_b_id, score_a, score_b,
+                      match_key, phase_label, team_a_tag, team_b_tag,
+                      display_date, display_time, score_display, proposed_by,
                       scheduled_at, status, bracket_slot, next_match_id
+
+bracket_matches       id, tournament_id, section, round, slot,
+                      team_a_tag, team_b_tag, team_a_id, team_b_id,
+                      score_a, score_b, winner_side
+
+tournament_standings  id, tournament_id, team_id, rank, v, d, wo, j, cor, logo
 ```
 
 Esta é a mudança mais importante do schema. No site atual, um campeonato inteiro (inscritos, grupos, cronograma, chaveamento e classificação) vive em **sete blobs JSONB numa única linha**, e um trigger de auditoria grava uma cópia de cinco desses blobs **a cada update**. Editar um placar reescreve o torneio inteiro duas vezes.
 
-Normalizar resolve quatro problemas de uma vez: o crescimento descontrolado da auditoria, a função de merge de cronograma de 130 linhas, o recálculo de ranking que varre todos os campeonatos, e a classificação calculada no navegador.
+**ADR-016** eliminou de vez os 8 blobs JSONB (a ADR-014 os havia reintroduzido temporariamente para servir o fork do front). A API (`api/src/lib/tournament-shape.ts` + `tournament-store.ts`) reconstrói o shape legado 1:1 que as telas do fork consomem — o front não mudou uma linha. O que era blob vira:
 
-A classificação vira **view materializada** sobre `tournament_matches`, com refresh no fim de cada partida.
+- `times_inscritos` → `tournament_teams` (com `paid`/`discord`/`whatsapp`)
+- `cronograma` → `tournament_matches` (com snapshots de tag e strings de exibição)
+- `bracket_data` → `bracket_matches` (células da árvore double-elimination)
+- `grupos` → `tournament_groups` + `tournament_teams.group_id`
+- `classificacao` → `tournament_standings` (fallback manual; o shape deriva do cronograma)
+- `times_ordem_sorteio` → `tournaments.seed_order` (text[])
+- `grupos_sorteados`/`chaves_sorteados` → booleanos
+
+**Ressalva documentada:** `bracket_matches` e `tournament_matches` guardam **snapshots de tag + strings de exibição** (shape de UI que o fork renderiza), com ids resolvidos quando a tag casa com um time. É "relacional com ressalva", não relacional puro — o preço da paridade 1:1 (ADR-005).
+
+A classificação é **derivada** no servidor (shape) a partir dos jogos finalizados do cronograma, com fallback para `tournament_standings` quando não há jogos.
 
 ### 3.5 Partidas
 
