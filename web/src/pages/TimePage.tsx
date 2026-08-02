@@ -8,7 +8,6 @@ import {
   Copy, Phone, MessageCircle, MessageSquare,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { supabase } from '../lib/supabase'; // ainda usado em supabase.rpc('salvar_lineup_time') (app.swap.rpc)
 import { useAuth } from '../contexts/AuthContext';
 import { buildProfileIconUrl, buscarElo, buscarJogadorCompleto } from '../api/riot';
 import { useSound } from '../hooks/useSound';
@@ -1382,12 +1381,10 @@ export default function TimePage() {
   const handleUpdatePlayers = async (membros: Membro[]): Promise<boolean> => {
     if (!time) return false;
 
-    // RPC atômica: substitui o lineup inteiro numa ÚNICA transação no banco.
-    // Se qualquer insert falhar, faz ROLLBACK — o time NUNCA fica zerado.
-    // (security definer valida dono/capitão e não depende de RLS)
-    const { error } = await supabase.rpc('salvar_lineup_time', {
-      p_time_id: time.id,
-      p_membros: membros.map(m => ({
+    // A API substitui o lineup inteiro numa ÚNICA transação (substitui a RPC).
+    // Se qualquer insert falhar, ROLLBACK — o time NUNCA fica zerado.
+    try {
+      await api.teams.saveLineup(time.id, membros.map(m => ({
         user_id:               m.userId || null,
         lane:                  m.role,
         is_capitao:            m.isLeader || false,
@@ -1396,10 +1393,8 @@ export default function TimePage() {
         guest_puuid:           m.userId ? null : m.puuid,
         guest_profile_icon_id: m.userId ? null : m.iconeId,
         guest_elo_cache:       m.userId ? null : m.elo,
-      })),
-    });
-
-    if (error) {
+      })));
+    } catch (error: any) {
       console.error('❌ Erro ao salvar lineup:', error.message, error);
       return false;
     }

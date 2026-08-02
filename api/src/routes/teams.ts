@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and, or, ilike, desc, asc, inArray, count, gt, ne } from "drizzle-orm";
 import { db } from "../db.js";
-import { users, userSessions } from "../../../db/schema/identidade.js";
+import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
 import {
   teams,
   teamMembers,
@@ -674,5 +674,104 @@ teamsRouter.delete("/:id", async (req, res) => {
     return res.json({ ok: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao dissolver time" });
+  }
+});
+
+// ── POST /api/teams/:id/lineup — substitui o lineup inteiro (transação) ────
+// Substitui a RPC salvar_lineup_time (security definer que validava dono/capitão).
+// A API valida o usuário é dono/capitão do time e substitui os membros numa
+// ÚNICA transação — se qualquer insert falhar, rollback (o time nunca fica zerado).
+teamsRouter.post("/:id/lineup", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const { id } = req.params;
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) return res.status(404).json({ error: "Time não encontrado" });
+
+    const isOwner = team.ownerId === user.id;
+    const [cap] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.isCaptain, true)))
+      .limit(1);
+    if (!isOwner && !cap) {
+      return res.status(403).json({ error: "Apenas o dono ou capitão pode editar o lineup" });
+    }
+
+    const membros = Array.isArray(req.body?.p_membros) ? req.body.p_membros : Array.isArray(req.body?.membros) ? req.body.membros : [];
+    await db.transaction(async (tx) => {
+      await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
+      for (const m of membros) {
+        const slot = legacyToSlot(m.lane);
+        await tx.insert(teamMembers).values({
+          teamId: id,
+          userId: m.user_id || null,
+          guestHandle: m.user_id ? null : m.guest_riot_id ?? null,
+          guestRiotId: m.user_id ? null : m.guest_riot_id ?? null,
+          guestPuuid: m.user_id ? null : m.guest_puuid ?? null,
+          guestProfileIconId: m.user_id ? null : m.guest_profile_icon_id ?? null,
+          guestEloCache: m.user_id ? null : m.guest_elo_cache ?? null,
+          roleSlot: slot,
+          isCaptain: !!m.is_capitao,
+          status: "accepted",
+        });
+      }
+    });
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao salvar lineup" });
+  }
+});
+
+// ── POST /api/teams/:id/stats/adjust — ajusta PDL/V/D de um time ───────────
+// Substitui a RPC ajustar_stats_time (admin no Supabase, agora valida cargo na API).
+teamsRouter.post("/:id/stats/adjust", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isAdmin = roles.some((r) => r.role === "admin" || r.role === "proprietario");
+    if (!isAdmin) return res.status(403).json({ error: "Apenas admin pode ajustar stats" });
+
+    const { id } = req.params;
+    // Aceita uuid OU tag (o Admin.tsx ajusta stats por tag).
+    const isUuid = /^[0-9a-fA-F-]{36}$/.test(id);
+    const [team] = isUuid
+      ? await db.select().from(teams).where(eq(teams.id, id)).limit(1)
+      : await db.select().from(teams).where(eq(teams.tag, id)).limit(1);
+    if (!team) return res.status(404).json({ error: "Time não encontrado" });
+
+    const deltaPdl = Number(req.body?.p_delta_pdl ?? 0) || 0;
+    const deltaWins = Number(req.body?.p_delta_wins ?? 0) || 0;
+    const deltaLosses = Number(req.body?.p_delta_losses ?? 0) || 0;
+
+    const teamId = team.id;
+    const [stats] = await db.select().from(teamStats).where(eq(teamStats.teamId, teamId)).limit(1);
+    const current = stats || { pdl: 0, wins: 0, losses: 0 };
+    if (stats) {
+      await db.update(teamStats)
+        .set({
+          pdl: Math.max(0, (current.pdl ?? 0) + deltaPdl),
+          wins: Math.max(0, (current.wins ?? 0) + deltaWins),
+          losses: Math.max(0, (current.losses ?? 0) + deltaLosses),
+          updatedAt: new Date(),
+        })
+        .where(eq(teamStats.teamId, teamId));
+    } else {
+      await db.insert(teamStats).values({
+        teamId,
+        pdl: Math.max(0, deltaPdl),
+        wins: Math.max(0, deltaWins),
+        losses: Math.max(0, deltaLosses),
+      });
+    }
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao ajustar stats" });
   }
 });

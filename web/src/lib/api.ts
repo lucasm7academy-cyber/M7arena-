@@ -339,6 +339,8 @@ export interface ApiMatchesSdk {
   start: (id: number) => Promise<ApiSalaResultado>;
   finalizar: (id: number) => Promise<ApiSalaResultado>;
   reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) => Promise<ApiSalaResultado>;
+  /** Registra voto num jogo (substitui RPC votar_jogo). */
+  vote: (id: number | string, teamTag: string) => Promise<{ ok: boolean }>;
 }
 
 /**
@@ -528,6 +530,12 @@ export const api = {
     clearInvites: (ids: string[]) => api.post<{ ok: boolean }>("/teams/invites/clear", { ids }),
     acceptInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/accept`),
     declineInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/decline`),
+    /** Substitui o lineup inteiro (substitui RPC salvar_lineup_time). */
+    saveLineup: (id: string | number, membros: any[]) =>
+      api.post<{ ok: boolean }>(`/teams/${id}/lineup`, { p_membros: membros }),
+    /** Ajusta PDL/V/D de um time (substitui RPC ajustar_stats_time). */
+    adjustStats: (id: string, deltas: { p_delta_pdl?: number; p_delta_wins?: number; p_delta_losses?: number }) =>
+      api.post<{ ok: boolean }>(`/teams/${id}/stats/adjust`, deltas),
   },
 
   tournaments: {
@@ -622,6 +630,9 @@ export const api = {
     finalizar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/finalizar`),
     reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) =>
       api.post<ApiSalaResultado>(`/matches/${id}/report-result`, data),
+    /** Registra voto num jogo (substitui RPC votar_jogo). */
+    vote: (id: number | string, teamTag: string) =>
+      api.post<{ ok: boolean }>(`/matches/${id}/vote`, { p_team_tag: teamTag }),
   } as ApiMatchesSdk,
 
   profiles: {
@@ -657,6 +668,11 @@ export const api = {
     /** Grava elo_cache de contas exibidas (refresh de cache, autenticado). */
     refreshElo: (updates: { userId: string; eloCache: any }[]) =>
       api.post<{ ok: boolean }>("/players/refresh-elo", { updates }),
+    /** Busca paginada com filtros (substitui RPC buscar_jogadores_filtrados). */
+    filtrados: (params: { p_offset?: number; p_limit?: number; p_search?: string; p_elo_tier?: string; p_role_lane?: string } = {}) =>
+      api.get<Array<ApiLegacyRiotAccount & { total_count: number; rank: number }>>(
+        `/players/filtrados${qs({ p_offset: params.p_offset, p_limit: params.p_limit, p_search: params.p_search, p_elo_tier: params.p_elo_tier, p_role_lane: params.p_role_lane })}`
+      ),
   },
 
   discord: {
@@ -667,5 +683,13 @@ export const api = {
     /** Vincula o Discord do usuário logado (identidade + tag). */
     link: (data: { state: string; discordId: string; discordTag: string }) =>
       api.post<{ ok: boolean }>("/discord/link", data),
+  },
+
+  adminCargos: {
+    /** Lista usuários com cargo (substitui RPC listar_admins_com_email). */
+    listar: () => api.get<Array<{ id: string; user_id: string; email: string; display_name: string; cargo: string }>>("/admin/cargos"),
+    /** Atualiza cargo de um usuário (substitui RPC atualizar_cargo_usuario). */
+    atualizar: (userId: string, cargo: string) =>
+      api.put<{ ok: boolean }>(`/admin/cargos/${userId}`, { p_cargo: cargo }),
   },
 };

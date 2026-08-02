@@ -163,16 +163,15 @@ async function carregarJogadores(
   filtroSemTime = false,
   opts: { refreshElos?: boolean; forceRefresh?: boolean } = {}
 ): Promise<{ jogadores: Jogador[]; totalCount: number }> {
-  const { data: rows, error } = await supabase.rpc('buscar_jogadores_filtrados', {
+  const rows = await api.players.filtrados({
     p_offset:    offset,
     p_limit:     limit,
     p_search:    searchTerm.trim(),
     p_elo_tier:  filtroElo  !== 'todos' ? (ELO_TO_TIER[filtroElo]  ?? '') : '',
     p_role_lane: filtroRole !== 'todos' ? (ROLE_TO_LANE[filtroRole] ?? '') : '',
-    p_sem_time:  filtroSemTime,
-  });
+  }).catch(() => []);
 
-  if (error || !rows?.length) return { jogadores: [], totalCount: 0 };
+  if (!rows?.length) return { jogadores: [], totalCount: 0 };
 
   const totalCount = Number(rows[0]?.total_count ?? 0);
   const userIds = rows.map((r: any) => r.user_id).filter(Boolean);

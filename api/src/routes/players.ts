@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { eq, and, gt, ilike, inArray } from "drizzle-orm";
+import { eq, and, gt, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "../db.js";
-import { userSessions } from "../../../db/schema/identidade.js";
+import { userSessions, users } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 
 export const playersRouter = Router();
@@ -157,5 +157,56 @@ playersRouter.post("/refresh-elo", async (req, res) => {
     return res.json({ ok: true, atualizadas });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao atualizar cache de elo" });
+  }
+});
+
+// ── GET /api/players/filtrados — busca paginada com filtros (elo/role/search) ─
+// Substitui a RPC buscar_jogadores_filtrados. Filtra contas Riot (game_accounts)
+// por elo_cache (tier), role (lane em users) e busca por handle/puuid.
+playersRouter.get("/filtrados", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const offset = Math.max(0, Number(req.query.p_offset ?? 0) || 0);
+    const limit = Math.min(100, Number(req.query.p_limit ?? 20) || 20);
+    const search = String(req.query.p_search ?? "").trim();
+    const eloTier = String(req.query.p_elo_tier ?? "").trim();
+    const roleLane = String(req.query.p_role_lane ?? "").trim();
+
+    const clauses: any[] = [eq(gameAccounts.gameId, "lol")];
+    if (search) {
+      clauses.push(or(ilike(gameAccounts.handle, `%${search}%`), ilike(gameAccounts.externalId, `%${search}%`)));
+    }
+    if (eloTier) {
+      clauses.push(sql`${gameAccounts.metadata}->'elo_cache'->>'tier' ILIKE ${`%${eloTier}%`}`);
+    }
+
+    const whereBase = and(...clauses);
+    const base = db.select().from(gameAccounts).where(whereBase);
+
+    const [countRow] = await db
+      .select({ total: sql<number>`count(*)` })
+      .from(gameAccounts)
+      .where(whereBase);
+
+    const rows = await base.orderBy(gameAccounts.createdAt).limit(limit).offset(offset);
+
+    // role: filtra pela lane_primary do usuário (profiles → users)
+    let result = rows;
+    if (roleLane) {
+      const ids = rows.map((r) => r.userId);
+      const userRows = ids.length
+        ? await db.select({ id: users.id, lane: users.lanePrimary }).from(users).where(inArray(users.id, ids))
+        : [];
+      const laneMap = new Map(userRows.map((u) => [u.id, u.lane]));
+      result = rows.filter((r) => laneMap.get(r.userId) === roleLane);
+    }
+
+    return res.json(
+      result.map((r, i) => ({ ...toLegacyRiot(r), total_count: countRow?.total ?? 0, rank: offset + i + 1 }))
+    );
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar jogadores" });
   }
 });

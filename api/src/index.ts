@@ -15,7 +15,7 @@ import { walletRouter } from "./routes/wallet.js";
 import { matchesRouter } from "./routes/matches.js";
 import { tournamentsRouter } from "./routes/tournaments.js";
 import { contentRouter } from "./routes/content.js";
-import { rpcRouter } from "./routes/rpc.js";
+import { adminRouter } from "./routes/admin.js";
 
 dotenv.config();
 
@@ -43,7 +43,7 @@ app.use("/api/wallet", walletRouter);
 app.use("/api/matches", matchesRouter);
 app.use("/api/tournaments", tournamentsRouter);
 app.use("/api/content", contentRouter);
-app.use("/api/rpc", rpcRouter);
+app.use("/api/admin", adminRouter);
 
 // Rota de Health Check da API Node
 app.get("/api/health", async (_req, res) => {

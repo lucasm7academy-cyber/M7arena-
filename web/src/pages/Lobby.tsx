@@ -535,7 +535,7 @@ const Home = () => {
     localStorage.setItem(`vote_${matchId}`, side);
     // Invalida cache de votos para próxima visita refrescar contagem
     _votesCache = null;
-    await supabase.rpc('votar_jogo', { p_match_id: matchId, p_team_tag: teamTag });
+    await api.matches.vote(matchId, teamTag).catch((e: any) => console.error('Erro ao votar:', e.message));
   };
 
   const handlePrev = () => {

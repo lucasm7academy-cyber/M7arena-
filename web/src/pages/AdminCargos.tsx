@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase'; // RPCs listar_admins/atualizar_cargo (app.swap.rpc)
 import { api } from '../lib/api';
 import { ArrowLeft, Shield, Search, Edit2, Save, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -31,8 +30,7 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
 
   const carregarUsuarios = async () => {
     try {
-      const { data: admins, error: adminError } = await supabase.rpc('listar_admins_com_email');
-      if (adminError) throw adminError;
+      const admins = await api.adminCargos.listar();
       if (!admins) { setLoading(false); return; }
 
       // Contas Riot via API própria (by-ids); o RPC listar_admins fica p/ app.swap.rpc.
@@ -70,14 +68,11 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
     const novoCargo = novosCargos[userId];
     if (!novoCargo) return;
 
-    // Usa RPC security definer que bypassa RLS e valida permissão de proprietário
-    const { error } = await supabase.rpc('atualizar_cargo_usuario', {
-      p_user_id: userId,
-      p_cargo: novoCargo,
-    });
-
-    if (error) {
-      if (error.message?.includes('Acesso negado')) {
+    // A API valida a permissão de proprietário no servidor (substitui a RPC)
+    try {
+      await api.adminCargos.atualizar(userId, novoCargo);
+    } catch (error: any) {
+      if (error.message?.includes('Acesso negado') || error.message?.includes('proprietário')) {
         setErro('Sem permissão: apenas proprietários podem alterar cargos.');
       } else {
         setErro(`Erro ao atualizar cargo: ${error.message}`);

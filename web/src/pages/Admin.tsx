@@ -236,10 +236,8 @@ function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
     const dPdl  = opPdl    === 'adicionar' ?  pdlQtd  : -pdlQtd;
     const dWins = opWins   === 'adicionar' ?  winsQtd : -winsQtd;
     const dLoss = opLosses === 'adicionar' ?  lossQtd : -lossQtd;
-    const { error } = await supabase.rpc('ajustar_stats_time', {
-      p_tag: selecionado.tag, p_delta_pdl: dPdl, p_delta_wins: dWins, p_delta_losses: dLoss,
-    });
-    if (!error) {
+    try {
+      await api.teams.adjustStats(selecionado.tag, { p_delta_pdl: dPdl, p_delta_wins: dWins, p_delta_losses: dLoss });
       setDeltaPdl(''); setDeltaWins(''); setDeltaLosses('');
       const parts: string[] = [];
       if (pdlQtd  > 0) parts.push(`${dPdl  > 0 ? '+' : ''}${dPdl} PDL`);
@@ -254,8 +252,9 @@ function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
         wins:         Math.max(0, prev.wins + dWins),
         games_played: Math.max(0, prev.games_played + dWins + dLoss),
       } : null);
-    } else {
-      setPopup({ tipo: 'erro', msg: 'Erro ao aplicar ajuste.' });
+    } catch (error: any) {
+      console.error('❌ Erro ao ajustar stats:', error.message);
+      setPopup({ tipo: 'erro', msg: `Falha ao ajustar stats: ${error.message || 'erro'}` });
     }
     setSalvando(false);
     setTimeout(() => setPopup(null), 3500);
