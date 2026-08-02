@@ -324,13 +324,13 @@ const _NOTICIAS_CACHE_TTL = 5 * 60 * 1000;
 let _noticiasCache: { data: Noticia[]; ts: number } | null = null;
 
 interface Noticia {
-  id: number;
+  id: string;
   titulo: string;
   slug: string;
   resumo: string;
   categoria: string;
   thumbnail_url: string | null;
-  autor: string;
+  autor?: string;
   publicado_em: string;
   destaque: boolean;
 }
@@ -442,17 +442,13 @@ const Home = () => {
       setHighlights(_highlightsCache.data);
       return;
     }
-    supabase
-      .from('highlights')
-      .select('id, titulo, link, thumbnail_url, categoria')
-      .eq('ativo', true)
-      .order('ordem')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (data) {
-          setHighlights(data);
-          _highlightsCache = { data, ts: Date.now() };
-        }
+    api.content.highlights()
+      .then((data) => {
+        setHighlights(data);
+        _highlightsCache = { data, ts: Date.now() };
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar highlights:', err);
       });
   }, []);
 
@@ -462,19 +458,13 @@ const Home = () => {
       setNoticias(_noticiasCache.data);
       return;
     }
-    supabase
-      .from('noticias')
-      .select('*')
-      .eq('ativo', true)
-      .order('destaque', { ascending: false })
-      .order('publicado_em', { ascending: false })
-      .limit(6)
-      .then(({ data }) => {
-        if (data) {
-          const list = data as Noticia[];
-          setNoticias(list);
-          _noticiasCache = { data: list, ts: Date.now() };
-        }
+    api.content.news()
+      .then((list) => {
+        setNoticias(list);
+        _noticiasCache = { data: list, ts: Date.now() };
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar notícias:', err);
       });
   }, []);
 

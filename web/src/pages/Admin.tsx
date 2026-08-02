@@ -48,7 +48,7 @@ interface Highlight {
 }
 
 interface NoticiaAdmin {
-  id: number;
+  id: string;
   titulo: string;
   slug?: string;
   resumo: string;
@@ -410,9 +410,14 @@ function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('highlights').select('*').order('ordem').order('created_at', { ascending: false });
-    if (data) setList(data as Highlight[]);
-    setLoading(false);
+    try {
+      const data = await api.content.highlights({ all: true });
+      setList(data);
+    } catch {
+      setPopup({ tipo: 'erro', msg: 'Erro ao carregar highlights.' });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { carregar(); }, [carregar]);
@@ -420,31 +425,32 @@ function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
   const salvar = async () => {
     if (!form.titulo.trim() || !form.link.trim()) return;
     setSalvando(true);
-    const { error } = await supabase.from('highlights').insert({
-      titulo: form.titulo.trim(),
-      link: form.link.trim(),
-      thumbnail_url: form.thumbnail_url.trim() || null,
-      categoria: form.categoria,
-    });
-    if (error) {
-      setPopup({ tipo: 'erro', msg: 'Erro ao salvar.' });
-    } else {
+    try {
+      await api.content.highlightsCreate({
+        titulo: form.titulo.trim(),
+        link: form.link.trim(),
+        thumbnail_url: form.thumbnail_url.trim() || null,
+        categoria: form.categoria,
+      });
       setForm({ titulo: '', link: '', thumbnail_url: '', categoria: 'highlight' });
       setPopup({ tipo: 'sucesso', msg: 'Highlight adicionado!' });
       carregar();
+    } catch {
+      setPopup({ tipo: 'erro', msg: 'Erro ao salvar.' });
+    } finally {
+      setSalvando(false);
     }
-    setSalvando(false);
     setTimeout(() => setPopup(null), 3000);
   };
 
   const toggleAtivo = async (h: Highlight) => {
-    await supabase.from('highlights').update({ ativo: !h.ativo }).eq('id', h.id);
+    await api.content.highlightsUpdate(h.id, { ativo: !h.ativo });
     setList(prev => prev.map(x => x.id === h.id ? { ...x, ativo: !x.ativo } : x));
   };
 
   const deletar = async (id: string) => {
     if (!window.confirm('Remover este highlight?')) return;
-    await supabase.from('highlights').delete().eq('id', id);
+    await api.content.highlightsDelete(id);
     setList(prev => prev.filter(x => x.id !== id));
   };
 
@@ -540,7 +546,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
   const { perfil } = usePerfil();
   const [list, setList] = useState<NoticiaAdmin[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState(INITIAL_NOTICIA_FORM);
   const [salvando, setSalvando] = useState(false);
@@ -549,16 +555,14 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('noticias')
-      .select('*')
-      .order('destaque', { ascending: false })
-      .order('publicado_em', { ascending: false });
-
-    if (data) {
-      setList(data as NoticiaAdmin[]);
+    try {
+      const data = await api.content.news({ all: true });
+      setList(data);
+    } catch {
+      setPopup({ tipo: 'erro', msg: 'Erro ao carregar notícias.' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -616,50 +620,39 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
       autor: perfil?.nome || perfil?.riotId || 'M7 Staff',
     };
 
-    let res;
-    if (editandoId) {
-      res = await supabase.from('noticias').update(payload).eq('id', editandoId);
-      if (res.error && (res.error.message?.includes('link_url') || res.error.message?.includes('column'))) {
-        delete payload.link_url;
-        delete payload.link_texto;
-        res = await supabase.from('noticias').update(payload).eq('id', editandoId);
+    try {
+      if (editandoId) {
+        await api.content.newsUpdate(editandoId, payload);
+      } else {
+        payload.publicado_em = new Date().toISOString();
+        await api.content.newsCreate(payload);
       }
-    } else {
-      payload.publicado_em = new Date().toISOString();
-      res = await supabase.from('noticias').insert(payload);
-      if (res.error && (res.error.message?.includes('link_url') || res.error.message?.includes('column'))) {
-        delete payload.link_url;
-        delete payload.link_texto;
-        res = await supabase.from('noticias').insert(payload);
-      }
-    }
-
-    if (res.error) {
-      setPopup({ tipo: 'erro', msg: 'Erro ao salvar notícia: ' + res.error.message });
-    } else {
       setPopup({ tipo: 'sucesso', msg: editandoId ? 'Notícia atualizada com sucesso!' : 'Notícia publicada com sucesso!' });
       resetForm();
       carregar();
+    } catch (err: any) {
+      setPopup({ tipo: 'erro', msg: 'Erro ao salvar notícia: ' + (err?.message || 'erro desconhecido') });
+    } finally {
+      setSalvando(false);
     }
-    setSalvando(false);
     setTimeout(() => setPopup(null), 3500);
   };
 
   const toggleAtivo = async (n: NoticiaAdmin) => {
     const novoStatus = !(n.ativo ?? true);
-    await supabase.from('noticias').update({ ativo: novoStatus }).eq('id', n.id);
+    await api.content.newsUpdate(n.id, { ativo: novoStatus });
     setList(prev => prev.map(x => (x.id === n.id ? { ...x, ativo: novoStatus } : x)));
   };
 
   const toggleDestaque = async (n: NoticiaAdmin) => {
     const novoDestaque = !n.destaque;
-    await supabase.from('noticias').update({ destaque: novoDestaque }).eq('id', n.id);
+    await api.content.newsUpdate(n.id, { destaque: novoDestaque });
     setList(prev => prev.map(x => (x.id === n.id ? { ...x, destaque: novoDestaque } : x)));
   };
 
-  const deletar = async (id: number) => {
+  const deletar = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja excluir esta notícia?')) return;
-    await supabase.from('noticias').delete().eq('id', id);
+    await api.content.newsDelete(id);
     setList(prev => prev.filter(x => x.id !== id));
   };
 

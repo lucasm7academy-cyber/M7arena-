@@ -4,6 +4,25 @@
  * Substitui o cliente GoTrue / Supabase.
  */
 
+import type {
+  ApiLegacyNews,
+  ApiLegacyHighlight,
+  ApiNewsRow,
+  ApiHighlightRow,
+  ApiPlayerStats,
+  ApiContentSdk,
+} from "./api-content.js";
+import { toLegacyNews, toApiNews, toLegacyHighlight, toApiHighlight } from "./api-content.js";
+
+export type {
+  ApiLegacyNews,
+  ApiLegacyHighlight,
+  ApiNewsRow,
+  ApiHighlightRow,
+  ApiPlayerStats,
+  ApiContentSdk,
+} from "./api-content.js";
+
 export interface ApiUser {
   id: string;
   email: string;
@@ -334,5 +353,30 @@ export const api = {
       api.put<ApiLegacyTournament>(`/tournaments/${id}/cronograma/merge`, { jogos }),
     recalcularPdl: (id: string) =>
       api.post<{ ok: boolean }>(`/tournaments/${id}/recalcular-pdl`),
+  },
+
+  content: {
+    news: (params: { all?: boolean } = {}) =>
+      api.get<ApiNewsRow[]>(`/content/news${params.all ? "/all" : ""}`).then((rows) =>
+        (rows || []).map(toLegacyNews)
+      ),
+    newsCreate: (data: Partial<ApiLegacyNews>) =>
+      api.post<ApiNewsRow>("/content/news", toApiNews(data)).then(toLegacyNews),
+    newsUpdate: (id: string, data: Partial<ApiLegacyNews>) =>
+      api.put<ApiNewsRow>(`/content/news/${id}`, toApiNews(data)).then(toLegacyNews),
+    newsDelete: (id: string) => api.delete<{ ok: boolean }>(`/content/news/${id}`),
+    highlights: (params: { all?: boolean } = {}) =>
+      api.get<ApiHighlightRow[]>(`/content/highlights${params.all ? "/all" : ""}`).then((rows) =>
+        (rows || []).map(toLegacyHighlight)
+      ),
+    highlightsCreate: (data: Partial<ApiLegacyHighlight>) =>
+      api.post<ApiHighlightRow>("/content/highlights", toApiHighlight(data)).then(toLegacyHighlight),
+    highlightsUpdate: (id: string, data: Partial<ApiLegacyHighlight>) =>
+      api.put<ApiHighlightRow>(`/content/highlights/${id}`, toApiHighlight(data)).then(toLegacyHighlight),
+    highlightsDelete: (id: string) => api.delete<{ ok: boolean }>(`/content/highlights/${id}`),
+    playerStats: (userId: string) =>
+      api.get<ApiPlayerStats[]>(`/content/player-stats/${userId}`),
+    recordPlayerStats: (data: { userId: string; modo: string; vitoria: boolean }) =>
+      api.post<ApiPlayerStats>("/content/player-stats", data),
   },
 };
