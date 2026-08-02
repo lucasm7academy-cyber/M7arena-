@@ -6,6 +6,10 @@
       "env": {
         "M7_PROJECT_ROOT": "D:/Aplicativos/M7arenaSite"
       }
+    },
+    "browser": {
+      "command": "node",
+      "args": ["D:/Aplicativos/M7arenaSite/MCP/browser-server/server.js"]
     }
   }
 }
