@@ -14,10 +14,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { VipLabel } from '../components/ui/VipBadge';
 
-const getImageUrl = (fileName: string) => {
-  const { data } = supabase.storage.from('public-images').getPublicUrl(fileName);
-  return data.publicUrl;
-};
+// Imagens estáticas da página vivem na pasta 'public-images' do volume de
+// uploads (ADR-007). A URL /uploads/<bucket>/<arquivo> é servida pelo Nginx.
+const getImageUrl = (fileName: string) => `/uploads/public-images/${fileName}`;
 
 const BACKGROUND_URL = getImageUrl('background.png');
 const DDR_FALLBACK = '14.24.1';

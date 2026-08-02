@@ -254,6 +254,20 @@ export const api = {
     }),
   delete: <T = any>(endpoint: string) => request<T>(endpoint, { method: "DELETE" }),
 
+  /**
+   * Upload de imagem para o disco local (ADR-007), servido pelo Nginx em
+   * /uploads/. Envia multipart com o arquivo, o bucket (viram pasta no volume:
+   * team-logos/, public-images/) e um path opcional de subpasta (ex.:
+   * 'campeonatos'). Devolve a URL pública pronta para gravar no banco.
+   */
+  upload: (file: File, bucket: string, path?: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("bucket", bucket);
+    if (path) form.append("path", path);
+    return api.post<{ url: string; filename: string; ownerId: string }>("/upload", form);
+  },
+
   auth: {
     login: (email: string, password: string) =>
       api.post<{ user: ApiUser }>("/auth/login", { email, password }),
