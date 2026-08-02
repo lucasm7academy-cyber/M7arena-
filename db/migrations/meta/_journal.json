@@ -50,6 +50,13 @@
       "when": 1785700000000,
       "tag": "0006_matches_salas_swap",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785701000000,
+      "tag": "0007_matches_sala_num",
+      "breakpoints": true
     }
   ]
 }

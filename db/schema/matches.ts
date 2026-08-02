@@ -17,6 +17,10 @@ export const matches = pgTable(
   "matches",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    // Número público da sala (herdado de `salas.id` bigint). O fork navega em
+    // `/sala-mod1/:id` e deriva o código de exibição `#${String(id).padStart(6,'0')}`,
+    // então o id público precisa ser numérico — o uuid fica interno.
+    salaNum: integer("sala_num").generatedByDefaultAsIdentity().notNull().unique(),
     gameId: varchar("game_id", { length: 50 })
       .notNull()
       .references(() => games.id, { onDelete: "restrict" }),
