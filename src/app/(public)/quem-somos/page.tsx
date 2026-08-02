@@ -9,7 +9,7 @@ export default function QuemSomosPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-full bg-transparent text-white py-10 md:py-16 px-4">
+    <div className="min-h-screen bg-[#050505] text-white py-10 md:py-16 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <button
