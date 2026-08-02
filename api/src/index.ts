@@ -8,6 +8,8 @@ import { googleAuthRouter } from "./routes/auth-google.js";
 import { riotRouter } from "./routes/riot.js";
 import { uploadRouter } from "./routes/upload.js";
 import { profilesRouter } from "./routes/profiles.js";
+import { playersRouter } from "./routes/players.js";
+import { discordRouter } from "./routes/discord.js";
 import { teamsRouter } from "./routes/teams.js";
 import { walletRouter } from "./routes/wallet.js";
 import { matchesRouter } from "./routes/matches.js";
@@ -34,6 +36,8 @@ app.use("/api/auth", googleAuthRouter); // /google e /google/callback (ADR-011)
 app.use("/api/riot", riotRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/profiles", profilesRouter);
+app.use("/api/players", playersRouter);
+app.use("/api/discord", discordRouter);
 app.use("/api/teams", teamsRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/matches", matchesRouter);
