@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { buildProfileIconUrl } from '../api/riot';
 
 export interface PerfilData {
@@ -24,7 +24,7 @@ interface PerfilContextType {
   refetch: () => void;
   refetchCargo: () => Promise<void>;
   desvincular: () => void;
-  // Dados adicionais da RPC expandida
+  // Dados adicionais que a RPC carregava junto (agora vêm da API própria)
   profileData?: any;
   myTeam?: any;
   eloCache?: any;
@@ -48,6 +48,42 @@ export function usePerfilSafe(): PerfilContextType {
 
 const PerfilContext = createContext<PerfilContextType | null>(null);
 
+/** Cargo legado a partir das roles do schema novo (user_roles). */
+function rolesToCargo(roles: string[]): string {
+  if (roles.includes('admin') || roles.includes('proprietario')) return 'admin';
+  if (roles.includes('organizador') || roles.includes('organizer')) return 'organizador';
+  return 'jogador';
+}
+
+/**
+ * Converte o time (ApiLegacyTeamDetail) no shape camelCase que o fork consome.
+ * `membro_role` é a lane do usuário logado dentro do time (vinda de time_membros).
+ */
+function toMyTeam(team: any, userId: string) {
+  const membro = (team?.time_membros ?? []).find((m: any) => m.user_id === userId);
+  return {
+    id: team.id,
+    nome: team.nome,
+    name: team.nome, // Para compatibilidade
+    tag: team.tag,
+    logoUrl: team.logo_url,
+    logo_url: team.logo_url,
+    gradientFrom: team.gradient_from,
+    gradient_from: team.gradient_from,
+    gradientTo: team.gradient_to,
+    gradient_to: team.gradient_to,
+    pdl: team.pdl,
+    winrate: team.winrate,
+    ranking: team.ranking,
+    wins: team.wins,
+    gamesPlayed: team.games_played,
+    games_played: team.games_played,
+    donoId: team.dono_id,
+    dono_id: team.dono_id,
+    membro_role: membro?.lane ?? null,
+  };
+}
+
 export function PerfilProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
@@ -66,48 +102,38 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
     try {
-      // ✅ RPC otimizada: 5 queries → 1 chamada (80% mais leve!)
-      const { data: perfilData, error } = await supabase
-        .rpc('carregar_perfil_completo', { p_user_id: user.id });
+      // RPC carregar_perfil_completo (5 queries em 1) → 3 rotas da API própria:
+      // /profiles/me (profile + contaRiot + roles), /wallet/balance (saldo) e
+      // /teams/by-user/:id (time). O shape de PerfilData não muda.
+      const [me, balance, userTeams] = await Promise.all([
+        api.profiles.me(),
+        api.wallet.balance(),
+        api.teams.byUser(user.id),
+      ]);
 
-      if (error) throw error;
+      const contaRiot = me?.riotAccount ?? null;
+      const profile = me?.profile ?? null;
+      const cargo = rolesToCargo(me?.roles ?? []);
 
-      const contaRiot = perfilData?.contaRiot;
-      const profile = perfilData?.profile;
-      const saldoData = perfilData?.saldoData;
-      const adminData = perfilData?.adminData;
-      const team = perfilData?.myTeam;
-
-      const cargo = adminData?.cargo ?? 'jogador';
-
-      // ✅ Armazenar dados da RPC expandida para a página de perfil usar
+      // ✅ Dados para a página de perfil usar (shape legado de profiles)
       setProfileData(profile);
-      // ✅ Mapear myTeam: converter snake_case do RPC para camelCase
-      if (team) {
-        setMyTeam({
-          id: team.id,
-          nome: team.nome,
-          name: team.nome, // Para compatibilidade
-          tag: team.tag,
-          logoUrl: team.logo_url,
-          logo_url: team.logo_url,
-          gradientFrom: team.gradient_from,
-          gradient_from: team.gradient_from,
-          gradientTo: team.gradient_to,
-          gradient_to: team.gradient_to,
-          pdl: team.pdl,
-          winrate: team.winrate,
-          ranking: team.ranking,
-          wins: team.wins,
-          gamesPlayed: team.games_played,
-          games_played: team.games_played,
-          donoId: team.dono_id,
-          dono_id: team.dono_id,
-          membro_role: team.membro_role,
-        });
+
+      // ✅ myTeam: by-user entrega o id/time em batch; o detail traz o shape
+      // completo (pdl, winrate, ranking, dono_id, time_membros) que o card usa.
+      const membership = userTeams?.memberships?.find((m: any) => m.status === 'ativo')
+        ?? userTeams?.memberships?.[0];
+      if (membership?.time_id) {
+        try {
+          const team = await api.teams.detail(membership.time_id);
+          setMyTeam(toMyTeam(team, user.id));
+        } catch (err) {
+          console.error('❌ Erro ao carregar time no perfil:', err);
+          setMyTeam(null);
+        }
       } else {
         setMyTeam(null);
       }
+
       setEloCache(contaRiot?.elo_cache);
       setChampionsCache(contaRiot?.champions_cache);
 
@@ -127,7 +153,7 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
           iconId: contaRiot.profile_icon_id,
           contaVinculada: true,
           isVip: profile?.is_vip ?? false,
-          saldo: saldoData?.saldo ?? 0,
+          saldo: balance?.mc ?? 0,
           cargo,
           twitch: profile?.twitch,
         });
@@ -139,13 +165,13 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
           elo: 'Sem Elo',
           contaVinculada: false,
           isVip: profile?.is_vip ?? false,
-          saldo: saldoData?.saldo ?? 0,
+          saldo: balance?.mc ?? 0,
           cargo,
           twitch: profile?.twitch,
         });
       }
-
     } catch (err) {
+      console.error('❌ Erro ao carregar perfil:', err);
     } finally {
       setLoading(false);
     }
@@ -181,15 +207,13 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
     if (!user || !perfil) return;
 
     try {
-      // ✅ Schema novo: cargo vive em `platform_roles`.
-      const { data: cargoData } = await supabase
-        .from('platform_roles')
-        .select('cargo')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      setPerfil((prev) => prev ? { ...prev, cargo: cargoData?.cargo ?? 'jogador' } : null);
+      // Cargo vive em user_roles; /auth/me devolve as roles do usuário logado.
+      const { user: apiUser } = await api.auth.me();
+      const roles = apiUser?.roles ?? [];
+      const cargo = rolesToCargo(roles);
+      setPerfil((prev) => prev ? { ...prev, cargo } : null);
     } catch (err) {
+      console.error('❌ Erro ao atualizar cargo:', err);
     }
   }, [user, perfil]);
 
