@@ -135,6 +135,17 @@ switch (cmd) {
     const notes = flag("notes");
     const evidence = flag("evidence");
 
+    if (status === "done") {
+      const ev = (evidence || "").trim();
+      if (ev.length < 12) {
+        die(
+          `Para marcar "${id}" como done, passe --evidence com o COMANDO que você rodou e que passou.\n` +
+            `  Ex.: --evidence "npx drizzle-kit generate -> 0000_init.sql, 29 tabelas"\n` +
+            `  Se você só escreveu o arquivo e não executou nada, o status correto é "doing".`
+        );
+      }
+    }
+
     const { result } = await mutateState(agent, (s) => {
       const c = s.components.find((x) => x.id === id);
       if (!c) {

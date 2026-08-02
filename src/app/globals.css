@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FFB800;
+  --color-m7-orange: #FFB800;
+  --color-on-primary: #000000;
+  --color-background: #0A0A0A;
+  --color-surface: #121212;
+  --color-surface-variant: #1A1A1A;
+  --color-outline: #333333;
+  --color-on-background: #FFFFFF;
+  --color-on-surface: #E0E0E0;
+  --color-on-surface-variant: #A0A0A0;
+  --color-success: #00E676;
+  --color-secondary: #3B82F6;
+  --color-tertiary: #EF4444;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-headline: var(--font-outfit), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+  --font-label: var(--font-inter), sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-body antialiased selection:bg-primary selection:text-on-primary;
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .m7-gradient {
+    @apply bg-gradient-to-r from-primary to-yellow-500;
+  }
+  
+  .m7-success-gradient {
+    background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+  }
+  
+  .m7-glow {
+    box-shadow: 0 0 15px rgba(255, 184, 0, 0.3);
+  }
+  
+  .blue-glow {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+  }
+  
+  .red-glow {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  }
+  
+  .glass-panel {
+    @apply bg-black/60 backdrop-blur-sm;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .hide-scrollbar::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .hide-scrollbar,
+  .no-scrollbar {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;  /* Firefox */
+  }
+}
+
+/* VIP Border Animation */
+@keyframes vip-border-rotate {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+/* Swipe Hint Heartbeat — usada na seta mobile do carrossel de campeonatos */
+@keyframes heartbeat-swipe {
+  0%   { transform: translateX(0) scale(1);    opacity: 0.95; }
+  14%  { transform: translateX(6px) scale(1.15); opacity: 1; }
+  28%  { transform: translateX(0) scale(1);    opacity: 0.85; }
+  42%  { transform: translateX(6px) scale(1.15); opacity: 1; }
+  70%  { transform: translateX(0) scale(1);    opacity: 0.95; }
+  100% { transform: translateX(0) scale(1);    opacity: 0.95; }
+}
+
+.animate-heartbeat {
+  animation: heartbeat-swipe 1.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-heartbeat {
+    animation: none;
+  }
+}
+
+/* Global scrollbar defaults */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FFB800;
+  border-radius: 10px;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "m7-ops-server",
+  "version": "1.0.0",
+  "description": "MCP Server de Operações da VPS para o M7Arena",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

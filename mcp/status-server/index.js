@@ -266,11 +266,30 @@ server.tool(
       .string()
       .max(300)
       .optional()
-      .describe("Prova de que está feito: caminho:linha, comando que roda, ou URL testada."),
+      .describe(
+        "OBRIGATÓRIO para status=done. O COMANDO que você rodou e que passou — ex.: 'npx drizzle-kit generate → 0000_init.sql com 29 tabelas' ou 'npm test → 20 checks ok'. Não vale citar arquivo que você escreveu mas não executou."
+      ),
   },
   async ({ agent, id, status, notes, evidence }) => {
     try {
       const { result } = await mutateState(agent, (state) => {
+        // "done" exige prova executável. Escrever o arquivo não é terminar a peça:
+        // um agente já marcou 11 componentes como done com schema que nem compilava.
+        if (status === "done") {
+          const ev = (evidence ?? "").trim();
+          if (!ev) {
+            throw new Error(
+              `Para marcar "${id}" como done você precisa passar "evidence" com o COMANDO que você executou e que passou.\n` +
+                `Exemplos válidos: "npx drizzle-kit generate → 0000_init.sql, 29 tabelas" | "npm test → 20 checks ok" | "docker compose up + psql \\dt → 29 tabelas".\n` +
+                `Se você só escreveu o arquivo e não rodou nada, o status correto é "doing".`
+            );
+          }
+          if (ev.length < 12) {
+            throw new Error(
+              `A evidência "${ev}" é curta demais para ser verificável. Descreva o comando e o resultado observado.`
+            );
+          }
+        }
         const c = (state.components || []).find((x) => x.id === id);
         if (!c) {
           const ids = (state.components || []).map((x) => x.id);

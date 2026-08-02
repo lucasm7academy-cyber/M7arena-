@@ -29,6 +29,8 @@ backup/
 scripts/migrate/data/
 *.dump
 *.sql.gz
+*.tar.gz
+m7arena.tar.gz
 
 # uploads locais
 uploads/

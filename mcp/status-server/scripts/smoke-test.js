@@ -98,11 +98,28 @@ check("status inválido é rejeitado pelo schema", (await call("set_component_st
   agent: "smoke", id: "db.setup", status: "quase-pronto",
 })).result?.isError === true || true);
 
-const bad = await call("set_component_status", { agent: "smoke", id: "db.naoexiste", status: "done" });
+const bad = await call("set_component_status", {
+  agent: "smoke", id: "db.naoexiste", status: "done", evidence: "comando fake que passou",
+});
 check("id inexistente é rejeitado com sugestão", bad.result?.isError === true && textOf(bad).includes("Parecidos"));
 
-const ok = await call("set_component_status", { agent: "smoke", id: "db.setup", status: "done", notes: "n" });
-check("escrita válida aceita", !ok.result?.isError);
+// O gate de evidência: "done" sem prova executável tem que ser recusado.
+const semEv = await call("set_component_status", { agent: "smoke", id: "db.setup", status: "done" });
+check("done sem evidência é recusado", semEv.result?.isError === true && textOf(semEv).includes("evidence"));
+
+const evCurta = await call("set_component_status", {
+  agent: "smoke", id: "db.setup", status: "done", evidence: "ok",
+});
+check("evidência curta demais é recusada", evCurta.result?.isError === true);
+
+const semEvDoing = await call("set_component_status", { agent: "smoke", id: "db.setup", status: "doing" });
+check("doing não exige evidência", !semEvDoing.result?.isError);
+
+const ok = await call("set_component_status", {
+  agent: "smoke", id: "db.setup", status: "done", notes: "n",
+  evidence: "npx drizzle-kit generate -> 0000_init.sql, 29 tabelas",
+});
+check("done com evidência é aceito", !ok.result?.isError);
 
 const fora = await call("set_component_status", { agent: "smoke", id: "db.tournaments", status: "doing" });
 check("avisa ao pegar fora de ordem", textOf(fora).includes("ATENÇÃO") && textOf(fora).includes("db.teams"));

@@ -1,0 +1,125 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: m7arena_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: m7arena
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d m7arena"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: m7arena_pgbouncer
+    restart: always
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: m7arena
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
+    ports:
+      - "127.0.0.1:6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: ${DOCKER_IMAGE:-m7arena-app:latest}
+    container_name: m7arena_app
+    restart: always
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@pgbouncer:6432/m7arena?prepare=false"
+      AUTH_SECRET: ${AUTH_SECRET:-dev-secret-key-m7arena-local-environment-32bytes}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      RIOT_API_KEY: ${RIOT_API_KEY:-dev_dummy_riot_key}
+    volumes:
+      - uploads_data:/app/public/uploads
+    depends_on:
+      - pgbouncer
+
+  realtime:
+    image: node:22-alpine
+    container_name: m7arena_realtime
+    restart: always
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/m7arena"
+      WS_PORT: 3001
+    command: node /app/dist/realtime/index.js
+    volumes:
+      - ../src/realtime:/app/realtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: m7arena_nginx
+    restart: always
+    ports:
+      - "8090:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - uploads_data:/var/www/uploads:ro
+      - certbot_data:/etc/letsencrypt
+    depends_on:
+      - app
+      - realtime
+
+  backup:
+    image: postgres:16-alpine
+    container_name: m7arena_backup
+    restart: always
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: m7arena
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - backups_data:/backups
+    entrypoint: ["/bin/sh", "-c", "while true; do pg_dump -h postgres -U postgres m7arena | gzip > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql.gz; sleep 86400; done"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mcp-ops:
+    image: node:22-alpine
+    container_name: m7arena_mcp_ops
+    restart: always
+    environment:
+      NODE_ENV: production
+      DATABASE_READONLY_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/m7arena"
+    volumes:
+      - ../mcp/ops-server:/app/ops-server
+    command: node /app/ops-server/index.js
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  uploads_data:
+  backups_data:
+  certbot_data:

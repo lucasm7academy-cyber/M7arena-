@@ -56,6 +56,11 @@ export const PLAN = {
   "design.ui": ["fase-3", "design.tokens"],
   "design.regressao": ["fase-3", "design.tokens"],
 
+  // Shell da aplicação: header, sidebar, menu mobile e dropdown de perfil.
+  // Sem ele cada tela flutua solta — é o que faz o site parecer o site.
+  "app.port.shell": ["fase-3", "design.tokens", "app.setup"],
+  "app.port.notificacoes": ["fase-3", "app.port.shell", "db.teams"],
+
   "app.auth": ["fase-3", "app.setup", "db.identidade"],
   "app.data": ["fase-3", "app.setup", "db.setup"],
   "app.perfil-context": ["fase-3", "app.data", "app.auth"],

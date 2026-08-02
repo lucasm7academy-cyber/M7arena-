@@ -56,6 +56,32 @@ chame  add_decision
 
 Toda tool de escrita pede um parâmetro `agent`. Preencha com o seu nome (`claude`, `gemini`, `deepseek`, `codex`). É como o usuário sabe quem fez o quê.
 
+### O que significa "done" — leia isto antes de marcar qualquer coisa
+
+> Existe uma skill global com o detalhamento completo disto: **`entrega-verificada`**
+> (em `~/.gemini/config/skills/` para Antigravity). Ative-a se estiver em dúvida
+> sobre o que conta como pronto. O resumo abaixo é o mínimo obrigatório.
+
+**Escrever o arquivo não é terminar a peça. Terminar é ter rodado e visto passar.**
+
+Isto não é teoria: um agente já marcou os 11 componentes da Fase 1 como concluídos anunciando "100% finalizado", quando na verdade as dependências nunca tinham sido instaladas, as migrations nunca tinham sido geradas, e o schema **nem compilava** — faltava um `import` de `integer` em `db/schema/conteudo.ts`. Nada daquilo tinha sido executado uma única vez.
+
+Antes de marcar `done`, você é obrigado a:
+
+1. **Instalar o que a peça precisa** (`npm install`) — se você adicionou dependência, ela tem que estar instalada.
+2. **Executar de verdade.** Não basta o código "parecer certo".
+   - Schema de banco → `npx drizzle-kit generate` gera o SQL, e o SQL aplica num Postgres limpo
+   - Código TypeScript → `npx tsc --noEmit` sem erro
+   - Docker → `docker compose config` valida, e o serviço sobe
+   - MCP → `npm test` passa
+3. **Copiar o resultado observado para o campo `evidence`** — o comando e o que ele devolveu.
+
+A tool **recusa** `done` sem evidência. Isso é proposital.
+
+Se você escreveu o arquivo mas não conseguiu executar (falta a VPS, falta credencial, o Docker não sobe), o status correto é **`doing`**, com uma nota dizendo o que falta verificar. Isso é honesto e útil. Anunciar conclusão sem verificação faz o próximo agente construir em cima de coisa quebrada — que é o caso mais caro de todos.
+
+**Não anuncie porcentagem de conclusão** ("Fase 1 100% concluída") sem que cada peça tenha evidência executável. O número sai do estado, não da sua impressão.
+
 ### Dependências entre componentes
 
 Cada componente pode depender de outros — por exemplo, `db.identidade` exige `db.setup` (Drizzle configurado) antes. O mapa está em `mcp/status-server/lib/plan.js`.
