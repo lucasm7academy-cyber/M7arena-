@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useRole } from '../contexts/RoleContext';
 
@@ -242,7 +243,7 @@ export default function AdminPanel() {
   // Estado para banner de erro de persistência (não-bloqueante mas visível)
   const [persistError, setPersistError] = useState<string | null>(null);
 
-  // Helper: save one tournament to Supabase
+  // Helper: save one tournament to the API
   // Não é mais totalmente fire-and-forget: erros agora aparecem num banner
   // no topo da tela para o admin reagir (recarregar, tentar de novo).
   // Antes só caíam silenciosamente no console.error, então uma falha de
@@ -250,25 +251,23 @@ export default function AdminPanel() {
   // local desincronizado do banco sem aviso.
   const saveToDB = async (t: Tournament | any) => {
     const processed = await processTournamentImages(t, t.id);
-    supabase.from('campeonatos').update(toDbPayload(processed)).eq('id', t.id)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Erro ao salvar campeonato:', error);
-          setPersistError(
-            `Falha ao salvar alterações no campeonato "${t.titulo}". ` +
-            `Suas mudanças locais não foram persistidas. ` +
-            `Verifique sua conexão e recarregue a página. Detalhe: ${error.message || error}`
-          );
-        } else {
-          // Limpa banner de erro anterior quando um save dá certo
-          setPersistError(prev => prev ? null : prev);
-          // Sincroniza localmente com as URLs corretas do Storage
-          setMyTournaments(prev => prev.map(item => item.id === t.id ? processed : item));
-          if (selectedTournament?.id === t.id) {
-            setSelectedTournament(processed);
-          }
-        }
-      });
+    try {
+      await api.tournaments.update(t.id, toDbPayload(processed));
+      // Limpa banner de erro anterior quando um save dá certo
+      setPersistError(prev => prev ? null : prev);
+      // Sincroniza localmente com as URLs corretas do Storage
+      setMyTournaments(prev => prev.map(item => item.id === t.id ? processed : item));
+      if (selectedTournament?.id === t.id) {
+        setSelectedTournament(processed);
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar campeonato:', error);
+      setPersistError(
+        `Falha ao salvar alterações no campeonato "${t.titulo}". ` +
+        `Suas mudanças locais não foram persistidas. ` +
+        `Verifique sua conexão e recarregue a página. Detalhe: ${error?.message || error}`
+      );
+    }
   };
 
   const isPlatformAdmin = role === 'admin';
@@ -280,22 +279,18 @@ export default function AdminPanel() {
     if (!isPlatformAdmin && !isOrganizador) navigate('/campeonatos');
   }, [loadingRole, isPlatformAdmin, isOrganizador, navigate]);
 
-  // Load tournaments from Supabase
-  React.useEffect(() => {
-    if (loadingRole) return;
-    let cancelled = false;
-    setLoadingTournaments(true);
-    let q = supabase.from('campeonatos')
-      .select('id, created_at, criado_por, titulo, frase, logo_url, banner_url, org_photo_url, theme_color, regulamento, formato, status, vagas, times_por_grupo, classificados_por_grupo, tier, data, premiacao, taxa, tem_outros_premios, outros_premios, times_inscritos, classificacao, grupos, cronograma, times_ordem_sorteio, grupos_sorteados, chaves_sorteados')
-      .order('created_at', { ascending: false });
-    // Organizador (não-admin) só enxerga/gerencia os campeonatos que ELE criou
-    if (!isPlatformAdmin && isOrganizador && user) {
-      q = q.eq('criado_por', user.id);
-    }
-    q.then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) { console.error(error); setLoadingTournaments(false); return; }
-        const mapped = (data || []).map(mapFromDb);
+    // Load tournaments from API
+    React.useEffect(() => {
+      if (loadingRole) return;
+      let cancelled = false;
+      setLoadingTournaments(true);
+      const load = async () => {
+        try {
+          let data = await api.tournaments.list({ sort: "created_at" });
+          // Organizador (não-admin) só enxerga/gerencia os campeonatos que ELE criou
+          if (!isPlatformAdmin && isOrganizador && user) data = data.filter(t => t.criado_por === user.id);
+          if (cancelled) return;
+          const mapped = (data || []).map(mapFromDb);
         setMyTournaments(mapped);
         setLoadingTournaments(false);
 
@@ -340,7 +335,13 @@ export default function AdminPanel() {
 
           checkAndUpload();
         });
-      });
+      } catch (error: any) {
+        if (cancelled) return;
+        console.error(error);
+        setLoadingTournaments(false);
+      }
+    };
+    load();
     return () => { cancelled = true; };
   }, [loadingRole, isPlatformAdmin, isOrganizador, user]);
 
@@ -615,8 +616,8 @@ export default function AdminPanel() {
   const handleDeleteTournament = (id: string) => {
     setMyTournaments(prev => prev.filter(t => t.id !== id));
     setSelectedTournament(null);
-    supabase.from('campeonatos').delete().eq('id', id)
-      .then(({ error }) => { if (error) console.error('Erro ao deletar campeonato:', error); });
+    api.tournaments.remove(id)
+      .catch((error: any) => console.error('Erro ao deletar campeonato:', error?.message || error));
   };
 
   const handleStatusChange = (tournamentId: string, newStatus: Tournament['status']) => {
@@ -710,8 +711,8 @@ export default function AdminPanel() {
               (INITIAL_BRACKET.side as any)[side][initialRoundKey][idx] = { t1, t2, s1: 0, s2: 0, winner: null };
             }
 
-            supabase.from('campeonatos').update({ bracket_data: INITIAL_BRACKET }).eq('id', tournamentId)
-              .then(({ error }) => { if (error) console.error('Erro ao salvar bracket:', error); });
+            api.tournaments.update(tournamentId, { bracket_data: INITIAL_BRACKET })
+              .catch((error: any) => console.error('Erro ao salvar bracket:', error?.message || error));
             updatedT = { ...updatedT, gruposSorteados: true } as any;
           }
         }
@@ -840,24 +841,16 @@ export default function AdminPanel() {
                     ...toDbPayload(newTournament),
                     criado_por: user?.id,
                   };
-                  supabase.from('campeonatos').insert(dbPayload).select().single()
-                    .then(({ data, error }) => {
-                      if (error) {
-                        console.error('Erro ao criar campeonato:', error);
-                        // 42501 = violação de RLS (policy INSERT bloqueou).
-                        // Mensagem amigável + dica do que verificar.
-                        if (error.code === '42501') {
-                          setPersistError(
-                            'Sem permissão para criar campeonato. Seu cargo precisa ser admin ou proprietario em platform_roles. ' +
-                            'Se a permissão já foi concedida, aplique a migration mais recente (supabase db push) — a policy de INSERT depende da função is_campeonato_admin().'
-                          );
-                        } else {
-                          setPersistError(`Falha ao criar campeonato: ${error.message}`);
-                        }
-                        return;
-                      }
-                      if (data) setMyTournaments(prev => [mapFromDb(data), ...prev]);
-                    });
+                  try {
+                    // A API antiga reportava violação de RLS (42501) com dica de migration;
+                    // a API nova joga o erro HTTP como exceção e a mensagem do servidor já
+                    // explica o motivo.
+                    const data = await api.tournaments.create(dbPayload);
+                    if (data) setMyTournaments(prev => [mapFromDb(data), ...prev]);
+                  } catch (error: any) {
+                    console.error('Erro ao criar campeonato:', error);
+                    setPersistError(`Falha ao criar campeonato: ${error?.message || error}`);
+                  }
                   setActiveTab('manage');
                   setFormData({
                     titulo: '',
@@ -1454,11 +1447,7 @@ export default function AdminPanel() {
                                 const handleGerarBracket = async (t: any) => {
                                   // Busca dados frescos do banco — evita usar estado desatualizado
                                   // (o usuário pode ter editado jogos de grupo em outra página)
-                                  const { data: fresh } = await supabase
-                                    .from('campeonatos')
-                                    .select('grupos, cronograma, times_inscritos')
-                                    .eq('id', t.id)
-                                    .single();
+                                  const fresh = await api.tournaments.detail(t.id);
                                   const grupos     = fresh?.grupos          || t.grupos       || {};
                                   const cronograma = fresh?.cronograma      || t.cronograma   || [];
                                   const timesInsc  = fresh?.times_inscritos || t.timesInscritos || [];
@@ -1548,15 +1537,13 @@ export default function AdminPanel() {
                                     (c: any) => c.fase !== 'MATA-MATA (CHAVEAMENTO)',
                                   );
 
-                                  supabase.from('campeonatos')
-                                    .update({ bracket_data: bracket, chaves_sorteados: true, cronograma: newCronograma })
-                                    .eq('id', t.id)
-                                    .then(({ error }: any) => {
-                                      if (error) { alert('Erro ao gerar chaveamento: ' + error.message); return; }
+                                  api.tournaments.update(t.id, { bracket_data: bracket, chaves_sorteados: true, cronograma: newCronograma })
+                                    .then(() => {
                                       const updated = { ...t, chavesSorteados: true, cronograma: newCronograma };
                                       setSelectedTournament(updated as any);
                                       setMyTournaments((prev: any) => prev.map((mt: any) => mt.id === t.id ? updated : mt));
-                                    });
+                                    })
+                                    .catch((error: any) => { alert('Erro ao gerar chaveamento: ' + (error?.message || error)); });
                                 };
                                 return (selectedTournament as any).chavesSorteados ? (
                                   <div className="flex flex-col gap-2">

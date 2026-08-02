@@ -139,6 +139,55 @@ export interface ApiTeamsSdk {
   declineInvite: (id: string) => Promise<{ ok: boolean }>;
 }
 
+/**
+ * Shape legado de campeonato que o fork consome (ADR-014). A API devolve os
+ * nomes snake_case do schema `campeonatos` antigo; os jsonb (times_inscritos,
+ * cronograma, bracket_data, ...) passam como estão para o JSX não mudar.
+ */
+export interface ApiLegacyTournament {
+  id: string;
+  titulo: string;
+  nome: string;
+  criado_por: string;
+  status: string;
+  formato: string;
+  frase?: string | null;
+  logo_url?: string | null;
+  banner_url?: string | null;
+  org_photo_url?: string | null;
+  theme_color?: string;
+  regulamento?: string | null;
+  vagas: number;
+  times_por_grupo?: number | null;
+  classificados_por_grupo?: number | null;
+  tier?: string | null;
+  data?: string | null;
+  premiacao?: string | null;
+  taxa?: string | null;
+  tem_outros_premios?: boolean;
+  outros_premios?: string | null;
+  organizacao?: string | null;
+  times_inscritos: any[];
+  cronograma: any[];
+  bracket_data?: any;
+  classificacao?: any[];
+  grupos?: any;
+  times_ordem_sorteio?: any[];
+  grupos_sorteados?: any;
+  chaves_sorteados?: any;
+  registeredTeamsCount?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ApiTournamentsSdk {
+  list: (params?: { status?: string; criado_por?: string; ids?: string[]; sort?: string }) => Promise<ApiLegacyTournament[]>;
+  detail: (id: string) => Promise<ApiLegacyTournament>;
+  create: (data: Partial<ApiLegacyTournament>) => Promise<ApiLegacyTournament>;
+  update: (id: string, data: Partial<ApiLegacyTournament>) => Promise<ApiLegacyTournament>;
+  remove: (id: string) => Promise<{ ok: boolean }>;
+}
+
 function qs(params: Record<string, string | number | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -249,5 +298,17 @@ export const api = {
     clearInvites: (ids: string[]) => api.post<{ ok: boolean }>("/teams/invites/clear", { ids }),
     acceptInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/accept`),
     declineInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/decline`),
+  },
+
+  tournaments: {
+    list: (params: { status?: string; criado_por?: string; ids?: string[]; sort?: string } = {}) => {
+      const base = qs({ status: params.status, criado_por: params.criado_por, sort: params.sort });
+      const ids = params.ids?.length ? `${base ? "&" : "?"}ids=${params.ids.join(",")}` : "";
+      return api.get<ApiLegacyTournament[]>(`/tournaments${base}${ids}`);
+    },
+    detail: (id: string) => api.get<ApiLegacyTournament>(`/tournaments/${id}`),
+    create: (data: Partial<ApiLegacyTournament>) => api.post<ApiLegacyTournament>("/tournaments", data),
+    update: (id: string, data: Partial<ApiLegacyTournament>) => api.put<ApiLegacyTournament>(`/tournaments/${id}`, data),
+    remove: (id: string) => api.delete<{ ok: boolean }>(`/tournaments/${id}`),
   },
 };

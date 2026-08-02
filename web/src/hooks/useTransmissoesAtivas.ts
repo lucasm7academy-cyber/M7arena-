@@ -81,10 +81,7 @@ export function useTransmissoesAtivas() {
         // Buscar dados dos campeonatos
         const campsMap = new Map<string, { id: string; nome: string }>();
         if (campIds.size > 0) {
-          const { data: campsData } = await supabase
-            .from('campeonatos')
-            .select('id, nome')
-            .in('id', Array.from(campIds));
+          const campsData = await api.tournaments.list({ ids: Array.from(campIds) });
 
           if (campsData) {
             campsData.forEach((c: any) => campsMap.set(c.id, { id: c.id, nome: c.nome }));

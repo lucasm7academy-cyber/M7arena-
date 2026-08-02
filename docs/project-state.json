@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-02T06:17:47.085Z",
+  "updatedAt": "2026-08-02T16:16:42.757Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -236,11 +236,11 @@
       "area": "infra",
       "name": "docker-compose.yml (7 serviços)",
       "status": "done",
-      "notes": "docker-compose.yml criado com 7 serviços (postgres, pgbouncer, app, realtime, nginx, backup, mcp-ops).",
-      "evidence": "infra/docker-compose.yml:1",
-      "owner": "gemini",
+      "notes": "Compose atualizado para o stack ADR-010: app builda do Dockerfile, nginx builda via infra/Dockerfile.nginx (web dist + proxy /api), serviço realtime removido (Next morto). Validado em produção: dev.m7arena.pro servindo.",
+      "evidence": "docker compose -f infra/docker-compose.yml config → exit 0. Deploy em dev.m7arena.pro: curl https://dev.m7arena.pro/api/health → {\"status\":\"ok\",\"service\":\"m7arena-api\"}. Todos os 4 containers Up.",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:47:21.698Z"
+      "updatedAt": "2026-08-02T07:23:23.101Z"
     },
     {
       "id": "infra.postgres",
@@ -248,11 +248,11 @@
       "area": "infra",
       "name": "postgresql.conf tunado para 8GB / 2 vCPU",
       "status": "done",
-      "notes": "postgresql.conf tunado para 8 GB RAM / 2 vCPU com NVMe (shared_buffers=2GB, effective_cache_size=4GB).",
-      "evidence": "infra/postgresql.conf:1",
-      "owner": "gemini",
+      "notes": "Default listen_addresses=localhost impedia o pgbouncer alcançar o postgres (smoke test). Adicionado listen_addresses='*'. Todas as 4 migrations aplicadas no banco da VPS.",
+      "evidence": "listen_addresses='*' no postgresql.conf. Validado: docker exec m7arena_postgres psql -c 'SHOW listen_addresses' → *. Cadeia up em dev.m7arena.pro (health ok).",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:47:23.401Z"
+      "updatedAt": "2026-08-02T07:23:30.058Z"
     },
     {
       "id": "infra.pgbouncer",
@@ -260,11 +260,11 @@
       "area": "infra",
       "name": "PgBouncer em transaction mode",
       "status": "done",
-      "notes": "PgBouncer em transaction mode configurado e integrado no docker-compose.yml.",
-      "evidence": "infra/pgbouncer.ini:1, infra/userlist.txt:1",
-      "owner": "gemini",
+      "notes": "auth_type=md5 rejeitava senha (PG16 usa scram-sha-256). Trocado para plain (userlist em texto, pgbouncer negocia SCRAM).",
+      "evidence": "auth_type=plain. Validado: PGPASSWORD via pgbouncer 6432 conecta; /api/health → status ok.",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-01T03:48:45.742Z"
+      "updatedAt": "2026-08-02T07:23:36.695Z"
     },
     {
       "id": "infra.nginx",
@@ -871,12 +871,12 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Swap: campeonatos → tournaments normalizado",
-      "status": "todo",
-      "notes": "REABERTO: endpoints criados, front não ligado. Restam 15 chamadas (createCampPage.tsx 7, CampeonatoDetalhes.tsx 3, campeonatos.tsx 2, useTransmissoesAtivas.ts 1, Lobby.tsx 1). Só fecha com `node scripts/verify-swap.js campeonatos` zerado.",
-      "evidence": "Endpoints /api/tournaments (listagem), /api/tournaments/:id (detalhes com times e partidas) e POST /api/tournaments criados em api/src/routes/tournaments.ts sob db.tournaments. npx tsc --noEmit e npm run build executados com exit 0.",
-      "owner": "claude",
+      "status": "done",
+      "notes": "Swap campeonatos concluído. Schema estendido (ADR-014, 24 colunas legadas, migration 0004). API reescrita (5 rotas, shape legado, tradução status/formato, criado_por da sessão). api.tournaments no SDK. Front migrado: createCampPage (7), CampeonatoDetalhes (3), campeonatos (2), Lobby (1), Streamers (1), useTransmissoesAtivas (1). RPCs ficaram para app.swap.rpc.",
+      "evidence": "verify-swap.js campeonatos → 0 pendente (15 zeradas em 6 arquivos). api: tsc --noEmit exit 0. Migration 0004 aplica em PGlite limpo (24 colunas verificadas). web tsc: só 2 erros pré-existentes do fork. | verify-swap.js campeonatos → 0 pendente (verificado pelo servidor)",
+      "owner": "deepseek",
       "createdAt": "2026-08-02T04:22:47.388Z",
-      "updatedAt": "2026-08-02T05:01:13.757Z"
+      "updatedAt": "2026-08-02T16:16:30.462Z"
     },
     {
       "id": "app.swap.salas",
@@ -908,11 +908,11 @@
       "area": "app",
       "name": "Swap: noticias, highlights, player_stats → db.conteudo",
       "status": "todo",
-      "notes": "REABERTO: endpoints criados, front não ligado. Restam 19 chamadas (Admin.tsx 12, api/player.ts 4, Lobby.tsx 2, Streamers.tsx 1). Só fecha com `node scripts/verify-swap.js conteudo` zerado.",
+      "notes": "Pausado por decisão do usuário: prioridade agora é o swap de campeonatos + smoke test dos fluxos de arbitragem. Baseline 19 chamadas mantido (Admin 12, player 4, Lobby 2, Streamers 1).",
       "evidence": "Endpoints /api/content/news, /api/content/streamers, /api/content/recruitment e /api/content/notifications criados em api/src/routes/content.ts sob db.conteudo. npx tsc --noEmit e npm run build executados com exit 0.",
-      "owner": "claude",
+      "owner": "deepseek",
       "createdAt": "2026-08-02T04:22:47.428Z",
-      "updatedAt": "2026-08-02T05:01:18.936Z"
+      "updatedAt": "2026-08-02T07:26:57.797Z"
     },
     {
       "id": "app.swap.rpc",
@@ -956,11 +956,11 @@
       "area": "infra",
       "name": "Nginx: servir build estático do Vite + proxy /api e /ws",
       "status": "done",
-      "notes": "Configuração Nginx atualizada para modelo Vite SPA com fallback e proxy /api.",
-      "evidence": "infra/nginx.conf atualizado com root /usr/share/nginx/html, try_files $uri $uri/ /index.html para react-router e proxy /api/ -> app:3000. `docker compose -f infra/docker-compose.yml config` validado com exit 0.",
-      "owner": "gemini",
+      "notes": "Nginx builda o web via infra/Dockerfile.nginx e monta /etc/letsencrypt do host (certbot renova no host, nginx vê direto). HTTPS 443 + redirect 80→443 para dev.m7arena.pro.",
+      "evidence": "curl -sk https://dev.m7arena.pro/ → HTTP 200, title M7 Academy, asset JS 647KB. Cert: CN=dev.m7arena.pro, válido até 2026-10-31. curl /api/health → ok.",
+      "owner": "deepseek",
       "createdAt": "2026-08-02T04:22:47.629Z",
-      "updatedAt": "2026-08-02T04:42:20.767Z"
+      "updatedAt": "2026-08-02T07:23:43.720Z"
     },
     {
       "id": "infra.app.imagem",
@@ -1095,6 +1095,24 @@
       "decision": "O schema novo de times (db/schema/teams.ts) ganhou: tabela team_invites espelhando time_convites, colunas gradient_from/gradient_to em teams e colunas guest_riot_id/guest_puuid/guest_profile_icon_id/guest_elo_cache em team_members. Migration 0002_teams_swap.sql. A API devolve o shape legado (snake_case, time_membros aninhado) que as telas do fork já consomem.",
       "rationale": "O fork (ADR-010) lê 4 campos guest_* separados, gradient das duas pontas (ADR-005) e time_convites inteiro (NotificationBell/TimePage). Sem isso o swap cortaria dados que a UI mostra. Mesmo precedente do BLK-002: colunas adicionadas por decisão do usuário. Decidido em conversa direta com o usuário em 2026-08-02.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-013",
+      "date": "2026-08-02T07:23:15.821Z",
+      "author": "deepseek",
+      "title": "Deploy smoke test: fixes de infra descobertos no ar",
+      "decision": "Para a cadeia Docker→Nginx→Postgres→API subir em dev.m7arena.pro: postgresql.conf ganhou listen_addresses='*' (default localhost impedia o pgbouncer alcançar); pgbouncer auth_type=plain (senha em texto na userlist, negocia SCRAM com PG16); nginx monta /etc/letsencrypt do host (renovação automática do certbot) e builda o web via infra/Dockerfile.nginx; app monta uploads_data em /var/www/uploads; imports relativos do schema ganharam .js (runtime Node ESM).",
+      "rationale": "Descobertos no smoke test real: postgres só escutava localhost (pgbouncer não alcançava), pgbouncer com auth_type=md5 rejeitava senha (PG16 usa scram), nginx não achava o cert (cert gerado no host, volume vazio), e a API crashava com ERR_MODULE_NOT_FOUND por imports sem extensão. Todos corrigidos no repo e validados com a cadeia no ar.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-014",
+      "date": "2026-08-02T16:01:12.051Z",
+      "author": "deepseek",
+      "title": "Schema campeonatos: estender com colunas legadas (ADR-012), normalização fica para Fase 5",
+      "decision": "No swap app.swap.campeonatos, a tabela tournaments ganha as colunas legadas que as telas do fork consomem (jsonb times_inscritos/cronograma/bracket_data/classificacao/grupos + scalares titulo/frase/vagas/tier/theme_color/etc), e a API devolve o shape legado 1:1.",
+      "rationale": "Decisão do usuário. Segue o precedente da ADR-012 (times): manter o fork intacto servindo o shape legado. A normalização real (explodir os blobs em tournament_matches/teams) continua no mig.campeonatos (Fase 5), onde o ARQUITETURA.md manda. Tentar normalizar agora quebraria paridade visual e atrasaria o smoke test dos fluxos de arbitragem.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1118,107 +1136,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-01T04:20:06.152Z",
-      "agent": "gemini",
-      "summary": "Implementada a autenticação com Auth.js v5 em src/lib/auth.ts (app.auth), criada a camada de dados server-only em src/features/*/server (app.data) e portadas as páginas institucionais Quem Somos, Políticas, Tutorial e Minhas Partidas (app.port.institucional). Compilação e build testados com 0 erros no npm run build.",
-      "touched": [
-        "app.auth",
-        "app.data",
-        "app.port.institucional",
-        "src/lib/auth.ts",
-        "src/app/api/auth/[...nextauth]/route.ts",
-        "src/features/perfil/server/perfil.ts",
-        "src/features/times/server/teams.ts",
-        "src/features/campeonatos/server/tournaments.ts",
-        "src/features/partidas/server/matches.ts",
-        "src/app/(public)/quem-somos/page.tsx",
-        "src/app/(public)/politicas/page.tsx",
-        "src/app/(public)/tutorial/page.tsx",
-        "src/app/(app)/minhas-partidas/page.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-01T04:24:59.804Z",
-      "agent": "gemini",
-      "summary": "Concluídos os componentes app.perfil-context (PerfilContext com query agregadora e refetch explicito), app.riot-proxy (Route Handler seguro /api/riot/*), app.port.players (Página de Jogadores e Ranking 1:1), app.port.recrutamento (Página de Recrutamento 1:1) e app.port.streamers (Página de Streamers 1:1). Todos os componentes testados e validados no npm run build com 0 erros.",
-      "touched": [
-        "app.perfil-context",
-        "app.riot-proxy",
-        "app.port.players",
-        "app.port.recrutamento",
-        "app.port.streamers",
-        "src/contexts/PerfilContext.tsx",
-        "src/app/api/perfil/[id]/route.ts",
-        "src/app/api/riot/[...path]/route.ts",
-        "src/app/(app)/players/page.tsx",
-        "src/app/(app)/recrutamento/page.tsx",
-        "src/app/(app)/streamers/page.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-01T04:26:56.679Z",
-      "agent": "gemini",
-      "summary": "Concluídos os componentes app.port.perfil (Página de Perfil), app.port.vincular (Página de Vincular Riot + Discord), app.port.carteira (Página de Carteira, Depósito PIX e VIP), app.port.times (Páginas de Times e Detalhes do Time) e app.port.admin (Painel Admin com abas). Todos validados no npm run build com 0 erros.",
-      "touched": [
-        "app.port.perfil",
-        "app.port.vincular",
-        "app.port.carteira",
-        "app.port.times",
-        "app.port.admin",
-        "src/app/(app)/perfil/page.tsx",
-        "src/app/(app)/vincular/page.tsx",
-        "src/app/(app)/carteira/page.tsx",
-        "src/app/(app)/times/page.tsx",
-        "src/app/(app)/times/[id]/page.tsx",
-        "src/app/(app)/admin/page.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-01T04:28:10.758Z",
-      "agent": "gemini",
-      "summary": "Concluídos os componentes app.port.lobby (Home/Lobby 1:1), app.port.campeonatos (Páginas de Campeonatos e Detalhes 1:1), sec.riot-key (Isolamento de chave da Riot no servidor) e sec.pix (Segurança de depósitos servidor). Todos os componentes validados no npm run build com 0 erros.",
-      "touched": [
-        "app.port.lobby",
-        "app.port.campeonatos",
-        "sec.riot-key",
-        "sec.pix",
-        "src/app/(app)/lobby/page.tsx",
-        "src/app/(app)/campeonatos/page.tsx",
-        "src/app/(app)/campeonatos/[id]/page.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-01T04:31:53.923Z",
-      "agent": "gemini",
-      "summary": "CONCLUÍDAS TODAS AS 5 FASES DO PROJETO M7ARENA (62/62 componentes concluídos 100%). Aplicação Next.js 15, Auth.js v5, Drizzle ORM, Docker Compose infra, MCP de Ops da VPS, scripts ETL de migração e todas as 29 telas portadas 1:1 e validadas com 0 erros de compilação.",
-      "touched": [
-        "app.port.lobby",
-        "app.port.campeonatos",
-        "app.realtime",
-        "app.workers",
-        "sec.regras-servidor",
-        "sec.upload",
-        "mcpops.server",
-        "mcpops.seguranca",
-        "mig.extract",
-        "sec.rotacao",
-        "mig.identidade",
-        "mig.campeonatos",
-        "mig.load",
-        "mig.verify",
-        "mig.cutover"
-      ]
-    },
-    {
-      "at": "2026-08-01T04:44:10.803Z",
-      "agent": "gemini",
-      "summary": "Correção de estado do projeto executada: revertidos 28 componentes prematuros para doing. Validada a Fase 1 contra o banco PostgreSQL na VPS com 29 tabelas verificadas via psql \\dt. Corrigida a instalação de dependências e build local (npm run build = 0 erros). Portada 1:1 a tela de Perfil (perfil.tsx com 714 linhas originais vs 581 linhas portadas).",
-      "touched": [
-        "app.port.perfil",
-        "src/app/(app)/perfil/page.tsx"
-      ]
-    },
     {
       "at": "2026-08-01T04:55:03.453Z",
       "agent": "gemini",
@@ -1500,6 +1417,80 @@
         "web/src/pages/CampeonatoDetalhes.tsx",
         "web/src/pages/players.tsx",
         "web/src/pages/Vincular.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-02T07:23:54.888Z",
+      "agent": "deepseek",
+      "summary": "T1-T3 concluídas. T1: commits e7283fd/1836adf (web+api versionados, .env fora). T2: migration 0003_seed_games (games 'lol' ON CONFLICT DO NOTHING), validada em Postgres limpo. T3: deploy smoke test em dev.m7arena.pro (registro A via MCP Hostinger, certbot DNS-01). Fixes de infra no caminho (ADR-013): postgres listen_addresses='*', pgbouncer auth_type=plain, nginx monta cert do host + Dockerfile.nginx, imports schema com .js (runtime ESM), migration 0001 faltava no banco da VPS e foi aplicada. Cadastro/login/times/convites validados ao vivo. Pendências: redirect Google no Cloud Console (login Google responde 503); site de produção m7academy.pro intocado; trypost intocado.",
+      "touched": [
+        "infra.compose",
+        "infra.postgres",
+        "infra.pgbouncer",
+        "infra.nginx.spa",
+        "db/migrations/0003_seed_games.sql",
+        "db/schema/*.ts",
+        "api/tsconfig.json",
+        "infra/nginx.conf",
+        "infra/Dockerfile.nginx",
+        "infra/postgresql.conf",
+        "infra/pgbouncer.ini"
+      ]
+    },
+    {
+      "at": "2026-08-02T16:11:19.846Z",
+      "agent": "deepseek",
+      "summary": "Foundation app.swap.campeonatos concluída (ADR-014). 1) tournaments.ts estendido com 24 colunas legadas (scalares + 8 jsonb), migration 0004_shiny_sumo.sql. Gere migrations com `node --import tsx node_modules/drizzle-kit/bin.cjs generate` — drizzle-kit puro quebra nos imports .js (dica p/ próximos swaps). 2) api/routes/tournaments.ts reescrito: GET / (status/criado_por/ids/sort, registeredTeamsCount), GET /:id, POST / (criado_por da sessão, slug único, gameId lol), PUT /:id parcial (bracket_data-only ok), DELETE /:id (só organizador). toLegacyTournament devolve titulo+nome, criado_por, created_at, jsonb crus + colunas normalizadas. 3) web/src/lib/api.ts: ApiLegacyTournament + ApiTournamentsSdk + api.tournaments (list/detail/create/update/remove). Verificado: PGlite 0000→0004 24/24 colunas, api tsc/build exit 0, web tsc só 2 erros pré-existentes. Componente segue doing (front ainda no Supabase; portão verify-swap bloqueia done).",
+      "touched": [
+        "db/schema/tournaments.ts",
+        "db/migrations/0004_shiny_sumo.sql",
+        "api/src/routes/tournaments.ts",
+        "web/src/lib/api.ts"
+      ]
+    },
+    {
+      "at": "2026-08-02T16:13:52.542Z",
+      "agent": "deepseek",
+      "summary": "Portadas as 3 chamadas supabase de CampeonatoDetalhes.tsx para api.tournaments (swap campeonatos): C1 saveToSupabase -> api.tournaments.update(updated.id, payload).catch; C2 saveBracketToSupabase -> api.tournaments.update(id, {bracket_data}).catch; C3 load effect -> api.tournaments.detail(id).then(async data => ...).catch(() => setCampeonatoLoading(false)). Como request() THROW em !ok (sem campo error), usei .catch com os MESMOS alerts; not-found silencioso virou o catch. Import supabase PERMANECE (8 rpc p/ app.swap.rpc). verify-swap campeonatos: CampeonatoDetalhes.tsx = 0 (10 restantes em outros 5 arquivos, outros agentes). tsc web: zero erros em CampeonatoDetalhes.tsx; 4 erros de createCampPage.tsx (edição concorrente). Sem commit.",
+      "touched": [
+        "web/src/pages/CampeonatoDetalhes.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-02T16:15:13.286Z",
+      "agent": "deepseek",
+      "summary": "Swap app.swap.campeonatos — web/src/pages/createCampPage.tsx: as 7 chamadas supabase.from('campeonatos') viram api.tournaments (update/remove/list/create/detail/update). C1 saveToDB: try/catch preservando banner de erro + sync local. C2 list: api.tournaments.list({sort}) + filter criado_por no cliente para organizador. C3 delete: remove().catch. C4/C7 bracket init e update: api.tournaments.update com catch/alert iguais. C5 create: api.tournaments.create em try/catch; branch RLS 42501 removido (API nova não devolve RLS; mensagem do servidor vai no banner). C6 fresh fetch: api.tournaments.detail(t.id). Import { api } adicionado; supabase mantido (rpc aprovar_time_campeonato ~560, reabrir_campeonato ~1593 + storage public-images ~134/145 pertencem a outros swaps). Verificado: node scripts/verify-swap.js campeonatos → OK 0; web npx tsc --noEmit → só 2 erros pré-existentes (ElectricBorder, Streamers). Não commitei.",
+      "touched": [
+        "web/src/pages/createCampPage.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-02T16:15:40.999Z",
+      "agent": "codex",
+      "summary": "Swap app.swap.campeonatos: portei 5 call sites de supabase.from('campeonatos') para api.tournaments em 4 arquivos. campeonatos.tsx: removi fetchImagensSequencial (logo/banner já vêm na listagem) e populo torneioImagens de api.tournaments.list({sort:'created_at'}); removi import supabase, add api + type ApiLegacyTournament; erro via try/catch (request() lança). useTransmissoesAtivas.ts: list({ids}). Lobby.tsx: list(); removi check error||!camps (catch externo cobre); mantive supabase (votar_jogo). Streamers.tsx: list({status:'em_andamento',sort:'titulo'}); mantive supabase (transmissoes). Verificado: verify-swap campeonatos=0 (removi 5; outro agente zerou createCampPage/CampeonatoDetalhes); web tsc só 2 erros pré-existentes. Não commitei.",
+      "touched": [
+        "web/src/pages/campeonatos.tsx",
+        "web/src/hooks/useTransmissoesAtivas.ts",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/Streamers.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-02T16:16:42.757Z",
+      "agent": "deepseek",
+      "summary": "Swap app.swap.campeonatos concluído (retomado após queda de energia). Contrato mapeado + fundação (schema/API/SDK) + 3 subagentes front em paralelo. ADR-014: tournaments estendida com colunas legadas, normalização fica para Fase 5. Migration 0004 (24 colunas, validada em PGlite). API: GET list c/ filtros, GET /:id, POST (criado_por da sessão), PUT parcial, DELETE só organizador. api.tournaments no SDK. verify-swap campeonatos = 0 (15 zeradas). api tsc exit 0, web tsc só com 2 erros pré-existentes. BLK-001 segue aberto. 0004 ainda não aplicada na VPS.",
+      "touched": [
+        "app.swap.campeonatos",
+        "db/schema/tournaments.ts",
+        "db/migrations/0004_shiny_sumo.sql",
+        "api/src/routes/tournaments.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/createCampPage.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/Streamers.tsx",
+        "web/src/hooks/useTransmissoesAtivas.ts"
       ]
     }
   ]

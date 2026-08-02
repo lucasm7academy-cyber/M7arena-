@@ -10,7 +10,7 @@ import {
   Search, RefreshCw, X, SlidersHorizontal, Settings, Diamond
 } from 'lucide-react';
 import { useRole } from '../contexts/RoleContext';
-import { supabase } from '../lib/supabase';
+import { api, type ApiLegacyTournament } from '../lib/api';
 
 // ============================================
 // CACHE DE MÓDULO — persiste durante a sessão do app (SPA)
@@ -84,43 +84,7 @@ const Campeonatos = () => {
     return () => el.removeEventListener('scroll', onScroll);
   }, [loadingTorneios, torneiosCustom]);
 
-  // Carrega as imagens dos campeonatos sequencialmente (card a card) em segundo plano
-  useEffect(() => {
-    if (torneiosCustom.length === 0) return;
-    let active = true;
-
-    const fetchImagensSequencial = async () => {
-      for (const t of torneiosCustom) {
-        if (!active) break;
-        if (torneioImagens[t.id]) continue; // Pula se já carregou ou está no cache
-
-        const { data, error } = await supabase
-          .from('campeonatos')
-          .select('logo_url, banner_url')
-          .eq('id', t.id)
-          .maybeSingle();
-
-        if (!error && data && active) {
-          const imgData = {
-            logo: data.logo_url || '',
-            banner: data.banner_url || '',
-          };
-          _imagensCache[t.id] = imgData;
-          setTorneioImagens(prev => ({
-            ...prev,
-            [t.id]: imgData
-          }));
-        }
-        // Pequena pausa entre requisições para suavizar a rede
-        await new Promise(r => setTimeout(r, 80));
-      }
-    };
-
-    fetchImagensSequencial();
-    return () => { active = false; };
-  }, [torneiosCustom]);
-
-  // Carrega campeonatos do Supabase — usa cache de módulo para evitar
+  // Carrega campeonatos da API própria — usa cache de módulo para evitar
   // re-fetch a cada navegação. Só busca de novo se o cache expirou (5 min)
   // ou se for a primeira visita na sessão.
   useEffect(() => {
@@ -136,13 +100,17 @@ const Campeonatos = () => {
       }
 
       setLoadingTorneios(true);
-      const { data, error } = await supabase
-        .from('campeonatos')
-        .select('id, titulo, frase, status, vagas, tier, data, premiacao, taxa, tem_outros_premios, outros_premios, theme_color, formato, organizacao')
-        .order('created_at', { ascending: false });
+      let data: ApiLegacyTournament[];
+      try {
+        data = await api.tournaments.list({ sort: 'created_at' });
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Erro ao buscar campeonatos:', error);
+        setLoadingTorneios(false);
+        return;
+      }
 
       if (cancelled) return;
-      if (error) { console.error('Erro ao buscar campeonatos:', error); setLoadingTorneios(false); return; }
 
       const mapped = (data || []).map((t: any) => ({
         id: t.id,
@@ -161,6 +129,17 @@ const Campeonatos = () => {
         timesInscritos: t.times_inscritos || [],
         formato: t.formato,
       }));
+
+      // Logo/banner já vêm na própria listagem — não precisa mais do fetch por card
+      const imagens: Record<string, { logo: string; banner: string }> = {};
+      for (const t of data) {
+        imagens[t.id] = {
+          logo: t.logo_url || '',
+          banner: t.banner_url || '',
+        };
+      }
+      _imagensCache = imagens;
+      setTorneioImagens(imagens);
 
       // Atualiza cache de módulo
       _campeonatosCache = { data: mapped, ts: Date.now() };

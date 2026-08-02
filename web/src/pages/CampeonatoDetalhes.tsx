@@ -1501,33 +1501,29 @@ const CampeonatoDetalhes = () => {
       classificacao: updated.classificacao || [],
       times_ordem_sorteio: updated.timesOrdemSorteio || [],
     };
-    supabase.from('campeonatos').update(payload).eq('id', updated.id)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Erro ao salvar campeonato:', error);
-          // Feedback visível ao admin — antes só caía no console silencioso.
-          if (typeof window !== 'undefined') {
-            alert(
-              `Falha ao salvar alterações do campeonato. ` +
-              `Verifique sua conexão e tente novamente.\n\nDetalhe: ${error.message || error}`
-            );
-          }
+    api.tournaments.update(updated.id, payload)
+      .catch((error: any) => {
+        console.error('Erro ao salvar campeonato:', error);
+        // Feedback visível ao admin — antes só caía no console silencioso.
+        if (typeof window !== 'undefined') {
+          alert(
+            `Falha ao salvar alterações do campeonato. ` +
+            `Verifique sua conexão e tente novamente.\n\nDetalhe: ${error.message || error}`
+          );
         }
       });
   };
 
   // Helper: save bracket to Supabase — agora reporta erros ao admin.
   const saveBracketToSupabase = (bracket: any) => {
-    supabase.from('campeonatos').update({ bracket_data: bracket }).eq('id', id)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Erro ao salvar bracket:', error);
-          if (typeof window !== 'undefined') {
-            alert(
-              `Falha ao salvar o chaveamento no servidor. ` +
-              `Recarregue a página e tente novamente.\n\nDetalhe: ${error.message || error}`
-            );
-          }
+    api.tournaments.update(id, { bracket_data: bracket })
+      .catch((error: any) => {
+        console.error('Erro ao salvar bracket:', error);
+        if (typeof window !== 'undefined') {
+          alert(
+            `Falha ao salvar o chaveamento no servidor. ` +
+            `Recarregue a página e tente novamente.\n\nDetalhe: ${error.message || error}`
+          );
         }
       });
   };
@@ -2305,10 +2301,9 @@ const CampeonatoDetalhes = () => {
     let cancelled = false;
     setCampeonatoLoading(true);
 
-    supabase.from('campeonatos').select('*').eq('id', id).single()
-      .then(async ({ data, error }) => {
+    api.tournaments.detail(id)
+      .then(async (data) => {
         if (cancelled) return;
-        if (error || !data) { setCampeonatoLoading(false); return; }
         const mapped = mapFromDb(data);
         setCampeonato(mapped);
         if (data.bracket_data) {
@@ -2361,6 +2356,10 @@ const CampeonatoDetalhes = () => {
             });
           }
         }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCampeonatoLoading(false);
       });
 
     return () => { cancelled = true; };

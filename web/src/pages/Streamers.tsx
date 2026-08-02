@@ -123,13 +123,7 @@ export default function Streamers() {
   // ── BUSCAR CAMPEONATOS DISPONÍVEIS ────────────────────────────────────
   const fetchCampeonatos = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('campeonatos')
-        .select('id, titulo')
-        .eq('status', 'em_andamento')
-        .order('titulo');
-
-      if (error) throw error;
+      const data = await api.tournaments.list({ status: 'em_andamento', sort: 'titulo' });
       setAvailableCampeonatos(data || []);
     } catch (err) {
       console.error('❌ Erro ao buscar campeonatos:', err);

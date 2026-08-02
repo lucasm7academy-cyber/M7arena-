@@ -12,6 +12,7 @@ import {
 import { FaDiscord, FaTwitch } from "react-icons/fa6";
 import { ImWhatsapp } from "react-icons/im";
 import { useTransmissoesAtivas } from '../hooks/useTransmissoesAtivas';
+import { api } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
 
@@ -363,10 +364,7 @@ const Home = () => {
         return;
       }
       try {
-        const { data: camps, error } = await supabase
-          .from('campeonatos')
-          .select('id, theme_color, cronograma, times_inscritos');
-        if (error || !camps) { setUpcomingLoaded(true); return; }
+        const camps = await api.tournaments.list();
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
