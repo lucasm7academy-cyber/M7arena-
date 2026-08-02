@@ -6,6 +6,12 @@ export const riotRouter = Router();
 const cache = new Map<string, { data: any; expiresAt: number }>();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
+// Endpoints que o fork do front (web/src/api/riot.ts) já consome via proxy
+// (sec.riot-key). A chave da Riot vive só aqui, nunca no bundle.
+const PLATFORM_URL = "https://br1.api.riotgames.com"; // LoL BR
+const REGIONAL_URL = "https://americas.api.riotgames.com"; // contas, match v5, challenges
+const DDR_BASE = "https://ddragon.leagueoflegends.com";
+
 function getCached(key: string) {
   const item = cache.get(key);
   if (item && item.expiresAt > Date.now()) {
@@ -19,6 +25,35 @@ function setCache(key: string, data: any) {
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+/**
+ * Proxy genérico para um endpoint da Riot: injeta a chave, usa cache de 10min
+ * e repassa o status HTTP da Riot (404 sem dados de rank, 403 sem permissão,
+ * 429 rate limit) — o front já trata cada um desses casos.
+ */
+async function riotFetch(res: any, cacheKey: string, url: string) {
+  const apiKey = process.env.RIOT_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "RIOT_API_KEY não configurada no servidor" });
+  }
+
+  const cached = getCached(cacheKey);
+  if (cached) {
+    return res.json(cached);
+  }
+
+  const response = await fetch(url, {
+    headers: { "X-Riot-Token": apiKey },
+  });
+
+  if (!response.ok) {
+    return res.status(response.status).json({ error: `Riot API error ${response.status}` });
+  }
+
+  const data = await response.json();
+  setCache(cacheKey, data);
+  return res.json(data);
+}
+
 // GET /api/riot/version - Retorna a versão atual do DataDragon (DDragon)
 riotRouter.get("/version", async (_req, res) => {
   try {
@@ -27,7 +62,7 @@ riotRouter.get("/version", async (_req, res) => {
       return res.json({ version: cachedVersion });
     }
 
-    const response = await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
+    const response = await fetch(`${DDR_BASE}/api/versions.json`);
     if (!response.ok) {
       throw new Error(`DDragon error: ${response.status}`);
     }
@@ -45,37 +80,112 @@ riotRouter.get("/version", async (_req, res) => {
 riotRouter.get("/account/:gameName/:tagLine", async (req, res) => {
   try {
     const { gameName, tagLine } = req.params;
-    const apiKey = process.env.RIOT_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({ error: "RIOT_API_KEY não configurada no servidor" });
-    }
-
     const cacheKey = `account:${gameName.toLowerCase()}:${tagLine.toLowerCase()}`;
-    const cachedAccount = getCached(cacheKey);
-    if (cachedAccount) {
-      return res.json(cachedAccount);
-    }
-
-    const riotUrl = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
+    const riotUrl = `${REGIONAL_URL}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
       gameName
     )}/${encodeURIComponent(tagLine)}`;
-
-    const response = await fetch(riotUrl, {
-      headers: {
-        "X-Riot-Token": apiKey,
-      },
-    });
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: `Riot API error ${response.status}` });
-    }
-
-    const account = await response.json();
-    setCache(cacheKey, account);
-
-    return res.json(account);
+    return await riotFetch(res, cacheKey, riotUrl);
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao consultar conta na Riot API" });
+  }
+});
+
+// GET /api/riot/summoner/:puuid - Invocador (nível, ícone, summonerId) por PUUID
+riotRouter.get("/summoner/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const riotUrl = `${PLATFORM_URL}/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
+    return await riotFetch(res, `summoner:${puuid}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar invocador na Riot API" });
+  }
+});
+
+// GET /api/riot/league/:puuid - Entradas ranqueadas (solo/flex) por PUUID
+riotRouter.get("/league/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const riotUrl = `${PLATFORM_URL}/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`;
+    return await riotFetch(res, `league:${puuid}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar elo na Riot API" });
+  }
+});
+
+// GET /api/riot/mastery/:puuid?count=N - Top maestrias por PUUID
+riotRouter.get("/mastery/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const count = req.query.count || 5;
+    const riotUrl = `${PLATFORM_URL}/lol/champion-mastery/v4/champion-masteries/by-puuid/${encodeURIComponent(
+      puuid
+    )}?count=${encodeURIComponent(String(count))}`;
+    return await riotFetch(res, `mastery:${puuid}:${count}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar maestrias na Riot API" });
+  }
+});
+
+// GET /api/riot/mastery-score/:puuid - Pontuação total de maestria por PUUID
+riotRouter.get("/mastery-score/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const riotUrl = `${PLATFORM_URL}/lol/champion-mastery/v4/scores/by-puuid/${encodeURIComponent(puuid)}`;
+    return await riotFetch(res, `mastery-score:${puuid}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar pontuação de maestria" });
+  }
+});
+
+// GET /api/riot/matches/:puuid?count=N&queue=N&startTime=S - IDs de partidas por PUUID
+riotRouter.get("/matches/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const allowed = ["count", "queue", "startTime", "endTime"] as const;
+    const params = new URLSearchParams();
+    for (const key of allowed) {
+      const value = req.query[key];
+      if (value !== undefined) params.set(key, String(value));
+    }
+    const qs = params.toString();
+    const riotUrl = `${REGIONAL_URL}/lol/match/v5/matches/by-puuid/${encodeURIComponent(
+      puuid
+    )}/ids${qs ? `?${qs}` : ""}`;
+    return await riotFetch(res, `matches:${puuid}:${qs}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar histórico de partidas" });
+  }
+});
+
+// GET /api/riot/match/:matchId - Detalhes de uma partida (match v5)
+riotRouter.get("/match/:matchId", async (req, res) => {
+  try {
+    const { matchId } = req.params;
+    const riotUrl = `${REGIONAL_URL}/lol/match/v5/matches/${encodeURIComponent(matchId)}`;
+    return await riotFetch(res, `match:${matchId}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar detalhes da partida" });
+  }
+});
+
+// GET /api/riot/spectator/:puuid - Partida ativa do invocador (null se não estiver jogando)
+riotRouter.get("/spectator/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const riotUrl = `${PLATFORM_URL}/lol/spectator/v5/active-games/by-puuid/${encodeURIComponent(puuid)}`;
+    return await riotFetch(res, `spectator:${puuid}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar partida ativa" });
+  }
+});
+
+// GET /api/riot/challenges/:puuid - Desafios do jogador (challenges v1)
+riotRouter.get("/challenges/:puuid", async (req, res) => {
+  try {
+    const { puuid } = req.params;
+    const riotUrl = `${REGIONAL_URL}/lol/challenges/v1/player-data/${encodeURIComponent(puuid)}`;
+    return await riotFetch(res, `challenges:${puuid}`, riotUrl);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar desafios do jogador" });
   }
 });
