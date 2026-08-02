@@ -11,7 +11,7 @@
  * idem. A classificação é derivada do cronograma quando há jogos finalizados,
  * com fallback para a tabela tournament_standings (manual).
  */
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, count } from "drizzle-orm";
 import { db } from "../db.js";
 import {
   tournaments,
@@ -290,7 +290,7 @@ export async function toLegacyTournament(id: string, teamsCount?: number) {
 export async function toLegacyTournamentList(ids: string[]): Promise<Record<string, number>> {
   if (!ids.length) return {};
   const grouped = await db
-    .select({ tournamentId: tournamentTeams.tournamentId, total: sql<number>`count()` })
+    .select({ tournamentId: tournamentTeams.tournamentId, total: count() })
     .from(tournamentTeams)
     .where(inArray(tournamentTeams.tournamentId, ids))
     .groupBy(tournamentTeams.tournamentId);
