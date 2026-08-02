@@ -46,47 +46,78 @@ export const PLAN = {
   "infra.nginx": ["fase-2", "infra.compose"],
   "infra.backup": ["fase-2", "infra.compose", "infra.postgres"],
   "infra.ci": ["fase-2", "gov.repo"],
+  // ADR-010: o Nginx passa a servir o build estático do Vite e o serviço `app`
+  // deixa de ser Next para virar a API Node.
+  "infra.nginx.spa": ["fase-2", "infra.nginx", "app.fork.build"],
+  "infra.app.imagem": ["fase-2", "infra.compose", "app.api.server"],
 
-  // ---- Fase 3 — aplicação (design system primeiro, é gate)
-  "app.setup": ["fase-3"],
-  "design.tokens": ["fase-3", "app.setup"],
-  "design.fontes": ["fase-3", "app.setup"],
-  "design.libs": ["fase-3", "app.setup"],
-  "design.assets": ["fase-3", "app.setup"],
-  "design.ui": ["fase-3", "design.tokens"],
-  "design.regressao": ["fase-3", "design.tokens"],
+  // ---- Fase 3 — aplicação (ADR-010: fork do React/Vite, não reescrita em Next)
+  //
+  // ETAPA A — o site em React rodando, com o visual intacto, SEM tocar em banco.
+  // É o portão de tudo: nenhuma peça de dados abre antes de o fork buildar.
+  "app.fork.copia": ["fase-3"],
+  "app.fork.build": ["fase-3", "app.fork.copia"],
+  "design.assets": ["fase-3", "app.fork.copia"],
+  "design.regressao": ["fase-3", "app.fork.build"],
 
-  // Shell da aplicação: header, sidebar, menu mobile e dropdown de perfil.
-  // Sem ele cada tela flutua solta — é o que faz o site parecer o site.
-  "app.port.shell": ["fase-3", "design.tokens", "app.setup"],
-  "app.port.notificacoes": ["fase-3", "app.port.shell", "db.teams"],
+  // ETAPA B — camada de dados própria, atrás do portão do fork.
+  "app.api.server": ["fase-3", "app.fork.build", "db.setup"],
+  "app.auth.sessao": ["fase-3", "app.api.server", "db.identidade"],
+  "app.sdk": ["fase-3", "app.api.server", "app.auth.sessao"],
 
-  "app.auth": ["fase-3", "app.setup", "db.identidade"],
-  "app.data": ["fase-3", "app.setup", "db.setup"],
-  "app.perfil-context": ["fase-3", "app.data", "app.auth"],
-  "app.realtime": ["fase-3", "db.matches", "infra.pgbouncer"],
-  "app.workers": ["fase-3", "app.data"],
-  "app.riot-proxy": ["fase-3", "app.data"],
+  "app.realtime": ["fase-3", "app.api.server", "db.matches", "infra.pgbouncer"],
+  "app.workers": ["fase-3", "app.api.server"],
+  "app.riot-proxy": ["fase-3", "app.api.server"],
 
-  // ports — todos exigem o design system pronto (design.tokens) e a camada de dados
-  "app.port.institucional": ["fase-3", "design.tokens", "app.setup"],
-  "app.port.perfil": ["fase-3", "design.tokens", "app.perfil-context"],
-  "app.port.players": ["fase-3", "design.tokens", "app.data", "db.games"],
-  "app.port.recrutamento": ["fase-3", "design.tokens", "app.data"],
-  "app.port.streamers": ["fase-3", "design.tokens", "app.data"],
-  "app.port.carteira": ["fase-3", "design.tokens", "app.data", "db.economia"],
-  "app.port.vincular": ["fase-3", "design.tokens", "app.riot-proxy"],
-  "app.port.times": ["fase-3", "design.tokens", "app.data", "db.teams"],
-  "app.port.admin": ["fase-3", "design.tokens", "app.data"],
-  "app.port.lobby": ["fase-3", "design.tokens", "app.data", "db.conteudo"],
-  "app.port.salas": ["fase-3", "design.tokens", "app.realtime", "db.matches"],
-  "app.port.campeonatos": ["fase-3", "design.tokens", "app.data", "db.tournaments"],
+  // Os swaps: cada um troca um domínio de supabase.* por chamada ao app.sdk.
+  // Todos dependem de app.auth.sessao: enquanto o front usar supabase.auth para
+  // a sessão, nenhuma chamada à API própria consegue se autenticar. Auth primeiro,
+  // sempre. E nenhum deles fecha sem `node scripts/verify-swap.js <dominio>` em 0.
+  "app.swap.identidade": ["fase-3", "app.sdk", "app.auth.sessao", "db.identidade"],
+  "app.swap.times": ["fase-3", "app.sdk", "app.auth.sessao", "db.teams"],
+  "app.swap.campeonatos": ["fase-3", "app.sdk", "app.auth.sessao", "db.tournaments"],
+  "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
+  "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
+  "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],
+  "app.swap.rpc": ["fase-3", "app.sdk", "app.auth.sessao"],
+  "app.storage.uploads": ["fase-3", "app.api.server", "app.auth.sessao"],
+  // As 6 edge functions do Supabase (fonte em M7AcademySite/supabase/functions/).
+  // Não estavam no plano original e bloqueiam o pagamento e parte dos workers.
+  "app.edge-functions": ["fase-3", "app.api.server", "app.auth.sessao"],
+  "app.env": ["fase-3", "app.fork.build"],
 
   // segurança acompanha a peça que ela corrige
-  "sec.riot-key": ["fase-3", "app.riot-proxy"],
-  "sec.pix": ["fase-3", "app.port.carteira"],
-  "sec.regras-servidor": ["fase-3", "app.data"],
-  "sec.upload": ["fase-3", "app.data"],
+  "sec.riot-key": ["fase-3", "app.riot-proxy", "app.env"],
+  // O PIX de fallback vive dentro de create-mercado-pago-order, então tirar ele
+  // do cliente exige a edge function migrada, não só a carteira trocada.
+  "sec.pix": ["fase-3", "app.swap.carteira", "app.edge-functions"],
+  "sec.regras-servidor": ["fase-3", "app.swap.carteira", "app.swap.salas"],
+  "sec.upload": ["fase-3", "app.storage.uploads"],
+
+  // ---- descartados pela ADR-010 (o port em Next). Mantidos só para histórico:
+  // o grafo não os usa mais, mas remover quebraria phaseOf() de estado antigo.
+  "app.setup": ["fase-3"],
+  "design.tokens": ["fase-3"],
+  "design.fontes": ["fase-3"],
+  "design.libs": ["fase-3"],
+  "design.ui": ["fase-3"],
+  "app.auth": ["fase-3"],
+  "app.data": ["fase-3"],
+  "app.perfil-context": ["fase-3"],
+  "app.port.shell": ["fase-3"],
+  "app.port.notificacoes": ["fase-3"],
+  "app.port.institucional": ["fase-3"],
+  "app.port.perfil": ["fase-3"],
+  "app.port.players": ["fase-3"],
+  "app.port.recrutamento": ["fase-3"],
+  "app.port.streamers": ["fase-3"],
+  "app.port.carteira": ["fase-3"],
+  "app.port.vincular": ["fase-3"],
+  "app.port.times": ["fase-3"],
+  "app.port.admin": ["fase-3"],
+  "app.port.lobby": ["fase-3"],
+  "app.port.salas": ["fase-3"],
+  "app.port.campeonatos": ["fase-3"],
 
   // ---- Fase 4 — MCP de operações
   "mcpops.server": ["fase-4", "infra.vps"],
@@ -99,7 +130,17 @@ export const PLAN = {
   "mig.load": ["fase-5", "mig.identidade", "mig.campeonatos"],
   "mig.verify": ["fase-5", "mig.load"],
   "sec.rotacao": ["fase-5"],
-  "mig.cutover": ["fase-5", "mig.verify", "infra.vps", "sec.rotacao"],
+  // ADR-010: o cutover só abre com o app novo de pé — paridade visual conferida,
+  // regras de negócio no servidor e o Nginx servindo a SPA.
+  "mig.cutover": [
+    "fase-5",
+    "mig.verify",
+    "infra.vps",
+    "sec.rotacao",
+    "design.regressao",
+    "sec.regras-servidor",
+    "infra.nginx.spa",
+  ],
 };
 
 export const phaseOf = (id) => PLAN[id]?.[0] ?? null;

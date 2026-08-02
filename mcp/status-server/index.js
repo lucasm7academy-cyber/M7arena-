@@ -15,7 +15,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { loadState, mutateState, readLog, nextId, MD_PATH } from "./lib/state.js";
+import { loadState, mutateState, readLog, nextId, MD_PATH, PROJECT_ROOT } from "./lib/state.js";
+import { verificarPortao } from "./lib/gates.js";
 import {
   AREAS,
   AREA_LABEL,
@@ -98,11 +99,16 @@ server.tool(
       );
       L.push(`\nUse \`next_task\` (com o parâmetro phase) para a lista completa e o que está travado.`);
 
-      L.push(`\n## Decisões vigentes (${(s.decisions || []).length})`);
+      // Uma ADR revogada não pode aparecer como vigente: um agente que lesse
+      // "ADR-001: use Next.js" depois da ADR-010 faria o oposto do plano.
+      const revogadas = new Set(
+        (s.decisions || []).map((d) => d.supersedes).filter(Boolean)
+      );
+      const vigentes = (s.decisions || []).filter((d) => !revogadas.has(d.id));
+      L.push(`\n## Decisões vigentes (${vigentes.length})`);
       L.push(
-        (s.decisions || [])
-          .map((d) => `- ${d.id}: ${d.title} → ${d.decision}`)
-          .join("\n") || "- nenhuma"
+        vigentes.map((d) => `- ${d.id}: ${d.title} → ${d.decision}`).join("\n") ||
+          "- nenhuma"
       );
 
       if (lastSessions.length) {
@@ -289,6 +295,11 @@ server.tool(
               `A evidência "${ev}" é curta demais para ser verificável. Descreva o comando e o resultado observado.`
             );
           }
+
+          // Para componentes com sucesso mensurável, o SERVIDOR mede. Texto
+          // convincente não passa daqui — ver mcp/status-server/lib/gates.js.
+          const provaAutomatica = verificarPortao(id, PROJECT_ROOT);
+          if (provaAutomatica) evidence = `${ev} | ${provaAutomatica}`;
         }
         const c = (state.components || []).find((x) => x.id === id);
         if (!c) {

@@ -123,9 +123,9 @@ O M7Arena é a **reescrita do motor** de um site que já existe e funciona.
 |---|---|---|
 | Pasta | `D:\Aplicativos\M7AcademySite` | `D:\Aplicativos\M7arenaSite` (aqui) |
 | Domínio | m7academy.pro | m7arena.pro |
-| Front | React 19 + Vite (SPA) | Next.js 15 (App Router) |
+| Front | React 19 + Vite (SPA) | **o mesmo, forkado sem alteração** (ADR-010) |
 | Banco | Supabase | PostgreSQL em VPS própria |
-| Auth | Supabase Auth (GoTrue) | Auth.js v5 |
+| Auth | Supabase Auth (GoTrue) | sessão própria, cookie httpOnly (ADR-011) |
 | Hospedagem | Vercel | VPS (2 vCPU, 8 GB, 100 GB NVMe) + Docker + Nginx |
 
 É uma plataforma de campeonatos de League of Legends: times, ranking, salas de partida, carteira com moeda interna (MP/MC), VIP, recrutamento, streamers e notícias.
@@ -184,9 +184,22 @@ Toda mudança de schema entra como migration versionada. Um `git clone` + rodar 
 
 No site atual isso falhou: cerca de 15 tabelas em produção nunca tiveram `CREATE TABLE` versionado — existem só num dump.
 
+### 3.5b Evidência é número que cai, não comando que passa
+
+`npx tsc --noEmit → exit 0` passa lindamente numa API que **ninguém importa**. Em 2026-08-02 os oito `app.swap.*` foram marcados `done` exatamente assim: endpoints escritos, `exit 0` em tudo, e **zero** chamadas migradas no front. O painel dizia 58/58 com o app inteiro ainda rodando no Supabase.
+
+Regra que sai disso:
+
+- **Se a tarefa é remover algo, a evidência é a contagem caindo** — não um build passando. Para os swaps existe `node scripts/verify-swap.js`, que conta o que ainda fala com o Supabase em `web/src`, quebrado por domínio e por arquivo. Nenhum `app.swap.*` fecha sem o contador dele em 0.
+- **Isso não é honra, é portão.** Para todo `app.swap.*`, mais `app.auth.sessao` e `app.storage.uploads`, o próprio MCP roda o `verify-swap.js` quando você chama `set_component_status ... done` e **recusa** se sobrar qualquer ocorrência — pelo MCP e pelo CLI. Não adianta escrever uma evidência melhor: quem mede é o servidor. Ver `mcp/status-server/lib/gates.js`.
+- **Criar o endpoint não é fazer o swap.** O swap só existe quando o front deixa de chamar o antigo.
+- **Nunca cite como evidência um arquivo que você escreveu mas não executou**, nem um comando que roda numa parte do sistema diferente da que a tarefa mudou.
+
 ### 3.6 Nenhum arquivo passa de ~400 linhas
 
 Se passou, é hora de recortar. O site atual tem um componente de 4.482 linhas com 2.674 de JSX num único `return`. É intratável tanto para humano quanto para agente.
+
+> **Ressalva da ADR-010, com prazo.** O fork do app original traz arquivos que já nascem violando isso (`CampeonatoDetalhes.tsx` tem 5.856 linhas). Durante a Etapa 3A — a cópia — **este invariante fica suspenso**: recortar arquivo enquanto copia é reescrita disfarçada, e foi exatamente o que fez o port anterior perder a paridade visual. Arquivo **novo** (API, sdk, auth) obedece ao limite desde a primeira linha. O corte dos arquivos herdados acontece dentro de cada `app.swap.*`, junto com a troca de dados — nunca como tarefa isolada. Detalhes em `docs/PLANO_MIGRACAO.md` seção 9.
 
 ---
 
@@ -208,7 +221,10 @@ M7arenaSite/
 ├── db/                          ← schema Drizzle + migrations
 ├── infra/                       ← docker-compose, postgresql.conf, nginx
 ├── scripts/migrate/             ← extract/transform/load do Supabase
-└── src/                         ← a aplicação Next.js
+├── web/                         ← o fork React+Vite (ADR-010). O front vive aqui.
+├── api/                         ← servidor de API Node + Drizzle (serviço `app`)
+└── src/                         ← MORTO: port em Next descartado pela ADR-010.
+                                    Preservado no commit 3e8fd68. Não trabalhe aqui.
 ```
 
 ---

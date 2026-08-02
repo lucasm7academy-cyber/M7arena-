@@ -20,6 +20,13 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
   socials: jsonb("socials").$type<Record<string, string>>().default({}),
+  // Rotas preferidas do jogador (TOP/JUNGLE/MID/ADC/SUPPORT), vindas de
+  // profiles.lane_primaria e lane_secundaria do schema antigo. A UI mostra as
+  // duas no card do jogador, e o schema novo tinha esquecido delas (BLK-002).
+  // Ficam em users, e não em game_accounts, porque é preferência do usuário —
+  // ele escolhe a rota mesmo sem ter conta da Riot vinculada.
+  lanePrimary: varchar("lane_primary", { length: 20 }),
+  laneSecondary: varchar("lane_secondary", { length: 20 }),
   status: varchar("status", { length: 50 }).default("active").notNull(),
   isVip: boolean("is_vip").default(false).notNull(),
   vipExpiresAt: timestamp("vip_expires_at", { mode: "date" }),

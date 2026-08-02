@@ -8,6 +8,20 @@
       "when": 1785556094468,
       "tag": "0000_brave_korg",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785649181598,
+      "tag": "0001_robust_the_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785650034886,
+      "tag": "0002_teams_swap",
+      "breakpoints": true
     }
   ]
 }

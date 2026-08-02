@@ -17,7 +17,8 @@
  *   node mcp/status-server/scripts/cli.js history [20]
  */
 
-import { loadState, mutateState, readLog, nextId } from "../lib/state.js";
+import { loadState, mutateState, readLog, nextId, PROJECT_ROOT } from "../lib/state.js";
+import { verificarPortao } from "../lib/gates.js";
 import { PHASES, PHASE_LABEL, STATUS, STATUS_ICON } from "../lib/schema.js";
 import { blockingDeps } from "../lib/plan.js";
 
@@ -81,8 +82,11 @@ switch (cmd) {
     console.log(`\n## Pode pegar agora (${livres.length})`);
     console.log(livres.slice(0, 10).map((c) => `- ${c.id} [${c.phase}] ${c.name}`).join("\n") || "- nada liberado");
 
-    console.log(`\n## Decisões vigentes (${s.decisions.length})`);
-    console.log(s.decisions.map((d) => `- ${d.id}: ${d.title} -> ${d.decision}`).join("\n"));
+    // Não listar ADR já revogada por outra — ver comentário em index.js.
+    const revogadas = new Set(s.decisions.map((d) => d.supersedes).filter(Boolean));
+    const vigentes = s.decisions.filter((d) => !revogadas.has(d.id));
+    console.log(`\n## Decisões vigentes (${vigentes.length})`);
+    console.log(vigentes.map((d) => `- ${d.id}: ${d.title} -> ${d.decision}`).join("\n"));
 
     console.log(`\n## Invariantes`);
     console.log(s.invariants.map((i) => `- ${i}`).join("\n"));
@@ -143,6 +147,12 @@ switch (cmd) {
             `  Ex.: --evidence "npx drizzle-kit generate -> 0000_init.sql, 29 tabelas"\n` +
             `  Se você só escreveu o arquivo e não executou nada, o status correto é "doing".`
         );
+      }
+      // Mesmo portão automático do MCP: o CLI não pode ser a porta dos fundos.
+      try {
+        verificarPortao(id, PROJECT_ROOT);
+      } catch (e) {
+        die(e.message);
       }
     }
 

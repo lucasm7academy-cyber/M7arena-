@@ -27,7 +27,9 @@ Agora o produto está pronto e sabemos o que funciona. Dá para refazer o motor 
 
 ## 3. Decisões travadas
 
-Estão registradas como ADR-001 a ADR-008 no `statusdoprojeto.md`. Em resumo: Next.js 15 com serviço WebSocket separado; Auth.js v5 (os hashes bcrypt do sistema atual continuam válidos, ninguém reseta senha); import inicial de dados agora com re-sync no cutover; schema multi-jogo desde o v1; Drizzle; storage em disco local; paridade visual total; e governança por MCP com operações tipadas.
+Estão registradas como ADR-001 a ADR-011 no `statusdoprojeto.md`. Em resumo: import inicial de dados agora com re-sync no cutover; schema multi-jogo desde o v1; Drizzle; storage em disco local; paridade visual total; governança por MCP com operações tipadas; **fork do app React/Vite existente em vez de reescrita em Next.js (ADR-010)**; e **sessão própria por cookie httpOnly em vez de Auth.js v5 (ADR-011)**. Os hashes bcrypt do sistema atual continuam válidos — ninguém reseta senha.
+
+> **ADR-001 e ADR-002 foram revogadas.** O port para Next.js foi tentado e reimplementou o front em 9.781 linhas contra 29.420 do original, sem atingir a paridade visual que a ADR-005 exige. O código está preservado no commit `3e8fd68`. Ver seção 4, Fase 3.
 
 Para revogar qualquer uma delas, use `add_decision` com o campo `supersedes` — não apague a anterior.
 
@@ -51,13 +53,61 @@ Ordem sugerida: identidade → jogos → times → campeonatos → partidas → 
 
 Pode correr em paralelo com a Fase 1.
 
-### Fase 3 — Aplicação
+### Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
 
-Port das telas, uma a uma, com o JSX recortado e colado do site atual. Começa pelo design system (tokens, fontes, assets, componentes de UI) — nenhuma tela é portada antes disso.
+**Não existe mais port de tela.** Sob a ADR-010, o front do m7arena.pro é um fork literal do app React+Vite do m7academy.pro. O visual não é reconstruído: ele é copiado. Isso torna a paridade visual um fato, não uma tarefa.
 
-Ordem sugerida, da mais simples para a mais complexa: institucional → perfil → players → recrutamento → streamers → carteira → vincular → times → admin → salas → campeonatos.
+A fase tem duas etapas, e a ordem é obrigatória — o grafo em `mcp/status-server/lib/plan.js` a impõe, então `next_task` não libera a Etapa B antes de a A fechar.
 
-Cada tela portada passa por comparação visual com a original antes de ser marcada como `done`.
+**Etapa A — o site em React de pé, sem tocar em banco.**
+
+| # | Componente | O que é |
+|---|---|---|
+| 1 | `app.fork.copia` | Copiar `M7AcademySite` → `M7arenaSite/web/`. Zero alteração de UI. |
+| 2 | `app.fork.build` | `npm install` + `vite build` + dev server servindo as 25 rotas. |
+| 3 | `design.regressao` | Conferir as 25 telas contra o site no ar. |
+
+Ao fim da Etapa A o site está visualmente pronto e rodando. Ele ainda fala com o Supabase — isso é esperado e temporário.
+
+**Etapa B — trocar o motor de dados por baixo.**
+
+Primeiro a fundação (`app.api.server` → `app.auth.sessao` → `app.sdk`), depois os swaps por domínio: identidade, times, campeonatos, salas, carteira, conteúdo, rpc, uploads.
+
+**`app.auth.sessao` vem antes de todos os swaps.** Enquanto o front usar `supabase.auth` para a sessão, nenhuma chamada à API própria consegue se autenticar. O grafo impõe isso.
+
+> ### Como um swap fecha
+>
+> Em 2026-08-02 os oito `app.swap.*` foram marcados `done` com os endpoints escritos, `tsc --noEmit exit 0` em tudo — e **zero** chamadas migradas no front. O painel dizia 58/58 com o app inteiro ainda rodando no Supabase. Escrever o endpoint **não é** fazer o swap.
+>
+> Um swap é: `supabase.from('x')` no componente **deixa de existir** e vira chamada ao `app.sdk`.
+>
+> A evidência é mecânica:
+>
+> ```
+> node scripts/verify-swap.js            # relatório completo, por domínio e arquivo
+> node scripts/verify-swap.js identidade # só um domínio
+> node scripts/verify-swap.js --strict   # exit 1 se sobrou algo
+> ```
+>
+> Nenhum `app.swap.*` é marcado `done` sem o contador dele em **0**. Linha de base em 2026-08-02: **192 ocorrências**.
+
+O `app.sdk` é a peça de maior alavancagem: é o módulo único (`web/src/lib/api.ts`) por onde os ~113 pontos de chamada ao Supabase passam a falar com a API. **Não imite a query-builder do PostgREST** — exponha funções por domínio.
+
+**A superfície a substituir, medida:**
+
+| Chamada | Ocorrências |
+|---|---|
+| `supabase.from()` | 62 |
+| `supabase.auth.*` | 23 |
+| `supabase.rpc()` | 18 |
+| `supabase.storage` | 10 |
+| `import.meta.env` | 19 |
+
+**Três armadilhas do fork, que o plano cobre explicitamente:**
+
+1. **Regra de negócio no cliente.** O original decide saldo, resultado de partida e classificação no front. Trocar o transporte não conserta isso. Cada `app.swap.*` tem que *mover a regra para o servidor*, não só apontar o `fetch` para outro lugar. É o `sec.regras-servidor`, e é o item mais crítico da fase.
+2. **Segredos no bundle.** Tudo com prefixo `VITE_` é público. As 19 ocorrências de `import.meta.env` precisam de auditoria (`app.env`), e a chave da Riot precisa sair de vez (`sec.riot-key`).
+3. **Arquivos gigantes.** O fork traz a dívida do original junto: `CampeonatoDetalhes.tsx` tem 5.856 linhas, `createCampPage.tsx` 2.044, `TimePage.tsx` 1.943. Ver a ressalva ao invariante de 400 linhas na seção 9.
 
 ### Fase 4 — MCP de operações
 
@@ -119,12 +169,22 @@ Explodir `campeonatos.cronograma`, `bracket_data`, `classificacao` e `times_insc
 ## 7. Ordem e dependências
 
 ```
-Fase 0 ──┬── Fase 1 (schema) ──┬── Fase 3 (app) ──┐
-         │                     │                  ├── Fase 5 (migração + cutover)
-         └── Fase 2 (infra) ───┴── Fase 4 (mcp-ops)┘
+Fase 0 ──┬── Fase 1 (schema) ──┐
+         │                     ├── Fase 3B (dados) ──┐
+         ├── Fase 2 (infra) ───┴── Fase 4 (mcp-ops) ─┼── Fase 5 (migração + cutover)
+         │                                           │
+         └── Fase 3A (fork React) ───────────────────┘
+                    ▲
+             portão: nada de 3B abre antes daqui
 ```
 
-Fase 0 bloqueia tudo. Fases 1 e 2 correm em paralelo. Fase 5 exige 1 e 3 prontas, e a VPS contratada.
+Fase 0 bloqueia tudo. Fases 1 e 2 correm em paralelo.
+
+**A Etapa 3A (fork) não depende de nada além da Fase 0** — pode começar imediatamente, mesmo sem VPS e mesmo com o schema em aberto. Ela é o portão da Etapa 3B: `app.api.server` exige `app.fork.build` concluído, então nenhum agente consegue começar a mexer em banco antes de o site estar rodando em React.
+
+Fase 5 exige 1, 2 e 3 prontas e a VPS contratada. O `mig.cutover` agora também exige `design.regressao`, `sec.regras-servidor` e `infra.nginx.spa` — ou seja, não vira o DNS com o app pela metade.
+
+**Bloqueio externo atual:** a VPS ainda não foi contratada (componente `infra.vps`). Isso **não** trava a Etapa 3A, que roda inteira na máquina local.
 
 **Bloqueio externo atual:** a VPS ainda não foi contratada (componente `infra.vps`). Tudo que depende de execução remota fica parado até lá — mas as fases 1, 2 e 3 podem ser desenvolvidas e testadas localmente com Docker.
 
@@ -142,3 +202,17 @@ Se você é um agente chegando agora:
 6. `log_session` com o resumo
 
 Se algo travar, `add_blocker`. Se você decidir entre alternativas, `add_decision`.
+
+---
+
+## 9. Ressalva ao invariante de 400 linhas
+
+O `AGENTS.md` diz que nenhum arquivo passa de ~400 linhas. O fork da ADR-010 traz arquivos que violam isso de saída: `CampeonatoDetalhes.tsx` (5.856), `createCampPage.tsx` (2.044), `TimePage.tsx` (1.943), `Lobby.tsx` (1.726), `Admin.tsx` (1.225).
+
+**Isso é aceito de propósito, com prazo.** A regra passa a valer assim:
+
+- **Na Etapa 3A o invariante fica suspenso.** Copiar é copiar. Recortar arquivo durante a cópia é justamente o erro que produziu o port de 9.781 linhas — vira reescrita disfarçada e a paridade se perde de novo.
+- **Todo arquivo *novo* (API, sdk, auth) obedece ao limite desde a primeira linha.**
+- **Na Etapa 3B o corte acontece junto com o swap, não separado dele.** Quando `app.swap.campeonatos` tira o JSONB gigante de dentro de `CampeonatoDetalhes.tsx`, o arquivo encolhe naturalmente. Recortar aí é de graça; recortar antes é pagar duas vezes.
+
+Não abra uma tarefa de refatoração isolada para isso. Ela morre no meio e deixa o arquivo pior do que estava.

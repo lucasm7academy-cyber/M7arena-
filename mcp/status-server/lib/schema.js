@@ -33,7 +33,7 @@ export const PHASE_LABEL = {
   "fase-0": "Fase 0 — Governança multi-agente",
   "fase-1": "Fase 1 — Schema do banco",
   "fase-2": "Fase 2 — Infraestrutura (Docker/VPS)",
-  "fase-3": "Fase 3 — Aplicação (port visual 1:1)",
+  "fase-3": "Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)",
   "fase-4": "Fase 4 — MCP de operações da VPS",
   "fase-5": "Fase 5 — Migração de dados e cutover",
 };
@@ -53,7 +53,7 @@ export const AREA_LABEL = {
   governanca: "Governança & Agentes",
   banco: "Banco de Dados",
   infra: "Infraestrutura (Docker/VPS)",
-  app: "Aplicação (Next.js)",
+  app: "Aplicação (React + Vite)",
   design: "Design & Paridade Visual",
   "mcp-ops": "MCP de Operações",
   migracao: "Migração de Dados",
