@@ -42,6 +42,9 @@ services:
         condition: service_healthy
 
   app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
     image: ${DOCKER_IMAGE:-m7arena-app:latest}
     container_name: m7arena_app
     restart: always
@@ -49,42 +52,31 @@ services:
       NODE_ENV: production
       DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@pgbouncer:6432/m7arena?prepare=false"
       AUTH_SECRET: ${AUTH_SECRET:-dev-secret-key-m7arena-local-environment-32bytes}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
       RIOT_API_KEY: ${RIOT_API_KEY:-dev_dummy_riot_key}
     volumes:
       - uploads_data:/app/public/uploads
     depends_on:
       - pgbouncer
 
-  realtime:
-    image: node:22-alpine
-    container_name: m7arena_realtime
-    restart: always
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/m7arena"
-      WS_PORT: 3001
-    command: node /app/dist/realtime/index.js
-    volumes:
-      - ../src/realtime:/app/realtime
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   nginx:
-    image: nginx:alpine
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.nginx
+    image: ${NGINX_IMAGE:-m7arena-nginx:latest}
     container_name: m7arena_nginx
     restart: always
     ports:
       - "8090:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - uploads_data:/var/www/uploads:ro
       - certbot_data:/etc/letsencrypt
     depends_on:
       - app
-      - realtime
 
   backup:
     image: postgres:16-alpine
