@@ -8,7 +8,7 @@ import {
   jsonb,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { users } from "./identidade";
+import { users } from "./identidade.js";
 
 export const games = pgTable("games", {
   id: varchar("id", { length: 50 }).primaryKey(), // slug: 'lol'

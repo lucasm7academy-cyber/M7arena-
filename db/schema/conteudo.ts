@@ -9,7 +9,7 @@ import {
   index,
   integer,
 } from "drizzle-orm/pg-core";
-import { users } from "./identidade";
+import { users } from "./identidade.js";
 
 export const news = pgTable(
   "news",

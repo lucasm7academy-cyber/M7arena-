@@ -7,7 +7,7 @@ import {
   jsonb,
   index,
 } from "drizzle-orm/pg-core";
-import { users } from "./identidade";
+import { users } from "./identidade.js";
 
 export const auditLogs = pgTable(
   "audit_logs",

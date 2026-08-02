@@ -8,8 +8,8 @@ import {
   timestamp,
   index,
 } from "drizzle-orm/pg-core";
-import { users } from "./identidade";
-import { matches } from "./matches";
+import { users } from "./identidade.js";
+import { matches } from "./matches.js";
 
 export const walletTransactions = pgTable(
   "wallet_transactions",

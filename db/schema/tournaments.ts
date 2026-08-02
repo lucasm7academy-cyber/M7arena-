@@ -9,9 +9,9 @@ import {
   primaryKey,
   index,
 } from "drizzle-orm/pg-core";
-import { users } from "./identidade";
-import { games } from "./games";
-import { teams } from "./teams";
+import { users } from "./identidade.js";
+import { games } from "./games.js";
+import { teams } from "./teams.js";
 
 export const tournaments = pgTable(
   "tournaments",

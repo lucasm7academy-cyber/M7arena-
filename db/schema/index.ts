@@ -3,11 +3,11 @@
  * Todos os arquivos de schema de cada domínio são exportados a partir daqui.
  */
 
-export * from "./identidade";
-export * from "./games";
-export * from "./retencao";
-export * from "./teams";
-export * from "./matches";
-export * from "./economia";
-export * from "./conteudo";
-export * from "./tournaments";
+export * from "./identidade.js";
+export * from "./games.js";
+export * from "./retencao.js";
+export * from "./teams.js";
+export * from "./matches.js";
+export * from "./economia.js";
+export * from "./conteudo.js";
+export * from "./tournaments.js";
