@@ -1229,21 +1229,18 @@ export default function TimePage() {
     // Buscar dados Riot + wallet de todos os membros em paralelo
     const userIds = membrosRaw.map(m => m.userId).filter(Boolean);
     if (userIds.length > 0) {
-      const [{ data: contas }, { data: wallets }] = await Promise.all([
+      const [{ data: contas }, wallets] = await Promise.all([
         supabase
           .from('contas_riot')
           .select('user_id, riot_id, profile_icon_id, level, puuid, elo_cache')
           .in('user_id', userIds),
-        supabase
-          .from('wallets')
-          .select('user_id, mc')
-          .in('user_id', userIds),
+        api.wallet.adminBalances(userIds),
       ]);
 
       const contaMap: Record<string, any> = {};
       (contas ?? []).forEach((c: any) => { contaMap[c.user_id] = c; });
       const walletMap: Record<string, number> = {};
-      (wallets ?? []).forEach((w: any) => { walletMap[w.user_id] = w.mc; });
+      (wallets ?? []).forEach((w: any) => { walletMap[w.userId] = w.mc; });
 
       membrosRaw.forEach(m => {
         if (m.userId) {

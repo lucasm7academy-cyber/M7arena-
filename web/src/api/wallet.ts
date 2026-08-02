@@ -11,7 +11,7 @@
  * Toda movimentação cria automaticamente uma linha em `transacoes` (auditoria).
  */
 
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 export interface Wallet {
   user_id: string;
@@ -25,26 +25,19 @@ export interface Wallet {
 
 /** Lê wallet do usuário; retorna {mp:0, mc:0} se não existir. */
 export async function buscarWallet(userId: string): Promise<Wallet> {
-  const { data } = await supabase
-    .from('wallets')
-    .select('user_id, mp, mc')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  return data ?? { user_id: userId, mp: 0, mc: 0 };
+  const list = await api.wallet.adminBalances([userId]);
+  const w = list?.[0];
+  return w ? { user_id: w.userId, mp: w.mp, mc: w.mc } : { user_id: userId, mp: 0, mc: 0 };
 }
 
 /** Lê wallets em lote (otimização para listagens). */
 export async function buscarWalletsEmLote(userIds: string[]): Promise<Record<string, Wallet>> {
   if (userIds.length === 0) return {};
-  const { data } = await supabase
-    .from('wallets')
-    .select('user_id, mp, mc')
-    .in('user_id', userIds);
+  const list = await api.wallet.adminBalances(userIds);
 
   const map: Record<string, Wallet> = {};
   for (const id of userIds) map[id] = { user_id: id, mp: 0, mc: 0 };
-  (data ?? []).forEach((w: Wallet) => { map[w.user_id] = w; });
+  (list ?? []).forEach((w) => { map[w.userId] = { user_id: w.userId, mp: w.mp, mc: w.mc }; });
   return map;
 }
 
@@ -137,29 +130,18 @@ export async function ajustarSaldoAdmin(
   deltaMP: number,
   motivo: string = 'ajuste_admin',
 ): Promise<RespostaAjusteAdmin> {
-  const { data, error } = await supabase.rpc('admin_ajustar_saldo', {
-    p_user_id:  userId,
-    p_delta_mc: deltaMC,
-    p_delta_mp: deltaMP,
-    p_motivo:   motivo,
-  });
-
-  // Erro de transporte / permissão de execução: a RPC nem chegou a responder.
-  if (error) {
-    return { ok: false, erro: error.message || 'rpc_indisponivel', mc: 0, mp: 0 };
+  try {
+    const r = await api.wallet.adminAdjust(userId, deltaMC, deltaMP, motivo);
+    return {
+      ok:   r.ok === true,
+      erro: r.erro ?? null,
+      mc:   typeof r.mc === 'number' ? r.mc : 0,
+      mp:   typeof r.mp === 'number' ? r.mp : 0,
+    };
+  } catch (e: any) {
+    // 401/403/400 vêm com { error } no corpo; o SDK lança com a mensagem.
+    return { ok: false, erro: e?.message || 'rpc_indisponivel', mc: 0, mp: 0 };
   }
-
-  const r = data as Partial<RespostaAjusteAdmin> | null;
-  if (!r || typeof r !== 'object') {
-    return { ok: false, erro: 'rpc_indisponivel', mc: 0, mp: 0 };
-  }
-
-  return {
-    ok:   r.ok === true,
-    erro: r.erro ?? null,
-    mc:   typeof r.mc === 'number' ? r.mc : 0,
-    mp:   typeof r.mp === 'number' ? r.mp : 0,
-  };
 }
 
 /**

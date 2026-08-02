@@ -200,6 +200,43 @@ export interface ApiTournamentsSdk {
   recalcularPdl: (id: string) => Promise<{ ok: boolean }>;
 }
 
+/** Saldo de MP/MC no shape que as telas do fork consomem. */
+export interface ApiWalletBalance {
+  userId: string;
+  mp: number;
+  mc: number;
+}
+
+/** Linha do ledger wallet_transactions (extrato). */
+export interface ApiWalletTransaction {
+  id: string;
+  userId: string;
+  currency: "mp" | "mc";
+  amount: number;
+  kind: string;
+  refType?: string | null;
+  refId?: string | null;
+  balanceAfter: number;
+  createdAt: string;
+}
+
+/** Retorno do POST /api/wallet/admin/adjust (saldos finais calculados no servidor). */
+export interface ApiWalletAdjustResult {
+  ok: boolean;
+  erro: string | null;
+  mc: number;
+  mp: number;
+}
+
+export interface ApiWalletsSdk {
+  balance: () => Promise<ApiWalletBalance>;
+  transactions: () => Promise<ApiWalletTransaction[]>;
+  /** Leitura em lote: com userIds, qualquer autenticado; sem, só admin (agregação). */
+  adminBalances: (userIds?: string[]) => Promise<ApiWalletBalance[]>;
+  /** Ajuste admin por DELTA — o servidor valida cargo, grava ledger e devolve saldos. */
+  adminAdjust: (userId: string, deltaMC: number, deltaMP: number, motivo?: string) => Promise<ApiWalletAdjustResult>;
+}
+
 function qs(params: Record<string, string | number | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -334,5 +371,21 @@ export const api = {
       api.put<ApiLegacyTournament>(`/tournaments/${id}/cronograma/merge`, { jogos }),
     recalcularPdl: (id: string) =>
       api.post<{ ok: boolean }>(`/tournaments/${id}/recalcular-pdl`),
+  },
+
+  wallet: {
+    balance: () => api.get<ApiWalletBalance>("/wallet/balance"),
+    transactions: () => api.get<ApiWalletTransaction[]>("/wallet/transactions"),
+    adminBalances: (userIds?: string[]) =>
+      api.get<ApiWalletBalance[]>(
+        `/wallet/admin/balances${userIds?.length ? `?userIds=${userIds.join(",")}` : ""}`
+      ),
+    adminAdjust: (userId: string, deltaMC: number, deltaMP: number, motivo?: string) =>
+      api.post<ApiWalletAdjustResult>("/wallet/admin/adjust", {
+        userId,
+        deltaMC,
+        deltaMP,
+        motivo: motivo || "ajuste_admin",
+      }),
   },
 };
