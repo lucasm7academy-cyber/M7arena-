@@ -986,18 +986,17 @@ interface PlatformStats {
   mpDistribuido: number;
 }
 
-const ESTADOS_ATIVOS = ['preenchendo', 'confirmacao', 'confirmada', 'iniciando_partida', 'partida_iniciada'];
-
 function StatsCards() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // ✅ Schema novo: salas em `salas`; saldo agregado em `wallets.mc`.
+      // Salas ativas vêm da API própria (lista ativa); saldo agregado e
+      // contagem de jogadores seguem nos domínios carteira/identidade.
       const [jog, salas, timesCount, wallets] = await Promise.all([
         supabase.from('contas_riot').select('user_id', { count: 'exact', head: true }),
-        supabase.from('salas').select('id', { count: 'exact', head: true }).in('estado', ESTADOS_ATIVOS),
+        api.matches.list({ status: 'ativas', limit: 200 }).catch(() => []),
         api.teams.list({ limit: 1 }),
         supabase.from('wallets').select('mc'),
       ]);
@@ -1005,7 +1004,7 @@ function StatsCards() {
       const totalMP = (wallets.data ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0), 0);
       setStats({
         jogadores: jog.count ?? 0,
-        salasAtivas: salas.count ?? 0,
+        salasAtivas: Array.isArray(salas) ? salas.length : 0,
         times: timesCount.total ?? 0,
         mpDistribuido: totalMP,
       });

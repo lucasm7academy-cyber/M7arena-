@@ -11,6 +11,9 @@
 // (`transicionandoRef` & cia) — 10 clientes não competem mais pela mesma linha.
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { api } from '../lib/api';
+// O canal Realtime (ADR-009) ainda usa supabase; a leitura de dados e as
+// ações foram migradas para a API própria neste swap.
 import { supabase } from '../lib/supabase';
 import {
     buscarsalas,
@@ -371,13 +374,12 @@ export function useSalaSimples(
     }, [sala?.estado, votos]);
 
     // ── ENCERRAR PARTIDA ─────────────────────────────
-    // ⚠️ FASE 2: ainda escreve direto em `salas` e `sala_jogadores`.
-    // Precisa virar RPC junto com o fluxo de votação.
+    // O servidor encerra a sala, paga o prêmio e solta os vínculos atômicamente.
     async function encerrarPartida(vencedor: 'A' | 'B' | 'empate') {
         if (IS_DEV) console.log(`🏆 [Partida] Encerrando com vencedor: ${vencedor}`);
         if (timerFinRef.current) { clearInterval(timerFinRef.current); timerFinRef.current = null; }
-        await encerrarSala(salaId, vencedor);
-        await supabase.from('sala_jogadores').update({ vinculado: false }).eq('sala_id', salaId);
+        const ok = await encerrarSala(salaId, vencedor);
+        if (!ok && IS_DEV) console.log(`❌ [Partida] Falha ao encerrar sala ${salaId}`);
     }
 
     // ── CARREGAR VOTOS (COM TRAVA) ────────────────────
@@ -487,12 +489,10 @@ export function useSalaSimples(
         if (sucesso) { setMeuVoto(opcao); await carregarVotos(); }
     };
 
-    // ⚠️ FASE 2: ainda escreve direto em `salas` (fluxo de finalização).
+    // Solicita a finalização no servidor (transição para votação).
     const solicitarFinalizacao = async () => {
-        await supabase.from('salas').update({
-            estado: 'finalizacao',
-            updated_at: new Date().toISOString()
-        }).eq('id', salaId);
+        const r = await api.matches.finalizar(salaId);
+        if (!r.ok && IS_DEV) console.log(`❌ [Finalizar] Recusado: ${r.erro}`);
     };
 
     return {

@@ -12,7 +12,7 @@ import {
   getMaxJogadoresPorModo, type ModoJogo, type Sala,
 } from '../api/salamod1';
 import { criarSala } from '../api/salamod1';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 
@@ -450,31 +450,15 @@ const Jogar = () => {
       return;
     }
 
-    // ✅ Busca SEM join com sala_jogadores
-    const { data, error } = await supabase
-      .from('salas')
-      .select('*')
-      .not('estado', 'eq', 'encerrada')
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      // Contar jogadores em 1 query separada (leve)
-      const salaIds = data.map(s => s.id);
-      const { data: contagens } = await supabase
-        .from('sala_jogadores')
-        .select('sala_id')
-        .in('sala_id', salaIds);
-
-      const countMap: Record<number, number> = {};
-      contagens?.forEach(c => {
-        countMap[c.sala_id] = (countMap[c.sala_id] || 0) + 1;
-      });
+    // ✅ Busca SEM join com sala_jogadores (a API já entrega a contagem)
+    try {
+      const data = await api.matches.list({ status: 'ativas', limit: 100 });
 
       // Montar objeto Sala com jogadores vazio (só contagem)
       const salasLeves = data.map(sala => ({
         ...sala,
         codigo: `#${String(sala.id).padStart(6, '0')}`,
-        jogadores: Array(countMap[sala.id] || 0).fill({}),
+        jogadores: Array(sala.jogadores?.length || 0).fill({}),
         maxJogadores: sala.max_jogadores,
         criadorId: sala.criador_id,
         criadorNome: sala.criador_nome || 'Desconhecido',
@@ -482,7 +466,7 @@ const Jogar = () => {
         timeBNome: sala.time_b_nome,
         temSenha: sala.tem_senha || false,
         mpoints: sala.mpoints || 0,
-        modo: sala.modo,
+        modo: sala.modo as ModoJogo,
         estado: sala.estado,
         descricao: sala.descricao || '',
         nome: sala.nome,
@@ -492,6 +476,9 @@ const Jogar = () => {
 
       setSalas(salasLeves);
       _salasCache = { data: salasLeves, ts: Date.now() };
+    } catch (error: any) {
+      // Nunca engole erro: derruba silencioso mas loga para diagnóstico.
+      console.error('[Jogar] falha ao listar salas:', error?.message);
     }
     setLoadingSalas(false);
   }, []);
@@ -501,14 +488,8 @@ const Jogar = () => {
     if (carregouFinalizadas) return;
     setLoadingSalasFinalizadas(true);
 
-    const { data } = await supabase
-      .from('salas')
-      .select('*')
-      .eq('estado', 'encerrada')
-      .order('updated_at', { ascending: false })
-      .limit(20);
-
-    if (data) {
+    try {
+      const data = await api.matches.list({ status: 'encerrada', limit: 20 });
       const salasLeves = data.map(sala => ({
         ...sala,
         codigo: `#${String(sala.id).padStart(6, '0')}`,
@@ -520,7 +501,7 @@ const Jogar = () => {
         timeBNome: sala.time_b_nome,
         temSenha: sala.tem_senha || false,
         mpoints: sala.mpoints || 0,
-        modo: sala.modo,
+        modo: sala.modo as ModoJogo,
         estado: sala.estado,
         descricao: sala.descricao || '',
         nome: sala.nome,
@@ -529,6 +510,8 @@ const Jogar = () => {
         createdAt: new Date(sala.created_at),
       }));
       setSalasFinalizadas(salasLeves);
+    } catch (error: any) {
+      console.error('[Jogar] falha ao listar salas finalizadas:', error?.message);
     }
     setLoadingSalasFinalizadas(false);
     setCarregouFinalizadas(true);
