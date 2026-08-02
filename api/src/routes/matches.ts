@@ -194,8 +194,23 @@ matchesRouter.post("/:id/join", async (req, res) => {
         if (total.length >= (match.maxJogadores ?? 10)) {
           return { ok: false, erro: "vaga_ocupada", estado: match.status, mudou: false };
         }
-        // Solta vagas em outras salas ainda em preenchimento.
-        await tx.delete(matchPlayers).where(and(eq(matchPlayers.userId, user.id), eq(matchPlayers.linked, false)));
+        // Solta vagas em outras salas ainda em preenchimento (mesma regra da
+        // RPC legada sala_entrar: só salas em `preenchendo`, nunca as travadas).
+        const outrasSalas = await tx
+          .select({ matchId: matchPlayers.matchId })
+          .from(matchPlayers)
+          .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
+          .where(and(
+            eq(matchPlayers.userId, user.id),
+            eq(matchPlayers.linked, false),
+            eq(matches.status, "preenchendo")
+          ));
+        const idsOutras = outrasSalas
+          .map((p: any) => p.matchId)
+          .filter((mid: string) => mid !== match.id);
+        if (idsOutras.length > 0) {
+          await tx.delete(matchPlayers).where(and(eq(matchPlayers.userId, user.id), inArray(matchPlayers.matchId, idsOutras)));
+        }
 
         try {
           await debitarEntrada(tx, user.id, match.entryMp, match.id);
