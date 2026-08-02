@@ -27,6 +27,7 @@ docs/*.tmp
 dump/
 backup/
 scripts/migrate/data/
+scripts/migrate/transformed/
 *.dump
 *.sql.gz
 *.tar.gz
