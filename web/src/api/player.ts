@@ -425,11 +425,7 @@ export async function processarApostaPartida(
   await Promise.all(perdedores.map(j => ajustarMC(j.userId, -apostaValor)));
   await Promise.all(vencedores.map(j => ajustarMC(j.userId, prêmioPorVencedor)));
 
-  await supabase.from('ganhos_plataforma').insert({
-    sala_id: salaId,
-    modo: resultado.modo,
-    mc_taxa: TAXA_MC_POR_PARTIDA,
-    mc_total_apostado: totalPrêmio,
-  });
-
+  // 🔒 Regra de negócio no servidor: débito/crédito de aposta e a taxa da
+  // plataforma (ganhos_plataforma) passam a ser decididos pela API de salas,
+  // nunca pelo navegador. Esta função está morta (nenhum chamador) até lá.
 }

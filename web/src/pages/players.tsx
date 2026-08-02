@@ -204,11 +204,8 @@ async function carregarJogadores(
   // ✅ Schema novo: MP/MC vêm de wallets (não mais de contas_riot.mp/mc).
   const walletMap: Record<string, { mp: number; mc: number }> = {};
   if (userIds.length > 0) {
-    const { data: walletsData } = await supabase
-      .from('wallets')
-      .select('user_id, mp, mc')
-      .in('user_id', userIds);
-    (walletsData ?? []).forEach((w: any) => { walletMap[w.user_id] = { mp: w.mp ?? 0, mc: w.mc ?? 0 }; });
+    const walletsData = await api.wallet.adminBalances(userIds);
+    (walletsData ?? []).forEach((w: any) => { walletMap[w.userId] = { mp: w.mp ?? 0, mc: w.mc ?? 0 }; });
   }
 
   // Buscar membros e times (incluindo convidados/guests)
