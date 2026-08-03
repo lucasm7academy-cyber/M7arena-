@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { pool } from "./db.js";
+import { runCron } from "./cron.js";
 import { authRouter } from "./routes/auth.js";
 import { googleAuthRouter } from "./routes/auth-google.js";
 import { riotRouter } from "./routes/riot.js";
@@ -63,3 +64,10 @@ app.get("/api/health", async (_req, res) => {
 app.listen(PORT, () => {
   console.log(`[m7arena-api] Servidor de API rodando na porta ${PORT}`);
 });
+
+// Cron de varredura (design v3 §8): kick de ociosidade (30min) + partida
+// fantasma (3h) a cada 10 min. Roda 1x ao subir e depois em intervalo.
+setInterval(() => {
+  runCron().catch((e) => console.error("[cron] erro:", e?.message));
+}, 10 * 60 * 1000);
+runCron().catch((e) => console.error("[cron] erro inicial:", e?.message));
