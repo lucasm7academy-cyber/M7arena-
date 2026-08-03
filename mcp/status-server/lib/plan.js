@@ -94,6 +94,15 @@ export const PLAN = {
   "sec.regras-servidor": ["fase-3", "app.swap.carteira", "app.swap.salas"],
   "sec.upload": ["fase-3", "app.storage.uploads"],
 
+  // ---- Salas apostadas (ADR-019, design v3) — P1: escrow + máquina de estados
+  "app.apostas.schema": ["fase-3", "db.matches", "db.economia", "db.identidade"],
+  "app.apostas.escrow": ["fase-3", "app.apostas.schema"],
+  "app.apostas.machine": ["fase-3", "app.apostas.escrow"],
+  "app.apostas.revisao": ["fase-3", "app.apostas.machine"],
+  "app.apostas.cron": ["fase-3", "app.apostas.machine"],
+  "app.apostas.realtime": ["fase-3", "app.api.server", "db.matches", "infra.compose"],
+  "app.apostas.smoke": ["fase-3", "app.apostas.revisao", "app.apostas.cron", "app.apostas.realtime"],
+
   // ---- descartados pela ADR-010 (o port em Next). Mantidos só para histórico:
   // o grafo não os usa mais, mas remover quebraria phaseOf() de estado antigo.
   "app.setup": ["fase-3"],
