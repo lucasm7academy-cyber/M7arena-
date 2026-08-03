@@ -641,14 +641,13 @@ export default function Perfil() {
           )}
         </motion.div>
 
-        {/* Dados da Conta */}
+        {/* E-mail de Acesso */}
         <div className="grid md:grid-cols-1 gap-8">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} 
             className="rounded-3xl p-5 sm:p-8" style={getCardStyle()}>
-            <div className="flex items-center justify-between mb-8"><span className={LABEL_CLASS}>Dados da Conta</span><ShieldCheck className="w-5 h-5 text-primary/40" /></div>
+            <div className="flex items-center justify-between mb-8"><span className={LABEL_CLASS}>E-mail de Acesso</span><ShieldCheck className="w-5 h-5 text-primary/40" /></div>
             <div className="space-y-6">
               <div>
-                <p className="text-white/20 text-[10px] uppercase mb-2">E-mail de Acesso</p>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/5 rounded-2xl gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <Mail className="w-5 h-5 text-primary/60 shrink-0" />
