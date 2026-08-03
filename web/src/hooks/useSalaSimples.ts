@@ -12,9 +12,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
-// O canal Realtime (ADR-009) ainda usa supabase; a leitura de dados e as
-// ações foram migradas para a API própria neste swap.
-import { supabase } from '../lib/supabase';
+import { useSalaRealtime } from './useSalaRealtime';
 import {
     buscarsalas,
     buscarJogadores,
@@ -196,71 +194,32 @@ export function useSalaSimples(
     }, [sincronizarTudo]);
 
     // ── REALTIME ─────────────────────────────────────
-    useEffect(() => {
-        if (IS_DEV) console.log(`🔌 [Realtime] Conectando canal sala_${salaId}`);
+    // O socket próprio (P4) só avisa "a sala mudou"; o estado completo vem do
+    // GET /api/matches/:id (que revalida permissão no servidor). Substitui o
+    // supabase.channel (ADR-009): as mensagens de transição de estado passam a
+    // ser derivadas comparando o estado antes/depois do refetch.
+    useSalaRealtime(salaId, {
+        onUpdate: async () => {
+            const estadoAnterior = ultimoEstadoRef.current;
+            const dadosSala = await sincronizarTudo('realtime');
+            if (!dadosSala) return;
+            const novoEstado = dadosSala.estado;
+            if (novoEstado === estadoAnterior) return;
 
-        const channel = supabase
-            .channel(`sala_${salaId}`)
-            .on('postgres_changes',
-                { event: '*', schema: 'public', table: 'sala_jogadores', filter: `sala_id=eq.${salaId}` },
-                (payload: any) => {
-                    const tipo = payload.eventType || payload.event;
+            if (IS_DEV) console.log(`📡 [Realtime] Sala ${salaId}: ${estadoAnterior} → ${novoEstado}`);
+            tickRef.current = null; // o servidor avançou: prazo antigo não interessa mais
 
-                    if (tipo === 'UPDATE') {
-                        if (IS_DEV) console.log(`📝 [Realtime] jogador UPDATE: ${payload.new?.user_id} confirmado=${payload.new?.confirmado}`);
-                        setJogadores(prev => prev.map(j =>
-                            j.user_id === payload.new?.user_id ? { ...j, ...payload.new } : j
-                        ));
-                    } else if (tipo === 'INSERT') {
-                        if (IS_DEV) console.log(`➕ [Realtime] jogador INSERT: ${payload.new?.user_id}`);
-                        (async () => {
-                            const { data: profiles } = await supabase
-                                .rpc('get_users_vip_status', { user_ids: [payload.new?.user_id] });
-                            const isVip = profiles?.[0]?.is_vip ?? false;
-                            setJogadores(prev => (
-                                prev.some(j => j.user_id === payload.new?.user_id)
-                                    ? prev
-                                    : [...prev, { ...payload.new, isVip }]
-                            ));
-                        })();
-                    } else if (tipo === 'DELETE') {
-                        if (IS_DEV) console.log(`➖ [Realtime] jogador DELETE: ${payload.old?.user_id}`);
-                        setJogadores(prev => prev.filter(j => j.user_id !== payload.old?.user_id));
-                    }
-                }
-            )
-            .on('postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'salas', filter: `id=eq.${salaId}` },
-                (payload: any) => {
-                    const novaSala = payload.new;
-                    const novoEstado = novaSala.estado;
-                    const estadoAnterior = ultimoEstadoRef.current;
-
-                    // O servidor é a fonte da verdade: aceitamos o payload inteiro.
-                    setSala(novaSala);
-                    setCodigoPartida(novaSala.codigo_partida || null);
-
-                    if (novoEstado === estadoAnterior) return;
-
-                    if (IS_DEV) console.log(`📡 [Realtime] Sala ${salaId}: ${estadoAnterior} → ${novoEstado}`);
-                    ultimoEstadoRef.current = novoEstado;
-                    tickRef.current = null; // o servidor avançou: prazo antigo não interessa mais
-
-                    // Mudança de estado pode ter mexido nos jogadores
-                    // (reset de `confirmado`, remoção de quem recusou, etc).
-                    sincronizarJogadores();
-
-                    if (estadoAnterior === 'confirmacao' && novoEstado === 'preenchendo') {
-                        mostrar('erro', 'Confirmação cancelada — sala reaberta');
-                    } else if (novoEstado === 'cancelada') {
-                        mostrar('erro', 'Partida cancelada');
-                    }
-                }
-            )
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, [salaId, sincronizarJogadores, mostrar]);
+            if (estadoAnterior === 'confirmacao' && novoEstado === 'preenchendo') {
+                mostrar('erro', 'Confirmação cancelada — sala reaberta');
+            } else if (novoEstado === 'cancelada') {
+                mostrar('erro', 'Partida cancelada');
+            }
+        },
+        onReconnect: () => {
+            if (IS_DEV) console.log(`🔌 [Realtime] Reconectado — refazendo GET da sala ${salaId}`);
+            sincronizarTudo('reconexao');
+        },
+    });
 
     // ── LOOP DE RE-RENDER DOS TIMERS DERIVADOS ────────
     // ⚡ requestAnimationFrame: pausa sozinho quando a aba vai para background.

@@ -16,7 +16,8 @@
     "drizzle-orm": "^0.39.1",
     "express": "^4.21.2",
     "multer": "^2.2.0",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -24,6 +25,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/multer": "^2.2.0",
+    "@types/ws": "^8.5.13",
     "@types/node": "^22.13.1",
     "@types/pg": "^8.11.11",
     "tsx": "^4.19.2",

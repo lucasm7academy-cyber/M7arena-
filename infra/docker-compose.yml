@@ -62,6 +62,24 @@ services:
     depends_on:
       - pgbouncer
 
+  realtime:
+    image: node:22-alpine
+    container_name: m7arena_realtime
+    restart: always
+    environment:
+      NODE_ENV: production
+      # LISTEN/NOTIFY NÃO passa pelo pgbouncer (transaction mode não entrega
+      # NOTIFY): o realtime conecta DIRETO no postgres, como o mcp-ops faz.
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/m7arena"
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:-dev-secret-key-m7arena-local-environment-32bytes}
+    volumes:
+      - ../api:/app/api
+    command: node /app/api/dist/api/src/realtime/index.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   nginx:
     build:
       context: ..
@@ -77,6 +95,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - app
+      - realtime
 
   backup:
     image: postgres:16-alpine
