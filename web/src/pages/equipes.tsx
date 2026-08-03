@@ -790,7 +790,7 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${theme.from}25` }}>
                   <Plus className="w-4 h-4" style={{ color: theme.from }} />
                 </div>
-                <h2 className="text-white font-black text-lg">Criar Equipe</h2>
+                <h2 className="text-white font-black text-lg">Monte sua Equipe</h2>
               </div>
               <button onClick={onClose} className="text-white/30 hover:text-white"><X className="w-5 h-5" /></button>
             </div>
@@ -802,6 +802,7 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
               <div><label className="text-white/40 text-xs uppercase tracking-widest">Tag (3 letras)</label>
                 <input value={tag} onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))} placeholder="Ex: M7E" maxLength={3}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold tracking-widest focus:outline-none focus:border-white/30" />
+                <p className="text-white/25 text-[10px] mt-1">Sua tag aparece em rankings, campeonatos e no Hall da Fama.</p>
               </div>
               <div><label className="text-white/40 text-xs uppercase tracking-widest">Logo do Time</label>
                 <div className="flex items-center gap-3">

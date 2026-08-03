@@ -184,8 +184,8 @@ export default function Login() {
             {formMode === 'forgot' && 'Recuperar Senha'}
           </h1>
           <p className="text-white/40 text-[10px] uppercase tracking-widest font-black mb-8">
-            {formMode === 'login' && 'Acesse sua conta para entrar na arena.'}
-            {formMode === 'register' && 'Inicie sua jornada lendária.'}
+            {formMode === 'login' && 'Entre na arena e dispute prêmios em Pix.'}
+            {formMode === 'register' && 'Crie sua conta grátis e comece a competir.'}
             {formMode === 'forgot' && 'Insira seu e-mail para receber o link.'}
           </p>
 
@@ -289,8 +289,8 @@ export default function Login() {
               ) : (
                 <>
                   <span>
-                    {formMode === 'login' && 'Acessar Arena'}
-                    {formMode === 'register' && 'Criar Conta'}
+                    {formMode === 'login' && 'Entrar na Arena'}
+                    {formMode === 'register' && 'Criar Conta Grátis'}
                     {formMode === 'forgot' && 'Enviar Link'}
                   </span>
                   <ArrowRight className="w-5 h-5 shrink-0" />
@@ -325,13 +325,13 @@ export default function Login() {
           <div className="text-center mt-8">
             {formMode === 'login' && (
               <p className="text-sm text-white/40 font-bold">
-                Não tem conta?
+                Novo por aqui?
                 <button 
                   type="button"
                   onClick={() => { setFormMode('register'); setErrorMessage(null); setSuccessMessage(null); }} 
                   className="ml-2 text-[#FFB800] hover:text-[#FF5E00] font-black uppercase transition-colors"
                 >
-                  Cadastre-se
+                  Crie sua conta grátis
                 </button>
               </p>
             )}
@@ -404,7 +404,7 @@ export default function Login() {
               Domine a <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFB800] to-[#FF5E00]">Arena</span>
             </h2>
             <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mt-1.5">
-              A plataforma oficial das lendas
+              Torneios com premiação em Pix
             </p>
           </div>
         </div>

@@ -162,6 +162,10 @@ export interface ApiWalletBalance {
   userId: string;
   mp: number;
   mc: number;
+  /** MC travado em salas apostadas ativas (design v3 §11 — "em partida"). */
+  mcReservado?: number;
+  /** Salas apostadas ativas que seguram a reserva — valor vira link no perfil. */
+  emPartida?: { salaNum: number; apostaMc: number; nome: string | null }[];
 }
 
 /** Retorno do POST /api/wallet/admin/adjust (saldos finais calculados no servidor). */
@@ -203,6 +207,13 @@ export interface ApiLegacySala {
   created_at: string;
   ended_at?: string | null;
   jogadores: ApiLegacySalaJogador[];
+  // ── Salas apostadas (design v3 §5/§11) — campos aditivos do port ──
+  aposta_mc?: number;
+  taxa_pct?: string | number;
+  match_id?: string;
+  revisao_desde?: string | null;
+  prints_recebidos?: number;
+  prints_necessarios?: number;
 }
 
 export interface ApiLegacySalaJogador {
@@ -228,6 +239,14 @@ export interface ApiSalaResultado {
   erro: string | null;
   estado: string | null;
   mudou: boolean;
+  /** Presente no erro `saldo_insuficiente` — quanto falta para entrar (design v3 §11). */
+  faltam?: number;
+  /** Erro `ja_em_sala_apostada` — sala apostada ativa que segura a vaga do jogador. */
+  sala_num?: number;
+  /** Erro `suspenso_por_strikes` — quando a suspensão termina. */
+  liberado_em?: string | null;
+  /** Erro `conta_suspensa` — fim da suspensão temporária. */
+  suspensa_ate?: string | null;
 }
 
 /** Print de prova de uma partida apostada (design v3 §6). */
@@ -368,6 +387,11 @@ export interface ApiProfileMe {
   displayName: string;
   avatarUrl?: string | null;
   roles: string[];
+  /** Strikes anti no-show (design v3 §2.1) — "você tem 2/3 strikes" no perfil. */
+  strikes?: number;
+  strikesMax?: number;
+  suspensaAte?: string | null;
+  termosAceitos?: boolean;
   profile: ApiLegacyProfile;
   riotAccount: ApiLegacyRiotAccount | null;
   discordAccount?: { providerAccountId?: string; discord_tag?: string | null } | null;
@@ -455,6 +479,11 @@ export const api = {
       api.post<{ user: ApiUser }>("/auth/register", data),
     logout: () => api.post<{ success: boolean }>("/auth/logout"),
     me: () => api.get<{ user: ApiUser | null }>("/auth/me"),
+  },
+
+  terms: {
+    /** Registra o aceite dos Termos de Uso com declaração de 18+ (design v3 §2.1). */
+    accept: () => api.post<{ ok: boolean; termos_aceitos_em?: string }>("/terms/accept"),
   },
 
   teams: {

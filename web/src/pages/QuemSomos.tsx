@@ -23,9 +23,9 @@ export default function QuemSomos() {
           <div className="flex flex-col lg:flex-row items-center gap-10 md:gap-16">
             <div className="flex flex-col items-center lg:items-start gap-8 lg:w-1/2 text-center lg:text-left">
               <div className="flex flex-col items-center lg:items-start gap-2">
-                <h2 className="text-3xl md:text-6xl font-black uppercase tracking-tighter leading-none font-display text-center lg:text-left">
+                <h1 className="text-3xl md:text-6xl font-black uppercase tracking-tighter leading-none font-display text-center lg:text-left">
                   QUEM SOMOS?
-                </h2>
+                </h1>
               </div>
 
               <div className="lg:hidden w-full">
@@ -38,7 +38,7 @@ export default function QuemSomos() {
                   <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
                     <img
                       src="/images/lucasEdu.png"
-                      alt="Founder"
+                      alt="Lucas Eduardo, fundador e CEO da M7 Arena"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
@@ -57,7 +57,7 @@ export default function QuemSomos() {
                   Desde os 15 anos de idade, sonho em realizar campeonatos e eventos de e-sports, e somente aos 24 deixei o medo de lado e criei a <span className="text-white font-bold">M7 Arena</span>, uma organização voltada para o competitivo com o intuito de proporcionar aos jogadores amadores a experiência única de brilhar em uma arena profissional.
                 </p>
                 <p>
-                  Acreditamos que o talento não tem elo e que todos merecem uma vitrine justa. Na M7, nossa missão é transformar sonhos em realidade, oferecendo competições organizadas, seguras e com premiações que valorizam o esforço de cada competidor que pisa na Summoner's Rift.
+                  Acreditamos que o talento não tem elo e que todos merecem uma vitrine justa. Por isso, a M7 oferece competições organizadas, seguras e transparentes, com premiação em Pix que valoriza o esforço de cada competidor que pisa na Summoner's Rift.
                 </p>
               </div>
             </div>
@@ -76,7 +76,7 @@ export default function QuemSomos() {
                   <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden group">
                     <img
                       src="/images/lucasEdu.png"
-                      alt="Founder"
+                      alt="Lucas Eduardo, fundador e CEO da M7 Arena"
                       className="w-full h-full object-cover transition-all duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
@@ -114,7 +114,7 @@ export default function QuemSomos() {
                   <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
                     <img
                     src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Riven_18.jpg"
-                    alt="Founder Continuation"
+                    alt="Campeã Riven do League of Legends em splash art"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
@@ -146,7 +146,7 @@ export default function QuemSomos() {
                 <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden group">
                   <img
                     src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Riven_18.jpg"
-                      alt="Founder Continuation"
+                      alt="Splash art da campeã Riven do League of Legends"
                       className="w-full h-full object-cover transition-all duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />

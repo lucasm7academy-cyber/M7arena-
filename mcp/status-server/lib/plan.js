@@ -104,6 +104,7 @@ export const PLAN = {
   "app.apostas.elegibilidade": ["fase-3", "app.apostas.machine"],
   "app.apostas.prints": ["fase-3", "app.apostas.machine", "app.apostas.revisao", "app.storage.uploads"],
   "app.apostas.smoke": ["fase-3", "app.apostas.revisao", "app.apostas.cron", "app.apostas.realtime", "app.apostas.elegibilidade", "app.apostas.prints"],
+  "app.apostas.ui": ["fase-3", "app.apostas.elegibilidade", "app.apostas.prints", "app.apostas.realtime", "app.swap.salas", "app.swap.carteira"],
 
   // ---- descartados pela ADR-010 (o port em Next). Mantidos só para histórico:
   // o grafo não os usa mais, mas remover quebraria phaseOf() de estado antigo.

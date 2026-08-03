@@ -105,7 +105,7 @@ describe("cron", () => {
     }
   });
 
-  test("partida casual (aposta 0) iniciada há 3h NÃO vira fantasma", async () => {
+  test("partida casual (aposta 0) iniciada há 3h sem print também vira fantasma", async () => {
     const { client, db } = await setupDb();
     try {
       const sala = await criaSala(db, {
@@ -115,9 +115,9 @@ describe("cron", () => {
       });
 
       const r = await runCron(db);
-      assert.equal(r.fantasmas, 0);
+      assert.equal(r.fantasmas, 1);
       const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
-      assert.equal(m.status, "partida_iniciada");
+      assert.equal(m.status, "aguardando_revisao");
     } finally {
       await client.close();
     }

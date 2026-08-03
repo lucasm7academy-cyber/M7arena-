@@ -3,6 +3,7 @@ import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userWallets } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { matchPrints } from "../../../db/schema/apostas.js";
 import { toLegacyMatch } from "../lib/match-shape.js";
 import {
   avaliarTransicoes,
@@ -41,7 +42,17 @@ async function shapeSala(m: any, ctx: any = db) {
     __user: userMap.get(p.userId),
     __isVip: userMap.get(p.userId)?.isVip ?? false,
   }));
-  return toLegacyMatch(m, playersEnriched, criadorNome);
+
+  // Só salas em `aguardando_revisao` levam a contagem de prints (design v3 §6):
+  // é o único estado que o front mostra "prints recebidos X/3". Evita query
+  // extra na listagem pública (vitrine).
+  let printsRecebidos = 0;
+  if (m.status === "aguardando_revisao") {
+    const printsRows = await ctx.select({ id: matchPrints.id }).from(matchPrints).where(eq(matchPrints.matchId, m.id));
+    printsRecebidos = printsRows.length;
+  }
+
+  return toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos);
 }
 
 /**

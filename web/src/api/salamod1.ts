@@ -35,6 +35,14 @@ export interface ResultadoSalaRpc {
     erro: string | null;
     estado: string | null;
     mudou: boolean;
+    /** `saldo_insuficiente` — quanto falta (design v3 §11). */
+    faltam?: number;
+    /** `ja_em_sala_apostada` — sala apostada ativa que segura a vaga do jogador. */
+    salaNum?: number;
+    /** `suspenso_por_strikes` — quando a suspensão termina. */
+    liberadoEm?: string | null;
+    /** `conta_suspensa` — fim da suspensão temporária. */
+    suspensaAte?: string | null;
 }
 
 const IS_DEV = import.meta.env.DEV;
@@ -48,6 +56,10 @@ async function normalizarResultado(p: Promise<import('../lib/api').ApiSalaResult
             erro: r?.erro ?? null,
             estado: r?.estado ?? null,
             mudou: r?.mudou === true,
+            faltam: r?.faltam,
+            salaNum: r?.sala_num,
+            liberadoEm: r?.liberado_em ?? null,
+            suspensaAte: r?.suspensa_ate ?? null,
         };
     } catch (error: any) {
         if (IS_DEV) console.error(`❌ [Sala] ${error?.message}`);
@@ -89,11 +101,26 @@ const ERROS_SALA: Record<string, string> = {
     sala_nao_encontrada: 'Sala não encontrada.',
     estado_invalido: 'A sala mudou de estado. Tente novamente.',
     vaga_ocupada: 'Essa vaga já foi preenchida.',
-    ja_em_outra_sala: 'Você já está em uma partida em andamento.',
+    ja_em_outra_sala: 'Você já está em uma partida em andamento — finalize ou saia dela primeiro.',
     nao_esta_na_sala: 'Você não está nesta sala.',
-    ja_confirmado: 'Você já confirmou presença.',
-    nao_pode_sair: 'Você não pode sair da sala agora.',
+    ja_confirmado: 'Você já confirmou presença nesta sala.',
+    nao_pode_sair: 'A partida já começou — você não pode sair agora.',
     rpc_falhou: 'Falha de comunicação com o servidor. Tente novamente.',
+    // ── Elegibilidade de salas apostadas (design v3 §2.1) ──
+    saldo_insuficiente: 'Saldo insuficiente.',
+    riot_id_obrigatorio: 'Você precisa vincular seu Riot ID para jogar valendo MC.',
+    ja_em_sala_apostada: 'Você já está em uma sala apostada.',
+    suspenso_por_strikes: 'Você está suspenso de salas apostadas por excesso de strikes.',
+    termos_nao_aceitos: 'Você precisa aceitar os Termos de Uso antes de jogar valendo MC.',
+    conta_suspensa: 'Sua conta está suspensa temporariamente.',
+    conta_banida: 'Sua conta foi banida.',
+    conta_nao_encontrada: 'Conta não encontrada.',
+    motivo_invalido: 'O motivo da contestação precisa ter pelo menos 5 caracteres.',
+    ja_contestou: 'Você já contestou o resultado desta partida.',
+    limite_prints: 'Limite de 3 prints por partida atingido.',
+    nao_confirmado: 'Você precisa estar confirmado na sala para enviar print.',
+    nao_participante: 'Você não é participante desta partida.',
+    sala_casual: 'Esta sala não é uma partida apostada.',
 };
 
 export function traduzirErroSala(codigo: string | null | undefined): string {
@@ -204,7 +231,10 @@ export async function criarSala(
             createdAt: new Date(data.created_at),
         };
     } catch (error: any) {
-        return null;
+        // Nunca engola erro: o chamador traduz o código do servidor (ex.:
+        // saldo_insuficiente, riot_id_obrigatorio) para o usuário.
+        if (IS_DEV) console.error(`❌ [CriarSala] ${error?.message}`);
+        throw error;
     }
 }
 
@@ -252,7 +282,7 @@ export const MODOS_JOGO: Record<ModoJogo, {
   '5v5': {
     nome: '5v5 Clássico',
     icone: '🏆',
-    descricao: 'Summoners Rift - Competitivo',
+    descricao: 'Summoners Rift — o competitivo em sua forma mais pura',
     maxJogadores: 10,
     jogadoresPorTime: 5,
     tipo: 'individual',
@@ -262,7 +292,7 @@ export const MODOS_JOGO: Record<ModoJogo, {
   'aram': {
     nome: 'ARAM',
     icone: '🌉',
-    descricao: 'Howling Abyss - Caos total',
+    descricao: 'Howling Abyss — partidas rápidas, ação do início ao fim',
     maxJogadores: 10,
     jogadoresPorTime: 5,
     tipo: 'individual',
@@ -272,7 +302,7 @@ export const MODOS_JOGO: Record<ModoJogo, {
   '1v1': {
     nome: '1v1',
     icone: '⚔️',
-    descricao: 'Howling Abyss - Duelo individual',
+    descricao: 'Howling Abyss — duelo individual, quem é o melhor?',
     maxJogadores: 2,
     jogadoresPorTime: 1,
     tipo: 'individual',
@@ -282,7 +312,7 @@ export const MODOS_JOGO: Record<ModoJogo, {
   'time_vs_time': {
     nome: 'Time vs Time',
     icone: '🏅',
-    descricao: 'Desafio entre times - Vale ranking do clã',
+    descricao: 'Clã contra clã — disputa que vale ranking e orgulho',
     maxJogadores: 10,
     jogadoresPorTime: 5,
     tipo: 'time',

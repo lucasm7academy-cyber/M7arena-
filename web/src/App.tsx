@@ -214,7 +214,9 @@ export default function App() {
               <Route path="/auth/discord/callback" element={<RouteWithSuspense element={<DiscordCallback />} />} />
 
               {/* Rotas Privadas (Necessitam de Conta) */}
-              <Route path="/jogar" element={<PrivateRoute><RouteWithSuspense element={<Jogar />} /></PrivateRoute>} />
+              {/* `/jogar` é vitrine pública (design v3 §2.1): visitante vê salas e
+                  estado; ações abrem o modal de cadastro/login dentro de Jogar.tsx. */}
+              <Route path="/jogar" element={<RouteWithSuspense element={<Jogar />} />} />
               <Route path="/perfil" element={<PrivateRoute><RouteWithSuspense element={<Perfil />} /></PrivateRoute>} />
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />

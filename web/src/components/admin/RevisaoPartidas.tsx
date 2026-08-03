@@ -81,6 +81,8 @@ export function RevisaoPartidas() {
   const [erro, setErro] = useState<string | null>(null);
   const [processandoId, setProcessandoId] = useState<string | null>(null);
   const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; msg: string } | null>(null);
+  // Print em exibição ampliada (lightbox, mesmo padrão dos logos de time).
+  const [lightboxPrint, setLightboxPrint] = useState<{ id: string; nomeJogador: string } | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -253,15 +255,17 @@ export function RevisaoPartidas() {
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {sala.prints.map((p) => (
-                      <div key={p.id} className="rounded-xl overflow-hidden border border-white/10 bg-black/40">
+                      <button key={p.id} onClick={() => setLightboxPrint({ id: p.id, nomeJogador: p.nomeJogador })}
+                        className="rounded-xl overflow-hidden border border-white/10 bg-black/40 text-left cursor-pointer group"
+                        title={`Print de ${p.nomeJogador} — clique para ampliar`}>
                         <img
                           src={api.prints.file(p.id)}
                           alt={`Print de ${p.nomeJogador}`}
                           loading="lazy"
-                          className="w-full h-32 lg:h-40 object-contain bg-black/60"
+                          className="w-full h-32 lg:h-40 object-contain bg-black/60 group-hover:opacity-80 transition-opacity"
                         />
                         <p className="px-2 py-1.5 text-[10px] font-black text-white/40 truncate">{p.nomeJogador}</p>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -322,6 +326,41 @@ export function RevisaoPartidas() {
           );
         })}
       </div>
+
+      {/* Lightbox do print (mesmo padrão dos logos de time) */}
+      <AnimatePresence>
+        {lightboxPrint && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxPrint(null)}
+            className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center cursor-zoom-out"
+          >
+            <motion.img
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              src={api.prints.file(lightboxPrint.id)}
+              alt={`Print de ${lightboxPrint.nomeJogador}`}
+              className="max-w-[min(480px,90vw)] max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setLightboxPrint(null)}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-sm">
+              <span className="text-white/80 text-xs font-black uppercase tracking-widest">
+                Print de {lightboxPrint.nomeJogador}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -79,6 +79,15 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
     const { winnerSide, decisionId } = req.body;
     const matchId = req.params.id;
 
+    // `decision_id` é uma coluna uuid no banco (idempotência §4.3). Um valor
+    // fora do formato estouraria o Postgres com 500 — valida aqui e responde
+    // 400 amigável (o painel gera via crypto.randomUUID, então nunca chega aqui
+    // no fluxo normal).
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!decisionId || typeof decisionId !== "string" || !uuidRegex.test(decisionId)) {
+      return res.status(400).json({ erro: "decision_id_invalido" });
+    }
+
     const r2 = await db.transaction(async (tx: any) => {
       const [m] = await tx.select().from(matches).where(eq(matches.id, matchId)).limit(1).for("update");
       if (!m) return { ok: false, erro: "sala_nao_encontrada" };
@@ -125,6 +134,11 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
       } else {
         return { ok: false, erro: "resultado_invalido" };
       }
+
+      // LIBERA os vínculos dos jogadores: sem isso, após o admin decidir, eles
+      // continuam `linked=true` e o join de outra sala bloqueia com
+      // `ja_em_outra_sala` (matches.ts). A partida terminou — ninguém fica preso.
+      await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, m.id));
 
       return { ok: true, estado: winnerSide === "cancel" ? "cancelada" : "encerrada" };
     });

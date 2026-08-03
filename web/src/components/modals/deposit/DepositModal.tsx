@@ -305,59 +305,84 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               </button>
 
               {/* Cabeçalho */}
-              <div className="mb-6">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 mb-2">
+              <div className="mb-7">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 mb-3">
                   <Zap className="w-3 h-3 text-[#FFD700]" fill="currentColor" />
                   <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">Recarga Instantânea via PIX</span>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
                   Depositar <span className="text-[#FFD700]">M7 COINS</span>
                 </h2>
+                <p className="text-white/45 text-sm mt-1.5 leading-relaxed max-w-md">
+                  Escolha um pacote e seus MCs caem na hora. Quanto maior o pacote, maior o bônus.
+                </p>
               </div>
 
               {!paymentData ? (
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] gap-6 items-start">
                   {/* Grade dos 5 Pacotes */}
                   <div className="space-y-3">
-                    <p className="text-white/50 text-xs uppercase tracking-wider font-bold">
-                      Selecione o valor do depósito
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {PACKAGES.map((pkg, idx) => (
+                    <div className="flex items-center justify-between">
+                      <p className="text-white/50 text-xs uppercase tracking-wider font-bold">
+                        Selecione o valor
+                      </p>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#FFD700]/70">
+                        {selectedPackage ? `Selecionado: ${selectedPackage.label}` : 'Toque em um pacote'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {PACKAGES.map((pkg, idx) => {
+                        // Bônus relativo ao pacote R$10 (referência de 55 MC/R$)
+                        const refRate = 550 / 10;
+                        const rate = pkg.mcs / pkg.priceInReais;
+                        const bonusPct = Math.round((rate / refRate - 1) * 100);
+                        const isSelected = selectedPackage?.id === pkg.id;
+                        return (
                         <motion.button
                           key={pkg.id}
                           onClick={() => handleSelectPackage(pkg)}
-                          className={`relative p-4 rounded-2xl border transition-all duration-200 text-left flex flex-col justify-between gap-3 backdrop-blur-md ${
-                            selectedPackage?.id === pkg.id
-                              ? 'border-2 border-[#FFD700] bg-[#FFD700]/10 shadow-[0_0_20px_rgba(255,215,0,0.2)]'
-                              : 'border-white/10 bg-black/40 hover:border-white/20 hover:bg-white/5'
-                          }`}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          className={`relative p-4 rounded-2xl border transition-all duration-200 text-left flex flex-col gap-2.5 overflow-hidden ${
+                            isSelected
+                              ? 'border-[#FFD700] bg-gradient-to-b from-[#FFD700]/15 to-[#FFD700]/5 shadow-[0_0_25px_rgba(255,215,0,0.25)]'
+                              : 'border-white/10 bg-black/40 hover:border-white/25 hover:bg-white/5'
+                          }`}
                         >
                           {pkg.popular && (
                             <span className="absolute -top-2 right-3 bg-[#FFD700] text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md">
-                              Especial
+                              Mais Escolhido
+                            </span>
+                          )}
+                          {bonusPct > 0 && (
+                            <span className="absolute top-2.5 right-3 bg-green-500/15 border border-green-500/30 text-green-400 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md">
+                              +{bonusPct}% bônus
                             </span>
                           )}
 
-                          <div className="text-sm font-bold text-white/70">
-                            {pkg.label}
+                          <div className="flex items-center justify-between">
+                            <span className={`text-base font-black tracking-tight ${isSelected ? 'text-[#FFD700]' : 'text-white'}`}>
+                              {pkg.label}
+                            </span>
+                            {isSelected && (
+                              <CheckCircle2 size={16} className="text-[#FFD700]" />
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <GoldEssenceIcon size={20} className={selectedPackage?.id === pkg.id ? 'opacity-100' : 'opacity-70'} />
-                            <div className="text-xl md:text-2xl font-black text-white tracking-tight">
+                            <GoldEssenceIcon size={22} className={isSelected ? 'opacity-100' : 'opacity-80'} />
+                            <div className="text-2xl font-black text-white tracking-tight">
                               {pkg.mcs.toLocaleString('pt-BR')} <span className="text-[10px] font-medium text-white/40">MCs</span>
                             </div>
                           </div>
                         </motion.button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
                   {/* Resumo do Pedido Glassmorphism */}
-                  <div className="bg-black/60 border border-[#FFD700]/30 rounded-2xl p-5 backdrop-blur-lg space-y-4 shadow-xl z-10">
+                  <div className="bg-black/60 border border-[#FFD700]/30 rounded-2xl p-5 backdrop-blur-lg space-y-4 shadow-xl z-10 lg:sticky lg:top-0">
                     <p className="text-[#FFD700] text-[10px] uppercase tracking-widest font-black">Resumo do Pedido</p>
 
                     {selectedPackage ? (
@@ -365,7 +390,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         <div className="space-y-3">
                           <div className="flex justify-between items-baseline">
                             <span className="text-white/50 text-xs font-bold uppercase">Total a Pagar</span>
-                            <span className="text-2xl md:text-3xl font-black text-[#FFD700]">
+                            <span className="text-3xl font-black text-[#FFD700] tracking-tight">
                               R$ {selectedPackage.priceInReais.toFixed(2).replace('.', ',')}
                             </span>
                           </div>
@@ -377,9 +402,16 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               <span className="text-lg font-black">{selectedPackage.mcs.toLocaleString('pt-BR')} MCs</span>
                             </div>
                           </div>
+
+                          <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2 flex items-center justify-between">
+                            <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Custo por MC</span>
+                            <span className="text-white/70 text-xs font-black">
+                              R$ {(selectedPackage.priceInReais / selectedPackage.mcs).toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-2 text-white/50 text-[10px]">
+                        <div className="flex items-center gap-2 pt-1 text-white/50 text-[10px]">
                           <CheckCircle2 size={12} className="text-[#FFD700] shrink-0" />
                           <span>Liberação imediata pós-PIX • Sem taxas</span>
                         </div>
@@ -387,7 +419,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         <button
                           onClick={handleBuyClick}
                           disabled={!selectedPackage || loading}
-                          className={`relative w-full py-3.5 rounded-xl font-black uppercase tracking-wider text-xs md:text-sm text-black transition-all duration-300 overflow-hidden ${
+                          className={`relative w-full py-4 rounded-xl font-black uppercase tracking-wider text-xs md:text-sm text-black transition-all duration-300 overflow-hidden ${
                             selectedPackage && !loading
                               ? 'bg-gradient-to-r from-[#E6A600] via-[#FFD700] to-[#E6A600] hover:brightness-110 shadow-[0_8px_25px_rgba(230,166,0,0.35)] cursor-pointer active:scale-95'
                               : 'bg-white/10 text-white/20 cursor-not-allowed opacity-50'
@@ -425,6 +457,13 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   {paymentData.method === 'pix' && paymentData.qrCode ? (
                     <>
                       <div className="flex flex-col items-center">
+                        {/* Valor do pedido em destaque */}
+                        <div className="mb-4 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/30 px-5 py-2.5 inline-flex items-baseline gap-1.5">
+                          <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Pagando</span>
+                          <span className="text-2xl font-black text-[#FFD700]">
+                            R$ {selectedPackage?.priceInReais.toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
                         <div className="relative p-4 bg-white rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(255,215,0,0.2)]">
                           <img
                             src={`data:image/png;base64,${paymentData.qrCode}`}

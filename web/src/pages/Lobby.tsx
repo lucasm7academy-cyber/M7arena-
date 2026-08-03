@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -182,7 +182,7 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
     </div>
 
-    {/* TÃ­tulo + streamer */}
+    {/* Título + streamer */}
     <div className="w-full px-4 py-3 flex-1">
       <p className="text-sm font-bold text-white line-clamp-2 leading-tight">{titulo}</p>
       <span className="text-[12px] font-black text-[#9146FF] uppercase tracking-[0.15em] mt-1 block">@{streamer}</span>
@@ -220,13 +220,13 @@ const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
       {/* Badge roxo com estrela branca */}
       <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-2 bg-[#9146FF] rounded text-[8px] font-black uppercase tracking-widest text-white">
-        â˜… {categoria === 'clutch' ? 'Clutch' : categoria === 'jogada' ? 'Jogada' : categoria === 'engracado' ? 'EngraÃ§ado' : categoria === 'top5' ? 'Top 5' : categoria === 'compilacao' ? 'CompilaÃ§Ã£o' : categoria === 'semana' ? 'Destaques' : 'Highlight'}
+        ★ {categoria === 'clutch' ? 'Clutch' : categoria === 'jogada' ? 'Jogada' : categoria === 'engracado' ? 'Engraçado' : categoria === 'top5' ? 'Top 5' : categoria === 'compilacao' ? 'Compilação' : categoria === 'semana' ? 'Destaques' : 'Highlight'}
       </div>
     </div>
     <div className="w-full px-4 py-3 flex-1">
       <p className="text-sm font-bold text-white line-clamp-2 leading-tight">{titulo}</p>
     </div>
-    {/* BotÃ£o roxo embaixo */}
+    {/* Botão roxo embaixo */}
     <div className="w-full bg-[#9146FF] py-5 flex items-center justify-center border-t border-black/5">
       <span className="text-[14px] font-black uppercase tracking-[0.4em] text-white">ASSISTIR AGORA!</span>
     </div>
@@ -234,12 +234,12 @@ const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
 );
 
 const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, link, colorA, colorB, titulo, modo, nomecamp }: any) => {
-  // Gerar tÃ­tulo automÃ¡tico baseado no modo
+  // Gerar título automático baseado no modo
   const tituloFinal = modo === 'campeonato'
     ? nomecamp
     : modo === 'amistoso'
     ? `Amistoso - ${tagA.replace('#', '')} vs ${tagB.replace('#', '')}`
-    : titulo || 'TransmissÃ£o ao vivo';
+    : titulo || 'Transmissão ao vivo';
 
   return (
   <a
@@ -282,7 +282,7 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent pointer-events-none" />
     </div>
 
-    {/* TÃ­tulo automÃ¡tico + Streamer name */}
+    {/* Título automático + Streamer name */}
     <div className="w-full px-4 py-3 flex-1 flex flex-col justify-between">
       <p className="text-sm font-bold text-white line-clamp-1 leading-tight">{tituloFinal}</p>
       <span className="text-[12px] font-black text-[#9146FF] uppercase tracking-[0.15em] mt-1 block">@{streamer}</span>
@@ -314,12 +314,12 @@ const _UPCOMING_CACHE_TTL = 5 * 60 * 1000;
 const _UPCOMING_CACHE_VER = 3; // bump ao mudar estrutura
 let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = null;
 
-// âš¡ OTIMIZAÃ‡ÃƒO: cache em memÃ³ria de 5min para highlights e votos.
-// Evita refetch ao navegar Lobby â†” outras pÃ¡ginas â†” Lobby de novo.
+// ⚡ OTIMIZAÇÃO: cache em memória de 5min para highlights e votos.
+// Evita refetch ao navegar Lobby ↔ outras páginas ↔ Lobby de novo.
 const _HIGHLIGHTS_CACHE_TTL = 5 * 60 * 1000;
 let _highlightsCache: { data: Array<{ id: string; titulo: string; link: string; thumbnail_url: string | null; categoria: string }>; ts: number } | null = null;
 
-// âš¡ Cache para notÃ­cias do blog (mesmo padrÃ£o)
+// ⚡ Cache para notícias do blog (mesmo padrão)
 const _NOTICIAS_CACHE_TTL = 5 * 60 * 1000;
 let _noticiasCache: { data: Noticia[]; ts: number } | null = null;
 
@@ -355,7 +355,7 @@ const Home = () => {
   const [openFaqId, setOpenFaqId] = React.useState<number | null>(null);
   const [selectedNoticia, setSelectedNoticia] = React.useState<any>(null);
 
-  // Fetch prÃ³ximos jogos do cronograma (cache 5 min)
+  // Fetch próximos jogos do cronograma (cache 5 min)
   React.useEffect(() => {
     const fetchUpcoming = async () => {
       if (_upcomingCache && _upcomingCache.v === _UPCOMING_CACHE_VER && Date.now() - _upcomingCache.ts < _UPCOMING_CACHE_TTL) {
@@ -397,7 +397,7 @@ const Home = () => {
               diffDays === 0
                 ? 'HOJE'
                 : diffDays === 1
-                ? 'AMANHÃƒ'
+                ? 'AMANHÃ'
                 : mDate
                     .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
                     .toUpperCase();
@@ -421,7 +421,7 @@ const Home = () => {
           colorB: c._tB?.cor || c.theme_color || '#FFB700',
           logoB: c._tB?.logo || '',
           date: c._dateStr,
-          time: match.hora || match.horario || 'â€”',
+          time: match.hora || match.horario || '—',
         }));
 
         _upcomingCache = { data: mapped, ts: Date.now(), v: _UPCOMING_CACHE_VER };
@@ -429,7 +429,7 @@ const Home = () => {
         setCurrentMatchIndex(0);
         setUpcomingLoaded(true);
       } catch (err) {
-        console.error('Erro ao buscar prÃ³ximos jogos:', err);
+        console.error('Erro ao buscar próximos jogos:', err);
         setUpcomingLoaded(true);
       }
     };
@@ -452,7 +452,7 @@ const Home = () => {
       });
   }, []);
 
-  // Busca notÃ­cias do blog (cache 5min) â€” usado na seÃ§Ã£o "NotÃ­cias & AtualizaÃ§Ãµes"
+  // Busca notícias do blog (cache 5min) — usado na seção "Notícias & Atualizações"
   React.useEffect(() => {
     if (_noticiasCache && Date.now() - _noticiasCache.ts < _NOTICIAS_CACHE_TTL) {
       setNoticias(_noticiasCache.data);
@@ -464,11 +464,11 @@ const Home = () => {
         _noticiasCache = { data: list, ts: Date.now() };
       })
       .catch((err) => {
-        console.error('Erro ao buscar notÃ­cias:', err);
+        console.error('Erro ao buscar notícias:', err);
       });
   }, []);
 
-  // Carrega votos jÃ¡ dados pelo usuÃ¡rio (localStorage)
+  // Carrega votos já dados pelo usuário (localStorage)
   React.useEffect(() => {
     const stored: Record<string, 'a' | 'b'> = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -517,7 +517,7 @@ const Home = () => {
     fetchVotes();
   }, [upcomingMatches]);
 
-  // Registra voto do usuÃ¡rio
+  // Registra voto do usuário
   const handleVote = async (matchId: string, side: 'a' | 'b') => {
     if (userVotes[matchId]) return;
     const match = upcomingMatches.find((m) => m.id === matchId);
@@ -533,7 +533,7 @@ const Home = () => {
     }));
     setUserVotes((prev) => ({ ...prev, [matchId]: side }));
     localStorage.setItem(`vote_${matchId}`, side);
-    // Invalida cache de votos para prÃ³xima visita refrescar contagem
+    // Invalida cache de votos para próxima visita refrescar contagem
     _votesCache = null;
     await api.matches.vote(matchId, teamTag).catch((e: any) => console.error('Erro ao votar:', e.message));
   };
@@ -642,20 +642,20 @@ const Home = () => {
               <div className="flex items-center gap-2">
 
                 <span className="text-[#FFB700] text-[10px] md:text-sm font-black uppercase tracking-[0.3em]">
-                  M7 ARENA â€¢ Campeonatos 2026
+                  M7 ARENA • Campeonatos 2026
                 </span>
               </div>
 
               <h1 className="text-2xl sm:text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
-                Seu Time estÃ¡ <br />
+                Seu Time está <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40">
-                  preparado?
+                  pronto para vencer?
                 </span>
               </h1>
 
               <p className="text-white/40 text-[10px] sm:text-sm md:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
-                Participe dos maiores torneios de elite, conquiste prÃªmios reais e
-                escreva seu nome na histÃ³ria da M7 ARENA.
+                Campeonatos de LoL com premiação em Pix, ranking por PDL e
+                transmissão ao vivo — a vitrine para o seu time brilhar.
               </p>
 
               {/* Action Buttons */}
@@ -729,15 +729,15 @@ const Home = () => {
               ref={liveScrollRef}
               className="flex gap-6 overflow-x-auto hide-scrollbar pb-8 px-4 -mx-4 scroll-smooth snap-x snap-mandatory sm:snap-none"
             >
-              {/* Vazio sÃ³ quando nÃ£o hÃ¡ lives NEM highlights */}
+              {/* Vazio só quando não há lives NEM highlights */}
               {!loadingLives && transmissoes.length === 0 && highlights.length === 0 && (
                 <div className="flex-none w-full py-12 text-center">
                   <FaTwitch size={32} className="mx-auto text-purple-500/40 mb-3" />
-                  <p className="text-white/30 text-sm font-bold uppercase tracking-widest">Nenhuma live no momento</p>
+                  <p className="text-white/30 text-sm font-bold uppercase tracking-widest">Nenhuma live no momento — veja os destaques abaixo</p>
                 </div>
               )}
 
-              {/* Lives ativas â€” sempre primeiro */}
+              {/* Lives ativas — sempre primeiro */}
               {transmissoes.map((tx) => {
                 if (tx.modo === 'padrao' || (!tx.time1 && !tx.time2)) {
                   return (
@@ -770,7 +770,7 @@ const Home = () => {
                 );
               })}
 
-              {/* Aviso "nÃ£o ao vivo" com Howling Abyss quando sÃ³ hÃ¡ highlights â€” escondido no mobile */}
+              {/* Aviso "não ao vivo" com Howling Abyss quando só há highlights — escondido no mobile */}
               {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
                 <div className="hidden sm:flex group relative flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center rounded-2xl border border-[#9146FF]/30 overflow-hidden flex-col items-center justify-center p-6 text-center min-h-[220px] shadow-2xl bg-black">
                   <img
@@ -783,16 +783,16 @@ const Home = () => {
                   <div className="relative z-10">
                     <FaTwitch size={32} className="mx-auto text-[#9146FF] mb-2 drop-shadow-lg" />
                     <p className="text-white font-black text-sm uppercase tracking-wider leading-snug drop-shadow">
-                      NÃ£o estamos<br />ao vivo no momento
+                      Não estamos<br />ao vivo no momento
                     </p>
                     <p className="text-white/50 text-xs font-semibold mt-2.5 leading-relaxed drop-shadow">
-                      Assista aos highlights<br />da nossa comunidade â†’
+                      Assista aos highlights<br />da nossa comunidade →
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Highlights â€” aparecem sempre apÃ³s as lives */}
+              {/* Highlights — aparecem sempre após as lives */}
               {highlights.map((h) => (
                 <HighlightCard
                   key={h.id}
@@ -814,13 +814,13 @@ const Home = () => {
         </div>
       </section>
 
-      {/* UPCOMING MATCHES - PRÃ“XIMOS JOGOS (oculto quando nÃ£o hÃ¡ jogos) */}
+      {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (oculto quando não há jogos) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
       <section className="pt-10 pb-4 px-4 max-w-7xl mx-auto overflow-hidden relative">
         <div className="space-y-8 relative">
           <div className="flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
-              PrÃ³ximos <span className="text-[#FFB700]">Jogos</span>
+              Próximos <span className="text-[#FFB700]">Jogos</span>
             </h2>
           </div>
 
@@ -940,7 +940,7 @@ const Home = () => {
 
                       </div>
 
-                      {/* VotaÃ§Ã£o da torcida */}
+                      {/* Votação da torcida */}
                       {(() => {
                         const m = upcomingMatches[currentMatchIndex];
                         if (!m) return null;
@@ -962,7 +962,7 @@ const Home = () => {
                                 style={{ width: `${pctB}%`, backgroundColor: m.colorB, opacity: 0.85 }}
                               />
                             </div>
-                            {/* BotÃµes GO */}
+                            {/* Botões GO */}
                             <div className="flex items-center justify-between gap-2">
                               <button
                                 onClick={() => handleVote(m.id, 'a')}
@@ -971,7 +971,7 @@ const Home = () => {
                                   ${voted === 'a' ? 'cursor-default' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 text-white/50 hover:scale-105 active:scale-95 hover:text-white hover:border-white/30'}`}
                                 style={voted === 'a' ? { borderColor: m.colorA, color: m.colorA } : undefined}
                               >
-                                {voted === 'a' && 'âœ“ '}GO {m.tagA}
+                                {voted === 'a' && '✓ '}GO {m.tagA}
                                 <span className="opacity-60">{pctA}%</span>
                               </button>
 
@@ -988,7 +988,7 @@ const Home = () => {
                               >
                                 GO {m.tagB}
                                 <span className="opacity-60">{pctB}%</span>
-                                {voted === 'b' && ' âœ“'}
+                                {voted === 'b' && ' ✓'}
                               </button>
                             </div>
                           </div>
@@ -1013,16 +1013,16 @@ const Home = () => {
       )}
 
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          COMO FUNCIONA â€” Linha do Tempo da Jornada com Banners de Imagem
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          COMO FUNCIONA — Linha do Tempo da Jornada com Banners de Imagem
+         ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 max-w-7xl mx-auto">
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
             Do Cadastro ao <span className="text-[#FFB700]">Campeonato</span>
           </h2>
           <p className="text-white/40 text-sm md:text-base mt-3 max-w-xl mx-auto">
-            4 passos simples para vocÃª comeÃ§ar a competir e conquistar seu espaÃ§o na elite do eSports.
+            Do cadastro à disputa por prêmios em Pix: 4 passos para colocar seu time na briga pela elite do eSports.
           </p>
         </div>
 
@@ -1032,7 +1032,7 @@ const Home = () => {
               n: '01',
               icon: UserPlus,
               title: 'Crie sua Conta',
-              desc: 'Cadastro rÃ¡pido e seguro. Vincule sua conta Riot Games para checagem de elo oficial.',
+              desc: 'Cadastro rápido e seguro. Vincule sua conta Riot Games para checagem de elo oficial.',
               color: '#FFB700',
               bgImage: '/images/poro_step1.jpeg',
             },
@@ -1040,7 +1040,7 @@ const Home = () => {
               n: '02',
               icon: Users,
               title: 'Monte seu Time',
-              desc: 'Traga seu squad completo ou encontre parceiros perfeitos no nosso painel de recrutamento.',
+              desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento — sem time, a gente ajuda a montar.',
               color: '#00F0FF',
               bgImage: '/images/poro_step2.jpeg',
             },
@@ -1048,7 +1048,7 @@ const Home = () => {
               n: '03',
               icon: Trophy,
               title: 'Inscreva-se',
-              desc: 'Escolha o campeonato ideal para o nÃ­vel da sua equipe e garanta sua vaga nas chaves.',
+              desc: 'Escolha o campeonato ideal para o nível da sua equipe — do Bronze ao Desafiante — e garanta sua vaga nas chaves.',
               color: '#00FF41',
               bgImage: '/images/poro_step3.jpeg',
             },
@@ -1056,7 +1056,7 @@ const Home = () => {
               n: '04',
               icon: SwordsIcon,
               title: 'Compita e Suba',
-              desc: 'Jogue partidas competitivas, acumule PDL no ranking global e dispute premiaÃ§Ãµes em Pix.',
+              desc: 'Jogue partidas competitivas, acumule PDL no ranking global e dispute premiações em Pix.',
               color: '#D500FF',
               bgImage: '/images/poro_step4.jpeg',
             },
@@ -1092,7 +1092,7 @@ const Home = () => {
                   </span>
                 </div>
 
-                {/* NÃºmero no Canto da Imagem */}
+                {/* Número no Canto da Imagem */}
                 <div
                   className="absolute bottom-2 right-3 text-5xl font-black opacity-30 select-none z-10"
                   style={{ color: step.color }}
@@ -1101,7 +1101,7 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* ConteÃºdo do Card */}
+              {/* Conteúdo do Card */}
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
@@ -1130,9 +1130,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          NOTÃCIAS & ATUALIZAÃ‡Ã•ES â€” ClicÃ¡veis com Leitura Completa
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          NOTÍCIAS & ATUALIZAÇÕES — Clicáveis com Leitura Completa
+         ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
         <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div className="text-center sm:text-left">
@@ -1145,7 +1145,7 @@ const Home = () => {
             </h2>
           </div>
           <span className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40">
-            Clique em qualquer matÃ©ria para ler na Ã­ntegra
+            Clique em qualquer matéria para ler na íntegra
           </span>
         </div>
 
@@ -1155,8 +1155,8 @@ const Home = () => {
               {
                 id: 'demo-1',
                 titulo: 'Nova Temporada de Torneios M7 ARENA Anunciada',
-                resumo: 'PremiaÃ§Ã£o recorde, novas categorias por tier e narraÃ§Ã£o ao vivo das finais todas as semanas.',
-                conteudo: 'A M7 ARENA tem o orgulho de anunciar a abertura oficial da nova temporada de torneios de eSports! Com premiaÃ§Ã£o recorde distribuÃ­da em Pix, os campeonatos contarÃ£o com transmissÃµes semanais ao vivo com narradores convidados na Twitch. AlÃ©m disso, criamos novos tiers de entrada para que times iniciantes disputem em igualdade de condiÃ§Ãµes com o mesmo suporte das equipes veteranas. Inscreva seu time hoje mesmo e venha fazer histÃ³ria na plataforma!',
+                resumo: 'Premiação recorde, novas categorias por tier e narração ao vivo das finais todas as semanas.',
+                conteudo: 'A M7 ARENA tem o orgulho de anunciar a abertura oficial da nova temporada de torneios de eSports! Com premiação recorde distribuída em Pix, os campeonatos contarão com transmissões semanais ao vivo com narradores convidados na Twitch. Além disso, criamos novos tiers de entrada para que times iniciantes disputem em igualdade de condições com o mesmo suporte das equipes veteranas. Inscreva seu time hoje mesmo e venha fazer história na plataforma!',
                 categoria: 'Torneios',
                 date: 'Hoje',
                 image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800',
@@ -1164,19 +1164,19 @@ const Home = () => {
               {
                 id: 'demo-2',
                 titulo: 'Sistema de Ranking por PDL Atualizado',
-                resumo: 'Agora cada vitÃ³ria nas salas 1v1 e torneios oficiais garante pontos no ranking geral de equipes.',
-                conteudo: 'Atualizamos o algoritmo do nosso ranking global! A partir deste patch, cada vitÃ³ria em salas de enfrentamento 1v1 e em partidas de campeonatos oficiais gera pontuaÃ§Ã£o PDL proporcional ao Elo do adversÃ¡rio. Equipes que mantiverem sequÃªncias de vitÃ³rias (Win Streak) receberÃ£o bÃ´nus adicionais de PDL para subir mais rapidamente na tabela do Hall da Fama. Confira seu saldo de PDL no seu perfil!',
+                resumo: 'Agora cada vitória nas salas 1v1 e torneios oficiais garante pontos no ranking geral de equipes.',
+                conteudo: 'Atualizamos o algoritmo do nosso ranking global! A partir deste patch, cada vitória em salas de enfrentamento 1v1 e em partidas de campeonatos oficiais gera pontuação PDL proporcional ao Elo do adversário. Equipes que mantiverem sequências de vitórias (Win Streak) receberão bônus adicionais de PDL para subir mais rapidamente na tabela do Hall da Fama. Confira seu saldo de PDL no seu perfil!',
                 categoria: 'Patch Notes',
-                date: 'HÃ¡ 2 dias',
+                date: 'Há 2 dias',
                 image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800',
               },
               {
                 id: 'demo-3',
-                titulo: 'Dicas para CapitÃ£es: Como Estruturar um Time CampeÃ£o',
-                resumo: 'Aprenda a selecionar os integrantes, definir horÃ¡rios de treino e alinhar estratÃ©gias.',
+                titulo: 'Dicas para Capitães: Como Estruturar um Time Campeão',
+                resumo: 'Aprenda a selecionar os integrantes, definir horários de treino e alinhar estratégias.',
                 categoria: 'Dicas',
-                conteudo: 'Liderar uma equipe de eSports exige muito mais do que boa mecÃ¢nica individual no jogo. Um verdadeiro capitÃ£o precisa organizar a comunicaÃ§Ã£o da equipe (Shotcall), alinhar os horÃ¡rios de scrims e treinos semanais, e manter o foco do grupo durante momentos difÃ­ceis na partida. Confira nosso guia completo com 5 passos fundamentais para transformar seu time amador em uma mÃ¡quina de vitÃ³rias nos torneios M7!',
-                date: 'HÃ¡ 5 dias',
+                conteudo: 'Liderar uma equipe de eSports exige muito mais do que boa mecânica individual no jogo. Um verdadeiro capitão precisa organizar a comunicação da equipe (Shotcall), alinhar os horários de scrims e treinos semanais, e manter o foco do grupo durante momentos difíceis na partida. Confira nosso guia completo com 5 passos fundamentais para transformar seu time amador em uma máquina de vitórias nos torneios M7!',
+                date: 'Há 5 dias',
                 image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=800',
               },
             ].map((n, idx) => (
@@ -1217,7 +1217,7 @@ const Home = () => {
                       {n.date}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
-                      Ler MatÃ©ria <ArrowRight className="w-3 h-3" />
+                      Ler Matéria <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
                 </div>
@@ -1282,9 +1282,9 @@ const Home = () => {
         )}
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          DEPOIMENTOS â€” Avatares Estilo Anime / Gamer Real
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          DEPOIMENTOS — Avatares Estilo Anime / Gamer Real
+         ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
         <div className="text-center mb-14">
           <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
@@ -1299,18 +1299,18 @@ const Home = () => {
           {[
             {
               quote:
-                'A M7 ARENA mudou a rotina da BLACK SAILS. A organizaÃ§Ã£o das chaves 5v5, o suporte no Discord e a transparÃªncia do ranking por PDL sÃ£o sensacionais!',
+                'A M7 ARENA mudou a rotina da BLACK SAILS. A organização das chaves 5v5, o suporte no Discord e a transparência do ranking por PDL são sensacionais!',
               name: 'Portugal',
-              role: 'CapitÃ£o â€¢ BLACK SAILS (BKS)',
+              role: 'Capitão • BLACK SAILS (BKS)',
               elo: 'CHALLENGER',
               eloColor: '#FFB700',
               avatar: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=200',
             },
             {
               quote:
-                'Montamos a CONFIDENT e entramos na liga oficial. As salas de enfrentamento 1v1 dÃ£o aquela adrenalina diÃ¡ria e a premiaÃ§Ã£o em Pix cai na hora!',
+                'Montamos a CONFIDENT e entramos na liga oficial. As salas de enfrentamento 1v1 dão aquela adrenalina diária e a premiação em Pix cai na hora!',
               name: 'Xoxotone',
-              role: 'Mid Laner â€¢ CONFIDENT (CNF)',
+              role: 'Mid Laner • CONFIDENT (CNF)',
               elo: 'MESTRE',
               eloColor: '#00F0FF',
               avatar: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&q=80&w=200',
@@ -1319,7 +1319,7 @@ const Home = () => {
               quote:
                 'Encontrei meus parceiros de rotas pelo recrutamento da plataforma. Hoje jogamos torneios semanais da ACE e-Sports e lutamos pelo topo do Hall da Fama!',
               name: 'Blefy',
-              role: 'CapitÃ£o â€¢ ACE e-Sports (ACE)',
+              role: 'Capitão • ACE e-Sports (ACE)',
               elo: 'DIAMANTE I',
               eloColor: '#D500FF',
               avatar: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=200',
@@ -1367,9 +1367,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          CENTRAL DE COMUNIDADE & REDES SOCIAIS â€” Clean sem marca d'Ã¡gua gigante
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          CENTRAL DE COMUNIDADE & REDES SOCIAIS — Clean sem marca d'água gigante
+         ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
         <div className="text-center mb-14">
           <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-full">
@@ -1380,7 +1380,7 @@ const Home = () => {
             Conecte-se com a <span className="text-[#FFB700]">M7 ARENA</span>
           </h2>
           <p className="text-white/40 text-sm md:text-base mt-3 max-w-xl mx-auto">
-            FaÃ§a parte dos nossos canais oficiais para interagir com outros jogadores, receber suporte e acompanhar torneios.
+            Faça parte dos nossos canais oficiais para interagir com outros jogadores, receber suporte e acompanhar torneios.
           </p>
         </div>
 
@@ -1396,7 +1396,7 @@ const Home = () => {
                   <FaDiscord className="w-8 h-8" />
                 </div>
                 <span className="px-3 py-1 bg-[#5865F2]/20 text-[#5865F2] border border-[#5865F2]/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                  â— 5.000+ Membros
+                  ● 5.000+ Membros
                 </span>
               </div>
 
@@ -1404,7 +1404,7 @@ const Home = () => {
                 Servidor Oficial Discord
               </h3>
               <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
-                Ache parceiros de duplas, agende treinos (scrims), tire dÃºvidas em tempo real com a staff e participe dos canais de voz durante as rodadas.
+                Ache parceiros de duplas, agende treinos (scrims), tire dúvidas em tempo real com a staff e participe dos canais de voz durante as rodadas.
               </p>
             </div>
 
@@ -1430,7 +1430,7 @@ const Home = () => {
                   <ImWhatsapp className="w-7 h-7" />
                 </div>
                 <span className="px-3 py-1 bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                  â— Avisos InstantÃ¢neos
+                  ● Avisos Instantâneos
                 </span>
               </div>
 
@@ -1438,7 +1438,7 @@ const Home = () => {
                 Grupo VIP no WhatsApp
               </h3>
               <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
-                Receba alertas em primeira mÃ£o sobre inscriÃ§Ãµes abertas, sorteios de premiaÃ§Ãµes, novidades de patch e avisos diretos no celular.
+                Receba alertas em primeira mão sobre inscrições abertas, sorteios de premiações, novidades de patch e avisos diretos no celular.
               </p>
             </div>
 
@@ -1464,7 +1464,7 @@ const Home = () => {
                   <Instagram className="w-7 h-7" />
                 </div>
                 <span className="px-3 py-1 bg-[#E1306C]/20 text-[#E1306C] border border-[#E1306C]/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                  â— Clips & ConteÃºdo
+                  ● Clips & Conteúdo
                 </span>
               </div>
 
@@ -1489,17 +1489,17 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          FAQ INTERATIVO â€” DÃºvidas Frequentes
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          FAQ INTERATIVO — Dúvidas Frequentes
+         ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 max-w-4xl mx-auto border-t border-white/5">
         <div className="text-center mb-14">
           <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-full">
             <HelpCircle className="w-3.5 h-3.5 text-[#FFB700]" />
-            DÃºvidas Frequentes
+            Dúvidas Frequentes
           </span>
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4">
-            Tudo o que vocÃª <span className="text-[#FFB700]">Precisa Saber</span>
+            Tudo o que você <span className="text-[#FFB700]">Precisa Saber</span>
           </h2>
         </div>
 
@@ -1507,23 +1507,23 @@ const Home = () => {
           {[
             {
               id: 1,
-              q: 'Como funcionam as premiaÃ§Ãµes e saques dos torneios?',
-              a: 'Todas as premiaÃ§Ãµes dos campeonatos e enfrentamentos sÃ£o pagas via Pix diretamente na conta cadastrada do capitÃ£o ou integrante do time em atÃ© 24 horas Ãºteis apÃ³s o encerramento do evento.',
+              q: 'Como funcionam as premiações e saques dos torneios?',
+              a: 'Todas as premiações são pagas via Pix para a conta cadastrada do capitão ou integrante do time em até 24 horas úteis após o encerramento do evento. Transparência total: você vê o valor da premiação antes de se inscrever.',
             },
             {
               id: 2,
               q: 'Preciso ter um time fechado de 5 jogadores para competir?',
-              a: 'NÃ£o! VocÃª pode participar individualmente de salas rÃ¡pidas 1v1 ou publicar seu perfil no nosso painel de Recrutamento para ser contratado por equipes que precisam de reforÃ§o.',
+              a: 'Não! Você pode entrar sozinho nas salas rápidas 1v1 ou publicar seu perfil no nosso painel de Recrutamento — capitães procuram reforços lá todos os dias. Sem time? A M7 ajuda a montar o seu.',
             },
             {
               id: 3,
-              q: 'Como Ã© feita a verificaÃ§Ã£o do Elo oficial da Riot Games?',
-              a: 'Ao vincular seu Nick + Tag no seu perfil, o sistema M7 busca automaticamente via API oficial da Riot a sua liga atual no League of Legends. Isso garante o equilÃ­brio justo entre os times nos tiers dos campeonatos.',
+              q: 'Como é feita a verificação do Elo oficial da Riot Games?',
+              a: 'Ao vincular seu Nick + Tag no perfil, o sistema M7 busca sua liga atual na API oficial da Riot Games. Assim, os campeonatos são divididos por tier e você compete contra quem está no mesmo nível — equilíbrio justo, do Bronze ao Desafiante.',
             },
             {
               id: 4,
               q: 'Posso fazer co-stream ou transmitir minhas partidas ao vivo?',
-              a: 'Com certeza! Encorajamos todos os jogadores e times a realizarem suas prÃ³prias lives. AlÃ©m disso, as fases finais dos campeonatos contam com transmissÃ£o oficial e narraÃ§Ã£o nos canais da M7 ARENA.',
+              a: 'Com certeza! Encorajamos todos os jogadores e times a realizarem suas próprias lives. Além disso, as fases finais dos campeonatos contam com transmissão oficial e narração nos canais da M7 ARENA.',
             },
           ].map((item) => {
             const isOpen = openFaqId === item.id;
@@ -1566,9 +1566,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          BANNER CTA FINAL â€” Call-to-Action Ã‰pico
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          BANNER CTA FINAL — Call-to-Action Épico
+         ════════════════════════════════════════════════════════════════ */}
       <section className="py-16 px-4 max-w-7xl mx-auto">
         <div className="relative rounded-3xl p-8 md:p-14 bg-gradient-to-r from-black via-[#FFB700]/10 to-black border border-[#FFB700]/30 overflow-hidden shadow-2xl text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#FFB700]/10 rounded-full blur-3xl pointer-events-none" />
@@ -1581,7 +1581,7 @@ const Home = () => {
               Pronto para Dominar o <span className="text-[#FFB700]">Summoner's Rift?</span>
             </h2>
             <p className="text-white/60 text-sm md:text-base mt-3 leading-relaxed">
-              Crie sua conta em menos de 1 minuto, monte seu squad ou entre em partidas rÃ¡pidas hoje mesmo.
+              Crie sua conta em menos de 1 minuto e entre na disputa por prêmios em Pix — sua vaga está esperando.
             </p>
           </div>
 
@@ -1604,9 +1604,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          MODAL DE NOTÃCIAS â€” Leitura Completa ao Clicar
-         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ════════════════════════════════════════════════════════════════
+          MODAL DE NOTÍCIAS — Leitura Completa ao Clicar
+         ════════════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {selectedNoticia && (
           <div
@@ -1639,7 +1639,7 @@ const Home = () => {
 
                 <div className="absolute bottom-4 left-6 flex items-center gap-2">
                   <span className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest rounded-md shadow-md">
-                    {selectedNoticia.categoria || 'NotÃ­cia'}
+                    {selectedNoticia.categoria || 'Notícia'}
                   </span>
                   {selectedNoticia.date && (
                     <span className="px-3 py-1 bg-black/60 border border-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest rounded-md backdrop-blur-sm flex items-center gap-1">
@@ -1661,7 +1661,7 @@ const Home = () => {
 
                 <div className="text-white/70 text-sm leading-relaxed space-y-3 pt-2 border-t border-white/5 whitespace-pre-line">
                   <p>
-                    {selectedNoticia.conteudo || selectedNoticia.resumo || 'ConteÃºdo completo da matÃ©ria em breve. Fique atento Ã s nossas redes sociais para mais informaÃ§Ãµes.'}
+                    {selectedNoticia.conteudo || selectedNoticia.resumo || 'Conteúdo completo da matéria em breve. Fique atento às nossas redes sociais para mais informações.'}
                   </p>
                 </div>
 

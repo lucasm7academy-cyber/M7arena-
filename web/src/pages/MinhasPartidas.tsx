@@ -269,25 +269,25 @@ export default function MinhasPartidas() {
               <History className="w-10 h-10 text-white/20" />
             </div>
             <h3 className="text-2xl font-black text-white uppercase mb-3">
-              Carregue seu histórico
+              Sua jornada começa aqui
             </h3>
             <p className="text-white/40 text-sm max-w-md mx-auto mb-6">
-              Clique para visualizar suas partidas finalizadas.
+              Você ainda não disputou nenhuma partida. Entre na arena e comece a construir seu histórico de vitórias.
             </p>
             <div className="flex gap-3 justify-center">
               <button
-                onClick={() => carregarDados()}
-                className="px-6 py-3 rounded-xl bg-[#FFB700] text-black font-black text-sm uppercase hover:bg-[#e0a000] transition-all inline-flex items-center gap-2"
-              >
-                <History className="w-4 h-4" />
-                Carregar Histórico
-              </button>
-              <button
                 onClick={() => navigate('/jogar')}
-                className="px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-black text-sm uppercase hover:bg-white/20 transition-all inline-flex items-center gap-2"
+                className="px-6 py-3 rounded-xl bg-[#FFB700] text-black font-black text-sm uppercase hover:bg-[#e0a000] transition-all inline-flex items-center gap-2"
               >
                 <Swords className="w-4 h-4" />
                 Encontrar Partida
+              </button>
+              <button
+                onClick={() => navigate('/lobby')}
+                className="px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-black text-sm uppercase hover:bg-white/20 transition-all inline-flex items-center gap-2"
+              >
+                <Trophy className="w-4 h-4" />
+                Ver Campeonatos
               </button>
             </div>
           </motion.div>

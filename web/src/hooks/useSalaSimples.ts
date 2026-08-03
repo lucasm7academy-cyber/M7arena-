@@ -35,6 +35,20 @@ const TICK_RETRY_MS = 3000;
 // Janela mínima entre dois ticks para a MESMA deadline (anti-loop).
 const TICK_DEBOUNCE_MS = 2500;
 
+/**
+ * Erros de elegibilidade que viram MODAL (design v3 §2.1/§11), nunca mensagem
+ * genérica. `faltam` vem de `saldo_insuficiente`; `salaNum` de
+ * `ja_em_sala_apostada`; `liberadoEm` de `suspenso_por_strikes`/`conta_suspensa`.
+ */
+export type ErroElegibilidade =
+  | { tipo: 'saldo'; faltam: number }
+  | { tipo: 'outra_sala'; salaNum: number }
+  | { tipo: 'riot_id' }
+  | { tipo: 'termos' }
+  | { tipo: 'suspenso'; liberadoEm: string | null }
+  | { tipo: 'banida' }
+  | null;
+
 export function useSalaSimples(
     salaId: number,
     usuarioAtual: {
@@ -57,6 +71,8 @@ export function useSalaSimples(
     const [votos, setVotos] = useState<any[]>([]);
     const [timerFinalizacao, setTimerFinalizacao] = useState(180);
     const [mostrarMensagem, setMostrarMensagem] = useState<{ tipo: 'erro' | 'sucesso'; texto: string } | null>(null);
+    const [erroElegibilidade, setErroElegibilidade] = useState<ErroElegibilidade>(null);
+    const [kickTick, setKickTick] = useState(0); // re-render periódico do aviso de ociosidade
 
     // ── Refs (apenas UI/anti-clique-duplo — NADA de coordenação de estado) ──
     const timerFinRef = useRef<NodeJS.Timeout | null>(null);
@@ -68,6 +84,10 @@ export function useSalaSimples(
     const ultimoEstadoRef = useRef<string>('');
     const tickRef = useRef<{ chave: string; ts: number } | null>(null);
     const tickEmVooRef = useRef(false);
+    const jogadoresRef = useRef<any[]>([]);
+    // Timestamp da última saída VOLUNTÁRIA: o realtime que chega logo depois
+    // não pode virar o aviso de "removido por ociosidade".
+    const saiuProprioRef = useRef(0);
 
     // ── TIMERS DERIVADOS (apresentação; a decisão é do servidor) ──────
     const timer = sala?.confirmacao_expires_at
@@ -92,6 +112,7 @@ export function useSalaSimples(
     const sincronizarJogadores = useCallback(async () => {
         const dados = await buscarJogadores(salaId);
         setJogadores(dados);
+        jogadoresRef.current = dados;
         return dados;
     }, [salaId]);
 
@@ -105,6 +126,7 @@ export function useSalaSimples(
         setSala(dadosSala);
         setCodigoPartida(dadosSala.codigo_partida || null);
         setJogadores(dadosJogadores);
+        jogadoresRef.current = dadosJogadores;
         ultimoEstadoRef.current = dadosSala.estado;
 
         if (IS_DEV) {
@@ -170,6 +192,7 @@ export function useSalaSimples(
             if (!mounted) return;
 
             setJogadores(dadosJogadores);
+            jogadoresRef.current = dadosJogadores;
             if (IS_DEV) console.log(`📥 [Initial Load] estado=${dadosSala.estado}, ${dadosJogadores.length} jogadores`);
             setLoading(false);
         }
@@ -201,9 +224,21 @@ export function useSalaSimples(
     useSalaRealtime(salaId, {
         onUpdate: async () => {
             const estadoAnterior = ultimoEstadoRef.current;
+            const tinhaEu = jogadoresRef.current.some((j: any) => j.user_id === usuarioAtual.id);
             const dadosSala = await sincronizarTudo('realtime');
             if (!dadosSala) return;
             const novoEstado = dadosSala.estado;
+
+            // Kick por ociosidade (design v3 §8): minha vaga sumiu sem eu ter
+            // saído e a sala CONTINUA em `preenchendo` → aviso do strike na hora
+            // (design v3 §11). Remoção por timeout de confirmação (confirmacao→
+            // preenchendo) NÃO gera strike e já tem a própria mensagem abaixo.
+            const saiuHagora = Date.now() - saiuProprioRef.current < 5000;
+            const tinhaEuAgora = jogadoresRef.current.some((j: any) => j.user_id === usuarioAtual.id);
+            if (tinhaEu && !saiuHagora && !tinhaEuAgora && estadoAnterior === 'preenchendo' && novoEstado === 'preenchendo') {
+                mostrar('erro', 'Você foi removido da vaga por ociosidade — strike registrado.');
+            }
+
             if (novoEstado === estadoAnterior) return;
 
             if (IS_DEV) console.log(`📡 [Realtime] Sala ${salaId}: ${estadoAnterior} → ${novoEstado}`);
@@ -339,6 +374,9 @@ export function useSalaSimples(
         if (timerFinRef.current) { clearInterval(timerFinRef.current); timerFinRef.current = null; }
         const ok = await encerrarSala(salaId, vencedor);
         if (!ok && IS_DEV) console.log(`❌ [Partida] Falha ao encerrar sala ${salaId}`);
+        // → encerrada (casual) ou aguardando_revisao (apostada): refaz a sala
+        // inteira na hora (mesma razão do entrar/confirmar).
+        await sincronizarTudo('encerrar');
     }
 
     // ── CARREGAR VOTOS (COM TRAVA) ────────────────────
@@ -370,13 +408,41 @@ export function useSalaSimples(
 
             if (!r.ok) {
                 if (IS_DEV) console.log(`❌ [entrar] Recusado pelo servidor: ${r.erro}`);
-                mostrar('erro', traduzirErroSala(r.erro));
+
+                // Erros de elegibilidade viram MODAL específico (design v3 §11),
+                // nunca mensagem genérica. O servidor é a fonte da verdade.
+                if (r.erro === 'saldo_insuficiente') {
+                    setErroElegibilidade({ tipo: 'saldo', faltam: r.faltam ?? 0 });
+                } else if (r.erro === 'ja_em_sala_apostada') {
+                    setErroElegibilidade({ tipo: 'outra_sala', salaNum: r.salaNum ?? 0 });
+                } else if (r.erro === 'riot_id_obrigatorio') {
+                    setErroElegibilidade({ tipo: 'riot_id' });
+                } else if (r.erro === 'termos_nao_aceitos') {
+                    setErroElegibilidade({ tipo: 'termos' });
+                } else if (r.erro === 'suspenso_por_strikes') {
+                    setErroElegibilidade({ tipo: 'suspenso', liberadoEm: r.liberadoEm ?? null });
+                } else if (r.erro === 'conta_suspensa') {
+                    setErroElegibilidade({ tipo: 'suspenso', liberadoEm: r.suspensaAte ?? null });
+                } else if (r.erro === 'conta_banida') {
+                    setErroElegibilidade({ tipo: 'banida' });
+                } else {
+                    mostrar('erro', traduzirErroSala(r.erro));
+                }
+
                 await sincronizarJogadores(); // realinha a UI com a verdade do banco
                 return;
             }
 
             if (IS_DEV) console.log(`✅ [entrar] OK — estado da sala: ${r.estado}`);
-            await sincronizarJogadores();
+            // Caso especial "vagas cheias": entrar preencheu a última vaga e o
+            // servidor transicionou para confirmacao (r.estado). Refaz o fetch
+            // da sala INTEIRA na hora para a contagem aparecer — sem depender
+            // do WebSocket, que o Chrome congela em aba de background.
+            if (r.estado === 'confirmacao') {
+                await sincronizarTudo('entrar');
+            } else {
+                await sincronizarJogadores();
+            }
         } finally {
             entrandoRef.current = false;
         }
@@ -394,11 +460,46 @@ export function useSalaSimples(
                 mostrar('erro', traduzirErroSala(r.erro));
                 return;
             }
+            // Marca a saída como voluntária para o realtime não virar "kick".
+            saiuProprioRef.current = Date.now();
             await sincronizarJogadores();
         } finally {
             saindoRef.current = false;
         }
     };
+
+    // ── FECHAR MODAL DE ELEGIBILIDADE ─────────────────────────
+    const fecharErroElegibilidade = useCallback(() => setErroElegibilidade(null), []);
+
+    // ── ACEITAR TERMOS (modal `termos_nao_aceitos`) ────────────
+    const aceitarTermos = useCallback(async () => {
+        try {
+            await api.terms.accept();
+            setErroElegibilidade(null);
+            if (IS_DEV) console.log(`📋 [Termos] Aceite registrado — pode tentar entrar de novo`);
+        } catch (error: any) {
+            if (IS_DEV) console.error(`❌ [Termos] ${error?.message}`);
+            mostrar('erro', 'Não foi possível registrar o aceite. Tente novamente.');
+        }
+    }, [mostrar]);
+
+    // ── TICKER DE OCIOSIDADE (aviso de kick aos 25 min, design v3 §8) ──
+    // Enquanto eu estiver numa vaga de sala em `preenchendo`, re-renderiza a
+    // cada 15s para o badge "será removido em 5 min" derivar de `created_at`
+    // (o servidor kicka aos 30 min desde o created_at da vaga).
+    useEffect(() => {
+        if (sala?.estado !== 'preenchendo') return;
+        const temVaga = jogadores.some((j: any) => j.user_id === usuarioAtual.id && !!j.created_at);
+        if (!temVaga) return;
+        const id = setInterval(() => setKickTick((t) => t + 1), 15_000);
+        return () => clearInterval(id);
+    }, [sala?.estado, jogadores, usuarioAtual.id]);
+
+    // ── OCIOSIDADE DERIVADA DO SERVIDOR (minutos desde a entrada na vaga) ──
+    const minhaVaga = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
+    const ociosidadeMin = sala?.estado === 'preenchendo' && minhaVaga?.created_at
+        ? Math.max(0, (Date.now() - new Date(minhaVaga.created_at).getTime()) / 60_000)
+        : 0;
 
     const confirmar = async () => {
         if (confirmandoRef.current) {
@@ -415,7 +516,15 @@ export function useSalaSimples(
                 if (IS_DEV) console.log(`❌ [confirmar] Recusado: ${r.erro}`);
                 mostrar('erro', traduzirErroSala(r.erro));
             }
-            await sincronizarJogadores();
+            // Caso especial: o último confirmar dispara confirmacao →
+            // iniciando_partida (r.estado). Refaz o fetch da sala INTEIRA na
+            // hora para os demais verem "Preparar para a Batalha" — sem
+            // depender do WebSocket congelado em aba de background.
+            if (r.estado === 'iniciando_partida') {
+                await sincronizarTudo('confirmar');
+            } else {
+                await sincronizarJogadores();
+            }
         } finally {
             setTimeout(() => { confirmandoRef.current = false; }, 300);
         }
@@ -452,6 +561,9 @@ export function useSalaSimples(
     const solicitarFinalizacao = async () => {
         const r = await api.matches.finalizar(salaId);
         if (!r.ok && IS_DEV) console.log(`❌ [Finalizar] Recusado: ${r.erro}`);
+        // partida_iniciada → finalizacao: refaz a sala inteira para a tela de
+        // votação aparecer na hora (mesma razão do entrar/confirmar).
+        await sincronizarTudo('finalizar');
     };
 
     return {
@@ -459,6 +571,9 @@ export function useSalaSimples(
         timer, timerIniciandoPartida, codigoPartida,
         meuVoto, votos, timerFinalizacao,
         mostrarMensagem,
+        erroElegibilidade, fecharErroElegibilidade, aceitarTermos,
+        ociosidadeMin,
+        atualizar: () => sincronizarTudo('manual'),
         entrar, sair, confirmar, recusar, votar, solicitarFinalizacao,
     };
 }

@@ -3,6 +3,8 @@ import { eq, and, gt, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userWallets, userRoles } from "../../../db/schema/identidade.js";
 import { walletTransactions, payments } from "../../../db/schema/economia.js";
+import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { ESTADOS_ATIVOS } from "../lib/match-flow.js";
 
 export const walletRouter = Router();
 
@@ -37,10 +39,21 @@ walletRouter.get("/balance", async (req, res) => {
 
     const [wallet] = await db.select().from(userWallets).where(eq(userWallets.userId, user.id)).limit(1);
 
+    // Wallet transparente (design v3 §11): "X MC disponível + Y MC em partida".
+    // `mcReservado` é o que está travado em salas apostadas ativas; `emPartida`
+    // lista as salas que seguram a reserva para o valor virar link no perfil.
+    const emPartida = await db
+      .select({ salaNum: matches.salaNum, apostaMc: matches.apostaMc, nome: matches.nome })
+      .from(matchPlayers)
+      .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
+      .where(and(eq(matchPlayers.userId, user.id), gt(matches.apostaMc, 0), inArray(matches.status, ESTADOS_ATIVOS)));
+
     return res.json({
       userId: user.id,
       mp: wallet?.mp || 0,
       mc: wallet?.mc || 0,
+      mcReservado: wallet?.mcReservado || 0,
+      emPartida: emPartida.map((s) => ({ salaNum: s.salaNum, apostaMc: s.apostaMc ?? 0, nome: s.nome })),
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao consultar saldo da carteira" });

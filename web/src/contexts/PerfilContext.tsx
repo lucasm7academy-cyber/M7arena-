@@ -16,6 +16,11 @@ export interface PerfilData {
   saldo: number;
   cargo: string;
   twitch?: string;
+  // Strikes anti no-show (design v3 §2.1/§11) — vêm de /profiles/me.
+  strikes?: number;
+  strikesMax?: number;
+  suspensaAte?: string | null;
+  termosAceitos?: boolean;
 }
 
 interface PerfilContextType {
@@ -156,6 +161,10 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
           saldo: balance?.mc ?? 0,
           cargo,
           twitch: profile?.twitch,
+          strikes: me?.strikes ?? 0,
+          strikesMax: me?.strikesMax ?? 3,
+          suspensaAte: me?.suspensaAte ?? null,
+          termosAceitos: me?.termosAceitos ?? false,
         });
       } else {
         setPerfil({
@@ -168,6 +177,10 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
           saldo: balance?.mc ?? 0,
           cargo,
           twitch: profile?.twitch,
+          strikes: me?.strikes ?? 0,
+          strikesMax: me?.strikesMax ?? 3,
+          suspensaAte: me?.suspensaAte ?? null,
+          termosAceitos: me?.termosAceitos ?? false,
         });
       }
     } catch (err) {

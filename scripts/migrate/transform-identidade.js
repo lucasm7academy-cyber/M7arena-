@@ -23,8 +23,13 @@ const authUsers = readDump("auth_users");
 const profiles = readDump("profiles");
 const contasRiot = readDump("contas_riot");
 const wallets = readDump("wallets");
+// BLK-001 resolvido: passwords.json vem do extract-passwords.mjs (pg_dump do Postgres do Supabase)
+const passwords = readDump("passwords");
 
 const profileById = Object.fromEntries(profiles.map((p) => [p.id, p]));
+const passwordByEmail = Object.fromEntries(
+  passwords.filter((p) => p.encryptedPassword).map((p) => [p.email.toLowerCase(), p.encryptedPassword])
+);
 
 // 1. users: todos do auth_users + dados do profile quando existir
 const users = authUsers.map((u) => {
@@ -33,7 +38,7 @@ const users = authUsers.map((u) => {
   return {
     id: u.id,
     email: u.email.toLowerCase(),
-    passwordHash: null, // BLK-001: hashes vivem em auth.users.encrypted_password (inalcançável via API)
+    passwordHash: passwordByEmail[u.email.toLowerCase()] ?? null, // BLK-001: via extract-passwords.mjs
     displayName: p?.nome_exibicao || (u.email ? u.email.split("@")[0] : "Jogador"),
     avatarUrl: p?.avatar_url ?? null,
     bio: p?.bio ?? null,

@@ -89,12 +89,13 @@ describe("máquina de estados com escrow", () => {
     assert.equal(m.stateDeadlineAt, null);
   });
 
-  test("entrarEmRevisao: sala casual (aposta 0) é rejeitada", async () => {
+  test("entrarEmRevisao: sala casual (aposta 0) também entra em revisão", async () => {
     const db = ctx.db;
     const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 0 });
     const r = await entrarEmRevisao(db as any, sala.id);
-    assert.equal(r.ok, false);
-    assert.equal(r.erro, "sala_casual");
+    assert.equal(r.ok, true);
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "aguardando_revisao");
   });
 
   test("payout mantém invariante: pote = prize + taxa + resto; saldo total cai só pela taxa", async () => {

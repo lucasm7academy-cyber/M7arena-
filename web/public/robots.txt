@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/cargos
+Disallow: /admin/contatos
+Disallow: /admin/criar-campeonato
+Disallow: /perfil
+Disallow: /partidas
+Disallow: /sala-mod1
+
+Sitemap: https://m7arena.pro/sitemap.xml

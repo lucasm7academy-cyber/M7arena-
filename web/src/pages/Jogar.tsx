@@ -11,8 +11,9 @@ import {
   MODOS_JOGO, OPCOES_ELO, OPCOES_MPOINTS, getModoInfo, getMPointsInfo,
   getMaxJogadoresPorModo, type ModoJogo, type Sala,
 } from '../api/salamod1';
-import { criarSala } from '../api/salamod1';
+import { criarSala, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
+import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 
@@ -63,7 +64,7 @@ const heroSlides: HeroSlide[] = [
     id: 1,
     title: "CRIE SUA",
     subtitle: "EQUIPE",
-    description: "Monte seu time dos sonhos, recrute jogadores e domine a Summoner's Rift juntos",
+    description: "Monte seu time dos sonhos, recrute os melhores parceiros e dispute torneios com premiação em Pix",
     icon: Users,
     color: '#4ade80',
     bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
@@ -75,7 +76,7 @@ const heroSlides: HeroSlide[] = [
     id: 2,
     title: "BENEFÍCIOS",
     subtitle: "VIP",
-    description: "Acesso a salas exclusivas, torneios premium e recompensas em dobro",
+    description: "Acesso a salas exclusivas, torneios premium e recompensas em dobro — o próximo nível do competitivo",
     icon: Crown,
     color: '#fbbf24',
     bgGradient: 'from-yellow-500/20 via-yellow-500/5 to-transparent',
@@ -174,7 +175,7 @@ const ModalSenha = ({ nome, onClose, onConfirm, erro }: any) => {
           </button>
         </div>
         <div className="p-6 space-y-4">
-          <p className="text-white/60 text-sm">A sala <span className="text-white font-bold">{nome}</span> requer senha</p>
+          <p className="text-white/60 text-sm">Esta sala é privada. Digite a senha que o criador definiu para <span className="text-white font-bold">{nome}</span>:</p>
           <input
             type="password" value={senha} onChange={(e) => setSenha(e.target.value)}
             placeholder="Digite a senha"
@@ -185,6 +186,77 @@ const ModalSenha = ({ nome, onClose, onConfirm, erro }: any) => {
           <div className="flex gap-3">
             <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10">Cancelar</button>
             <button onClick={() => onConfirm(senha)} className="flex-1 py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400">Entrar</button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// VITRINE PÚBLICA (design v3 §2.1/§11)
+// ============================================
+
+// Rótulo + cor do estado de cada sala na vitrine (visitante vê o estado antes
+// de criar conta — a sala cheia de gente apostando é o marketing).
+const ESTADO_LABEL: Record<string, { label: string; cls: string }> = {
+  preenchendo: { label: 'Aberta', cls: 'text-green-400 border-green-400/30 bg-green-400/10' },
+  confirmacao: { label: 'Confirmando', cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' },
+  iniciando_partida: { label: 'Iniciando', cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' },
+  partida_iniciada: { label: 'Em jogo', cls: 'text-orange-400 border-orange-400/30 bg-orange-400/10' },
+  finalizacao: { label: 'Votação', cls: 'text-purple-400 border-purple-400/30 bg-purple-400/10' },
+  aguardando_revisao: { label: 'Em análise', cls: 'text-cyan-400 border-cyan-400/30 bg-cyan-400/10' },
+  encerrada: { label: 'Encerrada', cls: 'text-white/40 border-white/10 bg-white/5' },
+  cancelada: { label: 'Cancelada', cls: 'text-red-400 border-red-400/30 bg-red-400/10' },
+};
+
+// Modal de cadastro/login com a sala ao fundo — visita vê a vitrine, clicar em
+// qualquer ação cai aqui (o /jogar é rota pública; /login tem aba de cadastro).
+const ModalLoginVitrine = ({ onClose }: any) => {
+  const navigate = useNavigate();
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+        className="relative w-full max-w-sm rounded-2xl overflow-hidden"
+        style={{
+          background: 'rgba(13, 13, 13, 0.9)',
+          border: '2px solid #FFB700',
+          boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
+          backdropFilter: 'blur(16px)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <LogIn className="w-5 h-5 text-yellow-400" />
+            <h2 className="text-white font-black text-lg uppercase tracking-tight">Crie sua conta para jogar</h2>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-white/60 text-sm leading-relaxed">
+            As salas valendo <span className="text-yellow-400 font-black">MC</span> são a vitrine da arena. Crie sua conta grátis e ocupe uma vaga antes que a sala encha.
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Criar conta gratuita
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10 flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-4 h-4" /> Já tenho conta — entrar
+            </button>
           </div>
         </div>
       </motion.div>
@@ -279,7 +351,9 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Valor da Partida</label>
             <div className="grid grid-cols-3 gap-2">
               {OPCOES_MPOINTS.map((op) => {
-                const isLocked = op.valor > 0;
+                // Backend das salas apostadas completo (P1-P4): todas as faixas
+                // ficam liberadas. A elegibilidade real roda no servidor.
+                const isLocked = false;
                 return (
                   <button
                     key={op.valor}
@@ -337,7 +411,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Descrição</label>
             <textarea
               value={descricao} onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva sua sala..."
+              placeholder="Ex: Duo mid, jogamos todos os dias às 20h — só entra quem leva a sério"
               className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm resize-none h-20"
             />
           </div>
@@ -423,6 +497,7 @@ const Jogar = () => {
   const [modoSelecionado, setModoSelecionado] = useState<ModoJogo>('5v5');
   const [showSenhaModal, setShowSenhaModal] = useState<{ salaId: number; nome: string } | null>(null);
   const [erroSenha, setErroSenha] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // ── CARREGAMENTO LEVE DO USUÁRIO ──────────────────
   const { perfil } = usePerfil();
@@ -569,7 +644,12 @@ const Jogar = () => {
   });
 
   // ── AÇÕES ──────────────────────────────────────────
+  // Visitante deslogado vê a vitrine; qualquer ação cai no modal de login.
   const entrarNaSala = (sala: Sala, senha?: string) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
     if (sala.temSenha && senha !== sala.senha) {
       setErroSenha('Senha incorreta');
       return;
@@ -580,16 +660,28 @@ const Jogar = () => {
   };
 
   const handleCriarSala = async (dados: any) => {
-    if (!usuarioAtual) return;
+    if (!usuarioAtual) {
+      setShowLoginModal(true);
+      return;
+    }
 
-    const nova = await criarSala(dados, usuarioAtual);
-    if (nova) {
-      setShowCriarModal(false);
-      navigate(`/sala-mod1/${nova.id}`);
+    try {
+      const nova = await criarSala(dados, usuarioAtual);
+      if (nova) {
+        setShowCriarModal(false);
+        navigate(`/sala-mod1/${nova.id}`);
+      }
+    } catch (error: any) {
+      // Nunca engole erro: traduz o código do servidor para o usuário.
+      toast.error(traduzirErroSala(error?.message));
     }
   };
 
   const abrirModalCriar = (modo: ModoJogo) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
     setModoSelecionado(modo);
     setShowCriarModal(true);
   };
@@ -601,17 +693,7 @@ const Jogar = () => {
     setRefreshing(false);
   };
 
-  if (!usuarioAtual) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FFB700] border-t-transparent mx-auto mb-4" />
-          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Visitante deslogado: a vitrine renderiza normal (o usuário é opcional).
   const currentSlide = heroSlides[activeHero];
   const SlideIcon = currentSlide.icon;
 
@@ -799,25 +881,32 @@ const Jogar = () => {
             {loadingSalas ? (
               <div className="w-full text-center py-20">
                 <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FFB700] border-t-transparent mx-auto mb-4" />
-                <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Carregando salas...</p>
+                <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Buscando salas ativas...</p>
               </div>
             ) : salasFiltradas.length === 0 ? (
               <div className="w-full text-center py-20 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
                 <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
                 <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala encontrada</p>
-                <p className="text-white/20 text-xs uppercase mt-2">Crie uma sala nos cards acima!</p>
+                <p className="text-white/20 text-xs uppercase mt-2">Seja o primeiro — crie uma sala nos cards acima e defina o valor!</p>
               </div>
             ) : (
               salasFiltradas.map((sala) => {
                 const modoInfo = getModoInfo(sala.modo);
                 const mpInfo = getMPointsInfo(sala.mpoints);
                 const estaCheia = (sala.jogadores || []).length >= sala.maxJogadores;
-                const jaEsta = (sala.jogadores || []).some((j: any) => j.id === usuarioAtual.id);
+                const jaEsta = usuarioAtual
+                  ? (sala.jogadores || []).some((j: any) => j.id === usuarioAtual.id)
+                  : false;
+                const estadoInfo = ESTADO_LABEL[sala.estado] ?? { label: sala.estado, cls: 'text-white/40 border-white/10 bg-white/5' };
 
                 return (
                   <div
                     key={sala.id}
                     onClick={() => {
+                      if (!user) {
+                        setShowLoginModal(true);
+                        return;
+                      }
                       if (sala.temSenha && !jaEsta) {
                         setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
                       } else {
@@ -840,6 +929,9 @@ const Jogar = () => {
                             {sala.codigo}
                           </span>
                           {sala.temSenha && <Lock className="w-3.5 h-3.5 text-yellow-400" />}
+                          <span className={`px-2 py-1 rounded text-[9px] font-black uppercase border ${estadoInfo.cls}`}>
+                            {estadoInfo.label}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white/60 text-[10px] font-black px-2.5 py-1.5 rounded border border-white/10">
                           <Users className="w-3 h-3" />
@@ -871,6 +963,10 @@ const Jogar = () => {
                       
                       <button
                         onClick={() => {
+                          if (!user) {
+                            setShowLoginModal(true);
+                            return;
+                          }
                           if (sala.temSenha && !jaEsta) {
                             setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
                           } else {
@@ -880,11 +976,13 @@ const Jogar = () => {
                         className={`mt-auto w-full py-3 rounded-lg font-black text-sm uppercase transition-all flex items-center justify-center gap-2 ${
                           jaEsta
                             ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30'
+                            : estaCheia
+                            ? 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
                             : 'bg-[#FFB700] hover:bg-[#e0a000] text-black'
                         }`}
                       >
                         <LogIn className="w-4 h-4" />
-                        {jaEsta ? 'VOLTAR' : 'ENTRAR'}
+                        {jaEsta ? 'REENTRAR' : estaCheia ? 'SALA CHEIA' : 'ENTRAR'}
                       </button>
                     </div>
                   </div>
@@ -954,7 +1052,7 @@ const Jogar = () => {
             </div>
           ) : (
             <div className="text-center py-10 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
-              <p className="text-white/20 text-xs uppercase">Role para baixo para carregar partidas finalizadas</p>
+              <p className="text-white/20 text-xs uppercase">Continue descendo para ver as partidas já disputadas</p>
             </div>
           )}
         </div>
@@ -987,6 +1085,11 @@ const Jogar = () => {
             erro={erroSenha}
           />
         )}
+      </AnimatePresence>
+
+      {/* Modal de login/cadastro da vitrine pública (design v3 §11) */}
+      <AnimatePresence>
+        {showLoginModal && <ModalLoginVitrine onClose={() => setShowLoginModal(false)} />}
       </AnimatePresence>
     </div>
   );

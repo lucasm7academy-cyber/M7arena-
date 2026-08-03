@@ -13,6 +13,7 @@ import { sincronizarContaRiot } from '../api/player';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { VipLabel } from '../components/ui/VipBadge';
+import { CarteiraEStrikes } from '../components/perfil/CarteiraEStrikes';
 
 // Imagens estáticas da página vivem na pasta 'public-images' do volume de
 // uploads (ADR-007). A URL /uploads/<bucket>/<arquivo> é servida pelo Nginx.
@@ -538,6 +539,14 @@ export default function Perfil() {
             </div>
           </div>
         </motion.div>
+
+        {/* WALLET + STRIKES (design v3 §11) */}
+        <CarteiraEStrikes
+          saldoDisponivel={saldo}
+          strikes={perfilContext?.strikes ?? 0}
+          strikesMax={perfilContext?.strikesMax ?? 3}
+          suspensaAte={perfilContext?.suspensaAte ?? null}
+        />
 
         {/* EQUIPE */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}

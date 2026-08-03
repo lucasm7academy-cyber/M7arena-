@@ -2,7 +2,7 @@
   {
     "id": "8fc40a7f-5b47-4fe9-8a45-0c30e5ca3dfc",
     "email": "wadoichimonji21wazamono@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$3Z0DriASY7q4VgLUebqRqu2g0XCUwQQs6rB2WnDyrPemIZcpp0ddC",
     "displayName": "wadoichimonji21wazamono",
     "avatarUrl": null,
     "bio": null,
@@ -19,7 +19,7 @@
   {
     "id": "dc680612-f01e-480e-bd4f-f30aef02320d",
     "email": "finistrola0154@hotmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$v3q.a9g4IbrtxVsCic5sdeerpIByqvcktl7WhzaB4CAoPfWKeZc3y",
     "displayName": "finistrola0154",
     "avatarUrl": null,
     "bio": null,
@@ -70,7 +70,7 @@
   {
     "id": "a7e479ad-cf8e-46e8-82df-4572fb69de90",
     "email": "oliveira.marcos.2013@hotmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$XRXHJsAdI6CJsdYEdJKr7ODoyglBBUL4oYcPGFgQONkLovbdqyui6",
     "displayName": "oliveira.marcos.2013",
     "avatarUrl": null,
     "bio": null,
@@ -138,7 +138,7 @@
   {
     "id": "d558089f-e8ab-4eff-a111-214e9dab4690",
     "email": "dzetaepsilon@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$Qqjkpom73AZUsw1gxAW3BOngS24h45G/EHT.CXEe2Qx5H7If2T3Vm",
     "displayName": "dzetaepsilon",
     "avatarUrl": null,
     "bio": null,
@@ -223,7 +223,7 @@
   {
     "id": "2229e819-4546-4cf3-897b-b82ae8e3ddb3",
     "email": "dummyrakaa@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$hUHyrqsssygjJ2OFkPtkeO3y4naGSIQtv3ZE3pp6HV2s.TaNgRgNi",
     "displayName": "dummyrakaa",
     "avatarUrl": null,
     "bio": null,
@@ -274,7 +274,7 @@
   {
     "id": "7e6d35f3-35da-4ca6-adbf-65df1dbddfdd",
     "email": "yago87978@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$XYd.KJo/zQUbNyuzXdGhVuxhA2XzngORpL02SDPBQl2P8h8b7AdF.",
     "displayName": "yago87978",
     "avatarUrl": null,
     "bio": null,
@@ -291,7 +291,7 @@
   {
     "id": "a2d7b363-afb1-4dd1-8007-6aa595d1f05f",
     "email": "ciyira5818@gicont.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$qdbGiDCi9Np3ab7BMEXOYeRs85ZVxICo93gB2O2SBsBEvi0CD/6vW",
     "displayName": "ciyira5818",
     "avatarUrl": null,
     "bio": "Profile criado via pentest",
@@ -308,7 +308,7 @@
   {
     "id": "561392d4-58a8-4464-9586-69858bee6601",
     "email": "teste@teste.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$LLEw.kt2EqW8u9g1DFSIhO6Tq7lFLFn1w9Z5n5OwHvcAZkG6xR.z.",
     "displayName": "teste",
     "avatarUrl": null,
     "bio": null,
@@ -393,7 +393,7 @@
   {
     "id": "2498042e-45cf-48ee-96a2-862927b4b5b0",
     "email": "bot10683@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$wLA7fRKtzYRM2TgMFHJ3AeE68vVbxiLQAk6oFj.qbYFwygrFCxs6u",
     "displayName": "bot10683",
     "avatarUrl": null,
     "bio": null,
@@ -529,7 +529,7 @@
   {
     "id": "7bc7be1b-0f4f-4411-8bd7-4f0346ad8be1",
     "email": "pedroschirmer867@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$YT/CYn2p/VUUTS57rt7Ddu6ornSNStaU4Y3xlUifPT8uGe71qT8BK",
     "displayName": "pedroschirmer867",
     "avatarUrl": null,
     "bio": null,
@@ -546,7 +546,7 @@
   {
     "id": "706a237b-1689-4197-86e9-8f23d2403c2d",
     "email": "brunnobarsottini@prof.educacao.sp.gov.br",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$buhXvmMqF6mCte5Hcnz1UOOGV0QEly8ljigguOQfjbAzDuviK5VDm",
     "displayName": "brunnobarsottini",
     "avatarUrl": null,
     "bio": null,
@@ -563,7 +563,7 @@
   {
     "id": "0df2fa44-0e01-4eef-8c41-bbb7c775c17a",
     "email": "brunno.barssottini@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$BavYd6GIQL60YH91TlwL4e1dQBOWQ8dJUlMWsJNVNbWH9R15jS0nS",
     "displayName": "brunno.barssottini",
     "avatarUrl": null,
     "bio": null,
@@ -614,7 +614,7 @@
   {
     "id": "60772468-948b-4e93-aa22-5f25763ade29",
     "email": "joaoguidantas77@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$0PMqpsfXbfcg.WQTcbxScuYpSr0OR9aJEKP11/o/EI.TkJh35iueC",
     "displayName": "joaoguidantas77",
     "avatarUrl": null,
     "bio": null,
@@ -699,7 +699,7 @@
   {
     "id": "de620a50-1d9d-4145-9178-f27fc244e139",
     "email": "vitor-hugo2017@hotmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$IQft46Qw4SG15QPtwEpZG.ynJRlTvLPiQk1EvEJjem0WCRKrPqkiS",
     "displayName": "vitor-hugo2017",
     "avatarUrl": null,
     "bio": null,
@@ -735,7 +735,7 @@
   {
     "id": "409a3c3b-9870-4197-946c-dd8660217f73",
     "email": "gilsinho1001pika@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$.XFhEye5Afcm/zfvDF7mQeLpQX2N7fp3oq6JoQNoBYa9Df7.rdeAy",
     "displayName": "gilsinho1001pika",
     "avatarUrl": null,
     "bio": null,
@@ -803,7 +803,7 @@
   {
     "id": "c3669650-0253-481d-a14c-161fcfa1bad3",
     "email": "afonsoehtop.gabriel.com@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$7kDV7Im/SxjlhD4tCAUsIuv5k5cfkbfE0BqA7m7p/LcT3WMxYzVxy",
     "displayName": "afonsoehtop.gabriel.com",
     "avatarUrl": null,
     "bio": null,
@@ -905,7 +905,7 @@
   {
     "id": "b05df760-82a1-44a3-b6b8-52c46c972da9",
     "email": "cpassierick@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$PkB7F3JDRfokd7c.d6hxxOPTMhqdc9/tmF4SMRqC76JE4WzZ5G.9m",
     "displayName": "cpassierick",
     "avatarUrl": null,
     "bio": null,
@@ -922,7 +922,7 @@
   {
     "id": "21d25b69-e138-42d5-ad75-1865619b69f6",
     "email": "lucasxly7@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$vo3NVLUua1Hbuxleoogb8.QbwWrMEyIzs5.Uy.f2JbbPhvDYonrYe",
     "displayName": "lucasxly7",
     "avatarUrl": null,
     "bio": null,
@@ -977,7 +977,7 @@
   {
     "id": "df34c914-85f5-43c5-84d7-2ac3ad2db56c",
     "email": "jvictormpereira@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$9n2Zf8NMc.MXym0F4XZaHOgTIzJTCN/4lRVzcnSHETiUCcCVIiYS2",
     "displayName": "jvictormpereira",
     "avatarUrl": null,
     "bio": null,
@@ -1079,7 +1079,7 @@
   {
     "id": "f7f001e2-a670-42b6-9261-749342692c5b",
     "email": "limabiel2004@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$sroBLhAX.XGrqtFKW844JOB9Z3oF5qOFWaJCZg9q/BF1qS9GS1Wn.",
     "displayName": "limabiel2004",
     "avatarUrl": null,
     "bio": null,
@@ -1096,7 +1096,7 @@
   {
     "id": "111437bc-112f-400e-b30b-4447fbe433bd",
     "email": "danthor19@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$k3avbdCiU7V.3ptnZp53v.noACPbexrVON9YJoS5WUkSVzvC6qsvS",
     "displayName": "danthor19",
     "avatarUrl": null,
     "bio": null,
@@ -1167,7 +1167,7 @@
   {
     "id": "410b56a8-f7d4-414b-a467-a149566f0f1b",
     "email": "zedao69@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$3gqs5iYmBvXY8qgucgDFmuPPEPH1SjqIqMpU0xvdr3uKJC3ncxw0q",
     "displayName": "zedao69",
     "avatarUrl": null,
     "bio": null,
@@ -1201,7 +1201,7 @@
   {
     "id": "585190fd-f6fc-4a9d-b452-fc3357060a2f",
     "email": "cleozanluchi@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$mT2giK2YKjmuAKS5FbHBAO8oGXSxDSvc8ab7hafyVNephFpoy7Z5m",
     "displayName": "cleozanluchi",
     "avatarUrl": null,
     "bio": null,
@@ -1371,7 +1371,7 @@
   {
     "id": "d1fda70c-39dc-4da2-a054-0afb8bed8197",
     "email": "animehaqui@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$mzrYhRsD/6nVZeXJ63Tq5eCkzZIvoOPoSEA/LGISiFLgPVRJkw62u",
     "displayName": "animehaqui",
     "avatarUrl": null,
     "bio": null,
@@ -1388,7 +1388,7 @@
   {
     "id": "364738fb-bf60-4123-848e-1fe7af086223",
     "email": "rafaeldechechi@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$rxFz5XV2EPYI19HbGdZ0neqqE1LB2/HBvnPbEei6A6vW6H22iHDZO",
     "displayName": "rafaeldechechi",
     "avatarUrl": null,
     "bio": null,
@@ -1526,7 +1526,7 @@
   {
     "id": "12b114d3-3c4a-4033-aabb-ac364d57197b",
     "email": "luizfogo20@hotmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$saFs2qrrlLxjX7ILJTEJLumQTFFiKqg5b.3Sp.hNJ2oVUvPooonaW",
     "displayName": "luizfogo20",
     "avatarUrl": null,
     "bio": null,
@@ -1662,7 +1662,7 @@
   {
     "id": "498debb9-9ca6-47b5-8767-1bd87d8e5bec",
     "email": "zepequenolol77@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$E0rftfFnKnCQAPLjZ2NR3e5SJa7lD35UI9zNp88besntjVlmM1ixm",
     "displayName": "zepequenolol77",
     "avatarUrl": null,
     "bio": null,
@@ -1679,7 +1679,7 @@
   {
     "id": "31d19f08-4f28-4d59-8aa5-1c29527850ae",
     "email": "orcaylucas52@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$FkUp93wKVfyIcdsPWLifzOjBcFIZ1GhN54lXgyzbmqgzC3WZ3vt6y",
     "displayName": "orcaylucas52",
     "avatarUrl": null,
     "bio": null,
@@ -1866,7 +1866,7 @@
   {
     "id": "d1c2c2e4-06e9-4097-bad2-a142a203ffd8",
     "email": "leokelele123@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$7tli8oxOCYFK7asBCqRo5esn2RGa7VkN6ZK/G3Z8iqXtTwtzFeFbG",
     "displayName": "leokelele123",
     "avatarUrl": null,
     "bio": null,
@@ -2038,7 +2038,7 @@
   {
     "id": "b8280683-1187-4787-b673-00e174e6f808",
     "email": "trafiquentirj@hotmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$rjuumQwaZWXmuq9Lxizsm.lej10kjOFTB88xRKQUYVlHPm0zoEHzq",
     "displayName": "trafiquentirj",
     "avatarUrl": null,
     "bio": null,
@@ -2055,7 +2055,7 @@
   {
     "id": "9a7bf307-e3f0-40e5-acaf-4860b89057a5",
     "email": "lazarorenato085@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$mv93ND/LodD5Aaql9qySpe.0Nuhee5d6FtDUDlKmfzT4uDL4iXlDm",
     "displayName": "lazarorenato085",
     "avatarUrl": null,
     "bio": "Shynaider Líder da High Dome ",
@@ -2075,7 +2075,7 @@
   {
     "id": "1918e3e8-2a96-45b6-9260-1eb36aeece74",
     "email": "lazarorenato03@icloud.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$8BhmKOuOqBkzWoMQsfx3VOO7PnS9sKVrg/ywVoNWQdimrhRplWcb2",
     "displayName": "lazarorenato03",
     "avatarUrl": null,
     "bio": null,
@@ -2092,7 +2092,7 @@
   {
     "id": "94c32c4c-5058-4f6d-898f-65730346184c",
     "email": "darlanacessosmcz@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$SmXDwM1ECJVFKbCIEhb.pu4aPHAkfvOlji9KWQ30EGqjD3t2RA/vq",
     "displayName": "darlanacessosmcz",
     "avatarUrl": null,
     "bio": null,
@@ -2177,7 +2177,7 @@
   {
     "id": "a080f193-ebbe-41f6-a20e-1fa5aed2f057",
     "email": "pessoalgabrielrocha@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$KTsJmMjAIs03Xe4xcUc6Ku3SansQTy8d2OvNQPM5vRI19rx3xKpO2",
     "displayName": "SK4 GabrielR",
     "avatarUrl": null,
     "bio": null,
@@ -2211,7 +2211,7 @@
   {
     "id": "bff3799c-7fde-4e32-9004-01a9bf1be1b5",
     "email": "felipeapg2005@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$arjMYMnHon50M.AOMb7HvuATbT6bSjRz2qM2qtj3fb9299ppPLXdW",
     "displayName": "Ferpo Chumbado",
     "avatarUrl": null,
     "bio": null,
@@ -2245,7 +2245,7 @@
   {
     "id": "571cc674-f1e1-4a21-b3d4-de1eda60386f",
     "email": "adrianwauke@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$jEr9fj4QLZhN8MnxS6d09usmg.bxwgA/mTcXcHvtTCglOOoP9nqAC",
     "displayName": "adrianwauke",
     "avatarUrl": null,
     "bio": null,
@@ -2398,7 +2398,7 @@
   {
     "id": "7afcf291-3406-4258-9772-dbc6e5435992",
     "email": "marcosrodofho@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$IVEfSONrQUZB7SECX7NpV.pXitfQ2JoWM4pgJ9he2Kkq.OqtSzzUG",
     "displayName": "Estrela Perdida",
     "avatarUrl": null,
     "bio": null,
@@ -2438,7 +2438,7 @@
   {
     "id": "be3d7ad3-647a-4b81-b323-19952525d684",
     "email": "rafaelpr1993@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$etW8345yOx09vxWxRSqZrOHOR6o2LCuWPdgg2B7KDGFVfOrNOI456",
     "displayName": "BKS Portugal",
     "avatarUrl": null,
     "bio": null,
@@ -2455,7 +2455,7 @@
   {
     "id": "da3d0a80-9f35-4208-a0af-a573da862dad",
     "email": "naurtosausk@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$LkXhIJs5IrOEPDvBSlUwfON2pIN6K89hfAFSUQ1.I5MENLw5/OFbK",
     "displayName": "CNB Pewtz",
     "avatarUrl": null,
     "bio": null,
@@ -2574,7 +2574,7 @@
   {
     "id": "07e2de3c-bb88-45e0-814e-ee33517319db",
     "email": "krixisalves@gmai.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$XIADLOqXCLLeSlX.y71fi.Qnhra8PesB5Nxpg5zq2uywELMVbHnJq",
     "displayName": "krixisalves",
     "avatarUrl": null,
     "bio": null,
@@ -2591,7 +2591,7 @@
   {
     "id": "b07a9538-eafe-4631-9622-3629b1d79f32",
     "email": "bernardo.gdrt@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$XWqWSkrnzLJL7A8K9L0v.ewt6K7Jzt5ZQSazYrQtSpXIJ41dCVG8q",
     "displayName": "gordo com fome",
     "avatarUrl": null,
     "bio": null,
@@ -2625,7 +2625,7 @@
   {
     "id": "2ea435b9-9dc1-46d2-b5e7-0bfe3aad4390",
     "email": "ianrohers@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$Kz/7Lvm/zqgyL7dEYx1CnuIO/jvHDzyktQplscGCo8jou1bLIyB4q",
     "displayName": "Luck",
     "avatarUrl": null,
     "bio": "QUERO Q O KURI VAI SE FUDER",
@@ -2814,7 +2814,7 @@
   {
     "id": "76862282-bbd6-4ed6-90ef-0d7bca8f96ad",
     "email": "williamgomes079@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$o5T2HQNluKcSMxs95jy2oumVsrYa.oQeJ/ee.jOLFGonGV1yWxNpe",
     "displayName": "San",
     "avatarUrl": null,
     "bio": null,
@@ -2882,7 +2882,7 @@
   {
     "id": "060ad342-72e6-417f-8eb4-e1a26d8ca91d",
     "email": "rafael17borba@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$yzvQ0JU7bXt0d/56LjfPvusNyK03L3oRsH3DGaHgtbQr8zbPeVQtS",
     "displayName": "rafael17borba",
     "avatarUrl": null,
     "bio": null,
@@ -2967,7 +2967,7 @@
   {
     "id": "d244dadd-5b6f-4a67-b39c-e02bb3ef6e0f",
     "email": "bibineto0330@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$et8PHh0ZPnlZki8XroOvGOoauDoLuSBRFP6h/IKVpQ51Mxggb1d4G",
     "displayName": "FL ShadowBaian0",
     "avatarUrl": null,
     "bio": null,
@@ -3001,7 +3001,7 @@
   {
     "id": "3f8c98ea-5e20-466c-ba86-b0dea9d99418",
     "email": "artur.cabral.148@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$B32.0SgAobYh9pSJIgFnSOydT7DUzJ70FUhEEu8kffpqtFe3.q.Zu",
     "displayName": "Komekoko",
     "avatarUrl": null,
     "bio": null,
@@ -3105,7 +3105,7 @@
   {
     "id": "1da2e4c0-823e-46d3-9a2f-395504ae55be",
     "email": "lapetitfleurr@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$reMRyqDQAkjoMgZJDvLm5.A6W0rKtpyPJgci969jzqHRWfBTSsDMu",
     "displayName": "suki",
     "avatarUrl": null,
     "bio": null,
@@ -3156,7 +3156,7 @@
   {
     "id": "5271f918-26fc-4be7-a697-4c96a2072c33",
     "email": "jeansanders2022@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$mre09QwFfoX2nbXYg5i7UeqSwSp4P23Mwer1nkLreQyCmHwFyFjmO",
     "displayName": "Akuma Carry",
     "avatarUrl": null,
     "bio": null,
@@ -3275,7 +3275,7 @@
   {
     "id": "10ffb1aa-6f48-49cd-991f-8333d6e39f03",
     "email": "hiury10@live.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$vN86BsRTbe7DO38F6J0BRuEV2jDCnH4QBxQxsTYl4oq3XPUDOFOaK",
     "displayName": "Hatary",
     "avatarUrl": null,
     "bio": null,
@@ -3311,7 +3311,7 @@
   {
     "id": "6c45f45c-9397-4069-9d3b-08430f6bc4df",
     "email": "edvan.chavos2022@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$qs1hlSPydbOYF/3BlTClX.al66XOXQVZfPhzaizjXBVBgfs3vkLJy",
     "displayName": "Chavos",
     "avatarUrl": null,
     "bio": null,
@@ -3379,7 +3379,7 @@
   {
     "id": "d18329ad-b6a6-4862-8e38-dec5acf8c938",
     "email": "787878one@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$1DNHjhQzRY1c6h2C6S.KsOW4mOYVmMm47.DbEN10oBxfQwOxl6Ef6",
     "displayName": "787878one",
     "avatarUrl": null,
     "bio": null,
@@ -3396,7 +3396,7 @@
   {
     "id": "f7277ecc-5660-415e-8da8-e3e9f4bcb99b",
     "email": "carloscarturani@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$83p6Yua601ndmjH0Bt9uU.uJOAXXKl2/c3yv2OEww1w9unmlTtwA6",
     "displayName": "ODA500",
     "avatarUrl": null,
     "bio": null,
@@ -3447,7 +3447,7 @@
   {
     "id": "e0cf9047-8ce6-470d-9c3b-d50c8d182958",
     "email": "crhneto@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$V7BOMrQ5A4D8CwgXhmoNpuUADJLOfwToo08lVcEj/NasKtehTciJK",
     "displayName": "Noble",
     "avatarUrl": null,
     "bio": null,
@@ -3464,7 +3464,7 @@
   {
     "id": "fb288414-a422-4b22-b1c0-fe76496b7104",
     "email": "juuh_sonota@hotmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$WWIrNyjt1AmVINyK5easauHuA/WyhniPmjaP0x2hYqiry/vmpawWC",
     "displayName": "juuh_sonota",
     "avatarUrl": null,
     "bio": null,
@@ -3655,7 +3655,7 @@
   {
     "id": "8574dfb5-6549-4650-8fa4-d099e814ecc6",
     "email": "caickconteof@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$JI4ui42Wx2f05T0GTDuna.yTrmA7FqDORxHlva8uok6kDtwwifToW",
     "displayName": "CRN Dom",
     "avatarUrl": null,
     "bio": null,
@@ -3672,7 +3672,7 @@
   {
     "id": "e97666d2-1190-47dd-a6c0-01e1ecfe893b",
     "email": "gabrielsguerra25@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$GPFB.SYsc/k8UV9qvo2Qhu3lmMIeRLBouwlmHdx0MWYW3EkhrW9fW",
     "displayName": "CGM Guerra",
     "avatarUrl": null,
     "bio": null,
@@ -3763,7 +3763,7 @@
   {
     "id": "59180f6a-5d93-4452-966b-afc420f804d0",
     "email": "lucasm7academy@gmail.com",
-    "passwordHash": null,
+    "passwordHash": "$2a$10$TTIg6YmWlGwI2VCpG5p9ROQWH47ylyRY5VotbzI9V0RCMM8My9hKO",
     "displayName": "azizam",
     "avatarUrl": null,
     "bio": "salvee",

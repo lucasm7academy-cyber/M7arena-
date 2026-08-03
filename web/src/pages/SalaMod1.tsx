@@ -2,10 +2,15 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeftFromLine, Copy, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeftFromLine, Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { VagaSlot } from '../components/partidas/VagaSlot';
-import { ROLE_CONFIG, type Role } from '../api/salamod1';
+import { ModaisElegibilidade } from '../components/partidas/ModaisElegibilidade';
+import { AguardandoRevisao } from '../components/partidas/AguardandoRevisao';
+import { RegrasDaSala } from '../components/partidas/RegrasDaSala';
+import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
+import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 
@@ -67,7 +72,7 @@ export default function SalaMod1() {
     const navigate = useNavigate();
     const salaId = parseInt(id ?? '0', 10);
     const { user } = useAuth();
-    const { perfil } = usePerfil();
+    const { perfil, refetch: refetchPerfil } = usePerfil();
 
     const usuarioAtual = perfil ? {
         ...perfil,
@@ -80,18 +85,23 @@ export default function SalaMod1() {
         avatar: undefined,
     };
 
-    if (!user) return <div className="flex-1 bg-[#050505] flex items-center justify-center text-white">Faça login</div>;
+    if (!user) return <div className="flex-1 bg-[#050505] flex items-center justify-center text-white">Faça login para entrar na sala</div>;
 
     const {
         sala, jogadores, loading, erro,
         timer, codigoPartida,
         meuVoto, votos, timerFinalizacao,
         mostrarMensagem,
+        erroElegibilidade, fecharErroElegibilidade, aceitarTermos,
+        ociosidadeMin, atualizar,
         entrar, sair, confirmar, recusar, votar, solicitarFinalizacao,
     } = useSalaSimples(salaId, usuarioAtual);
 
     const [codigoCopiado, setCodigoCopiado] = useState(false);
     const codigoCopiadoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [showAvisoRiotId, setShowAvisoRiotId] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [enviandoPrint, setEnviandoPrint] = useState(false);
 
     const copiarCodigo = () => {
         if (codigoPartida) {
@@ -125,7 +135,7 @@ export default function SalaMod1() {
                 <p className="text-white/40 font-black mb-8 relative z-10 uppercase tracking-widest">{erro ?? 'Sala não encontrada'}</p>
                 <button onClick={() => navigate('/jogar')}
                     className="relative z-10 px-[4vmin] py-[1.5vmin] rounded-full bg-white/5 border border-white/10 text-white font-black text-[1.4vmin] uppercase tracking-widest hover:bg-white/10 transition-all">
-                    Voltar ao Lobby
+                    Voltar às Salas
                 </button>
             </div>
         );
@@ -139,11 +149,65 @@ export default function SalaMod1() {
     const votosA = votos.filter((v: any) => v.opcao === 'time_a').length;
     const votosB = votos.filter((v: any) => v.opcao === 'time_b').length;
 
+    // ── Salas apostadas (design v3 §11): aviso antecipado, print e regras ──
+    const ehApostada = (sala.mpoints || 0) > 0;
+    const temRiotId = !!perfil?.riotId;
+    const matchId = (sala.match_id as string) || '';
+    const jogadorConfirmado = !!jogadorAtual?.confirmado;
+    const minutosParaKick = ehApostada ? Math.max(0, Math.ceil(30 - ociosidadeMin)) : 0;
+
+    // Intercepta o clique na vaga: sem Riot ID, avisa ANTES de tentar entrar
+    // (design v3 §11) — o servidor continua sendo a fonte da verdade.
+    const handleEntrar = (role: string, isTimeA: boolean) => {
+        if (ehApostada && !temRiotId) {
+            setShowAvisoRiotId(true);
+            return;
+        }
+        entrar(role, isTimeA);
+    };
+
+    // Print de prova durante `partida_iniciada` — é o gatilho que leva a sala
+    // apostada para `aguardando_revisao` (design v3 §6). Nunca cai no vazio:
+    // toast de sucesso + refetch imediato + realtime.
+    const enviarPrintPartida = async (file: File) => {
+        if (!matchId || !file) return;
+        setEnviandoPrint(true);
+        try {
+            await api.prints.upload(matchId, file);
+            toast.success('Print enviado — entrando em análise.');
+            await atualizar();
+        } catch (e: any) {
+            toast.error(traduzirErroSala(e?.message));
+        } finally {
+            setEnviandoPrint(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const aceitarTermosEAtualizar = async () => {
+        await aceitarTermos();
+        refetchPerfil(); // atualiza termosAceitos no contexto
+    };
+
     const coresModo: Record<string, string> = {
         '1v1': 'text-red-500', 
         'aram': 'text-blue-400', 
         '5v5': 'text-green-400',
     };
+
+    // Rótulo amigável do estado da sala no top bar (antes mostrava o valor cru
+    // do banco: "preenchendo", "confirmacao"...).
+    const ESTADO_ROTULO: Record<string, string> = {
+        preenchendo: 'Aguardando Jogadores',
+        confirmacao: 'Confirmando Presença',
+        iniciando_partida: 'Iniciando Partida',
+        partida_iniciada: 'Em Jogo',
+        finalizacao: 'Votação',
+        aguardando_revisao: 'Em Análise',
+        encerrada: 'Encerrada',
+        cancelada: 'Cancelada',
+    };
+    const estadoRotulo = ESTADO_ROTULO[sala.estado] ?? sala.estado.replace('_', ' ');
 
     const hexCoresModo: Record<string, string> = {
         '1v1': '#ef4444',
@@ -208,7 +272,7 @@ export default function SalaMod1() {
                     <div className="flex items-center gap-[4vmin]">
                         <div className="flex flex-col items-center">
                             <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Estado</span>
-                            <span className="text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5">{sala.estado.replace('_', ' ')}</span>
+                            <span className="text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5">{estadoRotulo}</span>
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Modo</span>
@@ -216,11 +280,39 @@ export default function SalaMod1() {
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Premiação</span>
-                            <span className="text-[1.5vmin] font-black text-green-400 uppercase tracking-widest mt-0.5">{sala.mpoints || 0} MC</span>
+                            <span className="text-[1.5vmin] font-black text-green-400 uppercase tracking-widest mt-0.5">{sala.mpoints > 0 ? `${sala.mpoints} MC` : 'Casual'}</span>
                         </div>
                     </div>
                 </div>
             </motion.div>
+
+            {/* AVISO ANTECIPADO DE RIOT ID (salas apostadas, design v3 §11) */}
+            {ehApostada && !temRiotId && (
+                <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                    className="absolute top-[13vh] left-1/2 -translate-x-1/2 z-[45] w-[min(600px,92vw)]">
+                    <div className="px-4 py-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 backdrop-blur-md flex items-center gap-3 shadow-2xl">
+                        <LinkIcon className="w-4 h-4 text-blue-400 shrink-0" />
+                        <p className="flex-1 text-blue-100 text-[1.4vmin] font-black uppercase tracking-wider">
+                            Vincule seu Riot ID para jogar valendo MC
+                        </p>
+                        <button onClick={() => navigate('/vincular')}
+                            className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-[1.2vmin] font-black uppercase tracking-widest hover:bg-blue-500/30 transition-all">
+                            Vincular
+                        </button>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* AVISO DE KICK POR OCIOSIDADE (aos 25 min, design v3 §8) */}
+            {sala.estado === 'preenchendo' && ociosidadeMin >= 25 && (
+                <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                    className="absolute top-[13vh] left-1/2 -translate-x-1/2 z-[45]">
+                    <div className="px-5 py-2 rounded-full border border-orange-500/40 bg-orange-500/10 backdrop-blur-md text-orange-300 text-[1.4vmin] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
+                        <Clock className="w-[1.6vmin] h-[1.6vmin]" />
+                        Ocioso — removido da vaga em {minutosParaKick} min
+                    </div>
+                </motion.div>
+            )}
 
             {/* MAIN CENTRAL AREA */}
             <div className="flex-1 w-full relative flex items-center justify-center overflow-visible">
@@ -280,7 +372,7 @@ export default function SalaMod1() {
                                     <VagaSlot key={`A-${role}`} ocupada={!!jogador}
                                         nome={jogador?.nome} tag={jogador?.tag} icone={avatar}
                                         isTimeA={true} role={role as any} isConfirmado={jogador?.confirmado}
-                                        aoEntrar={() => entrar(role, true)}
+                                        aoEntrar={() => handleEntrar(role, true)}
                                         aoSair={isAtual ? sair : undefined}
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
@@ -318,7 +410,7 @@ export default function SalaMod1() {
                                     <VagaSlot key={`B-${role}`} ocupada={!!jogador}
                                         nome={jogador?.nome} tag={jogador?.tag} icone={avatar}
                                         isTimeA={false} role={role as any} isConfirmado={jogador?.confirmado}
-                                        aoEntrar={() => entrar(role, false)}
+                                        aoEntrar={() => handleEntrar(role, false)}
                                         aoSair={isAtual ? sair : undefined}
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
@@ -502,7 +594,25 @@ export default function SalaMod1() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* ESTADO PÓS-PRINT — "Em análise, prints X/3, pagamento em até 24h" */}
+                {sala.estado === 'aguardando_revisao' && (
+                    <AguardandoRevisao
+                        sala={sala}
+                        jogadorConfirmado={jogadorConfirmado}
+                        usuarioId={usuarioAtual.id}
+                        onAtualizar={atualizar}
+                    />
+                )}
             </div>
+
+            {/* REGRAS VISÍVEIS ANTES DE CONFIRMAR (design v3 §11) */}
+            {sala.estado === 'confirmacao' && ehApostada && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    className="absolute bottom-[2vh] left-1/2 -translate-x-1/2 z-[65] w-[min(620px,94vw)]">
+                    <RegrasDaSala aposta={sala.mpoints || 0} taxaPct={sala.taxa_pct ?? 8.99} />
+                </motion.div>
+            )}
 
             {/* ACTION FOOTER */}
             <div className="w-full h-[15vh] flex flex-col items-center justify-center z-[70] pb-[5vh] pointer-events-none">
@@ -543,22 +653,77 @@ export default function SalaMod1() {
                         </motion.div>
                     )}
 
-                    {/* PARTIDA INICIADA - Botão para finalizar (após 4 minutos) */}
+                    {/* PARTIDA INICIADA — envio de print é o gatilho da revisão
+                        (design v3 §6; decisão 2026-08-03: TODAS as salas, casuais
+                        e apostadas, passam pelo admin — sem votação no cliente) */}
                     {sala.estado === 'partida_iniciada' && jogadorAtual && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) enviarPrintPartida(f); }} />
                             <motion.button
-                                whileHover={{ scale: 1.05, y: -5, backgroundColor: 'rgba(249, 115, 22, 1)', borderColor: 'rgba(249, 115, 22, 0.4)' }}
+                                whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={solicitarFinalizacao}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-orange-600 border-2 border-orange-500/40 text-white transition-all shadow-[0_20px_50px_rgba(249,115,22,0.3)]"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={enviandoPrint}
+                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all shadow-[0_20px_50px_rgba(255,183,0,0.3)] disabled:opacity-50 flex items-center justify-center gap-[1.5vmin]"
                             >
-                                Finalizar Partida
+                                {enviandoPrint ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <ImagePlus className="w-[2.2vmin] h-[2.2vmin]" />}
+                                {enviandoPrint ? 'Enviando...' : 'Enviar Print e Iniciar Revisão'}
                             </motion.button>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
             </div>
+
+            {/* MODAIS DE ELEGIBILIDADE (saldo, outra sala, Riot ID, termos, suspensão) */}
+            <ModaisElegibilidade
+                erro={erroElegibilidade}
+                onClose={fecharErroElegibilidade}
+                onAceitarTermos={aceitarTermosEAtualizar}
+            />
+
+            {/* AVISO ANTECIPADO DE RIOT ID AO CLICAR NA VAGA */}
+            <AnimatePresence>
+                {showAvisoRiotId && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                        onClick={() => setShowAvisoRiotId(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-sm rounded-2xl overflow-hidden"
+                            style={{
+                                background: 'rgba(13, 13, 13, 0.9)',
+                                border: '2px solid #FFB700',
+                                boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
+                                backdropFilter: 'blur(16px)',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <LinkIcon className="w-5 h-5 text-blue-400" />
+                                    <h2 className="text-white font-black text-base uppercase tracking-tight">Riot ID obrigatório</h2>
+                                </div>
+                                <button onClick={() => setShowAvisoRiotId(false)} className="text-white/30 hover:text-white">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <p className="text-white/70 text-sm leading-relaxed">
+                                    Esta sala vale <b className="text-white">MC</b>. Vincule seu <b className="text-white">Riot ID</b> para jogar — é ele que garante sua elegibilidade e amarra o print de resultado ao seu perfil.
+                                </p>
+                                <button onClick={() => { setShowAvisoRiotId(false); navigate('/vincular'); }}
+                                    className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2">
+                                    <LinkIcon className="w-4 h-4" /> Vincular Riot ID
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Edge Fog */}
             <div className="absolute inset-y-0 left-0 w-[15vw] bg-gradient-to-r from-black via-black/40 to-transparent z-[5] pointer-events-none" />

@@ -252,14 +252,17 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
 
 /**
  * Entra em `aguardando_revisao` (design v3 §6). PRÉ-CONDIÇÃO: quem chama já
- * travou a linha em `matches` com FOR UPDATE. Só salas apostadas (aposta > 0)
- * passam por revisão — casuais seguem o fluxo normal. Zera o deadline: a
- * revisão não tem timeout técnico, o SLA é humano (admin decide).
+ * travou a linha em `matches` com FOR UPDATE.
+ *
+ * Decisão do usuário (2026-08-03): TODAS as salas — casuais e apostadas —
+ * passam pelo admin. A votação red/blue no cliente foi removida; o resultado
+ * é decidido por print + aprovação no painel (apostadas pagam escrow, casuais
+ * só marcam o resultado). Zera o deadline: a revisão não tem timeout técnico,
+ * o SLA é humano (admin decide).
  */
 export async function entrarEmRevisao(tx: any, matchId: string) {
   const [m] = await tx.select().from(matches).where(eq(matches.id, matchId)).limit(1).for("update");
   if (!m) return { ok: false, erro: "sala_nao_encontrada" };
-  if (!m.apostaMc || m.apostaMc <= 0) return { ok: false, erro: "sala_casual" };
   if (m.status !== "partida_iniciada") return { ok: false, erro: "estado_invalido", estado: m.status };
   await tx
     .update(matches)

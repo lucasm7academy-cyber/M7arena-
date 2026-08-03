@@ -115,7 +115,7 @@ const Campeonatos = () => {
       const mapped = (data || []).map((t: any) => ({
         id: t.id,
         titulo: t.titulo,
-        descricao: t.frase || 'Prepare seu time para a arena oficial.',
+        descricao: t.frase || 'Vagas limitadas, premiação em Pix e o melhor do competitivo de LoL.',
         status: mapDbStatus(t.status),
         vagas: t.vagas,
         tier: t.tier || 'Free Elo',
@@ -225,7 +225,7 @@ const Campeonatos = () => {
               </h1>
 
               <p className="text-white/40 text-[10px] sm:text-sm md:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
-                 Entre para os melhores torneios, conquiste prêmios e escreva seu nome na história da M7 Arena. O desafio espera por você no Rift.
+                 Entre para os melhores torneios de LoL, dispute premiações em Pix e suba no ranking por PDL. Do Bronze ao Desafiante, o desafio espera por você no Rift.
               </p>
 
               {/* Action Buttons styled after the image */}
@@ -263,6 +263,10 @@ const Campeonatos = () => {
         {/* CARDS DE DESTAQUE - TORNEIOS EM BREVE */}
         {/* ============================================ */}
         <div ref={torneiosRef} className="space-y-6 scroll-mt-24">
+          <p className="text-white/40 text-sm max-w-2xl leading-relaxed">
+            Torneios de LoL com premiação em Pix, salas por tier e vagas limitadas.
+            Encontre o campeonato ideal para o seu nível e garanta sua inscrição antes que as chaves fechem.
+          </p>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3 shrink-0">
               <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
@@ -320,13 +324,14 @@ const Campeonatos = () => {
                 <div className="w-full text-center py-20">
                   <div className="flex items-center justify-center gap-3 text-white/30">
                     <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span className="font-black uppercase tracking-widest text-sm">Carregando campeonatos...</span>
+                    <span className="font-black uppercase tracking-widest text-sm">Buscando campeonatos...</span>
                   </div>
                 </div>
               ) : cardsFiltrados.length === 0 ? (
                 <div className="w-full text-center py-20 bg-white/[0.02] rounded-xl border border-dashed border-white/10">
                   <Trophy className="w-16 h-16 text-white/10 mx-auto mb-4" />
                   <p className="text-white/30 font-black uppercase tracking-widest">Nenhum campeonato encontrado</p>
+                  <p className="text-white/20 text-xs mt-2 uppercase tracking-widest">Ajuste a busca ou o filtro para ver os torneios disponíveis</p>
                 </div>
               ) : (
                 cardsFiltrados.map((card, idx) => {
@@ -407,7 +412,7 @@ const Campeonatos = () => {
                               <span className="text-base font-medium">Times: {card.vagas}</span>
                             </div>
                             <div className="flex items-center text-white/40 pt-4">
-                              <span className="text-sm font-medium">Organização {card.org}</span>
+                              <span className="text-sm font-medium">Organizado por {card.org}</span>
                             </div>
                           </div>
                         </div>

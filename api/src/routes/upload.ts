@@ -8,8 +8,9 @@ import { db } from "../db.js";
 import { userSessions } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
 import { matchPrints } from "../../../db/schema/apostas.js";
-import { entrarEmRevisao } from "../lib/match-flow.js";
+import { entrarEmRevisao, notifyMatchChange } from "../lib/match-flow.js";
 import { notificarRevisao } from "../lib/discord.js";
+import { getRoles, eRevisor } from "../lib/acesso-sala.js";
 
 export const uploadRouter = Router();
 
@@ -148,10 +149,12 @@ function rateLimitPermitido(userId: string): boolean {
 
 /**
  * Valida se o usuário pode enviar print da sala (design v3 §6): participante
- * CONFIRMADO, sala apostada (aposta > 0) em `partida_iniciada` ou já em
- * `aguardando_revisao`, e ainda menos de 3 prints. A checagem de participante e
- * status re-roda dentro da transação de gravação (via `entrarEmRevisao`, que
- * re-locka a linha), então um golpe no intervalo não vira print órfão.
+ * CONFIRMADO ou revisor (admin/moderador), sala em `partida_iniciada` ou já em
+ * `aguardando_revisao`, e ainda menos de 3 prints. Vale para TODAS as salas —
+ * casuais e apostadas (decisão de 2026-08-03: o resultado é sempre decidido
+ * pelo admin, sem votação no cliente). A checagem de participante e status
+ * re-roda dentro da transação de gravação (via `entrarEmRevisao`, que re-locka
+ * a linha), então um golpe no intervalo não vira print órfão.
  */
 export type ValidacaoPrint =
   | { ok: false; erro: string; estado?: string; sala?: any }
@@ -160,17 +163,22 @@ export type ValidacaoPrint =
 export async function validarPrintDePartida(db: any, userId: string, matchId: string): Promise<ValidacaoPrint> {
   const [m] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
   if (!m) return { ok: false, erro: "sala_nao_encontrada" };
-  if (!m.apostaMc || m.apostaMc <= 0) return { ok: false, erro: "sala_casual" };
   if (m.status !== "partida_iniciada" && m.status !== "aguardando_revisao") {
     return { ok: false, erro: "estado_invalido", estado: m.status };
   }
-  const [player] = await db
-    .select()
-    .from(matchPlayers)
-    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, userId)))
-    .limit(1);
-  if (!player) return { ok: false, erro: "nao_participante" };
-  if (!player.confirmed) return { ok: false, erro: "nao_confirmado" };
+  // Revisor (admin/moderador) pode anexar de qualquer sala; participante só se
+  // confirmado (decisão do usuário: "só admin ou quem joga pode anexar").
+  const roles = await getRoles(db, userId);
+  const ehRevisor = eRevisor(roles);
+  if (!ehRevisor) {
+    const [player] = await db
+      .select()
+      .from(matchPlayers)
+      .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, userId)))
+      .limit(1);
+    if (!player) return { ok: false, erro: "nao_participante" };
+    if (!player.confirmed) return { ok: false, erro: "nao_confirmado" };
+  }
   const prints = await db.select().from(matchPrints).where(eq(matchPrints.matchId, matchId));
   if (prints.length >= 3) return { ok: false, erro: "limite_prints" };
   return { ok: true, sala: m };
@@ -306,6 +314,9 @@ uploadRouter.post(
         if (!r.ok) return res.status(400).json({ error: r.erro });
         // Notifica revisores quando a sala entra em revisão nesta escrita.
         if (r.entrouEmRevisao) notificarRevisao(r.sala);
+        // Real-time: os jogadores da sala veem "em análise" / o novo print sem
+        // refresh (design v3 §6 — o cliente refaz o GET ao receber o aviso).
+        notifyMatchChange(subpath);
         return res.json({ url: r.url, printId: r.printId });
       }
 

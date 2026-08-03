@@ -57,14 +57,19 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
     vinculado: p.linked,
     is_vip: isVip,
     isVip,
+    // Momento em que o jogador entrou na vaga — base do aviso de kick por
+    // ociosidade (30 min desde `createdAt`, design v3 §8; aviso aos 25 min).
+    created_at: p.createdAt ?? null,
   };
 }
 
 /**
  * Shape legado de `salas`. `players` são as linhas de `match_players` já
  * enriquecidas com user + isVip pelo chamador. `criadorNome` vem do dono.
+ * `printsRecebidos` é opcional (contagem de `match_prints` para o estado
+ * `aguardando_revisao` — design v3 §6); só a rota de detalhe/painel envia.
  */
-export function toLegacyMatch(m: any, players: any[], criadorNome: string) {
+export function toLegacyMatch(m: any, players: any[], criadorNome: string, printsRecebidos = 0) {
   const jogadores = players.map((p) =>
     toLegacyPlayer(p, p.__user, !!p.__isVip, m.salaNum)
   );
@@ -93,6 +98,13 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string) {
     iniciando_partida_at: m.iniciandoPartidaAt ?? null,
     created_at: m.createdAt,
     ended_at: m.endedAt ?? null,
+    // ── Salas apostadas (design v3 §5/§11) — campos aditivos para o fork ──
+    aposta_mc: m.apostaMc ?? 0,          // 0 = casual
+    taxa_pct: m.taxaPct ?? 8.99,          // congelada na criação da sala
+    match_id: m.id,                       // uuid interno (prints/disputas/revisão)
+    revisao_desde: m.revisaoDesde ?? null, // SLA do estado aguardando_revisao
+    prints_recebidos: printsRecebidos,
+    prints_necessarios: 3,                // máx. 3 prints por partida (design v3 §6)
     // O fork conta jogadores em `sala.jogadores.length` na listagem.
     jogadores,
   };

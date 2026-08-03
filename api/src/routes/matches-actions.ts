@@ -2,7 +2,6 @@ import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
 import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
-import { winnerLegacyToSide } from "../lib/match-shape.js";
 import {
   avaliarTransicoes,
   reembolsarSeNecessario,
@@ -170,44 +169,29 @@ matchesActionsRouter.post("/:id/finalizar", async (req, res) => {
   }
 });
 
-// POST /api/matches/:id/report-result - Encerra e paga o prêmio
+// POST /api/matches/:id/report-result - Reporta o resultado (print enviado no
+// app) e leva a sala para a revisão do admin.
 matchesActionsRouter.post("/:id/report-result", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
 
-    const side = winnerLegacyToSide(req.body?.winnerSide);
-
     const r = await db.transaction(async (tx: any) => {
       const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
-      if (!["finalizacao", "partida_iniciada", "iniciando_partida"].includes(match.status)) {
+      if (!["partida_iniciada", "iniciando_partida"].includes(match.status)) {
         return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
       }
 
-      // Salas apostadas (aposta > 0): não pagam direto — vão para revisão do
-      // admin (design v3 §6). O print do vencedor é enviado pelo app e o admin
-      // decide aprovar/empatar/cancelar na rota /api/revisao.
-      if ((match.apostaMc ?? 0) > 0) {
-        const rv = await entrarEmRevisao(tx, match.id);
-        if (!rv.ok) return { ok: false, erro: rv.erro, estado: match.status, mudou: false };
-        await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, match.id));
-        await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, match.id));
-        return { ok: true, erro: null, estado: "aguardando_revisao", mudou: true };
-      }
-
-      // Salas casuais (aposta 0): encerram no fluxo normal (resultado simples).
-      await tx.update(matches).set({
-        status: "encerrada",
-        winnerSide: side,
-        endedAt: new Date(),
-        stateDeadlineAt: null,
-      }).where(eq(matches.id, match.id));
-
+      // Decisão de 2026-08-03: TODAS as salas passam pela revisão do admin —
+      // casuais e apostadas. A votação red/blue no cliente foi removida; o
+      // resultado é decidido por print + aprovação no painel. `pagarPremio` é
+      // no-op para aposta 0, então a decisão de uma casual só marca o resultado.
+      const rv = await entrarEmRevisao(tx, match.id);
+      if (!rv.ok) return { ok: false, erro: rv.erro, estado: match.status, mudou: false };
       await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, match.id));
       await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, match.id));
-
-      return { ok: true, erro: null, estado: "encerrada", mudou: true };
+      return { ok: true, erro: null, estado: "aguardando_revisao", mudou: true };
     });
 
     notifyMatchChange(String(req.params.id));

@@ -53,12 +53,13 @@ async function loadUsers(users) {
          (id, email, email_verified, password_hash, display_name, avatar_url, bio,
           socials, lane_primary, lane_secondary, status, is_vip, vip_expires_at,
           created_at, updated_at)
-       VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        ON CONFLICT (email) DO NOTHING`,
       [
         u.id,
         u.email.toLowerCase(),
         u.emailVerified ?? null,
+        u.passwordHash ?? null,
         u.displayName || u.email.split("@")[0],
         u.avatarUrl ?? null,
         u.bio ?? null,

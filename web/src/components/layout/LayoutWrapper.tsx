@@ -90,6 +90,15 @@ export default function Layout() {
     return () => window.removeEventListener('m7:open-vip', openVip);
   }, []);
 
+  // ✅ Modal de recarga abre por evento global `m7:open-deposit` — o modal de
+  // "Saldo insuficiente" das salas apostadas (design v3 §11) usa isso para o
+  // botão "Recarregar agora" cair direto no fluxo de compra.
+  useEffect(() => {
+    const openDeposit = () => setIsDepositModalOpen(true);
+    window.addEventListener('m7:open-deposit', openDeposit);
+    return () => window.removeEventListener('m7:open-deposit', openDeposit);
+  }, []);
+
   // ✅ Fechar dropdown ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -182,7 +191,7 @@ export default function Layout() {
                   M7 ARENA
                 </h1>
                 <span className="text-[6px] xl:text-[8px] text-white/40 tracking-[0.2em] xl:tracking-[0.3em] uppercase">
-                  jogue e divirta-se!
+                  competitivo é aqui
                 </span>
               </div>
             </Link>
@@ -194,7 +203,7 @@ export default function Layout() {
                   {!user ? (
                     <h2 className="font-body text-sm font-light tracking-wide">
                       <span className="text-primary font-semibold">Bem-vindo,</span>
-                      <span className="text-white/80 ml-1">Visitante</span>
+                      <span className="text-white/80 ml-1">Invocador</span>
                     </h2>
                   ) : !perfil ? (
                     <div className="h-4 w-36 bg-white/10 rounded animate-pulse" />
@@ -502,7 +511,7 @@ export default function Layout() {
                     <img alt="Logo" className="h-9 w-auto" src={LOGO_URL} />
                     <div>
                       <h1 className="text-base font-black text-primary font-headline italic leading-tight">M7 ARENA</h1>
-                      <p className="text-[9px] text-white/40 tracking-wider">jogue e divirta-se!</p>
+                      <p className="text-[9px] text-white/40 tracking-wider">competitivo é aqui</p>
                     </div>
                   </div>
                   <button 

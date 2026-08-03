@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-03T03:51:51.499Z",
+  "updatedAt": "2026-08-03T06:05:50.821Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1105,6 +1105,18 @@
       "owner": "deepseek",
       "createdAt": "2026-08-03T03:26:13.246Z",
       "updatedAt": "2026-08-03T03:44:32.785Z"
+    },
+    {
+      "id": "app.apostas.ui",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P5: Front das salas apostadas (design v3 §11)",
+      "status": "done",
+      "notes": "Unificação do resultado: votação red/blue de player removida; toda sala (casual e apostada) envia print e vai para aguardando_revisao onde o admin decide (ADR-027). Prints com lightbox ao clicar + nome de quem anexou, permissão participante confirmado OU revisor (ADR-028). Cron de partida fantasma agora cobre casuais. decisaoId validado como uuid.",
+      "evidence": "node scripts/smoke-casual-revisao.mjs → 10/10 (casual → print → aguardando_revisao → admin aprova → encerrada); npx tsx --test → 45/45; lightbox verificado no browser (admin: miniatura clicável, amplia e fecha)",
+      "owner": "deepseek",
+      "createdAt": "2026-08-03T04:52:02.957Z",
+      "updatedAt": "2026-08-03T06:05:40.961Z"
     }
   ],
   "decisions": [
@@ -1323,6 +1335,42 @@
       "decision": "O cron detecta abandono comparando o escrow: jogador com `match_entry_reserve` na sala apostada ativa (partida_iniciada/aguardando_revisao, sem decisão), SEM `match_entry_refund`, e ausente do `match_players` → strike `abandono` (idempotente por partida).",
       "rationale": "Não existe rota que remova um jogador vinculado hoje (leave/recusar bloqueiam linked), então o estado \"saiu após iniciar\" só é detectável pelo dinheiro: quem pagou a reserva e não está mais na sala nem foi reembolsado abandonou. O ledger é o rastro confiável desse fato.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-025",
+      "date": "2026-08-03T04:52:54.780Z",
+      "author": "riven",
+      "title": "SEO + copy de conversão sem tocar no visual 1:1",
+      "decision": "Melhorias de marketing/SEO aplicadas apenas em texto e meta tags, sem alterar nenhum className, layout ou estrutura: index.html ganhou title/description/OG/Twitter/JSON-LD/canonical, e o copy de Lobby/Jogar/Login/campeonatos foi refinado para conversão. Violou o invariante de paridade textual porque o usuário pediu explicitamente (\"melhore tudo de marketing/SEO\"), mantendo a paridade visual.",
+      "rationale": "O usuário pediu explicitamente melhoria de marketing, SEO, headlines e frases. O invariante de 1:1 é sobre visual (classes/layout); texto é campo do marketing. Preservar classes garante paridade visual intacta.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-026",
+      "date": "2026-08-03T05:34:23.101Z",
+      "author": "deepseek",
+      "title": "Salas: contagem de confirmação via resposta do entrar, sem polling",
+      "decision": "Quando o entrar preenche a última vaga (transição preenchendo→confirmacao), o front refaz o fetch da sala inteira (sincronizarTudo) usando o r.estado que o servidor já retorna — em vez de só sincronizarJogadores. Entrar/sair/confirmar/recusar no caso geral seguem 100% realtime (WebSocket).",
+      "rationale": "O Chrome congela o WebSocket de abas em background, então o outro cliente não recebia o match_update e a contagem (timer de confirmação) só aparecia após reload/voltar pra aba. Refetch pontual no momento exato em que a sala enche resolve sem polling (que o usuário rejeitou por pesar). Confirmado em teste real com duas contas em duas abas: contagem aparece na hora.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-027",
+      "date": "2026-08-03T06:05:24.925Z",
+      "author": "deepseek",
+      "title": "Resultado de sala: TODAS passam pelo admin (casuais e apostadas), sem votação no cliente",
+      "decision": "A votação red/blue de player (finalizacao → voto no Supabase → apuração no cliente) foi REMOVIDA. Agora toda sala — casual (0 MC) e apostada — envia print de resultado e vai para aguardando_revisao, onde o admin aprova/empata/cancela no painel. entrarEmRevisao, validarPrintDePartida, report-result e o cron de partida fantasma passaram a aceitar casuais. pagarPremio é no-op para aposta 0, então a decisão de casual só marca o resultado.",
+      "rationale": "Decisão do usuário em 2026-08-03: \"deixa casuais também pro adm decidir sem essa votação de player\". A votação violava o invariante de regra de negócio no servidor (quem vence era decidido no cliente) e ainda usava o Supabase. Unificar no admin elimina a superfície de aposta indevida e remove o vínculo residual com o Supabase.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-028",
+      "date": "2026-08-03T06:05:33.127Z",
+      "author": "deepseek",
+      "title": "Prints: miniatura + lightbox ao clicar + permissão por role",
+      "decision": "Os prints de resultado aparecem como miniaturas com o nome de quem anexou; clicar abre lightbox (mesmo padrão dos logos de time, z-[200] com spring) tanto no painel Em Análise (AguardandoRevisao) quanto no painel admin (RevisaoPartidas). Anexar exige participante confirmado OU revisor (admin/moderador). decisaoId na rota de revisão agora valida formato uuid (400 decision_id_invalido em vez de 500 do Postgres).",
+      "rationale": "Usuário pediu para deixar visível quem anexou e ampliar a imagem ao clicar (\"só admin ou quem joga pode anexar\"). Reutilizar o lightbox dos logos de time mantém paridade visual. A validação de uuid evita 500 quando um decisionId inválido chega (bug de robustez encontrado no smoke test).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1364,230 +1412,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-02T17:58:29.986Z",
-      "agent": "deepseek",
-      "summary": "Auditoria preparatória para a conclusão da migração: rodei node scripts/verify-swap.js (107 pendentes) e mapeei TODAS as chamadas supabase.* de web/src por arquivo/linha/shape/tipo (from/rpc/storage/auth/functions), cobrindo os 21 arquivos relevantes + reconciliei os totais por domínio (identidade 35, salas 10, carteira 7, conteudo 19, rpc 18, storage 8, edge-functions 4). Documentei também chamadas Supabase que o gate NÃO conta (sala_votos, votos_jogos, transmissoes, pagamentos, get_users_vip_status multilinha, realtime channel, platform_roles, carregar_perfil_completo). Nada foi alterado — apenas análise para orientar os swaps.",
-      "touched": [
-        "scripts/verify-swap.js",
-        "web/src/api/player.ts",
-        "web/src/api/wallet.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/pages/Vincular.tsx",
-        "web/src/pages/DiscordCallback.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/Streamers.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/AdminCargos.tsx",
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/pages/createCampPage.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/vip/VipModal.tsx",
-        "web/src/lib/supabase.ts"
-      ]
-    },
-    {
-      "at": "2026-08-02T19:16:10.432Z",
-      "agent": "claude",
-      "summary": "Normalização completa de campeonatos (ADR-016, revoga ADR-014) concluída e deployada. Migration 0005 (8 jsonb → tabelas: tournament_teams+paid/discord/whatsapp/group_id, tournament_matches+colunas de exibição, tournament_groups, tournament_standings, bracket_matches, seed_order text[]/booleans) validada em PGlite e aplicada na VPS. API refatorada (lib/tournament-shape.ts reconstrói legado 1:1, lib/tournament-store.ts decompõe escritas) + 6 endpoints novos (inscricoes/aprovar/reabrir/cronograma/merge/recalcular-pdl). SDK expõe 6 métodos. Front: 8 call sites de supabase.rpc migrados (CampeonatoDetalhes 6, createCampPage 2), import supabase removido de CampeonatoDetalhes. verify-swap campeonatos=0. Smoke test ao vivo dev.m7arena.pro 12/12 (health/register/login/create/PUT/inscrever/aprovar/merge/recalcular/list/401). Commits a2f47bb + 4189be6 pushados. ARQUITETURA §3.4 atualizada. Pendente: fluxos de votação/arbitragem dependem de app.swap.rpc; BLK-001 (senhas) segue aberto.",
-      "touched": [
-        "db/schema/tournaments.ts",
-        "db/migrations/0005_campeonatos_normalize.sql",
-        "db/migrations/meta/0005_snapshot.json",
-        "api/src/lib/tournament-shape.ts",
-        "api/src/lib/tournament-store.ts",
-        "api/src/routes/tournaments.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/pages/createCampPage.tsx",
-        "docs/ARQUITETURA.md"
-      ]
-    },
-    {
-      "at": "2026-08-02T19:38:37.714Z",
-      "agent": "claude",
-      "summary": "Bug vincular Riot: 401 no busca (abcde) + 401 carregar_perfil_completo. CAUSA 1: container m7arena_app rodava com RIOT_API_KEY dummy (recriado sem --env-file, regressão ADR-015). Recriei com --env-file /root/m7arena/.env → key real, /api/riot/account volta 200. CAUSA 2: proxy /api/riot/* só tinha /version e /account; o front chama 8 rotas a mais (summoner, league, mastery, mastery-score, matches, match, spectator, challenges) que davam 404. Completei api/src/routes/riot.ts com as 8 + helper riotFetch (cache 10min). tsc exit 0; deploy VPS; smoke: 8 endpoints 200. Save do vínculo OK (anon pode inserir em contas_riot). O 401 de carregar_perfil_completo é o app.swap.identidade pendente (PerfilContext usa supabase.rpc que exige GoTrue) — não bloqueia o vínculo, não fiz o swap. Pendentes: carregar_perfil_completo, BLK-001, BOM no /root/m7arena/.env.",
-      "touched": [
-        "api/src/routes/riot.ts",
-        "infra/docker-compose.yml",
-        "VPS: /root/m7arena/.env + container m7arena_app"
-      ]
-    },
-    {
-      "at": "2026-08-02T19:48:30.456Z",
-      "agent": "claude",
-      "summary": "Swap carteira concluído. API: POST /api/wallet/admin/adjust (valida cargo admin em user_roles, calcula saldos no servidor, grava wallet_transactions kind admin_adjustment + balance_after, upsert user_wallets) e GET /api/wallet/admin/balances. SDK web/src/lib/api.ts: namespace wallet (balance/transactions/adminBalances/adminAdjust). Front migrado: api/wallet.ts via SDK (import supabase removido), player.ts (insert ganhos_plataforma de função morta removido), Admin.tsx (2), players.tsx (1), TimePage.tsx (1). Gates: verify-swap carteira=0, api tsc 0, web tsc só 2 pré-existentes. Commit local f6ddde8 (branch worktree-agent-a643a5645a6928953, NÃO push).",
-      "touched": [
-        "api/src/routes/wallet.ts",
-        "web/src/lib/api.ts",
-        "web/src/api/wallet.ts",
-        "web/src/api/player.ts",
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-02T20:02:47.299Z",
-      "agent": "claude",
-      "summary": "Swap app.swap.conteudo feito no worktree (branch worktree-agent-a6863fa9cf800f6a4, commit 59ff3a9, NÃO push): 19 chamadas supabase.* (noticias/highlights/player_stats) → API própria. API: CRUD autenticado (admin via user_roles) em content.ts montando content-news.ts/content-highlights.ts + lib/content.ts; player-stats com regra no servidor. SDK: namespace content em api.ts + api-content.ts (adaptador legado snake_case↔camelCase). Front: Admin.tsx(12), player.ts(4), Lobby.tsx(2), Streamers.tsx(1). Schema: news+highlights ganharam colunas legadas, tabela player_stats nova; migration 0006_content_swap.sql. Gates no worktree: verify-swap conteudo=0, api tsc=0, web tsc só 2 pré-existentes. Pendente: merge no main p/ gate MCP aceitar done; 0006 não aplicada em PG real.",
-      "touched": [
-        "api/src/routes/content.ts",
-        "api/src/routes/content-news.ts",
-        "api/src/routes/content-highlights.ts",
-        "api/src/lib/content.ts",
-        "db/schema/conteudo.ts",
-        "db/migrations/0006_content_swap.sql",
-        "db/migrations/meta/0006_snapshot.json",
-        "db/migrations/meta/_journal.json",
-        "web/src/lib/api.ts",
-        "web/src/lib/api-content.ts",
-        "web/src/api/player.ts",
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/Streamers.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-02T20:37:00.623Z",
-      "agent": "claude",
-      "summary": "Task 3 app.swap.salas concluída no worktree. Causa das 10 ocorrências: 4 em api/salamod1.ts (buscarsalas/buscarJogadores/criarSala/encerrarSala), 3 em Jogar.tsx (listar ativas com join, listar encerradas), 2 em useSalaSimples.ts (encerrarPartida, solicitarFinalizacao), 1 em Admin.tsx (contagem salas ativas). Mudou: schema matches com shape legado de salas + sala_num (migrations 0006/0007); API em lib/match-shape.ts + match-flow.ts + routes/matches.ts + matches-actions.ts (máquina de estados, débito entryMp em wallet_transactions, reembolso, payout no reportResult, pool tournament codes FOR UPDATE SKIP LOCKED, pg_notify); SDK api.matches.*; front migrado. Gates: verify-swap salas → OK 0; api tsc exit 0; web tsc só ElectricBorder:23 e Streamers:695 (pré-existentes). Commits no branch worktree-agent-a3cb762dca4ef3df0: 135c8d9, 1601351, 00dc60a, 34f771c. NÃO push. Pendente: merge em main para o gate MCP zerar; sala_votos (app.swap.rpc) e Realtime (ADR-009) seguem no supabase.",
-      "touched": [
-        "db/schema/matches.ts",
-        "db/migrations/0006_matches_salas_swap.sql",
-        "db/migrations/0007_matches_sala_num.sql",
-        "api/src/lib/match-shape.ts",
-        "api/src/lib/match-flow.ts",
-        "api/src/routes/matches.ts",
-        "api/src/routes/matches-actions.ts",
-        "web/src/lib/api.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/pages/Jogar.tsx",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/pages/Admin.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-02T20:50:39.281Z",
-      "agent": "claude",
-      "summary": "Swap app.swap.identidade concluído no worktree agent-aa22608455e9e836b (4 commits, NÃO push): 35 chamadas supabase.* de contas_riot/profiles/discord_links/discord_oauth_state zeradas em 12 arquivos. API: profiles/players/discord (rotas novas, shape legado). SDK: namespaces profiles/players/discord. PerfilContext: RPC carregar_perfil_completo vira Promise.all(/profiles/me, /wallet/balance, /teams/by-user/:id), cargo de roles, refetchCargo via api.auth.me(). Gates: verify-swap identidade=0, api tsc 0, web tsc só 2 pré-existentes. Pendente: merge no main p/ gate MCP aceitar done. Edge function discord-oauth-exchange fica p/ app.edge-functions. Sem migration nova.",
-      "touched": [
-        "api/src/routes/profiles.ts",
-        "api/src/routes/players.ts",
-        "api/src/routes/discord.ts",
-        "api/src/index.ts",
-        "web/src/lib/api.ts",
-        "web/src/contexts/PerfilContext.tsx",
-        "web/src/api/player.ts",
-        "web/src/pages/Vincular.tsx",
-        "web/src/pages/DiscordCallback.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/contexts/VerificacaoContext.tsx",
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/AdminCargos.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/MinhasPartidas.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/Tutorial.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-02T21:23:26.452Z",
-      "agent": "claude",
-      "summary": "Swap rpc concluído (a05d3df): 7 RPCs restantes viram endpoints nomeados (lineup transacional, stats adjust por tag, admin cargos, vote, players filtrados) e a rota genérica rpc.ts foi removida. TODOS os 7 swaps de domínio zerados: identidade, times, campeonatos, salas, carteira, conteudo, rpc, storage. Baseline caiu de 97 → 10 pendentes (era 107). Restam apenas: edge-functions (4, blocked por credenciais BLK-003), client Supabase (1, realtime WS pendente ADR-009), envs (5). BLK-003 registrado. Conflitos de merge de worktrees paralelos resolvidos (migrations 0007/0008 renomeadas, api.ts juntando namespaces).",
-      "touched": [
-        "api/src/routes/teams.ts",
-        "api/src/routes/players.ts",
-        "api/src/routes/matches.ts",
-        "api/src/routes/admin.ts",
-        "api/src/routes/index.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/AdminCargos.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/players.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-02T22:06:48.258Z",
-      "agent": "deepseek",
-      "summary": "Diagnóstico: browser MCP existia (mcp/browser-server, commit bb0ddf0) e respondia ao handshake com as 11 tools, mas não estava acessível no opencode porque estava registrado só no .mcp.json (formato Claude Code). opencode lê opencode.json. Registrei o servidor browser em opencode.json (type local, node D:/Aplicativos/M7arenaSite/mcp/browser-server/server.js), validei JSON e listei as tools via tools/list. Falta reiniciar o opencode para as tools browser_* carregarem.",
-      "touched": [
-        "opencode.json",
-        "mcp/browser-server/server.js"
-      ]
-    },
-    {
-      "at": "2026-08-02T22:32:43.394Z",
-      "agent": "deepseek",
-      "summary": "Ambiente local no ar: criei infra/docker-compose.local.yml + nginx.local.conf + .env.local (postgres+app+nginx em http://localhost:3000, porta do callback Google). Apliquei as 9 migrations no Postgres local (33 tabelas). Fixes: Dockerfile agora cria /var/www/uploads com dono nodeapp (era EACCES em upload); compose local usa NODE_ENV=development p/ cookie de sessão não sair Secure (quebrava login em HTTP); browser_evaluate em mcp/browser-server/server.js nunca fazia return (bug de serialização) — precisa reiniciar o opencode. Testado: health 200, registro/login + /api/auth/me ok no browser, OAuth Google redireciona certo p/ localhost:3000. Pendente: 404 dos uploads (logo/background) por volume vazio.",
-      "touched": [
-        "infra/docker-compose.local.yml",
-        "infra/nginx.local.conf",
-        "infra/.env.local",
-        "Dockerfile",
-        "mcp/browser-server/server.js"
-      ]
-    },
-    {
-      "at": "2026-08-02T23:58:08.728Z",
-      "agent": "deepseek",
-      "summary": "Ajuste visual do DepositModal (web/src/components/modals/deposit/DepositModal.tsx): título virou \"Depositar M7 COINS\"; bordas menos redondas (rounded-3xl/2xl, fora o padrão de 40px); responsividade (fonte menor em telas pequenas, max-h 92vh + overflow-y-auto p/ não cortar); layout de checkout com grid lg:grid-cols-[1fr_320px] — esquerda pacotes, direita bloco Resumo do Pedido com Total a Pagar/Você Recebe/botão. tsc: arquivo limpo (2 erros pré-existentes em ElectricBorder.tsx e Streamers.tsx).",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T00:00:24.103Z",
-      "agent": "deepseek",
-      "summary": "Pass de performance: adicionei loading=\"lazy\" em 21 <img> de listas/cards/grids abaixo da dobra em 9 arquivos do web: createCampPage.tsx (3), perfil.tsx (2: campeões top10, logo da equipe), equipes.tsx (1: logo meu time), players.tsx (1: avatar do card), CampeonatoDetalhes.tsx (9: logos em bracket/classificação/ranking/inscrição + org photo), recrutamento.tsx (1: logo do card), Vincular.tsx (1: sugestões de busca), TimePage.tsx (1: jogadores pendentes), PlayerDetailModal.tsx (2: avatar + time logo). Excluídos: hero/header, backgrounds, previews de upload, ícones de role/lane pequenos (UI). Jogar.tsx e campeonatos.tsx não têm <img>. tsc --noEmit -p web/tsconfig.json → só os 2 erros pré-existentes (ElectricBorder.tsx:23, Streamers.tsx:695).",
-      "touched": [
-        "web/src/pages/createCampPage.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/pages/recrutamento.tsx",
-        "web/src/pages/Vincular.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/components/players/PlayerDetailModal.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T00:09:57.828Z",
-      "agent": "deepseek",
-      "summary": "Limpeza de código morto guiada por auditoria de subagente. Removidos: 8 arquivos órfãos (streams/*, OAuthCallbackHandler, sejavip.stx, scrim.ts, codigosPartida.ts), ~25 funções/exports mortos, 3 imports mortos de supabase, 10 rotas API órfãs (mantida wallet/deposit), 19 imagens (~19MB). Fixes perf: ElectricBorder pausa rAF; NotificationBell loga catch. Botão DEPOSITAR no header abre DepositModal (mantido). 'Tornar-se VIP' agora emite m7:open-vip -> VipModal. Lazy load ~21 imgs. api tsc limpa; web só 2 erros pré-existentes. Pendente: 10 arquivos ainda usam Supabase (swaps recrutamento/streams/sala_votos/votos_jogos/resultados/pagamentos/realtime); verify-swap.js subconta (26 call sites reais).",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/MinhasPartidas.tsx",
-        "web/src/api/player.ts",
-        "web/src/api/wallet.ts",
-        "web/src/api/riot.ts",
-        "web/src/api/recrutamento.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/lib/api.ts",
-        "web/src/lib/api-content.ts",
-        "web/src/components/ui/ElectricBorder.tsx",
-        "web/src/components/notifications/NotificationBell.tsx",
-        "api/src/routes/wallet.ts",
-        "api/src/routes/content.ts",
-        "api/src/routes/riot.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/src/routes/teams.ts",
-        "api/src/lib/match-shape.ts",
-        "api/src/lib/session.ts"
-      ]
-    },
     {
       "at": "2026-08-03T00:16:15.084Z",
       "agent": "deepseek",
@@ -1776,6 +1600,152 @@
         "api/src/routes/profiles.ts",
         "api/src/index.ts",
         "api/test/elegibilidade.test.ts"
+      ]
+    },
+    {
+      "at": "2026-08-03T04:52:41.856Z",
+      "agent": "deepseek",
+      "summary": "Retomei o P5 (front das salas apostadas §11) do working tree não commitado. Verifiquei na stack local (nginx rebuilt): vitrine /jogar sem PrivateRoute, modal login visitante, criar apostada com faixas MC liberadas, escrow (500→400+100 reservado), CarteiraEStrikes no perfil, aviso Riot ID antecipado, modal \"já está em outra sala\" com link, modal saldo insuficiente (faltam X + Recarregar→DepositModal), aviso kick 25min, Enviar Print→aguardando_revisao, painel Em Análise (SLA, prints autenticados, contestação), RegrasDaSala no confirmacao. CORRIGI minutosParaKick (Math.ceil). tsc api 0, web só 2 pré-existentes, testes 45/45, MCP ok. Registrei app.apostas.ui (done) + plan.js. Depósito real segue BLK-003; usei MC manual nos testes. Dados de teste limpos. NÃO commitei.",
+      "touched": [
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/components/partidas/AguardandoRevisao.tsx",
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/components/partidas/RegrasDaSala.tsx",
+        "web/src/components/perfil/CarteiraEStrikes.tsx",
+        "web/src/lib/api.ts",
+        "web/src/contexts/PerfilContext.tsx",
+        "web/src/App.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "api/src/lib/match-shape.ts",
+        "api/src/routes/wallet.ts",
+        "api/src/routes/matches.ts",
+        "api/src/routes/upload.ts",
+        "api/src/cron.ts",
+        "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-08-03T04:53:10.378Z",
+      "agent": "riven",
+      "summary": "Auditoria de marketing/SEO. 1) BUG GRAVE corrigido: mojibake global (double-encoding UTF-8) em Lobby.tsx, CampeonatoDetalhes.tsx, Politicas.tsx (~1457 ocorrências \"prÃªmios\"→\"prêmios\"), corrigido com transform seletivo 1252→UTF-8 com guard round-trip bijectivo (impossível corromper texto correto). tsc web = 2 erros pré-existentes, nenhum nos arquivos tocados. 2) SEO: index.html completo (title, description, OG, Twitter, canonical, JSON-LD), robots.txt e sitemap.xml criados. 3) Copy de conversão sem tocar classes/layout: hero Lobby, Como Funciona, FAQ, CTA final, header, Login, Jogar, campeonatos, h1 QuemSomos. Build web passou. ADR-025.",
+      "touched": [
+        "web/index.html",
+        "web/public/robots.txt",
+        "web/public/sitemap.xml",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/pages/Politicas.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/Login.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/QuemSomos.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T04:58:27.755Z",
+      "agent": "riven",
+      "summary": "Página de campeonatos (web/src/pages/campeonatos.tsx) melhorada, só texto, classes/layout intactos: subtítulo de conversão sob o título da seção (\"Torneios de LoL com premiação em Pix, salas por tier e vagas limitadas...\"), empty state ganhou linha de orientação (\"Ajuste a busca ou o filtro...\"), loading \"Carregando\"→\"Buscando campeonatos...\", rótulo do card \"Organização\"→\"Organizado por\" (mais humano). Hero já tinha sido refinado na sessão anterior (subtexto com Pix/PDL/Bronze ao Desafiante). Build web passou (✓ built in 6.04s). tsc web segue com os mesmos 2 erros pré-existentes (ElectricBorder, Streamers), nenhum nos arquivos tocados.",
+      "touched": [
+        "web/src/pages/campeonatos.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:01:07.714Z",
+      "agent": "deepseek",
+      "summary": "Provei com teste real que a confirmação com 10 pessoas não repete o bug do site antigo. Criei scripts/smoke-confirmacao-concorrente.mjs: 1 criador + 9 jogadores preenchem sala 5v5 e 10 confirms disparam em PARALELO → 8/8 ok em 2 execuções (10 confirms ok, 10/10 confirmados, exatamente 1 transição, estado estável). Motivos: máquina de estados no servidor com FOR UPDATE (serializa os 10 confirms), ZERO triggers no banco (trigger_sala_confirmacao 40s vs 60s não existe mais), countdown derivado de confirmacao_expires_at do servidor. Descobri que a rota join espera roleSlot/is_time_a (não role/isTimeA); front já envia certo. Dados de teste limpos. Obs: apuração da VOTAÇÃO de resultado (finalizacao) ainda é no cliente (FASE 2 em useSalaSimples) — separado da confirmação.",
+      "touched": [
+        "scripts/smoke-confirmacao-concorrente.mjs"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:03:11.034Z",
+      "agent": "riven",
+      "summary": "Página de detalhes do campeonato (CampeonatoDetalhes.tsx) melhorada, só texto, classes/layout intactos: botão \"Inscrever Time\"→\"Garantir Vaga Agora\" (urgência + benefício), fallback de descrição agora com proposição de valor (\"Vagas limitadas, premiação em Pix e o melhor do competitivo de LoL...\"), empty state do modal de inscrição mais conversor (\"Crie a sua agora e entre na disputa — leva menos de um minuto\"), reasseguramento sob o botão principal sem \"lista de espera\" frio (troquei por \"Vagas confirmadas pela organização. Sem custo surpresa: você vê a taxa antes de confirmar.\"), subtitulo do torneio \"Torneio 16v16\"→\"Torneio de LoL 16v16\". Fallback de descrição também atualizado em campeonatos.tsx. Build web passou (✓ built in 5.62s). MojiBAKE restante = 0.",
+      "touched": [
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/pages/campeonatos.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:06:15.791Z",
+      "agent": "riven",
+      "summary": "Página de Login (web/src/pages/Login.tsx) melhorada, só texto, classes/layout intactos: hero lateral \"A plataforma oficial das lendas\"→\"Torneios com premiação em Pix\" (proposta de valor concreta), CTA principal login \"Acessar Arena\"→\"Entrar na Arena\" e registro \"Criar Conta\"→\"Criar Conta Grátis\" (remover atrito de custo), toggle \"Não tem conta?/Cadastre-se\"→\"Novo por aqui?/Crie sua conta grátis\". Subheads do formulário já haviam sido melhorados na sessão anterior (\"Entre na arena e dispute prêmios em Pix\" / \"Crie sua conta grátis e comece a competir\"). Botão Google mantido. Build web passou (✓ built in 6.75s).",
+      "touched": [
+        "web/src/pages/Login.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:10:39.797Z",
+      "agent": "riven",
+      "summary": "Copy das salas e modais de partida (Jogar.tsx + componentes) melhorada, só texto, classes/layout intactos. MODOS_JOGO em api/salamod1.ts: descrições genéricas (\"Summoners Rift - Competitivo\") viraram copy com benefício (\"o competitivo em sua forma mais pura\", \"partidas rápidas, ação do início ao fim\", \"duelo individual, quem é o melhor?\", \"Clã contra clã — disputa que vale ranking e orgulho\"). Jogar.tsx: modal login vitrine com urgência de vaga, empty state \"Seja o primeiro — crie uma sala... e defina o valor!\", placeholder de descrição com exemplo real, botão de sala cheia (estado visual desabilitado + rótulo SALA CHEIA, antes mostrava ENTRAR), modal de senha mais claro. ModaisElegibilidade: saldo insuficiente com urgência + CTA \"Recarregar e garantir vaga\", suspensão mais empática com caminho de volta. RegrasDaSala: SLA com \"no Pix\". Build web passou (✓ built in 7.32s).",
+      "touched": [
+        "web/src/api/salamod1.ts",
+        "web/src/pages/Jogar.tsx",
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/components/partidas/RegrasDaSala.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:14:30.401Z",
+      "agent": "riven",
+      "summary": "Verificação completa das mensagens de display da sala de partida (SalaMod1.tsx + salamod1.ts + useSalaSimples). Melhorias de copy, classes/layout intactos: (1) BUG de copy corrigido — botão de erro dizia \"Voltar ao Lobby\" mas navegava para /jogar, agora \"Voltar às Salas\"; (2) estado da sala no top bar deixou de mostrar o valor cru do banco (preenchendo, confirmacao...) e ganhou rótulo amigável via mapa ESTADO_ROTULO (\"Aguardando Jogadores\", \"Confirmando Presença\", \"Em Jogo\", \"Em Análise\"...); (3) \"Faça login\"→\"Faça login para entrar na sala\"; (4) premiação em sala casual mostra \"Casual\" em vez de \"0 MC\"; (5) ERROS_SALA refinados (ja_em_outra_sala, ja_confirmado, nao_pode_sair) com tom de ação; (6) botão \"Enviar Print de Resultado\"→\"Enviar Print e Iniciar Revisão\". Verifiquei também AguardandoRevisao, RegrasDaSala, VagaSlot, ModaisElegibilidade e as transições de estado do useSalaSimples — já estavam bem escritos. Build web passou (✓ built in 7.41s).",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/api/salamod1.ts"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:19:26.618Z",
+      "agent": "riven",
+      "summary": "Página Quem Somos (web/src/pages/QuemSomos.tsx) finalizada. Na sessão anterior só tinha trocado h2 por h1 (semântica SEO). Agora completei: alt texts das 4 imagens saíram de \"Founder\"/\"Founder Continuation\" para descritivos com contexto (\"Lucas Eduardo, fundador e CEO da M7 Arena\", \"Splash art da campeã Riven do League of Legends\"), e o parágrafo de missão agora destaca o benefício concreto \"premiação em Pix\" e \"transparentes\" (antes era só \"premiações\"). Nenhuma classe ou layout alterado. Observação: página é SPA sem title/meta própria (limitação do index.html único — ficaria para futura implementação de per-route meta). Build web passou (✓ built in 6.38s).",
+      "touched": [
+        "web/src/pages/QuemSomos.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:31:04.623Z",
+      "agent": "riven",
+      "summary": "Redesign dos modais de depósito e elegibilidade (skill design-frontend). DepositModal.tsx: header com subtítulo de valor (\"Quanto maior o pacote, maior o bônus\"), grade de pacotes com destaque de seleção (check + gradiente dourado), badge \"Mais Escolhido\" no popular, badge de \"+X% bônus\" calculado relativo ao pacote R$10 nos maiores, resumo do pedido com \"Custo por MC\" (transparência de valor), CTA maior, tela de QR com valor a pagar em destaque. ModaisElegibilidade.tsx: ModalShell redesenhado (linha de acento no topo por cor de tipo, ícone por modal específico em vez de sempre AlertTriangle, botões com sombra/feedback de escala), modal de saldo com barra de progresso e microcopy \"Recarga em segundos via PIX\". Lógica de negócio e classes dos demais elementos intactas. Build web passou (✓ built in 10.18s).",
+      "touched": [
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/partidas/ModaisElegibilidade.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:32:50.688Z",
+      "agent": "deepseek",
+      "summary": "Bug UX de salas: a contagem (timer de confirmação) não aparecia na hora quando a última vaga era preenchida em aba de background (Chrome congela o WebSocket). Diagnóstico: o `entrar()` só chamava `sincronizarJogadores()` (atualiza jogadores, ignora o estado que o servidor retorna), então a transição preenchendo→confirmacao não refletia no DOM até um refetch manual (reload/voltar pra aba). Solução (conforme pedido do usuário, sem polling): em useSalaSimples.ts, o `entrar()` agora checa `r.estado === 'confirmacao'` e nesse caso chama `sincronizarTudo('entrar')` (refetch da sala inteira) — a contagem aparece na hora mesmo com WebSocket congelado. Entrar/sair/confirmar/recusar no caso geral ficaram como estavam (realtime). Testado no browser MCP: última vaga → DOM mostra CONFIRME AGORA + timer sem reload. tsc web ok (só 2 pré-existentes), nginx rebuildado.",
+      "touched": [
+        "web/src/hooks/useSalaSimples.ts"
+      ]
+    },
+    {
+      "at": "2026-08-03T05:34:29.289Z",
+      "agent": "deepseek",
+      "summary": "Usuário validou em teste real (duas abas, duas contas): a contagem de confirmação agora aparece na hora ao preencher a última vaga. Registrado ADR-026 (refetch da sala inteira via r.estado no entrar, sem polling). Nada mais mudou — build já estava no ar.",
+      "touched": [
+        "web/src/hooks/useSalaSimples.ts"
+      ]
+    },
+    {
+      "at": "2026-08-03T06:05:50.821Z",
+      "agent": "deepseek",
+      "summary": "Unifiquei o resultado de todas as salas no admin (ADR-027): removi a votação red/blue de player (que ainda usava Supabase e apurava no cliente). Agora casual e apostada enviam print → aguardando_revisao → admin decide. Mudanças: match-flow entrarEmRevisao aceita casual; upload validarPrintDePartida aceita casual e revisor (admin/moderador); report-result sempre vai para revisão; cron fantasma cobre casual; front SalaMod1 remove botão \"Finalizar Partida\" (todas usam \"Enviar Print e Iniciar Revisão\"). Prints agora com lightbox ao clicar (mesmo padrão logos de time) no AguardandoRevisao e no RevisaoPartidas, mostrando quem anexou (ADR-028). Fix robustez: decisaoId validado como uuid (400 em vez de 500). Criei admin@m7arena.local/Admin@M7Arena2026. Novos smoke: scripts/smoke-casual-revisao.mjs 10/10. Testes API 45/45. Stack local rebuildada.",
+      "touched": [
+        "api/src/lib/match-flow.ts",
+        "api/src/routes/upload.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/src/routes/revisao.ts",
+        "api/src/cron.ts",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/components/partidas/AguardandoRevisao.tsx",
+        "web/src/components/admin/RevisaoPartidas.tsx",
+        "api/test/estados.test.ts",
+        "api/test/cron.test.ts",
+        "scripts/smoke-casual-revisao.mjs"
       ]
     }
   ]

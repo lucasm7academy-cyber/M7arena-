@@ -5,7 +5,7 @@ import { users } from "../../db/schema/identidade.js";
 import { walletTransactions } from "../../db/schema/economia.js";
 import { userStrikes } from "../../db/schema/apostas.js";
 import { devolverEntrada } from "./lib/escrow.js";
-import { aplicarSuspensaoSeNecessario } from "./lib/match-flow.js";
+import { aplicarSuspensaoSeNecessario, notifyMatchChange } from "./lib/match-flow.js";
 
 const KICK_OCIOSIDADE_MS = 30 * 60 * 1000;
 const FANTASMA_MS = 3 * 60 * 60 * 1000;
@@ -42,21 +42,26 @@ export async function runCron(d: any = db) {
         await tx.insert(userStrikes).values({ userId: vaga.userId, matchId: m.id, motivo: "kick_ociosidade" });
         await aplicarSuspensaoSeNecessario(tx, vaga.userId, agora);
       });
+      // Avisa os clientes na sala (o kikado vê o aviso de strike na hora,
+      // design v3 §11) — o realtime refaz o GET e deriva a mensagem.
+      notifyMatchChange(sala.id);
       kikados++;
     }
   }
 
-  // 2. Partida fantasma: 'partida_iniciada' aposta>0 há 3h sem print
+  // 2. Partida fantasma: 'partida_iniciada' há 3h sem print. Vale para TODAS as
+  //    salas (decisão de 2026-08-03: o resultado é sempre decidido pelo admin;
+  //    casuais e apostadas sem print em 3h entram na fila de revisão).
   const fantasmasList = await d
     .select()
     .from(matches)
     .where(and(eq(matches.status, "partida_iniciada"), lt(matches.updatedAt, fantasmaLimite)));
   for (const sala of fantasmasList) {
-    if (!sala.apostaMc || sala.apostaMc <= 0) continue;
     await d
       .update(matches)
       .set({ status: "aguardando_revisao", revisaoDesde: agora })
       .where(eq(matches.id, sala.id));
+    notifyMatchChange(sala.id); // jogadores veem "em análise" sem refresh
     fantasmas++;
   }
 
