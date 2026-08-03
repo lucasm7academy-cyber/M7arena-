@@ -8,10 +8,8 @@ import {
   LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
   Pencil, Trash2, Eye, EyeOff, Star, ExternalLink,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase'; // ainda usado em app.swap.salas / app.swap.rpc
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
-import { atualizarPontosPartida } from '../api/player';
 import { ajustarSaldoAdmin } from '../api/wallet';
 import { buscarElo, buscarJogadorCompleto } from '../api/riot';
 import {

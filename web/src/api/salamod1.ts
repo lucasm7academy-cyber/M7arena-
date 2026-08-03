@@ -341,8 +341,5 @@ export const ROLE_CONFIG: Record<Role, { label: string; img: string; color: stri
 export const getMaxJogadoresPorModo = (modo: ModoJogo): number =>
   MODOS_JOGO[modo]?.maxJogadores || 10;
 
-export const getJogadoresPorTime = (modo: ModoJogo): number =>
-  MODOS_JOGO[modo]?.jogadoresPorTime || 5;
-
 export const getModoInfo = (modo: ModoJogo | string) =>
   MODOS_JOGO[modo as ModoJogo] ?? MODOS_JOGO['5v5'];

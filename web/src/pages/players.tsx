@@ -16,7 +16,6 @@ import {
   ShieldCheck, Gamepad2, X, Check, ChevronDown
 } from 'lucide-react';
 import { useSound } from '../hooks/useSound';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { buscarElo } from '../api/riot';
 import {
@@ -619,7 +618,7 @@ export default function App() {
                     <div className="relative">
                       <div className="absolute inset-0 rounded-full blur-[3px] opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border }} />
                       <img
-                        src={getIconeUrl(jogador.iconeId)}
+                        src={getIconeUrl(jogador.iconeId)} loading="lazy"
                         className="w-16 h-16 rounded-full border-2 relative z-10 shadow-xl"
                         style={{
                           borderColor: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border,

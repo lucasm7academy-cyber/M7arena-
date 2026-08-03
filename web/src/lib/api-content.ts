@@ -129,16 +129,3 @@ export function toApiHighlight(data: Partial<ApiLegacyHighlight>): Record<string
   if (data.categoria !== undefined) out.categoria = data.categoria;
   return out;
 }
-
-export interface ApiContentSdk {
-  news: (params?: { all?: boolean }) => Promise<ApiLegacyNews[]>;
-  newsCreate: (data: Partial<ApiLegacyNews>) => Promise<ApiLegacyNews>;
-  newsUpdate: (id: string, data: Partial<ApiLegacyNews>) => Promise<ApiLegacyNews>;
-  newsDelete: (id: string) => Promise<{ ok: boolean }>;
-  highlights: (params?: { all?: boolean }) => Promise<ApiLegacyHighlight[]>;
-  highlightsCreate: (data: Partial<ApiLegacyHighlight>) => Promise<ApiLegacyHighlight>;
-  highlightsUpdate: (id: string, data: Partial<ApiLegacyHighlight>) => Promise<ApiLegacyHighlight>;
-  highlightsDelete: (id: string) => Promise<{ ok: boolean }>;
-  playerStats: (userId: string) => Promise<ApiPlayerStats[]>;
-  recordPlayerStats: (data: { userId: string; modo: string; vitoria: boolean }) => Promise<ApiPlayerStats>;
-}

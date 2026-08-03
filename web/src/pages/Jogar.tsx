@@ -664,7 +664,14 @@ const Jogar = () => {
               <p className="text-lg md:text-xl text-white/60 mb-8 max-w-md font-medium leading-snug">{currentSlide.description}</p>
               {currentSlide.actionText && (
                 <button
-                  onClick={() => currentSlide.actionLink && navigate(currentSlide.actionLink)}
+                  onClick={() => {
+                    if (!currentSlide.actionLink) return;
+                    if (currentSlide.actionLink === '/sejavip') {
+                      window.dispatchEvent(new Event('m7:open-vip'));
+                      return;
+                    }
+                    navigate(currentSlide.actionLink);
+                  }}
                   className="px-6 py-3 rounded-xl font-black text-sm uppercase text-black transition-all hover:scale-105"
                   style={{ background: currentSlide.color }}
                 >

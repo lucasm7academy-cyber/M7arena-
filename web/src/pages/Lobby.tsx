@@ -61,7 +61,7 @@ const TournamentPreview = ({ title, prize, date, image, category }: any) => (
 const StreamerCard = ({ name, viewers, category, image }: any) => (
   <div className="group relative flex-none w-64 rounded-xl overflow-hidden border border-white/10 bg-black cursor-pointer">
     <div className="aspect-video relative overflow-hidden">
-      <img src={image} alt={name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
+      <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
       <div className="absolute top-3 left-3 px-2 py-1 bg-red-600 rounded flex items-center gap-1.5 shadow-lg">
         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         <span className="text-[9px] font-black uppercase tracking-widest text-white">Live</span>
@@ -87,7 +87,7 @@ const TeamRankItem = ({ rank, name, logo, color, points }: any) => (
         </span>
       </div>
       <div className="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-[#FFB700]/30 transition-colors">
-        <img src={logo} alt={name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+        <img src={logo} alt={name} loading="lazy" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
       </div>
       <div>
         <h4 className="text-base font-black uppercase tracking-tight transition-colors" style={{ color: color }}>{name}</h4>
@@ -107,7 +107,7 @@ const MatchHistoryItem = ({ tagA, tagB, logoA, logoB, scoreA, scoreB, date, colo
       {/* Team A */}
       <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
         <div className="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-white/20 transition-colors">
-          <img src={logoA} alt={tagA} className="w-full h-full object-cover opacity-80" />
+          <img src={logoA} alt={tagA} loading="lazy" className="w-full h-full object-cover opacity-80" />
         </div>
         <span className="text-[11px] font-black uppercase tracking-widest text-center" style={{ color: colorA }}>{tagA}</span>
       </div>
@@ -125,7 +125,7 @@ const MatchHistoryItem = ({ tagA, tagB, logoA, logoB, scoreA, scoreB, date, colo
       {/* Team B */}
       <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
         <div className="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-white/20 transition-colors">
-          <img src={logoB} alt={tagB} className="w-full h-full object-cover opacity-80" />
+          <img src={logoB} alt={tagB} loading="lazy" className="w-full h-full object-cover opacity-80" />
         </div>
         <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: colorB }}>{tagB}</span>
       </div>

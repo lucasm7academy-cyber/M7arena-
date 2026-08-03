@@ -106,6 +106,7 @@ export default function NotificationBell() {
       setNotifications(allNotifs);
       setNotificationCount(0); // Limpa badge após abrir
     } catch (err) {
+      console.error('❌ Erro ao carregar notificações:', err);
     } finally {
       setIsLoading(false);
     }

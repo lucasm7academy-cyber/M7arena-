@@ -16,10 +16,6 @@ export function roleSlotToSlot(role: string): number {
   return idx === -1 ? 5 : idx; // RES/desconhecido cai na sobra
 }
 
-export function slotToRoleSlot(slot: number): string {
-  return ROLES_5V5[slot] ?? "RES";
-}
-
 /** Vencedor legado ('A' | 'B' | 'empate') → winner_side ('blue' | 'red' | 'draw'). Idempotente. */
 export function winnerLegacyToSide(v: string | undefined | null): "blue" | "red" | "draw" {
   if (v === "A") return "blue";

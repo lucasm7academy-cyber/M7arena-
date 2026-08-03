@@ -516,7 +516,7 @@ export default function MinhasPartidas() {
                       {/* Botões */}
                       <div className="flex items-center justify-center gap-3">
                         <button
-                          onClick={() => navigate('/sejavip')}
+                          onClick={() => window.dispatchEvent(new Event('m7:open-vip'))}
                           className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black text-sm uppercase hover:scale-[1.02] transition-all flex items-center gap-2 shadow-[0_10px_30px_-5px_rgba(255,183,0,0.3)]"
                         >
                           <Crown className="w-4 h-4" />

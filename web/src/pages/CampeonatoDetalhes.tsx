@@ -127,7 +127,7 @@ const BracketMatch = ({
                 className={`w-8 h-8 rounded bg-black border border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${isWinner1 ? "border-white/20" : ""}`}
               >
                 {logoOf(t1) ? (
-                  <img src={logoOf(t1)} alt="" className="w-full h-full object-cover" />
+                  <img src={logoOf(t1)} loading="lazy" alt="" className="w-full h-full object-cover" />
                 ) : (
                   <ShieldCheck
                     className={`w-4 h-4 ${isWinner1 ? "text-white" : isWinner2 ? "text-white/10" : "text-white/20"}`}
@@ -218,7 +218,7 @@ const BracketMatch = ({
                 className={`w-8 h-8 rounded bg-black border border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${isWinner2 ? "border-white/20" : ""}`}
               >
                 {logoOf(t2) ? (
-                  <img src={logoOf(t2)} alt="" className="w-full h-full object-cover" />
+                  <img src={logoOf(t2)} loading="lazy" alt="" className="w-full h-full object-cover" />
                 ) : (
                   <ShieldCheck
                     className={`w-4 h-4 ${isWinner2 ? "text-white" : isWinner1 ? "text-white/10" : "text-white/20"}`}
@@ -427,7 +427,7 @@ const GroupStage = ({ tournament }: { tournament: any }) => {
                         <div className="w-6 h-6 rounded bg-black border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                           {team.logo ? (
                             <img
-                              src={team.logo}
+                              src={team.logo} loading="lazy"
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -3382,7 +3382,7 @@ const CampeonatoDetalhes = () => {
                               <div className="w-10 h-10 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden">
                                 {team.logo ? (
                                   <img
-                                    src={team.logo}
+                                    src={team.logo} loading="lazy"
                                     alt="Logo"
                                     className="w-full h-full object-cover"
                                   />
@@ -3740,7 +3740,7 @@ const CampeonatoDetalhes = () => {
                               >
                                 {(time as any).logo ? (
                                   <img
-                                    src={(time as any).logo}
+                                    src={(time as any).logo} loading="lazy"
                                     alt=""
                                     className="w-full h-full object-cover"
                                   />
@@ -4700,7 +4700,7 @@ const CampeonatoDetalhes = () => {
                                     >
                                       {timeA.logo ? (
                                         <img
-                                          src={timeA.logo}
+                                          src={timeA.logo} loading="lazy"
                                           className="w-full h-full object-cover rounded-md"
                                         />
                                       ) : (
@@ -4785,7 +4785,7 @@ const CampeonatoDetalhes = () => {
                                     >
                                       {timeB.logo ? (
                                         <img
-                                          src={timeB.logo}
+                                          src={timeB.logo} loading="lazy"
                                           className="w-full h-full object-cover rounded-md"
                                         />
                                       ) : (
@@ -5735,14 +5735,14 @@ const CampeonatoDetalhes = () => {
                 <div className="w-48 h-48 rounded-xl flex items-center justify-center mb-6 relative overflow-hidden group p-4 transform hover:scale-105 transition-transform">
                   {campeonato.orgPhotoUrl ? (
                     <img
-                      src={campeonato.orgPhotoUrl}
+                      src={campeonato.orgPhotoUrl} loading="lazy"
                       alt="Logo Org"
                       className="w-full h-full object-contain relative z-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
                     />
                   ) : (
                     <div className="w-full h-full rounded-xl bg-black border-2 border-white/10 flex items-center justify-center">
                       <img
-                        src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400"
+                        src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400" loading="lazy"
                         alt="Logo Default"
                         className="w-full h-full object-cover opacity-50"
                       />

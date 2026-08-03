@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-02T22:37:29.688Z",
+  "updatedAt": "2026-08-03T00:09:57.828Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1194,31 +1194,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-02T04:42:27.776Z",
-      "agent": "gemini",
-      "summary": "Concluído infra.nginx.spa (Nginx configurado com root /usr/share/nginx/html, try_files $uri $uri/ /index.html para roteamento react-router SPA e proxy /api/ para o serviço app:3000). Validação via docker compose config com exit 0. Total de 39/58 componentes concluídos.",
-      "touched": [
-        "infra.nginx.spa"
-      ]
-    },
-    {
-      "at": "2026-08-02T04:44:22.863Z",
-      "agent": "gemini",
-      "summary": "Concluídos app.api.server (servidor de API Node + Express + Drizzle ORM criado em api/, validado com tsc --noEmit exit 0 e build exit 0) e infra.app.imagem (Dockerfile multi-stage reconfigurado sob a ADR-010 para a nova arquitetura). Fase 2 (Infraestrutura) 100% concluída (9/9). Total de 41/58 componentes concluídos.",
-      "touched": [
-        "app.api.server",
-        "infra.app.imagem"
-      ]
-    },
-    {
-      "at": "2026-08-02T04:46:39.113Z",
-      "agent": "gemini",
-      "summary": "Concluído app.auth.sessao (ADR-011): criadas as rotas de autenticação própria em api/src/routes/auth.ts (login, register, logout, me) utilizando cookies httpOnly (m7_session) e persistência de sessões no Postgres (user_sessions). Compilação TypeScript e build validados com exit 0. Total de 42/58 componentes concluídos.",
-      "touched": [
-        "app.auth.sessao"
-      ]
-    },
-    {
       "at": "2026-08-02T04:50:58.034Z",
       "agent": "gemini",
       "summary": "Concluídos app.sdk (cliente HTTP web/src/lib/api.ts), app.riot-proxy (proxy /api/riot/* com cache 10min), sec.riot-key (remoção da VITE_RIOT_API_KEY do bundle), app.storage.uploads (upload local /api/upload no volume Nginx), sec.upload (autenticação m7_session no upload), app.swap.identidade (rotas /api/profiles/me e /me/riot), app.swap.times (rotas /api/teams), app.swap.carteira (rotas /api/wallet/balance, transactions, deposit) e sec.pix (removido fallback de PIX pessoal). Total de 48/58 componentes concluídos.",
@@ -1610,6 +1585,56 @@
         "infra/.env.local",
         "Dockerfile",
         "mcp/browser-server/server.js"
+      ]
+    },
+    {
+      "at": "2026-08-02T23:58:08.728Z",
+      "agent": "deepseek",
+      "summary": "Ajuste visual do DepositModal (web/src/components/modals/deposit/DepositModal.tsx): título virou \"Depositar M7 COINS\"; bordas menos redondas (rounded-3xl/2xl, fora o padrão de 40px); responsividade (fonte menor em telas pequenas, max-h 92vh + overflow-y-auto p/ não cortar); layout de checkout com grid lg:grid-cols-[1fr_320px] — esquerda pacotes, direita bloco Resumo do Pedido com Total a Pagar/Você Recebe/botão. tsc: arquivo limpo (2 erros pré-existentes em ElectricBorder.tsx e Streamers.tsx).",
+      "touched": [
+        "web/src/components/modals/deposit/DepositModal.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T00:00:24.103Z",
+      "agent": "deepseek",
+      "summary": "Pass de performance: adicionei loading=\"lazy\" em 21 <img> de listas/cards/grids abaixo da dobra em 9 arquivos do web: createCampPage.tsx (3), perfil.tsx (2: campeões top10, logo da equipe), equipes.tsx (1: logo meu time), players.tsx (1: avatar do card), CampeonatoDetalhes.tsx (9: logos em bracket/classificação/ranking/inscrição + org photo), recrutamento.tsx (1: logo do card), Vincular.tsx (1: sugestões de busca), TimePage.tsx (1: jogadores pendentes), PlayerDetailModal.tsx (2: avatar + time logo). Excluídos: hero/header, backgrounds, previews de upload, ícones de role/lane pequenos (UI). Jogar.tsx e campeonatos.tsx não têm <img>. tsc --noEmit -p web/tsconfig.json → só os 2 erros pré-existentes (ElectricBorder.tsx:23, Streamers.tsx:695).",
+      "touched": [
+        "web/src/pages/createCampPage.tsx",
+        "web/src/pages/perfil.tsx",
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/pages/recrutamento.tsx",
+        "web/src/pages/Vincular.tsx",
+        "web/src/pages/TimePage.tsx",
+        "web/src/components/players/PlayerDetailModal.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T00:09:57.828Z",
+      "agent": "deepseek",
+      "summary": "Limpeza de código morto guiada por auditoria de subagente. Removidos: 8 arquivos órfãos (streams/*, OAuthCallbackHandler, sejavip.stx, scrim.ts, codigosPartida.ts), ~25 funções/exports mortos, 3 imports mortos de supabase, 10 rotas API órfãs (mantida wallet/deposit), 19 imagens (~19MB). Fixes perf: ElectricBorder pausa rAF; NotificationBell loga catch. Botão DEPOSITAR no header abre DepositModal (mantido). 'Tornar-se VIP' agora emite m7:open-vip -> VipModal. Lazy load ~21 imgs. api tsc limpa; web só 2 erros pré-existentes. Pendente: 10 arquivos ainda usam Supabase (swaps recrutamento/streams/sala_votos/votos_jogos/resultados/pagamentos/realtime); verify-swap.js subconta (26 call sites reais).",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/MinhasPartidas.tsx",
+        "web/src/api/player.ts",
+        "web/src/api/wallet.ts",
+        "web/src/api/riot.ts",
+        "web/src/api/recrutamento.ts",
+        "web/src/api/salamod1.ts",
+        "web/src/lib/api.ts",
+        "web/src/lib/api-content.ts",
+        "web/src/components/ui/ElectricBorder.tsx",
+        "web/src/components/notifications/NotificationBell.tsx",
+        "api/src/routes/wallet.ts",
+        "api/src/routes/content.ts",
+        "api/src/routes/riot.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/src/routes/teams.ts",
+        "api/src/lib/match-shape.ts",
+        "api/src/lib/session.ts"
       ]
     }
   ]

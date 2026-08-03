@@ -70,24 +70,6 @@ export async function fetchRecruitmentsByRole(role: RoleRecrutamento): Promise<R
   return (data ?? []) as unknown as Recrutamento[];
 }
 
-/** Busca um post de recrutamento específico pelo ID. */
-export async function fetchRecruitmentById(id: number): Promise<Recrutamento | null> {
-  const { data, error } = await supabase
-    .from('recrutamentos')
-    .select(RECRUTAMENTO_SELECT)
-    .eq('id', id)
-    .eq('ativo', true)
-    .single();
-
-  if (error) {
-    if (error.code !== 'PGRST116') {
-      console.error('[recrutamento] fetchRecruitmentById:', error.message);
-    }
-    return null;
-  }
-  return data as unknown as Recrutamento;
-}
-
 /** Cria um novo post de recrutamento. */
 export async function createRecruitment(
   input: RecrutamentoInput,

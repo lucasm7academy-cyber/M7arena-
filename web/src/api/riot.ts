@@ -6,7 +6,6 @@ const REGIONAL_URL = 'https://americas.api.riotgames.com';
 const DDR_BASE = 'https://ddragon.leagueoflegends.com';
 
 let ddrVersion: string | null = null;
-let champCache: Record<number, string> | null = null;
 const REQUEST_TIMEOUT = 8000;
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = REQUEST_TIMEOUT): Promise<Response> {
@@ -57,23 +56,6 @@ export function buildChampionIconUrl(championKey: string, version?: string): str
   return `${DDR_BASE}/cdn/${v}/img/champion/${championKey}.png`;
 }
 
-async function getChampionKey(id: number): Promise<string> {
-  if (!champCache) {
-    try {
-      const version = await getDDRVersion();
-      const res = await fetchWithTimeout(`${DDR_BASE}/cdn/${version}/data/pt_BR/champion.json`, {}, 5000);
-      const data = await res.json();
-      champCache = {};
-      for (const key of Object.keys(data.data)) {
-        champCache[parseInt(data.data[key].key)] = key;
-      }
-    } catch {
-      return 'Unknown';
-    }
-  }
-  return champCache![id] ?? 'Unknown';
-}
-
 // Busca conta via proxy do servidor /api/riot/account
 export async function buscarContaRiot(riotId: string) {
   const [gameName, tagLine] = riotId.split('#');
@@ -104,84 +86,6 @@ export async function buscarElo(puuid: string) {
   } catch (err: any) {
     if (err?.message === 'RATE_LIMIT') throw err;
     return [];
-  }
-}
-
-export async function buscarTopChampions(puuid: string, count = 3) {
-  try {
-    const url = `/api/riot/mastery/${puuid}?count=${count}`;
-    const res = await fetchWithTimeout(url);
-    if (!res.ok) return [];
-    const items: any[] = await res.json();
-    return await Promise.all(items.map(async item => ({
-      championId: item.championId,
-      championKey: await getChampionKey(item.championId),
-      championPoints: item.championPoints,
-      championLevel: item.championLevel,
-      lastPlayTime: item.lastPlayTime,
-      chestGranted: item.chestGranted,
-    })));
-  } catch {
-    return [];
-  }
-}
-
-export async function buscarPontuacaoMaestria(puuid: string): Promise<number> {
-  try {
-    const res = await fetchWithTimeout(`/api/riot/mastery-score/${puuid}`);
-    if (!res.ok) return 0;
-    return await res.json();
-  } catch {
-    return 0;
-  }
-}
-
-export async function buscarHistoricoPartidas(puuid: string, count = 10, queue?: number): Promise<string[]> {
-  try {
-    let url = `/api/riot/matches/${puuid}?count=${count}`;
-    if (queue !== undefined) url += `&queue=${queue}`;
-    const res = await fetchWithTimeout(url);
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  }
-}
-
-export async function buscarDetalhesPartida(matchId: string) {
-  const res = await fetchWithTimeout(`/api/riot/match/${matchId}`);
-  if (!res.ok) throw riotError(res.status);
-  return await res.json();
-}
-
-export async function buscarUltimasPartidas(puuid: string, count = 5, queue?: number) {
-  try {
-    const ids = await buscarHistoricoPartidas(puuid, count, queue);
-    const partidas = await Promise.all(ids.map(id => buscarDetalhesPartida(id).catch(() => null)));
-    return partidas.filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-export async function buscarPartidaAtiva(puuid: string) {
-  try {
-    const res = await fetchWithTimeout(`/api/riot/spectator/${puuid}`);
-    if (res.status === 404) return null;
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-export async function buscarDesafiosJogador(puuid: string) {
-  try {
-    const res = await fetchWithTimeout(`/api/riot/challenges/${puuid}`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
   }
 }
 

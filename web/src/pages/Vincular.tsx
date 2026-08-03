@@ -585,7 +585,7 @@ export default function Vincular() {
                           >
                             <div className="relative">
                               <img 
-                                src={getIconeUrl(sug.iconId)} 
+                                src={getIconeUrl(sug.iconId)} loading="lazy" 
                                 className="w-12 h-12 rounded-full border border-white/10 group-hover:border-[#FFB700]/50 transition-colors" 
                                 alt="Icon" 
                               />

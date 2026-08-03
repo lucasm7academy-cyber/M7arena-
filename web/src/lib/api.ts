@@ -10,7 +10,6 @@ import type {
   ApiNewsRow,
   ApiHighlightRow,
   ApiPlayerStats,
-  ApiContentSdk,
 } from "./api-content.js";
 import { toLegacyNews, toApiNews, toLegacyHighlight, toApiHighlight } from "./api-content.js";
 
@@ -20,7 +19,6 @@ export type {
   ApiNewsRow,
   ApiHighlightRow,
   ApiPlayerStats,
-  ApiContentSdk,
 } from "./api-content.js";
 
 export interface ApiUser {
@@ -118,46 +116,6 @@ export interface ApiMemberRow {
   guest_riot_id?: string | null;
 }
 
-export interface ApiTeamsSdk {
-  list: (params?: { page?: number; limit?: number; search?: string; sort?: string; dir?: string }) => Promise<ApiTeamListResult>;
-  detail: (id: string) => Promise<ApiLegacyTeamDetail>;
-  batch: (ids: string[]) => Promise<ApiTeamBatchItem[]>;
-  byUser: (userId: string) => Promise<ApiUserTeams>;
-  members: (params: { user_ids?: string[]; guest_riot_ids?: string[] }) => Promise<ApiMemberRow[]>;
-  create: (data: {
-    nome: string;
-    tag: string;
-    logo_url?: string | null;
-    gradient_from?: string;
-    gradient_to?: string;
-    whatsapp?: string | null;
-    discord?: string | null;
-  }) => Promise<ApiLegacyTeam>;
-  update: (id: string, data: Partial<{
-    nome: string;
-    tag: string;
-    logo_url: string | null;
-    gradient_from: string | null;
-    gradient_to: string | null;
-    whatsapp: string | null;
-    discord: string | null;
-  }>) => Promise<ApiLegacyTeam>;
-  leave: (id: string) => Promise<{ ok: boolean; deleted?: boolean }>;
-  removeMemberships: () => Promise<{ ok: boolean }>;
-  invites: () => Promise<ApiLegacyInvite[]>;
-  createInvite: (data: {
-    time_id: string;
-    para_user_id?: string | null;
-    riot_id?: string | null;
-    role: string;
-    mensagem?: string | null;
-    tipo: string;
-  }) => Promise<ApiLegacyInvite>;
-  clearInvites: (ids: string[]) => Promise<{ ok: boolean }>;
-  acceptInvite: (id: string) => Promise<{ ok: boolean }>;
-  declineInvite: (id: string) => Promise<{ ok: boolean }>;
-}
-
 /**
  * Shape legado de campeonato que o fork consome (ADR-014). A API devolve os
  * nomes snake_case do schema `campeonatos` antigo; os jsonb (times_inscritos,
@@ -199,44 +157,11 @@ export interface ApiLegacyTournament {
   updated_at?: string;
 }
 
-export interface ApiTournamentsSdk {
-  list: (params?: { status?: string; criado_por?: string; ids?: string[]; sort?: string }) => Promise<ApiLegacyTournament[]>;
-  detail: (id: string) => Promise<ApiLegacyTournament>;
-  create: (data: Partial<ApiLegacyTournament>) => Promise<ApiLegacyTournament>;
-  update: (id: string, data: Partial<ApiLegacyTournament>) => Promise<ApiLegacyTournament>;
-  remove: (id: string) => Promise<{ ok: boolean }>;
-  /** Inscreve um time (substitui RPC registrar_time_campeonato). */
-  inscreverTime: (id: string, teamEntry: Record<string, unknown>) => Promise<ApiLegacyTournament>;
-  /** Aprova/rejeita um time inscrito (substitui RPC aprovar_time_campeonato). */
-  aprovarTime: (id: string, teamId: string, aprovar?: boolean) => Promise<ApiLegacyTournament>;
-  /** Reabre o campeonato (substitui RPC reabrir_campeonato). */
-  reabrir: (id: string) => Promise<ApiLegacyTournament>;
-  /** Atualiza o cronograma inteiro (substitui RPC atualizar_cronograma_campeonato). */
-  atualizarCronograma: (id: string, cronograma: any[]) => Promise<ApiLegacyTournament>;
-  /** Merge atômico de jogos no cronograma (substitui RPC merge_jogos_cronograma). */
-  mergeCronograma: (id: string, jogos: any[]) => Promise<ApiLegacyTournament>;
-  /** Recalcula PDL global (substitui RPC recalcular_pdl_global). */
-  recalcularPdl: (id: string) => Promise<{ ok: boolean }>;
-}
-
 /** Saldo de MP/MC no shape que as telas do fork consomem. */
 export interface ApiWalletBalance {
   userId: string;
   mp: number;
   mc: number;
-}
-
-/** Linha do ledger wallet_transactions (extrato). */
-export interface ApiWalletTransaction {
-  id: string;
-  userId: string;
-  currency: "mp" | "mc";
-  amount: number;
-  kind: string;
-  refType?: string | null;
-  refId?: string | null;
-  balanceAfter: number;
-  createdAt: string;
 }
 
 /** Retorno do POST /api/wallet/admin/adjust (saldos finais calculados no servidor). */
@@ -247,16 +172,6 @@ export interface ApiWalletAdjustResult {
   mp: number;
 }
 
-export interface ApiWalletsSdk {
-  balance: () => Promise<ApiWalletBalance>;
-  transactions: () => Promise<ApiWalletTransaction[]>;
-  /** Leitura em lote: com userIds, qualquer autenticado; sem, só admin (agregação). */
-  adminBalances: (userIds?: string[]) => Promise<ApiWalletBalance[]>;
-  /** Ajuste admin por DELTA — o servidor valida cargo, grava ledger e devolve saldos. */
-  adminAdjust: (userId: string, deltaMC: number, deltaMP: number, motivo?: string) => Promise<ApiWalletAdjustResult>;
-}
-
-/**
 /**
  * Shape legado de `salas` que as telas de Jogar/SalaMod1 consomem (ADR-005/010).
  * `id` é o `sala_num` público (numérico) — o fork navega em `/sala-mod1/:id`,
@@ -564,7 +479,6 @@ export const api = {
 
   wallet: {
     balance: () => api.get<ApiWalletBalance>("/wallet/balance"),
-    transactions: () => api.get<ApiWalletTransaction[]>("/wallet/transactions"),
     adminBalances: (userIds?: string[]) =>
       api.get<ApiWalletBalance[]>(
         `/wallet/admin/balances${userIds?.length ? `?userIds=${userIds.join(",")}` : ""}`
@@ -626,7 +540,6 @@ export const api = {
     confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),
     recusar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/recusar`),
     tick: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/tick`),
-    start: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/start`),
     finalizar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/finalizar`),
     reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) =>
       api.post<ApiSalaResultado>(`/matches/${id}/report-result`, data),

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, gt, desc, inArray } from "drizzle-orm";
+import { eq, and, gt, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userWallets, userRoles } from "../../../db/schema/identidade.js";
 import { walletTransactions, payments } from "../../../db/schema/economia.js";
@@ -44,27 +44,6 @@ walletRouter.get("/balance", async (req, res) => {
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao consultar saldo da carteira" });
-  }
-});
-
-// GET /api/wallet/transactions - Histórico de transações
-walletRouter.get("/transactions", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const txs = await db
-      .select()
-      .from(walletTransactions)
-      .where(eq(walletTransactions.userId, user.id))
-      .orderBy(desc(walletTransactions.createdAt))
-      .limit(50);
-
-    return res.json(txs);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao consultar extrato de transações" });
   }
 });
 

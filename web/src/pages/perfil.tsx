@@ -137,7 +137,7 @@ function PerformanceSection({ stats, ddrVer, delay = 0 }: any) {
                   <div className="flex items-center gap-4">
                     <div className="relative flex-shrink-0">
                       <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 bg-black/40">
-                        <img src={`https://ddragon.leagueoflegends.com/cdn/${ddrVer}/img/champion/${champ.championName}.png`} 
+                        <img src={`https://ddragon.leagueoflegends.com/cdn/${ddrVer}/img/champion/${champ.championName}.png`} loading="lazy" 
                           alt={champ.championName} className="w-full h-full object-cover" />
                       </div>
                       <div className="absolute -top-2 -left-2 w-6 h-6 rounded-lg bg-black border border-white/10 flex items-center justify-center">
@@ -558,7 +558,7 @@ export default function Perfil() {
                       style={{ border: `2px solid ${equipe.gradient_from || '#FFB700'}`, background: 'black', boxShadow: `0 8px 24px -6px ${equipe.gradient_from || '#FFB700'}60` }}
                     >
                       {equipe.logo_url ? (
-                        <img src={equipe.logo_url} alt={equipe.nome} className="w-full h-full object-cover" />
+                        <img src={equipe.logo_url} loading="lazy" alt={equipe.nome} className="w-full h-full object-cover" />
                       ) : (
                         <span className="font-black text-base sm:text-lg tracking-widest" style={{ color: equipe.gradient_from || '#FFB700' }}>{equipe.tag}</span>
                       )}

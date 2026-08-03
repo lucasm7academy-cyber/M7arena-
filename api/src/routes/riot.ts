@@ -112,31 +112,6 @@ riotRouter.get("/league/:puuid", async (req, res) => {
   }
 });
 
-// GET /api/riot/mastery/:puuid?count=N - Top maestrias por PUUID
-riotRouter.get("/mastery/:puuid", async (req, res) => {
-  try {
-    const { puuid } = req.params;
-    const count = req.query.count || 5;
-    const riotUrl = `${PLATFORM_URL}/lol/champion-mastery/v4/champion-masteries/by-puuid/${encodeURIComponent(
-      puuid
-    )}?count=${encodeURIComponent(String(count))}`;
-    return await riotFetch(res, `mastery:${puuid}:${count}`, riotUrl);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar maestrias na Riot API" });
-  }
-});
-
-// GET /api/riot/mastery-score/:puuid - Pontuação total de maestria por PUUID
-riotRouter.get("/mastery-score/:puuid", async (req, res) => {
-  try {
-    const { puuid } = req.params;
-    const riotUrl = `${PLATFORM_URL}/lol/champion-mastery/v4/scores/by-puuid/${encodeURIComponent(puuid)}`;
-    return await riotFetch(res, `mastery-score:${puuid}`, riotUrl);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar pontuação de maestria" });
-  }
-});
-
 // GET /api/riot/matches/:puuid?count=N&queue=N&startTime=S - IDs de partidas por PUUID
 riotRouter.get("/matches/:puuid", async (req, res) => {
   try {
@@ -165,27 +140,5 @@ riotRouter.get("/match/:matchId", async (req, res) => {
     return await riotFetch(res, `match:${matchId}`, riotUrl);
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar detalhes da partida" });
-  }
-});
-
-// GET /api/riot/spectator/:puuid - Partida ativa do invocador (null se não estiver jogando)
-riotRouter.get("/spectator/:puuid", async (req, res) => {
-  try {
-    const { puuid } = req.params;
-    const riotUrl = `${PLATFORM_URL}/lol/spectator/v5/active-games/by-puuid/${encodeURIComponent(puuid)}`;
-    return await riotFetch(res, `spectator:${puuid}`, riotUrl);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar partida ativa" });
-  }
-});
-
-// GET /api/riot/challenges/:puuid - Desafios do jogador (challenges v1)
-riotRouter.get("/challenges/:puuid", async (req, res) => {
-  try {
-    const { puuid } = req.params;
-    const riotUrl = `${REGIONAL_URL}/lol/challenges/v1/player-data/${encodeURIComponent(puuid)}`;
-    return await riotFetch(res, `challenges:${puuid}`, riotUrl);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar desafios do jogador" });
   }
 });

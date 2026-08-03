@@ -8,8 +8,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PerfilProvider } from './contexts/PerfilContext';
 import { RoleProvider } from './contexts/RoleContext';
 import VerificacaoStatus from './components/notifications/VerificacaoStatus';
-import OAuthCallbackHandler from './components/OAuthCallbackHandler';
-
 // ✅ Recupera de "chunk velho" após um novo deploy.
 // Quando sai uma versão nova, os arquivos .js mudam de hash. Se o usuário está
 // com a versão antiga aberta e navega, o import dinâmico falha (o arquivo antigo
@@ -186,7 +184,6 @@ export default function App() {
         <RoleProvider>
         <VerificacaoProvider>
           <BrowserRouter>
-          <OAuthCallbackHandler /> {/* ✅ Processa callbacks OAuth em qualquer rota */}
           <DDRagonInitializer /> {/* ✅ Inicialização segura do DDragon */}
           <VerificacaoStatus />
           <RootErrorBoundary>

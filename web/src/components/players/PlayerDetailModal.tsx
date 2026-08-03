@@ -128,7 +128,7 @@ export const PlayerDetailModal = ({ jogador, onClose }: { jogador: Jogador; onCl
             <div className="relative shrink-0">
               <div className="absolute inset-0 rounded-full blur-xl" style={{ background: eloStyle.border }} />
               <img
-                src={getIconeUrl(jogador.iconeId)}
+                src={getIconeUrl(jogador.iconeId)} loading="lazy"
                 className="w-20 h-20 rounded-full border-3 relative z-10 shadow-2xl"
                 style={{ borderColor: eloStyle.border }}
                 alt={jogador.nome}
@@ -162,7 +162,7 @@ export const PlayerDetailModal = ({ jogador, onClose }: { jogador: Jogador; onCl
                 }}
               >
                 {jogador.timeLogo ? (
-                  <img src={jogador.timeLogo} alt={jogador.timeTag ?? 'Time'} className="w-full h-full object-cover"
+                  <img src={jogador.timeLogo} loading="lazy" alt={jogador.timeTag ?? 'Time'} className="w-full h-full object-cover"
                     onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.style.display = 'none'; }} />
                 ) : (
                   <span className="font-black text-xl tracking-widest" style={{ color: jogador.timeColor ?? '#fff' }}>{jogador.timeTag}</span>

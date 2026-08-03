@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and, desc } from "drizzle-orm";
 import { db } from "../db.js";
-import { broadcasts, recruitmentPosts, notifications, playerStats } from "../../../db/schema/conteudo.js";
+import { playerStats } from "../../../db/schema/conteudo.js";
 import { getAuthUser } from "../lib/content.js";
 import { contentNewsRouter } from "./content-news.js";
 import { contentHighlightsRouter } from "./content-highlights.js";
@@ -79,83 +79,5 @@ contentRouter.post("/player-stats", async (req, res) => {
     return res.json(updated);
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao registrar stats" });
-  }
-});
-
-// ── OUTROS (inalterados) ─────────────────────────────────────────────────────
-
-// GET /api/content/streamers - Transmissões e streamers
-contentRouter.get("/streamers", async (_req, res) => {
-  try {
-    const items = await db.select().from(broadcasts).orderBy(desc(broadcasts.isLive));
-    return res.json(items);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar streamers" });
-  }
-});
-
-// GET /api/content/recruitment - Posts de recrutamento (LFT/LFP)
-contentRouter.get("/recruitment", async (_req, res) => {
-  try {
-    const items = await db
-      .select()
-      .from(recruitmentPosts)
-      .where(eq(recruitmentPosts.active, true))
-      .orderBy(desc(recruitmentPosts.createdAt))
-      .limit(50);
-    return res.json(items);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar recrutamento" });
-  }
-});
-
-// POST /api/content/recruitment - Criar anúncio de recrutamento
-contentRouter.post("/recruitment", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const { type, roleSlot, title, description } = req.body;
-    if (!type || !roleSlot || !title || !description) {
-      return res.status(400).json({ error: "Campos obrigatórios ausentes" });
-    }
-
-    const [created] = await db
-      .insert(recruitmentPosts)
-      .values({
-        authorId: user.id,
-        type,
-        roleSlot,
-        title: title.trim(),
-        description: description.trim(),
-      })
-      .returning();
-
-    return res.status(201).json(created);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao criar anúncio" });
-  }
-});
-
-// GET /api/content/notifications - Notificações do usuário
-contentRouter.get("/notifications", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const items = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, user.id))
-      .orderBy(desc(notifications.createdAt))
-      .limit(30);
-
-    return res.json(items);
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar notificações" });
   }
 });

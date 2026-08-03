@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Zap, Check, X, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 // ── URLs CONSTANTES (não mudam, não precisam de query) ──

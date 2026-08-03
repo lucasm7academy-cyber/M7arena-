@@ -649,34 +649,6 @@ teamsRouter.post("/invites/:id/decline", async (req, res) => {
   }
 });
 
-// ── DELETE /api/teams/:id — dissolver (apenas quando sem membros) ──────────
-teamsRouter.delete("/:id", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-    const { id } = req.params;
-    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
-    if (!team) return res.status(404).json({ error: "Time não encontrado" });
-
-    const [countRow] = await db
-      .select({ total: count() })
-      .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.status, "accepted")));
-    if ((countRow?.total ?? 0) > 0) {
-      return res.status(409).json({ error: "O time ainda tem membros" });
-    }
-
-    await db.delete(teamStats).where(eq(teamStats.teamId, id));
-    await db.delete(teamInvites).where(eq(teamInvites.teamId, id));
-    await db.delete(teams).where(eq(teams.id, id));
-    return res.json({ ok: true });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao dissolver time" });
-  }
-});
-
 // ── POST /api/teams/:id/lineup — substitui o lineup inteiro (transação) ────
 // Substitui a RPC salvar_lineup_time (security definer que validava dono/capitão).
 // A API valida o usuário é dono/capitão do time e substitui os membros numa

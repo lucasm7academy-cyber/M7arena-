@@ -88,7 +88,7 @@ function RecruitmentCard({ post, myUserId, onEdit, onDelete, onClick }: CardProp
         {/* Logo grande — preenche o hero */}
         <div className="w-24 h-24 rounded-2xl bg-black/35 backdrop-blur-md border-2 border-white/25 flex items-center justify-center overflow-hidden shadow-2xl">
           {timeData.logo_url ? (
-            <img src={timeData.logo_url} alt={timeData.nome} className="w-full h-full object-contain p-1.5" />
+            <img src={timeData.logo_url} loading="lazy" alt={timeData.nome} className="w-full h-full object-contain p-1.5" />
           ) : (
             <div className="w-full h-full flex items-center justify-center font-black text-2xl text-white/70">
               {timeData.tag}

@@ -31,6 +31,7 @@ import { useSound } from '../../hooks/useSound';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
 import VipModal from '../modals/vip/VipModal';
+import DepositModal from '../modals/deposit/DepositModal';
 
 // ✅ Lazy loading para componentes carregados sob demanda
 const NotificationBell = lazy(() => import('../notifications/NotificationBell'));
@@ -61,6 +62,7 @@ export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isGamePage);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +81,14 @@ export default function Layout() {
   useEffect(() => {
     setIsSidebarOpen(!isGamePage);
   }, [isGamePage]);
+
+  // ✅ Qualquer botão do site pode abrir o modal VIP emitindo o evento global
+  // `m7:open-vip` (ex.: botões "Tornar-se VIP" em Jogar/MinhasPartidas).
+  useEffect(() => {
+    const openVip = () => setIsVipModalOpen(true);
+    window.addEventListener('m7:open-vip', openVip);
+    return () => window.removeEventListener('m7:open-vip', openVip);
+  }, []);
 
   // ✅ Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -212,6 +222,17 @@ export default function Layout() {
               <FaDiscord className="w-3.5 h-3.5 md:w-3.5 md:h-3.5" />
               <span>Discord</span>
             </a>
+
+            <button
+              onClick={() => {
+                playSound('click');
+                setIsDepositModalOpen(true);
+              }}
+              className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00C35A] to-[#008F39] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,195,90,0.4)] md:px-3 md:py-1.5 md:rounded-full md:gap-1.5"
+            >
+              <CreditCard className="w-3.5 h-3.5 md:w-3.5 md:h-3.5" />
+              <span>Depositar</span>
+            </button>
 
             {!user && (
               <Link
@@ -597,6 +618,9 @@ export default function Layout() {
 
       {/* Modal VIP */}
       <VipModal isOpen={isVipModalOpen} onClose={() => setIsVipModalOpen(false)} />
+
+      {/* Modal Compra de MC */}
+      <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
     </div>
   );
 }

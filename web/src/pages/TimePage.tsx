@@ -527,7 +527,7 @@ const InvitePlayerModal = ({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                              {iconUrl ? <img src={iconUrl} alt="" className="w-full h-full object-cover" width={36} height={36} /> : <span className="text-white/60 text-xs font-bold">{p.riot_id.charAt(0).toUpperCase()}</span>}
+                              {iconUrl ? <img src={iconUrl} loading="lazy" alt="" className="w-full h-full object-cover" width={36} height={36} /> : <span className="text-white/60 text-xs font-bold">{p.riot_id.charAt(0).toUpperCase()}</span>}
                             </div>
                             <div>
                               <div className="flex items-center gap-2">

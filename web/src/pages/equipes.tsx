@@ -428,7 +428,7 @@ export default function Equipes() {
                       onClick={myTeam.logo_url ? () => setLightboxUrl(myTeam.logo_url) : undefined}
                     >
                       {myTeam.logo_url ? (
-                        <img src={myTeam.logo_url} alt={myTeam.nome} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" />
+                        <img src={myTeam.logo_url} loading="lazy" alt={myTeam.nome} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" />
                       ) : (
                         <span className="font-black text-base md:text-xl tracking-widest" style={{ color: myTeam.gradientFrom }}>{myTeam.tag}</span>
                       )}

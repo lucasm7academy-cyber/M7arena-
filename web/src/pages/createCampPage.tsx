@@ -1295,7 +1295,7 @@ export default function AdminPanel() {
                               <div className="flex items-center gap-4 md:gap-6">
                                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden group-hover:bg-teal-600 transition-colors">
                                   {team.logo ? (
-                                    <img src={team.logo} alt="Logo" className="w-full h-full object-cover" />
+                                    <img src={team.logo} loading="lazy" alt="Logo" className="w-full h-full object-cover" />
                                   ) : (
                                     <span className="font-black text-base md:text-lg text-white">{team.tag}</span>
                                   )}
@@ -1649,7 +1649,7 @@ export default function AdminPanel() {
                       {/* Banner area */}
                       <div className="h-40 relative bg-slate-900">
                         {tournament.logoUrl ? (
-                          <img src={tournament.logoUrl} alt="Banner" className="w-full h-full object-cover opacity-60" />
+                          <img src={tournament.logoUrl} loading="lazy" alt="Banner" className="w-full h-full object-cover opacity-60" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 opacity-60" />
                         )}
@@ -1685,7 +1685,7 @@ export default function AdminPanel() {
                           <div className="w-16 h-16 rounded-2xl bg-white p-1 border-4 border-white shadow-xl">
                             <div className="w-full h-full rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
                               {tournament.logoUrl ? (
-                                <img src={tournament.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                <img src={tournament.logoUrl} loading="lazy" alt="Logo" className="w-full h-full object-cover" />
                               ) : (
                                 <Trophy className="w-6 h-6 text-teal-600" />
                               )}

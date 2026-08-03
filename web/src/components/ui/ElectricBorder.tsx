@@ -179,6 +179,12 @@ const ElectricBorder = ({
     const drawElectricBorder = (currentTime: number) => {
       if (!canvas || !ctx) return;
 
+      // Após uma pausa (fora do viewport / aba oculta), o deltaTime do primeiro
+      // frame seria enorme e faria a animação saltar — usa o frame atual como base.
+      if (lastFrameTimeRef.current === 0) {
+        lastFrameTimeRef.current = currentTime;
+      }
+
       const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
       timeRef.current += deltaTime * speed;
       lastFrameTimeRef.current = currentTime;
@@ -258,13 +264,52 @@ const ElectricBorder = ({
     });
     resizeObserver.observe(container);
 
-    animationRef.current = requestAnimationFrame(drawElectricBorder);
+    const stopAnimation = () => {
+      if (animationRef.current !== undefined) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = undefined;
+      }
+      // Zera para o drawElectricBorder detectar a retomada no próximo frame.
+      lastFrameTimeRef.current = 0;
+    };
+
+    const startAnimation = () => {
+      if (animationRef.current !== undefined) return;
+      animationRef.current = requestAnimationFrame(drawElectricBorder);
+    };
+
+    // Sem isto, cada card manteria um loop de rAF eterno desenhando noise em
+    // canvas mesmo fora do viewport ou com a aba em background.
+    let isInViewport = true;
+    const updatePlayState = () => {
+      if (isInViewport && !document.hidden) {
+        startAnimation();
+      } else {
+        stopAnimation();
+      }
+    };
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        isInViewport = entries[0]?.isIntersecting ?? false;
+        updatePlayState();
+      },
+      { threshold: 0 }
+    );
+    intersectionObserver.observe(container);
+
+    const handleVisibilityChange = () => {
+      updatePlayState();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    updatePlayState();
 
     return () => {
       clearTimeout(sizeTimeout);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      intersectionObserver.disconnect();
+      stopAnimation();
       resizeObserver.disconnect();
     };
   }, [color, speed, chaos, borderRadius, octavedNoise, getRoundedRectPoint]);
