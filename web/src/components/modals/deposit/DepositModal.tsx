@@ -286,10 +286,10 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-xl mx-auto"
+            className="relative w-full max-w-4xl mx-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="absolute inset-0 rounded-[40px] bg-[#111111]/40 border border-white/[0.08] backdrop-blur-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 rounded-3xl bg-[#111111]/40 border border-white/[0.08] backdrop-blur-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-none">
               <div className="absolute top-0 left-0 w-full h-[120px] bg-gradient-to-b from-[#E6A600]/10 to-transparent pointer-events-none" />
             </div>
 
@@ -303,7 +303,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               referrerPolicy="no-referrer"
             />
 
-            <div className="relative p-10 md:p-12 z-10">
+            <div className="relative p-6 md:p-10 z-10 max-h-[92vh] overflow-y-auto">
               <button
                 onClick={handleClose}
                 className="absolute top-8 right-8 w-10 h-10 bg-white/5 border border-white/[0.05] rounded-full text-white/40 hover:text-white transition-all flex items-center justify-center hover:bg-white/10"
@@ -316,9 +316,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 <motion.h2 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="text-4xl font-black uppercase tracking-[-0.04em] text-white"
+                  className="text-3xl md:text-4xl font-black uppercase tracking-[-0.04em] text-white"
                 >
-                  Depositar <span className="text-[#E6A600]">MCs</span>
+                  Depositar <span className="text-[#E6A600]">M7 COINS</span>
                 </motion.h2>
                 <motion.p 
                   initial={{ opacity: 0, x: -20 }}
@@ -331,112 +331,127 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               </div>
 
               {!paymentData ? (
-                <div className="space-y-8">
-                  <div className="grid grid-cols-2 gap-4">
-                    {PACKAGES.map((pkg, idx) => (
-                      <motion.button
-                        key={pkg.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        onClick={() => handleSelectPackage(pkg)}
-                        className={`relative group p-6 rounded-[24px] border-2 transition-all duration-300 text-left overflow-hidden ${
-                          selectedPackage?.id === pkg.id
-                            ? 'border-[#E6A600] bg-[#E6A600]/10 shadow-[0_0_20px_rgba(230,166,0,0.1)]'
-                            : 'border-white/[0.05] bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {pkg.popular && (
-                          <div className="absolute -top-1 -right-1 bg-[#E6A600] text-black text-[10px] font-black uppercase tracking-tighter px-3 py-1.5 rounded-bl-xl">
-                            Especial
-                          </div>
-                        )}
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start">
+                  <div className="space-y-4">
+                    <p className="text-white/40 text-xs uppercase tracking-[0.2em] font-semibold">
+                      Escolha o pacote
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 md:gap-4">
+                      {PACKAGES.map((pkg, idx) => (
+                        <motion.button
+                          key={pkg.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.1 }}
+                          onClick={() => handleSelectPackage(pkg)}
+                          className={`relative group p-4 md:p-5 rounded-2xl border-2 transition-all duration-300 text-left overflow-hidden ${
+                            selectedPackage?.id === pkg.id
+                              ? 'border-[#E6A600] bg-[#E6A600]/10 shadow-[0_0_20px_rgba(230,166,0,0.1)]'
+                              : 'border-white/[0.05] bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {pkg.popular && (
+                            <div className="absolute -top-1 -right-1 bg-[#E6A600] text-black text-[10px] font-black uppercase tracking-tighter px-3 py-1.5 rounded-bl-xl">
+                              Especial
+                            </div>
+                          )}
 
-                        <div className="relative z-10 flex flex-col gap-1">
-                          <div className={`text-sm font-bold opacity-60 transition-colors duration-300 ${
-                            selectedPackage?.id === pkg.id ? 'text-[#E6A600]' : 'text-white'
-                          }`}>
-                            {pkg.label}
+                          <div className="relative z-10 flex flex-col gap-1">
+                            <div className={`text-sm font-bold opacity-60 transition-colors duration-300 ${
+                              selectedPackage?.id === pkg.id ? 'text-[#E6A600]' : 'text-white'
+                            }`}>
+                              {pkg.label}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <GoldEssenceIcon size={22} className={selectedPackage?.id === pkg.id ? 'opacity-100' : 'opacity-60'} />
+                              <div className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none">
+                                {pkg.mcs.toLocaleString('pt-BR')} <span className="text-xs font-medium opacity-40">MCs</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <GoldEssenceIcon size={24} className={selectedPackage?.id === pkg.id ? 'opacity-100' : 'opacity-60'} />
-                            <div className="text-3xl font-black text-white tracking-tight leading-none">
-                              {pkg.mcs.toLocaleString('pt-BR')} <span className="text-xs font-medium opacity-40">MCs</span>
+
+                          {selectedPackage?.id === pkg.id && (
+                            <motion.div 
+                              layoutId="package-glow"
+                              className="absolute inset-0 bg-gradient-to-tr from-[#E6A600]/20 to-transparent blur-xl pointer-events-none" 
+                            />
+                          )}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="bg-white/[0.03] border border-white/[0.05] rounded-2xl p-5 md:p-6 space-y-4 lg:sticky lg:top-0"
+                  >
+                    <p className="text-white/40 text-[10px] uppercase tracking-wider font-bold">Resumo do Pedido</p>
+
+                    {selectedPackage ? (
+                      <>
+                        <div className="flex justify-between items-end">
+                          <div className="space-y-1">
+                            <p className="text-white/40 text-[10px] uppercase tracking-wider font-bold">Total a Pagar</p>
+                            <p className="text-3xl font-black text-[#E6A600]">R$ {selectedPackage.priceInReais.toFixed(2).replace('.', ',')}</p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <p className="text-white/40 text-[10px] uppercase tracking-wider font-bold">Você Recebe</p>
+                            <div className="flex items-center justify-end gap-2 text-white">
+                              <GoldEssenceIcon size={20} />
+                              <p className="text-xl md:text-2xl font-black">{selectedPackage.mcs.toLocaleString('pt-BR')} MCs</p>
                             </div>
                           </div>
                         </div>
 
-                        {selectedPackage?.id === pkg.id && (
-                          <motion.div 
-                            layoutId="package-glow"
-                            className="absolute inset-0 bg-gradient-to-tr from-[#E6A600]/20 to-transparent blur-xl pointer-events-none" 
-                          />
-                        )}
-                      </motion.button>
-                    ))}
-                  </div>
-
-                  {selectedPackage && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="bg-white/[0.03] border border-white/[0.05] rounded-[24px] p-6 space-y-4"
-                    >
-                      <div className="flex justify-between items-end">
-                        <div className="space-y-1">
-                          <p className="text-white/40 text-[10px] uppercase tracking-wider font-bold">Total a Pagar</p>
-                          <p className="text-3xl font-black text-[#E6A600]">R$ {selectedPackage.priceInReais.toFixed(2).replace('.', ',')}</p>
-                        </div>
-                        <div className="text-right space-y-1">
-                          <p className="text-white/40 text-[10px] uppercase tracking-wider font-bold">Você Recebe</p>
-                          <div className="flex items-center justify-end gap-2 text-white">
-                            <GoldEssenceIcon size={20} />
-                            <p className="text-2xl font-black">{selectedPackage.mcs.toLocaleString('pt-BR')} MCs</p>
+                        <div className="flex items-center gap-3 pt-4 border-t border-white/[0.05]">
+                          <div className="w-5 h-5 rounded-full bg-[#E6A600]/20 border border-[#E6A600]/40 flex items-center justify-center">
+                            <CheckCircle2 size={10} className="text-[#E6A600]" />
                           </div>
+                          <p className="text-[11px] text-white/30 font-medium">Liberação imediata pós-PIX • Sem taxas de serviço</p>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3 pt-4 border-t border-white/[0.05]">
-                        <div className="w-5 h-5 rounded-full bg-[#E6A600]/20 border border-[#E6A600]/40 flex items-center justify-center">
-                          <CheckCircle2 size={10} className="text-[#E6A600]" />
-                        </div>
-                        <p className="text-[11px] text-white/30 font-medium">Liberação imediata pós-PIX • Sem taxas de serviço</p>
-                      </div>
-                    </motion.div>
-                  )}
 
-                  <motion.button
-                    layout
-                    onClick={handleBuyClick}
-                    disabled={!selectedPackage || loading}
-                    className={`relative w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm text-black transition-all duration-500 overflow-hidden ${
-                      selectedPackage && !loading
-                        ? 'bg-gradient-to-r from-[#E6A600] via-[#FFD700] to-[#E6A600] bg-[length:200%_auto] hover:bg-right shadow-[0_8px_32px_rgba(230,166,0,0.3)] cursor-pointer'
-                        : 'bg-white/10 text-white/20 cursor-not-allowed opacity-50'
-                    }`}
-                  >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-3">
-                        <Loader size={18} className="animate-spin" />
-                        Gerando Pagamento...
-                      </span>
+                        <motion.button
+                          layout
+                          onClick={handleBuyClick}
+                          disabled={!selectedPackage || loading}
+                          className={`relative w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-sm text-black transition-all duration-500 overflow-hidden ${
+                            selectedPackage && !loading
+                              ? 'bg-gradient-to-r from-[#E6A600] via-[#FFD700] to-[#E6A600] bg-[length:200%_auto] hover:bg-right shadow-[0_8px_32px_rgba(230,166,0,0.3)] cursor-pointer'
+                              : 'bg-white/10 text-white/20 cursor-not-allowed opacity-50'
+                          }`}
+                        >
+                          {loading ? (
+                            <span className="flex items-center justify-center gap-3">
+                              <Loader size={18} className="animate-spin" />
+                              Gerando Pagamento...
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-center gap-3">
+                              <Zap size={18} fill="currentColor" />
+                              Confirmar Depósito
+                            </span>
+                          )}
+                          
+                          {selectedPackage && !loading && (
+                            <motion.div 
+                              animate={{ x: ['100%', '-100%'] }}
+                              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg] pointer-events-none"
+                            />
+                          )}
+                        </motion.button>
+                      </>
                     ) : (
-                      <span className="flex items-center justify-center gap-3">
-                        <Zap size={18} fill="currentColor" />
-                        Confirmar Depósito
-                      </span>
+                      <div className="py-6 text-center">
+                        <p className="text-white/30 text-xs font-medium">
+                          Selecione um pacote para ver o resumo do pedido
+                        </p>
+                      </div>
                     )}
-                    
-                    {selectedPackage && !loading && (
-                      <motion.div 
-                        animate={{ x: ['100%', '-100%'] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg] pointer-events-none"
-                      />
-                    )}
-                  </motion.button>
+                  </motion.div>
                 </div>
               ) : (
                 <motion.div
@@ -448,7 +463,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   {paymentData.method === 'pix' && paymentData.qrCode ? (
                     <>
                       <div className="flex flex-col items-center">
-                        <div className="relative p-6 bg-white rounded-[32px] overflow-hidden group shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                        <div className="relative p-6 bg-white rounded-2xl overflow-hidden group shadow-[0_0_50px_rgba(255,255,255,0.1)]">
                           <img
                             src={`data:image/png;base64,${paymentData.qrCode}`}
                             alt="QR Code PIX"
@@ -466,7 +481,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </div>
 
                       {paymentData.brCode && (
-                        <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] p-6">
+                        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6">
                           <p className="text-[10px] text-white/40 uppercase tracking-widest font-black mb-4">Código PIX (Copia e Cola)</p>
                           <div className="relative group">
                             <div className="w-full bg-black/40 p-4 rounded-xl border border-white/[0.1] break-all text-[10px] font-mono text-[#E6A600] min-h-[60px] flex items-center">
@@ -488,7 +503,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </>
                   ) : (
                     <div className="flex flex-col items-center gap-6">
-                      <div className="relative p-6 bg-white/[0.03] border border-[#E6A600]/30 rounded-[32px] text-center max-w-sm">
+                      <div className="relative p-6 bg-white/[0.03] border border-[#E6A600]/30 rounded-2xl text-center max-w-sm">
                         <h3 className="text-xl font-black text-white mb-3">Pagamento via Checkout</h3>
                         <p className="text-white/40 text-sm mb-6">
                           Clique no botão abaixo para abrir a página segura do Mercado Pago. Lá você pode escolher PIX, cartão ou outro método.
