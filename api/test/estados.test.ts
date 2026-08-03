@@ -1,92 +1,31 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
 import { eq, and } from "drizzle-orm";
-import { userWallets } from "../../db/schema/identidade.js";
+import { users, userWallets } from "../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../db/schema/matches.js";
 import { walletTransactions, platformRevenue } from "../../db/schema/economia.js";
+import { setupDb } from "./helpers.js";
 import { reservarEntrada, devolverEntrada, pagarPremio } from "../src/lib/escrow.js";
 import { entrarEmRevisao } from "../src/lib/match-flow.js";
 
-async function setupDb() {
-  const client = new PGlite();
-  await client.exec(`CREATE TABLE user_wallets (
-    user_id uuid PRIMARY KEY,
-    mp integer NOT NULL DEFAULT 0,
-    mc integer NOT NULL DEFAULT 0,
-    mc_reservado integer NOT NULL DEFAULT 0,
-    updated_at timestamp NOT NULL DEFAULT now()
-  )`);
-  await client.exec(`CREATE TABLE wallet_transactions (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id uuid NOT NULL,
-    currency varchar(10) NOT NULL,
-    amount integer NOT NULL,
-    kind varchar(50) NOT NULL,
-    ref_type varchar(50),
-    ref_id text,
-    balance_after integer NOT NULL,
-    created_at timestamp DEFAULT now()
-  )`);
-  await client.exec(`CREATE TABLE platform_revenue (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    match_id uuid NOT NULL,
-    mc_fee integer NOT NULL,
-    mc_fee_rounding integer NOT NULL DEFAULT 0,
-    created_at timestamp DEFAULT now()
-  )`);
-  await client.exec(`CREATE TABLE matches (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    sala_num integer,
-    status varchar(50) NOT NULL DEFAULT 'preenchendo',
-    game_id varchar(50) NOT NULL DEFAULT 'lol',
-    mode varchar(50) NOT NULL DEFAULT '5v5',
-    created_by uuid,
-    room_code varchar(20),
-    winner_side varchar(10),
-    entry_mp integer NOT NULL DEFAULT 0,
-    nome text,
-    descricao text,
-    max_jogadores integer NOT NULL DEFAULT 10,
-    tem_senha boolean NOT NULL DEFAULT false,
-    senha text,
-    elo_minimo varchar(50),
-    time_a_nome text,
-    time_a_tag text,
-    time_a_logo text,
-    time_b_nome text,
-    time_b_tag text,
-    time_b_logo text,
-    codigo_partida text,
-    confirmacao_expires_at timestamp,
-    iniciando_partida_at timestamp,
-    state_deadline_at timestamp,
-    aposta_mc integer NOT NULL DEFAULT 0,
-    taxa_pct numeric(5,2) NOT NULL DEFAULT '8.99',
-    resultado varchar(10),
-    cancelado_em timestamp,
-    revisado_por uuid,
-    revisado_em timestamp,
-    decisao_id uuid,
-    revisao_desde timestamp,
-    created_at timestamp NOT NULL DEFAULT now(),
-    updated_at timestamp NOT NULL DEFAULT now(),
-    ended_at timestamp
-  )`);
-  await client.exec(`CREATE TABLE match_players (
-    match_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    side varchar(10) NOT NULL,
-    slot integer NOT NULL,
-    role_slot varchar(50),
-    confirmed boolean NOT NULL DEFAULT false,
-    linked boolean NOT NULL DEFAULT false,
-    created_at timestamp NOT NULL DEFAULT now(),
-    PRIMARY KEY (match_id, user_id)
-  )`);
-  const db = drizzle(client);
-  return { client, db };
+async function criaJogador(db: any, id: string, mc: number, mcReservado = 0) {
+  await db.insert(users).values({ id, email: id + "@x.com", displayName: "Jogador" });
+  await db.insert(userWallets).values({ userId: id, mc, mcReservado });
+}
+
+async function criaSala(db: any, values: any = {}) {
+  const dono = crypto.randomUUID();
+  await db.insert(users).values({ id: dono, email: dono + "@x.com", displayName: "Dono" });
+  const [sala] = await db.insert(matches).values({
+    gameId: "lol",
+    mode: "5v5",
+    createdBy: dono,
+    status: "preenchendo",
+    apostaMc: 0,
+    taxaPct: "8.99",
+    ...values,
+  }).returning();
+  return sala;
 }
 
 describe("máquina de estados com escrow", () => {
@@ -102,12 +41,11 @@ describe("máquina de estados com escrow", () => {
     const db = ctx.db;
     const criador = "aaaaaaa1-0000-0000-0000-000000000001";
     const segundo = "aaaaaaa1-0000-0000-0000-000000000002";
-    // saldo inicial de cada um
-    await db.insert(userWallets).values({ userId: criador, mc: 100, mcReservado: 0 });
-    await db.insert(userWallets).values({ userId: segundo, mc: 100, mcReservado: 0 });
+    await criaJogador(db, criador, 100);
+    await criaJogador(db, segundo, 100);
 
     // criar sala com aposta 30 -> criador reserva 30
-    const [sala] = await db.insert(matches).values({ status: "preenchendo", apostaMc: 30, taxaPct: "8.99" }).returning();
+    const sala = await criaSala(db, { apostaMc: 30 });
     await reservarEntrada(db as any, criador, 30, sala.id);
     await db.insert(matchPlayers).values({ matchId: sala.id, userId: criador, side: "blue", slot: 0, roleSlot: "TOP", confirmed: true });
 
@@ -138,11 +76,11 @@ describe("máquina de estados com escrow", () => {
 
   test("entrarEmRevisao: só sala apostada em partida_iniciada; zera deadline", async () => {
     const db = ctx.db;
-    const [sala] = await db.insert(matches).values({
+    const sala = await criaSala(db, {
       status: "partida_iniciada",
       apostaMc: 50,
       stateDeadlineAt: new Date(Date.now() + 60_000),
-    }).returning();
+    });
     const r = await entrarEmRevisao(db as any, sala.id);
     assert.equal(r.ok, true);
     const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
@@ -153,7 +91,7 @@ describe("máquina de estados com escrow", () => {
 
   test("entrarEmRevisao: sala casual (aposta 0) é rejeitada", async () => {
     const db = ctx.db;
-    const [sala] = await db.insert(matches).values({ status: "partida_iniciada", apostaMc: 0 }).returning();
+    const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 0 });
     const r = await entrarEmRevisao(db as any, sala.id);
     assert.equal(r.ok, false);
     assert.equal(r.erro, "sala_casual");
@@ -171,10 +109,10 @@ describe("máquina de estados com escrow", () => {
       { userId: ids[1], side: "blue" },
       { userId: ids[2], side: "red" },
     ];
-    const [sala] = await db.insert(matches).values({ status: "partida_iniciada", apostaMc: 30 }).returning();
+    const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 30 });
     const saldoInicial = 100;
     for (const p of players) {
-      await db.insert(userWallets).values({ userId: p.userId, mc: saldoInicial - 30, mcReservado: 30 });
+      await criaJogador(db, p.userId, saldoInicial - 30, 30);
     }
     await pagarPremio(db as any, sala.id, 30, players, "blue", 8.99);
 
@@ -207,9 +145,9 @@ describe("máquina de estados com escrow", () => {
       { userId: ids[0], side: "blue" },
       { userId: ids[1], side: "red" },
     ];
-    const [sala] = await db.insert(matches).values({ status: "partida_iniciada", apostaMc: 30 }).returning();
+    const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 30 });
     for (const p of players) {
-      await db.insert(userWallets).values({ userId: p.userId, mc: 70, mcReservado: 30 });
+      await criaJogador(db, p.userId, 70, 30);
     }
     await pagarPremio(db as any, sala.id, 30, players, "blue", 8.99);
     const txs = await db.select().from(walletTransactions).where(eq(walletTransactions.refId, sala.id));
