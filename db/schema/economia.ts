@@ -59,6 +59,9 @@ export const platformRevenue = pgTable("platform_revenue", {
     .notNull()
     .references(() => matches.id, { onDelete: "cascade" }),
   mcFee: integer("mc_fee").notNull(),
+  // Resto de arredondamento do payout (design v3 §4.1): a soma de prize + loss +
+  // taxa + resto fecha exatamente com o pote. Lançamento próprio para auditoria.
+  mcFeeRounding: integer("mc_fee_rounding").default(0).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 

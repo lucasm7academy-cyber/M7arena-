@@ -7,6 +7,7 @@ import {
   integer,
   timestamp,
   jsonb,
+  numeric,
   primaryKey,
   index,
 } from "drizzle-orm/pg-core";
@@ -52,7 +53,17 @@ export const matches = pgTable(
     confirmacaoExpiresAt: timestamp("confirmacao_expires_at", { mode: "date" }),
     iniciandoPartidaAt: timestamp("iniciando_partida_at", { mode: "date" }),
     stateDeadlineAt: timestamp("state_deadline_at", { mode: "date" }),
+    // ── Salas apostadas (ADR-019 / design v3 §5) ──
+    apostaMc: integer("aposta_mc").default(0).notNull(),   // 0 = casual
+    taxaPct: numeric("taxa_pct", { precision: 5, scale: 2 }).default("8.99").notNull(),
+    resultado: varchar("resultado", { length: 10 }),        // 'blue' | 'red' | 'draw'
+    canceladoEm: timestamp("cancelado_em", { mode: "date" }),
+    revisadoPor: uuid("revisado_por").references(() => users.id),
+    revisadoEm: timestamp("revisado_em", { mode: "date" }),
+    decisaoId: uuid("decisao_id"),
+    revisaoDesde: timestamp("revisao_desde", { mode: "date" }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
     endedAt: timestamp("ended_at", { mode: "date" }),
   },
   (table) => [

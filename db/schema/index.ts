@@ -11,3 +11,4 @@ export * from "./matches.js";
 export * from "./economia.js";
 export * from "./conteudo.js";
 export * from "./tournaments.js";
+export * from "./apostas.js";

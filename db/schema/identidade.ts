@@ -27,6 +27,12 @@ export const users = pgTable("users", {
   // ele escolhe a rota mesmo sem ter conta da Riot vinculada.
   lanePrimary: varchar("lane_primary", { length: 20 }),
   laneSecondary: varchar("lane_secondary", { length: 20 }),
+  // Elegibilidade para salas apostadas (ADR-019 / design v3 §2.1). Riot ID é
+  // único (anti multi-conta) e amarra o print ao jogador. status reutiliza a
+  // coluna existente: 'active' | 'suspensa' | 'banida'.
+  riotId: varchar("riot_id", { length: 100 }),
+  suspensaAte: timestamp("suspensa_ate", { mode: "date" }),
+  termosAceitosEm: timestamp("termos_aceitos_em", { mode: "date" }),
   status: varchar("status", { length: 50 }).default("active").notNull(),
   isVip: boolean("is_vip").default(false).notNull(),
   vipExpiresAt: timestamp("vip_expires_at", { mode: "date" }),
@@ -81,6 +87,10 @@ export const userWallets = pgTable("user_wallets", {
     .references(() => users.id, { onDelete: "cascade" }),
   mp: integer("mp").default(0).notNull(),
   mc: integer("mc").default(0).notNull(),
+  // Escrow das salas apostadas (ADR-019). Invariante: mc + mc_reservado = total;
+  // mc nunca fica negativo. O reservado só sai por payout, empate, cancelamento
+  // ou saída antes do início da partida.
+  mcReservado: integer("mc_reservado").default(0).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
