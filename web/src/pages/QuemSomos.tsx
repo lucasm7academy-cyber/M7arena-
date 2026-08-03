@@ -54,7 +54,7 @@ export default function QuemSomos() {
 
               <div className="space-y-6 text-white/80 text-sm md:text-lg leading-relaxed font-sans text-center lg:text-left">
                 <p>
-                  Desde os 15 anos de idade, sonho em realizar campeonatos e eventos de e-sports, e somente aos 24 deixei o medo de lado e criei a <span className="text-white font-bold">M7 Academy</span>, uma organização voltada para o competitivo com o intuito de proporcionar aos jogadores amadores a experiência única de brilhar em uma arena profissional.
+                  Desde os 15 anos de idade, sonho em realizar campeonatos e eventos de e-sports, e somente aos 24 deixei o medo de lado e criei a <span className="text-white font-bold">M7 Arena</span>, uma organização voltada para o competitivo com o intuito de proporcionar aos jogadores amadores a experiência única de brilhar em uma arena profissional.
                 </p>
                 <p>
                   Acreditamos que o talento não tem elo e que todos merecem uma vitrine justa. Na M7, nossa missão é transformar sonhos em realidade, oferecendo competições organizadas, seguras e com premiações que valorizam o esforço de cada competidor que pisa na Summoner's Rift.
@@ -127,7 +127,7 @@ export default function QuemSomos() {
                 O caminho até aqui não foi simples. Lidar com a incerteza, estruturar as primeiras transmissões e conquistar a confiança da comunidade foram desafios gigantescos que exigiram noites em claro e dedicação integral. Cada feedback de um jogador, cada momento emocionante narrado e cada comemoração de título nos mostraram que toda gota de suor valeu a pena.
               </p>
               <p>
-                Hoje, olhamos para a M7 Academy não apenas como uma marca de torneios, mas como uma verdadeira comunidade unida pela paixão pelo esporte eletrônico. E este é apenas o primeiro capítulo de uma história grandiosa que estamos escrevendo juntos com cada invocador.
+                Hoje, olhamos para a M7 Arena não apenas como uma marca de torneios, mas como uma verdadeira comunidade unida pela paixão pelo esporte eletrônico. E este é apenas o primeiro capítulo de uma história grandiosa que estamos escrevendo juntos com cada invocador.
               </p>
             </div>
           </div>

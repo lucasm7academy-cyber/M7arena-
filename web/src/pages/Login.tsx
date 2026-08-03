@@ -174,7 +174,7 @@ export default function Login() {
           {/* Header/Logo */}
           <div className="flex items-center gap-3.5 mb-8">
             <img src={LOGO_URL} alt="Logo" className="h-10 w-auto filter drop-shadow-[0_2px_8px_rgba(255,184,0,0.15)]" />
-            <span className="text-sm font-black text-white uppercase tracking-widest font-headline">M7 Academy</span>
+            <span className="text-sm font-black text-white uppercase tracking-widest font-headline">M7 Arena</span>
           </div>
 
           {/* Dynamic Titles with Brand Gradient */}

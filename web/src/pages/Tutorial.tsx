@@ -86,7 +86,7 @@ export default function Tutorial() {
                   vinculou sua conta!
                 </h1>
                 <p className="text-white/70 text-lg mb-6">
-                  Para aproveitar toda a experiência da M7 Academy e participar de partidas, você precisa vincular sua conta Riot.
+                  Para aproveitar toda a experiência da M7 Arena e participar de partidas, você precisa vincular sua conta Riot.
                 </p>
 
                 {/* Decorative Line */}

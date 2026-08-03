@@ -128,7 +128,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
   const createFallbackPayment = () => {
     const brCode = generatePixCode(
       'lucasm7academy@gmail.com',
-      'M7 ACADEMY',
+      'M7 ARENA',
       'SAO PAULO',
       9.90,
       'VIP' + Date.now().toString().slice(-6)
@@ -296,7 +296,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                       transition={{ delay: 0.3 }}
                       className="text-white/50 text-sm md:text-base max-w-md mx-auto leading-relaxed"
                     >
-                      Desbloqueie todos os benefícios premium e domine a M7 Academy com estilo.
+                       Desbloqueie todos os benefícios premium e domine a M7 Arena com estilo.
                     </motion.p>
                   </div>
 

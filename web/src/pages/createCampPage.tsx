@@ -1001,7 +1001,7 @@ export default function AdminPanel() {
                         name="organizacao"
                         value={formData.organizacao}
                         onChange={handleInputChange}
-                        placeholder="Nome da organização (ex: M7 Academy)"
+                        placeholder="Nome da organização (ex: M7 Arena)"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:border-teal-400"
                       />
                     </div>

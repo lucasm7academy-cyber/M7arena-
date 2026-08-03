@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useRole } from "../contexts/RoleContext";
@@ -146,7 +146,7 @@ const BracketMatch = ({
                   onBlur={() => setEditingSlot(null)}
                   className="bg-[#111] text-white text-[11px] font-bold rounded px-1 py-0.5 max-w-[130px] focus:outline-none border border-white/20 cursor-pointer"
                 >
-                  <option value="">— vazio (TBD) —</option>
+                  <option value="">â€” vazio (TBD) â€”</option>
                   {(availableTeams || []).map((tm: any) => (
                     <option key={tm.tag} value={tm.tag}>
                       {tm.nome} [{tm.tag}]
@@ -237,7 +237,7 @@ const BracketMatch = ({
                   onBlur={() => setEditingSlot(null)}
                   className="bg-[#111] text-white text-[11px] font-bold rounded px-1 py-0.5 max-w-[130px] focus:outline-none border border-white/20 cursor-pointer"
                 >
-                  <option value="">— vazio (TBD) —</option>
+                  <option value="">â€” vazio (TBD) â€”</option>
                   {(availableTeams || []).map((tm: any) => (
                     <option key={tm.tag} value={tm.tag}>
                       {tm.nome} [{tm.tag}]
@@ -328,7 +328,7 @@ const GroupStage = ({ tournament }: { tournament: any }) => {
       const myScore = isMatchA ? s1 : s2;
       const oppScore = isMatchA ? s2 : s1;
 
-      // Cada partida vencida (mapa) na série vale vitórias
+      // Cada partida vencida (mapa) na sÃ©rie vale vitÃ³rias
       v += myScore;
       d += oppScore;
       j += s1 + s2;
@@ -373,7 +373,7 @@ const GroupStage = ({ tournament }: { tournament: any }) => {
       <div className="py-20 text-center">
         <Trophy className="w-16 h-16 text-white/5 mx-auto mb-4" />
         <p className="text-sm font-black text-white/20 uppercase tracking-[0.3em]">
-          Os grupos ainda não foram sorteados
+          Os grupos ainda nÃ£o foram sorteados
         </p>
       </div>
     );
@@ -669,7 +669,7 @@ const DoubleSideBracket = ({
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="text-[12px] font-black text-white/40 uppercase tracking-[0.4em] mb-1">
-                      Grande Campeão
+                      Grande CampeÃ£o
                     </span>
                     <span
                       className="text-2xl font-black uppercase tracking-widest text-center max-w-[240px] truncate"
@@ -1319,7 +1319,7 @@ const DoubleEliminationBracket = ({
                   />
                   <div className="flex flex-col items-center">
                     <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em]">
-                      Campeão
+                      CampeÃ£o
                     </span>
                     <span
                       className="text-sm font-black uppercase tracking-wider"
@@ -1397,7 +1397,7 @@ const CampeonatoDetalhes = () => {
   const [adminMatchData, setAdminMatchData] = useState({
     timeA: "",
     timeB: "",
-    fase: "Cronograma", // fase fixa — sem divisão de grupos/desempate/mata-mata
+    fase: "Cronograma", // fase fixa â€” sem divisÃ£o de grupos/desempate/mata-mata
   });
   const [registrationData, setRegistrationData] = useState({
     teamId: "",
@@ -1408,8 +1408,8 @@ const CampeonatoDetalhes = () => {
   const { role, cargo } = useRole();
   const { myTeam: perfilMyTeam } = usePerfilSafe();
   const { user } = useAuth();
-  const isPlatformAdmin = role === "admin"; // proprietário/admin: manda em tudo
-  // Fallback: time carregado diretamente quando perfilMyTeam ainda não chegou
+  const isPlatformAdmin = role === "admin"; // proprietÃ¡rio/admin: manda em tudo
+  // Fallback: time carregado diretamente quando perfilMyTeam ainda nÃ£o chegou
   const [fallbackMyTeam, setFallbackMyTeam] = useState<any>(null);
   const isPlayer = role === "player";
   const effectiveRole = role;
@@ -1421,13 +1421,13 @@ const CampeonatoDetalhes = () => {
   const [campeonato, setCampeonato] = useState<any>(null);
   const [campeonatoLoading, setCampeonatoLoading] = useState(true);
 
-  // Organizador é "admin" APENAS do campeonato que ele mesmo criou.
+  // Organizador Ã© "admin" APENAS do campeonato que ele mesmo criou.
   const isOrganizerOwner =
     cargo === "organizador" && !!user && !!campeonato?.criadoPor && campeonato.criadoPor === user.id;
   // isAdmin do campeonato = admin da plataforma OU organizador-dono deste camp.
   const isAdmin = isPlatformAdmin || isOrganizerOwner;
 
-  // Helper: map DB row → local tournament shape
+  // Helper: map DB row â†’ local tournament shape
   const mapFromDb = (row: any) => ({
     id: row.id,
     titulo: row.titulo,
@@ -1438,7 +1438,7 @@ const CampeonatoDetalhes = () => {
     timesPorGrupo: row.times_por_grupo,
     classificadosPorGrupo: row.classificados_por_grupo,
     tier: row.tier || 'Free Elo',
-    data: row.data || '—',
+    data: row.data || 'â€”',
     premiacao: row.premiacao || '',
     taxa: row.taxa || '',
     temOutrosPremios: row.tem_outros_premios || false,
@@ -1460,13 +1460,13 @@ const CampeonatoDetalhes = () => {
     // Computed display fields
     subtitulo: `Torneio ${row.vagas || 16}v${row.vagas || 16}`,
     descricao: row.frase || 'Prepare seu time para a arena oficial.',
-    premio: (row.premiacao || '') + (row.tem_outros_premios ? ' + Outros Prêmios' : ''),
-    org: row.organizacao || 'M7 Academy',
+    premio: (row.premiacao || '') + (row.tem_outros_premios ? ' + Outros PrÃªmios' : ''),
+    org: row.organizacao || 'M7 ARENA',
     regras: [
       'Respeito absoluto entre os jogadores.',
-      'Proibido o uso de qualquer software de auxílio.',
-      'Atraso máximo de 10 minutos por partida.',
-      'Conexão estável é de responsabilidade do jogador.',
+      'Proibido o uso de qualquer software de auxÃ­lio.',
+      'Atraso mÃ¡ximo de 10 minutos por partida.',
+      'ConexÃ£o estÃ¡vel Ã© de responsabilidade do jogador.',
     ],
   });
 
@@ -1503,17 +1503,17 @@ const CampeonatoDetalhes = () => {
     api.tournaments.update(updated.id, payload)
       .catch((error: any) => {
         console.error('Erro ao salvar campeonato:', error);
-        // Feedback visível ao admin — antes só caía no console silencioso.
+        // Feedback visÃ­vel ao admin â€” antes sÃ³ caÃ­a no console silencioso.
         if (typeof window !== 'undefined') {
           alert(
-            `Falha ao salvar alterações do campeonato. ` +
-            `Verifique sua conexão e tente novamente.\n\nDetalhe: ${error.message || error}`
+            `Falha ao salvar alteraÃ§Ãµes do campeonato. ` +
+            `Verifique sua conexÃ£o e tente novamente.\n\nDetalhe: ${error.message || error}`
           );
         }
       });
   };
 
-  // Helper: save bracket to Supabase — agora reporta erros ao admin.
+  // Helper: save bracket to Supabase â€” agora reporta erros ao admin.
   const saveBracketToSupabase = (bracket: any) => {
     api.tournaments.update(id, { bracket_data: bracket })
       .catch((error: any) => {
@@ -1521,7 +1521,7 @@ const CampeonatoDetalhes = () => {
         if (typeof window !== 'undefined') {
           alert(
             `Falha ao salvar o chaveamento no servidor. ` +
-            `Recarregue a página e tente novamente.\n\nDetalhe: ${error.message || error}`
+            `Recarregue a pÃ¡gina e tente novamente.\n\nDetalhe: ${error.message || error}`
           );
         }
       });
@@ -1785,7 +1785,7 @@ const CampeonatoDetalhes = () => {
         stats[match.t2].gp += match.s2;
         stats[match.t2].gc += match.s1;
 
-        // Cada ponto no placar conta como vitória/derrota individual
+        // Cada ponto no placar conta como vitÃ³ria/derrota individual
         stats[match.t1].wins += match.s1;
         stats[match.t1].losses += match.s2;
         stats[match.t2].wins += match.s2;
@@ -1804,16 +1804,16 @@ const CampeonatoDetalhes = () => {
   };
 
   const sortStandings = (a: any, b: any) => {
-    // 1. Saldo de vitórias (V − D) — Mais importante.
-    //    Mais justo que vitórias brutas quando os times jogam números
+    // 1. Saldo de vitÃ³rias (V âˆ’ D) â€” Mais importante.
+    //    Mais justo que vitÃ³rias brutas quando os times jogam nÃºmeros
     //    diferentes de partidas: um time eliminado que jogou mais (mais V e
-    //    mais D) não fura a fila só por acumular vitórias.
+    //    mais D) nÃ£o fura a fila sÃ³ por acumular vitÃ³rias.
     const saldoA = (a.v || 0) - (a.d || 0);
     const saldoB = (b.v || 0) - (b.d || 0);
     if (saldoB !== saldoA) return saldoB - saldoA;
-    // 2. Menos Derrotas (quando o saldo empata, equivale a maior taxa de vitória)
+    // 2. Menos Derrotas (quando o saldo empata, equivale a maior taxa de vitÃ³ria)
     if (a.d !== b.d) return a.d - b.d;
-    // 3. Mais Jogos (Participação)
+    // 3. Mais Jogos (ParticipaÃ§Ã£o)
     if (b.matches !== a.matches) return b.matches - a.matches;
     // 4. Alfabetico
     return (a.nome || "").localeCompare(b.nome || "");
@@ -1852,8 +1852,8 @@ const CampeonatoDetalhes = () => {
     let anyMatches = false;
     (campeonato.cronograma || []).forEach((jogo: any) => {
       if (jogo.status !== "finalizado") return;
-      // A chave (bracket) é só visual: jogos "MATA-MATA (CHAVEAMENTO)" não
-      // contam na classificação. Só o que é lançado no cronograma conta.
+      // A chave (bracket) Ã© sÃ³ visual: jogos "MATA-MATA (CHAVEAMENTO)" nÃ£o
+      // contam na classificaÃ§Ã£o. SÃ³ o que Ã© lanÃ§ado no cronograma conta.
       if (jogo.fase === "MATA-MATA (CHAVEAMENTO)") return;
       anyMatches = true;
 
@@ -1874,29 +1874,29 @@ const CampeonatoDetalhes = () => {
       if (stats[tA]) {
         stats[tA].matches++;
         if (campeonato.formato === 'liga') {
-          // Liga: conta partidas individuais (mapas) — 2-1 = 2V + 1D para o vencedor
+          // Liga: conta partidas individuais (mapas) â€” 2-1 = 2V + 1D para o vencedor
           stats[tA].v += s1;
           stats[tA].d += s2;
           stats[tA].j += s1 + s2; // J = total de partidas/mapas jogados
         } else {
-          // Mata-mata: conta resultado da série — quem vence a série ganha 1V
+          // Mata-mata: conta resultado da sÃ©rie â€” quem vence a sÃ©rie ganha 1V
           stats[tA].j++;
           if (s1 > s2) {
-            stats[tA].v++; // V = série vencida
+            stats[tA].v++; // V = sÃ©rie vencida
           } else if (s1 < s2) {
-            stats[tA].d++; // D = série perdida
+            stats[tA].d++; // D = sÃ©rie perdida
           }
         }
       }
       if (stats[tB]) {
         stats[tB].matches++;
         if (campeonato.formato === 'liga') {
-          // Liga: conta partidas individuais (mapas) — 2-1 = 1V + 2D para o perdedor
+          // Liga: conta partidas individuais (mapas) â€” 2-1 = 1V + 2D para o perdedor
           stats[tB].v += s2;
           stats[tB].d += s1;
           stats[tB].j += s1 + s2;
         } else {
-          // Mata-mata: conta resultado da série
+          // Mata-mata: conta resultado da sÃ©rie
           stats[tB].j++;
           if (s2 > s1) {
             stats[tB].v++;
@@ -1911,7 +1911,7 @@ const CampeonatoDetalhes = () => {
       .sort(sortStandings)
       .map((t: any, i: number) => ({ ...t, rank: i + 1 }));
 
-    // Se for mata_mata e houver classificação manual sem cronograma
+    // Se for mata_mata e houver classificaÃ§Ã£o manual sem cronograma
     if (
       campeonato.formato === "mata_mata" &&
       !anyMatches &&
@@ -2037,7 +2037,7 @@ const CampeonatoDetalhes = () => {
             status: "combinando",
             data: "A COMBINAR",
             hora: "--:--",
-            proposedBy: "ORGANIZAÇÃO",
+            proposedBy: "ORGANIZAÃ‡ÃƒO",
             placar: "",
           };
 
@@ -2144,7 +2144,7 @@ const CampeonatoDetalhes = () => {
   ) => {
     if (!isAdmin) return;
 
-    // Usa cópia direta (não functional updater) para poder sincronizar com cronograma
+    // Usa cÃ³pia direta (nÃ£o functional updater) para poder sincronizar com cronograma
     const next = JSON.parse(JSON.stringify(bracketData));
     let match: any;
 
@@ -2160,8 +2160,8 @@ const CampeonatoDetalhes = () => {
 
     if (!match) return;
 
-    // Ajuste manual do time da vaga (admin trocando quem está na chave).
-    // Reseta placar/vencedor para a vaga ficar limpa e não disparar avanço automático.
+    // Ajuste manual do time da vaga (admin trocando quem estÃ¡ na chave).
+    // Reseta placar/vencedor para a vaga ficar limpa e nÃ£o disparar avanÃ§o automÃ¡tico.
     if (teamSlot === "t1" || teamSlot === "t2") {
       match[teamSlot] = delta; // delta = tag do time (ou "" para esvaziar)
       match.s1 = 0;
@@ -2186,12 +2186,12 @@ const CampeonatoDetalhes = () => {
       else match.winner = null; // Bug 2 fix: limpa winner se score caiu abaixo do threshold
     }
 
-    // ⚠️ CHAVE É APENAS VISUAL. Sem PDL, sem Histórico, sem Cronograma e sem
-    // contar vitória/derrota em lugar nenhum. O organizador marca o vencedor só
-    // para exibição. TODO o vínculo de vitórias/derrotas é feito pelo Cronograma.
+    // âš ï¸ CHAVE Ã‰ APENAS VISUAL. Sem PDL, sem HistÃ³rico, sem Cronograma e sem
+    // contar vitÃ³ria/derrota em lugar nenhum. O organizador marca o vencedor sÃ³
+    // para exibiÃ§Ã£o. TODO o vÃ­nculo de vitÃ³rias/derrotas Ã© feito pelo Cronograma.
     const temPlacar = (match.s1 || 0) > 0 || (match.s2 || 0) > 0;
     if (match.winner && temPlacar) {
-      match.status = "finalizado"; // só estado visual do card
+      match.status = "finalizado"; // sÃ³ estado visual do card
     } else {
       // 0-0 ou abaixo do MD: sem vencedor visual.
       match.status = undefined;
@@ -2202,7 +2202,7 @@ const CampeonatoDetalhes = () => {
     setBracketData(next);
   };
 
-  // Refs e lógica para Drag-to-Scroll nas chaves
+  // Refs e lÃ³gica para Drag-to-Scroll nas chaves
   const bracketRef = useRef<HTMLDivElement>(null);
   const modalBracketRef = useRef<HTMLDivElement>(null);
 
@@ -2262,7 +2262,7 @@ const CampeonatoDetalhes = () => {
     setModalBracketScale,
   );
 
-  // Time do usuário — usa perfilMyTeam (do contexto) ou fallbackMyTeam (query direta)
+  // Time do usuÃ¡rio â€” usa perfilMyTeam (do contexto) ou fallbackMyTeam (query direta)
   const myTeams = React.useMemo(() => {
     const team = perfilMyTeam || fallbackMyTeam;
     if (!team) return [];
@@ -2277,8 +2277,8 @@ const CampeonatoDetalhes = () => {
     }];
   }, [perfilMyTeam, fallbackMyTeam]);
 
-  // Times disponíveis para o admin atribuir manualmente às vagas da chave.
-  // Usa os times inscritos aprovados; grava sempre a tag (identificador canônico).
+  // Times disponÃ­veis para o admin atribuir manualmente Ã s vagas da chave.
+  // Usa os times inscritos aprovados; grava sempre a tag (identificador canÃ´nico).
   const bracketAvailableTeams = React.useMemo(() => {
     const inscritos = (campeonato?.timesInscritos || []).filter(
       (t: any) => !t.status || t.status === "approved",
@@ -2292,8 +2292,8 @@ const CampeonatoDetalhes = () => {
       .filter((t: any) => t.tag);
   }, [campeonato]);
 
-  // 🔧 Chave é APENAS visual: nada de sincronizar com cronograma, PDL ou histórico.
-  // O vínculo de vitórias/derrotas é 100% pelo Cronograma.
+  // ðŸ”§ Chave Ã© APENAS visual: nada de sincronizar com cronograma, PDL ou histÃ³rico.
+  // O vÃ­nculo de vitÃ³rias/derrotas Ã© 100% pelo Cronograma.
 
   useEffect(() => {
     if (!id) return;
@@ -2310,7 +2310,7 @@ const CampeonatoDetalhes = () => {
         }
         setCampeonatoLoading(false);
 
-        // Busca informações atualizadas dos times (logo, nome, cor) diretamente da tabela 'times'
+        // Busca informaÃ§Ãµes atualizadas dos times (logo, nome, cor) diretamente da tabela 'times'
         const teamIds = (mapped.timesInscritos || []).map((t: any) => t.id).filter(Boolean);
         if (teamIds.length > 0) {
           const dbTeams = await api.teams.batch(teamIds);
@@ -2364,7 +2364,7 @@ const CampeonatoDetalhes = () => {
     return () => { cancelled = true; };
   }, [id]);
 
-  // Detecta se o time do usuário já está inscrito (persiste entre reloads)
+  // Detecta se o time do usuÃ¡rio jÃ¡ estÃ¡ inscrito (persiste entre reloads)
   useEffect(() => {
     if (!campeonato || !perfilMyTeam) return;
     const jaInscrito = (campeonato.timesInscritos || []).some(
@@ -2373,10 +2373,10 @@ const CampeonatoDetalhes = () => {
     setIsRegistered(jaInscrito);
   }, [campeonato, perfilMyTeam]);
 
-  // Fallback: carrega time do usuário direto do Supabase quando perfilMyTeam ainda
-  // não está disponível (ex: usuário sem Riot account vinculada, contexto ainda carregando)
+  // Fallback: carrega time do usuÃ¡rio direto do Supabase quando perfilMyTeam ainda
+  // nÃ£o estÃ¡ disponÃ­vel (ex: usuÃ¡rio sem Riot account vinculada, contexto ainda carregando)
   useEffect(() => {
-    if (!campeonato || !user || perfilMyTeam) return; // só roda se não tiver via contexto
+    if (!campeonato || !user || perfilMyTeam) return; // sÃ³ roda se nÃ£o tiver via contexto
     const inscritosIds = (campeonato.timesInscritos || [])
       .map((t: any) => t.id)
       .filter(Boolean);
@@ -2395,7 +2395,7 @@ const CampeonatoDetalhes = () => {
       });
   }, [campeonato, user, perfilMyTeam]);
 
-  // Pré-seleciona o primeiro time do usuário ao abrir o modal de inscrição
+  // PrÃ©-seleciona o primeiro time do usuÃ¡rio ao abrir o modal de inscriÃ§Ã£o
   useEffect(() => {
     if (isRegistrationModalOpen && myTeams.length > 0) {
       setRegistrationData((prev) => ({
@@ -2415,7 +2415,7 @@ const CampeonatoDetalhes = () => {
       !registrationData.discord ||
       !registrationData.whatsapp
     ) {
-      alert("Por favor, preencha todos os campos obrigatórios!");
+      alert("Por favor, preencha todos os campos obrigatÃ³rios!");
       return;
     }
 
@@ -2425,12 +2425,12 @@ const CampeonatoDetalhes = () => {
       return;
     }
 
-    // Bloqueia inscrição duplicada do mesmo time
+    // Bloqueia inscriÃ§Ã£o duplicada do mesmo time
     const jaInscrito = (campeonato?.timesInscritos || []).some(
       (t: any) => t.id === registrationData.teamId
     );
     if (jaInscrito) {
-      alert("Este time já está inscrito neste campeonato!");
+      alert("Este time jÃ¡ estÃ¡ inscrito neste campeonato!");
       return;
     }
 
@@ -2446,11 +2446,11 @@ const CampeonatoDetalhes = () => {
       whatsapp: registrationData.whatsapp,
     };
 
-    // Salva via API própria (append atômico, substitui a RPC registrar_time_campeonato)
+    // Salva via API prÃ³pria (append atÃ´mico, substitui a RPC registrar_time_campeonato)
     try {
       await api.tournaments.inscreverTime(id, teamEntry);
     } catch (error: any) {
-      alert(error.message || 'Erro ao enviar inscrição. Tente novamente.');
+      alert(error.message || 'Erro ao enviar inscriÃ§Ã£o. Tente novamente.');
       return;
     }
 
@@ -2504,7 +2504,7 @@ const CampeonatoDetalhes = () => {
     return { p, v, d, matches, j: v + d };
   };
 
-  // (Removido) findNewlyFormedMatches: a chave é 100% visual e não cria mais
+  // (Removido) findNewlyFormedMatches: a chave Ã© 100% visual e nÃ£o cria mais
   // jogos no cronograma.
 
   const formatDayOfWeek = (dateStr: string) => {
@@ -2623,9 +2623,9 @@ const CampeonatoDetalhes = () => {
     saveToSupabase(updated);
   };
 
-  // Abre o chaveamento para preenchimento MANUAL (sem sorteio automático).
-  // Apenas revela o bracket vazio — o organizador preenche os times pela edição
-  // (lápis) de cada vaga. Não toca no cronograma.
+  // Abre o chaveamento para preenchimento MANUAL (sem sorteio automÃ¡tico).
+  // Apenas revela o bracket vazio â€” o organizador preenche os times pela ediÃ§Ã£o
+  // (lÃ¡pis) de cada vaga. NÃ£o toca no cronograma.
   const handleAbrirChaveamento = () => {
     if (!isAdmin) return;
     const updated = { ...campeonato, chavesSorteados: true, status: "em_andamento" };
@@ -2643,9 +2643,9 @@ const CampeonatoDetalhes = () => {
       return parseInt(s) || 16;
     };
 
-    // Defaults alinhados com o formulário de createCampPage (timesPorGrupo=4,
+    // Defaults alinhados com o formulÃ¡rio de createCampPage (timesPorGrupo=4,
     // classificadosPorGrupo=2). Antes este lado usava 8/4, divergindo do
-    // gerador da página admin e produzindo brackets diferentes dependendo
+    // gerador da pÃ¡gina admin e produzindo brackets diferentes dependendo
     // de qual tela o admin usasse para sortear chaves.
     const timesPorGrupo = campeonato.timesPorGrupo || 4;
     const classificados = campeonato.classificadosPorGrupo || 2;
@@ -2731,7 +2731,7 @@ const CampeonatoDetalhes = () => {
 
       for (let i = 0; i < teamsList.length / 2; i++) {
         if (roundArray[i]) {
-          // Prioridade: tag > name (tag é o identificador canônico)
+          // Prioridade: tag > name (tag Ã© o identificador canÃ´nico)
           roundArray[i].t1 =
             teamsList[i * 2]?.tag || teamsList[i * 2]?.name || "";
           roundArray[i].t2 =
@@ -2740,13 +2740,13 @@ const CampeonatoDetalhes = () => {
       }
     };
 
-    // Seleciona estrutura de bracket baseada no número real de times classificados
-    // ≤2 → Final direta (grandFinal)
-    // 3–4 ou mata_mata → DoubleSideBracket (.side.left / .side.right / sf)
-    // >4 liga → DoubleEliminationBracket (.upper)
+    // Seleciona estrutura de bracket baseada no nÃºmero real de times classificados
+    // â‰¤2 â†’ Final direta (grandFinal)
+    // 3â€“4 ou mata_mata â†’ DoubleSideBracket (.side.left / .side.right / sf)
+    // >4 liga â†’ DoubleEliminationBracket (.upper)
     const useDoubleElimBracket = campeonato.formato === "liga" && bracketTeams > 4;
     if (bracketTeams <= 2) {
-      // Final direta: os 2 times vão direto para a grande final
+      // Final direta: os 2 times vÃ£o direto para a grande final
       initialBracket.side.grandFinal.t1 = crossSeededTeams[0]?.tag || crossSeededTeams[0]?.name || "";
       initialBracket.side.grandFinal.t2 = crossSeededTeams[1]?.tag || crossSeededTeams[1]?.name || "";
     } else if (useDoubleElimBracket) {
@@ -2760,9 +2760,9 @@ const CampeonatoDetalhes = () => {
     saveBracketToSupabase(initialBracket);
     setBracketData(initialBracket);
 
-    // Chave é 100% VISUAL: não cria nenhum jogo no cronograma. Apenas remove
-    // jogos da chave ("MATA-MATA (CHAVEAMENTO)") que tenham sobrado de versões
-    // antigas. Todos os resultados que contam são lançados no cronograma.
+    // Chave Ã© 100% VISUAL: nÃ£o cria nenhum jogo no cronograma. Apenas remove
+    // jogos da chave ("MATA-MATA (CHAVEAMENTO)") que tenham sobrado de versÃµes
+    // antigas. Todos os resultados que contam sÃ£o lanÃ§ados no cronograma.
     const newCronograma = (campeonato.cronograma || []).filter(
       (c: any) => c.fase !== "MATA-MATA (CHAVEAMENTO)",
     );
@@ -2775,7 +2775,7 @@ const CampeonatoDetalhes = () => {
     };
     setCampeonato(updated);
     saveToSupabase(updated);
-    // Salva cronograma via API própria (substitui a RPC atualizar_cronograma_campeonato)
+    // Salva cronograma via API prÃ³pria (substitui a RPC atualizar_cronograma_campeonato)
     api.tournaments.atualizarCronograma(id, newCronograma)
       .catch((error: any) => console.error('Erro ao salvar cronograma do chaveamento:', error.message));
 
@@ -2800,14 +2800,14 @@ const CampeonatoDetalhes = () => {
         : false;
       if (isWithin24Hours) {
         alert(
-          "Não é possível alterar a data quando faltam menos de 24 horas para o jogo. Apenas administradores podem fazer isto.",
+          "NÃ£o Ã© possÃ­vel alterar a data quando faltam menos de 24 horas para o jogo. Apenas administradores podem fazer isto.",
         );
         return;
       }
     }
 
-    // Determine acting team tag — sempre usa tag do time quando o usuário tem
-    // um time nessa partida (inclusive admins que são jogadores)
+    // Determine acting team tag â€” sempre usa tag do time quando o usuÃ¡rio tem
+    // um time nessa partida (inclusive admins que sÃ£o jogadores)
     let actingTeamTag = "ADMIN";
     const myTeamInAction = myTeams.find(
       (t) => t.tag === match.timeA  || t.tag === match.timeB ||
@@ -2821,7 +2821,7 @@ const CampeonatoDetalhes = () => {
     } else if (editFormData.action === "finish") {
       match.status = "finalizado";
       match.placar = editFormData.placar;
-      // PDL/V/D são recalculados do cronograma após salvar (recalcular_pdl_global
+      // PDL/V/D sÃ£o recalculados do cronograma apÃ³s salvar (recalcular_pdl_global
       // no .then do merge abaixo). Editar o placar reverte/reaplica sozinho.
     } else {
       // Propose or Counter-propose
@@ -2833,7 +2833,7 @@ const CampeonatoDetalhes = () => {
 
     let updatedCampeonato = { ...campeonato, cronograma: newCronograma };
 
-    // --- Lógica de Desempate Automático ---
+    // --- LÃ³gica de Desempate AutomÃ¡tico ---
     if (match.status === "finalizado") {
       updatedCampeonato = checkAndAddTiebreakers(updatedCampeonato, match.fase);
     }
@@ -2848,14 +2848,14 @@ const CampeonatoDetalhes = () => {
     }
     setCampeonato(updatedCampeonato);
 
-    // ⚠️ RACE SAFETY: usa mergeCronograma com APENAS o jogo editado
+    // âš ï¸ RACE SAFETY: usa mergeCronograma com APENAS o jogo editado
     // em vez de enviar o cronograma inteiro. Dois times editando jogos
-    // diferentes ao mesmo tempo agora não se sobrescrevem mais.
+    // diferentes ao mesmo tempo agora nÃ£o se sobrescrevem mais.
     // O merge no servidor faz lookup por `id` (com fallback timeA+timeB+fase)
-    // e substitui só o jogo correspondente.
+    // e substitui sÃ³ o jogo correspondente.
     api.tournaments.mergeCronograma(id, [match])
       .then(() => {
-        // Jogo finalizado (ou placar editado) → recalcula PDL/V/D a partir dos
+        // Jogo finalizado (ou placar editado) â†’ recalcula PDL/V/D a partir dos
         // jogos finalizados do cronograma. Idempotente: corrige sozinho.
         if (match.status === "finalizado") {
           api.tournaments.recalcularPdl(id).catch((e: any) => console.error('Erro ao recalcular PDL:', e.message));
@@ -2863,10 +2863,10 @@ const CampeonatoDetalhes = () => {
       })
       .catch((error: any) => {
         console.error('Erro ao salvar cronograma:', error.message);
-        alert(`Falha ao salvar o jogo. Recarregue a página.\n\nDetalhe: ${error.message}`);
+        alert(`Falha ao salvar o jogo. Recarregue a pÃ¡gina.\n\nDetalhe: ${error.message}`);
       });
 
-    // --- Lógica de Sincronização com Chaves ---
+    // --- LÃ³gica de SincronizaÃ§Ã£o com Chaves ---
     if (match.status === "finalizado") {
       const scores = (match.placar || "0 - 0").split(" - ");
       const s1 = parseInt(scores[0]) || 0;
@@ -2883,7 +2883,7 @@ const CampeonatoDetalhes = () => {
           let targetIdx = -1;
           let targetSide: any = undefined;
 
-          // Remove !m.winner — permite re-editar resultado já existente na chave
+          // Remove !m.winner â€” permite re-editar resultado jÃ¡ existente na chave
           const searchAndUpdate = (m: any, type: string, round: string, idx: number, side?: any) => {
             if (found) return false;
             if ((m.t1 === match.timeA && m.t2 === match.timeB) || (m.t1 === match.timeB && m.t2 === match.timeA)) {
@@ -2953,10 +2953,10 @@ const CampeonatoDetalhes = () => {
     e.preventDefault();
     if (!adminMatchData.timeA || !adminMatchData.timeB) return;
 
-    // ⚠️ RACE SAFETY: garante `id` único no jogo recém-criado para que o
-    // merge no servidor consiga identificá-lo unicamente. Sem id, jogos
-    // criados manualmente (ex: amistosos extras) ficavam vulneráveis a
-    // colisão em merge subsequente.
+    // âš ï¸ RACE SAFETY: garante `id` Ãºnico no jogo recÃ©m-criado para que o
+    // merge no servidor consiga identificÃ¡-lo unicamente. Sem id, jogos
+    // criados manualmente (ex: amistosos extras) ficavam vulnerÃ¡veis a
+    // colisÃ£o em merge subsequente.
     const newMatch = {
       id: `manual-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
       data: "A COMBINAR",
@@ -2977,11 +2977,11 @@ const CampeonatoDetalhes = () => {
     const updatedCampeonato = { ...campeonato, cronograma: newCronograma };
     setCampeonato(updatedCampeonato);
 
-    // Envia só o jogo novo via merge atômico (substitui o write-all anterior)
+    // Envia sÃ³ o jogo novo via merge atÃ´mico (substitui o write-all anterior)
     api.tournaments.mergeCronograma(id, [newMatch])
       .catch((error: any) => {
         console.error('Erro ao criar jogo:', error.message);
-        alert(`Falha ao criar o jogo. Recarregue a página.\n\nDetalhe: ${error.message}`);
+        alert(`Falha ao criar o jogo. Recarregue a pÃ¡gina.\n\nDetalhe: ${error.message}`);
       });
 
     setIsAdminMatchModalOpen(false);
@@ -3027,13 +3027,13 @@ const CampeonatoDetalhes = () => {
 
   const tabs = React.useMemo(
     () => [
-      { id: "overview", label: "Visão Geral", icon: Eye },
+      { id: "overview", label: "VisÃ£o Geral", icon: Eye },
       ...(campeonato?.formato === "liga"
         ? [{ id: "groups", label: "Grupos", icon: List }]
         : []),
       { id: "schedule", label: "Cronograma", icon: Clock },
       { id: "bracket", label: "Chaves", icon: GitBranch },
-      { id: "history", label: "Histórico", icon: History },
+      { id: "history", label: "HistÃ³rico", icon: History },
     ],
     [campeonato?.formato, isAdmin],
   );
@@ -3061,12 +3061,12 @@ const CampeonatoDetalhes = () => {
     );
   };
 
-  // Ordenação e Filtragem por Role e Grupo
+  // OrdenaÃ§Ã£o e Filtragem por Role e Grupo
   const filteredCronograma = React.useMemo(() => {
     const raw = [...(campeonato?.cronograma || [])];
 
     const filtered = raw.filter((jogo: any) => {
-      // Apenas jogos confirmados ou finalizados aparecem no cronograma público
+      // Apenas jogos confirmados ou finalizados aparecem no cronograma pÃºblico
       if (jogo.status !== "confirmado" && jogo.status !== "finalizado")
         return false;
 
@@ -3112,15 +3112,15 @@ const CampeonatoDetalhes = () => {
     return ShieldCheck;
   };
 
-  // Todos os jogos não finalizados/confirmados
+  // Todos os jogos nÃ£o finalizados/confirmados
   const pendingAll = (campeonato?.cronograma || []).filter(
     (jogo: any) => jogo.status !== "finalizado" && jogo.status !== "confirmado"
   );
 
-  // Jogos onde o time do usuário participa (para qualquer um com time, inclusive admin-jogador)
+  // Jogos onde o time do usuÃ¡rio participa (para qualquer um com time, inclusive admin-jogador)
   const myPendingMatches = pendingAll.filter((jogo: any) => !!getMyTeamInMatch(jogo));
 
-  // Todos os jogos pendentes — apenas para admin, com botão "Arbitrar"
+  // Todos os jogos pendentes â€” apenas para admin, com botÃ£o "Arbitrar"
   const allPendingMatches = pendingAll;
 
   // Exclui um jogo do cronograma (controle manual do organizador).
@@ -3128,7 +3128,7 @@ const CampeonatoDetalhes = () => {
     if (!isAdmin) return;
     const nomeA = jogo.timeA || "Time A";
     const nomeB = jogo.timeB || "Time B";
-    if (!window.confirm(`Excluir o jogo ${nomeA} vs ${nomeB}? Ele deixará de existir.`)) return;
+    if (!window.confirm(`Excluir o jogo ${nomeA} vs ${nomeB}? Ele deixarÃ¡ de existir.`)) return;
     const newCronograma = (campeonato.cronograma || []).filter((c: any) =>
       jogo.id ? c.id !== jogo.id : c !== jogo,
     );
@@ -3136,8 +3136,8 @@ const CampeonatoDetalhes = () => {
     setCampeonato(updated);
     api.tournaments.atualizarCronograma(id, newCronograma)
       .then(() => {
-        // Recalcula PDL/V/D — se o jogo excluído estava finalizado, o time perde
-        // os pontos/vitória/derrota correspondentes automaticamente.
+        // Recalcula PDL/V/D â€” se o jogo excluÃ­do estava finalizado, o time perde
+        // os pontos/vitÃ³ria/derrota correspondentes automaticamente.
         return api.tournaments.recalcularPdl(id);
       })
       .catch((error: any) => console.error('Erro ao excluir jogo:', error.message));
@@ -3249,7 +3249,7 @@ const CampeonatoDetalhes = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal de Inscrição */}
+      {/* Modal de InscriÃ§Ã£o */}
       <AnimatePresence>
         {isRegistrationModalOpen && (
           <motion.div
@@ -3284,7 +3284,7 @@ const CampeonatoDetalhes = () => {
                         className="text-xl font-black uppercase tracking-widest"
                         style={{ color: campeonato.themeColor }}
                       >
-                        Inscrição de Time
+                        InscriÃ§Ã£o de Time
                       </h2>
                       <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
                         Garanta sua vaga na arena
@@ -3305,9 +3305,9 @@ const CampeonatoDetalhes = () => {
                       <Users className="w-8 h-8" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black uppercase text-white tracking-tight">Login Necessário</h3>
+                      <h3 className="text-lg font-black uppercase text-white tracking-tight">Login NecessÃ¡rio</h3>
                       <p className="text-xs text-white/50 mt-2 max-w-sm mx-auto leading-relaxed">
-                        Você precisa estar conectado à sua conta para inscrever um time no campeonato.
+                        VocÃª precisa estar conectado Ã  sua conta para inscrever um time no campeonato.
                       </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -3330,7 +3330,7 @@ const CampeonatoDetalhes = () => {
                     <div>
                       <h3 className="text-lg font-black uppercase text-white tracking-tight">Nenhuma Equipe Encontrada</h3>
                       <p className="text-xs text-white/50 mt-2 max-w-sm mx-auto leading-relaxed">
-                        Você ainda não possui uma equipe cadastrada. Para participar deste campeonato, crie sua equipe primeiro.
+                        VocÃª ainda nÃ£o possui uma equipe cadastrada. Para participar deste campeonato, crie sua equipe primeiro.
                       </p>
                     </div>
                     <button
@@ -3346,7 +3346,7 @@ const CampeonatoDetalhes = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleRegisterSubmit} className="space-y-6">
-                    {/* Seleção de Time */}
+                    {/* SeleÃ§Ã£o de Time */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between px-1">
                         <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">
@@ -3426,7 +3426,7 @@ const CampeonatoDetalhes = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
-                          Discord do Capitão
+                          Discord do CapitÃ£o
                         </label>
                         <div className="relative">
                           <MessageCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -3485,11 +3485,11 @@ const CampeonatoDetalhes = () => {
                       }}
                     >
                       <Trophy className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                      CONFIRMAR INSCRIÇÃO
+                      CONFIRMAR INSCRIÃ‡ÃƒO
                     </button>
                     <p className="text-[9px] text-center text-white/20 font-bold uppercase tracking-widest px-4 leading-relaxed">
-                      Ao confirmar, sua equipe será pré-inscrita e aguardará a
-                      aprovação manual dos administradores da M7 Academy.
+                      Ao confirmar, sua equipe serÃ¡ prÃ©-inscrita e aguardarÃ¡ a
+                      aprovaÃ§Ã£o manual dos administradores da M7 ARENA.
                     </p>
                   </form>
                 )}
@@ -3665,7 +3665,7 @@ const CampeonatoDetalhes = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-12 w-full"
                 >
-                  {/* O START TOURNAMENT BANNER FOI REMOVIDO PARA PRODUÇÃO */}
+                  {/* O START TOURNAMENT BANNER FOI REMOVIDO PARA PRODUÃ‡ÃƒO */}
 
                   <div
                     className="rounded-xl border-2 relative overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6"
@@ -3690,7 +3690,7 @@ const CampeonatoDetalhes = () => {
                       </div>
                       <div>
                         <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
-                          Classificação
+                          ClassificaÃ§Ã£o
                         </h2>
                         <p
                           className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
@@ -3728,7 +3728,7 @@ const CampeonatoDetalhes = () => {
                                       : "rgba(255,255,255,0.4)",
                                 }}
                               >
-                                {time.rank}º
+                                {time.rank}Âº
                               </div>
                               {/* Square team logo with border in team color */}
                               <div
@@ -3847,7 +3847,7 @@ const CampeonatoDetalhes = () => {
                       </div>
                       <div>
                         <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
-                          Histórico de Partidas
+                          HistÃ³rico de Partidas
                         </h2>
                         <p
                           className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
@@ -3915,9 +3915,9 @@ const CampeonatoDetalhes = () => {
                             className="bg-black/40 border-t border-white/5"
                           >
                             <div className="p-4 sm:p-6 space-y-3">
-                              {/* Histórico Real de Partidas */}
+                              {/* HistÃ³rico Real de Partidas */}
                               {(() => {
-                                // Histórico vem APENAS do cronograma (a chave é só visual).
+                                // HistÃ³rico vem APENAS do cronograma (a chave Ã© sÃ³ visual).
                                 const teamMatches = (campeonato.cronograma || [])
                                   .filter(
                                     (m: any) =>
@@ -3997,12 +3997,12 @@ const CampeonatoDetalhes = () => {
                                           </span>
                                           <div>
                                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                              {match.fase} •{" "}
+                                              {match.fase} â€¢{" "}
                                               {(() => {
                                                 const raw = match.data || match.timestamp;
-                                                if (!raw || raw === "A COMBINAR") return "—";
+                                                if (!raw || raw === "A COMBINAR") return "â€”";
                                                 const d = new Date(typeof raw === "string" && raw.length === 10 ? raw + "T00:00:00" : raw);
-                                                return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+                                                return isNaN(d.getTime()) ? "â€”" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
                                               })()}
                                             </p>
                                             <p className="text-sm font-black text-white uppercase">
@@ -4073,7 +4073,7 @@ const CampeonatoDetalhes = () => {
                               className="text-[10px] font-black uppercase tracking-[0.3em] mt-3"
                               style={{ color: campeonato.themeColor }}
                             >
-                              Capitão, insira confrontos manuais no campeonato
+                              CapitÃ£o, insira confrontos manuais no campeonato
                             </p>
                           </div>
                         </div>
@@ -4094,7 +4094,7 @@ const CampeonatoDetalhes = () => {
                     </div>
                   )}
 
-                  {/* MEUS JOGOS PENDENTES — somente jogos onde o time do usuário participa */}
+                  {/* MEUS JOGOS PENDENTES â€” somente jogos onde o time do usuÃ¡rio participa */}
                   {myPendingMatches.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -4144,7 +4144,7 @@ const CampeonatoDetalhes = () => {
                               className="text-[10px] font-black uppercase tracking-[0.3em] mt-3"
                               style={{ color: campeonato.themeColor }}
                             >
-                              Capitão, selecione um rival para propor data
+                              CapitÃ£o, selecione um rival para propor data
                             </p>
                           </div>
                         </div>
@@ -4166,7 +4166,7 @@ const CampeonatoDetalhes = () => {
                               {myPendingMatches.map((jogo: any, i: number) => {
                                 const myTeamInMatch = getMyTeamInMatch(jogo);
 
-                                // Determinação dos dados dos times para exibição
+                                // DeterminaÃ§Ã£o dos dados dos times para exibiÃ§Ã£o
                                 const teamATag = jogo.timeA;
                                 const teamBTag = jogo.timeB;
 
@@ -4210,7 +4210,7 @@ const CampeonatoDetalhes = () => {
                                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                                       <div className="flex-1 flex items-center gap-4 w-full">
                                         {myTeamInMatch ? (
-                                          // Visão do Jogador: Foco no adversário
+                                          // VisÃ£o do Jogador: Foco no adversÃ¡rio
                                           <div className="flex items-center gap-2">
                                             <div className="text-white text-[10px] font-black select-none">
                                               VS
@@ -4274,7 +4274,7 @@ const CampeonatoDetalhes = () => {
                                         )}
                                       </div>
 
-                                      {/* Botões de ação — sempre "Propor Data" nesta seção */}
+                                      {/* BotÃµes de aÃ§Ã£o â€” sempre "Propor Data" nesta seÃ§Ã£o */}
                                       <div className="flex flex-col gap-3 w-full md:w-[180px] shrink-0">
                                         <>
                                           <button
@@ -4359,7 +4359,7 @@ const CampeonatoDetalhes = () => {
                     </motion.div>
                   )}
 
-                  {/* TODOS OS JOGOS PENDENTES — somente admin, botão Arbitrar */}
+                  {/* TODOS OS JOGOS PENDENTES â€” somente admin, botÃ£o Arbitrar */}
                   {isAdmin && allPendingMatches.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -4388,7 +4388,7 @@ const CampeonatoDetalhes = () => {
                               />
                             </div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-3 text-white/40">
-                              Painel de arbitragem — gerencie todos os jogos
+                              Painel de arbitragem â€” gerencie todos os jogos
                             </p>
                           </div>
                         </div>
@@ -4449,7 +4449,7 @@ const CampeonatoDetalhes = () => {
                                         </span>
                                       </div>
 
-                                      {/* Botão Arbitrar + Excluir */}
+                                      {/* BotÃ£o Arbitrar + Excluir */}
                                       <div className="w-full md:w-[180px] shrink-0 flex items-center gap-2">
                                         <button
                                           onClick={() => {
@@ -4524,7 +4524,7 @@ const CampeonatoDetalhes = () => {
                             className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
                             style={{ color: campeonato.themeColor }}
                           >
-                            Horário de Brasília (BRT)
+                            HorÃ¡rio de BrasÃ­lia (BRT)
                           </p>
                         </div>
                       </div>
@@ -4587,7 +4587,7 @@ const CampeonatoDetalhes = () => {
                                   setEditingMatchIndex(realIdx);
                                   setJogoStatusAtStart(jogo.status);
                                   if (isAdmin && jogo.status === "finalizado") {
-                                    // Admin re-edita resultado já finalizado
+                                    // Admin re-edita resultado jÃ¡ finalizado
                                     setEditFormData({
                                       data: jogo.data,
                                       hora: jogo.hora,
@@ -4875,7 +4875,7 @@ const CampeonatoDetalhes = () => {
                           Chaveamento Oficial
                         </h2>
                         <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
-                          Confrontos eliminatórios em tempo real
+                          Confrontos eliminatÃ³rios em tempo real
                         </p>
                       </div>
                       <button
@@ -4970,7 +4970,7 @@ const CampeonatoDetalhes = () => {
                 >
                   <div>
                     <h2 className="text-3xl font-black uppercase tracking-tighter text-white">
-                      Configurações da Arena
+                      ConfiguraÃ§Ãµes da Arena
                     </h2>
                     <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mt-1">
                       Ajuste os detalhes e a identidade do seu campeonato
@@ -4992,7 +4992,7 @@ const CampeonatoDetalhes = () => {
                             Identidade Visual
                           </h3>
                           <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                            Defina a cor tema que será aplicada em todo o
+                            Defina a cor tema que serÃ¡ aplicada em todo o
                             campeonato
                           </p>
                         </div>
@@ -5045,7 +5045,7 @@ const CampeonatoDetalhes = () => {
                       </div>
                     </div>
 
-                    {/* Card: Gestão do Chaveamento */}
+                    {/* Card: GestÃ£o do Chaveamento */}
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6 md:col-span-2">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
@@ -5053,17 +5053,17 @@ const CampeonatoDetalhes = () => {
                         </div>
                         <div>
                           <h3 className="font-black text-lg uppercase tracking-wider text-white">
-                            Chaveamento Eliminatório
+                            Chaveamento EliminatÃ³rio
                           </h3>
                           <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
                             {campeonato.chavesSorteados
-                              ? "Chaveamento manual — preencha os times e avance pela edição (lápis) de cada vaga"
+                              ? "Chaveamento manual â€” preencha os times e avance pela ediÃ§Ã£o (lÃ¡pis) de cada vaga"
                               : "Abra o chaveamento e preencha os times manualmente quando quiser"}
                           </p>
                         </div>
                         {campeonato.chavesSorteados && (
                           <span className="ml-auto text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
-                            ✓ Gerado
+                            âœ“ Gerado
                           </span>
                         )}
                       </div>
@@ -5099,7 +5099,7 @@ const CampeonatoDetalhes = () => {
 
                       {campeonato.chavesSorteados && (
                         <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">
-                          Preencha os times pela edição (lápis) de cada vaga. Defina o placar para finalizar — o vencedor não avança sozinho.
+                          Preencha os times pela ediÃ§Ã£o (lÃ¡pis) de cada vaga. Defina o placar para finalizar â€” o vencedor nÃ£o avanÃ§a sozinho.
                         </p>
                       )}
                     </div>
@@ -5139,7 +5139,7 @@ const CampeonatoDetalhes = () => {
                               ? jogoStatusAtStart === "finalizado"
                                 ? "Editar Resultado"
                                 : "Finalizar Jogo"
-                              : "Propor Horário"}
+                              : "Propor HorÃ¡rio"}
                         </h3>
                       </div>
                       <button
@@ -5176,7 +5176,7 @@ const CampeonatoDetalhes = () => {
                           >
                             {editFormData.action === "accept"
                               ? "Aceite ou altere para enviar uma contra-proposta."
-                              : "Selecione a data e o horário para o confronto."}
+                              : "Selecione a data e o horÃ¡rio para o confronto."}
                           </p>
                         </div>
                       )}
@@ -5213,7 +5213,7 @@ const CampeonatoDetalhes = () => {
 
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
-                              Horário Previsto
+                              HorÃ¡rio Previsto
                             </label>
                             <input
                               type="time"
@@ -5382,7 +5382,7 @@ const CampeonatoDetalhes = () => {
                                 return;
                               }
 
-                              // Identify acting team tag — usa tag do time mesmo para admin-jogador
+                              // Identify acting team tag â€” usa tag do time mesmo para admin-jogador
                               let actingTeamTag = "ADMIN";
                               const myTeamForAccept = myTeams.find(
                                 (t) =>
@@ -5418,8 +5418,8 @@ const CampeonatoDetalhes = () => {
                               campeonato.cronograma[editingMatchIndex!]?.data ||
                             editFormData.hora !==
                               campeonato.cronograma[editingMatchIndex!]?.hora
-                              ? "Propor Novo Horário"
-                              : "Aceitar Horário"}
+                              ? "Propor Novo HorÃ¡rio"
+                              : "Aceitar HorÃ¡rio"}
                           </button>
                         )}
 
@@ -5436,11 +5436,11 @@ const CampeonatoDetalhes = () => {
                               ? "Confirmar Resultado"
                               : jogoStatusAtStart === "proposto"
                                 ? "Enviar Contra-Proposta"
-                                : "Enviar Proposta de Horário"}
+                                : "Enviar Proposta de HorÃ¡rio"}
                           </button>
                         )}
 
-                        {/* Excluir jogo (somente admin) — funciona para jogos
+                        {/* Excluir jogo (somente admin) â€” funciona para jogos
                             confirmados/propostos/etc. abertos neste modal */}
                         {isAdmin && editingMatchIndex !== null && (
                           <button
@@ -5465,7 +5465,7 @@ const CampeonatoDetalhes = () => {
               )}
             </AnimatePresence>
 
-            {/* Modal de Criação de Jogo (Admin) */}
+            {/* Modal de CriaÃ§Ã£o de Jogo (Admin) */}
             <AnimatePresence>
               {isAdminMatchModalOpen && (
                 <motion.div
@@ -5611,7 +5611,7 @@ const CampeonatoDetalhes = () => {
                         <Check className="w-5 h-5" />
                         {isAdmin
                           ? "Criar Jogo Oficial"
-                          : "Confirmar e Propor Horário"}
+                          : "Confirmar e Propor HorÃ¡rio"}
                       </button>
                     </form>
                   </motion.div>
@@ -5624,11 +5624,11 @@ const CampeonatoDetalhes = () => {
           <div className="space-y-6">
             <div className="bg-white/[0.03] rounded-xl border border-white/10 p-6 space-y-6 sticky top-10">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
-                Informações
+                InformaÃ§Ãµes
               </h3>
 
               <div className="space-y-4">
-                {/* 1. Premiação */}
+                {/* 1. PremiaÃ§Ã£o */}
                 <div className="flex items-center gap-4 py-1">
                   <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
                     <Coins
@@ -5638,7 +5638,7 @@ const CampeonatoDetalhes = () => {
                   </div>
                   <div>
                     <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Premiação Total
+                      PremiaÃ§Ã£o Total
                     </h4>
                     <p className="text-sm font-bold text-white/80">
                       {campeonato.premio}
@@ -5661,7 +5661,7 @@ const CampeonatoDetalhes = () => {
                   </div>
                   <div>
                     <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Taxa de Inscrição
+                      Taxa de InscriÃ§Ã£o
                     </h4>
                     <p className="text-sm font-bold text-white/80">
                       {campeonato.taxa}
@@ -5727,7 +5727,7 @@ const CampeonatoDetalhes = () => {
             {/* Separated Organization Card - Refined layout with centered text and icon below */}
             <div className="bg-white/[0.03] rounded-xl border border-white/10 p-6 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
-                Responsável
+                ResponsÃ¡vel
               </h3>
 
               <div className="flex flex-col items-center justify-center py-4 w-full">
@@ -5767,7 +5767,7 @@ const CampeonatoDetalhes = () => {
               </div>
             </div>
 
-            {/* Regulamento no Mobile - Mesmo tamanho e proporção do botão de inscrição, em cor neutra */}
+            {/* Regulamento no Mobile - Mesmo tamanho e proporÃ§Ã£o do botÃ£o de inscriÃ§Ã£o, em cor neutra */}
             <button
               onClick={() => setIsRulesModalOpen(true)}
               className="md:hidden w-full py-5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-[0.98] border border-white/10 text-white font-black text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all"
@@ -5776,7 +5776,7 @@ const CampeonatoDetalhes = () => {
               Regulamento Oficial
             </button>
 
-            {/* Ação de Inscrição ABAIXO do card de status */}
+            {/* AÃ§Ã£o de InscriÃ§Ã£o ABAIXO do card de status */}
             {(role as string) !== "spectator" && (
               <div className="space-y-4">
                 {isRegistered ? (
@@ -5805,14 +5805,14 @@ const CampeonatoDetalhes = () => {
                     <AlertCircle className="w-5 h-5" />
                     {campeonato.status === "breve" ||
                     campeonato.status === "inscricoes_em_breve"
-                      ? "Inscrições em Breve"
-                      : "Inscrições Encerradas"}
+                      ? "InscriÃ§Ãµes em Breve"
+                      : "InscriÃ§Ãµes Encerradas"}
                   </div>
                 )}
                 <p className="text-[10px] text-white/20 text-center uppercase font-bold px-4 leading-relaxed tracking-wider">
                   {isRegistered
-                    ? "Sua inscrição está sendo processada pela organização."
-                    : "Ao clicar em inscrever, seu time entrará na lista de espera para validação da organização."}
+                    ? "Sua inscriÃ§Ã£o estÃ¡ sendo processada pela organizaÃ§Ã£o."
+                    : "Ao clicar em inscrever, seu time entrarÃ¡ na lista de espera para validaÃ§Ã£o da organizaÃ§Ã£o."}
                 </p>
               </div>
             )}

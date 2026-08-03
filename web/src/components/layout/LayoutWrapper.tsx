@@ -159,7 +159,7 @@ export default function Layout() {
               className="lg:hidden flex items-center hover:opacity-90 transition-all"
             >
               <img
-                alt="M7 Academy Logo"
+                alt="M7 Arena Logo"
                 className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_2px_#FFFF00] drop-shadow-[0_0_5px_#FFFF00] drop-shadow-[0_0_10px_rgba(255,255,0,0.4)]"
                 src={LOGO_URL}
               />
@@ -172,14 +172,14 @@ export default function Layout() {
             >
               <div className="relative">
                 <img 
-                  alt="M7 Academy Logo" 
+                  alt="M7 Arena Logo" 
                   className="h-8 xl:h-10 w-auto object-contain relative z-10 drop-shadow-[0_0_2px_#FFFF00] drop-shadow-[0_0_5px_#FFFF00] drop-shadow-[0_0_10px_rgba(255,255,0,0.4)]" 
                   src={LOGO_URL} 
                 />
               </div>
               <div className="flex flex-col">
                 <h1 className="text-sm xl:text-base font-black tracking-tighter text-primary uppercase font-arial-bold italic leading-tight">
-                  M7 ACADEMY
+                  M7 ARENA
                 </h1>
                 <span className="text-[6px] xl:text-[8px] text-white/40 tracking-[0.2em] xl:tracking-[0.3em] uppercase">
                   jogue e divirta-se!
@@ -501,7 +501,7 @@ export default function Layout() {
                   <div className="flex items-center gap-2.5">
                     <img alt="Logo" className="h-9 w-auto" src={LOGO_URL} />
                     <div>
-                      <h1 className="text-base font-black text-primary font-headline italic leading-tight">M7 ACADEMY</h1>
+                      <h1 className="text-base font-black text-primary font-headline italic leading-tight">M7 ARENA</h1>
                       <p className="text-[9px] text-white/40 tracking-wider">jogue e divirta-se!</p>
                     </div>
                   </div>

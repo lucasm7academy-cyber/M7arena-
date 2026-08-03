@@ -122,7 +122,7 @@ const Campeonatos = () => {
         data: t.data || '—',
         premio: t.premiacao ? (t.premiacao + (t.tem_outros_premios ? ' + Outros Prêmios' : '')) : '—',
         taxa: t.taxa || '—',
-        org: t.organizacao || 'M7 Academy',
+        org: t.organizacao || 'M7 Arena',
         themeColor: t.theme_color || '#FFB700',
         cor: t.theme_color || '#FFB700',
         bgImage: null,
@@ -225,7 +225,7 @@ const Campeonatos = () => {
               </h1>
 
               <p className="text-white/40 text-[10px] sm:text-sm md:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
-                Entre para os melhores torneios, conquiste prêmios e escreva seu nome na história da M7 Academy. O desafio espera por você no Rift.
+                 Entre para os melhores torneios, conquiste prêmios e escreva seu nome na história da M7 Arena. O desafio espera por você no Rift.
               </p>
 
               {/* Action Buttons styled after the image */}
