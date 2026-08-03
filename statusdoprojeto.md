@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 02/08/2026 23:51 — por `deepseek`
+**Última atualização:** 03/08/2026 00:51 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`███████████████████████░░░░░ 56/67` concluído
+`████████████████████████░░░░ 58/69` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 12/12 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 26/31 | — | 2 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 28/33 | — | 2 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ██░░░░░░░░░░ 1/7 | 1 | 1 |
 
@@ -41,7 +41,7 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 12/12 | — | — |
 | Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Aplicação (React + Vite) | ████████████ 23/24 | — | 1 |
+| Aplicação (React + Vite) | ████████████ 25/26 | — | 1 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ░░░░░░░░░░░░ 0/6 | 1 | 1 |
@@ -157,6 +157,8 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **P1: Cron de varredura (kick ociosidade 30min + partida fantasma 3h)** `app.apostas.cron`<br>  api/src/cron.ts runCron(db): kick de vagas ocupadas há 30min em salas preenchendo (devolve MC + user_strikes kick_ociosidade) e partida fantasma (partida_iniciada aposta>0 há 3h → aguardando_revisao). Aceita db como parâmetro (testável com PGlite).<br>  _evidência:_ `tsx --test api/test/cron.test.ts → 4/4 pass. tsc exit 0. Cron inicializado no index.ts (setInterval 10min + execução inicial) — docker logs do app sem erro.`<br>  _concluído 02/08/2026 23:51 por deepseek_
 - `[x]` **P1: Smoke test local do fluxo apostado ponta a ponta** `app.apostas.smoke`<br>  Smoke test local ponta a ponta do fluxo apostado: criar sala apostada (reserva), entrar 2º, report-result → aguardando_revisao, decisão admin, payout com taxa, ledger, idempotência. Sala casual confirmada que encerra direto.<br>  _evidência:_ `scripts/smoke-apostas.mjs rodado na stack local (docker compose local, migration 0009 aplicada): 15/15 checks OK — reserva, report-result→revisão, admin aprova blue, payout, idempotência, invariante. Fluxo casual encerra direto sem revisão.`<br>  _concluído 02/08/2026 23:51 por deepseek_
 - `[x]` **P4: Realtime próprio na VPS (WebSocket + LISTEN/NOTIFY)** `app.apostas.realtime`<br>  Serviço realtime em api/src/realtime/index.ts (movido de src/ — ADR-020), compose prod+local, nginx /ws/, hook useSalaRealtime integrado no useSalaSimples (supabase.channel removido).<br>  _evidência:_ `api tsc exit 0; web tsc só 2 pré-existentes; docker compose config --quiet ok (local+prod); realtime up logando 'Escutando notificações do Postgres'; test-realtime.mjs 6/6 PASS: 401 sem cookie, 403 origin errada, sem_permissao não-participante, subscribed, match_update por sala_num e por uuid`<br>  _concluído 02/08/2026 23:17 por deepseek_
+- `[x]` **P2: Elegibilidade e strikes (saldo, Riot ID, 1 sala ativa, punições)** `app.apostas.elegibilidade`<br>  validarElegibilidade 6 checagens + admin bypass; join/criar na transação; termos/accept; admin strikes auditado; profiles/me strikes+suspensa_ate; cron abandono+reativação. ADRs 022-024.<br>  _evidência:_ `npx tsc --noEmit -p api/tsconfig.json → exit 0. npx tsx --test (cron/escrow/estados/revisao/elegibilidade) → 31/31 pass. Smoke HTTP: riot_id_obrigatorio, saldo_insuficiente faltam=50, ja_em_sala_apostada, terms/accept, senha redigida anônimo, admin strikes, profiles/me 0/3.`<br>  _concluído 03/08/2026 00:51 por deepseek_
+- `[x]` **P3: Prints, disputas e painel de revisão do admin** `app.apostas.prints`<br>  Design v3 §6: upload de print (bucket match-prints privado, magic bytes, máx 3, rate limit), leitura autenticada, contestação (1 por jogador), painel admin "Revisão de Partidas" (fila por antiguidade, prints lado a lado, disputas destacadas, botões idempotentes), notificação Discord.<br>  _evidência:_ `tsc api exit 0; tsx --test 45/45 (prints 9, disputas 5, revisao 3, escrow/estados/cron/elegibilidade ok). Upload match-prints: magic bytes, 5 uploads/min, max 3, participante confirmado, transicao entrarEmRevisao. GET /prints/:id/arquivo autenticado`<br>  _concluído 03/08/2026 00:44 por deepseek_
 
 **Design & Paridade Visual**
 
@@ -359,6 +361,30 @@ _02/08/2026 23:06 — deepseek_
 
 _02/08/2026 23:23 — deepseek_
 
+### ADR-022 — P2: senha de sala redigida para visitante, mantida para logado
+
+**Decisão:** GET /api/matches (lista e detalhe) remove a chave `senha` para requisições anônimas; usuário autenticado continua recebendo porque o fork valida a senha no cliente (Jogar.tsx:573 `senha !== sala.senha`) — cortar para logado quebraria a entrada em salas com senha.
+
+**Por quê:** O task pedia não expor `senha` na listagem pública, mas o fork depende de `sala.senha` para o gate de senha (invariante 1:1 da ADR-010). Redigir só para anônimo mantém a vitrine limpa sem quebrar o fluxo. A validação de senha no servidor (a correção definitiva) fica para o swap do front.
+
+_03/08/2026 00:51 — deepseek_
+
+### ADR-023 — P2: users.riot_id é a fonte da verdade da elegibilidade
+
+**Decisão:** `validarElegibilidade` lê `users.riot_id` (coluna do P1). POST/DELETE `/api/profiles/me/riot` passam a espelhar `users.riotId` ao vincular/desvincular a conta Riot — `game_accounts.handle` continua sendo o shape legado do front, mas o vínculo também grava no users.
+
+**Por quê:** Sem o espelho, o fluxo real de vínculo (que grava só em game_accounts) nunca populava users.riot_id e toda sala apostada bloqueava com riot_id_obrigatorio. O design v3 §2.1 define users.riot_id como campo único (anti multi-conta), então é ele que a elegibilidade lê.
+
+_03/08/2026 00:51 — deepseek_
+
+### ADR-024 — P2: strike de abandono detectado pelo escrow (ledger)
+
+**Decisão:** O cron detecta abandono comparando o escrow: jogador com `match_entry_reserve` na sala apostada ativa (partida_iniciada/aguardando_revisao, sem decisão), SEM `match_entry_refund`, e ausente do `match_players` → strike `abandono` (idempotente por partida).
+
+**Por quê:** Não existe rota que remova um jogador vinculado hoje (leave/recusar bloqueiam linked), então o estado "saiu após iniciar" só é detectável pelo dinheiro: quem pagou a reserva e não está mais na sala nem foi reembolsado abandonou. O ledger é o rastro confiável desse fato.
+
+_03/08/2026 00:51 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -367,6 +393,8 @@ _02/08/2026 23:23 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 03/08/2026 00:51 | deepseek | P2 (elegibilidade e strikes) pronto. Novo api/src/lib/elegibilidade.ts (validarElegibilidade 6 checagens, contarStrikesAtivos, aplicarSuspensaoSeNecessario, removerStrike) + api/test/elegibilidade.test.ts (11 testes). Rotas: join/criar validam na transação FOR UPDATE com faltam/sala_num/liberado_em; GET /api/matches público redige 'senha' p/ anônimo (ADR-022); POST /api/terms/accept; admin GET/DELETE /api/admin/strikes (auditado); profiles/me com strikes+suspensaAte e bind Riot espelha users.riot_id (ADR-023); cron: abandono via ledger (ADR-024), suspensão no 3º strike, reativação expirados. tsc 0; testes 31/31; smoke HTTP ok. Não commitei (P3 paralelo). Pendente: senha no servidor (swap front). <br>_tocou: `api/src/lib/elegibilidade.ts`, `api/src/lib/match-flow.ts`, `api/src/routes/matches.ts`, `api/src/cron.ts`, `api/src/routes/admin.ts`, `api/src/routes/auth.ts`, `api/src/routes/profiles.ts`, `api/src/index.ts`, `api/test/elegibilidade.test.ts`_ |
+| 03/08/2026 00:44 | deepseek | P3 (prints/disputas/painel de revisao) implementado e verificado. NOVOS: routes/prints.ts (GET /api/prints/:matchId + GET /api/prints/:id/arquivo com sendFile autenticado por participante/admin), routes/disputas.ts (POST/GET com 1 por jogador via UNIQUE), lib/acesso-sala.ts (role/participante), lib/discord.ts (webhook no upload), tests prints.test.ts (9) e disputas.test.ts (5). ESTENDIDOS: upload.ts (bucket match-prints + magic bytes png/jpeg/webp + rate limit 5/min + salvarPrintMatch + entrarEmRevisao), revisao.ts (pendentes agora embute jogadores+prints+disputas), index.ts (mount), api.ts (SDK prints/disputas/revisao), Admin.tsx + components/admin/RevisaoPartidas.tsx (aba Revisao: fila, prints lado a lado, disputas destacadas, botoes idempotentes com decisionId). Evidencia: tsc api exit 0, web tsc so os 2 erros pre-existentes, tsx --test 45/45. NOTA: cron.ts (partida fantasma) transiciona para aguardando_revisao sem webhook Discord (fora da minha fronteira). P2 estava editando match-flow.ts/matches.ts ao vivo; ao final estavam compilando. <br>_tocou: `api/src/routes/upload.ts`, `api/src/routes/prints.ts`, `api/src/routes/disputas.ts`, `api/src/routes/revisao.ts`, `api/src/index.ts`, `api/src/lib/acesso-sala.ts`, `api/src/lib/discord.ts`, `api/test/prints.test.ts`, `api/test/disputas.test.ts`, `web/src/lib/api.ts`, `web/src/pages/Admin.tsx`, `web/src/components/admin/RevisaoPartidas.tsx`_ |
 | 02/08/2026 23:51 | deepseek | P1 concluído e verificado. BLOQUEIO: snapshot 0008 malformado (formato de versão nova do drizzle-kit: identity string, defaults string, unique como index). Reconstruí o 0008 a partir da serialização da v0.30.6 (ADR-021); rodei generate com preload que patcheia Module._resolveFilename (.js→.ts). Migration 0009_white_wallflower LIMPA (só P1) + 5 constraints manuais. Cadeia 0000-0009 valida em PGlite (36 tabelas) e aplicada no Postgres local.
 
 Tasks: 1 schema (3634c26), 2 escrow.ts+test (6c7ac1f), 3 match-flow/rotas+estados.test (a2aae47), 4 revisao.ts com role real admin/moderador+test+helper (990852e), 5 cron.ts+test (a0f9b5c), 6 smoke local (4bc8adf). tsc exit 0; testes 20/20 pass.
@@ -386,8 +414,6 @@ NÃO toquei src/realtime, docker-compose, hooks front (P4). <br>_tocou: `db/sche
 | 02/08/2026 23:13 | gemini | Build do contêiner Docker m7arena_local_nginx concluído com sucesso. Novo bundle do Vite com o DepositModal atualizado publicado em http://localhost:3000. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`_ |
 | 02/08/2026 23:11 | gemini | Fix no DepositModal: adicionado useEffect para garantir a pré-seleção do pacote Especial sempre que o modal abre (evitando selectedPackage = null), atualizado o fundo do segundo bloco para #181920 com borda dourada 100% opaca e ajustada a imagem do Twisted Fate. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`_ |
 | 02/08/2026 23:10 | gemini | Ajustes no DepositModal: reduzido tamanho e ajustado posicionamento da imagem do Twisted Fate, pre-selecionado pacote Especial por padrão, tornando o bloco do resumo do pedido opaco (#121216) e removido animações de resize ao alternar opções de pacote. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`_ |
-| 02/08/2026 21:19 | deepseek | Deploy da limpeza confirmado na VPS (dev.m7arena.pro): bundle do front novo servido (m7:open-vip + botao Depositar presentes no JS, background.png ausente = correto). Banco intacto (33 tabelas, postgres Up 17h). Erro reportado no lobby era 404 do logo-m7.png: volume de uploads da VPS estava VAZIO (public-images 0 arquivos). Corrigido transferindo o backup_migracao_br do storage do Supabase (public-images 17 arquivos + team-logos 60 arquivos) via scp -> /tmp/uploads-restore -> docker cp para m7arena_app. logo-m7.png agora 200 na VPS. Codigo novo ja estava no ar; faltava apenas o dado (imagens do storage). <br>_tocou: `VPS:/root/m7arena`, `VPS:uploads volume`_ |
-| 02/08/2026 21:16 | deepseek | Deploy da limpeza na VPS (dev.m7arena.pro). Push dd37289, git pull em /root/m7arena, docker compose --env-file rebuild de app+nginx. Banco INTACTO: m7arena_postgres segue Up 17h sem recriar, 33 tabelas confirmadas (limpeza não criou migration nenhuma). Smoke test: health 200, /lobby 200, /api/riot/account 200, /api/auth/me 401 sem cookie (esperado), logs do app sem erro. ADR-017 (compose local), ADR-018 (limpeza) e log de sessão já registrados. <br>_tocou: `VPS:/root/m7arena`, `web/public/images`, `web/src`, `api/src`, `Dockerfile`_ |
 
 ---
 

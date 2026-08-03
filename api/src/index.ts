@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { pool } from "./db.js";
 import { runCron } from "./cron.js";
-import { authRouter } from "./routes/auth.js";
+import { authRouter, termsRouter } from "./routes/auth.js";
 import { googleAuthRouter } from "./routes/auth-google.js";
 import { riotRouter } from "./routes/riot.js";
 import { uploadRouter } from "./routes/upload.js";
@@ -15,6 +15,8 @@ import { teamsRouter } from "./routes/teams.js";
 import { walletRouter } from "./routes/wallet.js";
 import { matchesRouter } from "./routes/matches.js";
 import { revisaoRouter } from "./routes/revisao.js";
+import { printsRouter } from "./routes/prints.js";
+import { disputasRouter } from "./routes/disputas.js";
 import { tournamentsRouter } from "./routes/tournaments.js";
 import { contentRouter } from "./routes/content.js";
 import { adminRouter } from "./routes/admin.js";
@@ -34,6 +36,7 @@ app.use(cookieParser());
 
 // Rotas da API Node (ADR-010 / ADR-011 / ADR-007 / ADR-009)
 app.use("/api/auth", authRouter);
+app.use("/api/terms", termsRouter);
 app.use("/api/auth", googleAuthRouter); // /google e /google/callback (ADR-011)
 app.use("/api/riot", riotRouter);
 app.use("/api/upload", uploadRouter);
@@ -44,6 +47,8 @@ app.use("/api/teams", teamsRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/matches", matchesRouter);
 app.use("/api/revisao", revisaoRouter);
+app.use("/api/prints", printsRouter);
+app.use("/api/disputas", disputasRouter);
 app.use("/api/tournaments", tournamentsRouter);
 app.use("/api/content", contentRouter);
 app.use("/api/admin", adminRouter);

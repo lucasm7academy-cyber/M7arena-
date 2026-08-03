@@ -230,6 +230,65 @@ export interface ApiSalaResultado {
   mudou: boolean;
 }
 
+/** Print de prova de uma partida apostada (design v3 §6). */
+export interface ApiPrint {
+  id: string;
+  matchId: string;
+  userId: string;
+  nomeJogador: string;
+  /** URL autenticada — passa por GET /api/prints/:id/arquivo, nunca link direto. */
+  url: string;
+  createdAt: string;
+}
+
+/** Contestação de resultado (design v3 §6.1). */
+export interface ApiDisputa {
+  id: string;
+  matchId: string;
+  userId: string;
+  nomeJogador: string;
+  motivo: string;
+  status: string;
+  createdAt: string;
+}
+
+/** Jogador da sala no painel de revisão. */
+export interface ApiRevisaoJogador {
+  userId: string;
+  nome: string;
+  side: 'blue' | 'red';
+  confirmed: boolean;
+}
+
+/** Sala em `aguardando_revisao` com o que o painel precisa (prints + disputas embutidos). */
+export interface ApiRevisaoSala {
+  id: string;
+  salaNum: number;
+  mode: string;
+  status: string;
+  apostaMc: number;
+  taxaPct: string;
+  maxJogadores: number;
+  timeANome?: string | null;
+  timeATag?: string | null;
+  timeALogo?: string | null;
+  timeBNome?: string | null;
+  timeBTag?: string | null;
+  timeBLogo?: string | null;
+  revisaoDesde?: string | null;
+  createdAt: string;
+  jogadores: ApiRevisaoJogador[];
+  prints: ApiPrint[];
+  disputas: ApiDisputa[];
+}
+
+/** Resultado da decisão do revisor (idempotente via decisionId, §4.3). */
+export interface ApiDecisaoResultado {
+  ok: boolean;
+  erro?: string;
+  estado?: string;
+}
+
 export interface ApiMatchesSdk {
   list: (params?: { status?: string; limit?: number }) => Promise<ApiLegacySala[]>;
   detail: (id: number | string) => Promise<ApiLegacySala>;
@@ -604,5 +663,36 @@ export const api = {
     /** Atualiza cargo de um usuário (substitui RPC atualizar_cargo_usuario). */
     atualizar: (userId: string, cargo: string) =>
       api.put<{ ok: boolean }>(`/admin/cargos/${userId}`, { p_cargo: cargo }),
+  },
+
+  prints: {
+    /** Envia o print de prova de uma partida apostada (bucket privado match-prints). */
+    upload: (matchId: string, file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("bucket", "match-prints");
+      form.append("path", matchId);
+      return api.post<{ url: string; printId: string }>("/upload", form);
+    },
+    /** Lista os prints da partida (participante ou revisor). */
+    list: (matchId: string) => api.get<ApiPrint[]>(`/prints/${matchId}`),
+    /** URL autenticada do arquivo — o <img> reenvia o cookie httpOnly. */
+    file: (id: string) => `/api/prints/${id}/arquivo`,
+  },
+
+  disputas: {
+    /** Abre contestação de resultado (1 por jogador por partida, §6.1). */
+    abrir: (matchId: string, motivo: string) =>
+      api.post<{ ok: boolean }>(`/disputas/${matchId}`, { motivo }),
+    /** Lista as disputas da partida (participante ou revisor). */
+    list: (matchId: string) => api.get<ApiDisputa[]>(`/disputas/${matchId}`),
+  },
+
+  revisao: {
+    /** Fila de salas em `aguardando_revisao` por antiguidade (design v3 §6). */
+    pendentes: () => api.get<ApiRevisaoSala[]>("/revisao/pendentes"),
+    /** Decide a partida: 'blue' | 'red' | 'draw' | 'cancel', com decisionId idempotente. */
+    decidir: (id: string, data: { winnerSide: 'blue' | 'red' | 'draw' | 'cancel'; decisionId: string }) =>
+      api.post<ApiDecisaoResultado>(`/revisao/${id}/decidir`, data),
   },
 };

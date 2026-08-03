@@ -6,6 +6,7 @@ import { db } from "../db.js";
 import { users, userSessions, userRoles, userWallets } from "../../../db/schema/identidade.js";
 
 export const authRouter = Router();
+export const termsRouter = Router();
 
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
 
@@ -18,6 +19,38 @@ function setSessionCookie(res: any, token: string) {
     maxAge: SESSION_DURATION_MS,
   });
 }
+
+async function getAuthUser(req: any) {
+  const token = req.cookies?.m7_session || req.headers.authorization?.replace("Bearer ", "");
+  if (!token) return null;
+  const [session] = await db
+    .select()
+    .from(userSessions)
+    .where(and(eq(userSessions.sessionToken, token), gt(userSessions.expires, new Date())))
+    .limit(1);
+  if (!session) return null;
+  const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+  return user || null;
+}
+
+// POST /api/terms/accept — registra o aceite dos Termos de Uso com declaração
+// de 18+ (design v3 §2.1, requisito de elegibilidade para salas apostadas).
+termsRouter.post("/accept", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    if (!user.termosAceitosEm) {
+      await db
+        .update(users)
+        .set({ termosAceitosEm: new Date(), updatedAt: new Date() })
+        .where(eq(users.id, user.id));
+    }
+    const [atual] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    return res.json({ ok: true, termos_aceitos_em: atual.termosAceitosEm });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao aceitar os termos" });
+  }
+});
 
 // POST /api/auth/login
 authRouter.post("/login", async (req, res) => {

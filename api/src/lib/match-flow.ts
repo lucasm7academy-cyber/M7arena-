@@ -54,16 +54,6 @@ export async function notifyMatchChange(matchId: string) {
   }
 }
 
-/** Estados em que a sala está "viva" (contagem do painel admin). */
-export const ESTADOS_ATIVOS = [
-  "preenchendo",
-  "confirmacao",
-  "iniciando_partida",
-  "partida_iniciada",
-  "finalizacao",
-  "aguardando_revisao",
-];
-
 function resultado(ok: boolean, erro: string | null, estado: string | null, mudou = false) {
   return { ok, erro, estado, mudou };
 }
@@ -299,3 +289,15 @@ export function normalizarVaga(role: string | undefined, isTimeA: boolean) {
     side: isTimeA ? "blue" : "red",
   };
 }
+
+// ── ELEGIBILIDADE E STRIKES (design v3 §2.1) ─────────────────────────────────
+// Vivem em `lib/elegibilidade.ts` (regras puras de acesso). Re-exportados aqui
+// para as rotas manterem o import antigo de match-flow sem quebra.
+export {
+  ESTADOS_ATIVOS,
+  LIMITES,
+  contarStrikesAtivos,
+  aplicarSuspensaoSeNecessario,
+  removerStrike,
+  validarElegibilidade,
+} from "./elegibilidade.js";

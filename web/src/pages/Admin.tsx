@@ -6,7 +6,7 @@ import {
   ShieldCheck, Trophy, Coins, Search, Check, X, AlertTriangle,
   RefreshCw, Ban, Users, Zap, GraduationCap, Mail, ChevronRight, Film,
   LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
-  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink,
+  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -19,6 +19,7 @@ import {
 } from '../config/adminPermissoes';
 import { AbaCargos } from './AdminCargos';
 import { AbaContatos } from './AdminContatos';
+import { RevisaoPartidas } from '../components/admin/RevisaoPartidas';
 
 // ── TIPOS ──────────────────────────────────────────
 interface PartidaDisputa {
@@ -38,7 +39,7 @@ interface PartidaTravada {
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
-type Aba = 'dashboard' | 'saldos' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos';
+type Aba = 'dashboard' | 'saldos' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao';
 
 interface Highlight {
   id: string; titulo: string; link: string;
@@ -1138,6 +1139,7 @@ export default function Admin() {
     { id: 'highlights', label: 'Highlights', icon: Film,            bloqueada: !permissoes.gerenciarSaldos },
     { id: 'cargos',     label: 'Cargos',     icon: GraduationCap,   bloqueada: !permissoes.gerenciarCargos && adminCargo !== 'proprietario' },
     { id: 'contatos',   label: 'Contatos',   icon: Mail,            bloqueada: !isAdminOuProprietario },
+    { id: 'revisao',    label: 'Revisão',    icon: Swords,          bloqueada: false },
   ];
 
   return (
@@ -1209,6 +1211,7 @@ export default function Admin() {
             {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
             {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
             {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
+            {abaAtiva === 'revisao'    && <RevisaoPartidas />}
           </motion.div>
         </AnimatePresence>
       </div>

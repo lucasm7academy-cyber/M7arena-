@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
-import { users, userSessions } from "../../../db/schema/identidade.js";
+import { users, userSessions, userWallets } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
 import { toLegacyMatch } from "../lib/match-shape.js";
 import {
@@ -12,6 +12,7 @@ import {
   ESTADOS_ATIVOS,
   getAuthUser,
   notifyMatchChange,
+  validarElegibilidade,
 } from "../lib/match-flow.js";
 import { reservarEntrada } from "../lib/escrow.js";
 import { matchesActionsRouter } from "./matches-actions.js";
@@ -43,6 +44,17 @@ async function shapeSala(m: any, ctx: any = db) {
   return toLegacyMatch(m, playersEnriched, criadorNome);
 }
 
+/**
+ * Lista de salas é vitrine pública (design v3 §2.1): visitante vê times, vagas e
+ * valor da aposta, mas a senha da sala só chega a quem está autenticado — o
+ * fork valida a senha no cliente (Jogar.tsx) antes de navegar, então cortar
+ * para logado quebraria o fluxo de entrada de salas com senha.
+ */
+function redigirSenha(legacy: any, autenticado: boolean) {
+  if (!autenticado) delete legacy.senha;
+  return legacy;
+}
+
 // GET /api/matches - Lista salas em shape legado
 matchesRouter.get("/", async (req, res) => {
   try {
@@ -64,7 +76,8 @@ matchesRouter.get("/", async (req, res) => {
     }
 
     const results = await Promise.all(rows.map((m) => shapeSala(m)));
-    return res.json(results);
+    const autenticado = !!(await getAuthUser(req));
+    return res.json(results.map((s) => redigirSenha(s, autenticado)));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar salas" });
   }
@@ -75,7 +88,8 @@ matchesRouter.get("/:id", async (req, res) => {
   try {
     const match = await resolverSala(req.params.id);
     if (!match) return res.status(404).json({ error: "Partida não encontrada" });
-    return res.json(await shapeSala(match));
+    const autenticado = !!(await getAuthUser(req));
+    return res.json(redigirSenha(await shapeSala(match), autenticado));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar sala" });
   }
@@ -83,18 +97,23 @@ matchesRouter.get("/:id", async (req, res) => {
 
 // POST /api/matches - Criar sala
 matchesRouter.post("/", async (req, res) => {
+  const user = await getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+  const { mode, entryMp, apostaMc, taxaPct, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo } = req.body;
+  // apostaMc é o nome novo; entryMp é o alias legado (o fork envia entryMp).
+  const aposta = Number(apostaMc ?? entryMp ?? 0);
+  // Taxa congelada na criação (design v3 §2: nunca muda no meio da sala).
+  const taxa = Number(taxaPct ?? 8.99);
+  const roomCode = `M7-${Math.floor(1000 + Math.random() * 9000)}`;
+
   try {
-    const user = await getAuthUser(req);
-    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const r = await db.transaction(async (tx: any) => {
+      // Criador de sala apostada também passa na elegibilidade (Riot ID,
+      // maioridade, sem punição, 1 sala apostada ativa) — design v3 §2.1.
+      const eleg = await validarElegibilidade(tx, user.id, aposta);
+      if (!eleg.ok) return { ok: false as const, eleg };
 
-    const { mode, entryMp, apostaMc, taxaPct, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo } = req.body;
-    // apostaMc é o nome novo; entryMp é o alias legado (o fork envia entryMp).
-    const aposta = Number(apostaMc ?? entryMp ?? 0);
-    // Taxa congelada na criação (design v3 §2: nunca muda no meio da sala).
-    const taxa = Number(taxaPct ?? 8.99);
-    const roomCode = `M7-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const nova = await db.transaction(async (tx: any) => {
       const [newMatch] = await tx
         .insert(matches)
         .values({
@@ -131,14 +150,19 @@ matchesRouter.post("/", async (req, res) => {
         confirmed: true,
       });
 
-      return newMatch;
+      return { ok: true as const, sala: newMatch };
     });
 
-    notifyMatchChange(nova.id);
-    return res.status(201).json(await shapeSala(nova));
+    if (!r.ok) {
+      return res.status(400).json({ error: r.eleg.erro, ...(r.eleg.faltam !== undefined ? { faltam: r.eleg.faltam } : {}), ...(r.eleg.extra ?? {}) });
+    }
+
+    notifyMatchChange(r.sala.id);
+    return res.status(201).json(await shapeSala(r.sala));
   } catch (error: any) {
     if (error?.code === "SALDO_INSUFICIENTE") {
-      return res.status(400).json({ error: "saldo_insuficiente" });
+      const [w] = await db.select().from(userWallets).where(eq(userWallets.userId, user.id)).limit(1);
+      return res.status(400).json({ error: "saldo_insuficiente", faltam: aposta - (w?.mc ?? 0) });
     }
     return res.status(500).json({ error: error?.message || "Erro ao criar sala" });
   }
@@ -160,6 +184,20 @@ matchesRouter.post("/:id/join", async (req, res) => {
 
       const trans = await avaliarTransicoes(tx, match.id);
       if (match.status !== "preenchendo") return { ok: false, erro: "estado_invalido", estado: trans.estado, mudou: trans.mudou };
+
+      // Elegibilidade re-checada aqui, dentro da transação com FOR UPDATE
+      // (design v3 §2.1 — a fonte da verdade é o servidor).
+      const eleg = await validarElegibilidade(tx, user.id, match.apostaMc ?? 0, match.id);
+      if (!eleg.ok) {
+        return {
+          ok: false,
+          erro: eleg.erro,
+          faltam: eleg.faltam,
+          estado: match.status,
+          mudou: false,
+          ...(eleg.extra ?? {}),
+        };
+      }
 
       const [existing] = await tx
         .select()
@@ -202,6 +240,8 @@ matchesRouter.post("/:id/join", async (req, res) => {
         }
         // Solta vagas em outras salas ainda em preenchimento (mesma regra da
         // RPC legada sala_entrar: só salas em `preenchendo`, nunca as travadas).
+        // SÓ casuais (aposta 0): uma sala apostada tem MC reservado — soltar a
+        // vaga de lá vazaria a reserva (design v3 §2.1, 1 sala apostada ativa).
         const outrasSalas = await tx
           .select({ matchId: matchPlayers.matchId })
           .from(matchPlayers)
@@ -209,7 +249,8 @@ matchesRouter.post("/:id/join", async (req, res) => {
           .where(and(
             eq(matchPlayers.userId, user.id),
             eq(matchPlayers.linked, false),
-            eq(matches.status, "preenchendo")
+            eq(matches.status, "preenchendo"),
+            eq(matches.apostaMc, 0)
           ));
         const idsOutras = outrasSalas
           .map((p: any) => p.matchId)
@@ -221,7 +262,10 @@ matchesRouter.post("/:id/join", async (req, res) => {
         try {
           await reservarEntrada(tx, user.id, match.apostaMc ?? match.entryMp ?? 0, match.id);
         } catch (e: any) {
-          if (e?.code === "SALDO_INSUFICIENTE") return { ok: false, erro: "saldo_insuficiente", estado: match.status, mudou: false };
+          if (e?.code === "SALDO_INSUFICIENTE") {
+            const [w] = await tx.select().from(userWallets).where(eq(userWallets.userId, user.id)).limit(1);
+            return { ok: false, erro: "saldo_insuficiente", faltam: (match.apostaMc ?? 0) - (w?.mc ?? 0), estado: match.status, mudou: false };
+          }
           throw e;
         }
 

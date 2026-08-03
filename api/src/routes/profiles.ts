@@ -9,6 +9,7 @@ import {
   userPayoutInfo,
 } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
+import { contarStrikesAtivos, LIMITES } from "../lib/match-flow.js";
 
 export const profilesRouter = Router();
 
@@ -97,7 +98,7 @@ profilesRouter.get("/me", async (req, res) => {
       return res.status(401).json({ error: "Não autenticado" });
     }
 
-    const [roles, riotAccount, discordIdentity] = await Promise.all([
+    const [roles, riotAccount, discordIdentity, strikes] = await Promise.all([
       getRoles(user.id),
       getRiotAccount(user.id),
       db
@@ -105,6 +106,7 @@ profilesRouter.get("/me", async (req, res) => {
         .from(userIdentities)
         .where(and(eq(userIdentities.userId, user.id), eq(userIdentities.provider, "discord")))
         .limit(1),
+      contarStrikesAtivos(db, user.id),
     ]);
 
     const [payout] = await db.select().from(userPayoutInfo).where(eq(userPayoutInfo.userId, user.id)).limit(1);
@@ -116,6 +118,11 @@ profilesRouter.get("/me", async (req, res) => {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       roles,
+      // Strikes anti no-show (design v3 §2.1) — "você tem 2/3 strikes" no perfil.
+      strikes,
+      strikesMax: LIMITES.STRIKES_PARA_SUSPENSAO,
+      suspensaAte: user.suspensaAte ?? null,
+      termosAceitos: !!user.termosAceitosEm,
       profile: toLegacyProfile(user, payout),
       riotAccount: toLegacyRiot(riotAccount),
       discordAccount: discordIdentity?.length
@@ -284,6 +291,7 @@ profilesRouter.post("/me/riot", async (req, res) => {
         })
         .where(eq(gameAccounts.id, existing.id))
         .returning();
+      await db.update(users).set({ riotId, updatedAt: new Date() }).where(eq(users.id, user.id)); // espelha users.riot_id (design v3 §2.1)
       return res.json(toLegacyRiot(updated));
     }
 
@@ -300,6 +308,7 @@ profilesRouter.post("/me/riot", async (req, res) => {
       })
       .returning();
 
+    await db.update(users).set({ riotId, updatedAt: new Date() }).where(eq(users.id, user.id));
     return res.status(201).json(toLegacyRiot(created));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao vincular conta Riot" });
@@ -357,6 +366,7 @@ profilesRouter.delete("/me/riot", async (req, res) => {
     await db
       .delete(gameAccounts)
       .where(and(eq(gameAccounts.userId, user.id), eq(gameAccounts.gameId, "lol")));
+    await db.update(users).set({ riotId: null, updatedAt: new Date() }).where(eq(users.id, user.id)); // limpa espelho
     return res.json({ ok: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao desvincular conta Riot" });

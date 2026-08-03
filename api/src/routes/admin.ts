@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { eq, and, gt, inArray } from "drizzle-orm";
+import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
+import { userStrikes } from "../../../db/schema/apostas.js";
+import { removerStrike } from "../lib/match-flow.js";
 
 export const adminRouter = Router();
 
@@ -99,5 +101,53 @@ adminRouter.put("/cargos/:userId", async (req, res) => {
     return res.json({ ok: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao atualizar cargo" });
+  }
+});
+
+// ── GET /api/admin/strikes/:userId — lista strikes de um usuário (admin) ────
+// Design v3 §2.1: admin pode ver o histórico de punições para decidir se perdoa.
+adminRouter.get("/strikes/:userId", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode ver strikes" });
+    }
+
+    const rows = await db
+      .select()
+      .from(userStrikes)
+      .where(eq(userStrikes.userId, req.params.userId))
+      .orderBy(desc(userStrikes.createdAt));
+    return res.json(rows);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao listar strikes" });
+  }
+});
+
+// ── DELETE /api/admin/strikes/:id — remove um strike (admin, auditado) ─────
+// Seta removido_por/removido_em (o strike deixa de contar). Idempotente:
+// já removido → ok sem duplicar auditoria.
+adminRouter.delete("/strikes/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode remover strike" });
+    }
+
+    const [strike] = await db.select().from(userStrikes).where(eq(userStrikes.id, req.params.id)).limit(1);
+    if (!strike) return res.status(404).json({ error: "Strike não encontrado" });
+
+    // Seta removido_por/removido_em e, se a contagem cair abaixo do teto,
+    // reativa a suspensão que os strikes causaram.
+    const total = await removerStrike(db, strike.id, user.id);
+    return res.json({ ok: true, strikes: total });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao remover strike" });
   }
 });

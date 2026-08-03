@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-03T02:51:54.379Z",
+  "updatedAt": "2026-08-03T03:51:51.499Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1081,6 +1081,30 @@
       "owner": "deepseek",
       "createdAt": "2026-08-03T01:54:44.429Z",
       "updatedAt": "2026-08-03T02:17:11.281Z"
+    },
+    {
+      "id": "app.apostas.elegibilidade",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P2: Elegibilidade e strikes (saldo, Riot ID, 1 sala ativa, punições)",
+      "status": "done",
+      "notes": "validarElegibilidade 6 checagens + admin bypass; join/criar na transação; termos/accept; admin strikes auditado; profiles/me strikes+suspensa_ate; cron abandono+reativação. ADRs 022-024.",
+      "evidence": "npx tsc --noEmit -p api/tsconfig.json → exit 0. npx tsx --test (cron/escrow/estados/revisao/elegibilidade) → 31/31 pass. Smoke HTTP: riot_id_obrigatorio, saldo_insuficiente faltam=50, ja_em_sala_apostada, terms/accept, senha redigida anônimo, admin strikes, profiles/me 0/3.",
+      "owner": "deepseek",
+      "createdAt": "2026-08-03T03:26:04.653Z",
+      "updatedAt": "2026-08-03T03:51:51.499Z"
+    },
+    {
+      "id": "app.apostas.prints",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P3: Prints, disputas e painel de revisão do admin",
+      "status": "done",
+      "notes": "Design v3 §6: upload de print (bucket match-prints privado, magic bytes, máx 3, rate limit), leitura autenticada, contestação (1 por jogador), painel admin \"Revisão de Partidas\" (fila por antiguidade, prints lado a lado, disputas destacadas, botões idempotentes), notificação Discord.",
+      "evidence": "tsc api exit 0; tsx --test 45/45 (prints 9, disputas 5, revisao 3, escrow/estados/cron/elegibilidade ok). Upload match-prints: magic bytes, 5 uploads/min, max 3, participante confirmado, transicao entrarEmRevisao. GET /prints/:id/arquivo autenticado",
+      "owner": "deepseek",
+      "createdAt": "2026-08-03T03:26:13.246Z",
+      "updatedAt": "2026-08-03T03:44:32.785Z"
     }
   ],
   "decisions": [
@@ -1272,6 +1296,33 @@
       "decision": "O snapshot 0008 (gerado por versão nova do drizzle-kit) tinha formato divergente em 3 frentes: identity como string ('byDefault' em vez de objeto), defaults como string ('\"false\"' em vez de false) e unique como index (em vez de uniqueConstraints). Em vez de corrigir campo a campo, reconstruí o snapshot 0008 a partir do 0009 que a v0.30.6 serializou, revertendo apenas as mudanças do P1 (colunas/tabelas novas). Resultado: a migration 0009 gerada contém só o P1, e a cadeia 0000-0009 aplica num Postgres limpo.",
       "rationale": "Ajustar só o identity (como o plano sugeria) deixaria diffs espúrios de default/unique (SET DEFAULT, DROP INDEX) na migration 0009 — mudanças não-P1 em tournament_* e bracket_*. Reconstruir a partir da serialização da própria 0.30.6 garante que o diff da 0009 seja exatamente o delta do schema.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-022",
+      "date": "2026-08-03T03:51:12.927Z",
+      "author": "deepseek",
+      "title": "P2: senha de sala redigida para visitante, mantida para logado",
+      "decision": "GET /api/matches (lista e detalhe) remove a chave `senha` para requisições anônimas; usuário autenticado continua recebendo porque o fork valida a senha no cliente (Jogar.tsx:573 `senha !== sala.senha`) — cortar para logado quebraria a entrada em salas com senha.",
+      "rationale": "O task pedia não expor `senha` na listagem pública, mas o fork depende de `sala.senha` para o gate de senha (invariante 1:1 da ADR-010). Redigir só para anônimo mantém a vitrine limpa sem quebrar o fluxo. A validação de senha no servidor (a correção definitiva) fica para o swap do front.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-023",
+      "date": "2026-08-03T03:51:19.023Z",
+      "author": "deepseek",
+      "title": "P2: users.riot_id é a fonte da verdade da elegibilidade",
+      "decision": "`validarElegibilidade` lê `users.riot_id` (coluna do P1). POST/DELETE `/api/profiles/me/riot` passam a espelhar `users.riotId` ao vincular/desvincular a conta Riot — `game_accounts.handle` continua sendo o shape legado do front, mas o vínculo também grava no users.",
+      "rationale": "Sem o espelho, o fluxo real de vínculo (que grava só em game_accounts) nunca populava users.riot_id e toda sala apostada bloqueava com riot_id_obrigatorio. O design v3 §2.1 define users.riot_id como campo único (anti multi-conta), então é ele que a elegibilidade lê.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-024",
+      "date": "2026-08-03T03:51:25.176Z",
+      "author": "deepseek",
+      "title": "P2: strike de abandono detectado pelo escrow (ledger)",
+      "decision": "O cron detecta abandono comparando o escrow: jogador com `match_entry_reserve` na sala apostada ativa (partida_iniciada/aguardando_revisao, sem decisão), SEM `match_entry_refund`, e ausente do `match_players` → strike `abandono` (idempotente por partida).",
+      "rationale": "Não existe rota que remova um jogador vinculado hoje (leave/recusar bloqueiam linked), então o estado \"saiu após iniciar\" só é detectável pelo dinheiro: quem pagou a reserva e não está mais na sala nem foi reembolsado abandonou. O ledger é o rastro confiável desse fato.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1313,25 +1364,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-02T16:42:48.027Z",
-      "agent": "deepseek",
-      "summary": "Deploy do swap campeonatos na VPS via SSH (nao local). Push a2867ad, git pull em /root/m7arena, migration 0004_shiny_sumo.sql aplicada no Postgres da VPS (24 ALTER TABLE, colunas verificadas), rebuild app+nginx. Smoke test ao vivo em dev.m7arena.pro: health ok, register 201, login 200, CRUD campeonato completo (create 201, list com registeredTeamsCount, detail com bracket_data, PUT parcial bracket_data, PUT status, filtros status/ids, delete 200, 401 sem auth) — 18/18 checks. Cadeia publica Nginx->API->Postgres validada. Test user deletado. Fluxos de votacao/arbitragem ainda dependem de app.swap.rpc (nao migrado).",
-      "touched": [
-        "infra.compose",
-        "api/src/routes/tournaments.ts",
-        "db/migrations/0004_shiny_sumo.sql"
-      ]
-    },
-    {
-      "at": "2026-08-02T16:56:07.407Z",
-      "agent": "deepseek",
-      "summary": "Bug: login Google devolvia 503 'Login com Google não está configurado no servidor'. Causa raiz: docker compose -f infra/docker-compose.yml usa infra/ como project-directory e não lê /root/m7arena/.env — GOOGLE_CLIENT_ID/SECRET/REDIRECT e APP_URL chegavam vazios no container (defaults do compose). Corrigido recriando o container com --env-file /root/m7arena/.env. Validado: container com as 4 envs corretas, GET /api/auth/google responde 302 para accounts.google.com com client_id 1778749... e redirect_uri https://dev.m7arena.pro/api/auth/google/callback. ADR-015 registrada. Ainda falta conferir se a redirect URI está autorizada no Google Cloud Console (se não, o Google mostra redirect_uri_mismatch ao concluir o consentimento).",
-      "touched": [
-        "infra.compose",
-        "api/src/routes/auth-google.ts"
-      ]
-    },
     {
       "at": "2026-08-02T17:58:29.986Z",
       "agent": "deepseek",
@@ -1709,6 +1741,41 @@
         "api/test/revisao.test.ts",
         "api/test/cron.test.ts",
         "scripts/smoke-apostas.mjs"
+      ]
+    },
+    {
+      "at": "2026-08-03T03:44:40.534Z",
+      "agent": "deepseek",
+      "summary": "P3 (prints/disputas/painel de revisao) implementado e verificado. NOVOS: routes/prints.ts (GET /api/prints/:matchId + GET /api/prints/:id/arquivo com sendFile autenticado por participante/admin), routes/disputas.ts (POST/GET com 1 por jogador via UNIQUE), lib/acesso-sala.ts (role/participante), lib/discord.ts (webhook no upload), tests prints.test.ts (9) e disputas.test.ts (5). ESTENDIDOS: upload.ts (bucket match-prints + magic bytes png/jpeg/webp + rate limit 5/min + salvarPrintMatch + entrarEmRevisao), revisao.ts (pendentes agora embute jogadores+prints+disputas), index.ts (mount), api.ts (SDK prints/disputas/revisao), Admin.tsx + components/admin/RevisaoPartidas.tsx (aba Revisao: fila, prints lado a lado, disputas destacadas, botoes idempotentes com decisionId). Evidencia: tsc api exit 0, web tsc so os 2 erros pre-existentes, tsx --test 45/45. NOTA: cron.ts (partida fantasma) transiciona para aguardando_revisao sem webhook Discord (fora da minha fronteira). P2 estava editando match-flow.ts/matches.ts ao vivo; ao final estavam compilando.",
+      "touched": [
+        "api/src/routes/upload.ts",
+        "api/src/routes/prints.ts",
+        "api/src/routes/disputas.ts",
+        "api/src/routes/revisao.ts",
+        "api/src/index.ts",
+        "api/src/lib/acesso-sala.ts",
+        "api/src/lib/discord.ts",
+        "api/test/prints.test.ts",
+        "api/test/disputas.test.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/Admin.tsx",
+        "web/src/components/admin/RevisaoPartidas.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-03T03:51:39.514Z",
+      "agent": "deepseek",
+      "summary": "P2 (elegibilidade e strikes) pronto. Novo api/src/lib/elegibilidade.ts (validarElegibilidade 6 checagens, contarStrikesAtivos, aplicarSuspensaoSeNecessario, removerStrike) + api/test/elegibilidade.test.ts (11 testes). Rotas: join/criar validam na transação FOR UPDATE com faltam/sala_num/liberado_em; GET /api/matches público redige 'senha' p/ anônimo (ADR-022); POST /api/terms/accept; admin GET/DELETE /api/admin/strikes (auditado); profiles/me com strikes+suspensaAte e bind Riot espelha users.riot_id (ADR-023); cron: abandono via ledger (ADR-024), suspensão no 3º strike, reativação expirados. tsc 0; testes 31/31; smoke HTTP ok. Não commitei (P3 paralelo). Pendente: senha no servidor (swap front).",
+      "touched": [
+        "api/src/lib/elegibilidade.ts",
+        "api/src/lib/match-flow.ts",
+        "api/src/routes/matches.ts",
+        "api/src/cron.ts",
+        "api/src/routes/admin.ts",
+        "api/src/routes/auth.ts",
+        "api/src/routes/profiles.ts",
+        "api/src/index.ts",
+        "api/test/elegibilidade.test.ts"
       ]
     }
   ]

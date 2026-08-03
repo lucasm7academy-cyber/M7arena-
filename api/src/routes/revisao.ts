@@ -2,9 +2,12 @@ import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../db.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
-import { userRoles } from "../../../db/schema/identidade.js";
+import { users } from "../../../db/schema/identidade.js";
 import { pagarPremio, pagarEmpate, pagarCancelamento } from "../lib/escrow.js";
 import { getAuthUser, notifyMatchChange } from "../lib/match-flow.js";
+import { getRoles, eRevisor } from "../lib/acesso-sala.js";
+import { listarPrints } from "./prints.js";
+import { listarDisputas } from "./disputas.js";
 
 export const revisaoRouter = Router();
 
@@ -15,23 +18,34 @@ export const revisaoRouter = Router();
  * transação — dois cliques simultâneos só pagam uma vez (§4.3).
  */
 
-async function getRoles(userId: string): Promise<string[]> {
-  const rows = await db.select().from(userRoles).where(eq(userRoles.userId, userId));
-  return rows.map((r) => r.role);
-}
-
 /** Só admin ou moderador revisa (design v3 §6: revisor por role, não por usuário fixo). */
 async function exigeRevisor(req: any, res: any) {
   const user = await getAuthUser(req);
   if (!user) return { user: null, erro: res.status(401).json({ erro: "nao_autenticado" }) };
-  const roles = await getRoles(user.id);
-  if (!roles.includes("admin") && !roles.includes("moderador")) {
+  const roles = await getRoles(db, user.id);
+  if (!eRevisor(roles)) {
     return { user: null, erro: res.status(403).json({ erro: "sem_permissao" }) };
   }
   return { user };
 }
 
-// GET /api/revisao/pendentes — fila por antiguidade
+/** Jogadores da sala (para o painel do revisor: quem está do lado azul/vermelho). */
+async function listarJogadores(db: any, matchId: string) {
+  return db
+    .select({
+      userId: matchPlayers.userId,
+      nome: users.displayName,
+      side: matchPlayers.side,
+      confirmed: matchPlayers.confirmed,
+    })
+    .from(matchPlayers)
+    .innerJoin(users, eq(users.id, matchPlayers.userId))
+    .where(eq(matchPlayers.matchId, matchId))
+    .orderBy(matchPlayers.side, matchPlayers.slot);
+}
+
+// GET /api/revisao/pendentes — fila por antiguidade, com jogadores, prints e
+// disputas embutidos para o painel não precisar de N+1 requisições.
 revisaoRouter.get("/pendentes", async (req, res) => {
   try {
     const r = await exigeRevisor(req, res);
@@ -41,7 +55,15 @@ revisaoRouter.get("/pendentes", async (req, res) => {
       .from(matches)
       .where(eq(matches.status, "aguardando_revisao"))
       .orderBy(matches.revisaoDesde);
-    return res.json(rows);
+    const detalhadas = await Promise.all(
+      rows.map(async (s) => ({
+        ...s,
+        jogadores: await listarJogadores(db, s.id),
+        prints: await listarPrints(db, s.id),
+        disputas: await listarDisputas(db, s.id),
+      }))
+    );
+    return res.json(detalhadas);
   } catch (e: any) {
     return res.status(500).json({ erro: e?.message || "erro_interno" });
   }
