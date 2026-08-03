@@ -30,11 +30,12 @@ export async function reservarEntrada(tx: any, userId: string, aposta: number, m
   await gravarLancamento(tx, userId, -aposta, "match_entry_reserve", matchId, novoMc);
 }
 
-/** Devolve a reserva: move mc_reservado -> mc. */
+/** Devolve a reserva: move mc_reservado -> mc. No-op se não há reserva (idempotente). */
 export async function devolverEntrada(tx: any, userId: string, aposta: number, matchId: string) {
   if (!aposta || aposta <= 0) return;
   const [w] = await tx.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1).for("update");
   const reservadoAtual = w?.mcReservado ?? 0;
+  if (reservadoAtual < aposta) return; // nada reservado desta aposta — não criar MC do nada
   const novoMc = (w?.mc ?? 0) + aposta;
   const novoReservado = Math.max(0, reservadoAtual - aposta);
   await tx.update(userWallets).set({ mc: novoMc, mcReservado: novoReservado, updatedAt: new Date() }).where(eq(userWallets.userId, userId));

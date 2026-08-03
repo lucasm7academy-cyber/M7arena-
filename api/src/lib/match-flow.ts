@@ -18,12 +18,11 @@
 
 import { eq, and, gt } from "drizzle-orm";
 import { db, pool } from "../db.js";
-import { users, userSessions, userWallets } from "../../../db/schema/identidade.js";
+import { users, userSessions } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
-import { walletTransactions, platformRevenue } from "../../../db/schema/economia.js";
 import { roleSlotToSlot } from "./match-shape.js";
+import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./escrow.js";
 
-export const TAXA_MC_POR_PARTIDA = 30;
 const TEMPO_CONFIRMACAO_MS = 60_000;
 const TEMPO_INICIO_MS = 30_000;
 
@@ -62,6 +61,7 @@ export const ESTADOS_ATIVOS = [
   "iniciando_partida",
   "partida_iniciada",
   "finalizacao",
+  "aguardando_revisao",
 ];
 
 function resultado(ok: boolean, erro: string | null, estado: string | null, mudou = false) {
@@ -88,111 +88,22 @@ async function totalConfirmados(tx: any, matchId: string): Promise<number> {
 
 // ── ECONOMIA ────────────────────────────────────────────────────────────────
 
-async function obterSaldoMc(tx: any, userId: string): Promise<number> {
-  const [w] = await tx.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1);
-  return w?.mc ?? 0;
-}
-
-async function gravarLancamento(
-  tx: any,
-  userId: string,
-  amount: number,
-  kind: string,
-  matchId: string,
-  balanceAfter: number
-) {
-  await tx.insert(walletTransactions).values({
-    userId,
-    currency: "mc",
-    amount,
-    kind,
-    refType: "match",
-    refId: matchId,
-    balanceAfter,
-  });
-}
-
-/** Debita `entryMp` do wallet do usuário. Lança se saldo insuficiente. */
+/**
+ * Alias de transição: `debitarEntrada` agora reserva (escrow). As rotas novas
+ * usam `reservarEntrada` diretamente; este nome fica para não quebrar chamadas
+ * existentes enquanto a troca acontece. O ledger passa a gravar
+ * `match_entry_reserve` (não mais `match_entry`).
+ */
 export async function debitarEntrada(tx: any, userId: string, entryMp: number, matchId: string) {
-  if (!entryMp || entryMp <= 0) return;
-  const saldo = await obterSaldoMc(tx, userId);
-  if (saldo < entryMp) {
-    const err: any = new Error("saldo_insuficiente");
-    err.code = "SALDO_INSUFICIENTE";
-    throw err;
-  }
-  const balanceAfter = saldo - entryMp;
-  await tx
-    .update(userWallets)
-    .set({ mc: balanceAfter, updatedAt: new Date() })
-    .where(eq(userWallets.userId, userId));
-  await gravarLancamento(tx, userId, -entryMp, "match_entry", matchId, balanceAfter);
-}
-
-/** Devolve o stake quando a partida não acontece (sair/cancelar antes de vincular). */
-export async function reembolsarEntrada(tx: any, userId: string, entryMp: number, matchId: string) {
-  if (!entryMp || entryMp <= 0) return;
-  const saldo = await obterSaldoMc(tx, userId);
-  const balanceAfter = saldo + entryMp;
-  await tx
-    .update(userWallets)
-    .set({ mc: balanceAfter, updatedAt: new Date() })
-    .where(eq(userWallets.userId, userId));
-  await gravarLancamento(tx, userId, entryMp, "match_entry_refund", matchId, balanceAfter);
+  await reservarEntradaEscrow(tx, userId, entryMp, matchId);
 }
 
 /**
- * Reembolsa o stake se o jogador pagou a entrada (`match_entry`) e ainda não
- * foi reembolsado. Idempotente — usado em sair/recusar/cancelar antes do
- * vínculo da partida.
+ * Reembolsa o stake quando a partida não acontece (sair/cancelar antes do
+ * vínculo). Idempotente via `devolverEntrada` (no-op se nada está reservado).
  */
 export async function reembolsarSeNecessario(tx: any, userId: string, entryMp: number, matchId: string) {
-  if (!entryMp || entryMp <= 0) return;
-  const txs = await tx
-    .select({ kind: walletTransactions.kind })
-    .from(walletTransactions)
-    .where(and(eq(walletTransactions.userId, userId), eq(walletTransactions.refId, matchId)));
-  const debitou = txs.some((t: any) => t.kind === "match_entry");
-  const jaReembolsou = txs.some((t: any) => t.kind === "match_entry_refund");
-  if (debitou && !jaReembolsou) {
-    await reembolsarEntrada(tx, userId, entryMp, matchId);
-  }
-}
-
-/**
- * Payout no reportResult. `players` são as linhas de match_players da sala;
- * `winnerSide` em 'blue' | 'red' | 'draw'. O pool é `entryMp * total`; a
- * plataforma retém TAXA_MC_POR_PARTIDA; os vencedores dividem o líquido.
- * Grava wallet_transactions (kind match_prize) e platform_revenue.
- */
-export async function pagarPremio(
-  tx: any,
-  matchId: string,
-  winnerSide: "blue" | "red" | "draw",
-  entryMp: number,
-  players: any[]
-) {
-  const total = players.length;
-  if (entryMp > 0 && total > 0 && (winnerSide === "blue" || winnerSide === "red")) {
-    const pool = entryMp * total;
-    const liquido = pool - TAXA_MC_POR_PARTIDA;
-    const vencedores = players.filter((p) => p.side === winnerSide);
-    if (vencedores.length > 0 && liquido > 0) {
-      const premioPorVencedor = Math.floor(liquido / vencedores.length);
-      for (const v of vencedores) {
-        const saldo = await obterSaldoMc(tx, v.userId);
-        const balanceAfter = saldo + premioPorVencedor;
-        await tx
-          .update(userWallets)
-          .set({ mc: balanceAfter, updatedAt: new Date() })
-          .where(eq(userWallets.userId, v.userId));
-        await gravarLancamento(tx, v.userId, premioPorVencedor, "match_prize", matchId, balanceAfter);
-      }
-    }
-  }
-  if (entryMp > 0 && total > 0) {
-    await tx.insert(platformRevenue).values({ matchId, mcFee: TAXA_MC_POR_PARTIDA });
-  }
+  await devolverEntrada(tx, userId, entryMp, matchId);
 }
 
 // ── POOL DE CÓDIGOS DE PARTIDA ──────────────────────────────────────────────
@@ -347,6 +258,24 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
 
   const [m] = await tx.select().from(matches).where(eq(matches.id, matchId)).limit(1);
   return { estado: m?.status ?? null, mudou };
+}
+
+/**
+ * Entra em `aguardando_revisao` (design v3 §6). PRÉ-CONDIÇÃO: quem chama já
+ * travou a linha em `matches` com FOR UPDATE. Só salas apostadas (aposta > 0)
+ * passam por revisão — casuais seguem o fluxo normal. Zera o deadline: a
+ * revisão não tem timeout técnico, o SLA é humano (admin decide).
+ */
+export async function entrarEmRevisao(tx: any, matchId: string) {
+  const [m] = await tx.select().from(matches).where(eq(matches.id, matchId)).limit(1).for("update");
+  if (!m) return { ok: false, erro: "sala_nao_encontrada" };
+  if (!m.apostaMc || m.apostaMc <= 0) return { ok: false, erro: "sala_casual" };
+  if (m.status !== "partida_iniciada") return { ok: false, erro: "estado_invalido", estado: m.status };
+  await tx
+    .update(matches)
+    .set({ status: "aguardando_revisao", revisaoDesde: new Date(), stateDeadlineAt: null })
+    .where(eq(matches.id, matchId));
+  return { ok: true, estado: "aguardando_revisao" };
 }
 
 /** Retorna a sala (linha de `matches`) por sala_num, ou null. */

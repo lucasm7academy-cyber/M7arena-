@@ -5,8 +5,8 @@ import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js
 import { winnerLegacyToSide } from "../lib/match-shape.js";
 import {
   avaliarTransicoes,
-  pagarPremio,
   reembolsarSeNecessario,
+  entrarEmRevisao,
   getAuthUser,
   notifyMatchChange,
 } from "../lib/match-flow.js";
@@ -41,7 +41,7 @@ matchesActionsRouter.post("/:id/leave", async (req, res) => {
       if (!jogador) return { ok: false, erro: "nao_esta_na_sala", estado: match.status, mudou: false };
       if (jogador.confirmed || jogador.linked) return { ok: false, erro: "nao_pode_sair", estado: match.status, mudou: false };
 
-      await reembolsarSeNecessario(tx, user.id, match.entryMp, match.id);
+      await reembolsarSeNecessario(tx, user.id, match.apostaMc ?? match.entryMp ?? 0, match.id);
       await tx.delete(matchPlayers).where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id)));
 
       const trans2 = await avaliarTransicoes(tx, match.id);
@@ -110,7 +110,7 @@ matchesActionsRouter.post("/:id/recusar", async (req, res) => {
       if (!jogador) return { ok: false, erro: "nao_esta_na_sala", estado: match.status, mudou: false };
       if (jogador.linked) return { ok: false, erro: "nao_pode_sair", estado: match.status, mudou: false };
 
-      await reembolsarSeNecessario(tx, user.id, match.entryMp, match.id);
+      await reembolsarSeNecessario(tx, user.id, match.apostaMc ?? match.entryMp ?? 0, match.id);
       await tx.delete(matchPlayers).where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id)));
 
       await tx.update(matchPlayers).set({ confirmed: false }).where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.confirmed, true)));
@@ -185,10 +185,18 @@ matchesActionsRouter.post("/:id/report-result", async (req, res) => {
         return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
       }
 
-      const players = await tx.select().from(matchPlayers).where(eq(matchPlayers.matchId, match.id));
+      // Salas apostadas (aposta > 0): não pagam direto — vão para revisão do
+      // admin (design v3 §6). O print do vencedor é enviado pelo app e o admin
+      // decide aprovar/empatar/cancelar na rota /api/revisao.
+      if ((match.apostaMc ?? 0) > 0) {
+        const rv = await entrarEmRevisao(tx, match.id);
+        if (!rv.ok) return { ok: false, erro: rv.erro, estado: match.status, mudou: false };
+        await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, match.id));
+        await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, match.id));
+        return { ok: true, erro: null, estado: "aguardando_revisao", mudou: true };
+      }
 
-      await pagarPremio(tx, match.id, side, match.entryMp, players);
-
+      // Salas casuais (aposta 0): encerram no fluxo normal (resultado simples).
       await tx.update(matches).set({
         status: "encerrada",
         winnerSide: side,

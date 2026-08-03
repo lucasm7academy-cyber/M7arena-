@@ -8,12 +8,12 @@ import {
   avaliarTransicoes,
   buscarSalaPorNumero,
   buscarSalaPorId,
-  debitarEntrada,
   normalizarVaga,
   ESTADOS_ATIVOS,
   getAuthUser,
   notifyMatchChange,
 } from "../lib/match-flow.js";
+import { reservarEntrada } from "../lib/escrow.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -87,7 +87,11 @@ matchesRouter.post("/", async (req, res) => {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ error: "Não autenticado" });
 
-    const { mode, entryMp, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo } = req.body;
+    const { mode, entryMp, apostaMc, taxaPct, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo } = req.body;
+    // apostaMc é o nome novo; entryMp é o alias legado (o fork envia entryMp).
+    const aposta = Number(apostaMc ?? entryMp ?? 0);
+    // Taxa congelada na criação (design v3 §2: nunca muda no meio da sala).
+    const taxa = Number(taxaPct ?? 8.99);
     const roomCode = `M7-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const nova = await db.transaction(async (tx: any) => {
@@ -99,7 +103,9 @@ matchesRouter.post("/", async (req, res) => {
           status: "preenchendo",
           createdBy: user.id,
           roomCode,
-          entryMp: entryMp || 0,
+          entryMp: aposta,
+          apostaMc: aposta,
+          taxaPct: taxa,
           nome: nome || `Sala ${mode || "5v5"} de ${user.displayName || user.email?.split("@")[0]}`,
           descricao: descricao || "",
           maxJogadores: maxJogadores || 10,
@@ -112,8 +118,8 @@ matchesRouter.post("/", async (req, res) => {
         })
         .returning();
 
-      // Débito do entryMp do criador na criação (regra de negócio no servidor).
-      await debitarEntrada(tx, user.id, newMatch.entryMp, newMatch.id);
+      // Reserva (escrow) do aposta do criador na criação (regra de negócio no servidor).
+      await reservarEntrada(tx, user.id, aposta, newMatch.id);
 
       // Criador entra como primeiro jogador (blue slot 0 / TOP).
       await tx.insert(matchPlayers).values({
@@ -213,7 +219,7 @@ matchesRouter.post("/:id/join", async (req, res) => {
         }
 
         try {
-          await debitarEntrada(tx, user.id, match.entryMp, match.id);
+          await reservarEntrada(tx, user.id, match.apostaMc ?? match.entryMp ?? 0, match.id);
         } catch (e: any) {
           if (e?.code === "SALDO_INSUFICIENTE") return { ok: false, erro: "saldo_insuficiente", estado: match.status, mudou: false };
           throw e;
