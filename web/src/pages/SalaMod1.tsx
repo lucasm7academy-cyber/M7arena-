@@ -146,6 +146,7 @@ export default function SalaMod1() {
 
     // ── Salas apostadas (design v3 §11): aviso antecipado, print e regras ──
     const ehApostada = (sala.mpoints || 0) > 0;
+    const encerrada = sala.estado === 'encerrada';
     const temRiotId = !!perfil?.riotId;
     const matchId = (sala.match_id as string) || '';
     const jogadorConfirmado = !!jogadorAtual?.confirmado;
@@ -218,7 +219,7 @@ export default function SalaMod1() {
         <div className="flex-1 w-full h-full bg-[#050505] flex flex-col items-center justify-between p-0 font-sans relative overflow-hidden text-white">
 
             {/* Background Layer */}
-            <div className="absolute inset-0 z-0">
+            <div className={`absolute inset-0 z-0 ${encerrada ? 'grayscale' : ''}`}>
                 <div className="absolute inset-0 bg-[#050505]" />
 
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
@@ -242,7 +243,7 @@ export default function SalaMod1() {
                 className="w-full h-[10vh] bg-[#050505] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50 relative flex items-center px-[4vmin] justify-between overflow-hidden shrink-0"
             >
                 {/* Background Ryze Banner */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className={`absolute inset-0 z-0 pointer-events-none ${encerrada ? 'grayscale' : ''}`}>
                     <img 
                         src="/images/fundoryzecortado.png" 
                         alt="Ryze Background" 
@@ -321,7 +322,7 @@ export default function SalaMod1() {
                     <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
                     
                     {/* Main Hub Body */}
-                    <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
+                    <div className={`relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden ${encerrada ? 'grayscale' : ''}`}>
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
                         <ArcaneIndicators />
                         <CentralDisplay />
@@ -343,7 +344,7 @@ export default function SalaMod1() {
                 {/* SIDE GRID SECTION */}
                 <div className={`w-full flex items-center justify-center z-20 ${isX1 ? 'gap-[74vmin]' : 'gap-[70vmin]'}`}>
                     {/* BLUE SIDE */}
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">
+                    <div className={`flex flex-col gap-[1.5vmin] items-center w-[44vmin] ${encerrada ? 'grayscale' : ''}`}>
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -374,6 +375,7 @@ export default function SalaMod1() {
                                         aoSair={isAtual ? sair : undefined}
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
+                                        finalizada={sala.estado === 'encerrada'}
                                     />
                                 );
                             })}
@@ -381,7 +383,7 @@ export default function SalaMod1() {
                     </div>
 
                     {/* RED SIDE */}
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">
+                    <div className={`flex flex-col gap-[1.5vmin] items-center w-[44vmin] ${encerrada ? 'grayscale' : ''}`}>
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -412,6 +414,7 @@ export default function SalaMod1() {
                                         aoSair={isAtual ? sair : undefined}
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
+                                        finalizada={sala.estado === 'encerrada'}
                                     />
                                 );
                             })}

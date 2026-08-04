@@ -3,10 +3,10 @@
 // sala visível ao fundo e mostra no centro quem venceu (Time A/B ou Empate),
 // os jogadores vencedores e os prints de prova anexados (mesmo padrão de
 // miniatura + lightbox do AguardandoRevisao). Quem venceu vem do servidor
-// (`sala.vencedor`) — aqui só apresentamos o resultado.
+// (`sala.vencedor`) — aqui só apresentamos o resultado, em preto e branco.
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, X, ImageIcon, Loader, Crown, Users, Swords } from 'lucide-react';
+import { Trophy, X, ImageIcon, Loader, Crown, Users, Scale } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface ResultadoPartidaProps {
@@ -29,8 +29,8 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
       ? jogadores.filter((j: any) => (vencedor === 'A' ? j.is_time_a : !j.is_time_a))
       : [];
 
-  const corVencedor = vencedor === 'A' ? '#3b82f6' : vencedor === 'B' ? '#ef4444' : '#fbbf24';
   const nomeVencedor = vencedor === 'A' ? timeANome : vencedor === 'B' ? timeBNome : 'Empate';
+  const ladoVencedor = vencedor === 'A' ? 'Time A' : vencedor === 'B' ? 'Time B' : null;
 
   const carregarPrints = useCallback(async () => {
     if (!matchId) return;
@@ -56,20 +56,19 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
       className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[65] w-[min(90vw,520px)]"
     >
       <div
-        className="rounded-2xl overflow-hidden border shadow-[0_0_60px_rgba(255,183,0,0.15)]"
-        style={{ background: 'rgba(10,10,10,0.92)', backdropFilter: 'blur(16px)', borderColor: `${corVencedor}50` }}
+        className="rounded-2xl overflow-hidden border shadow-[0_0_60px_rgba(255,255,255,0.08)]"
+        style={{ background: 'rgba(10,10,10,0.94)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.2)' }}
       >
         {/* Cabeçalho */}
         <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}50` }}>
-              <Trophy className="w-4 h-4" style={{ color: corVencedor }} />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/25">
+              <Trophy className="w-4 h-4 text-white" />
             </div>
             <div>
               <p className="text-white font-black text-sm uppercase tracking-widest">Partida Finalizada</p>
-              <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: corVencedor }}>
-                {vencedor === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
+              <p className="text-[11px] font-black uppercase tracking-wider text-white/60">
+                {vencedor === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu${ladoVencedor ? ` — ${ladoVencedor}` : ''}`}
               </p>
             </div>
           </div>
@@ -82,21 +81,26 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
           {/* Vencedores em destaque */}
           <div>
             <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-              <Crown className="w-3.5 h-3.5" style={{ color: corVencedor }} />
+              <Crown className="w-3.5 h-3.5 text-white" />
               Vencedores
             </p>
             {vencedores.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {vencedores.map((j: any) => (
                   <span key={j.user_id || j.id}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-black"
-                    style={{ background: `${corVencedor}15`, borderColor: `${corVencedor}40`, color: '#fff' }}>
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-white/5 text-white text-xs font-black"
+                    style={{ borderColor: 'rgba(255,255,255,0.25)' }}>
                     {j.nome}
-                    <span className="text-[9px] font-black uppercase opacity-60" style={{ color: corVencedor }}>
+                    <span className="text-[9px] font-black uppercase opacity-50">
                       {j.is_time_a ? 'Azul' : 'Vermelho'}
                     </span>
                   </span>
                 ))}
+              </div>
+            ) : vencedor === 'empate' ? (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.02] text-white/60 text-xs font-bold">
+                <Scale className="w-4 h-4" />
+                Partida empatada — nenhum lado venceu.
               </div>
             ) : (
               <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/5 bg-white/[0.02] text-white/30 text-xs">
@@ -128,7 +132,7 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
                     className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group text-left cursor-pointer"
                     title={`Print de ${p.nomeJogador} — clique para ampliar`}>
                     <img src={api.prints.file(p.id)} alt={`Print de ${p.nomeJogador}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-300" loading="lazy" />
                     <span className="absolute bottom-0 inset-x-0 bg-black/70 text-white/70 text-[8px] font-black uppercase tracking-widest px-1 py-0.5 truncate">
                       {p.nomeJogador}
                     </span>
