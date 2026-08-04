@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 04/08/2026 03:03 — por `morpheus`
+**Última atualização:** 04/08/2026 03:17 — por `morpheus`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 61/72` concluído
+`████████████████████████░░░░ 62/72` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 12/12 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 31/36 | — | 2 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 32/36 | — | 2 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ██░░░░░░░░░░ 1/7 | 1 | 1 |
 
@@ -45,7 +45,7 @@
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ░░░░░░░░░░░░ 0/6 | 1 | 1 |
-| Segurança | ███████░░░░░ 4/7 | — | — |
+| Segurança | █████████░░░ 5/7 | — | — |
 
 </details>
 
@@ -54,7 +54,6 @@
 Componentes com todas as dependências satisfeitas. Marque como `doing` antes de começar.
 
 - `sec.upload` **Upload restrito por dono** — Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
-- `sec.salas-auditoria` **Auditoria Morpheus do fluxo de salas — findings de segurança** — Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
 
 ## ⚠️ Bloqueios abertos
 
@@ -178,7 +177,7 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **Mover regras de negócio para o servidor** `sec.regras-servidor`<br>  Fechado com o fix do eRevisor (proprietario passa a ser revisor). Liberacao do jogador ao finalizar ja existia (linked:false + escrow liquidado + encerrada fora de ESTADOS_ATIVOS) e agora esta coberta por smoke na VPS.<br>  _evidência:_ `Smoke VPS (scripts/smoke-vps-revisao.mjs, rodado dentro do m7arena_app): 13/13 ok. Proprietario acessa /api/revisao/pendentes (200, era 403), decide a revisao, sala encerrada, match_players.linked=0, jogador entra em sala nova sem ja_em_outra_sala. web build + tsc api exit 0.`<br>  _concluído 04/08/2026 00:10 por deepseek_
 - `[ ]` **Upload restrito por dono** `sec.upload`<br>  REABERTO por dependência: a proteção foi aplicada em /api/upload, que ainda não é usado por ninguém. Revalidar depois de app.storage.uploads.<br>  _dependências satisfeitas — liberado_<br>  _evidência:_ `Autenticação de sessão m7_session adicionada ao endpoint /api/upload. Arquivos salvos com prefixo do userId. npx tsc --noEmit e npm run build executados com exit 0.`
 - `[x]` **Auditar as 19 ocorrências de import.meta.env** `app.env`<br>  Auditoria de variáveis de ambiente concluída. Único segredo (VITE_RIOT_API_KEY) mapeado para proxy backend.<br>  _evidência:_ `Auditadas 19 ocorrências: 13 DEV (flags dev), 3 VITE_SUPABASE_URL (URL pública), 1 VITE_DISCORD_CLIENT_ID (client_id público), 1 VITE_RIOT_API_KEY (src/api/riot.ts:5 - segredo identificado para mover p/ proxy no servidor em sec.riot-key).`<br>  _concluído 02/08/2026 01:41 por gemini_
-- `[ ]` **Auditoria Morpheus do fluxo de salas — findings de segurança** `sec.salas-auditoria`<br>  Auditoria pós-ajustarsala: 4 findings. HIGH: senha de sala exposta a qualquer autenticado (servidor nao valida no join). MEDIUM: mass assignment maxJogadores/taxaPct/apostaMc na criacao (taxaPct negativo cria MC). MEDIUM: CORS origin:true. LOW: aposta negativa. Correcoes do ajustarsala (race/clock/polling) confirmadas solidas.
+- `[x]` **Auditoria Morpheus do fluxo de salas — findings de segurança** `sec.salas-auditoria`<br>  4 findings corrigidos e no ar: MORPH-001 senha validada no servidor (join, timingSafeEqual, shape sem senha); MORPH-002 clamp aposta/taxa/maxJogadores + allowlist modo + guarda no calcularPayout; MORPH-003 CORS allowlist fixa (validado na VPS); MORPH-004 coberto pelo clamp. Commit e73f7a2.<br>  _evidência:_ `Deploy na VPS validado: health 200, CORS nao ecoa origem arbitraria (evil.example.com sem Access-Control-Allow-Origin). tsc api exit 0, testes escrow+estados+cron+elegibilidade+revisao 36/36, build web ok.`<br>  _concluído 04/08/2026 03:17 por morpheus_
 
 ### Fase 4 — MCP de operações da VPS
 
@@ -428,6 +427,7 @@ _03/08/2026 03:05 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 04/08/2026 03:17 | morpheus | Corrigi os 4 findings da auditoria Morpheus do fluxo de salas e subi para a VPS. MORPH-001 (HIGH): senha de sala removida do shape (sempre null), validacao movida para o servidor no POST /join com timingSafeEqual; front guarda a senha digitada no lobby em salaSenhaStore e envia no join; erro senha_incorreta traduzido. MORPH-002 (MEDIUM): clamp de apostaMc (0..1M), taxaPct (0..100), maxJogadores (2..10) na criacao + allowlist do modo (5v5/1v1/aram/time_vs_time) + defesa em profundidade no calcularPayout (taxa invalida nunca infla premio). MORPH-003 (MEDIUM): CORS com allowlist fixa (APP_URL + localhost), validado na VPS que origem arbitraria nao recebe Access-Control-Allow-Origin. MORPH-004 (LOW): coberto pelo clamp. Testes 36/36, tsc api exit 0, build web ok. Deploy na VPS: lobby 200, health 200. Commits 97172b8 e e73f7a2. <br>_tocou: `api/src/routes/matches.ts`, `api/src/lib/match-shape.ts`, `api/src/lib/escrow.ts`, `api/src/index.ts`, `api/test/escrow.test.ts`, `web/src/lib/salaSenhaStore.ts`, `web/src/api/salamod1.ts`, `web/src/lib/api.ts`, `web/src/hooks/useSalaSimples.ts`, `web/src/pages/Jogar.tsx`, `web/src/pages/SalaMod1.tsx`_ |
 | 04/08/2026 03:03 | morpheus | Auditoria ofensiva (Morpheus) do fluxo de salas pos-ajustarsala. Correcoes confirmadas solidas: race no join/confirm protegida por FOR UPDATE+transacao (10 confirms paralelos 8/8), clock sync validado com relogios diferentes, polling fallback so com WS morto, 1 GET unico. FINDINGS: (1) HIGH - senha da sala exposta no GET /api/matches/:id para qualquer autenticado (match-shape.ts:86); servidor nunca valida senha no join - protecao so cosmética. (2) MEDIUM - mass assignment na criacao: maxJogadores/taxaPct/apostaMc do body sem clamp (matches.ts:114-141); taxaPct negativo cria MC do nada no calcularPayout (escrow.ts:64-70). (3) MEDIUM - CORS origin:true+credentials ecoa origem arbitraria (mitigado por SameSite=Lax). (4) LOW - aposta negativa vira dado inconsistente. Upload bem defendido (memoryStorage+sanitize+uuid). Cookies httpOnly+secure+lax corretos. <br>_tocou: `api/src/routes/matches.ts`, `api/src/lib/match-shape.ts`, `api/src/lib/escrow.ts`, `api/src/index.ts`, `api/src/routes/upload.ts`, `api/src/lib/session.ts`_ |
 | 04/08/2026 02:57 | deepseek | Reforcos finais do ajustarsala para o teste com 10 players. (1) Review de logica com 10 jogadores simultaneos: join/confirm usam FOR UPDATE na linha do match -> serializa cliques concorrentes; checagem de vaga e total>=max dentro do lock; 11o jogador barrado. (2) Corrigi polling fallback para rodar SO com WS morto (antes rodava a cada 5s em sala parada com 10 jogadores mesmo com WS perfeito, 2 req/s de desperdicio). (3) Otimizei sincronizarTudo para 1 GET unico (antes 2 GETs identicos de /matches/:id -> dobrava trafego com 10 jogadores e arriscava estados divergentes). (4) Novo teste de servidor: 5v5 com 10 jogadores preenchem -> confirmacao, 11o barrado (32/32 na suite). (5) NOVO smoke-clock-sync-vps.mjs: sala 1v1 real na VPS em confirmacao, 7 clientes simulados com relogios de -8min a +8min usando o codigo real de clockSync.ts -> SEM correcao cada um ve tempo diferente (0s a 540s), COM correcao todos veem 60s. 6/6. Tudo commitado e deployado. <br>_tocou: `scripts/smoke-clock-sync-vps.mjs`, `web/src/hooks/useSalaSimples.ts`, `api/test/estados.test.ts`, `ajustarsala.md`_ |
 | 04/08/2026 02:22 | deepseek | Fechei o plano ajustarsala (fases 1-5). Implementadas F1 (server_time no shape, join protegido por ESTADOS_ATIVOS, cron saneamento de salas mortas), F2 (clockSync.ts offset), F3 (fallback polling 5s). Reforcos de regra: smoke-clock-sync.mjs (relogios opostos +5min/-3min convergem, 5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9. Teste visual com 2 contas reais via Chrome CDP (porta 9223): sala 1v1 #23 com 1 jogador ficou AGUARDANDO JOGADORES (bug C = efeito do bug A); conta 2 preencheu ultima vaga -> CONFIRMANDO PRESENCA, timer no servidor coerente com a tela (33s vs 47s). Tudo deployado e commitado (2e810f7). VPS saudavel. Nao mexi no pandapost. <br>_tocou: `ajustarsala.md`, `scripts/smoke-clock-sync.mjs`, `scripts/smoke-vps-salas.mjs`, `api/src/lib/match-shape.ts`, `api/src/routes/matches.ts`, `api/src/cron.ts`, `api/src/realtime/index.ts`, `api/src/lib/acesso-sala.ts`, `api/test/cron.test.ts`, `api/test/estados.test.ts`, `web/src/lib/clockSync.ts`, `web/src/lib/api.ts`, `web/src/hooks/useSalaSimples.ts`, `web/src/hooks/useSalaRealtime.ts`_ |
@@ -442,7 +442,6 @@ _03/08/2026 03:05 — deepseek_
 | 03/08/2026 02:19 | riven | Página Quem Somos (web/src/pages/QuemSomos.tsx) finalizada. Na sessão anterior só tinha trocado h2 por h1 (semântica SEO). Agora completei: alt texts das 4 imagens saíram de "Founder"/"Founder Continuation" para descritivos com contexto ("Lucas Eduardo, fundador e CEO da M7 Arena", "Splash art da campeã Riven do League of Legends"), e o parágrafo de missão agora destaca o benefício concreto "premiação em Pix" e "transparentes" (antes era só "premiações"). Nenhuma classe ou layout alterado. Observação: página é SPA sem title/meta própria (limitação do index.html único — ficaria para futura implementação de per-route meta). Build web passou (✓ built in 6.38s). <br>_tocou: `web/src/pages/QuemSomos.tsx`_ |
 | 03/08/2026 02:14 | riven | Verificação completa das mensagens de display da sala de partida (SalaMod1.tsx + salamod1.ts + useSalaSimples). Melhorias de copy, classes/layout intactos: (1) BUG de copy corrigido — botão de erro dizia "Voltar ao Lobby" mas navegava para /jogar, agora "Voltar às Salas"; (2) estado da sala no top bar deixou de mostrar o valor cru do banco (preenchendo, confirmacao...) e ganhou rótulo amigável via mapa ESTADO_ROTULO ("Aguardando Jogadores", "Confirmando Presença", "Em Jogo", "Em Análise"...); (3) "Faça login"→"Faça login para entrar na sala"; (4) premiação em sala casual mostra "Casual" em vez de "0 MC"; (5) ERROS_SALA refinados (ja_em_outra_sala, ja_confirmado, nao_pode_sair) com tom de ação; (6) botão "Enviar Print de Resultado"→"Enviar Print e Iniciar Revisão". Verifiquei também AguardandoRevisao, RegrasDaSala, VagaSlot, ModaisElegibilidade e as transições de estado do useSalaSimples — já estavam bem escritos. Build web passou (✓ built in 7.41s). <br>_tocou: `web/src/pages/SalaMod1.tsx`, `web/src/api/salamod1.ts`_ |
 | 03/08/2026 02:10 | riven | Copy das salas e modais de partida (Jogar.tsx + componentes) melhorada, só texto, classes/layout intactos. MODOS_JOGO em api/salamod1.ts: descrições genéricas ("Summoners Rift - Competitivo") viraram copy com benefício ("o competitivo em sua forma mais pura", "partidas rápidas, ação do início ao fim", "duelo individual, quem é o melhor?", "Clã contra clã — disputa que vale ranking e orgulho"). Jogar.tsx: modal login vitrine com urgência de vaga, empty state "Seja o primeiro — crie uma sala... e defina o valor!", placeholder de descrição com exemplo real, botão de sala cheia (estado visual desabilitado + rótulo SALA CHEIA, antes mostrava ENTRAR), modal de senha mais claro. ModaisElegibilidade: saldo insuficiente com urgência + CTA "Recarregar e garantir vaga", suspensão mais empática com caminho de volta. RegrasDaSala: SLA com "no Pix". Build web passou (✓ built in 7.32s). <br>_tocou: `web/src/api/salamod1.ts`, `web/src/pages/Jogar.tsx`, `web/src/components/partidas/ModaisElegibilidade.tsx`, `web/src/components/partidas/RegrasDaSala.tsx`_ |
-| 03/08/2026 02:06 | riven | Página de Login (web/src/pages/Login.tsx) melhorada, só texto, classes/layout intactos: hero lateral "A plataforma oficial das lendas"→"Torneios com premiação em Pix" (proposta de valor concreta), CTA principal login "Acessar Arena"→"Entrar na Arena" e registro "Criar Conta"→"Criar Conta Grátis" (remover atrito de custo), toggle "Não tem conta?/Cadastre-se"→"Novo por aqui?/Crie sua conta grátis". Subheads do formulário já haviam sido melhorados na sessão anterior ("Entre na arena e dispute prêmios em Pix" / "Crie sua conta grátis e comece a competir"). Botão Google mantido. Build web passou (✓ built in 6.75s). <br>_tocou: `web/src/pages/Login.tsx`_ |
 
 ---
 

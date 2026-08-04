@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T06:03:48.597Z",
+  "updatedAt": "2026-08-04T06:17:12.968Z",
   "updatedBy": "morpheus",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1135,12 +1135,12 @@
       "phase": "fase-3",
       "area": "seguranca",
       "name": "Auditoria Morpheus do fluxo de salas — findings de segurança",
-      "status": "todo",
-      "notes": "Auditoria pós-ajustarsala: 4 findings. HIGH: senha de sala exposta a qualquer autenticado (servidor nao valida no join). MEDIUM: mass assignment maxJogadores/taxaPct/apostaMc na criacao (taxaPct negativo cria MC). MEDIUM: CORS origin:true. LOW: aposta negativa. Correcoes do ajustarsala (race/clock/polling) confirmadas solidas.",
-      "evidence": "",
+      "status": "done",
+      "notes": "4 findings corrigidos e no ar: MORPH-001 senha validada no servidor (join, timingSafeEqual, shape sem senha); MORPH-002 clamp aposta/taxa/maxJogadores + allowlist modo + guarda no calcularPayout; MORPH-003 CORS allowlist fixa (validado na VPS); MORPH-004 coberto pelo clamp. Commit e73f7a2.",
+      "evidence": "Deploy na VPS validado: health 200, CORS nao ecoa origem arbitraria (evil.example.com sem Access-Control-Allow-Origin). tsc api exit 0, testes escrow+estados+cron+elegibilidade+revisao 36/36, build web ok.",
       "owner": "morpheus",
       "createdAt": "2026-08-04T06:03:48.597Z",
-      "updatedAt": "2026-08-04T06:03:48.597Z"
+      "updatedAt": "2026-08-04T06:17:02.323Z"
     }
   ],
   "decisions": [
@@ -1436,23 +1436,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T02:17:41.320Z",
-      "agent": "deepseek",
-      "summary": "P4 realtime done. Servidor api/src/realtime/index.ts: cookie m7_session no handshake (user_sessions expires>now), Origin vs APP_URL, autorização por sala, máx 10 conexões, ping/pong 30s, fan-out só do id. LISTEN dedicado no postgres (não pgbouncer) com reconexão; NOTIFY por sala_num e uuid. ws na api. Compose prod+local + nginx /ws. Front: useSalaRealtime (debounce 250ms) no useSalaSimples; supabase.channel removido. Evidências: api tsc exit 0; web só 2 pré-existentes; compose config ok; realtime up 'Escutando notificações do Postgres'; teste 6/6 PASS (401 sem cookie, 403 origin, sem_permissao, subscribed, match_update por sala_num/uuid); 11 conexões→mais antiga cai. VPS: realtime roda dist de api/ (npm run build antes do deploy).",
-      "touched": [
-        "api/src/realtime/index.ts",
-        "api/package.json",
-        "api/scripts/test-realtime.mjs",
-        "infra/docker-compose.yml",
-        "infra/docker-compose.local.yml",
-        "infra/nginx.conf",
-        "infra/nginx.local.conf",
-        "web/src/hooks/useSalaRealtime.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "src/realtime/index.ts"
-      ]
-    },
     {
       "at": "2026-08-03T02:19:21.168Z",
       "agent": "gemini",
@@ -1828,6 +1811,24 @@
         "api/src/index.ts",
         "api/src/routes/upload.ts",
         "api/src/lib/session.ts"
+      ]
+    },
+    {
+      "at": "2026-08-04T06:17:12.968Z",
+      "agent": "morpheus",
+      "summary": "Corrigi os 4 findings da auditoria Morpheus do fluxo de salas e subi para a VPS. MORPH-001 (HIGH): senha de sala removida do shape (sempre null), validacao movida para o servidor no POST /join com timingSafeEqual; front guarda a senha digitada no lobby em salaSenhaStore e envia no join; erro senha_incorreta traduzido. MORPH-002 (MEDIUM): clamp de apostaMc (0..1M), taxaPct (0..100), maxJogadores (2..10) na criacao + allowlist do modo (5v5/1v1/aram/time_vs_time) + defesa em profundidade no calcularPayout (taxa invalida nunca infla premio). MORPH-003 (MEDIUM): CORS com allowlist fixa (APP_URL + localhost), validado na VPS que origem arbitraria nao recebe Access-Control-Allow-Origin. MORPH-004 (LOW): coberto pelo clamp. Testes 36/36, tsc api exit 0, build web ok. Deploy na VPS: lobby 200, health 200. Commits 97172b8 e e73f7a2.",
+      "touched": [
+        "api/src/routes/matches.ts",
+        "api/src/lib/match-shape.ts",
+        "api/src/lib/escrow.ts",
+        "api/src/index.ts",
+        "api/test/escrow.test.ts",
+        "web/src/lib/salaSenhaStore.ts",
+        "web/src/api/salamod1.ts",
+        "web/src/lib/api.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx"
       ]
     }
   ]
