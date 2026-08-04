@@ -63,7 +63,7 @@ services:
       - pgbouncer
 
   realtime:
-    image: node:22-alpine
+    image: ${DOCKER_IMAGE:-m7arena-app:latest}
     container_name: m7arena_realtime
     restart: always
     environment:
@@ -73,9 +73,9 @@ services:
       DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/m7arena"
       APP_URL: ${APP_URL:-http://localhost:3000}
       AUTH_SECRET: ${AUTH_SECRET:-dev-secret-key-m7arena-local-environment-32bytes}
-    volumes:
-      - ../api:/app/api
-    command: node /app/api/dist/api/src/realtime/index.js
+    # Mesma imagem compilada do app (contém dist/ com o realtime) — o VPS não
+    # tem node/npm e o dist não é versionado, então montar o fonte não funciona.
+    command: node dist/api/src/realtime/index.js
     depends_on:
       postgres:
         condition: service_healthy
