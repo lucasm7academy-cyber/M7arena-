@@ -4,6 +4,7 @@ import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userWallets } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints } from "../../../db/schema/apostas.js";
 import { toLegacyMatch } from "../lib/match-shape.js";
 import {
@@ -46,6 +47,21 @@ async function shapeSala(m: any, ctx: any = db) {
   const userMap = new Map<string, any>(usersRows.map((u: any) => [u.id, u] as [string, any]));
   const criador = userMap.get(m.createdBy);
   const criadorNome = criador?.displayName || criador?.email?.split("@")[0] || "Desconhecido";
+
+  // Riot ID (game_accounts.handle, "Game#Tag") de cada usuário da sala — é dele
+  // que o shape deriva `nome` (nick) e `tag`, como o legado gravava na RPC
+  // sala_entrar. Sem vínculo, o fallback do shape usa displayName/email.
+  const accountsRows: any[] = userIds.length
+    ? await ctx
+        .select({ userId: gameAccounts.userId, handle: gameAccounts.handle })
+        .from(gameAccounts)
+        .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, userIds)))
+    : [];
+  const riotMap = new Map<string, string>(accountsRows.map((a: any) => [a.userId, a.handle]));
+  usersRows.forEach((u: any) => {
+    u.__riotHandle = riotMap.get(u.id) ?? null;
+  });
+
   const playersEnriched = players.map((p: any) => ({
     ...p,
     __user: userMap.get(p.userId),

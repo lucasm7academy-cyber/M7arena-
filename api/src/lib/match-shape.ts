@@ -36,18 +36,32 @@ export function winnerSideToLegacy(side: string | null | undefined): "A" | "B" |
  * Linha legada de `sala_jogadores`. `user` é o usuário dono da vaga (join),
  * `isVip` o flag de VIP (vem de users.is_vip). A UI lê `is_time_a` (snake) e
  * `isVip` (camel) — entregamos os dois.
+ *
+ * `nome`/`tag` são derivados do Riot ID (game_accounts.handle, "Game#Tag") do
+ * mesmo jeito que o legado gravava em `sala_jogadores`: split_part do riot_id
+ * na RPC `sala_entrar` (nick em `nome`, tag em `tag`). Sem conta Riot vinculada
+ * cai no displayName (ou prefixo do email), também como o legado fazia.
  */
 export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: number) {
-  const nome =
-    user?.displayName && user.displayName.trim()
-      ? user.displayName
-      : user?.email?.split("@")[0] || "Jogador";
+  const handle = user?.__riotHandle || null;
+  let nome: string;
+  let tag = "";
+  if (handle) {
+    const [nick, tagLine] = handle.split("#");
+    nome = nick?.trim() || "Jogador";
+    if (tagLine) tag = `#${tagLine}`;
+  } else {
+    nome =
+      user?.displayName && user.displayName.trim()
+        ? user.displayName
+        : user?.email?.split("@")[0] || "Jogador";
+  }
   return {
     id: `${p.matchId}-${p.userId}`,
     sala_id: salaNum,
     user_id: p.userId,
     nome,
-    tag: "",
+    tag,
     elo: "Sem Elo",
     avatar: user?.avatarUrl || null,
     role: p.roleSlot || "RES",
