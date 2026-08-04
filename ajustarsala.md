@@ -192,6 +192,10 @@ Dois relógios não são iguais. Todo cliente que calcula "tempo restante" com
 - [x] `useSalaSimples`: medir `offset = server_time - Date.now()` na carga e
       usar `Date.now() + offset` em `timer` e `timerIniciandoPartida`.
 - [x] Recalcular offset a cada refetch (barato) para cobrir relógio que muda.
+- [x] Reforço validado com RELÓGIOS DIFERENTES na VPS real
+      (smoke-clock-sync-vps.mjs): sala 1v1 real em confirmacao, 7 clientes com
+      relógios de −8min a +8min — SEM correção cada um vê um tempo (0s a 540s);
+      COM clockSync todos veem 60s. A regra serve para qualquer fuso/relógio. 6/6.
 
 ### Fase 3 — Cliente: contagem inicia para todos (Bug A) ✅
 - [x] Fallback: polling leve (5s) nos estados ativos quando o WS não entregou
