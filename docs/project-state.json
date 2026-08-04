@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T05:57:03.352Z",
-  "updatedBy": "deepseek",
+  "updatedAt": "2026-08-04T06:03:48.597Z",
+  "updatedBy": "morpheus",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -1129,6 +1129,18 @@
       "owner": "deepseek",
       "createdAt": "2026-08-04T04:13:05.898Z",
       "updatedAt": "2026-08-04T05:22:50.316Z"
+    },
+    {
+      "id": "sec.salas-auditoria",
+      "phase": "fase-3",
+      "area": "seguranca",
+      "name": "Auditoria Morpheus do fluxo de salas — findings de segurança",
+      "status": "todo",
+      "notes": "Auditoria pós-ajustarsala: 4 findings. HIGH: senha de sala exposta a qualquer autenticado (servidor nao valida no join). MEDIUM: mass assignment maxJogadores/taxaPct/apostaMc na criacao (taxaPct negativo cria MC). MEDIUM: CORS origin:true. LOW: aposta negativa. Correcoes do ajustarsala (race/clock/polling) confirmadas solidas.",
+      "evidence": "",
+      "owner": "morpheus",
+      "createdAt": "2026-08-04T06:03:48.597Z",
+      "updatedAt": "2026-08-04T06:03:48.597Z"
     }
   ],
   "decisions": [
@@ -1424,14 +1436,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T02:15:56.567Z",
-      "agent": "gemini",
-      "summary": "Build do Docker m7arena_local_nginx concluído com sucesso. Novo bundle atualizado no ar em http://localhost:3000.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T02:17:41.320Z",
       "agent": "deepseek",
@@ -1811,6 +1815,19 @@
         "web/src/hooks/useSalaSimples.ts",
         "api/test/estados.test.ts",
         "ajustarsala.md"
+      ]
+    },
+    {
+      "at": "2026-08-04T06:03:41.107Z",
+      "agent": "morpheus",
+      "summary": "Auditoria ofensiva (Morpheus) do fluxo de salas pos-ajustarsala. Correcoes confirmadas solidas: race no join/confirm protegida por FOR UPDATE+transacao (10 confirms paralelos 8/8), clock sync validado com relogios diferentes, polling fallback so com WS morto, 1 GET unico. FINDINGS: (1) HIGH - senha da sala exposta no GET /api/matches/:id para qualquer autenticado (match-shape.ts:86); servidor nunca valida senha no join - protecao so cosmética. (2) MEDIUM - mass assignment na criacao: maxJogadores/taxaPct/apostaMc do body sem clamp (matches.ts:114-141); taxaPct negativo cria MC do nada no calcularPayout (escrow.ts:64-70). (3) MEDIUM - CORS origin:true+credentials ecoa origem arbitraria (mitigado por SameSite=Lax). (4) LOW - aposta negativa vira dado inconsistente. Upload bem defendido (memoryStorage+sanitize+uuid). Cookies httpOnly+secure+lax corretos.",
+      "touched": [
+        "api/src/routes/matches.ts",
+        "api/src/lib/match-shape.ts",
+        "api/src/lib/escrow.ts",
+        "api/src/index.ts",
+        "api/src/routes/upload.ts",
+        "api/src/lib/session.ts"
       ]
     }
   ]
