@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T04:58:17.925Z",
+  "updatedAt": "2026-08-04T05:22:58.637Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1123,12 +1123,12 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Força-tarefa: sync de timers e contagem de salas (plano ajustarsala)",
-      "status": "doing",
-      "notes": "Fases 1-3 implementadas, deployadas e validadas na VPS: server_time no shape, join protegido por ESTADOS_ATIVOS (bug D), cron saneamento de salas mortas, clock offset nos timers (bug B), fallback polling (bug A). Reforcos: smoke-clock-sync (relogios opostos 5/5), teste de deadline no servidor, smoke-vps-salas 9/9. Plano em ajustarsala.md. Resta teste visual do bug A (2 abas) e confirmacao do C.",
-      "evidence": "Investigacao: ajustarsala.md escrito; rg finalizacao api/src = 0 ocorrencias (estado morto); SQL confirmou sala 2 finalizacao com 2 linked=true; UPDATE sala 2 -> encerrada + linked=false aplicado na VPS (contas destravadas).",
+      "status": "done",
+      "notes": "Plano completo fases 1-5 concluidas e no ar. F1 server_time+join protegido+cron saneamento; F2 clock offset; F3 fallback polling; F4 bug C confirmado efeito do bug A; F5 smoke visual validado. Reforcos: smoke-clock-sync 5/5, teste deadline 60s, smoke-vps-salas 9/9.",
+      "evidence": "Teste visual 2 contas sala #23: 1 jogador nao abre contagem; 2o preencheu ultima vaga -> CONFIRMANDO PRESENCA, timer servidor 33s vs tela 47s (coerente). smoke-vps-salas 9/9, smoke-clock-sync 5/5.",
       "owner": "deepseek",
       "createdAt": "2026-08-04T04:13:05.898Z",
-      "updatedAt": "2026-08-04T04:58:09.700Z"
+      "updatedAt": "2026-08-04T05:22:50.316Z"
     }
   ],
   "decisions": [
@@ -1424,14 +1424,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T02:13:37.845Z",
-      "agent": "gemini",
-      "summary": "Build do contêiner Docker m7arena_local_nginx concluído com sucesso. Novo bundle do Vite com o DepositModal atualizado publicado em http://localhost:3000.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T02:15:23.179Z",
       "agent": "gemini",
@@ -1789,6 +1781,27 @@
         "api/src/lib/match-shape.ts",
         "api/src/routes/matches.ts",
         "api/src/cron.ts",
+        "api/test/cron.test.ts",
+        "api/test/estados.test.ts",
+        "web/src/lib/clockSync.ts",
+        "web/src/lib/api.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/hooks/useSalaRealtime.ts"
+      ]
+    },
+    {
+      "at": "2026-08-04T05:22:58.637Z",
+      "agent": "deepseek",
+      "summary": "Fechei o plano ajustarsala (fases 1-5). Implementadas F1 (server_time no shape, join protegido por ESTADOS_ATIVOS, cron saneamento de salas mortas), F2 (clockSync.ts offset), F3 (fallback polling 5s). Reforcos de regra: smoke-clock-sync.mjs (relogios opostos +5min/-3min convergem, 5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9. Teste visual com 2 contas reais via Chrome CDP (porta 9223): sala 1v1 #23 com 1 jogador ficou AGUARDANDO JOGADORES (bug C = efeito do bug A); conta 2 preencheu ultima vaga -> CONFIRMANDO PRESENCA, timer no servidor coerente com a tela (33s vs 47s). Tudo deployado e commitado (2e810f7). VPS saudavel. Nao mexi no pandapost.",
+      "touched": [
+        "ajustarsala.md",
+        "scripts/smoke-clock-sync.mjs",
+        "scripts/smoke-vps-salas.mjs",
+        "api/src/lib/match-shape.ts",
+        "api/src/routes/matches.ts",
+        "api/src/cron.ts",
+        "api/src/realtime/index.ts",
+        "api/src/lib/acesso-sala.ts",
         "api/test/cron.test.ts",
         "api/test/estados.test.ts",
         "web/src/lib/clockSync.ts",
