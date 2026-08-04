@@ -4,6 +4,7 @@ import { X, Loader, CheckCircle2, Copy, Zap } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import GoldEssenceIcon from '../../icons/GoldEssenceIcon';
 
 interface PackageOption {
   id: string;
@@ -18,40 +19,6 @@ interface DepositModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const GoldEssenceIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 32 32"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-  >
-    <g filter="url(#glow)">
-      <path
-        d="M16 2L22 16L16 30L10 16L16 2Z"
-        fill="url(#essence_grad)"
-      />
-      <path d="M16 2L16 30L10 16L16 2Z" fill="white" fillOpacity="0.2" />
-      <path d="M16 2L22 16L16 16L16 2Z" fill="white" fillOpacity="0.1" />
-      <path d="M25 10L28 13L24 14L25 10Z" fill="#FFD700" />
-      <path d="M7 20L4 23L8 24L7 20Z" fill="#E6A600" />
-      <path d="M23 24L25 27L21 28L23 24Z" fill="#FFD700" opacity="0.6" />
-    </g>
-    <defs>
-      <linearGradient id="essence_grad" x1="16" y1="2" x2="16" y2="30" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#FFD700" />
-        <stop offset="0.5" stopColor="#E6A600" />
-        <stop offset="1" stopColor="#996F00" />
-      </linearGradient>
-      <filter id="glow" x="0" y="0" width="32" height="32" filterUnits="userSpaceOnUse">
-        <feGaussianBlur stdDeviation="1.5" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
-    </defs>
-  </svg>
-);
 
 const PACKAGES: PackageOption[] = [
   {

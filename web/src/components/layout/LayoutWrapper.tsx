@@ -32,6 +32,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
 import VipModal from '../modals/vip/VipModal';
 import DepositModal from '../modals/deposit/DepositModal';
+import GoldEssenceIcon from '../icons/GoldEssenceIcon';
 
 // ✅ Lazy loading para componentes carregados sob demanda
 const NotificationBell = lazy(() => import('../notifications/NotificationBell'));
@@ -112,6 +113,7 @@ export default function Layout() {
 
   const navItems = [
     { label: 'Início', icon: SiLeagueoflegends, path: '/lobby' },
+    { label: 'Jogar', icon: Gamepad2, path: '/jogar' },
     { label: 'Campeonatos', icon: Trophy, path: '/campeonatos' },
     { label: 'Times', icon: FaFontAwesomeFlag, path: '/times' },
     { label: 'Jogadores', icon: UserIcon, path: '/players' },
@@ -242,6 +244,18 @@ export default function Layout() {
               <CreditCard className="w-3.5 h-3.5 md:w-3.5 md:h-3.5" />
               <span>Depositar</span>
             </button>
+
+            {user && (
+              <Link
+                to="/perfil"
+                onClick={() => playSound('click')}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#0a0b0f] border border-white/10 text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:border-primary/40 hover:text-primary transition-all active:scale-95 md:px-3 md:py-1.5 md:rounded-full"
+                title="Saldo em M7 Coins"
+              >
+                <GoldEssenceIcon size={16} className="shrink-0" />
+                <span className="tabular-nums">{(perfil?.saldo ?? 0).toLocaleString('pt-BR')}</span>
+              </Link>
+            )}
 
             {!user && (
               <Link

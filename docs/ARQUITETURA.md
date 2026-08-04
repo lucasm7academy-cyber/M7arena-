@@ -198,6 +198,13 @@ referral_events       referrer_id, referred_id, event_type, value, created_at
 
 `user_wallets` guarda o saldo corrente para leitura rápida; `wallet_transactions` é a verdade auditável. `balance_after` permite reconstruir e conferir. Toda escrita de saldo acontece na mesma transação do lançamento.
 
+> **Sistema de moedas (MC/MP):** o plano consolidado está em
+> [`planos/plano-m7coins.md`](./planos/plano-m7coins.md). O MC é moeda global
+> (`user_wallets.mc` + `mc_reservado` para escrow das salas apostadas); o fluxo
+> de aposta → reserva → payout/empate/cancelamento com taxa da plataforma está
+> implementado em `api/src/lib/escrow.ts` + `api/src/routes/revisao.ts` (design
+> v3). O `mp` (M7 Points) é moeda de pontos/ranking, sem fluxo de aposta.
+
 ### 3.7 Conteúdo
 
 `news`, `highlights`, `broadcasts`, `recruitment_posts`, `notifications`.

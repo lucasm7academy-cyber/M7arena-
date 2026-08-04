@@ -1,6 +1,6 @@
 # PLANO DE MIGRAÇÃO — M7Academy → M7Arena
 
-Documento central do projeto. O status ao vivo de cada item está em [`../statusdoprojeto.md`](../statusdoprojeto.md) (gerado pelo MCP). As regras de trabalho, em [`../AGENTS.md`](../AGENTS.md). O desenho técnico, em [`ARQUITETURA.md`](./ARQUITETURA.md).
+Documento central do projeto. O status ao vivo de cada item está em [`../statusdoprojeto.md`](../statusdoprojeto.md) (gerado pelo MCP). As regras de trabalho, em [`../AGENTS.md`](../AGENTS.md). O desenho técnico, em [`ARQUITETURA.md`](./ARQUITETURA.md). O sistema de moedas (MC/MP), em [`planos/plano-m7coins.md`](./planos/plano-m7coins.md).
 
 ---
 
@@ -126,7 +126,7 @@ Servidor MCP na VPS para os agentes verem logs, rodar consultas de diagnóstico,
 | `auth.users` | `users` + `user_identities` | hashes bcrypt preservados |
 | `profiles` | `users` (merge por id) + `user_payout_info` | PIX vai para tabela própria |
 | `contas_riot` | `game_accounts` (`game_id='lol'`) | `elo_cache`/`champions_cache` → `metadata` |
-| `wallets` | `user_wallets` + lançamento de abertura em `wallet_transactions` | |
+| `wallets` | `user_wallets` + lançamento de abertura em `wallet_transactions` | ver `planos/plano-m7coins.md` §2 |
 | `platform_roles` | `user_roles` | 1:1 vira N:N |
 | `discord_links` | `user_identities` (provider `discord`) | |
 | `times` | `teams` + `team_stats` | pdl/wins/losses saem para a tabela de stats |
