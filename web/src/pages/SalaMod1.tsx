@@ -11,6 +11,7 @@ import { AguardandoRevisao } from '../components/partidas/AguardandoRevisao';
 import { RegrasDaSala } from '../components/partidas/RegrasDaSala';
 import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
+import { lerSenhaSala, limparSenhaSala } from '../lib/salaSenhaStore';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 
@@ -156,7 +157,11 @@ export default function SalaMod1() {
             setShowAvisoRiotId(true);
             return;
         }
-        entrar(role, isTimeA);
+        // Senha de sala privada (MORPH-001): vem do store preenchido no lobby
+        // e é validada no SERVIDOR durante o join. Limpa após o uso.
+        const senha = lerSenhaSala(salaId);
+        limparSenhaSala(salaId);
+        entrar(role, isTimeA, senha || undefined);
     };
 
     // Print de prova durante `partida_iniciada` — é o gatilho que leva a sala

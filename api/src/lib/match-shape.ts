@@ -83,7 +83,10 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     modo: m.mode,
     mpoints: m.entryMp || 0,
     tem_senha: !!m.temSenha,
-    senha: m.senha ?? null,
+    // Segurança (MORPH-001): a senha NUNCA é devolvida no shape. O cliente só
+    // sabe que a sala é privada (tem_senha) e envia a senha no body do join —
+    // a validação acontece no servidor. `null` preserva o shape legado.
+    senha: null,
     max_jogadores: m.maxJogadores ?? 10,
     elo_minimo: m.eloMinimo ?? null,
     estado: m.status,

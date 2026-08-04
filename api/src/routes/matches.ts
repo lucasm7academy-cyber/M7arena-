@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { timingSafeEqual } from "crypto";
 import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userWallets } from "../../../db/schema/identidade.js";
@@ -22,6 +23,14 @@ export const matchesRouter = Router();
 // Ações de sala (confirm/leave/recusar/tick/start/report-result) em
 // rota própria para o arquivo não estourar ~400 linhas.
 matchesRouter.use(matchesActionsRouter);
+
+/** Comparação de strings em tempo constante (CWE-208) — para senhas de sala. */
+function timingSafeEqualStr(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
 
 /** Resolve `:id` como sala_num (número) ou uuid. */
 async function resolverSala(param: string, ctx: any = db) {
@@ -55,17 +64,6 @@ async function shapeSala(m: any, ctx: any = db) {
   return toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos);
 }
 
-/**
- * Lista de salas é vitrine pública (design v3 §2.1): visitante vê times, vagas e
- * valor da aposta, mas a senha da sala só chega a quem está autenticado — o
- * fork valida a senha no cliente (Jogar.tsx) antes de navegar, então cortar
- * para logado quebraria o fluxo de entrada de salas com senha.
- */
-function redigirSenha(legacy: any, autenticado: boolean) {
-  if (!autenticado) delete legacy.senha;
-  return legacy;
-}
-
 // GET /api/matches - Lista salas em shape legado
 matchesRouter.get("/", async (req, res) => {
   try {
@@ -87,8 +85,7 @@ matchesRouter.get("/", async (req, res) => {
     }
 
     const results = await Promise.all(rows.map((m) => shapeSala(m)));
-    const autenticado = !!(await getAuthUser(req));
-    return res.json(results.map((s) => redigirSenha(s, autenticado)));
+    return res.json(results);
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar salas" });
   }
@@ -99,8 +96,7 @@ matchesRouter.get("/:id", async (req, res) => {
   try {
     const match = await resolverSala(req.params.id);
     if (!match) return res.status(404).json({ error: "Partida não encontrada" });
-    const autenticado = !!(await getAuthUser(req));
-    return res.json(redigirSenha(await shapeSala(match), autenticado));
+    return res.json(await shapeSala(match));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar sala" });
   }
@@ -113,9 +109,18 @@ matchesRouter.post("/", async (req, res) => {
 
   const { mode, entryMp, apostaMc, taxaPct, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo } = req.body;
   // apostaMc é o nome novo; entryMp é o alias legado (o fork envia entryMp).
-  const aposta = Number(apostaMc ?? entryMp ?? 0);
+  // Segurança (MORPH-002/004): clamp rigoroso dos valores vindos do body. Sem
+  // isso, um cliente pode enviar `taxaPct: -100` (infla o payout e cria MC do
+  // nada no calcularPayout) ou `maxJogadores: -1` (quebra a contagem de vagas).
+  const apostaRaw = Number(apostaMc ?? entryMp ?? 0);
+  const aposta = Number.isFinite(apostaRaw) ? Math.max(0, Math.min(Math.trunc(apostaRaw), 1_000_000)) : 0;
   // Taxa congelada na criação (design v3 §2: nunca muda no meio da sala).
-  const taxa = Number(taxaPct ?? 8.99);
+  // O cliente NÃO escolhe a taxa — usa o padrão do servidor (8.99).
+  const taxaRaw = Number(taxaPct);
+  const taxa = Number.isFinite(taxaRaw) ? Math.max(0, Math.min(taxaRaw, 100)) : 8.99;
+  // Máx. 10 vagas (5v5/ARAM/times); mín. 2 (1v1). Rejeita qualquer coisa fora.
+  const maxRaw = Number(maxJogadores);
+  const maxJogadoresSanitizado = Number.isFinite(maxRaw) ? Math.max(2, Math.min(Math.trunc(maxRaw), 10)) : 10;
   const roomCode = `M7-${Math.floor(1000 + Math.random() * 9000)}`;
 
   try {
@@ -138,7 +143,7 @@ matchesRouter.post("/", async (req, res) => {
           taxaPct: taxa,
           nome: nome || `Sala ${mode || "5v5"} de ${user.displayName || user.email?.split("@")[0]}`,
           descricao: descricao || "",
-          maxJogadores: maxJogadores || 10,
+          maxJogadores: maxJogadoresSanitizado,
           temSenha: !!temSenha,
           senha: temSenha ? senha ?? null : null,
           eloMinimo: eloMinimo || null,
@@ -185,13 +190,24 @@ matchesRouter.post("/:id/join", async (req, res) => {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
 
-    const { side, roleSlot } = req.body;
+    const { side, roleSlot, senha } = req.body;
     const isTimeA = side ? side !== "red" : req.body.is_time_a !== false;
     const vaga = normalizarVaga(roleSlot, isTimeA);
 
     const r = await db.transaction(async (tx: any) => {
       const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+
+      // Segurança (MORPH-001): a senha é validada NO SERVIDOR, nunca no
+      // cliente. O shape não devolve a senha; quem entra em sala privada
+      // precisa enviar a senha no body do join. Comparação em tempo
+      // constante para não vazar informação por timing.
+      if (match.temSenha) {
+        const senhaOk = typeof senha === "string" && timingSafeEqualStr(senha, match.senha ?? "");
+        if (!senhaOk) {
+          return { ok: false, erro: "senha_incorreta", estado: match.status, mudou: false };
+        }
+      }
 
       const trans = await avaliarTransicoes(tx, match.id);
       if (match.status !== "preenchendo") return { ok: false, erro: "estado_invalido", estado: trans.estado, mudou: trans.mudou };

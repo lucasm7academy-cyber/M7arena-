@@ -62,8 +62,13 @@ export async function gravarLancamento(tx: any, userId: string, amount: number, 
  * nunca quebra por 1 MC.
  */
 export function calcularPayout(aposta: number, totalJogadores: number, taxaPct: number, numVencedores: number) {
+  // Segurança (MORPH-002): defesa em profundidade — nunca deixa uma taxa
+  // inválida (negativa ou >100%) inflar o prêmio. O clamp na rota de criação
+  // já protege a entrada; isto protege qualquer caminho futuro que chame a
+  // função sem validar. Taxa negativa faria premioLiq > pote (cria MC do nada).
+  const taxaClamp = Number.isFinite(taxaPct) ? Math.max(0, Math.min(taxaPct, 100)) : 8.99;
   const pote = aposta * totalJogadores;
-  const taxa = Math.ceil((pote * taxaPct) / 100);
+  const taxa = Math.ceil((pote * taxaClamp) / 100);
   const premioLiq = pote - taxa;
   const porVencedor = numVencedores > 0 ? Math.floor(premioLiq / numVencedores) : 0;
   const resto = premioLiq - porVencedor * numVencedores;

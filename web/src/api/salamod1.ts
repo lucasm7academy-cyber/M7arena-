@@ -62,9 +62,10 @@ async function normalizarResultado(p: Promise<import('../lib/api').ApiSalaResult
     }
 }
 
-/** Entra (ou troca) de vaga. O servidor valida vaga ocupada / vínculo em outra sala. */
-export async function entrarNaVaga(salaId: number, role: string, isTimeA: boolean) {
-    return normalizarResultado(api.matches.join(salaId, { roleSlot: role, is_time_a: isTimeA }));
+/** Entra (ou troca) de vaga. O servidor valida vaga ocupada / vínculo em outra
+ *  sala E a senha quando a sala é privada (MORPH-001 — validação no servidor). */
+export async function entrarNaVaga(salaId: number, role: string, isTimeA: boolean, senha?: string) {
+    return normalizarResultado(api.matches.join(salaId, { roleSlot: role, is_time_a: isTimeA, senha }));
 }
 
 /** Confirma presença durante o estado `confirmacao`. */
@@ -100,6 +101,7 @@ const ERROS_SALA: Record<string, string> = {
     nao_esta_na_sala: 'Você não está nesta sala.',
     ja_confirmado: 'Você já confirmou presença nesta sala.',
     nao_pode_sair: 'A partida já começou — você não pode sair agora.',
+    senha_incorreta: 'Senha incorreta. Verifique e tente novamente.',
     rpc_falhou: 'Falha de comunicação com o servidor. Tente novamente.',
     // ── Elegibilidade de salas apostadas (design v3 §2.1) ──
     saldo_insuficiente: 'Saldo insuficiente.',

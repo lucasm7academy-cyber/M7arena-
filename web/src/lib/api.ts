@@ -325,7 +325,7 @@ export interface ApiMatchesSdk {
     timeATag?: string;
     timeALogo?: string;
   }) => Promise<ApiLegacySala>;
-  join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean }) => Promise<ApiSalaResultado>;
+  join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean; senha?: string }) => Promise<ApiSalaResultado>;
   leave: (id: number) => Promise<ApiSalaResultado>;
   confirm: (id: number) => Promise<ApiSalaResultado>;
   recusar: (id: number) => Promise<ApiSalaResultado>;
@@ -621,7 +621,7 @@ export const api = {
       timeATag?: string;
       timeALogo?: string;
     }) => api.post<ApiLegacySala>("/matches", data),
-    join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean }) =>
+    join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean; senha?: string }) =>
       api.post<ApiSalaResultado>(`/matches/${id}/join`, data),
     leave: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/leave`),
     confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),

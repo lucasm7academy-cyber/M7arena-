@@ -13,6 +13,7 @@ import {
 } from '../api/salamod1';
 import { criarSala, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
+import { guardarSenhaSala } from '../lib/salaSenhaStore';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -644,14 +645,15 @@ const Jogar = () => {
 
   // ── AÇÕES ──────────────────────────────────────────
   // Visitante deslogado vê a vitrine; qualquer ação cai no modal de login.
+  // A senha de sala privada é guardada para o POST /join reutilizar — a
+  // VALIDAÇÃO acontece no servidor (MORPH-001), nunca aqui no cliente.
   const entrarNaSala = (sala: Sala, senha?: string) => {
     if (!user) {
       setShowLoginModal(true);
       return;
     }
-    if (sala.temSenha && senha !== sala.senha) {
-      setErroSenha('Senha incorreta');
-      return;
+    if (sala.temSenha && senha) {
+      guardarSenhaSala(sala.id, senha);
     }
     navigate(`/sala-mod1/${sala.id}`);
     setShowSenhaModal(null);

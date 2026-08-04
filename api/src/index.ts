@@ -26,8 +26,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Segurança (MORPH-003): CORS com allowlist fixa, nunca ecoar `Origin`
+// arbitrária com credenciais. O front roda no mesmo domínio servido pelo
+// nginx, mas o Google OAuth usa redirect no app — manter APP_URL + localhost
+// para o compose local (ADR-017) cobrir o desenvolvimento.
+const CORS_ALLOWLIST = [
+  process.env.APP_URL || "",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+].filter(Boolean);
+
 app.use(cors({
-  origin: true,
+  origin(origin, callback) {
+    // Requisições sem Origin (curl, ferramentas, same-origin) são permitidas.
+    if (!origin || CORS_ALLOWLIST.includes(origin)) return callback(null, true);
+    return callback(new Error("Origin não permitida pelo CORS"));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: "10mb" }));

@@ -348,7 +348,7 @@ export function useSalaSimples(
     ]);
 
     // ── AÇÕES (só disparam RPC; quem decide é o servidor) ──────
-    const entrar = async (role: string, isTimeA: boolean) => {
+    const entrar = async (role: string, isTimeA: boolean, senha?: string) => {
         if (entrandoRef.current) {
             if (IS_DEV) console.log(`⚠️ [entrar] Requisição em voo, ignorando`);
             return;
@@ -357,7 +357,7 @@ export function useSalaSimples(
 
         try {
             if (IS_DEV) console.log(`🚪 [entrar] sala_entrar(role=${role}, timeA=${isTimeA})`);
-            const r = await entrarNaVaga(salaId, role, isTimeA);
+            const r = await entrarNaVaga(salaId, role, isTimeA, senha);
 
             if (!r.ok) {
                 if (IS_DEV) console.log(`❌ [entrar] Recusado pelo servidor: ${r.erro}`);

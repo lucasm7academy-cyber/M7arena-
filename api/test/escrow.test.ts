@@ -84,6 +84,21 @@ describe("escrow", () => {
     assert.equal(r.resto, 1);
   });
 
+  test("calcularPayout: taxa inválida (negativa/>100) é clampada — nunca infla o pote (MORPH-002)", () => {
+    // Taxa negativa faria premioLiq > pote (criaria MC do nada). Deve virar 0.
+    const neg = calcularPayout(100, 10, -100, 5);
+    assert.equal(neg.taxa, 0);
+    assert.equal(neg.premioLiq, 1000); // igual ao pote, nunca maior
+
+    // Taxa acima de 100% é absurda; clamp em 100.
+    const alta = calcularPayout(100, 10, 500, 5);
+    assert.ok(alta.taxa >= 900, `taxa clampada <= 100% (foi ${alta.taxa})`);
+
+    // NaN é tratado como padrão 8.99.
+    const nan = calcularPayout(100, 10, Number.NaN, 5);
+    assert.equal(nan.taxa, 90);
+  });
+
   test("pagarPremio: credita vencedores, debita nada (já reservado), taxa+resto na plataforma", async () => {
     const db = ctx.db;
     const players = [
