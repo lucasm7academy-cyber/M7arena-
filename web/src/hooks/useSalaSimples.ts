@@ -122,15 +122,17 @@ export function useSalaSimples(
     }, [salaId]);
 
     const sincronizarTudo = useCallback(async (motivo: string) => {
-        const [dadosSala, dadosJogadores] = await Promise.all([
-            buscarsalas(salaId),
-            buscarJogadores(salaId),
-        ]);
+        // Um ÚNICO GET da sala (o detail já traz `jogadores` embutidos).
+        // Antes fazia buscarsalas + buscarJogadores = 2 GETs do MESMO endpoint,
+        // o que dobrava o tráfego com 10 jogadores e podia trazer estados
+        // diferentes em cada resposta (flicker/divergência na UI).
+        const dadosSala = await buscarsalas(salaId);
         if (!dadosSala) return null;
 
         registrarServerTime(dadosSala.server_time);
         setSala(dadosSala);
         setCodigoPartida(dadosSala.codigo_partida || null);
+        const dadosJogadores = dadosSala.jogadores || [];
         setJogadores(dadosJogadores);
         jogadoresRef.current = dadosJogadores;
         ultimoEstadoRef.current = dadosSala.estado;
