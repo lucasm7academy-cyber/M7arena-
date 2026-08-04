@@ -19,7 +19,6 @@ export const ESTADOS_ATIVOS = [
   "confirmacao",
   "iniciando_partida",
   "partida_iniciada",
-  "finalizacao",
   "aguardando_revisao",
 ];
 

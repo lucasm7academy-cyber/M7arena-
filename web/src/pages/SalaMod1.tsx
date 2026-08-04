@@ -62,10 +62,6 @@ function CentralDisplay() {
     );
 }
 
-function formatTime(s: number) {
-    return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
-}
-
 // ── PÁGINA ──────────────────────────────────────────
 export default function SalaMod1() {
     const { id } = useParams<{ id: string }>();
@@ -90,11 +86,10 @@ export default function SalaMod1() {
     const {
         sala, jogadores, loading, erro,
         timer, codigoPartida,
-        meuVoto, votos, timerFinalizacao,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos,
         ociosidadeMin, atualizar,
-        entrar, sair, confirmar, recusar, votar, solicitarFinalizacao,
+        entrar, sair, confirmar, recusar,
     } = useSalaSimples(salaId, usuarioAtual);
 
     const [codigoCopiado, setCodigoCopiado] = useState(false);
@@ -146,8 +141,6 @@ export default function SalaMod1() {
     const timeA = jogadores.filter((j: any) => j.is_time_a);
     const timeB = jogadores.filter((j: any) => !j.is_time_a);
     const jogadorAtual = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
-    const votosA = votos.filter((v: any) => v.opcao === 'time_a').length;
-    const votosB = votos.filter((v: any) => v.opcao === 'time_b').length;
 
     // ── Salas apostadas (design v3 §11): aviso antecipado, print e regras ──
     const ehApostada = (sala.mpoints || 0) > 0;
@@ -202,7 +195,6 @@ export default function SalaMod1() {
         confirmacao: 'Confirmando Presença',
         iniciando_partida: 'Iniciando Partida',
         partida_iniciada: 'Em Jogo',
-        finalizacao: 'Votação',
         aguardando_revisao: 'Em Análise',
         encerrada: 'Encerrada',
         cancelada: 'Cancelada',
@@ -499,68 +491,6 @@ export default function SalaMod1() {
                                     </div>
                                 )}
                             </motion.div>
-                        </motion.div>
-                    )}
-
-                    {/* VOTAÇÃO */}
-                    {sala.estado === 'finalizacao' && jogadorAtual && (
-                        <motion.div 
-                            key="overlay-votacao"
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full bg-black/80 backdrop-blur-xl z-[60] flex flex-col items-center justify-center p-[5vmin] text-center border border-white/10"
-                        >
-                            {meuVoto ? (
-                                <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex flex-col items-center gap-6">
-                                    <div className="flex flex-col items-center gap-4">
-                                        <div className="w-[10vmin] h-[10vmin] rounded-full bg-green-500/10 border-2 border-green-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(34,197,94,0.2)]">
-                                            <Check className="w-[5vmin] h-[5vmin] text-green-400 stroke-[3px]" />
-                                        </div>
-                                        <div className="flex flex-col gap-1 items-center">
-                                            <p className="text-white font-black text-[2vmin] uppercase tracking-widest text-center">Justiça Aplicada</p>
-                                            <p className="text-green-500/60 font-bold text-[1.2vmin] uppercase tracking-[0.3em] text-center">Voto Computado</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => navigate('/jogar')}
-                                        className="px-[6vmin] py-[2vmin] rounded-xl bg-white/[0.05] border border-white/10 text-white font-black text-[1.4vmin] uppercase tracking-widest hover:bg-[#FFB700] hover:text-black hover:border-[#FFB700] transition-all shadow-xl"
-                                    >
-                                        Sair da Sala
-                                    </motion.button>
-                                </motion.div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-6 w-full">
-                                    <div className="flex flex-col gap-2">
-                                        <p className="text-[2.5vmin] font-black text-white uppercase tracking-[0.4em]">FINALIZAR PARTIDA</p>
-                                        <p className="text-[1.2vmin] font-bold text-white/40 uppercase tracking-[0.4em]">Quem venceu?</p>
-                                    </div>
-
-                                    <div className="flex gap-4 w-full px-2">
-                                        <motion.button 
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => votar('time_a')}
-                                            className="flex-1 py-4 rounded-2xl border-2 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/20 transition-all flex flex-col items-center gap-1 group shadow-[0_0_30px_rgba(59,130,246,0.1)]"
-                                        >
-                                            <span className="text-[1.8vmin] font-black text-blue-400 uppercase tracking-widest group-hover:text-blue-300">Blue-Side</span>
-                                        </motion.button>
-                                        <motion.button 
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => votar('time_b')}
-                                            className="flex-1 py-4 rounded-2xl border-2 border-red-500/30 bg-red-500/5 hover:bg-red-500/20 transition-all flex flex-col items-center gap-1 group shadow-[0_0_30px_rgba(239,68,68,0.1)]"
-                                        >
-                                            <span className="text-[1.8vmin] font-black text-red-500 uppercase tracking-widest group-hover:text-red-400">Red-Side</span>
-                                        </motion.button>
-                                    </div>
-
-                                    <div className="flex flex-col items-center gap-2">
-                                        <p className="text-[1.2vmin] font-black text-white/20 uppercase tracking-[0.5em]">{formatTime(timerFinalizacao)} para encerramento</p>
-                                    </div>
-                                </div>
-                            )}
                         </motion.div>
                     )}
 

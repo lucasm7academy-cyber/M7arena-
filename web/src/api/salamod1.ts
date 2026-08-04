@@ -1,10 +1,5 @@
 // src/api/salamod1.ts
 import { api, type ApiLegacySala, type ApiLegacySalaJogador } from '../lib/api';
-// ── VOTAÇÃO ──
-// `registrarVoto` / `buscarVotos` ainda leem `sala_votos` (supabase). Esse
-// domínio pertence ao app.swap.rpc (votação/arbitragem); aqui só o domínio
-// salas/sala_jogadores foi migrado para a API própria.
-import { supabase } from '../lib/supabase';
 
 export async function buscarsalas(salaId: number): Promise<ApiLegacySala | null> {
     try {
@@ -126,57 +121,6 @@ const ERROS_SALA: Record<string, string> = {
 export function traduzirErroSala(codigo: string | null | undefined): string {
     if (!codigo) return 'Ocorreu um erro inesperado. Tente novamente.';
     return ERROS_SALA[codigo] ?? 'Ocorreu um erro inesperado. Tente novamente.';
-}
-
-// ── VOTAÇÃO ──────────────────────────────────────────
-
-export async function registrarVoto(
-    salaId: number,
-    userId: string,
-    opcao: 'time_a' | 'time_b',
-     isTimeA: boolean,
-) {
-    const { error } = await supabase
-        .from('sala_votos')
-        .upsert(
-            {
-                sala_id: salaId,
-                user_id: userId,
-                fase: 'finalizacao',
-                opcao: opcao,
-                 is_time_a: isTimeA,
-            },
-            {
-                onConflict: 'sala_id,user_id,fase',
-            }
-        );
-
-    if (error) {
-        return false;
-    }
-    return true;
-}
-
-export async function buscarVotos(salaId: number) {
-    const { data, error } = await supabase
-        .from('sala_votos')
-        .select('*')
-        .eq('sala_id', salaId)
-        .eq('fase', 'finalizacao');
-
-    if (error) {
-        return [];
-    }
-    return data || [];
-}
-
-/**
- * Encerra a partida e paga o prêmio no servidor (regra de negócio na API).
- * Substitui o antigo UPDATE direto em `salas` — o payout de MC decide na API.
- */
-export async function encerrarSala(salaId: number, vencedor: 'A' | 'B' | 'empate') {
-    const r = await normalizarResultado(api.matches.reportResult(salaId, { winnerSide: vencedor }));
-    return r.ok;
 }
 
 // ── CRIAR SALA ──────────────────────────────────────

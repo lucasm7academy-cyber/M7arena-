@@ -330,8 +330,6 @@ export interface ApiMatchesSdk {
   recusar: (id: number) => Promise<ApiSalaResultado>;
   tick: (id: number) => Promise<ApiSalaResultado>;
   start: (id: number) => Promise<ApiSalaResultado>;
-  finalizar: (id: number) => Promise<ApiSalaResultado>;
-  reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) => Promise<ApiSalaResultado>;
   /** Registra voto num jogo (substitui RPC votar_jogo). */
   vote: (id: number | string, teamTag: string) => Promise<{ ok: boolean }>;
 }
@@ -628,9 +626,6 @@ export const api = {
     confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),
     recusar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/recusar`),
     tick: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/tick`),
-    finalizar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/finalizar`),
-    reportResult: (id: number, data: { winnerSide: 'A' | 'B' | 'empate' | 'blue' | 'red' | 'draw' }) =>
-      api.post<ApiSalaResultado>(`/matches/${id}/report-result`, data),
     /** Registra voto num jogo (substitui RPC votar_jogo). */
     vote: (id: number | string, teamTag: string) =>
       api.post<{ ok: boolean }>(`/matches/${id}/vote`, { p_team_tag: teamTag }),

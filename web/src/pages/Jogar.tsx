@@ -204,7 +204,6 @@ const ESTADO_LABEL: Record<string, { label: string; cls: string }> = {
   confirmacao: { label: 'Confirmando', cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' },
   iniciando_partida: { label: 'Iniciando', cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' },
   partida_iniciada: { label: 'Em jogo', cls: 'text-orange-400 border-orange-400/30 bg-orange-400/10' },
-  finalizacao: { label: 'Votação', cls: 'text-purple-400 border-purple-400/30 bg-purple-400/10' },
   aguardando_revisao: { label: 'Em análise', cls: 'text-cyan-400 border-cyan-400/30 bg-cyan-400/10' },
   encerrada: { label: 'Encerrada', cls: 'text-white/40 border-white/10 bg-white/5' },
   cancelada: { label: 'Cancelada', cls: 'text-red-400 border-red-400/30 bg-red-400/10' },

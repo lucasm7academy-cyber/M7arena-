@@ -19,7 +19,7 @@ import { reservarEntrada } from "../lib/escrow.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
-// Ações de sala (confirm/leave/recusar/tick/start/finalizar/report-result) em
+// Ações de sala (confirm/leave/recusar/tick/start/report-result) em
 // rota própria para o arquivo não estourar ~400 linhas.
 matchesRouter.use(matchesActionsRouter);
 

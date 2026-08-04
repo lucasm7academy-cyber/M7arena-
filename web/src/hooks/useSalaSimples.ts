@@ -22,9 +22,6 @@ import {
     sairDaVaga,
     tickSala,
     traduzirErroSala,
-    registrarVoto,
-    buscarVotos,
-    encerrarSala,
 } from '../api/salamod1';
 
 const IS_DEV = import.meta.env.DEV;
@@ -67,20 +64,15 @@ export function useSalaSimples(
     const [tabFocusTick, setTabFocusTick] = useState(0); // reinicia timers ao voltar do alt+tab
 
     const [codigoPartida, setCodigoPartida] = useState<string | null>(null);
-    const [meuVoto, setMeuVoto] = useState<string | null>(null);
-    const [votos, setVotos] = useState<any[]>([]);
-    const [timerFinalizacao, setTimerFinalizacao] = useState(180);
     const [mostrarMensagem, setMostrarMensagem] = useState<{ tipo: 'erro' | 'sucesso'; texto: string } | null>(null);
     const [erroElegibilidade, setErroElegibilidade] = useState<ErroElegibilidade>(null);
     const [kickTick, setKickTick] = useState(0); // re-render periódico do aviso de ociosidade
 
     // ── Refs (apenas UI/anti-clique-duplo — NADA de coordenação de estado) ──
-    const timerFinRef = useRef<NodeJS.Timeout | null>(null);
     const mensagemTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const entrandoRef = useRef(false);
     const saindoRef = useRef(false);
     const confirmandoRef = useRef(false);
-    const carregandoVotosRef = useRef(false);
     const ultimoEstadoRef = useRef<string>('');
     const tickRef = useRef<{ chave: string; ts: number } | null>(null);
     const tickEmVooRef = useRef(false);
@@ -168,7 +160,6 @@ export function useSalaSimples(
     // ⚠️ NÃO remove jogador ao desmontar — quem decide isso é o servidor.
     useEffect(() => {
         return () => {
-            if (timerFinRef.current) clearInterval(timerFinRef.current);
             if (mensagemTimeoutRef.current) clearTimeout(mensagemTimeoutRef.current);
         };
     }, []);
@@ -305,94 +296,6 @@ export function useSalaSimples(
         timerIniciandoZerado,
         dispararTick,
     ]);
-
-    // ── CARREGAR VOTOS AO ENTRAR EM FINALIZAÇÃO ───────
-    useEffect(() => {
-        if (sala?.estado !== 'finalizacao') return;
-        if (votos.length > 0) return;
-        carregarVotos();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sala?.estado, votos.length]);
-
-    // ── TIMER DE FINALIZAÇÃO ──────────────────────────
-    // ⚠️ FASE 2: a apuração de votos ainda é decidida no cliente.
-    useEffect(() => {
-        if (sala?.estado !== 'finalizacao') {
-            setTimerFinalizacao(180);
-            return;
-        }
-
-        const is1v1 = sala?.modo === '1v1';
-
-        if (is1v1) {
-            // 1v1: 2 votos para o mesmo lado (1 de cada jogador)
-            const votosA = votos.filter(v => v.opcao === 'time_a').length;
-            const votosB = votos.filter(v => v.opcao === 'time_b').length;
-
-            if (votosA >= 2) { encerrarPartida('A'); return; }
-            if (votosB >= 2) { encerrarPartida('B'); return; }
-        } else {
-            // 5v5/ARAM/Time vs Time: 2 votos de time A + 2 de time B para o mesmo lado
-            const votosATimeA = votos.filter(v => v.opcao === 'time_a' && v.is_time_a === true).length;
-            const votosATimeB = votos.filter(v => v.opcao === 'time_a' && v.is_time_a === false).length;
-            const votosBTimeA = votos.filter(v => v.opcao === 'time_b' && v.is_time_a === true).length;
-            const votosBTimeB = votos.filter(v => v.opcao === 'time_b' && v.is_time_a === false).length;
-
-            if (votosATimeA >= 2 && votosATimeB >= 2) { encerrarPartida('A'); return; }
-            if (votosBTimeA >= 2 && votosBTimeB >= 2) { encerrarPartida('B'); return; }
-        }
-
-        if (!timerFinRef.current) {
-            timerFinRef.current = setInterval(() => {
-                setTimerFinalizacao(prev => {
-                    if (prev <= 1) {
-                        if (timerFinRef.current) {
-                            clearInterval(timerFinRef.current);
-                            timerFinRef.current = null;
-                        }
-                        encerrarPartida('empate');
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-
-        return () => {
-            if (timerFinRef.current) {
-                clearInterval(timerFinRef.current);
-                timerFinRef.current = null;
-            }
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sala?.estado, votos]);
-
-    // ── ENCERRAR PARTIDA ─────────────────────────────
-    // O servidor encerra a sala, paga o prêmio e solta os vínculos atômicamente.
-    async function encerrarPartida(vencedor: 'A' | 'B' | 'empate') {
-        if (IS_DEV) console.log(`🏆 [Partida] Encerrando com vencedor: ${vencedor}`);
-        if (timerFinRef.current) { clearInterval(timerFinRef.current); timerFinRef.current = null; }
-        const ok = await encerrarSala(salaId, vencedor);
-        if (!ok && IS_DEV) console.log(`❌ [Partida] Falha ao encerrar sala ${salaId}`);
-        // → encerrada (casual) ou aguardando_revisao (apostada): refaz a sala
-        // inteira na hora (mesma razão do entrar/confirmar).
-        await sincronizarTudo('encerrar');
-    }
-
-    // ── CARREGAR VOTOS (COM TRAVA) ────────────────────
-    async function carregarVotos() {
-        if (carregandoVotosRef.current) return;
-        carregandoVotosRef.current = true;
-
-        try {
-            const dadosVotos = await buscarVotos(salaId);
-            setVotos(dadosVotos);
-            const meu = dadosVotos.find((v: any) => v.user_id === usuarioAtual.id);
-            if (meu) setMeuVoto(meu.opcao);
-        } finally {
-            setTimeout(() => { carregandoVotosRef.current = false; }, 500);
-        }
-    }
 
     // ── AÇÕES (só disparam RPC; quem decide é o servidor) ──────
     const entrar = async (role: string, isTimeA: boolean) => {
@@ -551,29 +454,13 @@ export function useSalaSimples(
         }
     };
 
-    const votar = async (opcao: 'time_a' | 'time_b') => {
-        const jogador = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
-        const sucesso = await registrarVoto(salaId, usuarioAtual.id, opcao, jogador?.is_time_a || false);
-        if (sucesso) { setMeuVoto(opcao); await carregarVotos(); }
-    };
-
-    // Solicita a finalização no servidor (transição para votação).
-    const solicitarFinalizacao = async () => {
-        const r = await api.matches.finalizar(salaId);
-        if (!r.ok && IS_DEV) console.log(`❌ [Finalizar] Recusado: ${r.erro}`);
-        // partida_iniciada → finalizacao: refaz a sala inteira para a tela de
-        // votação aparecer na hora (mesma razão do entrar/confirmar).
-        await sincronizarTudo('finalizar');
-    };
-
     return {
         sala, jogadores, loading, erro,
         timer, timerIniciandoPartida, codigoPartida,
-        meuVoto, votos, timerFinalizacao,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos,
         ociosidadeMin,
         atualizar: () => sincronizarTudo('manual'),
-        entrar, sair, confirmar, recusar, votar, solicitarFinalizacao,
+        entrar, sair, confirmar, recusar,
     };
 }

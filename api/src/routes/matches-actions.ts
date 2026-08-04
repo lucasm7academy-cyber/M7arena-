@@ -146,29 +146,6 @@ matchesActionsRouter.post("/:id/tick", async (req, res) => {
   }
 });
 
-// POST /api/matches/:id/finalizar - Solicita finalização (vai para votação)
-matchesActionsRouter.post("/:id/finalizar", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
-
-    const r = await db.transaction(async (tx: any) => {
-      const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
-      if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
-      if (!["partida_iniciada", "iniciando_partida", "finalizacao"].includes(match.status)) {
-        return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
-      }
-      await tx.update(matches).set({ status: "finalizacao", stateDeadlineAt: null }).where(eq(matches.id, match.id));
-      return { ok: true, erro: null, estado: "finalizacao", mudou: true };
-    });
-
-    notifyMatchChange(String(req.params.id));
-    return res.json(r);
-  } catch (error: any) {
-    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
-  }
-});
-
 // POST /api/matches/:id/report-result - Reporta o resultado (print enviado no
 // app) e leva a sala para a revisão do admin.
 matchesActionsRouter.post("/:id/report-result", async (req, res) => {

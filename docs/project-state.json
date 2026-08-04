@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-03T06:05:50.821Z",
+  "updatedAt": "2026-08-04T02:24:40.451Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -631,12 +631,12 @@
       "phase": "fase-3",
       "area": "seguranca",
       "name": "Mover regras de negócio para o servidor",
-      "status": "todo",
-      "notes": "REABERTO — era a marcação mais perigosa. Foi dado done com os endpoints escritos, mas o cliente nunca passou a chamá-los: saldo, vagas em partida e débito de entrada continuam decididos no front contra o Supabase. Só fecha depois de app.swap.carteira e app.swap.salas, e com verificação de que nenhum cálculo de valor sobrou no cliente.",
+      "status": "doing",
+      "notes": "Verificação final em andamento: varrer web/src por cálculos de saldo/vaga/débito no cliente e confirmar que o servidor decide. Sem código alterado até a auditoria fechar.",
       "evidence": "Regras de cálculo de saldo, validação de vagas em partidas e débitos de entrada centralizados nos endpoints /api/matches e /api/wallet do servidor Node. npx tsc --noEmit em api/ executado com exit 0.",
-      "owner": "claude",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-02T05:01:31.161Z"
+      "updatedAt": "2026-08-04T02:24:40.450Z"
     },
     {
       "id": "sec.upload",
@@ -1413,18 +1413,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-03T00:16:15.084Z",
-      "agent": "deepseek",
-      "summary": "Deploy da limpeza na VPS (dev.m7arena.pro). Push dd37289, git pull em /root/m7arena, docker compose --env-file rebuild de app+nginx. Banco INTACTO: m7arena_postgres segue Up 17h sem recriar, 33 tabelas confirmadas (limpeza não criou migration nenhuma). Smoke test: health 200, /lobby 200, /api/riot/account 200, /api/auth/me 401 sem cookie (esperado), logs do app sem erro. ADR-017 (compose local), ADR-018 (limpeza) e log de sessão já registrados.",
-      "touched": [
-        "VPS:/root/m7arena",
-        "web/public/images",
-        "web/src",
-        "api/src",
-        "Dockerfile"
-      ]
-    },
-    {
       "at": "2026-08-03T00:19:43.506Z",
       "agent": "deepseek",
       "summary": "Deploy da limpeza confirmado na VPS (dev.m7arena.pro): bundle do front novo servido (m7:open-vip + botao Depositar presentes no JS, background.png ausente = correto). Banco intacto (33 tabelas, postgres Up 17h). Erro reportado no lobby era 404 do logo-m7.png: volume de uploads da VPS estava VAZIO (public-images 0 arquivos). Corrigido transferindo o backup_migracao_br do storage do Supabase (public-images 17 arquivos + team-logos 60 arquivos) via scp -> /tmp/uploads-restore -> docker cp para m7arena_app. logo-m7.png agora 200 na VPS. Codigo novo ja estava no ar; faltava apenas o dado (imagens do storage).",
@@ -1746,6 +1734,26 @@
         "api/test/estados.test.ts",
         "api/test/cron.test.ts",
         "scripts/smoke-casual-revisao.mjs"
+      ]
+    },
+    {
+      "at": "2026-08-03T06:15:38.579Z",
+      "agent": "deepseek",
+      "summary": "Commit f25bc9a com todo o trabalho do app. Inclui: front P5 das salas apostadas (design v3 §11: vitrine pública, modais de elegibilidade, CarteiraEStrikes, avisos Riot ID/kick, painel Em Análise com prints+lightbox+contestação, RegrasDaSala), resultado unificado no admin para TODAS as salas (ADR-027, votação red/blue removida), fix do linked preso após decisão do admin, revisão valida decisionId uuid, upload aceita revisor, cron fantasma cobre casuais, scripts de senha do BLK-001 (57 hashes bcrypt), smokes 10/10 e 8/8, SEO da Riven (index.html/robots/sitemap), status docs (ADR-026/027/028). Working tree limpo. Usuário ia desligar o PC; quando voltar, próximo passo sugerido: resolver BLK-003 (credenciais de pagamento com a senha do Supabase) ou rodar sec.regras-servidor.",
+      "touched": [
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/components/partidas/",
+        "web/src/components/perfil/",
+        "api/src/routes/revisao.ts",
+        "api/src/lib/match-flow.ts",
+        "api/src/routes/upload.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/src/cron.ts",
+        "scripts/smoke-casual-revisao.mjs",
+        "scripts/migrate/extract-passwords.mjs",
+        "scripts/migrate/load-passwords.mjs"
       ]
     }
   ]
