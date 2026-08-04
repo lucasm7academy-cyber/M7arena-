@@ -314,7 +314,9 @@ export default function SalaMod1() {
 
             {/* MAIN CENTRAL AREA */}
             <div className="flex-1 w-full relative flex items-center justify-center overflow-visible">
-                {/* CÍRCULO CENTRAL HUB */}
+                {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o card de
+                    resultado central já ocupa o espaço) */}
+                {sala.estado !== 'encerrada' && (
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full z-10 flex items-center justify-center">
                     {/* Outer rings */}
                     <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
@@ -339,6 +341,7 @@ export default function SalaMod1() {
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* SIDE GRID SECTION */}
                 <div className={`w-full flex items-center justify-center z-20 ${isX1 ? 'gap-[74vmin]' : 'gap-[70vmin]'}`}>
