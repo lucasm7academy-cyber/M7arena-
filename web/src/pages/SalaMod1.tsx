@@ -8,6 +8,7 @@ import { useSalaSimples } from '../hooks/useSalaSimples';
 import { VagaSlot } from '../components/partidas/VagaSlot';
 import { ModaisElegibilidade } from '../components/partidas/ModaisElegibilidade';
 import { AguardandoRevisao } from '../components/partidas/AguardandoRevisao';
+import { ResultadoPartida } from '../components/partidas/ResultadoPartida';
 import { RegrasDaSala } from '../components/partidas/RegrasDaSala';
 import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
@@ -538,6 +539,11 @@ export default function SalaMod1() {
                         usuarioId={usuarioAtual.id}
                         onAtualizar={atualizar}
                     />
+                )}
+
+                {/* PARTIDA FINALIZADA — resultado no centro (prints + vencedores) */}
+                {sala.estado === 'encerrada' && (
+                    <ResultadoPartida sala={sala} />
                 )}
             </div>
 

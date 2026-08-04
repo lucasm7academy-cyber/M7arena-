@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 04/08/2026 03:17 — por `morpheus`
+**Última atualização:** 04/08/2026 14:58 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 62/72` concluído
+`████████████████████████░░░░ 63/73` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 12/12 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 32/36 | — | 2 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 33/37 | — | 2 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ██░░░░░░░░░░ 1/7 | 1 | 1 |
 
@@ -39,7 +39,7 @@
 | Área | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Governança & Agentes | ████████████ 6/6 | — | — |
-| Banco de Dados | ████████████ 12/12 | — | — |
+| Banco de Dados | ████████████ 13/13 | — | — |
 | Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
 | Aplicação (React + Vite) | ████████████ 27/28 | — | 1 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
@@ -110,6 +110,10 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 
 ### Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
 
+**Banco de Dados**
+
+- `[x]` **Plano do sistema de moedas M7COINS (MC/MP)** `economia.mc.plano`<br>  Plano do M7COINS criado e referenciado nos demais planos. MC já é moeda global; fluxo admin→payout/empate implementado. Mapeadas 6 lacunas com ordem de implementação.<br>  _evidência:_ `docs/planos/plano-m7coins.md criado; refs em ARQUITETURA.md §3.6 e PLANO_MIGRACAO.md. Estado atual lido no código: escrow.ts (pagarPremio taxa, pagarEmpate sem taxa), revisao.ts:104-125, user_wallets.mc_reservado (identidade.ts:84), wallet_transactions (economia.ts:14).`<br>  _concluído 04/08/2026 14:44 por deepseek_
+
 **Aplicação (React + Vite)**
 
 - `[-]` **Next.js 15 App Router + Tailwind 4** `app.setup`<br>  ADR-010: Next.js 15 App Router descartado. O front passa a ser fork do React+Vite original. Código preservado no git (commit 3e8fd68).<br>  _evidência:_ `npm run build -> exit code 0, src/app/layout.tsx:1`
@@ -168,7 +172,7 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[-]` **motion v12 + lucide-react + react-icons** `design.libs`<br>  ADR-010: as libs vêm do package.json do fork (motion v12, lucide-react, react-icons), sem reinstalação manual.<br>  _evidência:_ `package.json:17`
 - `[x]` **public/ portado (40 imagens, lanes, ranks, sounds)** `design.assets`<br>  Todas as 40 imagens, assets de lanes, ranks e sons portados 1:1 de M7AcademySite/public para M7arenaSite/public.<br>  _evidência:_ `D:/Aplicativos/M7arenaSite/public/ (40 imagens, lanes, ranks, sounds)`<br>  _concluído 01/08/2026 01:13 por gemini_
 - `[-]` **ElectricBorder + VipBadge/VipCrown** `design.ui`<br>  ADR-010: ElectricBorder e VipBadge vêm prontos no fork.<br>  _evidência:_ `src/components/ui/ElectricBorder.tsx:1, src/components/ui/VipBadge.tsx:1`
-- `[!]` **Regressão visual antigo vs novo** `design.regressao`<br>  Reaberto sob ADR-010. Vira a verificação de fidelidade do fork: as 25 telas conferidas contra m7academy.pro no ar. Como é cópia literal, qualquer diferença é bug de build/env, não de layout.<br>  _evidência:_ `Paridade visual e estrutural 1:1 confirmada. App.tsx possui as 25 rotas idênticas em bytes. Build estático gerou 2.186 módulos em dist/ sem divergências de classe ou layout.`
+- `[!]` **Regressão visual antigo vs novo** `design.regressao`<br>  Revertido — erro meu. BLK-004 continua válido.<br>  _evidência:_ `Paridade visual e estrutural 1:1 confirmada. App.tsx possui as 25 rotas idênticas em bytes. Build estático gerou 2.186 módulos em dist/ sem divergências de classe ou layout.`
 
 **Segurança**
 
@@ -419,6 +423,14 @@ _03/08/2026 03:05 — deepseek_
 
 _03/08/2026 03:05 — deepseek_
 
+### ADR-029 — MC já é moeda global; MP permanece como moeda de pontos sem fluxo de aposta
+
+**Decisão:** O sistema M7COINS (MC) já está implementado como moeda global (user_wallets.mc + mc_reservado para escrow das salas apostadas), com fluxo completo de admin declara vencedor (payout com taxa 8,99% congelada), empate (devolve tudo sem taxa) e cancelamento. Criado docs/planos/plano-m7coins.md como plano consolidado, com referência cruzada em ARQUITETURA.md e PLANO_MIGRACAO.md. O MP (M7 Points) permanece como moeda de pontos/ranking, sem fluxo de aposta — se ganhar fluxo, registrar ADR.
+
+**Por quê:** O usuário pediu para FAZER/REVISAR/CRIAR o sistema MC "separando os dados no projeto" — a investigação mostrou que ele já existe e está no ar (escrow, revisão, ledger, testes 36/36). Redesenharia coisa pronta se não consolidasse o estado atual primeiro. O plano próprio documenta onde está cada peça e as lacunas reais (depósito, extrato, PIX, app_config).
+
+_04/08/2026 14:44 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -427,6 +439,8 @@ _03/08/2026 03:05 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 04/08/2026 14:58 | deepseek | Deploy do saldo MC no header (dev.m7arena.pro). 1) Adicionei botao 'Jogar' (rota /jogar, icone Gamepad2) como 2o item da sidebar em LayoutWrapper.tsx. 2) Criei web/src/components/icons/GoldEssenceIcon.tsx (SVG da moeda extraido do DepositModal, com useId p/ evitar colisao de ids SVG) e refatorei DepositModal para importar dele (visual 1:1). 3) Header: ao lado do botao Depositar, Link /perfil com icone da moeda + perfil.saldo formatado pt-BR (so user logado), escondido em telas < sm. 4) npm run build via node_modules/.bin/vite.cmd (npm run build nao regenerava dist — outro terminal tambem usa a pasta). Commit 0efda3f push + deploy VPS (git pull + docker compose up -d --build app nginx). Validado: health 200, lobby 200, bundle index-C5GBnhr4.js contem 'Saldo em M7 Coins' e path do icone. Removi arquivos temporarios vazios api/at*.txt. docs do plano M7COINS tambem foram commitados. <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`, `web/src/components/icons/GoldEssenceIcon.tsx`, `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/lib/api.ts`, `docs/planos/plano-m7coins.md`, `docs/ARQUITETURA.md`, `docs/PLANO_MIGRACAO.md`_ |
+| 04/08/2026 14:44 | deepseek | Investiguei o sistema M7COINS no código: MC JÁ É moeda global (user_wallets.mc + mc_reservado escrow, ledger wallet_transactions, platform_revenue) e o fluxo que o usuário descreveu JÁ está implementado: admin declara vencedor → pagarPremio com taxa 8,99% congelada; empate → pagarEmpate sem taxa devolve tudo; cancel → pagarCancelamento (revisao.ts:104-125 + escrow.ts). Criei docs/planos/plano-m7coins.md (plano próprio consolidado: estado atual, modelo de dados, fluxo fim a fim, arredondamento, 6 lacunas com ordem: edge-functions/BLK-003, PIX, extrato front, app_config, MP). Atualizei ARQUITETURA.md §3.6 e PLANO_MIGRACAO.md com referência cruzada. ADR-029 registrada. Peça economia.mc.plano fechada (done). Nenhum código de produto alterado — o botão Jogar na sidebar (LayoutWrapper.tsx:116) foi adicionado no início da sessão com build ok. <br>_tocou: `docs/planos/plano-m7coins.md`, `docs/ARQUITETURA.md`, `docs/PLANO_MIGRACAO.md`, `web/src/components/layout/LayoutWrapper.tsx`_ |
 | 04/08/2026 03:17 | morpheus | Corrigi os 4 findings da auditoria Morpheus do fluxo de salas e subi para a VPS. MORPH-001 (HIGH): senha de sala removida do shape (sempre null), validacao movida para o servidor no POST /join com timingSafeEqual; front guarda a senha digitada no lobby em salaSenhaStore e envia no join; erro senha_incorreta traduzido. MORPH-002 (MEDIUM): clamp de apostaMc (0..1M), taxaPct (0..100), maxJogadores (2..10) na criacao + allowlist do modo (5v5/1v1/aram/time_vs_time) + defesa em profundidade no calcularPayout (taxa invalida nunca infla premio). MORPH-003 (MEDIUM): CORS com allowlist fixa (APP_URL + localhost), validado na VPS que origem arbitraria nao recebe Access-Control-Allow-Origin. MORPH-004 (LOW): coberto pelo clamp. Testes 36/36, tsc api exit 0, build web ok. Deploy na VPS: lobby 200, health 200. Commits 97172b8 e e73f7a2. <br>_tocou: `api/src/routes/matches.ts`, `api/src/lib/match-shape.ts`, `api/src/lib/escrow.ts`, `api/src/index.ts`, `api/test/escrow.test.ts`, `web/src/lib/salaSenhaStore.ts`, `web/src/api/salamod1.ts`, `web/src/lib/api.ts`, `web/src/hooks/useSalaSimples.ts`, `web/src/pages/Jogar.tsx`, `web/src/pages/SalaMod1.tsx`_ |
 | 04/08/2026 03:03 | morpheus | Auditoria ofensiva (Morpheus) do fluxo de salas pos-ajustarsala. Correcoes confirmadas solidas: race no join/confirm protegida por FOR UPDATE+transacao (10 confirms paralelos 8/8), clock sync validado com relogios diferentes, polling fallback so com WS morto, 1 GET unico. FINDINGS: (1) HIGH - senha da sala exposta no GET /api/matches/:id para qualquer autenticado (match-shape.ts:86); servidor nunca valida senha no join - protecao so cosmética. (2) MEDIUM - mass assignment na criacao: maxJogadores/taxaPct/apostaMc do body sem clamp (matches.ts:114-141); taxaPct negativo cria MC do nada no calcularPayout (escrow.ts:64-70). (3) MEDIUM - CORS origin:true+credentials ecoa origem arbitraria (mitigado por SameSite=Lax). (4) LOW - aposta negativa vira dado inconsistente. Upload bem defendido (memoryStorage+sanitize+uuid). Cookies httpOnly+secure+lax corretos. <br>_tocou: `api/src/routes/matches.ts`, `api/src/lib/match-shape.ts`, `api/src/lib/escrow.ts`, `api/src/index.ts`, `api/src/routes/upload.ts`, `api/src/lib/session.ts`_ |
 | 04/08/2026 02:57 | deepseek | Reforcos finais do ajustarsala para o teste com 10 players. (1) Review de logica com 10 jogadores simultaneos: join/confirm usam FOR UPDATE na linha do match -> serializa cliques concorrentes; checagem de vaga e total>=max dentro do lock; 11o jogador barrado. (2) Corrigi polling fallback para rodar SO com WS morto (antes rodava a cada 5s em sala parada com 10 jogadores mesmo com WS perfeito, 2 req/s de desperdicio). (3) Otimizei sincronizarTudo para 1 GET unico (antes 2 GETs identicos de /matches/:id -> dobrava trafego com 10 jogadores e arriscava estados divergentes). (4) Novo teste de servidor: 5v5 com 10 jogadores preenchem -> confirmacao, 11o barrado (32/32 na suite). (5) NOVO smoke-clock-sync-vps.mjs: sala 1v1 real na VPS em confirmacao, 7 clientes simulados com relogios de -8min a +8min usando o codigo real de clockSync.ts -> SEM correcao cada um ve tempo diferente (0s a 540s), COM correcao todos veem 60s. 6/6. Tudo commitado e deployado. <br>_tocou: `scripts/smoke-clock-sync-vps.mjs`, `web/src/hooks/useSalaSimples.ts`, `api/test/estados.test.ts`, `ajustarsala.md`_ |
@@ -440,8 +454,6 @@ _03/08/2026 03:05 — deepseek_
 | 03/08/2026 02:32 | deepseek | Bug UX de salas: a contagem (timer de confirmação) não aparecia na hora quando a última vaga era preenchida em aba de background (Chrome congela o WebSocket). Diagnóstico: o `entrar()` só chamava `sincronizarJogadores()` (atualiza jogadores, ignora o estado que o servidor retorna), então a transição preenchendo→confirmacao não refletia no DOM até um refetch manual (reload/voltar pra aba). Solução (conforme pedido do usuário, sem polling): em useSalaSimples.ts, o `entrar()` agora checa `r.estado === 'confirmacao'` e nesse caso chama `sincronizarTudo('entrar')` (refetch da sala inteira) — a contagem aparece na hora mesmo com WebSocket congelado. Entrar/sair/confirmar/recusar no caso geral ficaram como estavam (realtime). Testado no browser MCP: última vaga → DOM mostra CONFIRME AGORA + timer sem reload. tsc web ok (só 2 pré-existentes), nginx rebuildado. <br>_tocou: `web/src/hooks/useSalaSimples.ts`_ |
 | 03/08/2026 02:31 | riven | Redesign dos modais de depósito e elegibilidade (skill design-frontend). DepositModal.tsx: header com subtítulo de valor ("Quanto maior o pacote, maior o bônus"), grade de pacotes com destaque de seleção (check + gradiente dourado), badge "Mais Escolhido" no popular, badge de "+X% bônus" calculado relativo ao pacote R$10 nos maiores, resumo do pedido com "Custo por MC" (transparência de valor), CTA maior, tela de QR com valor a pagar em destaque. ModaisElegibilidade.tsx: ModalShell redesenhado (linha de acento no topo por cor de tipo, ícone por modal específico em vez de sempre AlertTriangle, botões com sombra/feedback de escala), modal de saldo com barra de progresso e microcopy "Recarga em segundos via PIX". Lógica de negócio e classes dos demais elementos intactas. Build web passou (✓ built in 10.18s). <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/components/partidas/ModaisElegibilidade.tsx`_ |
 | 03/08/2026 02:19 | riven | Página Quem Somos (web/src/pages/QuemSomos.tsx) finalizada. Na sessão anterior só tinha trocado h2 por h1 (semântica SEO). Agora completei: alt texts das 4 imagens saíram de "Founder"/"Founder Continuation" para descritivos com contexto ("Lucas Eduardo, fundador e CEO da M7 Arena", "Splash art da campeã Riven do League of Legends"), e o parágrafo de missão agora destaca o benefício concreto "premiação em Pix" e "transparentes" (antes era só "premiações"). Nenhuma classe ou layout alterado. Observação: página é SPA sem title/meta própria (limitação do index.html único — ficaria para futura implementação de per-route meta). Build web passou (✓ built in 6.38s). <br>_tocou: `web/src/pages/QuemSomos.tsx`_ |
-| 03/08/2026 02:14 | riven | Verificação completa das mensagens de display da sala de partida (SalaMod1.tsx + salamod1.ts + useSalaSimples). Melhorias de copy, classes/layout intactos: (1) BUG de copy corrigido — botão de erro dizia "Voltar ao Lobby" mas navegava para /jogar, agora "Voltar às Salas"; (2) estado da sala no top bar deixou de mostrar o valor cru do banco (preenchendo, confirmacao...) e ganhou rótulo amigável via mapa ESTADO_ROTULO ("Aguardando Jogadores", "Confirmando Presença", "Em Jogo", "Em Análise"...); (3) "Faça login"→"Faça login para entrar na sala"; (4) premiação em sala casual mostra "Casual" em vez de "0 MC"; (5) ERROS_SALA refinados (ja_em_outra_sala, ja_confirmado, nao_pode_sair) com tom de ação; (6) botão "Enviar Print de Resultado"→"Enviar Print e Iniciar Revisão". Verifiquei também AguardandoRevisao, RegrasDaSala, VagaSlot, ModaisElegibilidade e as transições de estado do useSalaSimples — já estavam bem escritos. Build web passou (✓ built in 7.41s). <br>_tocou: `web/src/pages/SalaMod1.tsx`, `web/src/api/salamod1.ts`_ |
-| 03/08/2026 02:10 | riven | Copy das salas e modais de partida (Jogar.tsx + componentes) melhorada, só texto, classes/layout intactos. MODOS_JOGO em api/salamod1.ts: descrições genéricas ("Summoners Rift - Competitivo") viraram copy com benefício ("o competitivo em sua forma mais pura", "partidas rápidas, ação do início ao fim", "duelo individual, quem é o melhor?", "Clã contra clã — disputa que vale ranking e orgulho"). Jogar.tsx: modal login vitrine com urgência de vaga, empty state "Seja o primeiro — crie uma sala... e defina o valor!", placeholder de descrição com exemplo real, botão de sala cheia (estado visual desabilitado + rótulo SALA CHEIA, antes mostrava ENTRAR), modal de senha mais claro. ModaisElegibilidade: saldo insuficiente com urgência + CTA "Recarregar e garantir vaga", suspensão mais empática com caminho de volta. RegrasDaSala: SLA com "no Pix". Build web passou (✓ built in 7.32s). <br>_tocou: `web/src/api/salamod1.ts`, `web/src/pages/Jogar.tsx`, `web/src/components/partidas/ModaisElegibilidade.tsx`, `web/src/components/partidas/RegrasDaSala.tsx`_ |
 
 ---
 

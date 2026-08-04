@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T06:17:12.968Z",
-  "updatedBy": "morpheus",
+  "updatedAt": "2026-08-04T17:58:14.801Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -380,11 +380,11 @@
       "area": "design",
       "name": "Regressão visual antigo vs novo",
       "status": "blocked",
-      "notes": "Reaberto sob ADR-010. Vira a verificação de fidelidade do fork: as 25 telas conferidas contra m7academy.pro no ar. Como é cópia literal, qualquer diferença é bug de build/env, não de layout.",
+      "notes": "Revertido — erro meu. BLK-004 continua válido.",
       "evidence": "Paridade visual e estrutural 1:1 confirmada. App.tsx possui as 25 rotas idênticas em bytes. Build estático gerou 2.186 módulos em dist/ sem divergências de classe ou layout.",
-      "owner": "claude",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-02T05:37:18.615Z"
+      "updatedAt": "2026-08-04T17:55:17.527Z"
     },
     {
       "id": "app.auth",
@@ -1141,6 +1141,18 @@
       "owner": "morpheus",
       "createdAt": "2026-08-04T06:03:48.597Z",
       "updatedAt": "2026-08-04T06:17:02.323Z"
+    },
+    {
+      "id": "economia.mc.plano",
+      "phase": "fase-3",
+      "area": "banco",
+      "name": "Plano do sistema de moedas M7COINS (MC/MP)",
+      "status": "done",
+      "notes": "Plano do M7COINS criado e referenciado nos demais planos. MC já é moeda global; fluxo admin→payout/empate implementado. Mapeadas 6 lacunas com ordem de implementação.",
+      "evidence": "docs/planos/plano-m7coins.md criado; refs em ARQUITETURA.md §3.6 e PLANO_MIGRACAO.md. Estado atual lido no código: escrow.ts (pagarPremio taxa, pagarEmpate sem taxa), revisao.ts:104-125, user_wallets.mc_reservado (identidade.ts:84), wallet_transactions (economia.ts:14).",
+      "owner": "deepseek",
+      "createdAt": "2026-08-04T17:43:33.957Z",
+      "updatedAt": "2026-08-04T17:44:41.209Z"
     }
   ],
   "decisions": [
@@ -1395,6 +1407,15 @@
       "decision": "Os prints de resultado aparecem como miniaturas com o nome de quem anexou; clicar abre lightbox (mesmo padrão dos logos de time, z-[200] com spring) tanto no painel Em Análise (AguardandoRevisao) quanto no painel admin (RevisaoPartidas). Anexar exige participante confirmado OU revisor (admin/moderador). decisaoId na rota de revisão agora valida formato uuid (400 decision_id_invalido em vez de 500 do Postgres).",
       "rationale": "Usuário pediu para deixar visível quem anexou e ampliar a imagem ao clicar (\"só admin ou quem joga pode anexar\"). Reutilizar o lightbox dos logos de time mantém paridade visual. A validação de uuid evita 500 quando um decisionId inválido chega (bug de robustez encontrado no smoke test).",
       "supersedes": null
+    },
+    {
+      "id": "ADR-029",
+      "date": "2026-08-04T17:44:30.612Z",
+      "author": "deepseek",
+      "title": "MC já é moeda global; MP permanece como moeda de pontos sem fluxo de aposta",
+      "decision": "O sistema M7COINS (MC) já está implementado como moeda global (user_wallets.mc + mc_reservado para escrow das salas apostadas), com fluxo completo de admin declara vencedor (payout com taxa 8,99% congelada), empate (devolve tudo sem taxa) e cancelamento. Criado docs/planos/plano-m7coins.md como plano consolidado, com referência cruzada em ARQUITETURA.md e PLANO_MIGRACAO.md. O MP (M7 Points) permanece como moeda de pontos/ranking, sem fluxo de aposta — se ganhar fluxo, registrar ADR.",
+      "rationale": "O usuário pediu para FAZER/REVISAR/CRIAR o sistema MC \"separando os dados no projeto\" — a investigação mostrou que ele já existe e está no ar (escrow, revisão, ledger, testes 36/36). Redesenharia coisa pronta se não consolidasse o estado atual primeiro. O plano próprio documenta onde está cada peça e as lacunas reais (depósito, extrato, PIX, app_config).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1436,22 +1457,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T02:19:21.168Z",
-      "agent": "gemini",
-      "summary": "Redesign total do DepositModal: removidas transparências fracas dos cartões, aplicados fundos escuros sólidos (#0f1016 e #0d0e14 com bordas douradas sólidas e sombra), Twisted Fate posicionado a -right-[400px] com 820px de largura e opacidade de 95%. Rebuild do contêiner Docker iniciado.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T02:20:24.101Z",
-      "agent": "gemini",
-      "summary": "Build do Docker Nginx concluído. Layout sólido do DepositModal (sem transparências lavadas) e Twisted Fate posicionado a -right-[400px] atualizados e ativos localmente em http://localhost:3000.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T02:22:16.031Z",
       "agent": "gemini",
@@ -1829,6 +1834,31 @@
         "web/src/hooks/useSalaSimples.ts",
         "web/src/pages/Jogar.tsx",
         "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-04T17:44:47.940Z",
+      "agent": "deepseek",
+      "summary": "Investiguei o sistema M7COINS no código: MC JÁ É moeda global (user_wallets.mc + mc_reservado escrow, ledger wallet_transactions, platform_revenue) e o fluxo que o usuário descreveu JÁ está implementado: admin declara vencedor → pagarPremio com taxa 8,99% congelada; empate → pagarEmpate sem taxa devolve tudo; cancel → pagarCancelamento (revisao.ts:104-125 + escrow.ts). Criei docs/planos/plano-m7coins.md (plano próprio consolidado: estado atual, modelo de dados, fluxo fim a fim, arredondamento, 6 lacunas com ordem: edge-functions/BLK-003, PIX, extrato front, app_config, MP). Atualizei ARQUITETURA.md §3.6 e PLANO_MIGRACAO.md com referência cruzada. ADR-029 registrada. Peça economia.mc.plano fechada (done). Nenhum código de produto alterado — o botão Jogar na sidebar (LayoutWrapper.tsx:116) foi adicionado no início da sessão com build ok.",
+      "touched": [
+        "docs/planos/plano-m7coins.md",
+        "docs/ARQUITETURA.md",
+        "docs/PLANO_MIGRACAO.md",
+        "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-04T17:58:14.801Z",
+      "agent": "deepseek",
+      "summary": "Deploy do saldo MC no header (dev.m7arena.pro). 1) Adicionei botao 'Jogar' (rota /jogar, icone Gamepad2) como 2o item da sidebar em LayoutWrapper.tsx. 2) Criei web/src/components/icons/GoldEssenceIcon.tsx (SVG da moeda extraido do DepositModal, com useId p/ evitar colisao de ids SVG) e refatorei DepositModal para importar dele (visual 1:1). 3) Header: ao lado do botao Depositar, Link /perfil com icone da moeda + perfil.saldo formatado pt-BR (so user logado), escondido em telas < sm. 4) npm run build via node_modules/.bin/vite.cmd (npm run build nao regenerava dist — outro terminal tambem usa a pasta). Commit 0efda3f push + deploy VPS (git pull + docker compose up -d --build app nginx). Validado: health 200, lobby 200, bundle index-C5GBnhr4.js contem 'Saldo em M7 Coins' e path do icone. Removi arquivos temporarios vazios api/at*.txt. docs do plano M7COINS tambem foram commitados.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/components/icons/GoldEssenceIcon.tsx",
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/lib/api.ts",
+        "docs/planos/plano-m7coins.md",
+        "docs/ARQUITETURA.md",
+        "docs/PLANO_MIGRACAO.md"
       ]
     }
   ]
