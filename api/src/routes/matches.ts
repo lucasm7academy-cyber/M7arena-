@@ -121,6 +121,10 @@ matchesRouter.post("/", async (req, res) => {
   // Máx. 10 vagas (5v5/ARAM/times); mín. 2 (1v1). Rejeita qualquer coisa fora.
   const maxRaw = Number(maxJogadores);
   const maxJogadoresSanitizado = Number.isFinite(maxRaw) ? Math.max(2, Math.min(Math.trunc(maxRaw), 10)) : 10;
+  // Allowlist do modo (MORPH-002): mode do body não confiável — um valor
+  // inventado quebraria o layout de vagas do front (SalaMod1 usa a lista fixa).
+  const MODOS_VALIDOS = ["5v5", "1v1", "aram", "time_vs_time"];
+  const modoSanitizado = MODOS_VALIDOS.includes(mode) ? mode : "5v5";
   const roomCode = `M7-${Math.floor(1000 + Math.random() * 9000)}`;
 
   try {
@@ -134,7 +138,7 @@ matchesRouter.post("/", async (req, res) => {
         .insert(matches)
         .values({
           gameId: "lol",
-          mode: mode || "5v5",
+          mode: modoSanitizado,
           status: "preenchendo",
           createdBy: user.id,
           roomCode,
