@@ -8,9 +8,9 @@ import { userStrikes } from "../../../db/schema/apostas.js";
  * (design v3 §2.1). A fonte da verdade é o servidor: `validarElegibilidade`
  * é re-checado dentro da transação com FOR UPDATE nas rotas de join/criar.
  *
- * Casuais (aposta 0) só exigem conta ativa; apostadas exigem as 6 checagens.
- * Admin (role admin/proprietário) sempre pode entrar — não é bloqueado por
- * punição, outra sala ativa ou termos.
+ * Casuais (aposta 0) só exigem conta ativa + Riot ID; apostadas exigem todas
+ * as 6 checagens. Admin (role admin/proprietário) sempre pode entrar — não é
+ * bloqueado por punição, outra sala ativa ou termos.
  */
 
 /** Estados em que a sala está "viva" (contagem do painel admin). */
@@ -96,9 +96,9 @@ export async function removerStrike(tx: any, strikeId: string, removidoPor: stri
 /**
  * Regras de acesso a salas (design v3 §2.1) — a fonte da verdade é o servidor,
  * re-checadas dentro da transação com FOR UPDATE. `apostaMc` é o valor da sala:
- * casuais (0) só exigem conta ativa; apostadas exigem todas as 6 checagens.
- * Admin (role admin/proprietário) sempre pode entrar — não é bloqueado por
- * punição, outra sala ativa ou termos.
+ * casuais (0) só exigem conta ativa + Riot ID; apostadas exigem todas as 6
+ * checagens. Admin (role admin/proprietário) sempre pode entrar — não é
+ * bloqueado por punição, outra sala ativa ou termos.
  *
  * `ignorarMatchId` exclui a sala atual da regra "uma sala apostada ativa por
  * vez" (troca de vaga na mesma sala). Retorno:
@@ -118,10 +118,14 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
   }
 
   const apostada = Number(apostaMc ?? 0) > 0;
-  if (!apostada) return { ok: true as const };
 
-  // 2. Riot ID vinculado (amarra o print ao jogador; anti multi-conta).
+  // 2. Riot ID vinculado — obrigatório para TODA sala (casual e apostada).
+  // Decisão do dono (2026-08-04): até casual exige conta vinculada; é o que
+  // amarra o print ao jogador e previne multi-conta. Anti-multi-conta para
+  // todos, não só apostadas.
   if (!user.riotId) return { ok: false as const, erro: "riot_id_obrigatorio" };
+
+  if (!apostada) return { ok: true as const };
 
   // 3. Saldo suficiente — o modal mostra exatamente quanto falta.
   const [w] = await tx.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1).for("update");

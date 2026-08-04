@@ -90,10 +90,19 @@ describe("elegibilidade (design v3 §2.1)", () => {
     assert.equal(r.erro, "riot_id_obrigatorio");
   });
 
-  test("sala casual (aposta 0) não exige Riot ID nem saldo", async () => {
+  test("sem Riot ID em sala casual → riot_id_obrigatorio", async () => {
     const db = ctx.db;
     const id = "aaaaaaaa-e000-0000-0000-000000000003";
     await criaJogador(db, id, { mc: 0, riotId: null, termos: null });
+    const r = await validarElegibilidade(db as any, id, 0);
+    assert.equal(r.ok, false);
+    assert.equal(r.erro, "riot_id_obrigatorio");
+  });
+
+  test("sala casual (aposta 0) com Riot ID passa mesmo sem saldo/termos", async () => {
+    const db = ctx.db;
+    const id = "aaaaaaaa-e000-0000-0000-000000000030";
+    await criaJogador(db, id, { mc: 0, riotId: "Casual#BR1", termos: null });
     const r = await validarElegibilidade(db as any, id, 0);
     assert.equal(r.ok, true);
   });

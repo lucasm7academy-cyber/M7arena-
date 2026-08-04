@@ -23,6 +23,12 @@ export async function getAuthUser(req: any) {
  * Requer usuário autenticado com um dos cargos permitidos em user_roles (regra
  * de negócio no servidor). Admin gerencia highlights; notícias também aceitam
  * organizer, que é o que a tela de Admin já permitia.
+ *
+ * Normalização de cargo legado: `proprietario` é o dono do site e tem poder de
+ * admin (mesma regra de wallet.ts/teams.ts/eRevisor), e `organizador` é o
+ * equivalente em português de `organizer`. O fork usa `me.roles` e trata
+ * `proprietario` como admin (PerfilContext rolesToCargo), então a checagem de
+ * servidor precisa aceitar o mesmo conjunto.
  */
 export async function getAdminUser(req: any, res: any, allowed: string[]) {
   const user = await getAuthUser(req);
@@ -31,7 +37,14 @@ export async function getAdminUser(req: any, res: any, allowed: string[]) {
     return null;
   }
   const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
-  if (!roles.some((r) => allowed.includes(r.role))) {
+  const roleNames = roles.map((r) => r.role);
+  const temCargo = roleNames.some(
+    (role) =>
+      allowed.includes(role) ||
+      (allowed.includes("admin") && role === "proprietario") ||
+      (allowed.includes("organizer") && role === "organizador")
+  );
+  if (!temCargo) {
     res.status(403).json({ error: "Acesso negado: cargo insuficiente" });
     return null;
   }
