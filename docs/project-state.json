@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T04:14:40.892Z",
+  "updatedAt": "2026-08-04T04:58:17.925Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1124,11 +1124,11 @@
       "area": "app",
       "name": "Força-tarefa: sync de timers e contagem de salas (plano ajustarsala)",
       "status": "doing",
-      "notes": "Investigacao concluida e plano escrito em ajustarsala.md. Bug D (contas bloqueadas) causado por sala 2 presa em 'finalizacao' (estado morto do ADR-027) segurando linked=true; dados destravados na VPS (one-off). Bugs A/B/C analisados no codigo: contagem depende 100% do WS p/ quem ja esta na sala; timer usa Date.now() local (sem skew); 1v1 provavel efeito combinado do A. Proxima fase: validar plano com o usuario antes de codificar.",
+      "notes": "Fases 1-3 implementadas, deployadas e validadas na VPS: server_time no shape, join protegido por ESTADOS_ATIVOS (bug D), cron saneamento de salas mortas, clock offset nos timers (bug B), fallback polling (bug A). Reforcos: smoke-clock-sync (relogios opostos 5/5), teste de deadline no servidor, smoke-vps-salas 9/9. Plano em ajustarsala.md. Resta teste visual do bug A (2 abas) e confirmacao do C.",
       "evidence": "Investigacao: ajustarsala.md escrito; rg finalizacao api/src = 0 ocorrencias (estado morto); SQL confirmou sala 2 finalizacao com 2 linked=true; UPDATE sala 2 -> encerrada + linked=false aplicado na VPS (contas destravadas).",
       "owner": "deepseek",
       "createdAt": "2026-08-04T04:13:05.898Z",
-      "updatedAt": "2026-08-04T04:14:26.178Z"
+      "updatedAt": "2026-08-04T04:58:09.700Z"
     }
   ],
   "decisions": [
@@ -1424,14 +1424,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T02:11:56.431Z",
-      "agent": "gemini",
-      "summary": "Fix no DepositModal: adicionado useEffect para garantir a pré-seleção do pacote Especial sempre que o modal abre (evitando selectedPackage = null), atualizado o fundo do segundo bloco para #181920 com borda dourada 100% opaca e ajustada a imagem do Twisted Fate.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T02:13:37.845Z",
       "agent": "gemini",
@@ -1782,6 +1774,25 @@
         "api/src/lib/match-flow.ts",
         "api/src/lib/match-shape.ts",
         "api/src/cron.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/hooks/useSalaRealtime.ts"
+      ]
+    },
+    {
+      "at": "2026-08-04T04:58:17.925Z",
+      "agent": "deepseek",
+      "summary": "Implementei o plano ajustarsala.md por fases, testando cada uma. F1: server_time no shape, join de salas protegido por ESTADOS_ATIVOS (fix bug D — linked residual em sala morta nao bloqueia), cron de saneamento de salas presas em 'finalizacao' e linked orfao. F2: clockSync.ts mede offset server_time-Date.now() e timers usam agoraServidor() (fix bug B). F3: fallback polling a cada 5s quando WS nao entrega ha 8s (fix bug A). Reforcos de regra: smoke-clock-sync.mjs simula relogios opostos (+5min/-3min) e prova convergencia (5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9 (1v1 nao abre com 1 jogador, deadline coerente, linked residual liberado). Tudo commitado e deployado na VPS (commit 8ad0cf4). Nao toquei em nada do pandapost. VPS: 2 vCPU, 7.8Gi RAM (2.3Gi usado, 5.5Gi livre), load 0.02, containers m7arena usam ~212MiB total.",
+      "touched": [
+        "ajustarsala.md",
+        "scripts/smoke-clock-sync.mjs",
+        "scripts/smoke-vps-salas.mjs",
+        "api/src/lib/match-shape.ts",
+        "api/src/routes/matches.ts",
+        "api/src/cron.ts",
+        "api/test/cron.test.ts",
+        "api/test/estados.test.ts",
+        "web/src/lib/clockSync.ts",
+        "web/src/lib/api.ts",
         "web/src/hooks/useSalaSimples.ts",
         "web/src/hooks/useSalaRealtime.ts"
       ]
