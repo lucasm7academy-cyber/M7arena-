@@ -68,6 +68,9 @@ async function main() {
   // 5. server_time presente no shape (F2)
   const detalhe = await api(`/api/matches/${salaNum}`, {}, p1.cookie);
   check(typeof detalhe.body?.server_time === "number" && detalhe.body.server_time > 0, "shape inclui server_time (F2)");
+  // F2 reforço: o server_time deve estar perto do relógio real (offset < 5s).
+  const offsetMs = Math.abs(detalhe.body.server_time - Date.now());
+  check(offsetMs < 5000, `server_time alinhado ao relogio real (offset ${offsetMs}ms < 5s)`);
 
   // 6. Bug D: linked residual em sala nao ativa NAO bloqueia novo join.
   //    Forca a sala atual para encerrada com linked residual de p1, e p1
