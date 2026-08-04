@@ -12,9 +12,17 @@ import { userRoles } from "../../../db/schema/identidade.js";
 
 export type AcessoSala = "revisor" | "participante" | "nenhum";
 
-/** Roles de quem revisa a partida (gargalo humano sem ponto único de falha). */
+/**
+ * Roles de quem revisa a partida (gargalo humano sem ponto único de falha).
+ * `proprietario` (dono do site) também decide — ele tem o mesmo poder do admin
+ * em /admin-cargos, então não fica de fora da fila de revisão.
+ */
 export function eRevisor(roles: string[]): boolean {
-  return roles.includes("admin") || roles.includes("moderador");
+  return (
+    roles.includes("admin") ||
+    roles.includes("moderador") ||
+    roles.includes("proprietario")
+  );
 }
 
 /** Roles do usuário em user_roles. */

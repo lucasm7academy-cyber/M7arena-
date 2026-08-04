@@ -111,7 +111,7 @@ async function temPermissao(userId: string, matchId: string): Promise<boolean> {
   const r = await authPool.query(
     `SELECT 1 AS ok FROM match_players WHERE match_id = $1 AND user_id = $2
      UNION ALL
-     SELECT 1 FROM user_roles WHERE user_id = $2 AND role IN ('admin', 'moderador')
+     SELECT 1 FROM user_roles WHERE user_id = $2 AND role IN ('admin', 'moderador', 'proprietario')
      LIMIT 1`,
     [matchId, userId]
   );
