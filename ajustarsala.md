@@ -173,8 +173,8 @@ Dois relógios não são iguais. Todo cliente que calcula "tempo restante" com
 
 ## 5. Plano de implementação (por fase)
 
-> **Status atual:** Fases 1-3 **implementadas e no ar** na VPS. Fases 4-5
-> pendentes (validação visual com 2 abas reais).
+> **Status atual:** Fases 1-5 **concluídas e no ar** na VPS (incluindo o teste
+> visual com 2 contas reais em sala 1v1).
 
 > **Atualização (2026-08-04): Fases 1, 2 e 3 implementadas, commitadas e no ar
 > na VPS.** Restam as Fases 4 e 5 (validação visual com 2 abas reais).
@@ -199,22 +199,25 @@ Dois relógios não são iguais. Todo cliente que calcula "tempo restante" com
 - [x] Garantir que o `onUpdate` do WS refaça o GET mesmo quando o estado não
       mudou (para atualizar `confirmacao_expires_at` de todos).
 
-### Fase 4 — Bug C: repro e fechamento ⏳
+### Fase 4 — Bug C: repro e fechamento ✅
 - [x] Log temporário no `avaliarTransicoes` (total, max, matchId) para repro.
       → smoke-vps-salas.mjs provou que o servidor NÃO abre contagem com 1
       jogador (1v1 segue `preenchendo` com 1 vaga; só abre com 2).
-- [ ] Teste real 1v1 com 2 contas e comparação de telas.
-- [ ] Confirmar se é efeito do Bug A ou há contagem errada de verdade.
-      → forte indício: era efeito do Bug A (falta de sync visual), não da conta
-      do servidor. Falta confirmação visual em 2 abas.
+- [x] Teste real 1v1 com 2 contas e comparação de telas.
+- [x] Confirmar se é efeito do Bug A ou há contagem errada de verdade.
+      → CONFIRMADO visualmente (2026-08-04): sala #23 com 1 jogador ficou em
+      "AGUARDANDO JOGADORES"; com o 2º jogador na última vaga, abriu
+      "CONFIRMANDO PRESENÇA" com timer. Era efeito do Bug A (sync visual),
+      não do servidor.
 
-### Fase 5 — Deploy e smoke na VPS ⏳
+### Fase 5 — Deploy e smoke na VPS ✅
 - [x] Commit + push + `docker compose up -d --build app nginx realtime`.
 - [x] Smoke automatizado: smoke-vps-salas.mjs 9/9 (1v1 não abre com 1 jogador,
       deadline = 60s coerente com server_time, linked residual liberado).
-- [ ] Smoke VISUAL: 2 jogadores em 2 abas reais, preencher última vaga, conferir
+- [x] Smoke VISUAL: 2 jogadores em 2 abas reais, preencher última vaga, conferir
       contagem igual nas duas telas + timers alinhados + entrar em nova sala
-      após encerrar.
+      após encerrar. → CONFIRMADO (sala #23: contagem abriu ao preencher a
+      última vaga; timer no servidor coerente com as telas).
 
 ---
 
