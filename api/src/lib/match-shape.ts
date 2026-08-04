@@ -74,6 +74,9 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     toLegacyPlayer(p, p.__user, !!p.__isVip, m.salaNum)
   );
   return {
+    // Relógio do servidor no momento da resposta (epoch ms). O cliente usa
+    // para corrigir o skew de relógio e alinhar os timers (ajustarsala F2).
+    server_time: Date.now(),
     id: m.salaNum,
     nome: m.nome || "Sala",
     descricao: m.descricao || "",

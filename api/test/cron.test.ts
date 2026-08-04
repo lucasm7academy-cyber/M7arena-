@@ -122,4 +122,65 @@ describe("cron", () => {
       await client.close();
     }
   });
+
+  test("saneamento: sala presa em 'finalizacao' (estado morto) vira encerrada e libera linked", async () => {
+    const { client, db } = await setupDb();
+    try {
+      const jogador = "aaaaaaa3-0000-0000-0000-000000000003";
+      await criaJogador(db, jogador, 100, 0);
+      // Estado morto do ADR-027: a votação foi removida, mas a sala ficou no banco.
+      const sala = await criaSala(db, {
+        status: "finalizacao",
+        apostaMc: 0,
+      });
+      await db.insert(matchPlayers).values({
+        matchId: sala.id,
+        userId: jogador,
+        side: "blue",
+        slot: 0,
+        roleSlot: "TOP",
+        confirmed: true,
+        linked: true,
+      });
+
+      const r = await runCron(db);
+      assert.ok(r.sanitizadas >= 1, "cron deve sinalizar sala sanitizada");
+
+      const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+      assert.equal(m.status, "encerrada");
+
+      const [vaga] = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
+      assert.equal(vaga.linked, false);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("saneamento: linked residual em sala 'encerrada' é liberado (bug ja_em_outra_sala)", async () => {
+    const { client, db } = await setupDb();
+    try {
+      const jogador = "aaaaaaa3-0000-0000-0000-000000000004";
+      await criaJogador(db, jogador, 100, 0);
+      const sala = await criaSala(db, {
+        status: "encerrada",
+        apostaMc: 0,
+        endedAt: new Date(),
+      });
+      await db.insert(matchPlayers).values({
+        matchId: sala.id,
+        userId: jogador,
+        side: "blue",
+        slot: 0,
+        roleSlot: "TOP",
+        confirmed: true,
+        linked: true,
+      });
+
+      const r = await runCron(db);
+      const [vaga] = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
+      assert.equal(vaga.linked, false, "linked residual deve ser liberado pelo cron");
+    } finally {
+      await client.close();
+    }
+  });
 });

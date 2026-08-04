@@ -216,11 +216,18 @@ matchesRouter.post("/:id/join", async (req, res) => {
         .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id)))
         .limit(1);
 
-      // Bloqueia quem está vinculado (em partida) em outra sala.
+      // Bloqueia quem está vinculado (em partida) em outra sala. Só salas
+      // ATIVAS contam: uma sala em `finalizacao`/`encerrada`/`cancelada` com
+      // `linked` residual não pode prender o jogador (ajustarsala bug D).
       const outrosVinculos = await tx
         .select({ matchId: matchPlayers.matchId })
         .from(matchPlayers)
-        .where(and(eq(matchPlayers.userId, user.id), eq(matchPlayers.linked, true)));
+        .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
+        .where(and(
+          eq(matchPlayers.userId, user.id),
+          eq(matchPlayers.linked, true),
+          inArray(matches.status, ESTADOS_ATIVOS),
+        ));
       if (outrosVinculos.some((p: any) => p.matchId !== match.id)) {
         return { ok: false, erro: "ja_em_outra_sala", estado: match.status, mudou: false };
       }
