@@ -26,12 +26,14 @@ export interface UseSalaRealtimeOptions {
   onUpdate: (matchId: string | number) => void;
   /** Chamado ao reconectar (após re-assinar), para refazer o GET. */
   onReconnect?: () => void;
+  /** Notifica mudança de estado do socket (true = conectado/assinado). */
+  onStatusChange?: (conectado: boolean) => void;
   /** Pausa a conexão quando false (default true). */
   enabled?: boolean;
 }
 
 export function useSalaRealtime(matchId: string | number, options: UseSalaRealtimeOptions) {
-  const { onUpdate, onReconnect, enabled = true } = options;
+  const { onUpdate, onReconnect, onStatusChange, enabled = true } = options;
 
   const wsRef = useRef<WebSocket | null>(null);
   const debounceRef = useRef<number | null>(null);
@@ -42,9 +44,11 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
   // Callbacks e id em refs: mudanças não recriam a conexão.
   const onUpdateRef = useRef(onUpdate);
   const onReconnectRef = useRef(onReconnect);
+  const onStatusChangeRef = useRef(onStatusChange);
   const matchIdRef = useRef(matchId);
   onUpdateRef.current = onUpdate;
   onReconnectRef.current = onReconnect;
+  onStatusChangeRef.current = onStatusChange;
   matchIdRef.current = matchId;
 
   useEffect(() => {
@@ -72,6 +76,7 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
         primeiraConexaoRef.current = false;
         backoffRef.current = RECONEXAO_BASE_MS;
         ws.send(JSON.stringify({ type: "subscribe_match", matchId: matchIdRef.current }));
+        onStatusChangeRef.current?.(true);
         if (reconectou && onReconnectRef.current) onReconnectRef.current();
       };
 
@@ -90,6 +95,7 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
       ws.onclose = () => {
         if (desmontado) return;
         wsRef.current = null;
+        onStatusChangeRef.current?.(false);
         const delay = backoffRef.current;
         backoffRef.current = Math.min(delay * 2, RECONEXAO_MAX_MS);
         window.setTimeout(conectar, delay);
@@ -113,6 +119,7 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
         wsRef.current.close();
         wsRef.current = null;
       }
+      onStatusChangeRef.current?.(false);
     };
   }, [enabled, matchId]);
 }

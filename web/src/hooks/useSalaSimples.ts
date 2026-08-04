@@ -81,6 +81,14 @@ export function useSalaSimples(
     // Timestamp da última saída VOLUNTÁRIA: o realtime que chega logo depois
     // não pode virar o aviso de "removido por ociosidade".
     const saiuProprioRef = useRef(0);
+    // ── Fallback polling (ajustarsala bug A) ──
+    // O WS é a via principal, mas se ele cai (serviço fora, aba em background,
+    // mensagem perdida) o jogador que já está na sala não vê a transição.
+    // Enquanto a sala estiver ativa, faz um GET leve de backup a cada 5s
+    // apenas quando o WS não entregou nada recente.
+    const wsVivoRef = useRef(false);
+    const ultimoUpdateRef = useRef(0);
+    const pollingAtivoRef = useRef(false);
 
     // ── TIMERS DERIVADOS (apresentação; a decisão é do servidor) ──────
     // Usam `agoraServidor()` (now + offset) para que TODOS os clientes vejam o
@@ -221,6 +229,7 @@ export function useSalaSimples(
     // ser derivadas comparando o estado antes/depois do refetch.
     useSalaRealtime(salaId, {
         onUpdate: async () => {
+            ultimoUpdateRef.current = Date.now();
             const estadoAnterior = ultimoEstadoRef.current;
             const tinhaEu = jogadoresRef.current.some((j: any) => j.user_id === usuarioAtual.id);
             const dadosSala = await sincronizarTudo('realtime');
@@ -252,6 +261,9 @@ export function useSalaSimples(
             if (IS_DEV) console.log(`🔌 [Realtime] Reconectado — refazendo GET da sala ${salaId}`);
             sincronizarTudo('reconexao');
         },
+        onStatusChange: (conectado) => {
+            wsVivoRef.current = conectado;
+        },
     });
 
     // ── LOOP DE RE-RENDER DOS TIMERS DERIVADOS ────────
@@ -273,6 +285,32 @@ export function useSalaSimples(
 
         return () => cancelAnimationFrame(rafId);
     }, [estadoComTimer, sala?.confirmacao_expires_at, sala?.iniciando_partida_at, tabFocusTick]);
+
+    // ── FALLBACK POLLING (ajustarsala bug A) ──────────
+    // Quando o WS não está entregando (socket morto sem reconexão, ou nenhum
+    // match_update há vários segundos), refaz o GET da sala a cada 5s. O GET é
+    // leve (sala por sala_num, indexado) e só roda enquanto a sala estiver em
+    // estado ativo. Se o WS está saudável, não dispara nada.
+    const salaAtiva = !!sala && ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'].includes(sala?.estado);
+    useEffect(() => {
+        if (!salaAtiva) return;
+
+        const JANELA_SEM_WS_MS = 8000;
+        const POLL_INTERVALO_MS = 5000;
+
+        const id = setInterval(() => {
+            const wsSaudavel = wsVivoRef.current && (Date.now() - ultimoUpdateRef.current) < JANELA_SEM_WS_MS;
+            if (wsSaudavel) return; // WS entregando — não precisa pollar
+
+            if (pollingAtivoRef.current) return; // um GET já em voo
+            pollingAtivoRef.current = true;
+            sincronizarTudo('polling-fallback').finally(() => {
+                pollingAtivoRef.current = false;
+            });
+        }, POLL_INTERVALO_MS);
+
+        return () => clearInterval(id);
+    }, [salaAtiva, sincronizarTudo]);
 
     // ── DISPARO DO TICK QUANDO O PRAZO VENCE ──────────
     const timerZerado = timer <= 0;
