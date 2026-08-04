@@ -1031,19 +1031,20 @@ const Jogar = () => {
               ) : (
                 salasFinalizadasFiltradas.map((sala) => {
                   const modoInfo = getModoInfo(sala.modo);
+                  const mpInfo = getMPointsInfo(sala.mpoints);
                   const vencedorInfo =
                     sala.vencedor === 'A'
-                      ? { label: '🏆 Vitória Azul', cor: '#d4d4d4' }
+                      ? { label: '🏆 Vitória Azul', cor: '#3b82f6' }
                       : sala.vencedor === 'B'
-                      ? { label: '🏆 Vitória Vermelho', cor: '#d4d4d4' }
+                      ? { label: '🏆 Vitória Vermelho', cor: '#ef4444' }
                       : sala.vencedor === 'empate'
-                      ? { label: '⚖️ Empate', cor: '#9ca3af' }
-                      : { label: '⚔️ Disputa', cor: '#9ca3af' };
+                      ? { label: '⚖️ Empate', cor: '#fbbf24' }
+                      : { label: '⚔️ Disputa', cor: '#a855f7' };
                   return (
                     <div
                       key={sala.id}
                       onClick={() => navigate(`/sala-mod1/${sala.id}`)}
-                      className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-white/40 transition-all snap-start group/card bg-black"
+                      className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-[#FFB700]/50 transition-all snap-start group/card bg-black"
                     >
                       {modoInfo.bgImage && (
                         <div className="absolute inset-0 z-0 bg-cover bg-center opacity-30 group-hover/card:opacity-50 transition-opacity grayscale"
@@ -1057,8 +1058,8 @@ const Jogar = () => {
                           <span className="text-[10px] font-mono font-black text-white/40 border border-white/10 px-2 py-1 rounded bg-black/50">
                             {sala.codigo}
                           </span>
-                          <span className="px-2 py-1 rounded text-[9px] font-black uppercase border bg-white/5"
-                            style={{ color: vencedorInfo.cor, borderColor: 'rgba(255,255,255,0.2)' }}>
+                          <span className="px-2 py-1 rounded text-[9px] font-black uppercase border"
+                            style={{ background: `${vencedorInfo.cor}20`, color: vencedorInfo.cor, border: `1px solid ${vencedorInfo.cor}40` }}>
                             {vencedorInfo.label}
                           </span>
                         </div>
@@ -1067,10 +1068,12 @@ const Jogar = () => {
                         <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
 
                         <div className="flex flex-wrap gap-2 mb-4">
-                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/50">
+                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase"
+                            style={{ background: `${modoInfo.cor}20`, color: modoInfo.cor, border: `1px solid ${modoInfo.cor}40` }}>
                             {modoInfo.icone} {modoInfo.nome}
                           </span>
-                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1 bg-white/5 border border-white/10 text-white/50">
+                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"
+                            style={{ background: `${mpInfo.cor}20`, color: mpInfo.cor, border: `1px solid ${mpInfo.cor}40` }}>
                             <Coins className="w-3 h-3" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
                           </span>
                           <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40">
@@ -1080,15 +1083,15 @@ const Jogar = () => {
 
                         <div className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-4">
                           Criador: {sala.criadorNome}
-                          {sala.timeANome && <span className="ml-2 text-white/40">• {sala.timeANome}</span>}
-                          {sala.timeBNome && <span className="ml-2 text-white/40">• {sala.timeBNome}</span>}
+                          {sala.timeANome && <span className="ml-2 text-blue-400">• {sala.timeANome}</span>}
+                          {sala.timeBNome && <span className="ml-2 text-red-400">• {sala.timeBNome}</span>}
                         </div>
 
                         <div className="mt-auto flex items-center justify-between">
                           <span className="text-white/30 text-[10px] font-bold uppercase tracking-wider">
                             {new Date((sala as any).createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover/card:text-white transition-colors">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover/card:text-white transition-colors">
                             Ver resultado →
                           </span>
                         </div>

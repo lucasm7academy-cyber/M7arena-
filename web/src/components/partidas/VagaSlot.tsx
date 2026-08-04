@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Check, X, Lock } from 'lucide-react';
+import { UserPlus, Check, X } from 'lucide-react';
 
 const PRIMARY_COLOR = '#FFB700';
 
@@ -17,8 +17,6 @@ interface VagaSlotProps {
     roleIconImg: string;
     // NOVO - Sistema VIP
     vipTier?: 'free' | 'vip' | 'premium';
-    // Partida finalizada: vaga vazia mostra "FINALIZADO" (sem clique).
-    finalizada?: boolean;
 }
 
 const VagaSlotComponent: React.FC<VagaSlotProps> = ({
@@ -33,7 +31,6 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     aoSair,
     roleIconImg,
     vipTier = 'free',
-    finalizada = false,
 }) => {
 
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
@@ -192,10 +189,10 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     return (
         <div style={{ transform: `translateX(${arcOffset})` }}>
             <motion.div
-                whileHover={finalizada ? undefined : { scale: 1.015 }}
-                whileTap={finalizada ? undefined : { scale: 0.98 }}
-                onClick={finalizada ? undefined : aoEntrar}
-                className={`group relative ${cardWidth} h-[8.2vmin] p-[1px] transition-colors duration-300 overflow-hidden ${finalizada ? 'bg-red-500/40 border border-red-500/50 cursor-default' : 'bg-white/10 hover:bg-white/30 cursor-pointer'}`}
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={aoEntrar}
+                className={`group relative ${cardWidth} h-[8.2vmin] p-[1px] bg-white/10 hover:bg-white/30 transition-colors duration-300 overflow-hidden cursor-pointer`}
                 style={{
                     clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                 }}
@@ -206,14 +203,14 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                     }}
                 >
-                    <div className="w-[6vmin] h-[6vmin] rounded-xl border border-red-500/40 bg-red-500/10 flex items-center justify-center">
-                        <Lock className="w-[2.5vmin] h-[2.5vmin] text-red-500/80" />
+                    <div className="w-[6vmin] h-[6vmin] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300">
+                        <UserPlus className="w-[2.5vmin] h-[2.5vmin] text-white/10 group-hover:text-white/60 transition-colors" />
                     </div>
                     <div className={`flex flex-col ${isTimeA ? 'items-start' : 'items-end'}`}>
-                        <span className="text-[1.6vmin] font-black text-red-500 uppercase tracking-[0.4em]">FINALIZADO</span>
+                        <span className="text-[1.6vmin] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">ENTRAR</span>
                         <div className={`flex items-center gap-[1vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            <img src={roleIconImg} className="w-[2vmin] h-[2vmin] opacity-30 brightness-0 invert" alt={role} />
-                            <span className="text-[1.4vmin] font-black text-red-500/40 uppercase tracking-widest">{role}</span>
+                            <img src={roleIconImg} className="w-[2vmin] h-[2vmin] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
+                            <span className="text-[1.4vmin] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
                         </div>
                     </div>
                 </div>
@@ -237,8 +234,7 @@ export const VagaSlot = React.memo(
             prev.vipTier === next.vipTier &&
             prev.role === next.role &&
             prev.isTimeA === next.isTimeA &&
-            prev.roleIconImg === next.roleIconImg &&
-            prev.finalizada === next.finalizada
+            prev.roleIconImg === next.roleIconImg
         );
     }
 );
