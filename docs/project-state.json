@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T03:10:31.099Z",
+  "updatedAt": "2026-08-04T04:14:40.892Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1117,6 +1117,18 @@
       "owner": "deepseek",
       "createdAt": "2026-08-03T04:52:02.957Z",
       "updatedAt": "2026-08-03T06:05:40.961Z"
+    },
+    {
+      "id": "app.ajustar-salas",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Força-tarefa: sync de timers e contagem de salas (plano ajustarsala)",
+      "status": "doing",
+      "notes": "Investigacao concluida e plano escrito em ajustarsala.md. Bug D (contas bloqueadas) causado por sala 2 presa em 'finalizacao' (estado morto do ADR-027) segurando linked=true; dados destravados na VPS (one-off). Bugs A/B/C analisados no codigo: contagem depende 100% do WS p/ quem ja esta na sala; timer usa Date.now() local (sem skew); 1v1 provavel efeito combinado do A. Proxima fase: validar plano com o usuario antes de codificar.",
+      "evidence": "Investigacao: ajustarsala.md escrito; rg finalizacao api/src = 0 ocorrencias (estado morto); SQL confirmou sala 2 finalizacao com 2 linked=true; UPDATE sala 2 -> encerrada + linked=false aplicado na VPS (contas destravadas).",
+      "owner": "deepseek",
+      "createdAt": "2026-08-04T04:13:05.898Z",
+      "updatedAt": "2026-08-04T04:14:26.178Z"
     }
   ],
   "decisions": [
@@ -1412,14 +1424,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T02:10:43.994Z",
-      "agent": "gemini",
-      "summary": "Ajustes no DepositModal: reduzido tamanho e ajustado posicionamento da imagem do Twisted Fate, pre-selecionado pacote Especial por padrão, tornando o bloco do resumo do pedido opaco (#121216) e removido animações de resize ao alternar opções de pacote.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T02:11:56.431Z",
       "agent": "gemini",
@@ -1765,6 +1769,21 @@
         "web/src/pages/Jogar.tsx",
         "web/src/pages/SalaMod1.tsx",
         "VPS:/root/m7arena"
+      ]
+    },
+    {
+      "at": "2026-08-04T04:14:40.892Z",
+      "agent": "deepseek",
+      "summary": "Forca-tarefa ajustarsala (planejamento, sem codigo). Teste VPS revelou 4 bugs. (D) Contas bloqueadas ja_em_outra_sala: sala 2 presa em 'finalizacao' (estado morto do ADR-027) segurava linked=true; join filtra so linked sem checar sala ativa (matches.ts:223). Destravei dados na VPS (one-off). (A) Contagem nao inicia p/ quem ja esta na sala: ADR-026 so cobre quem dispara; os outros dependem do WS (que estava fora ate b9bc34e). (B) Timer dessincronizado: useSalaSimples.ts:85 usa Date.now() local, sem clock offset. (C) 1v1 com 1 jogador: servidor conta so sala atual; provavel efeito combinado do A. Plano em ajustarsala.md com 5 fases. Nenhum codigo alterado — aguarda validacao do usuario.",
+      "touched": [
+        "ajustarsala.md",
+        "VPS:/root/m7arena (dados: sala 2 destravada)",
+        "api/src/routes/matches.ts",
+        "api/src/lib/match-flow.ts",
+        "api/src/lib/match-shape.ts",
+        "api/src/cron.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/hooks/useSalaRealtime.ts"
       ]
     }
   ]
