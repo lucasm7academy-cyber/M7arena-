@@ -6,7 +6,7 @@ import { matches, matchPlayers } from "../../db/schema/matches.js";
 import { walletTransactions, platformRevenue } from "../../db/schema/economia.js";
 import { setupDb } from "./helpers.js";
 import { reservarEntrada, devolverEntrada, pagarPremio } from "../src/lib/escrow.js";
-import { entrarEmRevisao } from "../src/lib/match-flow.js";
+import { entrarEmRevisao, avaliarTransicoes } from "../src/lib/match-flow.js";
 
 async function criaJogador(db: any, id: string, mc: number, mcReservado = 0) {
   await db.insert(users).values({ id, email: id + "@x.com", displayName: "Jogador" });
@@ -156,5 +156,31 @@ describe("máquina de estados com escrow", () => {
     assert.equal(prizes.length, 1);
     const losses = txs.filter((t: any) => t.kind === "match_loss");
     assert.equal(losses.length, 1);
+  });
+
+  test("regra de timer: preencher a ultima vaga seta confirmacaoExpiresAt = now + 60s", async () => {
+    // Reforço do ajustarsala F2: o deadline é definido no SERVIDOR (now+60s),
+    // nunca derivado do relógio de um cliente. Se isso falhar, clientes com
+    // relógios diferentes divergem (bug B: 20s vs 75s).
+    const db = ctx.db;
+    const jogador1 = "ddddddd1-0000-0000-0000-000000000001";
+    const jogador2 = "ddddddd1-0000-0000-0000-000000000002";
+    await criaJogador(db, jogador1, 100, 0);
+    await criaJogador(db, jogador2, 100, 0);
+
+    const antes = Date.now();
+    const sala = await criaSala(db, { status: "preenchendo", maxJogadores: 2, apostaMc: 0 });
+    await db.insert(matchPlayers).values({ matchId: sala.id, userId: jogador1, side: "blue", slot: 0, roleSlot: "TOP", confirmed: false });
+    // Segundo jogador preenche a última vaga — isso dispara a transição.
+    await db.insert(matchPlayers).values({ matchId: sala.id, userId: jogador2, side: "red", slot: 0, roleSlot: "MID", confirmed: false });
+    // A transição só roda explicitamente (na rota ela roda dentro do join).
+    await avaliarTransicoes(db as any, sala.id);
+
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "confirmacao");
+    assert.ok(m.confirmacaoExpiresAt, "confirmacao_expires_at deve existir");
+    const diff = new Date(m.confirmacaoExpiresAt).getTime() - antes;
+    // Tolerância generosa: >=55s (latência do teste) e <70s.
+    assert.ok(diff >= 55_000 && diff < 70_000, `deadline ~60s a partir do now do servidor (foi ${Math.round(diff / 1000)}s)`);
   });
 });

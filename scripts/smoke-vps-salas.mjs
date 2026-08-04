@@ -58,6 +58,19 @@ async function main() {
   const est2 = await psql(`SELECT status FROM matches WHERE sala_num=${salaNum}`);
   check(est2[0]?.status === "confirmacao", "com 2 jogadores a sala foi para confirmacao", est2[0]?.status);
 
+  // 3b. REGRA DE TIMER (reforço F2): o deadline de confirmacao deve ser
+  //     COERENTE com o server_time — confirmacao_expires_at ≈ server_time + 60s.
+  //     Se valer, qualquer relógio de cliente (adiantado/atrasado) converge
+  //     para o mesmo tempo restante via clockSync. Se o deadline fosse
+  //     calculado com o relógio de UM cliente, isso aqui divergiria.
+  const detConfirm = await api(`/api/matches/${salaNum}`, {}, p1.cookie);
+  const expires = new Date(detConfirm.body?.confirmacao_expires_at).getTime();
+  const diff = expires - detConfirm.body?.server_time;
+  check(
+    Math.abs(diff - 60_000) < 3_000,
+    `deadline de confirmacao coerente com server_time (expires-server_time = ${Math.round(diff / 1000)}s ≈ 60s)`
+  );
+
   // 4. Ambos confirmam -> partida
   await api(`/api/matches/${salaNum}/confirm`, { method: "POST", body: "{}" }, p1.cookie);
   await api(`/api/matches/${salaNum}/confirm`, { method: "POST", body: "{}" }, p2.cookie);
