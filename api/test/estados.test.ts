@@ -183,4 +183,52 @@ describe("máquina de estados com escrow", () => {
     // Tolerância generosa: >=55s (latência do teste) e <70s.
     assert.ok(diff >= 55_000 && diff < 70_000, `deadline ~60s a partir do now do servidor (foi ${Math.round(diff / 1000)}s)`);
   });
+
+  test("5v5: 10 jogadores preenchem a sala -> confirmacao; o 11o NAO entra", async () => {
+    // Reforço do ajustarsala para o teste real com 10 players: a transição
+    // preenchendo->confirmacao só acontece com total >= max (10). E quem
+    // tenta entrar depois (11o) deve ser barrado — sem estourar a sala.
+    const db = ctx.db;
+    const sala = await criaSala(db, { status: "preenchendo", maxJogadores: 10, apostaMc: 0 });
+    const ids: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const id = `eeeeeee1-0000-0000-0000-0000000000${String(i).padStart(2, "0")}`;
+      ids.push(id);
+      await criaJogador(db, id, 100, 0);
+    }
+
+    // Primeiros 9 entram: sala segue preenchendo (9 < 10).
+    for (let i = 0; i < 9; i++) {
+      await db.insert(matchPlayers).values({
+        matchId: sala.id,
+        userId: ids[i],
+        side: i < 5 ? "blue" : "red",
+        slot: i % 5,
+        roleSlot: i < 5 ? ["TOP", "JG", "MID", "ADC", "SUP"][i] : ["TOP", "JG", "MID", "ADC", "SUP"][i - 5],
+        confirmed: false,
+      });
+    }
+    await avaliarTransicoes(db as any, sala.id);
+    const [m9] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m9.status, "preenchendo", "com 9 jogadores a sala segue preenchendo");
+
+    // 10o jogador completa: -> confirmacao.
+    await db.insert(matchPlayers).values({
+      matchId: sala.id,
+      userId: ids[9],
+      side: "blue",
+      slot: 4,
+      roleSlot: "SUP",
+      confirmed: false,
+    });
+    await avaliarTransicoes(db as any, sala.id);
+    const [m10] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m10.status, "confirmacao", "com 10 jogadores a sala vai para confirmacao");
+
+    // Um 11o jogador NÃO deve conseguir entrar: total >= max barra.
+    const id11 = "eeeeeee1-0000-0000-0000-000000000011";
+    await criaJogador(db, id11, 100, 0);
+    const total = await db.select({ id: matchPlayers.userId }).from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
+    assert.equal(total.length, 10, "a sala tem exatamente 10 jogadores (11o barrado)");
+  });
 });
