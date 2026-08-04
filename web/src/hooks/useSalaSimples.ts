@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
+import { registrarServerTime, agoraServidor } from '../lib/clockSync';
 import { useSalaRealtime } from './useSalaRealtime';
 import {
     buscarsalas,
@@ -82,12 +83,16 @@ export function useSalaSimples(
     const saiuProprioRef = useRef(0);
 
     // ── TIMERS DERIVADOS (apresentação; a decisão é do servidor) ──────
+    // Usam `agoraServidor()` (now + offset) para que TODOS os clientes vejam o
+    // MESMO tempo restante, mesmo com relógios locais diferentes (ajustarsala
+    // bug B). O offset é re-medido a cada sync via server_time.
+    const agora = agoraServidor();
     const timer = sala?.confirmacao_expires_at
-        ? Math.max(0, Math.round((new Date(sala.confirmacao_expires_at).getTime() - Date.now()) / 1000))
+        ? Math.max(0, Math.round((new Date(sala.confirmacao_expires_at).getTime() - agora) / 1000))
         : 60;
 
     const timerIniciandoPartida = sala?.iniciando_partida_at
-        ? Math.max(0, Math.round((new Date(sala.iniciando_partida_at).getTime() + 30000 - Date.now()) / 1000))
+        ? Math.max(0, Math.round((new Date(sala.iniciando_partida_at).getTime() + 30000 - agora) / 1000))
         : 30;
 
     // ── MENSAGEM TRANSITÓRIA ─────────────────────────
@@ -115,6 +120,7 @@ export function useSalaSimples(
         ]);
         if (!dadosSala) return null;
 
+        registrarServerTime(dadosSala.server_time);
         setSala(dadosSala);
         setCodigoPartida(dadosSala.codigo_partida || null);
         setJogadores(dadosJogadores);
@@ -175,6 +181,7 @@ export function useSalaSimples(
                 setLoading(false);
                 return;
             }
+            registrarServerTime(dadosSala.server_time);
             setSala(dadosSala);
             setCodigoPartida(dadosSala.codigo_partida || null);
             ultimoEstadoRef.current = dadosSala.estado;

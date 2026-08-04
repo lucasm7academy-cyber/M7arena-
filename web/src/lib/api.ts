@@ -206,6 +206,7 @@ export interface ApiLegacySala {
   iniciando_partida_at?: string | null;
   created_at: string;
   ended_at?: string | null;
+  server_time?: number | null;
   jogadores: ApiLegacySalaJogador[];
   // ── Salas apostadas (design v3 §5/§11) — campos aditivos do port ──
   aposta_mc?: number;
