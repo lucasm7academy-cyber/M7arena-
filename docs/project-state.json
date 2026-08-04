@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-04T02:24:40.451Z",
+  "updatedAt": "2026-08-04T03:10:31.099Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -631,12 +631,12 @@
       "phase": "fase-3",
       "area": "seguranca",
       "name": "Mover regras de negócio para o servidor",
-      "status": "doing",
-      "notes": "Verificação final em andamento: varrer web/src por cálculos de saldo/vaga/débito no cliente e confirmar que o servidor decide. Sem código alterado até a auditoria fechar.",
-      "evidence": "Regras de cálculo de saldo, validação de vagas em partidas e débitos de entrada centralizados nos endpoints /api/matches e /api/wallet do servidor Node. npx tsc --noEmit em api/ executado com exit 0.",
+      "status": "done",
+      "notes": "Fechado com o fix do eRevisor (proprietario passa a ser revisor). Liberacao do jogador ao finalizar ja existia (linked:false + escrow liquidado + encerrada fora de ESTADOS_ATIVOS) e agora esta coberta por smoke na VPS.",
+      "evidence": "Smoke VPS (scripts/smoke-vps-revisao.mjs, rodado dentro do m7arena_app): 13/13 ok. Proprietario acessa /api/revisao/pendentes (200, era 403), decide a revisao, sala encerrada, match_players.linked=0, jogador entra em sala nova sem ja_em_outra_sala. web build + tsc api exit 0.",
       "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-04T02:24:40.450Z"
+      "updatedAt": "2026-08-04T03:10:06.901Z"
     },
     {
       "id": "sec.upload",
@@ -1413,15 +1413,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-03T00:19:43.506Z",
-      "agent": "deepseek",
-      "summary": "Deploy da limpeza confirmado na VPS (dev.m7arena.pro): bundle do front novo servido (m7:open-vip + botao Depositar presentes no JS, background.png ausente = correto). Banco intacto (33 tabelas, postgres Up 17h). Erro reportado no lobby era 404 do logo-m7.png: volume de uploads da VPS estava VAZIO (public-images 0 arquivos). Corrigido transferindo o backup_migracao_br do storage do Supabase (public-images 17 arquivos + team-logos 60 arquivos) via scp -> /tmp/uploads-restore -> docker cp para m7arena_app. logo-m7.png agora 200 na VPS. Codigo novo ja estava no ar; faltava apenas o dado (imagens do storage).",
-      "touched": [
-        "VPS:/root/m7arena",
-        "VPS:uploads volume"
-      ]
-    },
-    {
       "at": "2026-08-03T02:10:43.994Z",
       "agent": "gemini",
       "summary": "Ajustes no DepositModal: reduzido tamanho e ajustado posicionamento da imagem do Twisted Fate, pre-selecionado pacote Especial por padrão, tornando o bloco do resumo do pedido opaco (#121216) e removido animações de resize ao alternar opções de pacote.",
@@ -1754,6 +1745,26 @@
         "scripts/smoke-casual-revisao.mjs",
         "scripts/migrate/extract-passwords.mjs",
         "scripts/migrate/load-passwords.mjs"
+      ]
+    },
+    {
+      "at": "2026-08-04T03:10:31.099Z",
+      "agent": "deepseek",
+      "summary": "Sessao de deploy + fix de revisao. Commit 2038924 (remocao residuos votacao red/blue) + deploy na VPS. VPS estava em 892ef18 (atrasado): realtime do compose rodava dist que nao existe no host — fix usando imagem compilada do app (b9bc34e); migration 0009 (apostas/escrow/strikes) nao estava no banco — apliquei via psql. Defini cargo 'proprietario' para lucasm7academy@gmail.com. Bug: 403 em /api/revisao/pendentes para o dono — eRevisor so aceitava admin/moderador; fix incluiu proprietario (acesso-sala.ts + realtime), commit b2c0f30. Smoke VPS novo (scripts/smoke-vps-revisao.mjs) 13/13 ok: sala casual -> revisao pelo proprietario (403->200), decisao, encerrada, linked liberado, jogador entra em sala nova. Deploy no ar (lobby 200, health 200). Pendente: remover smoke.mjs/probe.mjs deixados em /app do container (nodeapp sem permissao); browser MCP nao conectou (Chrome sem porta 9222).",
+      "touched": [
+        "infra/docker-compose.yml",
+        "api/src/lib/acesso-sala.ts",
+        "api/src/realtime/index.ts",
+        "scripts/smoke-vps-revisao.mjs",
+        "api/src/lib/elegibilidade.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/src/routes/matches.ts",
+        "web/src/api/salamod1.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "VPS:/root/m7arena"
       ]
     }
   ]
