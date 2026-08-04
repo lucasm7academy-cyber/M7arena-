@@ -295,12 +295,15 @@ export function useSalaSimples(
     useEffect(() => {
         if (!salaAtiva) return;
 
-        const JANELA_SEM_WS_MS = 8000;
         const POLL_INTERVALO_MS = 5000;
 
         const id = setInterval(() => {
-            const wsSaudavel = wsVivoRef.current && (Date.now() - ultimoUpdateRef.current) < JANELA_SEM_WS_MS;
-            if (wsSaudavel) return; // WS entregando — não precisa pollar
+            // WS conectado = confiar nele: toda ação dispara notifyMatchChange e
+            // todos os inscritos recebem match_update. Polling é só o fallback
+            // quando o socket está morto — senão uma sala parada (10 jogadores
+            // esperando em 'preenchendo') ficaria fazendo GET desnecessário a
+            // cada 5s, mesmo com o realtime perfeito.
+            if (wsVivoRef.current) return;
 
             if (pollingAtivoRef.current) return; // um GET já em voo
             pollingAtivoRef.current = true;
