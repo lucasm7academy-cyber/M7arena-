@@ -107,7 +107,7 @@ paymentsRouter.post("/mc/order", async (req, res) => {
     if (e?.status && e?.mpBody) {
       return res.status(502).json({ error: "mercadopago_indisponivel" });
     }
-    return res.status(500).json({ error: e?.message || "erro_interno" });
+    return res.status(500).json({ error: "erro_interno" });
   }
 });
 
@@ -125,9 +125,14 @@ paymentsRouter.post("/webhook", async (req, res) => {
     const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET || "";
     const isTest = accessToken.startsWith("TEST-");
 
-    // Em produção valida a assinatura; em modo teste (TEST-) o MP não envia a
-    // assinatura corretamente, igual à edge function antiga.
-    if (!isTest && secret) {
+    // Em produção a assinatura é OBRIGATÓRIA (fail closed): sem o secret a
+    // API não deve processar notificações não autenticadas num caminho de
+    // dinheiro. Em modo teste (TEST-) o MP não assina corretamente, igual à
+    // edge function antiga.
+    if (!isTest) {
+      if (!secret) {
+        return res.status(500).json({ error: "webhook_nao_configurado" });
+      }
       const signature = String(req.headers["x-signature"] ?? "");
       const requestId = String(req.headers["x-request-id"] ?? "");
       if (!validarAssinatura({ secret, signature, requestId, dataId })) {
@@ -152,7 +157,7 @@ paymentsRouter.post("/webhook", async (req, res) => {
     if (e?.status && e?.mpBody) {
       return res.status(502).json({ error: "mercadopago_indisponivel" });
     }
-    return res.status(500).json({ error: e?.message || "erro_interno" });
+    return res.status(500).json({ error: "erro_interno" });
   }
 });
 
