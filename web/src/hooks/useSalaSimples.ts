@@ -195,6 +195,8 @@ export function useSalaSimples(
             setSala(dadosSala);
             setCodigoPartida(dadosSala.codigo_partida || null);
             ultimoEstadoRef.current = dadosSala.estado;
+            ultimoUpdateRef.current = Date.now(); // carga inicial — WS não está quieto
+        ultimoUpdateRef.current = Date.now(); // acabamos de sincronizar — WS não está quieto
 
             const dadosJogadores = await buscarJogadores(salaId);
             if (!mounted) return;
@@ -289,23 +291,25 @@ export function useSalaSimples(
     }, [estadoComTimer, sala?.confirmacao_expires_at, sala?.iniciando_partida_at, tabFocusTick]);
 
     // ── FALLBACK POLLING (ajustarsala bug A) ──────────
-    // Quando o WS não está entregando (socket morto sem reconexão, ou nenhum
-    // match_update há vários segundos), refaz o GET da sala a cada 5s. O GET é
-    // leve (sala por sala_num, indexado) e só roda enquanto a sala estiver em
-    // estado ativo. Se o WS está saudável, não dispara nada.
+    // Quando o WS não está ENTREGANDO (socket morto, OU aba em background com o
+    // socket congelado pelo Chrome sem fechar), refaz o GET da sala a cada 5s.
+    // O critério é `ultimoUpdateRef`: se nenhum `match_update` chegou há vários
+    // segundos, não importa se o socket está "aberto" — ele não está funcionando
+    // para nós (Chrome congela WS de aba em background sem disparar onclose).
+    // Antes usava `wsVivoRef` (só fica false quando o socket FECHA), o que
+    // deixava o join invisível para quem já estava na sala em background.
     const salaAtiva = !!sala && ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'].includes(sala?.estado);
     useEffect(() => {
         if (!salaAtiva) return;
 
         const POLL_INTERVALO_MS = 5000;
+        // WS quieto por este tempo (sem match_update) dispara o polling, mesmo
+        // com o socket "vivo" — o socket vivo mas congelado não entrega nada.
+        const WS_QUIETO_MS = 8000;
 
         const id = setInterval(() => {
-            // WS conectado = confiar nele: toda ação dispara notifyMatchChange e
-            // todos os inscritos recebem match_update. Polling é só o fallback
-            // quando o socket está morto — senão uma sala parada (10 jogadores
-            // esperando em 'preenchendo') ficaria fazendo GET desnecessário a
-            // cada 5s, mesmo com o realtime perfeito.
-            if (wsVivoRef.current) return;
+            const quietoHa = Date.now() - ultimoUpdateRef.current;
+            if (quietoHa < WS_QUIETO_MS) return; // WS entregando: confia nele
 
             if (pollingAtivoRef.current) return; // um GET já em voo
             pollingAtivoRef.current = true;
