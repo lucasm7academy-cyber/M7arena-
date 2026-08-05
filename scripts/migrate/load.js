@@ -9,6 +9,7 @@ import fs from "fs";
 import path from "path";
 import pg from "pg";
 import { fileURLToPath } from "url";
+import { loadCampeonatos } from "./load-campeonatos.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -123,6 +124,40 @@ async function loadWallets(wallets, supabaseToDbId) {
   console.log(`[ETL Load] user_wallets inseridos/atualizados: ${n}`);
 }
 
+async function loadIdentities(identities, supabaseToDbId) {
+  let n = 0;
+  for (const i of identities) {
+    const userId = supabaseToDbId[i.userId];
+    if (!userId) continue;
+    const r = await pool.query(
+      `INSERT INTO user_identities (user_id, provider, provider_account_id, created_at)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT (provider, provider_account_id) DO NOTHING`,
+      [userId, i.provider, i.providerAccountId, i.createdAt ?? new Date()]
+    );
+    if (r.rowCount > 0) n++;
+  }
+  console.log(`[ETL Load] user_identities inseridos: ${n}`);
+}
+
+async function loadPayoutInfo(payouts, supabaseToDbId) {
+  let n = 0;
+  for (const p of payouts) {
+    const userId = supabaseToDbId[p.userId];
+    if (!userId) continue;
+    const r = await pool.query(
+      `INSERT INTO user_payout_info (user_id, pix_type, pix_key, pix_name, updated_at)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (user_id) DO UPDATE SET
+         pix_type = EXCLUDED.pix_type, pix_key = EXCLUDED.pix_key,
+         pix_name = EXCLUDED.pix_name, updated_at = EXCLUDED.updated_at`,
+      [userId, p.pixType, p.pixKey, p.pixName, p.updatedAt ?? new Date()]
+    );
+    if (r.rowCount > 0) n++;
+  }
+  console.log(`[ETL Load] user_payout_info inseridos/atualizados: ${n}`);
+}
+
 async function loadTeams(teams, supabaseToDbId) {
   let n = 0;
   for (const t of teams) {
@@ -233,6 +268,8 @@ async function load() {
   const users = readTransformed("users");
   const gameAccounts = readTransformed("game_accounts");
   const wallets = readTransformed("user_wallets");
+  const identities = readTransformed("user_identities");
+  const payouts = readTransformed("user_payout_info");
   const teams = readTransformed("teams");
   const members = readTransformed("team_members");
   const invites = readTransformed("team_invites");
@@ -244,10 +281,14 @@ async function load() {
   const { supabaseToDbId } = await loadUsers(users);
   await loadGameAccounts(gameAccounts, supabaseToDbId);
   await loadWallets(wallets, supabaseToDbId);
+  await loadIdentities(identities, supabaseToDbId);
+  await loadPayoutInfo(payouts, supabaseToDbId);
   await loadTeams(teams, supabaseToDbId);
   await loadTeamMembers(members, supabaseToDbId);
   await loadTeamInvites(invites, supabaseToDbId);
   await loadTeamStats(stats);
+
+  await loadCampeonatos(pool, readTransformed, supabaseToDbId);
 
   await pool.end();
   console.log("[ETL Load] Carga finalizada!");

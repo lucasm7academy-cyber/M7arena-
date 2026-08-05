@@ -84,6 +84,8 @@ export const PLAN = {
   // As 6 edge functions do Supabase (fonte em M7AcademySite/supabase/functions/).
   // Não estavam no plano original e bloqueiam o pagamento e parte dos workers.
   "app.edge-functions": ["fase-3", "app.api.server", "app.auth.sessao"],
+  // Gateway de pagamento MC (ADR-031): Mercado Pago PIX, pacotes em mc_packages.
+  "app.payments": ["fase-3", "app.api.server", "app.auth.sessao", "db.economia"],
   "app.env": ["fase-3", "app.fork.build"],
 
   // segurança acompanha a peça que ela corrige

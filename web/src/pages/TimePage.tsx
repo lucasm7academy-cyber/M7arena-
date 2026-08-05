@@ -130,7 +130,7 @@ async function uploadLogoTime(file: File, timeId: string): Promise<string | null
   const renamed = new File([file], name, { type: file.type });
 
   try {
-    const { url } = await api.upload(renamed, 'team-logos');
+    const { url } = await api.upload(renamed, 'team-logos', timeId);
     return `${url}?t=${Date.now()}`;
   } catch (err) {
     console.error('❌ Erro upload logo time:', err);

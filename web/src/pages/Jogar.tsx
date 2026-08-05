@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Play, ChevronLeft, ChevronRight, Trophy, Users, Coins,
   Search, Lock, Zap, Crown, X, LogIn, Plus, SlidersHorizontal,
-  Sword, Shield, Swords, Gem, Snowflake, Tv2, RefreshCw
+  Sword, Shield, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2
 } from 'lucide-react';
 import {
   MODOS_JOGO, OPCOES_ELO, OPCOES_MPOINTS, getModoInfo, getMPointsInfo,
@@ -694,6 +694,28 @@ const Jogar = () => {
     setRefreshing(false);
   };
 
+  // ── EXCLUSÃO ADMINISTRATIVA (admin/proprietário) ──
+  // Cargo vem do PerfilContext (perfil.cargo). A validação REAL roda no
+  // servidor (DELETE /api/matches/:id); aqui só exibimos o botão p/ quem tem.
+  const ehAdminOuProprietario = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
+
+  const excluirSala = async (sala: Sala) => {
+    if (!ehAdminOuProprietario) return;
+    const confirmou = window.confirm(
+      `Excluir a sala "${sala.nome}" permanentemente? As reservas dos jogadores serão devolvidas.`
+    );
+    if (!confirmou) return;
+    try {
+      await api.matches.excluir(sala.id);
+      toast.success('Sala excluída.');
+      // Invalida o cache em memória e recarrega a lista sem ele.
+      _salasCache = null;
+      await carregarSalasLista(true);
+    } catch (e: any) {
+      toast.error(traduzirErroSala(e?.message));
+    }
+  };
+
   // Visitante deslogado: a vitrine renderiza normal (o usuário é opcional).
   const currentSlide = heroSlides[activeHero];
   const SlideIcon = currentSlide.icon;
@@ -938,6 +960,16 @@ const Jogar = () => {
                           <Users className="w-3 h-3" />
                           {(sala.jogadores || []).length}/{sala.maxJogadores}
                         </div>
+                        {/* Excluir sala — só admin/proprietário (validação real no servidor) */}
+                        {ehAdminOuProprietario && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); excluirSala(sala); }}
+                            className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all"
+                            title="Excluir sala"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                       
                       <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1">{sala.nome}</h3>

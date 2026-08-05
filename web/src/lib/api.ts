@@ -176,6 +176,13 @@ export interface ApiWalletAdjustResult {
   mp: number;
 }
 
+/** Retorno do POST /api/wallet/admin/adjust-mc (exclusivo do proprietário). */
+export interface ApiWalletAdjustMcResult {
+  ok: boolean;
+  erro: string | null;
+  mc: number;
+}
+
 /**
  * Shape legado de `salas` que as telas de Jogar/SalaMod1 consomem (ADR-005/010).
  * `id` é o `sala_num` público (numérico) — o fork navega em `/sala-mod1/:id`,
@@ -333,6 +340,8 @@ export interface ApiMatchesSdk {
   start: (id: number) => Promise<ApiSalaResultado>;
   /** Registra voto num jogo (substitui RPC votar_jogo). */
   vote: (id: number | string, teamTag: string) => Promise<{ ok: boolean }>;
+  /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
+  excluir: (id: number | string) => Promise<{ ok: boolean; id: string; salaNum: number }>;
 }
 
 /**
@@ -577,6 +586,12 @@ export const api = {
         deltaMP,
         motivo: motivo || "ajuste_admin",
       }),
+    adminAdjustMc: (userId: string, deltaMC: number, motivo?: string) =>
+      api.post<ApiWalletAdjustMcResult>("/wallet/admin/adjust-mc", {
+        userId,
+        deltaMC,
+        motivo: motivo || "ajuste_admin",
+      }),
   },
 
   content: {
@@ -630,6 +645,9 @@ export const api = {
     /** Registra voto num jogo (substitui RPC votar_jogo). */
     vote: (id: number | string, teamTag: string) =>
       api.post<{ ok: boolean }>(`/matches/${id}/vote`, { p_team_tag: teamTag }),
+    /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
+    excluir: (id: number | string) =>
+      api.delete<{ ok: boolean; id: string; salaNum: number }>(`/matches/${id}`),
   } as ApiMatchesSdk,
 
   profiles: {

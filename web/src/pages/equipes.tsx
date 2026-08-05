@@ -295,7 +295,7 @@ export default function Equipes() {
       const name = `${novoTime.id}-${Date.now()}.${ext}`;
       const file = new File([newTeamData._logoFile], name, { type: newTeamData._logoFile.type });
       try {
-        const { url } = await api.upload(file, 'team-logos');
+        const { url } = await api.upload(file, 'team-logos', novoTime.id);
         await api.teams.update(novoTime.id, { logo_url: url });
       } catch (err) {
         // logo é acessório; falha não deve impedir o time criado

@@ -55,7 +55,8 @@ const PerfilContext = createContext<PerfilContextType | null>(null);
 
 /** Cargo legado a partir das roles do schema novo (user_roles). */
 function rolesToCargo(roles: string[]): string {
-  if (roles.includes('admin') || roles.includes('proprietario')) return 'admin';
+  if (roles.includes('proprietario')) return 'proprietario';
+  if (roles.includes('admin')) return 'admin';
   if (roles.includes('organizador') || roles.includes('organizer')) return 'organizador';
   return 'jogador';
 }

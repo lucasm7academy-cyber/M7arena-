@@ -23,6 +23,7 @@ const authUsers = readDump("auth_users");
 const profiles = readDump("profiles");
 const contasRiot = readDump("contas_riot");
 const wallets = readDump("wallets");
+const discordLinks = readDump("discord_links");
 // BLK-001 resolvido: passwords.json vem do extract-passwords.mjs (pg_dump do Postgres do Supabase)
 const passwords = readDump("passwords");
 
@@ -34,7 +35,6 @@ const passwordByEmail = Object.fromEntries(
 // 1. users: todos do auth_users + dados do profile quando existir
 const users = authUsers.map((u) => {
   const p = profileById[u.id];
-  const [nomeExibicao = null, riotId = null] = [p?.nome_exibicao ?? null, null];
   return {
     id: u.id,
     email: u.email.toLowerCase(),
@@ -94,11 +94,44 @@ const userWallets = wallets
     updatedAt: w.updated_at ?? new Date().toISOString(),
   }));
 
+// 4. user_identities: discord_links → user_identities (provider 'discord')
+// Plano de migração §5: discord_links vira user_identities com providerAccountId
+// = discord_id (o mesmo formato que api/src/routes/discord.ts grava no /link).
+// TODO(migracao): identidades Google NÃO migram — o extract.js não captura o
+// providerAccountId (google sub) em auth_users.json, e reconstruir com outro
+// valor quebraria o match do auth-google.ts. Sem a identidade, o primeiro login
+// Google do usuário re-vincula por e-mail (resolverUsuario) sem criar duplicata.
+const userIdentities = discordLinks
+  .filter((d) => authUsers.some((u) => u.id === d.supabase_id))
+  .map((d) => ({
+    userId: d.supabase_id,
+    provider: "discord",
+    providerAccountId: d.discord_id,
+    createdAt: d.created_at ?? new Date().toISOString(),
+  }));
+
+// 5. user_payout_info: profiles com chave Pix → tabela própria (plano §5)
+// Mapeamento de tipo: legado usa 'cpf'|'telefone'; schema espera 'cpf'|'phone'.
+const pixTypeMap = { cpf: "cpf", telefone: "phone", email: "email", random: "random" };
+const userPayoutInfo = profiles
+  .filter((p) => p.chave_pix)
+  .map((p) => ({
+    userId: p.id,
+    pixType: pixTypeMap[p.tipo_chave_pix] ?? p.tipo_chave_pix ?? "cpf",
+    pixKey: p.chave_pix,
+    pixName: p.nome_pix ?? "",
+    updatedAt: p.updated_at ?? new Date().toISOString(),
+  }));
+
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, "users.json"), JSON.stringify(users, null, 2));
 fs.writeFileSync(path.join(outDir, "game_accounts.json"), JSON.stringify(gameAccounts, null, 2));
 fs.writeFileSync(path.join(outDir, "user_wallets.json"), JSON.stringify(userWallets, null, 2));
+fs.writeFileSync(path.join(outDir, "user_identities.json"), JSON.stringify(userIdentities, null, 2));
+fs.writeFileSync(path.join(outDir, "user_payout_info.json"), JSON.stringify(userPayoutInfo, null, 2));
 
 console.log(`[ETL Transform] users: ${users.length}`);
 console.log(`[ETL Transform] game_accounts: ${gameAccounts.length}`);
 console.log(`[ETL Transform] user_wallets: ${userWallets.length}`);
+console.log(`[ETL Transform] user_identities: ${userIdentities.length}`);
+console.log(`[ETL Transform] user_payout_info: ${userPayoutInfo.length}`);

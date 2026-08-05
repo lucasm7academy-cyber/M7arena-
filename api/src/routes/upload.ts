@@ -6,6 +6,7 @@ import multer from "multer";
 import { eq, and, gt } from "drizzle-orm";
 import { db } from "../db.js";
 import { userSessions } from "../../../db/schema/identidade.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
 import { matchPrints } from "../../../db/schema/apostas.js";
 import { entrarEmRevisao, notifyMatchChange } from "../lib/match-flow.js";
@@ -23,8 +24,11 @@ function obterUploadDir(): string {
  * (ADR-007): `team-logos` → `/uploads/team-logos/`, `public-images` →
  * `/uploads/public-images/`, `match-prints` → `/uploads/match-prints/`. O
  * servidor restringe a escrita por bucket, então o cliente não decide caminho
- * arbitrário. `match-prints` é privado (design v3 §6): a URL servida passa por
- * endpoint autenticado, nunca link direto do disco.
+ * arbitrário. A escrita também é restrita por dono (ARQUITETURA.md §6):
+ * `team-logos` só aceita o dono/capitão do time (a logo cai em
+ * `/uploads/team-logos/<team_id>/`), `public-images` só admin/organizador, e
+ * `match-prints` é privado (design v3 §6): a URL servida passa por endpoint
+ * autenticado, nunca link direto do disco.
  */
 const BUCKETS = new Set(["team-logos", "public-images", "match-prints"]);
 
@@ -125,6 +129,65 @@ function sanitizeFilename(name: string): string | null {
  */
 function sanitizeSubpath(subpath: string): string {
   return subpath.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
+}
+
+/**
+ * Restrição por dono dos buckets públicos (ARQUITETURA.md §6 — "Autorização por
+ * dono, com limite de tamanho e MIME"). Não é só "estar autenticado": a escrita
+ * tem que pertencer ao dono do recurso.
+ *
+ * - `team-logos`: `subpath` é o `team_id` e a logo é gravada em
+ *   `/uploads/team-logos/<team_id>/`. Só o dono ou o capitão do time escreve —
+ *   mesma regra do PUT /api/teams/:id, para o atacante não plantar arquivos na
+ *   pasta de um time alheio.
+ * - `public-images`: usado só pelo painel de campeonatos. Só admin,
+ *   proprietário ou organizador escreve.
+ *
+ * `match-prints` não passa por aqui (tem fluxo próprio acima, com participante
+ * confirmado/revisor).
+ */
+export type PermissaoBucketPublico =
+  | { ok: true }
+  | { ok: false; status: number; erro: string };
+
+export async function validarPermissaoBucketPublico(
+  db: any,
+  userId: string,
+  bucket: string,
+  subpath: string
+): Promise<PermissaoBucketPublico> {
+  if (bucket === "team-logos") {
+    if (!subpath) {
+      return { ok: false, status: 400, erro: "Informe o id do time (path) para o bucket team-logos." };
+    }
+    const [team] = await db.select().from(teams).where(eq(teams.id, subpath)).limit(1);
+    if (!team) return { ok: false, status: 404, erro: "Time não encontrado." };
+
+    const isOwner = team.ownerId === userId;
+    const [cap] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.isCaptain, true)))
+      .limit(1);
+    const isCaptain = !isOwner && Boolean(cap && cap.userId === userId);
+    if (!isOwner && !isCaptain) {
+      return { ok: false, status: 403, erro: "Apenas o dono ou capitão do time pode enviar a logo." };
+    }
+    return { ok: true };
+  }
+
+  if (bucket === "public-images") {
+    const roles = await getRoles(db, userId);
+    const pode = roles.some(
+      (r) => r === "admin" || r === "proprietario" || r === "organizer" || r === "organizador"
+    );
+    if (!pode) {
+      return { ok: false, status: 403, erro: "Apenas admin ou organizador pode enviar imagens públicas." };
+    }
+    return { ok: true };
+  }
+
+  return { ok: true };
 }
 
 // ── RATE LIMIT de upload (design v3 §6) ─────────────────────────────────────
@@ -318,6 +381,12 @@ uploadRouter.post(
         // refresh (design v3 §6 — o cliente refaz o GET ao receber o aviso).
         notifyMatchChange(subpath);
         return res.json({ url: r.url, printId: r.printId });
+      }
+
+      // ── Buckets públicos: escrita restrita ao dono/role (ARQUITETURA.md §6) ──
+      const permissoes = await validarPermissaoBucketPublico(db, session.userId, bucket, subpath);
+      if (!permissoes.ok) {
+        return res.status(permissoes.status).json({ error: permissoes.erro });
       }
 
       const filename = sanitizeFilename(file.originalname);
