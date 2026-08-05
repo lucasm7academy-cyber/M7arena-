@@ -475,6 +475,7 @@ const Jogar = () => {
   const [activeHero, setActiveHero] = useState(0);
   const gamesRef = useRef<HTMLDivElement>(null);
   const finalizadasRef = useRef<HTMLDivElement>(null);
+  const finalizadasScrollRef = useRef<HTMLDivElement>(null);
   
   // Estados do usuário
   const [usuarioAtual, setUsuarioAtual] = useState<UsuarioAtual | null>(null);
@@ -1050,7 +1051,8 @@ const Jogar = () => {
           </div>
 
           {carregouFinalizadas ? (
-            <div className="flex gap-5 overflow-x-auto hide-scrollbar pb-4">
+            <div className="relative group">
+              <div ref={finalizadasScrollRef} className="flex gap-5 overflow-x-auto hide-scrollbar pb-4">
               {loadingSalasFinalizadas ? (
                 <div className="w-full text-center py-10">
                   <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FFB700] border-t-transparent mx-auto mb-4" />
@@ -1131,6 +1133,20 @@ const Jogar = () => {
                     </div>
                   );
                 })
+              )}
+              </div>
+
+              {salasFinalizadasFiltradas.length > 2 && (
+                <>
+                  <button onClick={() => finalizadasScrollRef.current?.scrollBy({ left: -450, behavior: 'smooth' })}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 rounded-lg bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => finalizadasScrollRef.current?.scrollBy({ left: 450, behavior: 'smooth' })}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 rounded-lg bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
               )}
             </div>
           ) : (

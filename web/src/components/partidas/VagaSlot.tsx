@@ -82,13 +82,13 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 <img
                     src={icone}
                     alt={nome}
-                    className={`w-[5vmin] h-[5vmin] rounded-lg object-cover border ${config.avatarBorder} transition-all`}
+                    className={`w-[5vmin] h-[5vmin] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                     style={config.avatarFilter ? { filter: config.avatarFilter } : {}}
                 />
             </div>
         )
         : (
-            <div className={`w-[5vmin] h-[5vmin] bg-white/5 rounded-lg flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
+            <div className={`w-[5vmin] h-[5vmin] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
                 <span className="text-white/20 text-[1.8vmin] font-black uppercase">{nome?.[0] || '?'}</span>
             </div>
         );

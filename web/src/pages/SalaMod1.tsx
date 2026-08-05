@@ -236,7 +236,7 @@ export default function SalaMod1() {
     };
 
     return (
-        <div className="flex-1 w-full h-full bg-[#050505] flex flex-col items-center justify-between p-0 font-sans relative overflow-hidden text-white">
+        <div className="flex-1 w-full h-full bg-[#050505] flex flex-col items-center justify-between p-0 font-sans relative overflow-y-auto md:overflow-hidden text-white">
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0">
@@ -274,18 +274,19 @@ export default function SalaMod1() {
 
                 <div className="flex items-center gap-[3vmin] z-10">
                     <motion.button 
-                        whileHover={{ scale: 1.1, rotate: 180 }}
+                        whileHover={{ scale: 1.15 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => navigate('/jogar')} 
-                        className="w-[5vmin] h-[5vmin] rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-red-500 hover:bg-red-500/20 transition-colors backdrop-blur-md"
+                        className="group relative flex items-center justify-center text-red-500 hover:text-red-400 transition-colors"
+                        title="Sair da sala"
                     >
                         <motion.span
                             initial={{ rotate: 0 }}
-                            whileHover={{ rotate: 180 }}
-                            transition={{ duration: 0.4, ease: 'easeInOut' }}
+                            whileHover={{ rotate: 45 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
                             className="flex"
                         >
-                            <X className="w-[2.2vmin] h-[2.2vmin]" />
+                            <X className="w-[5vmin] h-[5vmin]" strokeWidth={3.5} />
                         </motion.span>
                     </motion.button>
                     <div className="flex flex-col">
@@ -354,11 +355,11 @@ export default function SalaMod1() {
             )}
 
             {/* MAIN CENTRAL AREA */}
-            <div className="flex-1 w-full relative flex items-center justify-center overflow-y-auto md:overflow-visible">
+            <div className="flex-1 w-full relative flex items-start justify-start md:items-center md:justify-center overflow-y-auto md:overflow-visible py-[2vmin]">
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-center z-20 flex-col md:flex-row gap-[6vmin] md:gap-[70vmin] ${isX1 ? 'md:gap-[74vmin]' : 'md:gap-[70vmin]'}`}>
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[70vmin] py-[2vmin] md:py-0 ${isX1 ? 'md:gap-[74vmin]' : 'md:gap-[70vmin]'}`}>
                     {/* BLUE SIDE */}
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">
                         <div
@@ -402,7 +403,7 @@ export default function SalaMod1() {
                         no centro geométrico do MAIN entre os dois times. Mobile: entra
                         no fluxo vertical — vagas do time A → hub → vagas do time B. */}
                     {sala.estado !== 'encerrada' && (
-                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[42vmin] h-[42vmin] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0">
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[55vmin] h-[55vmin] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0">
                         {/* Outer rings */}
                         <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
                         <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
@@ -417,10 +418,10 @@ export default function SalaMod1() {
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
                                 <div className="absolute top-10 flex flex-col items-center">
                                     <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
-                                    <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">SISTEMA ANALÍTICO</span>
+                                    <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
                                 </div>
                                 <div className="absolute bottom-10 flex flex-col items-center">
-                                    <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">STATUS DE CONEXÃO: ESTÁVEL</span>
+                                    <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
                                     <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
                                 </div>
                             </div>
