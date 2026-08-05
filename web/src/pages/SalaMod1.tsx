@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeftFromLine, Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X } from 'lucide-react';
+import { Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { VagaSlot } from '../components/partidas/VagaSlot';
@@ -214,6 +214,27 @@ export default function SalaMod1() {
     };
     const corModoHeader = hexCoresModo[sala.modo] || '#FFB700';
 
+    // ── Exclusão administrativa (admin/proprietário) ──
+    // Cargo vem do PerfilContext (perfil.cargo: 'proprietario'|'admin'|...). A
+    // validação REAL roda no servidor (DELETE /api/matches/:id); aqui só
+    // escondemos o botão para quem não tem cargo.
+    const ehAdminOuProprietario = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
+
+    const excluirSala = async () => {
+        if (!ehAdminOuProprietario) return;
+        const confirmou = window.confirm(
+            `Excluir a sala "${sala.nome}" permanentemente? As reservas dos jogadores serão devolvidas.`
+        );
+        if (!confirmou) return;
+        try {
+            await api.matches.excluir(salaId);
+            toast.success('Sala excluída.');
+            navigate('/jogar');
+        } catch (e: any) {
+            toast.error(traduzirErroSala(e?.message));
+        }
+    };
+
     return (
         <div className="flex-1 w-full h-full bg-[#050505] flex flex-col items-center justify-between p-0 font-sans relative overflow-hidden text-white">
 
@@ -253,12 +274,19 @@ export default function SalaMod1() {
 
                 <div className="flex items-center gap-[3vmin] z-10">
                     <motion.button 
-                        whileHover={{ scale: 1.1, rotate: -5 }}
+                        whileHover={{ scale: 1.1, rotate: 180 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => navigate('/jogar')} 
-                        className="w-[5vmin] h-[5vmin] rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 hover:text-red-500 transition-colors backdrop-blur-md"
+                        className="w-[5vmin] h-[5vmin] rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-red-500 hover:bg-red-500/20 transition-colors backdrop-blur-md"
                     >
-                        <ArrowLeftFromLine className="w-[2.2vmin] h-[2.2vmin]" />
+                        <motion.span
+                            initial={{ rotate: 0 }}
+                            whileHover={{ rotate: 180 }}
+                            transition={{ duration: 0.4, ease: 'easeInOut' }}
+                            className="flex"
+                        >
+                            <X className="w-[2.2vmin] h-[2.2vmin]" />
+                        </motion.span>
                     </motion.button>
                     <div className="flex flex-col">
                         <h1 className="text-[2.2vmin] font-black tracking-widest text-white uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{sala.nome}</h1>
@@ -281,6 +309,19 @@ export default function SalaMod1() {
                             <span className="text-[1.5vmin] font-black text-green-400 uppercase tracking-widest mt-0.5">{sala.mpoints > 0 ? `${sala.mpoints} MC` : 'Casual'}</span>
                         </div>
                     </div>
+
+                    {/* Excluir sala — só admin/proprietário (validação real no servidor) */}
+                    {ehAdminOuProprietario && (
+                        <motion.button
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={excluirSala}
+                            className="w-[5vmin] h-[5vmin] rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500/20 hover:text-red-400 transition-colors backdrop-blur-md"
+                            title="Excluir sala permanentemente"
+                        >
+                            <Trash2 className="w-[2.2vmin] h-[2.2vmin]" />
+                        </motion.button>
+                    )}
                 </div>
             </motion.div>
 
@@ -313,38 +354,11 @@ export default function SalaMod1() {
             )}
 
             {/* MAIN CENTRAL AREA */}
-            <div className="flex-1 w-full relative flex items-center justify-center overflow-visible">
-                {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o card de
-                    resultado central já ocupa o espaço) */}
-                {sala.estado !== 'encerrada' && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full z-10 flex items-center justify-center">
-                    {/* Outer rings */}
-                    <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
-                    <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
-                    
-                    {/* Main Hub Body */}
-                    <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
-                        <ArcaneIndicators />
-                        <CentralDisplay />
-                        
-                        {/* HUB HUD Overlay */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
-                            <div className="absolute top-10 flex flex-col items-center">
-                                <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
-                                <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">SISTEMA ANALÍTICO</span>
-                            </div>
-                            <div className="absolute bottom-10 flex flex-col items-center">
-                                <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">STATUS DE CONEXÃO: ESTÁVEL</span>
-                                <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                )}
+            <div className="flex-1 w-full relative flex items-center justify-center overflow-y-auto md:overflow-visible">
 
-                {/* SIDE GRID SECTION */}
-                <div className={`w-full flex items-center justify-center z-20 ${isX1 ? 'gap-[74vmin]' : 'gap-[70vmin]'}`}>
+                {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
+                    hub → time B); desktop: times nas laterais do hub central */}
+                <div className={`w-full flex items-center justify-center z-20 flex-col md:flex-row gap-[6vmin] md:gap-[70vmin] ${isX1 ? 'md:gap-[74vmin]' : 'md:gap-[70vmin]'}`}>
                     {/* BLUE SIDE */}
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">
                         <div
@@ -382,6 +396,37 @@ export default function SalaMod1() {
                             })}
                         </div>
                     </div>
+
+                    {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o card de
+                        resultado central já ocupa o espaço). Desktop (md+): absoluto,
+                        no centro geométrico do MAIN entre os dois times. Mobile: entra
+                        no fluxo vertical — vagas do time A → hub → vagas do time B. */}
+                    {sala.estado !== 'encerrada' && (
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[42vmin] h-[42vmin] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0">
+                        {/* Outer rings */}
+                        <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
+                        <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
+
+                        {/* Main Hub Body */}
+                        <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
+                            <ArcaneIndicators />
+                            <CentralDisplay />
+
+                            {/* HUB HUD Overlay */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
+                                <div className="absolute top-10 flex flex-col items-center">
+                                    <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
+                                    <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">SISTEMA ANALÍTICO</span>
+                                </div>
+                                <div className="absolute bottom-10 flex flex-col items-center">
+                                    <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">STATUS DE CONEXÃO: ESTÁVEL</span>
+                                    <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    )}
 
                     {/* RED SIDE */}
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">

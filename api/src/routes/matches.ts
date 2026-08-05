@@ -2,10 +2,11 @@ import { Router } from "express";
 import { timingSafeEqual } from "crypto";
 import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
-import { users, userSessions, userWallets } from "../../../db/schema/identidade.js";
-import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { users, userSessions, userWallets, userRoles } from "../../../db/schema/identidade.js";
+import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
-import { matchPrints } from "../../../db/schema/apostas.js";
+import { matchPrints, matchDisputas, userStrikes } from "../../../db/schema/apostas.js";
+import { platformRevenue } from "../../../db/schema/economia.js";
 import { toLegacyMatch } from "../lib/match-shape.js";
 import {
   avaliarTransicoes,
@@ -17,7 +18,7 @@ import {
   notifyMatchChange,
   validarElegibilidade,
 } from "../lib/match-flow.js";
-import { reservarEntrada } from "../lib/escrow.js";
+import { reservarEntrada, devolverEntrada } from "../lib/escrow.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -367,5 +368,60 @@ matchesRouter.post("/:id/vote", async (req, res) => {
     return res.json({ ok: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao votar" });
+  }
+});
+
+// DELETE /api/matches/:id - Excluir sala (somente admin/proprietário).
+// A exclusão é administrativa e LIQUIDA tudo: devolve as reservas (escrow) ainda
+// pendentes de cada jogador da sala apostada e remove a sala com todos os dados
+// vinculados (players, prints, resultados, disputas, strikes, revenue, códigos).
+// Não bloqueia por estado — em qualquer estado as reservas pendentes voltam para
+// a carteira do jogador antes do DELETE. `devolverEntrada` é idempotente (no-op
+// quando o jogador não tem mais nada reservado), então liquidar duas vezes é seguro.
+matchesRouter.delete("/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const eAdminOuProprietario = roles.some((r: any) => r.role === "admin" || r.role === "proprietario");
+    if (!eAdminOuProprietario) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode excluir sala" });
+    }
+
+    const match = await resolverSala(req.params.id);
+    if (!match) return res.status(404).json({ error: "Sala não encontrada" });
+
+    await db.transaction(async (tx: any) => {
+      // Lock da linha para impedir join/transição concorrente no meio da liquidação.
+      const [atual] = await tx.select().from(matches).where(eq(matches.id, match.id)).limit(1).for("update");
+      if (!atual) return;
+
+      // Devolve a reserva de cada jogador da sala apostada (mc_reservado -> mc).
+      const aposta = atual.apostaMc ?? atual.entryMp ?? 0;
+      if (aposta > 0) {
+        const players = await tx.select().from(matchPlayers).where(eq(matchPlayers.matchId, match.id));
+        for (const p of players) {
+          await devolverEntrada(tx, p.userId, aposta, match.id);
+        }
+      }
+
+      // Libera o código de partida de volta para o pool (match_codes.match_id -> NULL).
+      await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, match.id));
+      // Remove os dados vinculados (FKs em matches.id; cascade cobriria, mas o
+      // DELETE explícito deixa a liquidação clara e independente do schema).
+      await tx.delete(matchPlayers).where(eq(matchPlayers.matchId, match.id));
+      await tx.delete(matchResults).where(eq(matchResults.matchId, match.id));
+      await tx.delete(matchPrints).where(eq(matchPrints.matchId, match.id));
+      await tx.delete(matchDisputas).where(eq(matchDisputas.matchId, match.id));
+      await tx.delete(userStrikes).where(eq(userStrikes.matchId, match.id));
+      await tx.delete(platformRevenue).where(eq(platformRevenue.matchId, match.id));
+      await tx.delete(matches).where(eq(matches.id, match.id));
+    });
+
+    notifyMatchChange(match.id);
+    return res.json({ ok: true, id: match.id, salaNum: match.salaNum });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao excluir sala" });
   }
 });

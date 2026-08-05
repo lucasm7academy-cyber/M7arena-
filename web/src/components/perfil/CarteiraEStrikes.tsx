@@ -5,7 +5,8 @@
 // aplicável. Saldo que "some" sem explicação vira ticket de suporte.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Coins, LoaderCircle, ShieldAlert } from 'lucide-react';
+import { LoaderCircle, ShieldAlert } from 'lucide-react';
+import { GiTwoCoins } from 'react-icons/gi';
 import { api, type ApiWalletBalance } from '../../lib/api';
 
 interface CarteiraEStrikesProps {
@@ -50,7 +51,7 @@ export function CarteiraEStrikes({ saldoDisponivel, strikes, strikesMax, suspens
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="flex items-center justify-between mb-5">
                     <span className="text-xs text-white/30 font-normal uppercase tracking-widest">Carteira</span>
-                    <Coins className="w-5 h-5 text-primary/40" />
+                    <GiTwoCoins className="w-5 h-5 text-primary/40" />
                 </div>
 
                 {carregando && !wallet ? (
@@ -62,13 +63,13 @@ export function CarteiraEStrikes({ saldoDisponivel, strikes, strikesMax, suspens
                         <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
                             <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Disponível</span>
                             <span className="flex items-center gap-1.5 text-white font-black text-base">
-                                <Coins className="w-4 h-4 text-yellow-400" /> {disponivel.toLocaleString('pt-BR')} MC
+                                <GiTwoCoins className="w-4 h-4 text-yellow-400" /> {disponivel.toLocaleString('pt-BR')} MC
                             </span>
                         </div>
                         <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-primary/5 border border-primary/20">
                             <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Em partida</span>
                             <span className="flex items-center gap-1.5 text-primary font-black text-base">
-                                <Coins className="w-4 h-4" /> {mcReservado.toLocaleString('pt-BR')} MC
+                                <GiTwoCoins className="w-4 h-4" /> {mcReservado.toLocaleString('pt-BR')} MC
                             </span>
                         </div>
                         {emPartida.length > 0 && (

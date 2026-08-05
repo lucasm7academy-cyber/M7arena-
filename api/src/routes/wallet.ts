@@ -135,6 +135,74 @@ walletRouter.get("/admin/balances", async (req, res) => {
   }
 });
 
+/**
+ * Regra de negócio compartilhada entre /admin/adjust e /admin/adjust-mc:
+ * recusa saldo negativo, faz upsert da carteira e grava o ledger
+ * wallet_transactions (kind admin_adjustment + balance_after) na mesma operação.
+ * A validação de cargo fica nos endpoints — aqui só o DELTA é aplicado.
+ */
+async function aplicarAjuste(
+  userId: string,
+  deltaMC: number,
+  deltaMP: number,
+  motivo: string
+): Promise<{ ok: true; mc: number; mp: number } | { ok: false; status: number; erro: string; mc: number; mp: number }> {
+  const [alvo] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!alvo) {
+    return { ok: false, status: 404, erro: "usuario_nao_encontrado", mc: 0, mp: 0 };
+  }
+
+  const [wallet] = await db.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1);
+  const mcAtual = wallet?.mc ?? 0;
+  const mpAtual = wallet?.mp ?? 0;
+  const novoMC = mcAtual + deltaMC;
+  const novoMP = mpAtual + deltaMP;
+
+  if (novoMC < 0 || novoMP < 0) {
+    return { ok: false, status: 400, erro: "saldo_insuficiente", mc: mcAtual, mp: mpAtual };
+  }
+
+  // Upsert da carteira — usuário pode ainda não ter linha em user_wallets.
+  if (wallet) {
+    await db
+      .update(userWallets)
+      .set({ mp: novoMP, mc: novoMC, updatedAt: new Date() })
+      .where(eq(userWallets.userId, userId));
+  } else {
+    await db.insert(userWallets).values({ userId, mp: novoMP, mc: novoMC });
+  }
+
+  // refType/refId carregam o motivo do ajuste (polimórfico: refType
+  // discrimina o tipo, refId guarda o texto) para o ledger preservar o "porquê".
+  const ref = {
+    refType: "admin_adjustment" as const,
+    refId: typeof motivo === "string" && motivo.trim() ? motivo.trim() : "ajuste_admin",
+  };
+
+  if (deltaMC !== 0) {
+    await db.insert(walletTransactions).values({
+      userId,
+      currency: "mc",
+      amount: deltaMC,
+      kind: "admin_adjustment",
+      ...ref,
+      balanceAfter: novoMC,
+    });
+  }
+  if (deltaMP !== 0) {
+    await db.insert(walletTransactions).values({
+      userId,
+      currency: "mp",
+      amount: deltaMP,
+      kind: "admin_adjustment",
+      ...ref,
+      balanceAfter: novoMP,
+    });
+  }
+
+  return { ok: true, mc: novoMC, mp: novoMP };
+}
+
 // POST /api/wallet/admin/adjust — ajuste de saldo por DELTA, exclusivo de admin.
 // O cliente nunca decide o valor final: o servidor valida o cargo, calcula os
 // saldos (recusa negativo) e grava o ledger wallet_transactions (kind
@@ -156,61 +224,45 @@ walletRouter.post("/admin/adjust", async (req, res) => {
     const dMC = Number.isFinite(Number(deltaMC)) ? Number(deltaMC) : 0;
     const dMP = Number.isFinite(Number(deltaMP)) ? Number(deltaMP) : 0;
 
-    const [alvo] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    if (!alvo) {
-      return res.status(404).json({ ok: false, erro: "usuario_nao_encontrado", error: "usuario_nao_encontrado", mc: 0, mp: 0 });
+    const r = await aplicarAjuste(userId, dMC, dMP, motivo);
+    if (!r.ok) {
+      return res.status(r.status).json({ ok: false, erro: r.erro, error: r.erro, mc: r.mc, mp: r.mp });
     }
-
-    const [wallet] = await db.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1);
-    const mcAtual = wallet?.mc ?? 0;
-    const mpAtual = wallet?.mp ?? 0;
-    const novoMC = mcAtual + dMC;
-    const novoMP = mpAtual + dMP;
-
-    if (novoMC < 0 || novoMP < 0) {
-      return res.status(400).json({ ok: false, erro: "saldo_insuficiente", error: "saldo_insuficiente", mc: mcAtual, mp: mpAtual });
-    }
-
-    // Upsert da carteira — usuário pode ainda não ter linha em user_wallets.
-    if (wallet) {
-      await db
-        .update(userWallets)
-        .set({ mp: novoMP, mc: novoMC, updatedAt: new Date() })
-        .where(eq(userWallets.userId, userId));
-    } else {
-      await db.insert(userWallets).values({ userId, mp: novoMP, mc: novoMC });
-    }
-
-    // refType/refId carregam o motivo do ajuste (polimórfico: refType
-    // discrimina o tipo, refId guarda o texto) para o ledger preservar o "porquê".
-    const ref = {
-      refType: "admin_adjustment" as const,
-      refId: typeof motivo === "string" && motivo.trim() ? motivo.trim() : "ajuste_admin",
-    };
-
-    if (dMC !== 0) {
-      await db.insert(walletTransactions).values({
-        userId,
-        currency: "mc",
-        amount: dMC,
-        kind: "admin_adjustment",
-        ...ref,
-        balanceAfter: novoMC,
-      });
-    }
-    if (dMP !== 0) {
-      await db.insert(walletTransactions).values({
-        userId,
-        currency: "mp",
-        amount: dMP,
-        kind: "admin_adjustment",
-        ...ref,
-        balanceAfter: novoMP,
-      });
-    }
-
-    return res.json({ ok: true, erro: null, mc: novoMC, mp: novoMP });
+    return res.json({ ok: true, erro: null, mc: r.mc, mp: r.mp });
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "erro_interno", error: error?.message || "erro_interno", mc: 0, mp: 0 });
+  }
+});
+
+// POST /api/wallet/admin/adjust-mc — ajuste de saldo MC, EXCLUSIVO do
+// proprietário (para testes de M7 Coins). Diferente de /admin/adjust (que usa
+// ehAdmin e aceita admin), aqui valida-se estritamente role `proprietario` em
+// user_roles — admin não passa. Reutiliza a mesma regra de negócio (delta,
+// recusa negativo, upsert, ledger) via aplicarAjuste.
+walletRouter.post("/admin/adjust-mc", async (req, res) => {
+  try {
+    const dono = await getAuthUser(req);
+    if (!dono) {
+      return res.status(401).json({ ok: false, erro: "nao_autenticado", error: "nao_autenticado", mc: 0 });
+    }
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, dono.id));
+    const ehProprietario = roles.some((r) => r.role === "proprietario");
+    if (!ehProprietario) {
+      return res.status(403).json({ ok: false, erro: "nao_autorizado", error: "nao_autorizado", mc: 0 });
+    }
+
+    const { userId, deltaMC = 0, motivo } = req.body ?? {};
+    if (!userId || typeof userId !== "string") {
+      return res.status(400).json({ ok: false, erro: "parametros_invalidos", error: "parametros_invalidos", mc: 0 });
+    }
+    const dMC = Number.isFinite(Number(deltaMC)) ? Number(deltaMC) : 0;
+
+    const r = await aplicarAjuste(userId, dMC, 0, motivo);
+    if (!r.ok) {
+      return res.status(r.status).json({ ok: false, erro: r.erro, error: r.erro, mc: r.mc });
+    }
+    return res.json({ ok: true, erro: null, mc: r.mc });
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "erro_interno", error: error?.message || "erro_interno", mc: 0 });
   }
 });

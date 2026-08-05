@@ -39,7 +39,7 @@ interface PartidaTravada {
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
-type Aba = 'dashboard' | 'saldos' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao';
+type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao';
 
 interface Highlight {
   id: string; titulo: string; link: string;
@@ -179,6 +179,85 @@ function AbaSaldos({ adminCargo }: { adminCargo: CargoAdmin }) {
               <div className="flex gap-2">{(['adicionar', 'remover'] as const).map(op => <button key={op} onClick={() => setOperacao(op)} className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border ${operacao === op ? (op === 'adicionar' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400') : 'bg-white/5 border-white/5 text-white/30'}`}>{op === 'adicionar' ? '+ Adicionar' : '− Remover'}</button>)}</div>
               <div><label className="text-white/30 text-[10px] font-black uppercase block mb-2">Quantidade (MP)</label><input type="number" min="1" value={valor} onChange={e => setValor(e.target.value)} placeholder="Ex: 500" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" /></div>
               <button onClick={aplicarSaldo} disabled={salvando || !valor || parseInt(valor) <= 0} className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 ${operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}>{salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MP`}</button>
+            </>}
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ABA: SALDO MC (exclusivo do proprietário) ─────
+function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
+  const [busca, setBusca] = useState('');
+  const [resultados, setResultados] = useState<Jogador[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [selecionado, setSelecionado] = useState<Jogador | null>(null);
+  const [valor, setValor] = useState('');
+  const [operacao, setOperacao] = useState<'adicionar' | 'remover'>('adicionar');
+  const [motivo, setMotivo] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro'; msg: string } | null>(null);
+  const podeMexer = temPermissao(adminCargo, 'gerenciarSaldoMc');
+
+  const buscarJogadores = useCallback(async () => {
+    if (busca.trim().length < 2) { setResultados([]); return; }
+    setBuscando(true);
+    // ✅ Schema novo: lê de `wallets` (mc) em vez de `saldos`; contas via API própria.
+    const [riotData, balances] = await Promise.all([
+      api.players.search(busca.trim()),
+      api.wallet.adminBalances(),
+    ]);
+    const saldoMap = Object.fromEntries((balances ?? []).map((w: any) => [w.userId, w.mc]));
+    if (riotData) setResultados(riotData.map((r: any) => ({ userId: r.user_id, riotId: r.riot_id ?? '—', nome: (r.riot_id ?? '—').split('#')[0], iconId: r.profile_icon_id, saldo: saldoMap[r.user_id] ?? 0 })));
+    setBuscando(false);
+  }, [busca]);
+
+  useEffect(() => { const t = setTimeout(buscarJogadores, 350); return () => clearTimeout(t); }, [buscarJogadores]);
+
+  const aplicarSaldo = async () => {
+    if (!selecionado || !valor || !podeMexer) return;
+    const qtd = parseInt(valor, 10);
+    if (isNaN(qtd) || qtd <= 0) return;
+    setSalvando(true);
+    const delta = operacao === 'adicionar' ? qtd : -qtd;
+    try {
+      // Fonte da verdade é o retorno do servidor, não um cálculo local.
+      const r = await api.wallet.adminAdjustMc(selecionado.userId, delta, motivo.trim() || 'ajuste_admin');
+      setSelecionado({ ...selecionado, saldo: r.mc });
+      setResultados(prev => prev.map(j => j.userId === selecionado.userId ? { ...j, saldo: r.mc } : j));
+      setValor(''); setMotivo('');
+      setPopup({ tipo: 'sucesso', msg: `${operacao === 'adicionar' ? '+' : '-'}${qtd} MC aplicado.` });
+    } catch (e: any) {
+      if (e?.message === 'nao_autorizado') {
+        setPopup({ tipo: 'erro', msg: 'Sem permissão: apenas o proprietário pode ajustar saldo MC.' });
+      } else {
+        setPopup({ tipo: 'erro', msg: 'Erro ao atualizar saldo.' });
+      }
+    }
+    setSalvando(false);
+    setTimeout(() => setPopup(null), 3000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div><h2 className="text-xl font-black text-white uppercase">Saldo M7 Coins (MC)</h2><p className="text-white/30 text-xs mt-1">{podeMexer ? 'Adicione ou remova M7 Coins (MC).' : 'Sem permissão.'}</p></div>
+      <AnimatePresence>{popup && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>{popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}{popup.msg}</motion.div>}</AnimatePresence>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl p-6 space-y-4" style={CardStyle()}>
+          <p className="text-white/40 text-xs font-black uppercase">Buscar Jogador</p>
+          <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><input type="text" value={busca} onChange={e => { setBusca(e.target.value); setSelecionado(null); }} placeholder="Nick#TAG..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none placeholder:text-white/20" />{buscando && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 animate-spin" />}</div>
+          {resultados.length > 0 && <div className="space-y-2 max-h-64 overflow-y-auto">{resultados.map(j => <button key={j.userId} onClick={() => setSelecionado(j)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left ${selecionado?.userId === j.userId ? 'bg-primary/10 border-primary/30' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}><div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0">{j.iconId ? <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/20 text-xs font-black">{j.nome[0]}</div>}</div><div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{j.riotId}</p><p className="text-white/40 text-xs">{j.saldo.toLocaleString('pt-BR')} MC</p></div>{selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}</button>)}</div>}
+        </div>
+        <div className="rounded-2xl p-6 space-y-5" style={CardStyle()}>
+          {!selecionado ? <div className="flex flex-col items-center justify-center h-full py-12"><Users className="w-8 h-8 text-white/10 mb-3" /><p className="text-white/20 text-sm font-black uppercase">Selecione um jogador</p></div>
+          : <>
+            <div className="flex items-center gap-3 pb-4 border-b border-white/5"><div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden shrink-0">{selecionado.iconId ? <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/30 font-black">{selecionado.nome[0]}</div>}</div><div><p className="text-white font-black">{selecionado.riotId}</p><div className="flex items-center gap-1.5 mt-0.5"><Coins className="w-3.5 h-3.5 text-primary" /><span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MC</span></div></div></div>
+            {podeMexer && <>
+              <div className="flex gap-2">{(['adicionar', 'remover'] as const).map(op => <button key={op} onClick={() => setOperacao(op)} className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border ${operacao === op ? (op === 'adicionar' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400') : 'bg-white/5 border-white/5 text-white/30'}`}>{op === 'adicionar' ? '+ Adicionar' : '− Remover'}</button>)}</div>
+              <div><label className="text-white/30 text-[10px] font-black uppercase block mb-2">Quantidade (MC)</label><input type="number" min="1" value={valor} onChange={e => setValor(e.target.value)} placeholder="Ex: 500" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" /></div>
+              <div><label className="text-white/30 text-[10px] font-black uppercase block mb-2">Motivo</label><input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ex: teste de saldo MC" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" /></div>
+              <button onClick={aplicarSaldo} disabled={salvando || !valor || parseInt(valor) <= 0} className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 ${operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}>{salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MC`}</button>
             </>}
           </>}
         </div>
@@ -1043,47 +1122,50 @@ function StatsCards() {
 
 // ── ABA: DASHBOARD (visão geral) ────────────────────
 function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void; adminCargo: CargoAdmin }) {
-  const permissoes = PERMISSOES_POR_CARGO[adminCargo];
-  const atalhos = [
-    { id: 'saldos' as Aba,     label: 'Saldos',     icon: Coins,         color: '#FFB700', desc: 'Gerenciar MPoints', bloqueada: !permissoes.gerenciarSaldos },
-    { id: 'ranking' as Aba,    label: 'Ranking',    icon: Trophy,        color: '#9146FF', desc: 'Ajustar PDL / W·L', bloqueada: !permissoes.gerenciarSaldos },
-    { id: 'noticias' as Aba,   label: 'Notícias',   icon: Newspaper,     color: '#00F0FF', desc: 'Informa & Esportes (Home)', bloqueada: !permissoes.gerenciarSaldos },
-    { id: 'highlights' as Aba, label: 'Highlights', icon: Film,          color: '#FF3131', desc: 'Clipes da comunidade', bloqueada: !permissoes.gerenciarSaldos },
-    { id: 'cargos' as Aba,     label: 'Cargos',     icon: GraduationCap, color: '#4DABFF', desc: 'Funções de usuários', bloqueada: !permissoes.gerenciarCargos },
-    { id: 'contatos' as Aba,   label: 'Contatos',   icon: Mail,          color: '#A78BFA', desc: 'WhatsApp e Discord', bloqueada: adminCargo !== 'admin' && adminCargo !== 'proprietario' },
-  ];
+  const podeRevisar = adminCargo === 'admin' || adminCargo === 'proprietario';
+  const [filaRevisao, setFilaRevisao] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!podeRevisar) return;
+    let ativo = true;
+    api.revisao
+      .pendentes()
+      .then(list => { if (ativo) setFilaRevisao(Array.isArray(list) ? list.length : 0); })
+      .catch(() => { if (ativo) setFilaRevisao(0); });
+    return () => { ativo = false; };
+  }, [podeRevisar]);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-black text-white uppercase">Bem-vindo ao painel</h2>
-        <p className="text-white/30 text-xs mt-1">Atalhos rápidos e visão geral da plataforma.</p>
+        <p className="text-white/30 text-xs mt-1">Visão geral operacional da plataforma.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {atalhos.map(a => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {podeRevisar && (
           <button
-            key={a.id}
-            onClick={() => !a.bloqueada && onNavigate(a.id)}
-            disabled={a.bloqueada}
-            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            onClick={() => onNavigate('revisao')}
+            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01]"
             style={CardStyle()}
           >
             <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: `${a.color}15`, border: `1px solid ${a.color}30` }}>
-              <a.icon className="w-5 h-5" style={{ color: a.color }} />
+              style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.3)' }}>
+              <Swords className="w-5 h-5 text-[#A78BFA]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-black text-sm uppercase tracking-wide">{a.label}</p>
-              <p className="text-white/40 text-xs mt-0.5">{a.desc}</p>
+              <p className="text-white font-black text-sm uppercase tracking-wide">Revisão de Partidas</p>
+              <p className="text-white/40 text-xs mt-0.5">
+                {filaRevisao === null
+                  ? 'Carregando fila...'
+                  : filaRevisao === 0
+                    ? 'Nenhuma partida aguardando revisão'
+                    : `${filaRevisao} ${filaRevisao === 1 ? 'partida aguardando' : 'partidas aguardando'} sua decisão`}
+              </p>
             </div>
-            {a.bloqueada ? (
-              <Lock className="w-4 h-4 text-white/20 shrink-0" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
-            )}
+            <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
           </button>
-        ))}
+        )}
       </div>
 
       <div className="rounded-2xl p-6 flex items-center gap-4" style={{ ...CardStyle(), borderColor: 'rgba(145,70,255,0.15)', background: 'rgba(145,70,255,0.04)' }}>
@@ -1134,6 +1216,7 @@ export default function Admin() {
   const abas: { id: Aba; label: string; icon: React.ElementType; bloqueada: boolean }[] = [
     { id: 'dashboard',  label: 'Visão',      icon: LayoutDashboard, bloqueada: false },
     { id: 'saldos',     label: 'Saldos',     icon: Coins,           bloqueada: !permissoes.gerenciarSaldos },
+    { id: 'saldomc',    label: 'Saldo MC',   icon: Coins,           bloqueada: !permissoes.gerenciarSaldoMc },
     { id: 'ranking',    label: 'Ranking',    icon: Trophy,          bloqueada: !permissoes.gerenciarSaldos },
     { id: 'noticias',   label: 'Notícias',   icon: Newspaper,       bloqueada: !permissoes.gerenciarSaldos },
     { id: 'highlights', label: 'Highlights', icon: Film,            bloqueada: !permissoes.gerenciarSaldos },
@@ -1206,6 +1289,7 @@ export default function Admin() {
           >
             {abaAtiva === 'dashboard'  && <AbaDashboard onNavigate={setAbaAtiva} adminCargo={adminCargo} />}
             {abaAtiva === 'saldos'     && <AbaSaldos adminCargo={adminCargo} />}
+            {abaAtiva === 'saldomc'    && <AbaSaldoMC adminCargo={adminCargo} />}
             {abaAtiva === 'ranking'    && <AbaRanking adminCargo={adminCargo} />}
             {abaAtiva === 'noticias'   && <AbaNoticias adminCargo={adminCargo} />}
             {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}

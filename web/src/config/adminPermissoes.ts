@@ -16,6 +16,8 @@ export type CargoAdmin = 'proprietario' | 'admin' | 'organizador' | 'streamer' |
 export interface PermissoesAdmin {
   /** Pode gerenciar saldos de MPoints de jogadores */
   gerenciarSaldos: boolean;
+  /** Pode ajustar saldo MC (M7 Coins) — exclusivo do proprietário */
+  gerenciarSaldoMc: boolean;
   /** Pode votar no vencedor de partidas em disputa */
   resolverPartidas: boolean;
   /** Pode cancelar uma partida (sem declarar vencedor) */
@@ -37,6 +39,7 @@ export interface PermissoesAdmin {
 export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   proprietario: {
     gerenciarSaldos:   true,
+    gerenciarSaldoMc:  true,
     resolverPartidas:  true,
     cancelarPartidas:  true,
     gerenciarCargos:   true,
@@ -48,6 +51,7 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   },
   admin: {
     gerenciarSaldos:   true,
+    gerenciarSaldoMc:  false,
     resolverPartidas:  true,
     cancelarPartidas:  true,
     gerenciarCargos:   false,
@@ -61,6 +65,7 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   // plataforma (saldos, elo, cargos, salas, outros campeonatos).
   organizador: {
     gerenciarSaldos:   false,
+    gerenciarSaldoMc:  false,
     resolverPartidas:  false,
     cancelarPartidas:  false,
     gerenciarCargos:   false,
@@ -72,6 +77,7 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   },
   streamer: {
     gerenciarSaldos:   false,
+    gerenciarSaldoMc:  false,
     resolverPartidas:  false,
     cancelarPartidas:  false,
     gerenciarCargos:   false,
@@ -83,6 +89,7 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   },
   coach: {
     gerenciarSaldos:   false,
+    gerenciarSaldoMc:  false,
     resolverPartidas:  false,
     cancelarPartidas:  false,
     gerenciarCargos:   false,
@@ -94,6 +101,7 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   },
   jogador: {
     gerenciarSaldos:   false,
+    gerenciarSaldoMc:  false,
     resolverPartidas:  false,
     cancelarPartidas:  false,
     gerenciarCargos:   false,
