@@ -103,5 +103,7 @@ export function validarAssinatura(params: {
 
   const dataStr = `id:${dataId};request-id:${requestId};ts:${ts};`;
   const calc = crypto.createHmac("sha256", secret).update(dataStr).digest("hex");
-  return calc === v1;
+  const calcBuf = Buffer.from(calc, "hex");
+  const v1Buf = Buffer.from(v1, "hex");
+  return calcBuf.length === v1Buf.length && crypto.timingSafeEqual(calcBuf, v1Buf);
 }
