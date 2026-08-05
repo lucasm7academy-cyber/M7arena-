@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader, CheckCircle2, Copy, Zap } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import GoldEssenceIcon from '../../icons/GoldEssenceIcon';
@@ -10,8 +10,9 @@ interface PackageOption {
   id: string;
   label: string;
   priceInReais: number;
+  baseMc: number;
+  bonusMc: number;
   mcs: number;
-  productId: string;
   popular?: boolean;
 }
 
@@ -19,49 +20,6 @@ interface DepositModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const PACKAGES: PackageOption[] = [
-  {
-    id: 'test',
-    label: 'R$ 2',
-    priceInReais: 2,
-    mcs: 110,
-    productId: 'test_product_2',
-    popular: false,
-  },
-  {
-    id: 'starter',
-    label: 'R$ 10',
-    priceInReais: 10,
-    mcs: 550,
-    productId: '4nphvqr_850185',
-    popular: false,
-  },
-  {
-    id: 'plus',
-    label: 'R$ 20',
-    priceInReais: 20,
-    mcs: 1187,
-    productId: 'prgoz44',
-    popular: true,
-  },
-  {
-    id: 'pro',
-    label: 'R$ 50',
-    priceInReais: 50,
-    mcs: 3100,
-    productId: 'etgawgo',
-    popular: false,
-  },
-  {
-    id: 'elite',
-    label: 'R$ 100',
-    priceInReais: 100,
-    mcs: 6547,
-    productId: '358aqek',
-    popular: false,
-  },
-];
 
 interface PaymentData {
   orderId: string;
@@ -73,12 +31,41 @@ interface PaymentData {
 
 export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const { user } = useAuth(); // ✅ Única fonte do usuário
-  const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(
-    () => PACKAGES.find((pkg) => pkg.popular) || PACKAGES[0]
-  );
+  const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
+  const [packages, setPackages] = useState<PackageOption[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [verifying, setVerifying] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    api.payments
+      .packages()
+      .then((rows) => {
+        if (!active) return;
+        const lista = (rows || []).map((p) => ({
+          id: p.id,
+          label: `R$ ${p.priceBrl.toFixed(0)}`,
+          priceInReais: p.priceBrl,
+          baseMc: p.baseMc,
+          bonusMc: p.bonusMc,
+          mcs: p.totalMc,
+          popular: p.isPopular,
+        }));
+        setPackages(lista);
+        setSelectedPackage(lista.find((pkg) => pkg.popular) || lista[0] || null);
+      })
+      .catch(() => {
+        if (active) toast.error('Erro ao carregar pacotes. Tente novamente.');
+      })
+      .finally(() => {
+        if (active) setPackagesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // ⚡ OTIMIZAÇÃO: Sem polling automático (antes era setInterval 5s).
   // Verificação única ao abrir + botão "Já paguei — verificar agora" on-demand.
@@ -86,13 +73,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     if (!paymentData?.orderId) return;
     if (!silent) setVerifying(true);
     try {
-      const { data, error } = await supabase
-        .from('pagamentos')
-        .select('status')
-        .eq('cakto_order_id', paymentData.orderId)
-        .maybeSingle();
+      const { status } = await api.payments.status(paymentData.orderId);
 
-      if (!error && data?.status === 'aprovado') {
+      if (status === 'approved') {
         toast.success('Pagamento aprovado! MCs creditados.');
         handleClose();
       } else if (!silent) {
@@ -115,9 +98,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // ⚡ Garante que o pacote Especial venha pré-selecionado sempre que o modal for aberto
   useEffect(() => {
     if (isOpen) {
-      setSelectedPackage(PACKAGES.find((pkg) => pkg.popular) || PACKAGES[0]);
+      setSelectedPackage(packages.find((pkg) => pkg.popular) || packages[0] || null);
     }
-  }, [isOpen]);
+  }, [isOpen, packages]);
 
   const handleSelectPackage = (pkg: PackageOption) => {
     setSelectedPackage(pkg);
@@ -133,65 +116,17 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setLoading(true);
     console.log('[DepositModal] Iniciando pagamento...', {
       userId: user.id,
-      productId: selectedPackage.productId,
-      amount: selectedPackage.priceInReais,
-      mcs: selectedPackage.mcs,
+      packageId: selectedPackage.id,
     });
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const data = await api.payments.createMcOrder(selectedPackage.id);
 
-      if (!session) {
-        // Depois da ADR-011 o login não passa mais pelo GoTrue, então esta
-        // sessão do Supabase é sempre nula — o pagamento fica indisponível até
-        // create-mercado-pago-order virar rota da API própria (ver sec.pix).
-        // A mensagem antiga dizia "sessão expirada" e mandava relogar, o que
-        // manda o usuário para um loop que não resolve nada.
-        console.error('[DepositModal] Pagamento indisponível: edge function ainda não migrada (sec.pix)');
-        toast.error('Pagamentos temporariamente indisponíveis. Tente novamente mais tarde.');
-        setLoading(false);
-        return;
-      }
-
-      const token = session.access_token;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bfsusctegzvfrlehhink.supabase.co';
-
-      console.log('[DepositModal] Chamando edge function...', { supabaseUrl });
-
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/create-mercado-pago-order`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            productId: selectedPackage.productId,
-            amount: selectedPackage.priceInReais,
-            mcs: selectedPackage.mcs,
-          }),
-        }
-      );
-
-      console.log('[DepositModal] Response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('[DepositModal] Erro na response:', errorData);
-        toast.error(errorData.error || 'Erro ao criar pagamento. Tente novamente.');
-        setLoading(false);
-        return;
-      }
-
-      const data = await response.json();
       console.log('[DepositModal] Dados recebidos:', {
-        success: data.success,
+        paymentId: data.paymentId,
         orderId: data.orderId,
         hasQrCode: !!data.qrCode,
         hasBrCode: !!data.brCode,
-        hasPaymentUrl: !!data.paymentUrl,
-        qrCodeLength: data.qrCode?.length || 0,
       });
 
       if (data.method === 'pix' && !data.qrCode) {
@@ -201,18 +136,24 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         return;
       }
 
-      setPaymentData(data);
+      setPaymentData({
+        orderId: data.paymentId,
+        method: data.method,
+        qrCode: data.qrCode ?? '',
+        brCode: data.brCode ?? '',
+        paymentUrl: '',
+      });
       toast.success('QR Code gerado com sucesso!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('[DepositModal] Erro inesperado:', error);
-      toast.error('Erro inesperado. Tente novamente.');
+      toast.error(error?.message || 'Erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleReset = () => {
-    setSelectedPackage(PACKAGES.find((pkg) => pkg.popular) || PACKAGES[0]);
+    setSelectedPackage(packages.find((pkg) => pkg.popular) || packages[0] || null);
     setPaymentData(null);
   };
 
@@ -297,12 +238,16 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         {selectedPackage ? `Selecionado: ${selectedPackage.label}` : 'Toque em um pacote'}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {PACKAGES.map((pkg, idx) => {
-                        // Bônus relativo ao pacote R$10 (referência de 55 MC/R$)
-                        const refRate = 550 / 10;
-                        const rate = pkg.mcs / pkg.priceInReais;
-                        const bonusPct = Math.round((rate / refRate - 1) * 100);
+                    {packagesLoading && packages.length === 0 ? (
+                      <div className="col-span-full text-white/40 text-sm py-8 text-center">
+                        Carregando pacotes...
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {packages.map((pkg, idx) => {
+                        // Bônus promocional definido no servidor (ADR-031):
+                        // % sobre o MC base (ex.: R$50 → 300/5000 = 6%).
+                        const bonusPct = pkg.bonusMc > 0 ? Math.round((pkg.bonusMc / pkg.baseMc) * 100) : 0;
                         const isSelected = selectedPackage?.id === pkg.id;
                         return (
                         <motion.button
@@ -346,6 +291,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         );
                       })}
                     </div>
+                    )}
                   </div>
 
                   {/* Resumo do Pedido Glassmorphism */}
