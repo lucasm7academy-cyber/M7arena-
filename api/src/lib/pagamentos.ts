@@ -11,6 +11,7 @@
 import { eq } from "drizzle-orm";
 import { userWallets } from "../../../db/schema/identidade.js";
 import { walletTransactions, payments } from "../../../db/schema/economia.js";
+import { validarAssinatura } from "./mercado-pago.js";
 
 /** Credita MC comprado: upsert na carteira + ledger `deposit`, atômico. */
 export async function creditarDeposito(tx: any, userId: string, mcCredit: number, paymentId: string) {
@@ -42,14 +43,26 @@ export async function creditarDeposito(tx: any, userId: string, mcCredit: number
  * checagem de `status` dentro da transação → o segundo webhook (retry/duplicado)
  * vê `approved` e sai sem creditar de novo.
  */
-export async function processarPagamentoAprovado(db: any, gatewayRef: string) {
+export async function processarPagamentoAprovado(db: any, gatewayRef: string, externalReference?: string | null) {
   return db.transaction(async (tx: any) => {
-    const [pag] = await tx
+    let [pag] = await tx
       .select()
       .from(payments)
       .where(eq(payments.gatewayRef, gatewayRef))
       .limit(1)
       .for("update");
+
+    // Fallback: se o gatewayRef (id do MP) ainda não foi gravado porque o
+    // UPDATE do mc/order não rodou, casa pelo external_reference (= nosso
+    // payments.id). Sem isso o webhook que chega na janela daria 404.
+    if (!pag && externalReference) {
+      [pag] = await tx
+        .select()
+        .from(payments)
+        .where(eq(payments.id, externalReference))
+        .limit(1)
+        .for("update");
+    }
 
     if (!pag) return { ok: false, code: 404, erro: "pagamento_nao_encontrado" };
     if (pag.status === "approved") return { ok: true, jaAprovado: true };
@@ -62,4 +75,46 @@ export async function processarPagamentoAprovado(db: any, gatewayRef: string) {
 
     return { ok: true, jaAprovado: false };
   });
+}
+
+/**
+ * Lógica de decisão do webhook do Mercado Pago (ADR-031). Extraída para ser
+ * testável sem rede: `consultarStatus` é injetado (em produção é a chamada
+ * real à API do MP). Retorna o status HTTP e o corpo da resposta.
+ */
+export async function processarWebhook(
+  d: any,
+  params: {
+    dataId: string;
+    type: string;
+    isTest: boolean;
+    secret: string;
+    signature: string;
+    requestId: string;
+    consultarStatus: (paymentId: string) => Promise<{ status: string; externalReference: string | null }>;
+  }
+): Promise<{ status: number; body: any }> {
+  if (!params.dataId || params.type !== "payment") {
+    return { status: 200, body: { success: true } };
+  }
+
+  if (!params.isTest) {
+    if (!params.secret) {
+      return { status: 500, body: { error: "webhook_nao_configurado" } };
+    }
+    if (!validarAssinatura({ secret: params.secret, signature: params.signature, requestId: params.requestId, dataId: params.dataId })) {
+      return { status: 401, body: { error: "assinatura_invalida" } };
+    }
+  }
+
+  const mp = await params.consultarStatus(params.dataId);
+  if (mp.status !== "approved") {
+    return { status: 200, body: { success: true } };
+  }
+
+  const r = await processarPagamentoAprovado(d, params.dataId, mp.externalReference);
+  if (!r.ok) {
+    return { status: r.code || 500, body: { error: r.erro || "erro_interno" } };
+  }
+  return { status: 200, body: { success: true } };
 }

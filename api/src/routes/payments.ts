@@ -4,8 +4,8 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
 import { mcPackages, payments } from "../../../db/schema/economia.js";
 import { getAuthUser } from "../lib/match-flow.js";
-import { criarPagamentoPix, consultarStatusPagamento, validarAssinatura } from "../lib/mercado-pago.js";
-import { processarPagamentoAprovado } from "../lib/pagamentos.js";
+import { criarPagamentoPix, consultarStatusPagamento, MpPixOrder } from "../lib/mercado-pago.js";
+import { processarWebhook } from "../lib/pagamentos.js";
 
 export const paymentsRouter = Router();
 
@@ -72,28 +72,41 @@ paymentsRouter.post("/mc/order", async (req, res) => {
     const notificationUrl =
       process.env.MERCADO_PAGO_NOTIFICATION_URL || `${process.env.APP_URL}/api/payments/webhook`;
 
-    const pix = await criarPagamentoPix({
-      accessToken,
-      amountBrl,
-      description: `M7 Arena - ${totalMc} MCs`,
-      payerEmail: isTest
-        ? "test_user_123456@testuser.com"
-        : `user-${user.id.substring(0, 8)}@m7arena.pro`,
-      externalReference: paymentId,
-      notificationUrl,
-      idempotencyKey: `${user.id}_${Date.now()}`,
-    });
-
+    // INSERT ANTES de chamar o MP (fix da revisão final): se o PIX for criado
+    // mas o INSERT falhar, o usuário paga sem registro no banco e o webhook
+    // não encontra o pagamento → MC nunca creditado. Gravando primeiro com
+    // gatewayRef=paymentId (placeholder) e atualizando depois, o registro
+    // existe antes de o MP poder notificar. Se o MP falhar, marca rejected.
     await db.insert(payments).values({
       id: paymentId,
       userId: user.id,
       gateway: "mercadopago",
-      gatewayRef: pix.id,
+      gatewayRef: paymentId,
       product: `mc_pack_${pkg.id}`,
       amountBrl: amountBrl.toString(),
       mcCredit: totalMc,
       status: "pending",
     });
+
+    let pix: MpPixOrder;
+    try {
+      pix = await criarPagamentoPix({
+        accessToken,
+        amountBrl,
+        description: `M7 Arena - ${totalMc} MCs`,
+        payerEmail: isTest
+          ? "test_user_123456@testuser.com"
+          : `user-${user.id.substring(0, 8)}@m7arena.pro`,
+        externalReference: paymentId,
+        notificationUrl,
+        idempotencyKey: `${user.id}_${Date.now()}`,
+      });
+    } catch (e) {
+      await db.update(payments).set({ status: "rejected" }).where(eq(payments.id, paymentId));
+      throw e;
+    }
+
+    await db.update(payments).set({ gatewayRef: pix.id }).where(eq(payments.id, paymentId));
 
     return res.status(201).json({
       paymentId,
@@ -111,46 +124,25 @@ paymentsRouter.post("/mc/order", async (req, res) => {
   }
 });
 
-// POST /api/payments/webhook — público (Mercado Pago). Valida assinatura,
-// confirma o status na API do MP e credita MC (idempotente).
+// POST /api/payments/webhook — público (Mercado Pago). A lógica de decisão
+// (assinatura → confirmar status no MP → creditar, idempotente) vive em
+// processarWebhook (lib/pagamentos.ts), testada sem rede.
 paymentsRouter.post("/webhook", async (req, res) => {
   try {
-    const dataId = String(req.query["data.id"] ?? "");
-    const type = String(req.query.type ?? "");
-    if (!dataId || type !== "payment") {
-      return res.json({ success: true }); // MP ignora — não é pagamento
-    }
-
     const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || "";
     const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET || "";
     const isTest = accessToken.startsWith("TEST-");
 
-    // Em produção a assinatura é OBRIGATÓRIA (fail closed): sem o secret a
-    // API não deve processar notificações não autenticadas num caminho de
-    // dinheiro. Em modo teste (TEST-) o MP não assina corretamente, igual à
-    // edge function antiga.
-    if (!isTest) {
-      if (!secret) {
-        return res.status(500).json({ error: "webhook_nao_configurado" });
-      }
-      const signature = String(req.headers["x-signature"] ?? "");
-      const requestId = String(req.headers["x-request-id"] ?? "");
-      if (!validarAssinatura({ secret, signature, requestId, dataId })) {
-        return res.status(401).json({ error: "assinatura_invalida" });
-      }
-    }
-
-    // NÃO confia no payload: consulta o status real no Mercado Pago.
-    const status = await consultarStatusPagamento(accessToken, dataId);
-    if (status !== "approved") {
-      return res.json({ success: true }); // pendente/rejeitado — nada a fazer
-    }
-
-    const r = await processarPagamentoAprovado(db, dataId);
-    if (!r.ok) {
-      return res.status(r.code || 500).json({ error: r.erro || "erro_interno" });
-    }
-    return res.json({ success: true });
+    const r = await processarWebhook(db, {
+      dataId: String(req.query["data.id"] ?? ""),
+      type: String(req.query.type ?? ""),
+      isTest,
+      secret,
+      signature: String(req.headers["x-signature"] ?? ""),
+      requestId: String(req.headers["x-request-id"] ?? ""),
+      consultarStatus: (id: string) => consultarStatusPagamento(accessToken, id),
+    });
+    return res.status(r.status).json(r.body);
   } catch (e: any) {
     // Falha ao consultar o MP ou erro interno → 500 para o MP reenviar o
     // webhook; a idempotência do processamento protege contra duplicação.

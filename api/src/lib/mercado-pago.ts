@@ -63,8 +63,13 @@ export async function criarPagamentoPix(params: {
   };
 }
 
-/** Consulta o status real de um pagamento no Mercado Pago (fonte da verdade do webhook). */
-export async function consultarStatusPagamento(accessToken: string, paymentId: string): Promise<string> {
+export interface MpPaymentStatus {
+  status: string;
+  externalReference: string | null;
+}
+
+/** Consulta o status real + external_reference no Mercado Pago (fonte da verdade do webhook). */
+export async function consultarStatusPagamento(accessToken: string, paymentId: string): Promise<MpPaymentStatus> {
   const res = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -76,7 +81,7 @@ export async function consultarStatusPagamento(accessToken: string, paymentId: s
     throw err;
   }
   const data = await res.json();
-  return String(data.status);
+  return { status: String(data.status), externalReference: data.external_reference ?? null };
 }
 
 /**
