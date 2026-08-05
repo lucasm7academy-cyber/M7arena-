@@ -168,6 +168,31 @@ export interface ApiWalletBalance {
   emPartida?: { salaNum: number; apostaMc: number; nome: string | null }[];
 }
 
+/** Pacote de compra de MC vindo de GET /api/payments/packages (ADR-031). */
+export interface ApiMcPackage {
+  id: string;
+  priceBrl: number;
+  baseMc: number;
+  bonusMc: number;
+  totalMc: number;
+  isPopular: boolean;
+}
+
+/** Resposta de POST /api/payments/mc/order (QR code PIX). */
+export interface ApiMcOrderResult {
+  paymentId: string;
+  orderId: string;
+  method: string;
+  qrCode: string | null;
+  brCode: string | null;
+}
+
+/** Resposta de GET /api/payments/:orderId/status. */
+export interface ApiPaymentStatus {
+  orderId: string;
+  status: string;
+}
+
 /** Retorno do POST /api/wallet/admin/adjust (saldos finais calculados no servidor). */
 export interface ApiWalletAdjustResult {
   ok: boolean;
@@ -592,6 +617,17 @@ export const api = {
         deltaMC,
         motivo: motivo || "ajuste_admin",
       }),
+  },
+
+  payments: {
+    /** Pacotes ativos de MC (fonte da verdade: servidor). */
+    packages: () => api.get<ApiMcPackage[]>("/payments/packages"),
+    /** Cria pedido PIX de MC (autenticado; cliente envia só o packageId). */
+    createMcOrder: (packageId: string) =>
+      api.post<ApiMcOrderResult>("/payments/mc/order", { packageId }),
+    /** Status do pagamento pelo uuid nosso (paymentId). */
+    status: (paymentId: string) =>
+      api.get<ApiPaymentStatus>(`/payments/${paymentId}/status`),
   },
 
   content: {
