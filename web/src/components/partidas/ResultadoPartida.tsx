@@ -163,7 +163,7 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               src={api.prints.file(lightboxPrint.id)}
               alt={`Print de ${lightboxPrint.nomeJogador}`}
-              className="max-w-[min(480px,90vw)] max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+              className="max-w-[min(1400px,94vw)] max-h-[92vh] object-contain rounded-2xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
             <button
