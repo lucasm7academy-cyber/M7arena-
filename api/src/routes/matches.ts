@@ -152,9 +152,11 @@ matchesRouter.post("/", async (req, res) => {
 
   try {
     const r = await db.transaction(async (tx: any) => {
-      // Criador de sala apostada também passa na elegibilidade (Riot ID,
-      // maioridade, sem punição, 1 sala apostada ativa) — design v3 §2.1.
-      const eleg = await validarElegibilidade(tx, user.id, aposta);
+      // Criador não paga nem entra na vaga na criação: sala nasce VAZIA e a
+      // reserva (escrow) só acontece quando alguém entra numa vaga (join) —
+      // criar partida é grátis, custo é só para jogar. Quem cria pode nem
+      // jogar. Elegibilidade checada com aposta 0 (só Riot ID/conta ativa).
+      const eleg = await validarElegibilidade(tx, user.id, 0);
       if (!eleg.ok) return { ok: false as const, eleg };
 
       const [newMatch] = await tx
@@ -179,19 +181,6 @@ matchesRouter.post("/", async (req, res) => {
           timeALogo: timeALogo || null,
         })
         .returning();
-
-      // Reserva (escrow) do aposta do criador na criação (regra de negócio no servidor).
-      await reservarEntrada(tx, user.id, aposta, newMatch.id);
-
-      // Criador entra como primeiro jogador (blue slot 0 / TOP).
-      await tx.insert(matchPlayers).values({
-        matchId: newMatch.id,
-        userId: user.id,
-        side: "blue",
-        slot: 0,
-        roleSlot: "TOP",
-        confirmed: true,
-      });
 
       return { ok: true as const, sala: newMatch };
     });
