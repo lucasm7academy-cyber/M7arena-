@@ -16,7 +16,7 @@ export async function setupDb() {
   const client = new PGlite();
   const files = fs
     .readdirSync(migrationsDir)
-    .filter((f) => /^000\d_/.test(f) && f.endsWith(".sql"))
+    .filter((f) => /^00\d{2}_/.test(f) && f.endsWith(".sql"))
     .sort();
   for (const f of files) {
     const sql = fs.readFileSync(path.join(migrationsDir, f), "utf8");

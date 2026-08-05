@@ -6,6 +6,7 @@ import {
   integer,
   numeric,
   timestamp,
+  boolean,
   index,
 } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
@@ -43,6 +44,10 @@ export const payments = pgTable(
     gatewayRef: text("gateway_ref").notNull(),
     product: varchar("product", { length: 100 }).notNull(), // e.g. 'mc_pack_1000' | 'vip_monthly'
     amountBrl: numeric("amount_brl", { precision: 10, scale: 2 }).notNull(),
+    // Total de MC (base + bônus) que este pagamento credita — o webhook usa
+    // este valor para creditar a carteira. Definido no servidor a partir do
+    // pacote, nunca enviado pelo cliente (ADR-031).
+    mcCredit: integer("mc_credit").default(0).notNull(),
     status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected' | 'refunded'
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     paidAt: timestamp("paid_at", { mode: "date" }),
@@ -82,5 +87,29 @@ export const referralEvents = pgTable(
   (table) => [
     index("referral_referrer_idx").on(table.referrerId),
     index("referral_referred_idx").on(table.referredId),
+  ]
+);
+
+/**
+ * Pacotes de compra de MC (ADR-031). Fonte da verdade dos preços: o cliente
+ * nunca envia valor/MC, só o `packageId`; o servidor resolve base+bônus aqui.
+ * R$1 = 100 MC de base; bônus promocional a partir de R$50 (R$50→+300,
+ * R$100→+600, R$200→+1.200 — 6 MC por real). price_brl é único: dois pacotes
+ * não podem custar o mesmo valor.
+ */
+export const mcPackages = pgTable(
+  "mc_packages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    priceBrl: numeric("price_brl", { precision: 10, scale: 2 }).notNull().unique(),
+    baseMc: integer("base_mc").notNull(),
+    bonusMc: integer("bonus_mc").default(0).notNull(),
+    isPopular: boolean("is_popular").default(false).notNull(),
+    active: boolean("active").default(true).notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("mc_packages_active_idx").on(table.active, table.sortOrder),
   ]
 );
