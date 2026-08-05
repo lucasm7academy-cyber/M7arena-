@@ -63,7 +63,12 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
     nome,
     tag,
     elo: "Sem Elo",
-    avatar: user?.avatarUrl || null,
+    // Avatar: prioriza o profile icon da conta LoL vinculada (mesma URL que o
+    // front monta em buildProfileIconUrl) — é o "ícone do jogador" que o site
+    // original mostrava. Sem conta vinculada, cai no avatar do email/URL.
+    avatar: user?.__riotIconId
+      ? `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${user.__riotIconId}.jpg`
+      : user?.avatarUrl || null,
     role: p.roleSlot || "RES",
     is_time_a: p.side === "blue",
     is_lider: p.slot === 0 && p.side === "blue",

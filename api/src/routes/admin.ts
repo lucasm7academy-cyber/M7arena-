@@ -43,8 +43,10 @@ const LEGACY_TO_ROLE: Record<string, string> = {
   jogador: "user",
 };
 
-// ── GET /api/admin/cargos — lista usuários com cargo (admin+proprietario) ──
-// Substitui a RPC listar_admins_com_email. Só admin/proprietário vê.
+// ── GET /api/admin/cargos — lista usuários e cargos ────────────────────────
+// Substitui a RPC listar_admins_com_email. Só admin/proprietário vê. Lista
+// TODOS os usuários (não só quem tem cargo) — o painel de cargos do site
+// original mostra a base completa para o proprietário promover/rebaixar.
 adminRouter.get("/cargos", async (req, res) => {
   try {
     const user = await getAuthUser(req);
@@ -55,18 +57,27 @@ adminRouter.get("/cargos", async (req, res) => {
       return res.status(403).json({ error: "Apenas admin/proprietário pode listar cargos" });
     }
 
-    const rows = await db
-      .select({ id: users.id, email: users.email, displayName: users.displayName, userId: userRoles.userId, role: userRoles.role })
-      .from(userRoles)
-      .innerJoin(users, eq(users.id, userRoles.userId))
-      .where(inArray(userRoles.role, ["admin", "proprietario"]));
+    // LEFT JOIN: usuários sem linha em user_roles aparecem com cargo vazio.
+    // Usa o cargo "mais alto" por usuário (proprietario > admin > ...) via
+    // DISTINCT ON, no mesmo espírito da RPC antiga.
+    const rows: any[] = await db
+      .selectDistinctOn([users.id], {
+        id: users.id,
+        email: users.email,
+        displayName: users.displayName,
+        role: userRoles.role,
+      })
+      .from(users)
+      .leftJoin(userRoles, eq(userRoles.userId, users.id))
+      .orderBy(users.id, desc(userRoles.role))
+      .limit(500);
 
     return res.json(rows.map((r) => ({
       id: r.id,
-      user_id: r.userId,
+      user_id: r.id,
       email: r.email,
       display_name: r.displayName,
-      cargo: ROLE_TO_LEGACY[r.role] || r.role,
+      cargo: r.role ? ROLE_TO_LEGACY[r.role] || r.role : "jogador",
     })));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao listar cargos" });

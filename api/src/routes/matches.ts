@@ -52,15 +52,21 @@ async function shapeSala(m: any, ctx: any = db) {
   // Riot ID (game_accounts.handle, "Game#Tag") de cada usuário da sala — é dele
   // que o shape deriva `nome` (nick) e `tag`, como o legado gravava na RPC
   // sala_entrar. Sem vínculo, o fallback do shape usa displayName/email.
+  // Também busca o metadata (profile_icon_id) para montar o avatar do jogador
+  // a partir da conta LoL vinculada, não do avatar genérico do email.
   const accountsRows: any[] = userIds.length
     ? await ctx
-        .select({ userId: gameAccounts.userId, handle: gameAccounts.handle })
+        .select({ userId: gameAccounts.userId, handle: gameAccounts.handle, metadata: gameAccounts.metadata })
         .from(gameAccounts)
         .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, userIds)))
     : [];
   const riotMap = new Map<string, string>(accountsRows.map((a: any) => [a.userId, a.handle]));
+  const riotIconMap = new Map<string, number>(
+    accountsRows.map((a: any) => [a.userId, (a.metadata as any)?.profile_icon_id ?? null])
+  );
   usersRows.forEach((u: any) => {
     u.__riotHandle = riotMap.get(u.id) ?? null;
+    u.__riotIconId = riotIconMap.get(u.id) ?? null;
   });
 
   const playersEnriched = players.map((p: any) => ({

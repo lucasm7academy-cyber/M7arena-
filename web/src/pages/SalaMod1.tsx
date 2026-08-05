@@ -274,18 +274,19 @@ export default function SalaMod1() {
 
                 <div className="flex items-center gap-[3vmin] z-10">
                     <motion.button 
-                        whileHover={{ scale: 1.1, rotate: 180 }}
+                        whileHover={{ scale: 1.15 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => navigate('/jogar')} 
-                        className="w-[5vmin] h-[5vmin] rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-red-500 hover:bg-red-500/20 transition-colors backdrop-blur-md"
+                        className="group relative flex items-center justify-center text-red-500 hover:text-red-400 transition-colors"
+                        title="Sair da sala"
                     >
                         <motion.span
                             initial={{ rotate: 0 }}
-                            whileHover={{ rotate: 180 }}
-                            transition={{ duration: 0.4, ease: 'easeInOut' }}
+                            whileHover={{ rotate: 45 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
                             className="flex"
                         >
-                            <X className="w-[2.2vmin] h-[2.2vmin]" />
+                            <X className="w-[5vmin] h-[5vmin]" strokeWidth={3.5} />
                         </motion.span>
                     </motion.button>
                     <div className="flex flex-col">
@@ -417,10 +418,10 @@ export default function SalaMod1() {
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
                                 <div className="absolute top-10 flex flex-col items-center">
                                     <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
-                                    <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">SISTEMA ANALÍTICO</span>
+                                    <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
                                 </div>
                                 <div className="absolute bottom-10 flex flex-col items-center">
-                                    <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">STATUS DE CONEXÃO: ESTÁVEL</span>
+                                    <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
                                     <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
                                 </div>
                             </div>
