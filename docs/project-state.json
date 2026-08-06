@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-06T04:17:04.315Z",
+  "updatedAt": "2026-08-06T05:18:12.981Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1177,6 +1177,18 @@
       "owner": "deepseek",
       "createdAt": "2026-08-06T03:48:49.341Z",
       "updatedAt": "2026-08-06T04:10:15.999Z"
+    },
+    {
+      "id": "app.saque",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Saque de MC via PIX (withdrawals + admin decide)",
+      "status": "doing",
+      "notes": "Fluxo de saque implementado e testado. Backend commitado por outro agente (3062c68: migration 0012, lib/routes/testes/SDK). Front (Tasks 5-6: DepositTab/SaqueTab/SaquesPix/Admin) escrito e buildando, AINDA NÃO COMMITADO nem deployado. Falta: commit do front + aplicar migration 0012 na VPS + deploy.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-06T04:53:30.829Z",
+      "updatedAt": "2026-08-06T04:53:30.829Z"
     }
   ],
   "decisions": [
@@ -1476,6 +1488,15 @@
       "decision": "Em saque-task-2, o teste do brief esperava valor_invalido para mcAmount=1500, mas 1500 é múltiplo de 100 (1500%100==0), então a implementação verbatim lança valor_minimo_nao_atingido. Corrigido no teste: 1500 → 1550 (caso não-múltiplo). Implementação de api/src/lib/withdrawals.ts permanece 100% verbatim.",
       "rationale": "O nome do teste (\"rejeita valor não múltiplo de 100\") exige um valor não-múltiplo para o caso valor_invalido; com 1500 o teste jamais passaria (GREEN inalcançável). Reverter 1550 para 1500 no teste reintroduz o fail.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-034",
+      "date": "2026-08-06T05:17:54.021Z",
+      "author": "deepseek",
+      "title": "Punições manuais: advertências + ban substituem strikes/suspensão automáticos",
+      "decision": "O sistema de strikes automáticos (kick de ociosidade 30min e abandono) e a suspensão temporária são removidos. Punições passam a ser MANUAIS: admin/proprietário aplica advertência (vira contador no perfil) ou ban. 3 advertências ativas = ban automático. Ban bloqueia casual E apostada e é permanente até o admin desbanir — mesmo o ban automático só sai com unban manual.",
+      "rationale": "O kick automático de ociosidade punia quem ficava parado 30min sem ação do admin, e a suspensão por strikes era opaca. O usuário pediu explicitamente: tirar a lógica de ociosidade, admin dá advertência (contador como o antigo) e tem poder de ban. Ban é a única punição que bloqueia tudo. user_strikes vira user_advertencias (match_id nullable, + criado_por/observacao); users ganham audit de ban (banido_por/em, ban_motivo, ban_automatico). Migration 0013.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1526,31 +1547,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T04:58:27.755Z",
-      "agent": "riven",
-      "summary": "Página de campeonatos (web/src/pages/campeonatos.tsx) melhorada, só texto, classes/layout intactos: subtítulo de conversão sob o título da seção (\"Torneios de LoL com premiação em Pix, salas por tier e vagas limitadas...\"), empty state ganhou linha de orientação (\"Ajuste a busca ou o filtro...\"), loading \"Carregando\"→\"Buscando campeonatos...\", rótulo do card \"Organização\"→\"Organizado por\" (mais humano). Hero já tinha sido refinado na sessão anterior (subtexto com Pix/PDL/Bronze ao Desafiante). Build web passou (✓ built in 6.04s). tsc web segue com os mesmos 2 erros pré-existentes (ElectricBorder, Streamers), nenhum nos arquivos tocados.",
-      "touched": [
-        "web/src/pages/campeonatos.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:01:07.714Z",
-      "agent": "deepseek",
-      "summary": "Provei com teste real que a confirmação com 10 pessoas não repete o bug do site antigo. Criei scripts/smoke-confirmacao-concorrente.mjs: 1 criador + 9 jogadores preenchem sala 5v5 e 10 confirms disparam em PARALELO → 8/8 ok em 2 execuções (10 confirms ok, 10/10 confirmados, exatamente 1 transição, estado estável). Motivos: máquina de estados no servidor com FOR UPDATE (serializa os 10 confirms), ZERO triggers no banco (trigger_sala_confirmacao 40s vs 60s não existe mais), countdown derivado de confirmacao_expires_at do servidor. Descobri que a rota join espera roleSlot/is_time_a (não role/isTimeA); front já envia certo. Dados de teste limpos. Obs: apuração da VOTAÇÃO de resultado (finalizacao) ainda é no cliente (FASE 2 em useSalaSimples) — separado da confirmação.",
-      "touched": [
-        "scripts/smoke-confirmacao-concorrente.mjs"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:03:11.034Z",
-      "agent": "riven",
-      "summary": "Página de detalhes do campeonato (CampeonatoDetalhes.tsx) melhorada, só texto, classes/layout intactos: botão \"Inscrever Time\"→\"Garantir Vaga Agora\" (urgência + benefício), fallback de descrição agora com proposição de valor (\"Vagas limitadas, premiação em Pix e o melhor do competitivo de LoL...\"), empty state do modal de inscrição mais conversor (\"Crie a sua agora e entre na disputa — leva menos de um minuto\"), reasseguramento sob o botão principal sem \"lista de espera\" frio (troquei por \"Vagas confirmadas pela organização. Sem custo surpresa: você vê a taxa antes de confirmar.\"), subtitulo do torneio \"Torneio 16v16\"→\"Torneio de LoL 16v16\". Fallback de descrição também atualizado em campeonatos.tsx. Build web passou (✓ built in 5.62s). MojiBAKE restante = 0.",
-      "touched": [
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/pages/campeonatos.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T05:06:15.791Z",
       "agent": "riven",
@@ -1889,6 +1885,64 @@
         "web/src/lib/api.ts",
         "web/src/pages/Admin.tsx",
         "web/src/components/admin/FinanceiroDashboard.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-06T04:33:36.939Z",
+      "agent": "deepseek",
+      "summary": "Painel admin em tela cheia: rota /admin movida para fora do Layout em web/src/App.tsx (sem header/sidebar do site); Admin.tsx reescrito com sidebar vertical própria (tópicos antes horizontais), botão \"Voltar ao site\" com ArrowLeft, header mobile com voltar + scroll. tsc/vite build ok. Commit 3062c68 (feat/advertencias-ban, base=origin/main) incluiu também WIP de outro terminal (saque PIX: migrations 0012/0013, user_advertencias ADR-033). Merge ff em main, push ok (3d9af47..3062c68). API tsc exit 0. BLOQUEIO: VPS ficou inacessível durante o deploy (ssh e https timeout). git pull rodou, mas migrations 0012/0013 NÃO aplicadas e rebuild app/nginx NÃO feito. Pendente quando a VPS voltar: aplicar 0012 e 0013, depois compose up --build app nginx.",
+      "touched": [
+        "web/src/App.tsx",
+        "web/src/pages/Admin.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-06T04:53:59.366Z",
+      "agent": "deepseek",
+      "summary": "Implementei o SAQUE de MC via PIX (spec/plano 2026-08-06-saque-mc-pix, componente novo app.saque). Regras aprovadas: 100MC=R$1, mín. R$20, sem taxa, MC debitado na solicitação (withdrawal_hold; paid consolida; rejected devolve withdrawal_refund), snapshot do PIX, admin paga fora e confirma.\n\nBACKEND commitado pelo outro agente (3062c68): migration 0012, lib/withdrawals.ts, rotas, 6 testes PGlite, SDK.\n\nFRONT escrito/verificado, NÃO commitado: DepositModal com abas Depósito(padrão)/Saque; admin aba Saques (FIFO, Marcar Pago/Rejeitar).\n\nVerificação: tsx --test 73/73, tsc api exit 0, tsc web 2 pré-existentes, build ok.\n\nPENDENTE (usuário decide): commit front + migration 0012 na VPS + deploy + teste ao vivo. CUIDADO: working tree tem trabalho uncommitado de outro agente (Punicoes, advertencias/ban) — não commitar com git add -A sem revisar. app.saque doing até deploy.",
+      "touched": [
+        "db/schema/economia.ts",
+        "db/migrations/0012_magical_sharon_ventura.sql",
+        "api/src/lib/withdrawals.ts",
+        "api/test/withdrawals.test.ts",
+        "api/src/routes/withdrawals.ts",
+        "api/src/index.ts",
+        "web/src/lib/api.ts",
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/modals/deposit/DepositTab.tsx",
+        "web/src/components/modals/deposit/SaqueTab.tsx",
+        "web/src/components/admin/SaquesPix.tsx",
+        "web/src/pages/Admin.tsx",
+        "mcp/status-server/lib/plan.js",
+        "docs/superpowers/specs/2026-08-06-saque-mc-pix-design.md",
+        "docs/superpowers/plans/2026-08-06-saque-mc-pix.md"
+      ]
+    },
+    {
+      "at": "2026-08-06T05:18:12.981Z",
+      "agent": "deepseek",
+      "summary": "ADR-034: punições manuais (advertências + ban) no lugar de strikes/suspensão automáticos. Removi kick de ociosidade, strike de abandono e suspensão do cron (só fantasma+saneamento). user_strikes→user_advertencias (migration 0013: match_id nullable, criado_por; users ganham audit de ban). 3 advertências = ban automático, que só sai com unban manual. Rotas: POST/DELETE /admin/advertencias, POST /admin/usuarios/:id/ban|unban, GET /admin/usuarios?q=. Painel: aba Punições (busca+advertir/remover/banir/desbanir+histórico). Perfil: contador X/3 + status de ban. Testes 73/73 API, tsc limpo (web só erros pré-existentes). Commit f748b10 na branch feat/advertencias-ban. ATENÇÃO: commit 3062c68 do outro CLI entrou na minha branch com backend parcial quebrado; f748b10 corrige. Pendente: aplicar migration 0013 na VPS + deploy.",
+      "touched": [
+        "api/src/lib/elegibilidade.ts",
+        "api/src/lib/match-flow.ts",
+        "api/src/cron.ts",
+        "api/src/routes/admin.ts",
+        "api/src/routes/profiles.ts",
+        "api/src/routes/matches.ts",
+        "api/test/cron.test.ts",
+        "api/test/elegibilidade.test.ts",
+        "db/schema/apostas.ts",
+        "db/schema/identidade.ts",
+        "db/migrations/0013_advertencias_ban.sql",
+        "web/src/pages/AdminPunicoes.tsx",
+        "web/src/pages/Admin.tsx",
+        "web/src/pages/perfil.tsx",
+        "web/src/contexts/PerfilContext.tsx",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/api/salamod1.ts",
+        "web/src/lib/api.ts",
+        "web/src/components/perfil/CarteiraEStrikes.tsx",
+        "web/src/components/partidas/ModaisElegibilidade.tsx"
       ]
     }
   ]
