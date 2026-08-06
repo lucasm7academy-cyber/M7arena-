@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { eq, and, gt, inArray, desc, sql } from "drizzle-orm";
+import { eq, and, gt, inArray, desc, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles, userWallets } from "../../../db/schema/identidade.js";
 import { payments, platformRevenue } from "../../../db/schema/economia.js";
-import { userStrikes } from "../../../db/schema/apostas.js";
-import { removerStrike } from "../lib/match-flow.js";
+import { userAdvertencias } from "../../../db/schema/apostas.js";
+import { removerAdvertencia } from "../lib/match-flow.js";
+import { aplicarBanAutomaticoSeNecessario, contarAdvertenciasAtivas } from "../lib/elegibilidade.js";
 
 export const adminRouter = Router();
 

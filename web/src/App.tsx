@@ -197,6 +197,10 @@ export default function App() {
                         {/* OAuth Callback */}
                         <Route path="/auth/callback" element={<RouteWithSuspense element={<AuthCallback />} />} />
 
+                        {/* Admin em tela cheia: fora do Layout do site (sem header/sidebar do
+                            site, como nas salas). O painel tem sidebar própria + botão voltar. */}
+                        <Route path="/admin" element={<PrivateRoute><RouteWithSuspense element={<Admin />} /></PrivateRoute>} />
+
                         {/* Rotas com Layout */}
             <Route element={<Layout />}>
               {/* Rotas Públicas */}
@@ -222,7 +226,6 @@ export default function App() {
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
               <Route path="/admin/criar-campeonato" element={<PrivateRoute><RouteWithSuspense element={<CreateCampPage />} /></PrivateRoute>} />
               <Route path="/sala-mod1/:id" element={<PrivateRoute><RouteWithSuspense element={<SalaMod1 />} /></PrivateRoute>} />
-              <Route path="/admin" element={<PrivateRoute><RouteWithSuspense element={<Admin />} /></PrivateRoute>} />
               <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
               <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>

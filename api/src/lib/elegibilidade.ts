@@ -1,16 +1,22 @@
 import { eq, and, gt, ne, isNull, inArray } from "drizzle-orm";
 import { users, userRoles, userWallets } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../../db/schema/matches.js";
-import { userStrikes } from "../../../db/schema/apostas.js";
+import { userAdvertencias } from "../../../db/schema/apostas.js";
 
 /**
- * elegibilidade.ts — regras de acesso e strikes das salas apostadas
- * (design v3 §2.1). A fonte da verdade é o servidor: `validarElegibilidade`
- * é re-checado dentro da transação com FOR UPDATE nas rotas de join/criar.
+ * elegibilidade.ts — regras de acesso às salas e punições (ADR-033).
+ * A fonte da verdade é o servidor: `validarElegibilidade` é re-checado dentro
+ * da transação com FOR UPDATE nas rotas de join/criar.
  *
- * Casuais (aposta 0) só exigem conta ativa + Riot ID; apostadas exigem todas
- * as 6 checagens. Admin (role admin/proprietário) sempre pode entrar — não é
- * bloqueado por punição, outra sala ativa ou termos.
+ * Punições são MANUAIS: o admin/proprietário aplica advertências (viram um
+ * contador no perfil) ou ban. 3 advertências ativas → ban automático, que só
+ * sai quando o admin desbana (mesmo o automático). O ban bloqueia CASUAL E
+ * APOSTADA. O sistema antigo de strikes automáticos (kick de ociosidade e
+ * abandono) e a suspensão temporária foram removidos.
+ *
+ * Casuais (aposta 0) só exigem conta ativa + Riot ID; apostadas exigem as
+ * checagens adicionais. Admin (role admin/proprietário) sempre pode entrar —
+ * não é bloqueado por punição, outra sala ativa ou termos.
  */
 
 /** Estados em que a sala está "viva" (contagem do painel admin). */
@@ -23,42 +29,42 @@ export const ESTADOS_ATIVOS = [
 ];
 
 /**
- * Limites operacionais das salas apostadas (design v3 §2.1). Centralizados aqui
- * para ajuste fácil enquanto não existe tabela app_config.
+ * Limites das punições (ADR-033). Centralizados aqui para ajuste fácil
+ * enquanto não existe tabela app_config.
  */
 export const LIMITES = {
-  STRIKES_PARA_SUSPENSAO: 3,
-  JANELA_STRIKES_DIAS: 30,
-  SUSPENSAO_HORAS: 12,
+  ADVERTENCIAS_PARA_BAN: 3,
 };
 
 /**
- * Conta strikes ativos (não removidos) do usuário dentro da janela configurada
- * (30 dias). O que decide o perfil do jogador é a contagem, não o estado.
+ * Conta advertências ATIVAS (não removidas) do usuário. Advertência não
+ * expira — fica até o admin remover. É o contador que o perfil mostra.
  */
-export async function contarStrikesAtivos(tx: any, userId: string, agora = new Date()) {
-  const janela = new Date(agora.getTime() - LIMITES.JANELA_STRIKES_DIAS * 24 * 60 * 60 * 1000);
+export async function contarAdvertenciasAtivas(tx: any, userId: string) {
   const rows = await tx
-    .select({ id: userStrikes.id })
-    .from(userStrikes)
-    .where(and(eq(userStrikes.userId, userId), isNull(userStrikes.removidoEm), gt(userStrikes.createdAt, janela)));
+    .select({ id: userAdvertencias.id })
+    .from(userAdvertencias)
+    .where(and(eq(userAdvertencias.userId, userId), isNull(userAdvertencias.removidoEm)));
   return rows.length;
 }
 
 /**
- * Aplica suspensão de salas apostadas quando o jogador atinge o teto de strikes
- * (3 em 30 dias → `status='suspensa'` por 12h). O cron reativa ao expirar.
- * Retorna o total de strikes ativos após a checagem.
+ * Aplica ban AUTOMÁTICO quando o jogador atinge o teto de advertências
+ * (3). `ban_automatico=true` registra a origem (as advertências), mas o ban
+ * em si é permanente até o admin desbanir — não reverte sozinho ao remover
+ * uma advertência (ADR-033).
  */
-export async function aplicarSuspensaoSeNecessario(tx: any, userId: string, agora = new Date()) {
-  const total = await contarStrikesAtivos(tx, userId, agora);
-  if (total >= LIMITES.STRIKES_PARA_SUSPENSAO) {
+export async function aplicarBanAutomaticoSeNecessario(tx: any, userId: string) {
+  const total = await contarAdvertenciasAtivas(tx, userId);
+  if (total >= LIMITES.ADVERTENCIAS_PARA_BAN) {
     await tx
       .update(users)
       .set({
-        status: "suspensa",
-        suspensaAte: new Date(agora.getTime() + LIMITES.SUSPENSAO_HORAS * 60 * 60 * 1000),
-        updatedAt: agora,
+        status: "banida",
+        banidoEm: new Date(),
+        banAutomatico: true,
+        banMotivo: "3 advertências",
+        updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
   }
@@ -66,39 +72,29 @@ export async function aplicarSuspensaoSeNecessario(tx: any, userId: string, agor
 }
 
 /**
- * Perdoa um strike (admin): seta `removido_por`/`removido_em`. Se a contagem
- * cair abaixo do teto, reativa a conta que foi suspensa POR CAUSA dos strikes
- * (status 'suspensa' → 'active'). Retorna o total de strikes ativos depois, ou
- * null se o strike não existe.
+ * Remove uma advertência (admin). Seta `removido_por`/`removido_em` — o
+ * contador cai, mas NÃO desbana sozinho: ban (mesmo automático) só sai com o
+ * admin chamando o unban. Retorna o total de advertências ativas depois, ou
+ * null se a advertência não existe.
  */
-export async function removerStrike(tx: any, strikeId: string, removidoPor: string) {
-  const [strike] = await tx.select().from(userStrikes).where(eq(userStrikes.id, strikeId)).limit(1);
-  if (!strike) return null;
-  if (!strike.removidoEm) {
+export async function removerAdvertencia(tx: any, advertenciaId: string, removidoPor: string) {
+  const [advertencia] = await tx.select().from(userAdvertencias).where(eq(userAdvertencias.id, advertenciaId)).limit(1);
+  if (!advertencia) return null;
+  if (!advertencia.removidoEm) {
     await tx
-      .update(userStrikes)
+      .update(userAdvertencias)
       .set({ removidoPor, removidoEm: new Date() })
-      .where(eq(userStrikes.id, strike.id));
+      .where(eq(userAdvertencias.id, advertencia.id));
   }
-  const total = await contarStrikesAtivos(tx, strike.userId);
-  if (total < LIMITES.STRIKES_PARA_SUSPENSAO) {
-    const [u] = await tx.select().from(users).where(eq(users.id, strike.userId)).limit(1);
-    if (u?.status === "suspensa") {
-      await tx
-        .update(users)
-        .set({ status: "active", suspensaAte: null, updatedAt: new Date() })
-        .where(eq(users.id, u.id));
-    }
-  }
-  return total;
+  return contarAdvertenciasAtivas(tx, advertencia.userId);
 }
 
 /**
- * Regras de acesso a salas (design v3 §2.1) — a fonte da verdade é o servidor,
- * re-checadas dentro da transação com FOR UPDATE. `apostaMc` é o valor da sala:
- * casuais (0) só exigem conta ativa + Riot ID; apostadas exigem todas as 6
- * checagens. Admin (role admin/proprietário) sempre pode entrar — não é
- * bloqueado por punição, outra sala ativa ou termos.
+ * Regras de acesso a salas (ADR-033) — a fonte da verdade é o servidor,
+ * re-checadas dentro da transação com FOR UPDATE. `apostaMc` é o valor da
+ * sala: casuais (0) só exigem conta ativa + Riot ID; apostadas exigem as
+ * checagens adicionais. Admin (role admin/proprietário) sempre pode entrar —
+ * não é bloqueado por punição, outra sala ativa ou termos.
  *
  * `ignorarMatchId` exclui a sala atual da regra "uma sala apostada ativa por
  * vez" (troca de vaga na mesma sala). Retorno:
@@ -111,18 +107,16 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
   const roles = await tx.select().from(userRoles).where(eq(userRoles.userId, userId));
   const isAdmin = roles.some((r: any) => r.role === "admin" || r.role === "proprietario");
 
-  // 1. Conta ativa — vale para toda sala (casual incluída).
+  // 1. Conta ativa — vale para toda sala (casual e apostada). Ban bloqueia
+  //    tudo; não existe mais suspensão temporária (ADR-033).
   if (user.status === "banida") return { ok: false as const, erro: "conta_banida" };
-  if (!isAdmin && user.status === "suspensa" && user.suspensaAte && user.suspensaAte.getTime() > Date.now()) {
-    return { ok: false as const, erro: "conta_suspensa", extra: { suspensa_ate: user.suspensaAte } };
-  }
 
   const apostada = Number(apostaMc ?? 0) > 0;
 
   // 2. Riot ID vinculado — obrigatório para TODA sala (casual e apostada).
-  // Decisão do dono (2026-08-04): até casual exige conta vinculada; é o que
-  // amarra o print ao jogador e previne multi-conta. Anti-multi-conta para
-  // todos, não só apostadas.
+  //    Decisão do dono (2026-08-04): até casual exige conta vinculada; é o que
+  //    amarra o print ao jogador e previne multi-conta. Anti-multi-conta para
+  //    todos, não só apostadas.
   if (!user.riotId) return { ok: false as const, erro: "riot_id_obrigatorio" };
 
   if (!apostada) return { ok: true as const };
@@ -148,18 +142,7 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
     if (outra) return { ok: false as const, erro: "ja_em_sala_apostada", extra: { sala_num: outra.salaNum } };
   }
 
-  // 5. Sem punição ativa — 3 strikes em 30 dias suspendem salas apostadas.
-  if (!isAdmin) {
-    const strikes = await contarStrikesAtivos(tx, userId);
-    if (strikes >= LIMITES.STRIKES_PARA_SUSPENSAO) {
-      await aplicarSuspensaoSeNecessario(tx, userId);
-      const [u] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
-      const liberadoEm = u?.suspensaAte ?? new Date(Date.now() + LIMITES.SUSPENSAO_HORAS * 60 * 60 * 1000);
-      return { ok: false as const, erro: "suspenso_por_strikes", extra: { liberado_em: liberadoEm } };
-    }
-  }
-
-  // 6. Termos aceitos (declaração de 18+ no cadastro).
+  // 5. Termos aceitos (declaração de 18+ no cadastro).
   if (!isAdmin && !user.termosAceitosEm) return { ok: false as const, erro: "termos_nao_aceitos" };
 
   return { ok: true as const };

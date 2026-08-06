@@ -85,6 +85,20 @@
       "when": 1785955000000,
       "tag": "0011_ledger_refund_repeat",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785989513871,
+      "tag": "0012_magical_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785990426472,
+      "tag": "0013_advertencias_ban",
+      "breakpoints": true
     }
   ]
 }

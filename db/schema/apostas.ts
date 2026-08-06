@@ -1,32 +1,38 @@
-import { pgTable, uuid, text, varchar, timestamp, index, integer } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, varchar, timestamp, index } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
 import { matches } from "./matches.js";
 
 /**
- * Salas apostadas (ADR-019 / design v3 §5): strikes anti no-show, prints de
- * prova e disputas de resultado. As constraints UNIQUE que o Drizzle não
- * expressa nativamente (disputas por jogador) são adicionadas no SQL da
- * migration.
+ * Salas apostadas (ADR-019 / design v3 §5): prints de prova e disputas de
+ * resultado. As constraints UNIQUE que o Drizzle não expressa nativamente
+ * (disputas por jogador) são adicionadas no SQL da migration.
+ *
+ * Punições (ADR-033): advertências e ban são MANUAIS (admin/proprietário).
+ * O sistema automático de strikes (kick de ociosidade / abandono) e a
+ * suspensão temporária foram removidos. 3 advertências ativas → ban
+ * automático, que só sai com o admin desbanindo.
  */
 
-/** Punição por kick de ociosidade ou abandono de partida iniciada. */
-export const userStrikes = pgTable(
-  "user_strikes",
+/** Advertência aplicada por admin/proprietário. 3 ativas → ban automático. */
+export const userAdvertencias = pgTable(
+  "user_advertencias",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    matchId: uuid("match_id")
-      .notNull()
-      .references(() => matches.id, { onDelete: "cascade" }),
-    motivo: varchar("motivo", { length: 50 }).notNull(), // 'kick_ociosidade' | 'abandono'
+    // Quem aplicou a advertência (admin/proprietário). Auditado.
+    criadoPor: uuid("criado_por").references(() => users.id),
+    // Partida relacionada (histórico das punições antigas). Advertência manual
+    // não precisa de partida — nullable.
+    matchId: uuid("match_id").references(() => matches.id, { onDelete: "cascade" }),
+    motivo: text("motivo").notNull(), // razão escrita pelo admin (ex.: "Toxicidade no chat")
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     removidoPor: uuid("removido_por").references(() => users.id),
     removidoEm: timestamp("removido_em", { mode: "date" }),
   },
   (table) => [
-    index("strikes_user_recentes_idx").on(table.userId, table.createdAt),
+    index("advertencias_user_recentes_idx").on(table.userId, table.createdAt),
   ]
 );
 

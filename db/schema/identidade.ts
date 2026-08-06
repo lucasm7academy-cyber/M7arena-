@@ -29,11 +29,19 @@ export const users = pgTable("users", {
   laneSecondary: varchar("lane_secondary", { length: 20 }),
   // Elegibilidade para salas apostadas (ADR-019 / design v3 §2.1). Riot ID é
   // único (anti multi-conta) e amarra o print ao jogador. status reutiliza a
-  // coluna existente: 'active' | 'suspensa' | 'banida'.
+  // coluna existente: 'active' | 'banida'. A suspensão temporária ('suspensa')
+  // foi removida no ADR-033 — ban é permanente até o admin desbanir.
   riotId: varchar("riot_id", { length: 100 }),
   suspensaAte: timestamp("suspensa_ate", { mode: "date" }),
   termosAceitosEm: timestamp("termos_aceitos_em", { mode: "date" }),
   status: varchar("status", { length: 50 }).default("active").notNull(),
+  // ── Audit de ban (ADR-033) — quem, quando e por quê. `ban_automatico`
+  //    marca bans aplicados pelas 3 advertências (registro de origem; o ban
+  //    em si só sai com admin desbanindo, mesmo automático).
+  banidoPor: uuid("banido_por").references((): any => users.id),
+  banidoEm: timestamp("banido_em", { mode: "date" }),
+  banMotivo: text("ban_motivo"),
+  banAutomatico: boolean("ban_automatico").default(false).notNull(),
   isVip: boolean("is_vip").default(false).notNull(),
   vipExpiresAt: timestamp("vip_expires_at", { mode: "date" }),
   referredBy: uuid("referred_by").references((): any => users.id),

@@ -208,6 +208,23 @@ export interface ApiWalletAdjustMcResult {
   mc: number;
 }
 
+/** Pedido de saque de MC via PIX (spec saque-mc-pix). */
+export interface ApiWithdrawal {
+  id: string;
+  mcAmount: number;
+  amountBrl: number;
+  pixType: string;
+  pixKey: string;
+  pixName: string;
+  status: 'pending' | 'paid' | 'rejected';
+  createdAt: string;
+  decidedAt: string | null;
+  /** Presente apenas em GET /withdrawals/admin. */
+  userId?: string;
+  riotId?: string | null;
+  displayName?: string;
+}
+
 /**
  * Shape legado de `salas` que as telas de Jogar/SalaMod1 consomem (ADR-005/010).
  * `id` é o `sala_num` público (numérico) — o fork navega em `/sala-mod1/:id`,
@@ -649,6 +666,18 @@ export const api = {
     /** Status do pagamento pelo uuid nosso (paymentId). */
     status: (paymentId: string) =>
       api.get<ApiPaymentStatus>(`/payments/${paymentId}/status`),
+  },
+
+  withdrawals: {
+    /** Cria solicitação de saque — cliente envia só o mcAmount (servidor converte). */
+    create: (mcAmount: number) => api.post<ApiWithdrawal>('/withdrawals', { mcAmount }),
+    /** Histórico do próprio jogador. */
+    mine: () => api.get<ApiWithdrawal[]>('/withdrawals/mine'),
+    /** Fila + histórico (admin). */
+    admin: () => api.get<ApiWithdrawal[]>('/withdrawals/admin'),
+    /** Admin decide: paid (paga fora e confirma) | rejected (devolve MC). */
+    decide: (id: string, action: 'paid' | 'rejected', decisionId: string) =>
+      api.post<{ ok: boolean } & ApiWithdrawal>(`/withdrawals/${id}/decide`, { action, decisionId }),
   },
 
   content: {

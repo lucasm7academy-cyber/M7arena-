@@ -21,7 +21,7 @@ export const walletTransactions = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     currency: varchar("currency", { length: 10 }).notNull(), // 'mp' | 'mc'
     amount: integer("amount").notNull(), // Com sinal (ex.: +100 ou -50)
-    kind: varchar("kind", { length: 50 }).notNull(), // 'match_entry' | 'match_prize' | 'deposit' | 'payout' | 'vip_purchase' | 'referral_bonus' | 'admin_adjustment'
+    kind: varchar("kind", { length: 50 }).notNull(), // 'match_entry' | 'match_prize' | 'deposit' | 'payout' | 'vip_purchase' | 'referral_bonus' | 'admin_adjustment' | 'withdrawal_hold' | 'withdrawal_refund'
     refType: varchar("ref_type", { length: 50 }), // 'match' | 'payment' | 'user'
     refId: text("ref_id"),
     balanceAfter: integer("balance_after").notNull(),
@@ -111,5 +111,38 @@ export const mcPackages = pgTable(
   },
   (table) => [
     index("mc_packages_active_idx").on(table.active, table.sortOrder),
+  ]
+);
+
+/**
+ * Solicitações de saque de MC via PIX (spec saque-mc-pix). Regras:
+ * - `mc_amount` é debitado de `user_wallets.mc` NA SOLICITAÇÃO (ledger
+ *   `withdrawal_hold`); `amount_brl` é calculado no servidor (100 MC = R$1).
+ * - `pix_type`/`pix_key`/`pix_name` são SNAPSHOT do user_payout_info no momento
+ *   do pedido — troca posterior da chave não afeta pedidos em aberto.
+ * - `status`: 'pending' → 'paid' (admin pagou fora do sistema) | 'rejected'
+ *   (devolve o MC). `decision_id` garante idempotência (dois cliques = 1 decisão).
+ */
+export const withdrawals = pgTable(
+  "withdrawals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mcAmount: integer("mc_amount").notNull(),
+    amountBrl: numeric("amount_brl", { precision: 10, scale: 2 }).notNull(),
+    pixType: varchar("pix_type", { length: 50 }).notNull(),
+    pixKey: text("pix_key").notNull(),
+    pixName: text("pix_name").notNull(),
+    status: varchar("status", { length: 50 }).default("pending").notNull(),
+    adminId: uuid("admin_id").references(() => users.id),
+    decisionId: uuid("decision_id"),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    decidedAt: timestamp("decided_at", { mode: "date" }),
+  },
+  (table) => [
+    index("withdrawals_user_idx").on(table.userId),
+    index("withdrawals_status_idx").on(table.status),
   ]
 );

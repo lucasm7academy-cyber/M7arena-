@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 06/08/2026 00:56 — por `deepseek`
+**Última atualização:** 06/08/2026 01:17 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 65/75` concluído
+`█████████████████████████░░░ 66/75` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 12/12 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 35/39 | 1 | 2 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 36/39 | — | 2 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ██░░░░░░░░░░ 1/7 | 3 | — |
 
@@ -41,7 +41,7 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 13/13 | — | — |
 | Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Aplicação (React + Vite) | ███████████░ 28/30 | 1 | 1 |
+| Aplicação (React + Vite) | ████████████ 29/30 | — | 1 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ░░░░░░░░░░░░ 0/6 | 3 | — |
@@ -63,7 +63,6 @@
 - `mig.extract` **Extract do Supabase** — deepseek · Executando a migração real: extract do Supabase, transform de times, load na VPS.
 - `mig.identidade` **Transform: identidade** — deepseek · Verificação/execução do transform de identidade: confirmar que users.json (220) tem passwordHash vindo de passwords.json (57 hashes) e completude de game_accounts/user_wallets. Supervisor despachou subagente. BLK-001 pode estar parcialmente resolvido pelos scripts de senha.
 - `mig.campeonatos` **Transform: explodir o JSONB de campeonatos** — deepseek · Retomando o transform de campeonatos com o dump real (campeonatos.json 156KB): tournaments.json transformado está vazio (rodou sobre dump vazio). Supervisor despachou subagente para corrigir o transform-campeonatos.js.
-- `app.admin-financeiro` **Dashboard financeiro no painel admin (faturamento/saques/lucro/MC)** — deepseek · Endpoint GET /api/admin/financeiro (periodo today/7/30/all, faturamento=payments approved R$, lucro=platform_revenue mc_fee+rounding /100, mcEmCirculacao=user_wallets mc+mc_reservado, dinheiroNoProjeto=mc/100; saques=0 até sec.pix). Componente FinanceiroDashboard com gráfico SVG estilo barbearia (cards clicáveis filtram linha, hover tooltip). Typecheck API exit 0, vite build ok. Falta: testar SQL contra Postgres real (sem banco local/Docker) e deploy.
 
 ## Componentes
 
@@ -162,7 +161,7 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **P5: Front das salas apostadas (design v3 §11)** `app.apostas.ui`<br>  Unificação do resultado: votação red/blue de player removida; toda sala (casual e apostada) envia print e vai para aguardando_revisao onde o admin decide (ADR-027). Prints com lightbox ao clicar + nome de quem anexou, permissão participante confirmado OU revisor (ADR-028). Cron de partida fantasma agora cobre casuais. decisaoId validado como uuid.<br>  _evidência:_ `node scripts/smoke-casual-revisao.mjs → 10/10 (casual → print → aguardando_revisao → admin aprova → encerrada); npx tsx --test → 45/45; lightbox verificado no browser (admin: miniatura clicável, amplia e fecha)`<br>  _concluído 03/08/2026 03:05 por deepseek_
 - `[x]` **Força-tarefa: sync de timers e contagem de salas (plano ajustarsala)** `app.ajustar-salas`<br>  Plano completo fases 1-5 concluidas e no ar. F1 server_time+join protegido+cron saneamento; F2 clock offset; F3 fallback polling; F4 bug C confirmado efeito do bug A; F5 smoke visual validado. Reforcos: smoke-clock-sync 5/5, teste deadline 60s, smoke-vps-salas 9/9.<br>  _evidência:_ `Teste visual 2 contas sala #23: 1 jogador nao abre contagem; 2o preencheu ultima vaga -> CONFIRMANDO PRESENCA, timer servidor 33s vs tela 47s (coerente). smoke-vps-salas 9/9, smoke-clock-sync 5/5.`<br>  _concluído 04/08/2026 02:22 por deepseek_
 - `[x]` **Gateway de pagamento MC (Mercado Pago PIX)** `app.payments`<br>  Deploy completo na VPS: migration 0010 aplicada, envs MERCADO_PAGO_* no .env, rebuild app+nginx. Pedido PIX real funcionando (QR + banco). Webhook fail-closed validado. Falta teste final: pagar PIX real para MCs cairem via webhook.<br>  _evidência:_ `Smoke VPS: mc/order → 201 com qrCode+brCode; banco mc_credit=500 pending; MP status=pending external_reference ok; webhook 401 sem assinatura. tsx --test 68/68, tsc api exit 0, build ok.`<br>  _concluído 05/08/2026 17:40 por deepseek_
-- `[~]` **Dashboard financeiro no painel admin (faturamento/saques/lucro/MC)** `app.admin-financeiro`<br>  Endpoint GET /api/admin/financeiro (periodo today/7/30/all, faturamento=payments approved R$, lucro=platform_revenue mc_fee+rounding /100, mcEmCirculacao=user_wallets mc+mc_reservado, dinheiroNoProjeto=mc/100; saques=0 até sec.pix). Componente FinanceiroDashboard com gráfico SVG estilo barbearia (cards clicáveis filtram linha, hover tooltip). Typecheck API exit 0, vite build ok. Falta: testar SQL contra Postgres real (sem banco local/Docker) e deploy.
+- `[x]` **Dashboard financeiro no painel admin (faturamento/saques/lucro/MC)** `app.admin-financeiro`<br>  Deployado e validado na VPS dev. Faturamento R$5, lucro R$1,08, R$171,47 no projeto. Sem auth 401. Commit 3d9af47 no main.<br>  _evidência:_ `GET /api/admin/financeiro?periodo=30 na VPS com sessão admin temporária → 200: faturamento 5, saques 0, lucro 1.08, mcEmCirculacao 17147, dinheiroNoProjeto 171.47. today → 5 buckets horários. Sem auth → 401. Deploy: commit 3d9af47 push main, pull VPS, compose up --build app nginx, health 200.`<br>  _concluído 06/08/2026 01:10 por deepseek_
 
 **Design & Paridade Visual**
 
@@ -454,6 +453,14 @@ _05/08/2026 15:08 — deepseek_
 
 _06/08/2026 00:51 — deepseek_
 
+### ADR-033 — Saque MC PIX: correção de valor no teste de valor_invalido
+
+**Decisão:** Em saque-task-2, o teste do brief esperava valor_invalido para mcAmount=1500, mas 1500 é múltiplo de 100 (1500%100==0), então a implementação verbatim lança valor_minimo_nao_atingido. Corrigido no teste: 1500 → 1550 (caso não-múltiplo). Implementação de api/src/lib/withdrawals.ts permanece 100% verbatim.
+
+**Por quê:** O nome do teste ("rejeita valor não múltiplo de 100") exige um valor não-múltiplo para o caso valor_invalido; com 1500 o teste jamais passaria (GREEN inalcançável). Reverter 1550 para 1500 no teste reintroduz o fail.
+
+_06/08/2026 01:17 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -463,6 +470,7 @@ _06/08/2026 00:51 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 06/08/2026 01:10 | deepseek | Deploy do dashboard financeiro na VPS dev. Commit 3d9af47 (feat/gateway-mc → main via worktree m7-deploy): app.admin-financeiro (GET /api/admin/financeiro em admin.ts, FinanceiroDashboard.tsx na aba Visão, api.adminFinanceiro no sdk) + WIP de outros terminais (SalaMod1/VagaSlot mobile, suspensão 48h→12h, WS quieto 8s→5s, spec saque PIX). Push main, pull VPS, compose up --build app nginx. Validação com sessão admin temporária (criada e removida): periodo=30 → 200 faturamento 5, saques 0, lucro 1.08, MC circulação 17147 = R$171.47; today → 5 buckets horários; sem auth → 401. Bundle Admin tem o dashboard. app.admin-financeiro done. Pendente: usuário validar visual em /admin. <br>_tocou: `api/src/routes/admin.ts`, `web/src/lib/api.ts`, `web/src/pages/Admin.tsx`, `web/src/components/admin/FinanceiroDashboard.tsx`_ |
 | 06/08/2026 00:56 | deepseek | Dashboard financeiro admin (app.admin-financeiro, doing). Endpoint GET /api/admin/financeiro (api/src/routes/admin.ts), período today/7/30/all. ADR-032: faturamento=payments approved (R$), lucro=MC retido em taxas platform_revenue/100 (lojas futuras somam), dinheiroNoProjeto=user_wallets mc+mc_reservado/100, saques=0 até sec.pix. Hoje por hora, resto por dia. Front: api.adminFinanceiro.get + tipo ApiFinanceiro (web/src/lib/api.ts); componente FinanceiroDashboard.tsx (gráfico SVG estilo barbearia: cards clicáveis, período, hover, legenda, card Dinheiro no Projeto); montado na aba Visão do Admin.tsx. Verificação: tsc api exit 0, vite build web ok. 2 erros TS do web são pré-existentes no HEAD (ElectricBorder/Streamers), não meus. Pendente: testar SQL contra Postgres real e deploy. Não commitei. <br>_tocou: `api/src/routes/admin.ts`, `web/src/lib/api.ts`, `web/src/pages/Admin.tsx`, `web/src/components/admin/FinanceiroDashboard.tsx`_ |
 | 05/08/2026 17:40 | deepseek | Gateway MC 100% no ar. Chave PIX aleatória cadastrada pelo usuário destravou o fluxo: pedido PIX real criado na VPS (R$5, 500 MC, QR+brCode gerados, payment pending no banco com external_reference casando), webhook fail-closed validado (401 sem assinatura), smoke test limpo. BLK-005 resolvido, app.payments done. Falta teste final manual: pagar um PIX real e ver o webhook creditar os MCs. Nota: notification_url é enviado por pedido, então funciona mesmo sem trocar a URL global no painel do MP (recomendado trocar para https://dev.m7arena.pro/api/payments/webhook para evitar notificações duplicadas). <br>_tocou: `VPS:/root/m7arena/.env`, `VPS migration 0010`, `api/src/routes/payments.ts`, `api/src/lib/mercado-pago.ts`, `api/src/lib/pagamentos.ts`, `web/src/components/modals/deposit/DepositModal.tsx`_ |
 | 05/08/2026 16:53 | deepseek | Deploy do gateway MC completo na VPS: merge feat/gateway-mc→main (ecb6fe8, resolvidos 3 conflitos: _journal 0010+0011, api.ts payments+adminAdjustMc, SalaMod1 versão usuário), push, reset VPS para ecb6fe8, migration 0010 aplicada (mc_packages 6 seeds + payments.mc_credit), envs MERCADO_PAGO_* corrigidas no .env da VPS (estavam coladas na RIOT_API_KEY), rebuild app+nginx. Smoke: health ok, packages devolve 6 pacotes, webhook 200/401 correto, mc/order 401 sem auth. BLOQUEIO: criar pedido PIX real falha com erro MP 13253 'Collector user without key enabled for QR render' — a conta MP (user_id 3157267389) não tem chave PIX ativada. BLK-005 registrado. Falta: usuário ativar chave PIX no painel MP, depois testar pedido real + webhook credita MC. <br>_tocou: `VPS:/root/m7arena/.env`, `VPS:/root/m7arena (git reset ecb6fe8 + migration 0010)`, `docs/superpowers/plans/2026-08-05-gateway-pagamento-mc.md`_ |
@@ -477,7 +485,6 @@ _06/08/2026 00:51 — deepseek_
 | 04/08/2026 03:03 | morpheus | Auditoria ofensiva (Morpheus) do fluxo de salas pos-ajustarsala. Correcoes confirmadas solidas: race no join/confirm protegida por FOR UPDATE+transacao (10 confirms paralelos 8/8), clock sync validado com relogios diferentes, polling fallback so com WS morto, 1 GET unico. FINDINGS: (1) HIGH - senha da sala exposta no GET /api/matches/:id para qualquer autenticado (match-shape.ts:86); servidor nunca valida senha no join - protecao so cosmética. (2) MEDIUM - mass assignment na criacao: maxJogadores/taxaPct/apostaMc do body sem clamp (matches.ts:114-141); taxaPct negativo cria MC do nada no calcularPayout (escrow.ts:64-70). (3) MEDIUM - CORS origin:true+credentials ecoa origem arbitraria (mitigado por SameSite=Lax). (4) LOW - aposta negativa vira dado inconsistente. Upload bem defendido (memoryStorage+sanitize+uuid). Cookies httpOnly+secure+lax corretos. <br>_tocou: `api/src/routes/matches.ts`, `api/src/lib/match-shape.ts`, `api/src/lib/escrow.ts`, `api/src/index.ts`, `api/src/routes/upload.ts`, `api/src/lib/session.ts`_ |
 | 04/08/2026 02:57 | deepseek | Reforcos finais do ajustarsala para o teste com 10 players. (1) Review de logica com 10 jogadores simultaneos: join/confirm usam FOR UPDATE na linha do match -> serializa cliques concorrentes; checagem de vaga e total>=max dentro do lock; 11o jogador barrado. (2) Corrigi polling fallback para rodar SO com WS morto (antes rodava a cada 5s em sala parada com 10 jogadores mesmo com WS perfeito, 2 req/s de desperdicio). (3) Otimizei sincronizarTudo para 1 GET unico (antes 2 GETs identicos de /matches/:id -> dobrava trafego com 10 jogadores e arriscava estados divergentes). (4) Novo teste de servidor: 5v5 com 10 jogadores preenchem -> confirmacao, 11o barrado (32/32 na suite). (5) NOVO smoke-clock-sync-vps.mjs: sala 1v1 real na VPS em confirmacao, 7 clientes simulados com relogios de -8min a +8min usando o codigo real de clockSync.ts -> SEM correcao cada um ve tempo diferente (0s a 540s), COM correcao todos veem 60s. 6/6. Tudo commitado e deployado. <br>_tocou: `scripts/smoke-clock-sync-vps.mjs`, `web/src/hooks/useSalaSimples.ts`, `api/test/estados.test.ts`, `ajustarsala.md`_ |
 | 04/08/2026 02:22 | deepseek | Fechei o plano ajustarsala (fases 1-5). Implementadas F1 (server_time no shape, join protegido por ESTADOS_ATIVOS, cron saneamento de salas mortas), F2 (clockSync.ts offset), F3 (fallback polling 5s). Reforcos de regra: smoke-clock-sync.mjs (relogios opostos +5min/-3min convergem, 5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9. Teste visual com 2 contas reais via Chrome CDP (porta 9223): sala 1v1 #23 com 1 jogador ficou AGUARDANDO JOGADORES (bug C = efeito do bug A); conta 2 preencheu ultima vaga -> CONFIRMANDO PRESENCA, timer no servidor coerente com a tela (33s vs 47s). Tudo deployado e commitado (2e810f7). VPS saudavel. Nao mexi no pandapost. <br>_tocou: `ajustarsala.md`, `scripts/smoke-clock-sync.mjs`, `scripts/smoke-vps-salas.mjs`, `api/src/lib/match-shape.ts`, `api/src/routes/matches.ts`, `api/src/cron.ts`, `api/src/realtime/index.ts`, `api/src/lib/acesso-sala.ts`, `api/test/cron.test.ts`, `api/test/estados.test.ts`, `web/src/lib/clockSync.ts`, `web/src/lib/api.ts`, `web/src/hooks/useSalaSimples.ts`, `web/src/hooks/useSalaRealtime.ts`_ |
-| 04/08/2026 01:58 | deepseek | Implementei o plano ajustarsala.md por fases, testando cada uma. F1: server_time no shape, join de salas protegido por ESTADOS_ATIVOS (fix bug D — linked residual em sala morta nao bloqueia), cron de saneamento de salas presas em 'finalizacao' e linked orfao. F2: clockSync.ts mede offset server_time-Date.now() e timers usam agoraServidor() (fix bug B). F3: fallback polling a cada 5s quando WS nao entrega ha 8s (fix bug A). Reforcos de regra: smoke-clock-sync.mjs simula relogios opostos (+5min/-3min) e prova convergencia (5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9 (1v1 nao abre com 1 jogador, deadline coerente, linked residual liberado). Tudo commitado e deployado na VPS (commit 8ad0cf4). Nao toquei em nada do pandapost. VPS: 2 vCPU, 7.8Gi RAM (2.3Gi usado, 5.5Gi livre), load 0.02, containers m7arena usam ~212MiB total. <br>_tocou: `ajustarsala.md`, `scripts/smoke-clock-sync.mjs`, `scripts/smoke-vps-salas.mjs`, `api/src/lib/match-shape.ts`, `api/src/routes/matches.ts`, `api/src/cron.ts`, `api/test/cron.test.ts`, `api/test/estados.test.ts`, `web/src/lib/clockSync.ts`, `web/src/lib/api.ts`, `web/src/hooks/useSalaSimples.ts`, `web/src/hooks/useSalaRealtime.ts`_ |
 
 ---
 

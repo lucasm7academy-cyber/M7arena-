@@ -5,7 +5,7 @@ import { db } from "../db.js";
 import { users, userSessions, userWallets, userRoles } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
-import { matchPrints, matchDisputas, userStrikes } from "../../../db/schema/apostas.js";
+import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
 import { platformRevenue } from "../../../db/schema/economia.js";
 import { toLegacyMatch } from "../lib/match-shape.js";
 import {
@@ -409,7 +409,7 @@ matchesRouter.delete("/:id", async (req, res) => {
       await tx.delete(matchResults).where(eq(matchResults.matchId, match.id));
       await tx.delete(matchPrints).where(eq(matchPrints.matchId, match.id));
       await tx.delete(matchDisputas).where(eq(matchDisputas.matchId, match.id));
-      await tx.delete(userStrikes).where(eq(userStrikes.matchId, match.id));
+      await tx.delete(userAdvertencias).where(eq(userAdvertencias.matchId, match.id));
       await tx.delete(platformRevenue).where(eq(platformRevenue.matchId, match.id));
       await tx.delete(matches).where(eq(matches.id, match.id));
     });

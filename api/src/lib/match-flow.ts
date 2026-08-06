@@ -293,14 +293,14 @@ export function normalizarVaga(role: string | undefined, isTimeA: boolean) {
   };
 }
 
-// ── ELEGIBILIDADE E STRIKES (design v3 §2.1) ─────────────────────────────────
+// ── ELEGIBILIDADE E PUNIÇÕES (ADR-033) ───────────────────────────────────────
 // Vivem em `lib/elegibilidade.ts` (regras puras de acesso). Re-exportados aqui
 // para as rotas manterem o import antigo de match-flow sem quebra.
 export {
   ESTADOS_ATIVOS,
   LIMITES,
-  contarStrikesAtivos,
-  aplicarSuspensaoSeNecessario,
-  removerStrike,
+  contarAdvertenciasAtivas,
+  aplicarBanAutomaticoSeNecessario,
+  removerAdvertencia,
   validarElegibilidade,
 } from "./elegibilidade.js";

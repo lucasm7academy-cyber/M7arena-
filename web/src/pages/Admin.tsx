@@ -6,7 +6,7 @@ import {
   ShieldCheck, Trophy, Coins, Search, Check, X, AlertTriangle,
   RefreshCw, Ban, Users, Zap, GraduationCap, Mail, ChevronRight, Film,
   LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
-  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords,
+  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -1191,6 +1191,7 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
 // ── PÁGINA PRINCIPAL ───────────────────────────────
 export default function Admin() {
   const { perfil } = usePerfil();
+  const navigate = useNavigate();
   const [abaAtiva, setAbaAtiva] = useState<Aba>('dashboard');
 
   if (!perfil) {
@@ -1230,78 +1231,173 @@ export default function Admin() {
   ];
 
   return (
-    <div className="flex-1 bg-[#050505] min-h-screen">
-      {/* ── HEADER (gradient + glow) ─────────────── */}
-      <div className="relative border-b border-white/5 bg-gradient-to-b from-primary/[0.04] via-white/[0.01] to-transparent">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(145,70,255,0.08),transparent_70%)] pointer-events-none" />
-        <div className="relative max-w-6xl mx-auto px-4 py-8 lg:py-10">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(145,70,255,0.15)]">
-                <ShieldCheck className="w-7 h-7 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter">Painel Admin</h1>
-                  <BadgeCargo cargo={adminCargo} />
-                </div>
-                <p className="text-white/40 text-sm font-medium mt-1">M7 Arena · gerenciamento da plataforma</p>
-              </div>
-            </div>
-            <div className="hidden sm:flex flex-col items-end gap-1">
-              <p className="text-white font-black text-sm">{perfil.riotId || perfil.nome}</p>
-              <p className="text-white/30 text-[10px] uppercase tracking-widest">Logado como admin</p>
-            </div>
+    <div className="flex h-screen bg-[#050505] text-white overflow-hidden">
+      {/* ── SIDEBAR PRÓPRIA ───────────────────────── */}
+      <aside className="hidden md:flex w-[220px] xl:w-[240px] shrink-0 flex-col border-r border-white/5 bg-[#070707]/90 backdrop-blur-md relative z-20">
+        <div className="absolute top-0 right-0 w-0 h-full bg-primary shadow-[-10px_0_15px_rgba(255,183,0,0.25)] z-50"></div>
+
+        {/* Logo / marca */}
+        <div className="flex items-center gap-3 px-5 pt-6 pb-5 border-b border-white/5">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(145,70,255,0.15)]">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-black text-white uppercase tracking-tighter leading-tight">Painel Admin</h1>
+            <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">M7 Arena</p>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 space-y-6 lg:space-y-8">
-        {/* ── STATS CARDS ────────────────────────── */}
-        <StatsCards />
+        {/* Navegação vertical (tópicos que eram as abas horizontais) */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+          {abas.map(({ id, label, icon: Icon, bloqueada }) => {
+            const ativa = abaAtiva === id;
+            return (
+              <button
+                key={id}
+                onClick={() => !bloqueada && setAbaAtiva(id)}
+                disabled={bloqueada}
+                className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all text-left ${
+                  ativa
+                    ? 'bg-white text-black shadow-lg shadow-white/10'
+                    : bloqueada
+                    ? 'text-white/15 cursor-not-allowed'
+                    : 'text-white/45 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {ativa && (
+                  <motion.span
+                    layoutId="admin-tab-active"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r"
+                    transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
+                  />
+                )}
+                <Icon className={`w-4 h-4 shrink-0 ${ativa ? 'text-black' : bloqueada ? 'text-white/15' : 'text-primary/70 group-hover:text-primary'}`} />
+                <span className="flex-1">{label}</span>
+                {bloqueada && <Lock className="w-3 h-3 shrink-0" />}
+              </button>
+            );
+          })}
+        </nav>
 
-        {/* ── TABS ────────────────────────────────── */}
-        <div className="flex gap-1.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/5 overflow-x-auto">
+        {/* Usuário + voltar ao site */}
+        <div className="px-3 py-5 border-t border-white/5 space-y-3">
+          <div className="flex items-center gap-2.5 px-2">
+            <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0 border border-primary/30">
+              {perfil.avatar ? (
+                <img src={perfil.avatar} className="w-full h-full object-cover" alt="" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/40 text-xs font-black">
+                  {(perfil.riotId || perfil.nome || '?')[0].toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-black text-xs truncate">{perfil.riotId || perfil.nome}</p>
+              <BadgeCargo cargo={adminCargo} />
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/lobby')}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all font-black text-[10px] uppercase tracking-widest"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Voltar ao site
+          </button>
+        </div>
+      </aside>
+
+      {/* ── CONTEÚDO ─────────────────────────────── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Header mobile: voltar + título + tópicos horizontais */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-4 border-b border-white/5 bg-gradient-to-b from-primary/[0.04] via-white/[0.01] to-transparent">
+          <button
+            onClick={() => navigate('/lobby')}
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all shrink-0"
+            aria-label="Voltar ao site"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="min-w-0">
+            <h1 className="text-base font-black text-white uppercase tracking-tighter leading-tight">Painel Admin</h1>
+            <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">{perfil.riotId || perfil.nome}</p>
+          </div>
+        </div>
+
+        {/* Tópicos em scroll horizontal no mobile */}
+        <div className="md:hidden flex gap-1.5 p-2.5 bg-white/[0.02] border-b border-white/5 overflow-x-auto">
           {abas.map(({ id, label, icon: Icon, bloqueada }) => (
             <button
               key={id}
               onClick={() => !bloqueada && setAbaAtiva(id)}
               disabled={bloqueada}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${
                 abaAtiva === id
                   ? 'bg-white text-black shadow-lg shadow-white/10'
                   : bloqueada
                   ? 'text-white/15 cursor-not-allowed'
-                  : 'text-white/40 hover:text-white hover:bg-white/5'
+                  : 'text-white/45 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               {label}
-              {bloqueada && <Lock className="w-3 h-3" />}
+              {bloqueada && <Lock className="w-2.5 h-2.5" />}
             </button>
           ))}
         </div>
 
-        {/* ── CONTEÚDO DA ABA ─────────────────────── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={abaAtiva}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-          >
-            {abaAtiva === 'dashboard'  && <AbaDashboard onNavigate={setAbaAtiva} adminCargo={adminCargo} />}
-            {abaAtiva === 'saldos'     && <AbaSaldos adminCargo={adminCargo} />}
-            {abaAtiva === 'saldomc'    && <AbaSaldoMC adminCargo={adminCargo} />}
-            {abaAtiva === 'ranking'    && <AbaRanking adminCargo={adminCargo} />}
-            {abaAtiva === 'noticias'   && <AbaNoticias adminCargo={adminCargo} />}
-            {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
-            {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
-            {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
-            {abaAtiva === 'revisao'    && <RevisaoPartidas />}
-          </motion.div>
-        </AnimatePresence>
+        {/* Corpo rolável */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {/* Header (gradient + glow) */}
+          <div className="relative border-b border-white/5 bg-gradient-to-b from-primary/[0.04] via-white/[0.01] to-transparent">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(145,70,255,0.08),transparent_70%)] pointer-events-none" />
+            <div className="relative max-w-6xl mx-auto px-4 py-8 lg:py-10">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(145,70,255,0.15)]">
+                    <ShieldCheck className="w-7 h-7 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <h1 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter">Painel Admin</h1>
+                      <BadgeCargo cargo={adminCargo} />
+                    </div>
+                    <p className="text-white/40 text-sm font-medium mt-1">M7 Arena · gerenciamento da plataforma</p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex flex-col items-end gap-1">
+                  <p className="text-white font-black text-sm">{perfil.riotId || perfil.nome}</p>
+                  <p className="text-white/30 text-[10px] uppercase tracking-widest">Logado como admin</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 space-y-6 lg:space-y-8">
+            {/* ── STATS CARDS ────────────────────────── */}
+            <StatsCards />
+
+            {/* ── CONTEÚDO DA ABA ─────────────────────── */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={abaAtiva}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+              >
+                {abaAtiva === 'dashboard'  && <AbaDashboard onNavigate={setAbaAtiva} adminCargo={adminCargo} />}
+                {abaAtiva === 'saldos'     && <AbaSaldos adminCargo={adminCargo} />}
+                {abaAtiva === 'saldomc'    && <AbaSaldoMC adminCargo={adminCargo} />}
+                {abaAtiva === 'ranking'    && <AbaRanking adminCargo={adminCargo} />}
+                {abaAtiva === 'noticias'   && <AbaNoticias adminCargo={adminCargo} />}
+                {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
+                {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
+                {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
+                {abaAtiva === 'revisao'    && <RevisaoPartidas />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   );
