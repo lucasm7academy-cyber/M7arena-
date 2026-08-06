@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-05T18:08:21.942Z",
+  "updatedAt": "2026-08-06T03:56:31.810Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1159,12 +1159,24 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Gateway de pagamento MC (Mercado Pago PIX)",
-      "status": "doing",
-      "notes": "Nova tabela mc_packages (migration 0010), rotas /api/payments/packages, /api/payments/mc/order, /api/payments/webhook, /api/payments/:orderId/status, webhook idempotente credita user_wallets.mc + ledger deposit, DepositModal passa a consumir a API própria. Design aprovado (ADR-031).",
-      "evidence": "",
+      "status": "done",
+      "notes": "Deploy completo na VPS: migration 0010 aplicada, envs MERCADO_PAGO_* no .env, rebuild app+nginx. Pedido PIX real funcionando (QR + banco). Webhook fail-closed validado. Falta teste final: pagar PIX real para MCs cairem via webhook.",
+      "evidence": "Smoke VPS: mc/order → 201 com qrCode+brCode; banco mc_credit=500 pending; MP status=pending external_reference ok; webhook 401 sem assinatura. tsx --test 68/68, tsc api exit 0, build ok.",
       "owner": "deepseek",
       "createdAt": "2026-08-05T18:08:21.942Z",
-      "updatedAt": "2026-08-05T18:08:21.942Z"
+      "updatedAt": "2026-08-05T20:40:24.867Z"
+    },
+    {
+      "id": "app.admin-financeiro",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Dashboard financeiro no painel admin (faturamento/saques/lucro/MC)",
+      "status": "doing",
+      "notes": "Endpoint GET /api/admin/financeiro (periodo today/7/30/all, faturamento=payments approved R$, lucro=platform_revenue mc_fee+rounding /100, mcEmCirculacao=user_wallets mc+mc_reservado, dinheiroNoProjeto=mc/100; saques=0 até sec.pix). Componente FinanceiroDashboard com gráfico SVG estilo barbearia (cards clicáveis filtram linha, hover tooltip). Typecheck API exit 0, vite build ok. Falta: testar SQL contra Postgres real (sem banco local/Docker) e deploy.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-06T03:48:49.341Z",
+      "updatedAt": "2026-08-06T03:56:18.169Z"
     }
   ],
   "decisions": [
@@ -1446,6 +1458,15 @@
       "decision": "Compra de MC migra da edge function do Supabase para a API própria (api/src/routes/payments.ts): tabela mc_packages no banco é a fonte dos preços (R$5→500, R$10→1.000, R$20→2.000, R$50→5.000+300, R$100→10.000+600, R$200→20.000+1.200 MC), PIX only sem fallback Checkout Pro, webhook valida x-signature + confirma status no MP antes de creditar, selo \"Mais Escolhido\" no R$50.",
       "rationale": "Invariante 3.3 (nenhuma regra de negócio no cliente): o cliente nunca envia valor/MC, só o packageId; o servidor resolve o pacote. Sem Supabase, como pedido. PIX only para simplicidade e foco. Webhook idempotente com FOR UPDATE para não creditar MC duas vezes.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-032",
+      "date": "2026-08-06T03:51:19.156Z",
+      "author": "deepseek",
+      "title": "Definição de lucro no dashboard financeiro: todo MC retido pela plataforma",
+      "decision": "No dashboard financeiro do admin, LUCRO = todo MC que a plataforma retém/queima do cliente (taxa de sala apostada hoje, compras em lojas futuras), convertido a R$1 = 100 MC. Faturamento = R$ recebido de payments aprovados. Saques = R$ pago ao cliente (fluxo sec.pix ainda inexistente → série zero). Dinheiro no projeto = MC em circulação (mc + mc_reservado) ÷ 100.",
+      "rationale": "O dono explicou que queimar MC do cliente vira lucro (seja taxa de sala, seja compra em loja): todo MC que sai de circulação e fica com a plataforma é receita. platform_revenue (mc_fee + rounding) já é a fonte de auditoria das taxas; lojas futuras entrarão como linhas adicionais de queima no mesmo somatório.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1484,68 +1505,18 @@
       "openedAt": "2026-08-02T22:37:29.688Z",
       "resolvedAt": null,
       "resolution": null
+    },
+    {
+      "id": "BLK-005",
+      "description": "Mercado Pago retorna erro 13253 'Collector user without key enabled for QR render' ao criar pagamento PIX. O access token APP_USR-4743852098543095 (user_id 3157267389) é válido, mas a conta collector não tem a CHAVE PIX ativada para gerar QR code. Necessário no painel do MP: cadastrar/ativar a chave PIX (CPF/CNPJ) em Configurações > Chave PIX (ou Cobranças). Sem isso o QR code não é gerado e o cliente não consegue pagar.",
+      "component": "app.payments",
+      "openedBy": "deepseek",
+      "openedAt": "2026-08-05T19:53:04.996Z",
+      "resolvedAt": "2026-08-05T20:39:54.145Z",
+      "resolution": "Chave PIX aleatória cadastrada pelo usuário (8386e1ba-cfec-4dfb-a443-148c83a7c69f). Pedido PIX real criado com sucesso na VPS: payment 365c59a3 (R$5, 500 MC, status pending), QR code e brCode gerados, external_reference casando. Webhook fail-closed validado em produção (401 sem assinatura). Falta apenas pagar o PIX real para o crédito cair (teste final do usuário)."
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T03:44:40.534Z",
-      "agent": "deepseek",
-      "summary": "P3 (prints/disputas/painel de revisao) implementado e verificado. NOVOS: routes/prints.ts (GET /api/prints/:matchId + GET /api/prints/:id/arquivo com sendFile autenticado por participante/admin), routes/disputas.ts (POST/GET com 1 por jogador via UNIQUE), lib/acesso-sala.ts (role/participante), lib/discord.ts (webhook no upload), tests prints.test.ts (9) e disputas.test.ts (5). ESTENDIDOS: upload.ts (bucket match-prints + magic bytes png/jpeg/webp + rate limit 5/min + salvarPrintMatch + entrarEmRevisao), revisao.ts (pendentes agora embute jogadores+prints+disputas), index.ts (mount), api.ts (SDK prints/disputas/revisao), Admin.tsx + components/admin/RevisaoPartidas.tsx (aba Revisao: fila, prints lado a lado, disputas destacadas, botoes idempotentes com decisionId). Evidencia: tsc api exit 0, web tsc so os 2 erros pre-existentes, tsx --test 45/45. NOTA: cron.ts (partida fantasma) transiciona para aguardando_revisao sem webhook Discord (fora da minha fronteira). P2 estava editando match-flow.ts/matches.ts ao vivo; ao final estavam compilando.",
-      "touched": [
-        "api/src/routes/upload.ts",
-        "api/src/routes/prints.ts",
-        "api/src/routes/disputas.ts",
-        "api/src/routes/revisao.ts",
-        "api/src/index.ts",
-        "api/src/lib/acesso-sala.ts",
-        "api/src/lib/discord.ts",
-        "api/test/prints.test.ts",
-        "api/test/disputas.test.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/Admin.tsx",
-        "web/src/components/admin/RevisaoPartidas.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T03:51:39.514Z",
-      "agent": "deepseek",
-      "summary": "P2 (elegibilidade e strikes) pronto. Novo api/src/lib/elegibilidade.ts (validarElegibilidade 6 checagens, contarStrikesAtivos, aplicarSuspensaoSeNecessario, removerStrike) + api/test/elegibilidade.test.ts (11 testes). Rotas: join/criar validam na transação FOR UPDATE com faltam/sala_num/liberado_em; GET /api/matches público redige 'senha' p/ anônimo (ADR-022); POST /api/terms/accept; admin GET/DELETE /api/admin/strikes (auditado); profiles/me com strikes+suspensaAte e bind Riot espelha users.riot_id (ADR-023); cron: abandono via ledger (ADR-024), suspensão no 3º strike, reativação expirados. tsc 0; testes 31/31; smoke HTTP ok. Não commitei (P3 paralelo). Pendente: senha no servidor (swap front).",
-      "touched": [
-        "api/src/lib/elegibilidade.ts",
-        "api/src/lib/match-flow.ts",
-        "api/src/routes/matches.ts",
-        "api/src/cron.ts",
-        "api/src/routes/admin.ts",
-        "api/src/routes/auth.ts",
-        "api/src/routes/profiles.ts",
-        "api/src/index.ts",
-        "api/test/elegibilidade.test.ts"
-      ]
-    },
-    {
-      "at": "2026-08-03T04:52:41.856Z",
-      "agent": "deepseek",
-      "summary": "Retomei o P5 (front das salas apostadas §11) do working tree não commitado. Verifiquei na stack local (nginx rebuilt): vitrine /jogar sem PrivateRoute, modal login visitante, criar apostada com faixas MC liberadas, escrow (500→400+100 reservado), CarteiraEStrikes no perfil, aviso Riot ID antecipado, modal \"já está em outra sala\" com link, modal saldo insuficiente (faltam X + Recarregar→DepositModal), aviso kick 25min, Enviar Print→aguardando_revisao, painel Em Análise (SLA, prints autenticados, contestação), RegrasDaSala no confirmacao. CORRIGI minutosParaKick (Math.ceil). tsc api 0, web só 2 pré-existentes, testes 45/45, MCP ok. Registrei app.apostas.ui (done) + plan.js. Depósito real segue BLK-003; usei MC manual nos testes. Dados de teste limpos. NÃO commitei.",
-      "touched": [
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/components/partidas/AguardandoRevisao.tsx",
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/components/partidas/RegrasDaSala.tsx",
-        "web/src/components/perfil/CarteiraEStrikes.tsx",
-        "web/src/lib/api.ts",
-        "web/src/contexts/PerfilContext.tsx",
-        "web/src/App.tsx",
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "api/src/lib/match-shape.ts",
-        "api/src/routes/wallet.ts",
-        "api/src/routes/matches.ts",
-        "api/src/routes/upload.ts",
-        "api/src/cron.ts",
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
     {
       "at": "2026-08-03T04:53:10.378Z",
       "agent": "riven",
@@ -1882,6 +1853,40 @@
         "web/src/components/partidas/AguardandoRevisao.tsx",
         "web/src/components/admin/RevisaoPartidas.tsx",
         "web/src/components/partidas/ResultadoPartida.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-05T19:53:12.351Z",
+      "agent": "deepseek",
+      "summary": "Deploy do gateway MC completo na VPS: merge feat/gateway-mc→main (ecb6fe8, resolvidos 3 conflitos: _journal 0010+0011, api.ts payments+adminAdjustMc, SalaMod1 versão usuário), push, reset VPS para ecb6fe8, migration 0010 aplicada (mc_packages 6 seeds + payments.mc_credit), envs MERCADO_PAGO_* corrigidas no .env da VPS (estavam coladas na RIOT_API_KEY), rebuild app+nginx. Smoke: health ok, packages devolve 6 pacotes, webhook 200/401 correto, mc/order 401 sem auth. BLOQUEIO: criar pedido PIX real falha com erro MP 13253 'Collector user without key enabled for QR render' — a conta MP (user_id 3157267389) não tem chave PIX ativada. BLK-005 registrado. Falta: usuário ativar chave PIX no painel MP, depois testar pedido real + webhook credita MC.",
+      "touched": [
+        "VPS:/root/m7arena/.env",
+        "VPS:/root/m7arena (git reset ecb6fe8 + migration 0010)",
+        "docs/superpowers/plans/2026-08-05-gateway-pagamento-mc.md"
+      ]
+    },
+    {
+      "at": "2026-08-05T20:40:32.457Z",
+      "agent": "deepseek",
+      "summary": "Gateway MC 100% no ar. Chave PIX aleatória cadastrada pelo usuário destravou o fluxo: pedido PIX real criado na VPS (R$5, 500 MC, QR+brCode gerados, payment pending no banco com external_reference casando), webhook fail-closed validado (401 sem assinatura), smoke test limpo. BLK-005 resolvido, app.payments done. Falta teste final manual: pagar um PIX real e ver o webhook creditar os MCs. Nota: notification_url é enviado por pedido, então funciona mesmo sem trocar a URL global no painel do MP (recomendado trocar para https://dev.m7arena.pro/api/payments/webhook para evitar notificações duplicadas).",
+      "touched": [
+        "VPS:/root/m7arena/.env",
+        "VPS migration 0010",
+        "api/src/routes/payments.ts",
+        "api/src/lib/mercado-pago.ts",
+        "api/src/lib/pagamentos.ts",
+        "web/src/components/modals/deposit/DepositModal.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-06T03:56:31.810Z",
+      "agent": "deepseek",
+      "summary": "Dashboard financeiro admin (app.admin-financeiro, doing). Endpoint GET /api/admin/financeiro (api/src/routes/admin.ts), período today/7/30/all. ADR-032: faturamento=payments approved (R$), lucro=MC retido em taxas platform_revenue/100 (lojas futuras somam), dinheiroNoProjeto=user_wallets mc+mc_reservado/100, saques=0 até sec.pix. Hoje por hora, resto por dia. Front: api.adminFinanceiro.get + tipo ApiFinanceiro (web/src/lib/api.ts); componente FinanceiroDashboard.tsx (gráfico SVG estilo barbearia: cards clicáveis, período, hover, legenda, card Dinheiro no Projeto); montado na aba Visão do Admin.tsx. Verificação: tsc api exit 0, vite build web ok. 2 erros TS do web são pré-existentes no HEAD (ElectricBorder/Streamers), não meus. Pendente: testar SQL contra Postgres real e deploy. Não commitei.",
+      "touched": [
+        "api/src/routes/admin.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/Admin.tsx",
+        "web/src/components/admin/FinanceiroDashboard.tsx"
       ]
     }
   ]

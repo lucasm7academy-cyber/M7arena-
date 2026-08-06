@@ -36,7 +36,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
 
     // Largura 100% uniforme para todos os cards
-    const cardWidth = 'w-[44vmin]';
+    const cardWidth = 'w-full';
 
     // Cards 100% alinhados e centralizados em relação aos badges dos times
     const arcOffset = '0vmin';
@@ -82,14 +82,14 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 <img
                     src={icone}
                     alt={nome}
-                    className={`w-[5vmin] h-[5vmin] rounded-full object-cover border ${config.avatarBorder} transition-all`}
+                    className={`w-[min(12vw,5vmin)] h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                     style={config.avatarFilter ? { filter: config.avatarFilter } : {}}
                 />
             </div>
         )
         : (
-            <div className={`w-[5vmin] h-[5vmin] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
-                <span className="text-white/20 text-[1.8vmin] font-black uppercase">{nome?.[0] || '?'}</span>
+            <div className={`w-[min(12vw,5vmin)] h-[min(12vw,5vmin)] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
+                <span className="text-[min(4vw,1.8vmin)] text-white/20 font-black uppercase">{nome?.[0] || '?'}</span>
             </div>
         );
 
@@ -100,7 +100,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     whileHover={{ scale: 1.015 }}
-                    className={`relative ${cardWidth} h-[8.2vmin] p-[1px] group overflow-hidden`}
+                    className={`relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] group overflow-hidden`}
                     style={{
                         backgroundColor: teamColor,
                         clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
@@ -153,19 +153,19 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         )}
 
                         <div className={`flex items-center gap-[2vmin] flex-1 overflow-hidden ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            <img src={roleIconImg} alt={role} className="w-[4.8vmin] h-[4.8vmin] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
+                            <img src={roleIconImg} alt={role} className="w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
                             {avatarEl}
                             <div className={`flex flex-col min-w-0 ${isTimeA ? 'text-left' : 'text-right'}`}>
                                 <div className="flex items-center gap-[1vmin]">
                                     <span
-                                        className="text-[2vmin] font-black truncate uppercase tracking-tight"
+                                        className="text-[min(5vw,2vmin)] font-black truncate uppercase tracking-tight"
                                         style={config.nomeStyle}
                                     >
                                         {nome}
                                     </span>
                                 </div>
                                 <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                    <span className="text-[1.2vmin] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                    <span className="text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
                                         {tag}
                                     </span>
                                     {vipTier === 'vip' && (
@@ -192,7 +192,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={aoEntrar}
-                className={`group relative ${cardWidth} h-[8.2vmin] p-[1px] bg-white/10 hover:bg-white/30 transition-colors duration-300 overflow-hidden cursor-pointer`}
+                className={`group relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] bg-white/10 hover:bg-white/30 transition-colors duration-300 overflow-hidden cursor-pointer`}
                 style={{
                     clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                 }}
@@ -203,14 +203,14 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                     }}
                 >
-                    <div className="w-[6vmin] h-[6vmin] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300">
-                        <UserPlus className="w-[2.5vmin] h-[2.5vmin] text-white/10 group-hover:text-white/60 transition-colors" />
+                    <div className="w-[min(14vw,6vmin)] h-[min(14vw,6vmin)] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300">
+                        <UserPlus className="w-[min(6vw,2.5vmin)] h-[min(6vw,2.5vmin)] text-white/10 group-hover:text-white/60 transition-colors" />
                     </div>
                     <div className={`flex flex-col ${isTimeA ? 'items-start' : 'items-end'}`}>
-                        <span className="text-[1.6vmin] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">ENTRAR</span>
+                        <span className="text-[min(4vw,1.6vmin)] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">ENTRAR</span>
                         <div className={`flex items-center gap-[1vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            <img src={roleIconImg} className="w-[2vmin] h-[2vmin] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
-                            <span className="text-[1.4vmin] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
+                            <img src={roleIconImg} className="w-[min(5vw,2vmin)] h-[min(5vw,2vmin)] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
+                            <span className="text-[min(3.5vw,1.4vmin)] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
                         </div>
                     </div>
                 </div>

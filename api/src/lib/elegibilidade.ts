@@ -29,7 +29,7 @@ export const ESTADOS_ATIVOS = [
 export const LIMITES = {
   STRIKES_PARA_SUSPENSAO: 3,
   JANELA_STRIKES_DIAS: 30,
-  SUSPENSAO_HORAS: 48,
+  SUSPENSAO_HORAS: 12,
 };
 
 /**
@@ -47,7 +47,7 @@ export async function contarStrikesAtivos(tx: any, userId: string, agora = new D
 
 /**
  * Aplica suspensão de salas apostadas quando o jogador atinge o teto de strikes
- * (3 em 30 dias → `status='suspensa'` por 48h). O cron reativa ao expirar.
+ * (3 em 30 dias → `status='suspensa'` por 12h). O cron reativa ao expirar.
  * Retorna o total de strikes ativos após a checagem.
  */
 export async function aplicarSuspensaoSeNecessario(tx: any, userId: string, agora = new Date()) {

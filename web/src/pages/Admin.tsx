@@ -20,6 +20,7 @@ import {
 import { AbaCargos } from './AdminCargos';
 import { AbaContatos } from './AdminContatos';
 import { RevisaoPartidas } from '../components/admin/RevisaoPartidas';
+import { FinanceiroDashboard } from '../components/admin/FinanceiroDashboard';
 
 // ── TIPOS ──────────────────────────────────────────
 interface PartidaDisputa {
@@ -1141,6 +1142,9 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
         <h2 className="text-xl font-black text-white uppercase">Bem-vindo ao painel</h2>
         <p className="text-white/30 text-xs mt-1">Visão geral operacional da plataforma.</p>
       </div>
+
+      {/* Dashboard financeiro (ADR-032): faturamento/saques/lucro/MC em circulação */}
+      <FinanceiroDashboard />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {podeRevisar && (

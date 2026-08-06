@@ -437,6 +437,27 @@ export interface ApiDiscordStateResult {
   userId?: string;
 }
 
+/** Ponto da série financeira do painel admin (ADR-032). Valores em R$. */
+export interface ApiFinanceiroPonto {
+  data: string;
+  faturamento: number;
+  saques: number;
+  lucro: number;
+}
+
+/** Retorno de GET /api/admin/financeiro (ADR-032). */
+export interface ApiFinanceiro {
+  periodo: string;
+  totais: {
+    faturamento: number;
+    saques: number;
+    lucro: number;
+    mcEmCirculacao: number;
+    dinheiroNoProjeto: number;
+  };
+  serie: ApiFinanceiroPonto[];
+}
+
 function qs(params: Record<string, string | number | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -742,6 +763,12 @@ export const api = {
     /** Atualiza cargo de um usuário (substitui RPC atualizar_cargo_usuario). */
     atualizar: (userId: string, cargo: string) =>
       api.put<{ ok: boolean }>(`/admin/cargos/${userId}`, { p_cargo: cargo }),
+  },
+
+  adminFinanceiro: {
+    /** Visão financeira do painel (ADR-032): faturamento/saques/lucro/MC. */
+    get: (periodo: 'today' | '7' | '30' | 'all' = '30') =>
+      api.get<ApiFinanceiro>(`/admin/financeiro?periodo=${periodo}`),
   },
 
   prints: {

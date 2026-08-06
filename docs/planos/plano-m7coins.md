@@ -145,7 +145,7 @@ criar sala (aposta_mc > 0) ── taxa_pct congelada no INSERT
 | 3 | **`app_config` (limites operacionais)** — o design v3 §5 prevê `app_config` com `aposta_min_mc`, `aposta_max_mc`, `taxa_pct_default`, `strikes_para_suspensao`, etc. Hoje os limites são clamps fixos no código (MORPH-002), não config. | Baixo (clamps já protegem) | Em aberto |
 | 4 | **PIX payout (`sec.pix`)** — `user_payout_info` existe (PIX cadastrado), mas o fluxo de sacar MC → PIX não existe e depende de `app.edge-functions`. | Médio | Bloqueado por `app.edge-functions` |
 | 5 | **`vip_purchase`** — compra de VIP com MC (`wallet_transactions.kind` prevê) depende das edge functions. | Médio | Bloqueado por `app.edge-functions` |
-| 6 | **Punições/strikes** — `user_strikes` + suspensão temporária existem; falta config de limite (3 strikes / 30 dias / 48h) que viria de `app_config`. | Baixo | Parcial |
+| 6 | **Punições/strikes** — `user_strikes` + suspensão temporária existem; falta config de limite (3 strikes / 30 dias / 12h) que viria de `app_config`. | Baixo | Parcial |
 
 ---
 

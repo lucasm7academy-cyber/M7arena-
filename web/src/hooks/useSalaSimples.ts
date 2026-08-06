@@ -305,7 +305,7 @@ export function useSalaSimples(
         const POLL_INTERVALO_MS = 5000;
         // WS quieto por este tempo (sem match_update) dispara o polling, mesmo
         // com o socket "vivo" — o socket vivo mas congelado não entrega nada.
-        const WS_QUIETO_MS = 8000;
+        const WS_QUIETO_MS = 5000;
 
         const id = setInterval(() => {
             const quietoHa = Date.now() - ultimoUpdateRef.current;

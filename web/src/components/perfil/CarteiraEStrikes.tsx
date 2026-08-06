@@ -113,7 +113,7 @@ export function CarteiraEStrikes({ saldoDisponivel, strikes, strikesMax, suspens
                             {strikes >= strikesMax
                                 ? 'Você está suspenso de salas apostadas.'
                                 : strikes >= limiteAviso
-                                    ? `Atenção: 1 strike a mais suspende você por 48 horas.`
+                                    ? `Atenção: 1 strike a mais suspende você por 12 horas.`
                                     : `Kicks por no-show e abandono geram strike. Salas casuais continuam liberadas.`}
                         </p>
                     </div>

@@ -236,7 +236,7 @@ export default function SalaMod1() {
     };
 
     return (
-        <div className="flex-1 w-full h-full bg-[#050505] flex flex-col items-center justify-between p-0 font-sans relative overflow-y-auto md:overflow-hidden text-white">
+        <div className="flex-1 w-full min-h-full bg-[#050505] flex flex-col items-center p-0 font-sans relative overflow-hidden md:h-full md:justify-between text-white">
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0">
@@ -355,13 +355,13 @@ export default function SalaMod1() {
             )}
 
             {/* MAIN CENTRAL AREA */}
-            <div className="flex-1 w-full relative flex items-start justify-start md:items-center md:justify-center overflow-y-auto md:overflow-visible py-[2vmin]">
+            <div className="w-full relative flex items-start justify-start md:flex-1 md:items-center md:justify-center overflow-visible py-[3vmin]">
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[70vmin] py-[2vmin] md:py-0 ${isX1 ? 'md:gap-[74vmin]' : 'md:gap-[70vmin]'}`}>
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[70vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[74vmin]' : 'md:gap-[70vmin]'}`}>
                     {/* BLUE SIDE */}
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">
+                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[44vmin]">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -430,7 +430,7 @@ export default function SalaMod1() {
                     )}
 
                     {/* RED SIDE */}
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[44vmin]">
+                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[44vmin]">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
