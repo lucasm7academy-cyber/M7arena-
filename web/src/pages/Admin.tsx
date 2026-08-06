@@ -6,7 +6,7 @@ import {
   ShieldCheck, Trophy, Coins, Search, Check, X, AlertTriangle,
   RefreshCw, Ban, Users, Zap, GraduationCap, Mail, ChevronRight, Film,
   LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
-  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft,
+  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft, Banknote,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -22,6 +22,7 @@ import { AbaContatos } from './AdminContatos';
 import { AbaPunicoes } from './AdminPunicoes';
 import { RevisaoPartidas } from '../components/admin/RevisaoPartidas';
 import { FinanceiroDashboard } from '../components/admin/FinanceiroDashboard';
+import { SaquesPix } from '../components/admin/SaquesPix';
 
 // ── TIPOS ──────────────────────────────────────────
 interface PartidaDisputa {
@@ -41,7 +42,7 @@ interface PartidaTravada {
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
-type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao' | 'punicoes';
+type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao' | 'punicoes' | 'saques';
 
 interface Highlight {
   id: string; titulo: string; link: string;
@@ -1126,6 +1127,7 @@ function StatsCards() {
 function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void; adminCargo: CargoAdmin }) {
   const podeRevisar = adminCargo === 'admin' || adminCargo === 'proprietario';
   const [filaRevisao, setFilaRevisao] = useState<number | null>(null);
+  const [filaSaques, setFilaSaques] = useState<number | null>(null);
 
   useEffect(() => {
     if (!podeRevisar) return;
@@ -1134,6 +1136,18 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
       .pendentes()
       .then(list => { if (ativo) setFilaRevisao(Array.isArray(list) ? list.length : 0); })
       .catch(() => { if (ativo) setFilaRevisao(0); });
+    return () => { ativo = false; };
+  }, [podeRevisar]);
+
+  useEffect(() => {
+    if (!podeRevisar) return;
+    let ativo = true;
+    api.withdrawals
+      .admin()
+      .then((rows) => {
+        if (ativo) setFilaSaques(Array.isArray(rows) ? rows.filter((r: any) => r.status === 'pending').length : 0);
+      })
+      .catch(() => { if (ativo) setFilaSaques(0); });
     return () => { ativo = false; };
   }, [podeRevisar]);
 
@@ -1166,6 +1180,29 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
                   : filaRevisao === 0
                     ? 'Nenhuma partida aguardando revisão'
                     : `${filaRevisao} ${filaRevisao === 1 ? 'partida aguardando' : 'partidas aguardando'} sua decisão`}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
+          </button>
+        )}
+        {podeRevisar && (
+          <button
+            onClick={() => onNavigate('saques')}
+            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01]"
+            style={CardStyle()}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)' }}>
+              <Banknote className="w-5 h-5 text-[#FFD700]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-black text-sm uppercase tracking-wide">Saques PIX</p>
+              <p className="text-white/40 text-xs mt-0.5">
+                {filaSaques === null
+                  ? 'Carregando...'
+                  : filaSaques === 0
+                    ? 'Nenhum saque aguardando pagamento'
+                    : `${filaSaques} ${filaSaques === 1 ? 'saque aguardando' : 'saques aguardando'} pagamento`}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
@@ -1230,6 +1267,7 @@ export default function Admin() {
     { id: 'contatos',   label: 'Contatos',   icon: Mail,            bloqueada: !isAdminOuProprietario },
     { id: 'revisao',    label: 'Revisão',    icon: Swords,          bloqueada: false },
     { id: 'punicoes',   label: 'Punições',   icon: Ban,             bloqueada: !isAdminOuProprietario },
+    { id: 'saques',     label: 'Saques',     icon: Banknote,        bloqueada: !isAdminOuProprietario },
   ];
 
   return (
@@ -1394,9 +1432,10 @@ export default function Admin() {
                 {abaAtiva === 'noticias'   && <AbaNoticias adminCargo={adminCargo} />}
                 {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
                 {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
-                {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
-                {abaAtiva === 'revisao'    && <RevisaoPartidas />}
-                {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
+            {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
+            {abaAtiva === 'revisao'    && <RevisaoPartidas />}
+            {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
+            {abaAtiva === 'saques'     && <SaquesPix />}
               </motion.div>
             </AnimatePresence>
           </div>

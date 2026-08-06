@@ -86,6 +86,9 @@ export const PLAN = {
   "app.edge-functions": ["fase-3", "app.api.server", "app.auth.sessao"],
   // Gateway de pagamento MC (ADR-031): Mercado Pago PIX, pacotes em mc_packages.
   "app.payments": ["fase-3", "app.api.server", "app.auth.sessao", "db.economia"],
+  // Saque de MC via PIX (spec saque-mc-pix): withdrawals + ledger hold/refund,
+  // debitado na solicitação, admin decide (paid/rejected) no painel.
+  "app.saque": ["fase-3", "app.swap.carteira", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.env": ["fase-3", "app.fork.build"],
 
   // segurança acompanha a peça que ela corrige
