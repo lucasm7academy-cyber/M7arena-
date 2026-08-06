@@ -9,7 +9,7 @@ import {
   userPayoutInfo,
 } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
-import { contarStrikesAtivos, LIMITES } from "../lib/match-flow.js";
+import { contarAdvertenciasAtivas, LIMITES } from "../lib/match-flow.js";
 
 export const profilesRouter = Router();
 
@@ -98,7 +98,7 @@ profilesRouter.get("/me", async (req, res) => {
       return res.status(401).json({ error: "Não autenticado" });
     }
 
-    const [roles, riotAccount, discordIdentity, strikes] = await Promise.all([
+    const [roles, riotAccount, discordIdentity, advertencias] = await Promise.all([
       getRoles(user.id),
       getRiotAccount(user.id),
       db
@@ -106,7 +106,7 @@ profilesRouter.get("/me", async (req, res) => {
         .from(userIdentities)
         .where(and(eq(userIdentities.userId, user.id), eq(userIdentities.provider, "discord")))
         .limit(1),
-      contarStrikesAtivos(db, user.id),
+      contarAdvertenciasAtivas(db, user.id),
     ]);
 
     const [payout] = await db.select().from(userPayoutInfo).where(eq(userPayoutInfo.userId, user.id)).limit(1);
@@ -118,9 +118,12 @@ profilesRouter.get("/me", async (req, res) => {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       roles,
-      // Strikes anti no-show (design v3 §2.1) — "você tem 2/3 strikes" no perfil.
-      strikes,
-      strikesMax: LIMITES.STRIKES_PARA_SUSPENSAO,
+      // Advertências manuais (ADR-033) — "você tem 2/3 advertências" no perfil.
+      advertencias,
+      advertenciasMax: LIMITES.ADVERTENCIAS_PARA_BAN,
+      status: user.status,
+      banMotivo: user.banMotivo ?? null,
+      banAutomatico: user.banAutomatico ?? false,
       suspensaAte: user.suspensaAte ?? null,
       termosAceitos: !!user.termosAceitosEm,
       profile: toLegacyProfile(user, payout),

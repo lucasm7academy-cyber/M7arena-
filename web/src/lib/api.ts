@@ -293,10 +293,6 @@ export interface ApiSalaResultado {
   faltam?: number;
   /** Erro `ja_em_sala_apostada` — sala apostada ativa que segura a vaga do jogador. */
   sala_num?: number;
-  /** Erro `suspenso_por_strikes` — quando a suspensão termina. */
-  liberado_em?: string | null;
-  /** Erro `conta_suspensa` — fim da suspensão temporária. */
-  suspensa_ate?: string | null;
 }
 
 /** Print de prova de uma partida apostada (design v3 §6). */
@@ -437,9 +433,12 @@ export interface ApiProfileMe {
   displayName: string;
   avatarUrl?: string | null;
   roles: string[];
-  /** Strikes anti no-show (design v3 §2.1) — "você tem 2/3 strikes" no perfil. */
-  strikes?: number;
-  strikesMax?: number;
+  /** Advertências manuais + ban (ADR-033) — "você tem X/3 advertências". */
+  advertencias?: number;
+  advertenciasMax?: number;
+  status?: string;
+  banMotivo?: string | null;
+  banAutomatico?: boolean;
   suspensaAte?: string | null;
   termosAceitos?: boolean;
   profile: ApiLegacyProfile;
@@ -798,6 +797,43 @@ export const api = {
     /** Visão financeira do painel (ADR-032): faturamento/saques/lucro/MC. */
     get: (periodo: 'today' | '7' | '30' | 'all' = '30') =>
       api.get<ApiFinanceiro>(`/admin/financeiro?periodo=${periodo}`),
+  },
+
+  adminPunicoes: {
+    /** Busca usuários por email/nome/Riot ID (aba Punições). */
+    buscarUsuarios: (q: string) =>
+      api.get<Array<{
+        id: string;
+        email: string;
+        displayName: string;
+        riotId: string | null;
+        status: string;
+        avatarUrl?: string | null;
+      }>>(`/admin/usuarios?q=${encodeURIComponent(q)}`),
+    /** Lista advertências de um usuário (histórico). */
+    listarAdvertencias: (userId: string) =>
+      api.get<Array<{
+        id: string;
+        userId: string;
+        criadoPor: string | null;
+        matchId: string | null;
+        motivo: string;
+        createdAt: string;
+        removidoPor: string | null;
+        removidoEm: string | null;
+      }>>(`/admin/advertencias/${userId}`),
+    /** Aplica advertência (criado_por = admin). 3 ativas → ban automático. */
+    aplicarAdvertencia: (userId: string, motivo: string) =>
+      api.post<{ ok: boolean; advertencias: number; banido: boolean }>("/admin/advertencias", { userId, motivo }),
+    /** Remove advertência (deixa de contar). Não desbana sozinho. */
+    removerAdvertencia: (id: string) =>
+      api.delete<{ ok: boolean; advertencias: number }>(`/admin/advertencias/${id}`),
+    /** Ban manual (permanente até desbanir). */
+    banir: (userId: string, motivo: string) =>
+      api.post<{ ok: boolean }>(`/admin/usuarios/${userId}/ban`, { motivo }),
+    /** Desban (única forma de sair do ban, inclusive o automático). */
+    desbanir: (userId: string) =>
+      api.post<{ ok: boolean }>(`/admin/usuarios/${userId}/unban`),
   },
 
   prints: {

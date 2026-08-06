@@ -1,21 +1,20 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { users, userWallets, userRoles } from "../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../db/schema/matches.js";
-import { userStrikes } from "../../db/schema/apostas.js";
-import { walletTransactions } from "../../db/schema/economia.js";
+import { userAdvertencias } from "../../db/schema/apostas.js";
 import { setupDb } from "./helpers.js";
 import {
   validarElegibilidade,
-  contarStrikesAtivos,
-  aplicarSuspensaoSeNecessario,
-  removerStrike,
+  contarAdvertenciasAtivas,
+  aplicarBanAutomaticoSeNecessario,
+  removerAdvertencia,
   LIMITES,
 } from "../src/lib/match-flow.js";
 import { runCron } from "../src/cron.js";
 
-/** Cria um usuário com as opções de elegibilidade (design v3 §2.1). */
+/** Cria um usuário com as opções de elegibilidade (ADR-033). */
 async function criaJogador(db: any, id: string, opts: any = {}) {
   await db.insert(users).values({
     id,
@@ -23,7 +22,6 @@ async function criaJogador(db: any, id: string, opts: any = {}) {
     displayName: "Jogador",
     riotId: opts.riotId ?? null,
     status: opts.status ?? "active",
-    suspensaAte: opts.suspensaAte ?? null,
     termosAceitosEm: opts.termos === undefined ? new Date() : opts.termos,
   });
   await db.insert(userWallets).values({
@@ -49,20 +47,14 @@ async function criaSala(db: any, values: any = {}) {
   return sala;
 }
 
-/** Cria N strikes (kick_ociosidade) para o usuário em salas próprias. */
-async function daStrikes(db: any, userId: string, n: number, diasAtras = 1) {
+/** Aplica N advertências manuais para o usuário (como o admin faria). */
+async function daAdvertencias(db: any, userId: string, n: number) {
   for (let i = 0; i < n; i++) {
-    const sala = await criaSala(db, { status: "preenchendo", apostaMc: 0 });
-    await db.insert(userStrikes).values({
-      userId,
-      matchId: sala.id,
-      motivo: "kick_ociosidade",
-      createdAt: new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000),
-    });
+    await db.insert(userAdvertencias).values({ userId, motivo: "Advertência de teste" });
   }
 }
 
-describe("elegibilidade (design v3 §2.1)", () => {
+describe("elegibilidade (ADR-033)", () => {
   let ctx: any;
   before(async () => {
     ctx = await setupDb();
@@ -131,68 +123,57 @@ describe("elegibilidade (design v3 §2.1)", () => {
     assert.equal(r2.ok, true);
   });
 
-  test("3 strikes em 30 dias → suspenso_por_strikes e aplica suspensão", async () => {
+  test("advertências ativas não bloqueiam até atingir o teto (ban)", async () => {
     const db = ctx.db;
     const id = "aaaaaaaa-e000-0000-0000-000000000005";
-    await criaJogador(db, id, { mc: 100, riotId: "Strike#BR1" });
-    await daStrikes(db, id, LIMITES.STRIKES_PARA_SUSPENSAO);
+    await criaJogador(db, id, { mc: 100, riotId: "Aviso#BR1" });
+    await daAdvertencias(db, id, LIMITES.ADVERTENCIAS_PARA_BAN - 1);
 
-    const r = await validarElegibilidade(db as any, id, 50);
-    assert.equal(r.ok, false);
-    assert.equal(r.erro, "suspenso_por_strikes");
-    assert.ok((r as any).extra.liberado_em instanceof Date);
+    const count = await contarAdvertenciasAtivas(db as any, id);
+    assert.equal(count, LIMITES.ADVERTENCIAS_PARA_BAN - 1);
 
-    // A própria checagem aplicou a suspensão (design v3 §2.1).
-    const [u] = await db.select().from(users).where(eq(users.id, id));
-    assert.equal(u.status, "suspensa");
-    assert.ok(u.suspensaAte);
-  });
-
-  test("strike removido pelo admin deixa de contar e libera o jogador", async () => {
-    const db = ctx.db;
-    const id = "aaaaaaaa-e000-0000-0000-000000000006";
-    const admin = "aaaaaaaa-e000-0000-0000-0000000000ad";
-    await criaJogador(db, id, { mc: 100, riotId: "Perdoado#BR1" });
-    await db.insert(users).values({ id: admin, email: admin + "@x.com", displayName: "Admin" });
-    await db.insert(userRoles).values({ userId: admin, role: "admin" });
-    await daStrikes(db, id, LIMITES.STRIKES_PARA_SUSPENSAO);
-
-    const antes = await validarElegibilidade(db as any, id, 50);
-    assert.equal(antes.ok, false);
-
-    // O que DELETE /api/admin/strikes/:id faz: perdoa o strike e, se a contagem
-    // cair abaixo do teto, reativa a suspensão que ele tinha causado.
-    const [um] = await db.select().from(userStrikes).where(eq(userStrikes.userId, id));
-    const total = await removerStrike(db as any, um.id, admin);
-
-    assert.equal(total, LIMITES.STRIKES_PARA_SUSPENSAO - 1);
-    const count = await contarStrikesAtivos(db as any, id);
-    assert.equal(count, LIMITES.STRIKES_PARA_SUSPENSAO - 1);
-
-    // Jogador volta a entrar em sala apostada.
+    // Ainda pode jogar apostada (só o ban bloqueia; advertência é contador).
     const r = await validarElegibilidade(db as any, id, 50);
     assert.equal(r.ok, true);
   });
 
-  test("suspensão expirada é reativada pelo cron", async () => {
+  test("aplicarBanAutomatico bane ao atingir 3 advertências", async () => {
     const db = ctx.db;
-    const id = "aaaaaaaa-e000-0000-0000-000000000007";
-    await criaJogador(db, id, {
-      mc: 100,
-      riotId: "Reativa#BR1",
-      status: "suspensa",
-      suspensaAte: new Date(Date.now() - 1000),
-    });
+    const id = "aaaaaaaa-e000-0000-0000-000000000006";
+    await criaJogador(db, id, { mc: 100, riotId: "Tres#BR1" });
+    await daAdvertencias(db, id, LIMITES.ADVERTENCIAS_PARA_BAN);
 
-    const r = await runCron(db);
-    assert.ok(r.reativados >= 1);
+    const total = await aplicarBanAutomaticoSeNecessario(db as any, id);
+    assert.equal(total, LIMITES.ADVERTENCIAS_PARA_BAN);
 
     const [u] = await db.select().from(users).where(eq(users.id, id));
-    assert.equal(u.status, "active");
-    assert.equal(u.suspensaAte, null);
+    assert.equal(u.status, "banida");
+    assert.equal(u.banAutomatico, true);
+    assert.equal(u.banMotivo, "3 advertências");
 
-    const liberado = await validarElegibilidade(db as any, id, 50);
-    assert.equal(liberado.ok, true);
+    // Ban bloqueia até sala casual.
+    const r = await validarElegibilidade(db as any, id, 0);
+    assert.equal(r.ok, false);
+    assert.equal(r.erro, "conta_banida");
+  });
+
+  test("remover advertência NÃO desbana sozinho (ban só sai com unban)", async () => {
+    const db = ctx.db;
+    const id = "aaaaaaaa-e000-0000-0000-000000000007";
+    const admin = "aaaaaaaa-e000-0000-0000-0000000000ad";
+    await criaJogador(db, id, { mc: 100, riotId: "Banido#BR1" });
+    await db.insert(users).values({ id: admin, email: admin + "@x.com", displayName: "Admin" });
+    await db.insert(userRoles).values({ userId: admin, role: "admin" });
+    await daAdvertencias(db, id, LIMITES.ADVERTENCIAS_PARA_BAN);
+    await aplicarBanAutomaticoSeNecessario(db as any, id);
+
+    const [uma] = await db.select().from(userAdvertencias).where(eq(userAdvertencias.userId, id)).limit(1);
+    const total = await removerAdvertencia(db as any, uma.id, admin);
+    assert.equal(total, LIMITES.ADVERTENCIAS_PARA_BAN - 1);
+
+    // Mesmo com contagem abaixo do teto, continua banido (ADR-033).
+    const [u] = await db.select().from(users).where(eq(users.id, id));
+    assert.equal(u.status, "banida");
   });
 
   test("conta banida é bloqueada até em sala casual", async () => {
@@ -213,45 +194,30 @@ describe("elegibilidade (design v3 §2.1)", () => {
     assert.equal(r.erro, "termos_nao_aceitos");
   });
 
-  test("admin não é bloqueado por strikes nem pela regra de 1 sala ativa", async () => {
+  test("admin não é bloqueado por advertências nem pela regra de 1 sala ativa", async () => {
     const db = ctx.db;
     const id = "aaaaaaaa-e000-0000-0000-00000000000a";
     await criaJogador(db, id, { mc: 100, riotId: "Admin#BR1", termos: null });
     await db.insert(userRoles).values({ userId: id, role: "admin" });
-    await daStrikes(db, id, LIMITES.STRIKES_PARA_SUSPENSAO);
+    await daAdvertencias(db, id, LIMITES.ADVERTENCIAS_PARA_BAN);
 
     const r = await validarElegibilidade(db as any, id, 50);
     assert.equal(r.ok, true);
   });
 
-  test("cron gera strike de abandono quando a vaga pagante some da sala iniciada", async () => {
+  test("cron NÃO gera mais punições (só partida fantasma e saneamento)", async () => {
     const db = ctx.db;
     const id = "aaaaaaaa-e000-0000-0000-00000000000b";
-    await criaJogador(db, id, { mc: 100, riotId: "Afk#BR1" });
-    const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 50 });
-
-    // Pagou a reserva, mas não está mais no match_players (abandono pós-início).
-    await db.insert(walletTransactions).values({
-      userId: id,
-      currency: "mc",
-      amount: -50,
-      kind: "match_entry_reserve",
-      refType: "match",
-      refId: sala.id,
-      balanceAfter: 50,
-    });
+    await criaJogador(db, id, { mc: 100, riotId: "Nada#BR1" });
+    const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 50, updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000) });
 
     const r = await runCron(db);
-    assert.equal(r.abandonos, 1);
+    assert.equal(r.fantasmas, 1);
 
-    const strikes = await db
-      .select()
-      .from(userStrikes)
-      .where(and(eq(userStrikes.userId, id), eq(userStrikes.motivo, "abandono")));
-    assert.equal(strikes.length, 1);
+    const advertencias = await db.select().from(userAdvertencias).where(eq(userAdvertencias.userId, id));
+    assert.equal(advertencias.length, 0);
 
-    // AplicarSuspensao é uma função separada e auditável (usada no cron).
-    const total = await aplicarSuspensaoSeNecessario(db as any, id);
-    assert.equal(total, 1);
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "aguardando_revisao");
   });
 });

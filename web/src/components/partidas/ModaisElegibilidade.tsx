@@ -1,27 +1,15 @@
 // src/components/partidas/ModaisElegibilidade.tsx
-// Modais de entrada em salas apostadas (design v3 §11): saldo insuficiente,
-// "você já está em outra sala", Riot ID obrigatório, termos 18+, suspensão por
-// strikes e conta banida. Seguem o tema visual dos modais existentes (fundos
-// escuros + borda dourada #FFB700) e NUNCA viram erro genérico — cada código
-// do servidor tem sua explicação e seu botão de ação.
+// Modais de entrada em salas apostadas (design v3 §11 / ADR-033): saldo
+// insuficiente, "você já está em outra sala", Riot ID obrigatório, termos 18+
+// e conta banida. Seguem o tema visual dos modais existentes (fundos escuros
+// + borda dourada #FFB700) e NUNCA viram erro genérico — cada código do
+// servidor tem sua explicação e seu botão de ação.
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Wallet, AlertTriangle, LinkIcon, ShieldCheck, Ban, Clock, Coins, Swords } from 'lucide-react';
+import { X, Wallet, AlertTriangle, LinkIcon, ShieldCheck, Ban, Coins, Swords } from 'lucide-react';
 import type { ErroElegibilidade } from '../../hooks/useSalaSimples';
 
 const DEPOSIT_EVENT = 'm7:open-deposit';
-
-function formatarData(iso: string | null): string {
-    if (!iso) return 'em breve';
-    try {
-        return new Date(iso).toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit',
-        });
-    } catch {
-        return 'em breve';
-    }
-}
 
 interface ModalShellProps {
     titulo: string;
@@ -158,24 +146,10 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
                 </ModalShell>
             )}
 
-            {erro?.tipo === 'suspenso' && (
-                <ModalShell titulo="Suspensão de salas apostadas" corIcone="#ef4444" icone={<Clock className="w-5 h-5" style={{ color: "#ef4444" }} />} onClose={onClose}>
-                    <p className="text-white/70 text-sm leading-relaxed">
-                        Você atingiu o limite de ausências (no-show/AFK) em salas apostadas. Por isso, ficou suspenso temporariamente dessas partidas. Salas casuais seguem liberadas — e o strike sai sozinho com o tempo.
-                    </p>
-                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/5 border border-red-500/20">
-                        <Clock className="w-4 h-4 text-red-400" />
-                        <span className="text-red-300 text-xs font-bold uppercase tracking-widest">
-                            Liberado em {formatarData(erro.liberadoEm)}
-                        </span>
-                    </div>
-                </ModalShell>
-            )}
-
             {erro?.tipo === 'banida' && (
                 <ModalShell titulo="Conta banida" corIcone="#ef4444" icone={<Ban className="w-5 h-5" style={{ color: "#ef4444" }} />} onClose={onClose}>
                     <p className="text-white/70 text-sm leading-relaxed">
-                        Sua conta foi banida da plataforma. Se você acha que isso é um engano, fale com o suporte no Discord.
+                        Sua conta foi banida — você não pode jogar partidas casuais nem apostadas. Se você acha que isso é um engano, fale com o suporte no Discord.
                     </p>
                     <span className="block w-full text-center">
                         <Ban className="w-8 h-8 text-red-500/40 mx-auto" />

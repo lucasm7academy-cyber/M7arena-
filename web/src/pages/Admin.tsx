@@ -19,6 +19,7 @@ import {
 } from '../config/adminPermissoes';
 import { AbaCargos } from './AdminCargos';
 import { AbaContatos } from './AdminContatos';
+import { AbaPunicoes } from './AdminPunicoes';
 import { RevisaoPartidas } from '../components/admin/RevisaoPartidas';
 import { FinanceiroDashboard } from '../components/admin/FinanceiroDashboard';
 
@@ -40,7 +41,7 @@ interface PartidaTravada {
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
-type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao';
+type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao' | 'punicoes';
 
 interface Highlight {
   id: string; titulo: string; link: string;
@@ -1228,6 +1229,7 @@ export default function Admin() {
     { id: 'cargos',     label: 'Cargos',     icon: GraduationCap,   bloqueada: !permissoes.gerenciarCargos && adminCargo !== 'proprietario' },
     { id: 'contatos',   label: 'Contatos',   icon: Mail,            bloqueada: !isAdminOuProprietario },
     { id: 'revisao',    label: 'Revisão',    icon: Swords,          bloqueada: false },
+    { id: 'punicoes',   label: 'Punições',   icon: Ban,             bloqueada: !isAdminOuProprietario },
   ];
 
   return (
@@ -1394,6 +1396,7 @@ export default function Admin() {
                 {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
                 {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
                 {abaAtiva === 'revisao'    && <RevisaoPartidas />}
+                {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
               </motion.div>
             </AnimatePresence>
           </div>

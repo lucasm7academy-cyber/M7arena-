@@ -36,14 +36,13 @@ const TICK_DEBOUNCE_MS = 2500;
 /**
  * Erros de elegibilidade que viram MODAL (design v3 §2.1/§11), nunca mensagem
  * genérica. `faltam` vem de `saldo_insuficiente`; `salaNum` de
- * `ja_em_sala_apostada`; `liberadoEm` de `suspenso_por_strikes`/`conta_suspensa`.
+ * `ja_em_sala_apostada`. O ban (`conta_banida`) bloqueia casual e apostada.
  */
 export type ErroElegibilidade =
   | { tipo: 'saldo'; faltam: number }
   | { tipo: 'outra_sala'; salaNum: number }
   | { tipo: 'riot_id' }
   | { tipo: 'termos' }
-  | { tipo: 'suspenso'; liberadoEm: string | null }
   | { tipo: 'banida' }
   | null;
 
@@ -376,10 +375,6 @@ export function useSalaSimples(
                     setErroElegibilidade({ tipo: 'riot_id' });
                 } else if (r.erro === 'termos_nao_aceitos') {
                     setErroElegibilidade({ tipo: 'termos' });
-                } else if (r.erro === 'suspenso_por_strikes') {
-                    setErroElegibilidade({ tipo: 'suspenso', liberadoEm: r.liberadoEm ?? null });
-                } else if (r.erro === 'conta_suspensa') {
-                    setErroElegibilidade({ tipo: 'suspenso', liberadoEm: r.suspensaAte ?? null });
                 } else if (r.erro === 'conta_banida') {
                     setErroElegibilidade({ tipo: 'banida' });
                 } else {

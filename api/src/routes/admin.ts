@@ -117,51 +117,185 @@ adminRouter.put("/cargos/:userId", async (req, res) => {
   }
 });
 
-// ── GET /api/admin/strikes/:userId — lista strikes de um usuário (admin) ────
-// Design v3 §2.1: admin pode ver o histórico de punições para decidir se perdoa.
-adminRouter.get("/strikes/:userId", async (req, res) => {
+// ── GET /api/admin/usuarios?q= — busca de usuários (admin) ─────────────────
+// Busca por email, nome de exibição ou Riot ID (parcial). Usada pela aba
+// Punições para localizar o alvo de advertência/ban.
+adminRouter.get("/usuarios", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ error: "Não autenticado" });
 
     const roles = await getRoles(user.id);
     if (!roles.includes("admin") && !roles.includes("proprietario")) {
-      return res.status(403).json({ error: "Apenas admin/proprietário pode ver strikes" });
+      return res.status(403).json({ error: "Apenas admin/proprietário" });
+    }
+
+    const q = String(req.query.q ?? "").trim();
+    if (!q) return res.json([]);
+
+    const rows = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        displayName: users.displayName,
+        riotId: users.riotId,
+        status: users.status,
+        avatarUrl: users.avatarUrl,
+      })
+      .from(users)
+      .where(or(ilike(users.email, `%${q}%`), ilike(users.displayName, `%${q}%`), ilike(users.riotId, `%${q}%`)))
+      .orderBy(desc(users.createdAt))
+      .limit(20);
+
+    return res.json(rows);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar usuários" });
+  }
+});
+
+// ── GET /api/admin/advertencias/:userId — lista advertências (admin) ────────
+// ADR-033: advertências manuais. Histórico para o admin decidir ban.
+adminRouter.get("/advertencias/:userId", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode ver advertências" });
     }
 
     const rows = await db
       .select()
-      .from(userStrikes)
-      .where(eq(userStrikes.userId, req.params.userId))
-      .orderBy(desc(userStrikes.createdAt));
+      .from(userAdvertencias)
+      .where(eq(userAdvertencias.userId, req.params.userId))
+      .orderBy(desc(userAdvertencias.createdAt));
     return res.json(rows);
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao listar strikes" });
+    return res.status(500).json({ error: error?.message || "Erro ao listar advertências" });
   }
 });
 
-// ── DELETE /api/admin/strikes/:id — remove um strike (admin, auditado) ─────
-// Seta removido_por/removido_em (o strike deixa de contar). Idempotente:
-// já removido → ok sem duplicar auditoria.
-adminRouter.delete("/strikes/:id", async (req, res) => {
+// ── POST /api/admin/advertencias — aplica advertência (admin) ──────────────
+// Cria a advertência (criado_por = admin) e, se o total ativo chegar ao teto,
+// aplica ban automático (ADR-033). Retorna o total ativo.
+adminRouter.post("/advertencias", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ error: "Não autenticado" });
 
     const roles = await getRoles(user.id);
     if (!roles.includes("admin") && !roles.includes("proprietario")) {
-      return res.status(403).json({ error: "Apenas admin/proprietário pode remover strike" });
+      return res.status(403).json({ error: "Apenas admin/proprietário pode aplicar advertência" });
     }
 
-    const [strike] = await db.select().from(userStrikes).where(eq(userStrikes.id, req.params.id)).limit(1);
-    if (!strike) return res.status(404).json({ error: "Strike não encontrado" });
+    const { userId, motivo } = req.body ?? {};
+    if (!userId || !motivo || !String(motivo).trim()) {
+      return res.status(400).json({ error: "userId e motivo são obrigatórios" });
+    }
 
-    // Seta removido_por/removido_em e, se a contagem cair abaixo do teto,
-    // reativa a suspensão que os strikes causaram.
-    const total = await removerStrike(db, strike.id, user.id);
-    return res.json({ ok: true, strikes: total });
+    const [alvo] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!alvo) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    const r = await db.transaction(async (tx: any) => {
+      await tx.insert(userAdvertencias).values({ userId, criadoPor: user.id, motivo: String(motivo).trim() });
+      const total = await aplicarBanAutomaticoSeNecessario(tx, userId);
+      return { total };
+    });
+
+    return res.json({ ok: true, advertencias: r.total, banido: r.total >= 3 });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao remover strike" });
+    return res.status(500).json({ error: error?.message || "Erro ao aplicar advertência" });
+  }
+});
+
+// ── DELETE /api/admin/advertencias/:id — remove advertência (admin) ─────────
+// Seta removido_por/removido_em (deixa de contar). Idempotente. Não desbana
+// sozinho: ban só sai pelo unban manual (ADR-033).
+adminRouter.delete("/advertencias/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode remover advertência" });
+    }
+
+    const total = await removerAdvertencia(db, req.params.id, user.id);
+    if (total === null) return res.status(404).json({ error: "Advertência não encontrada" });
+    return res.json({ ok: true, advertencias: total });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao remover advertência" });
+  }
+});
+
+// ── POST /api/admin/usuarios/:userId/ban — ban manual (admin) ───────────────
+// Ban permanente até o admin desbanir. Auditado (banido_por/em/motivo).
+adminRouter.post("/usuarios/:userId/ban", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode banir" });
+    }
+
+    const { motivo } = req.body ?? {};
+    const [alvo] = await db.select().from(users).where(eq(users.id, req.params.userId)).limit(1);
+    if (!alvo) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    await db
+      .update(users)
+      .set({
+        status: "banida",
+        banidoPor: user.id,
+        banidoEm: new Date(),
+        banMotivo: motivo ? String(motivo).trim() : "Ban manual",
+        banAutomatico: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, alvo.id));
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao banir usuário" });
+  }
+});
+
+// ── POST /api/admin/usuarios/:userId/unban — desban (admin) ─────────────────
+// Reativa a conta (active) e limpa o audit de ban. É a ÚNICA forma de sair do
+// ban — mesmo o ban automático (3 advertências) depende deste desban.
+adminRouter.post("/usuarios/:userId/unban", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode desbanir" });
+    }
+
+    const [alvo] = await db.select().from(users).where(eq(users.id, req.params.userId)).limit(1);
+    if (!alvo) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    await db
+      .update(users)
+      .set({
+        status: "active",
+        banidoPor: null,
+        banidoEm: null,
+        banMotivo: null,
+        banAutomatico: false,
+        suspensaAte: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, alvo.id));
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao desbanir usuário" });
   }
 });
 

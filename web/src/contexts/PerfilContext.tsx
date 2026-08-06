@@ -16,9 +16,12 @@ export interface PerfilData {
   saldo: number;
   cargo: string;
   twitch?: string;
-  // Strikes anti no-show (design v3 §2.1/§11) — vêm de /profiles/me.
-  strikes?: number;
-  strikesMax?: number;
+  // Advertências manuais + ban (ADR-033) — vêm de /profiles/me.
+  advertencias?: number;
+  advertenciasMax?: number;
+  status?: string;
+  banMotivo?: string | null;
+  banAutomatico?: boolean;
   suspensaAte?: string | null;
   termosAceitos?: boolean;
 }
@@ -162,8 +165,11 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
           saldo: balance?.mc ?? 0,
           cargo,
           twitch: profile?.twitch,
-          strikes: me?.strikes ?? 0,
-          strikesMax: me?.strikesMax ?? 3,
+          advertencias: me?.advertencias ?? 0,
+          advertenciasMax: me?.advertenciasMax ?? 3,
+          status: me?.status ?? 'active',
+          banMotivo: me?.banMotivo ?? null,
+          banAutomatico: me?.banAutomatico ?? false,
           suspensaAte: me?.suspensaAte ?? null,
           termosAceitos: me?.termosAceitos ?? false,
         });
@@ -178,8 +184,11 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
           saldo: balance?.mc ?? 0,
           cargo,
           twitch: profile?.twitch,
-          strikes: me?.strikes ?? 0,
-          strikesMax: me?.strikesMax ?? 3,
+          advertencias: me?.advertencias ?? 0,
+          advertenciasMax: me?.advertenciasMax ?? 3,
+          status: me?.status ?? 'active',
+          banMotivo: me?.banMotivo ?? null,
+          banAutomatico: me?.banAutomatico ?? false,
           suspensaAte: me?.suspensaAte ?? null,
           termosAceitos: me?.termosAceitos ?? false,
         });

@@ -34,10 +34,6 @@ export interface ResultadoSalaRpc {
     faltam?: number;
     /** `ja_em_sala_apostada` — sala apostada ativa que segura a vaga do jogador. */
     salaNum?: number;
-    /** `suspenso_por_strikes` — quando a suspensão termina. */
-    liberadoEm?: string | null;
-    /** `conta_suspensa` — fim da suspensão temporária. */
-    suspensaAte?: string | null;
 }
 
 const IS_DEV = import.meta.env.DEV;
@@ -53,8 +49,6 @@ async function normalizarResultado(p: Promise<import('../lib/api').ApiSalaResult
             mudou: r?.mudou === true,
             faltam: r?.faltam,
             salaNum: r?.sala_num,
-            liberadoEm: r?.liberado_em ?? null,
-            suspensaAte: r?.suspensa_ate ?? null,
         };
     } catch (error: any) {
         if (IS_DEV) console.error(`❌ [Sala] ${error?.message}`);
@@ -107,10 +101,8 @@ const ERROS_SALA: Record<string, string> = {
     saldo_insuficiente: 'Saldo insuficiente.',
     riot_id_obrigatorio: 'Você precisa vincular seu Riot ID para jogar valendo MC.',
     ja_em_sala_apostada: 'Você já está em uma sala apostada.',
-    suspenso_por_strikes: 'Você está suspenso de salas apostadas por excesso de strikes.',
     termos_nao_aceitos: 'Você precisa aceitar os Termos de Uso antes de jogar valendo MC.',
-    conta_suspensa: 'Sua conta está suspensa temporariamente.',
-    conta_banida: 'Sua conta foi banida.',
+    conta_banida: 'Sua conta foi banida — você não pode jogar partidas casuais nem apostadas.',
     conta_nao_encontrada: 'Conta não encontrada.',
     motivo_invalido: 'O motivo da contestação precisa ter pelo menos 5 caracteres.',
     ja_contestou: 'Você já contestou o resultado desta partida.',

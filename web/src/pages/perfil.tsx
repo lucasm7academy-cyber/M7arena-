@@ -540,11 +540,13 @@ export default function Perfil() {
           </div>
         </motion.div>
 
-        {/* WALLET + STRIKES (design v3 §11) */}
+        {/* WALLET + ADVERTÊNCIAS (ADR-033) */}
         <CarteiraEStrikes
           saldoDisponivel={saldo}
-          strikes={perfilContext?.strikes ?? 0}
-          strikesMax={perfilContext?.strikesMax ?? 3}
+          advertencias={perfilContext?.advertencias ?? 0}
+          advertenciasMax={perfilContext?.advertenciasMax ?? 3}
+          status={perfilContext?.status ?? 'active'}
+          banMotivo={perfilContext?.banMotivo ?? null}
           suspensaAte={perfilContext?.suspensaAte ?? null}
         />
 

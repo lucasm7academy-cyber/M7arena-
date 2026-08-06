@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { users, userWallets } from "../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../db/schema/matches.js";
-import { userStrikes } from "../../db/schema/apostas.js";
 import { setupDb } from "./helpers.js";
 import { runCron } from "../src/cron.js";
 
@@ -28,7 +27,7 @@ async function criaSala(db: any, values: any = {}) {
 }
 
 describe("cron", () => {
-  test("kick de ociosidade remove vaga ocupada há 30min e devolve o MC", async () => {
+  test("kick de ociosidade foi removido (ADR-033): vaga antiga não é mais kickada", async () => {
     const { client, db } = await setupDb();
     try {
       const jogador = "aaaaaaa3-0000-0000-0000-000000000001";
@@ -41,43 +40,13 @@ describe("cron", () => {
         slot: 0,
         roleSlot: "TOP",
         confirmed: false,
-        createdAt: new Date(Date.now() - 31 * 60 * 1000),
+        createdAt: new Date(Date.now() - 60 * 60 * 1000),
       });
 
       const r = await runCron(db);
-      assert.equal(r.kikados, 1);
+      assert.equal(r.fantasmas, 0);
 
-      const vagas = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
-      assert.equal(vagas.length, 0);
-      const [w] = await db.select().from(userWallets).where(eq(userWallets.userId, jogador));
-      assert.equal(w.mc, 100);
-      assert.equal(w.mcReservado, 0);
-      const strikes = await db.select().from(userStrikes).where(eq(userStrikes.userId, jogador));
-      assert.equal(strikes.length, 1);
-      assert.equal(strikes[0].motivo, "kick_ociosidade");
-    } finally {
-      await client.close();
-    }
-  });
-
-  test("vaga recente (< 30min) NÃO é kikada", async () => {
-    const { client, db } = await setupDb();
-    try {
-      const jogador = "aaaaaaa3-0000-0000-0000-000000000002";
-      await criaJogador(db, jogador, 70, 30);
-      const sala = await criaSala(db, { status: "preenchendo", apostaMc: 30 });
-      await db.insert(matchPlayers).values({
-        matchId: sala.id,
-        userId: jogador,
-        side: "blue",
-        slot: 0,
-        roleSlot: "TOP",
-        confirmed: false,
-        createdAt: new Date(),
-      });
-
-      const r = await runCron(db);
-      assert.equal(r.kikados, 0);
+      // A vaga continua lá, o usuário não perde nada (punição é manual agora).
       const vagas = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
       assert.equal(vagas.length, 1);
     } finally {
