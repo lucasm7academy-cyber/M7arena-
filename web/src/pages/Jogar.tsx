@@ -700,15 +700,12 @@ const Jogar = () => {
   });
 
   // ── AÇÕES ──────────────────────────────────────────
-  // Visitante deslogado vê a vitrine; qualquer ação cai no modal de login.
-  // A senha de sala privada é guardada para o POST /join reutilizar — a
-  // VALIDAÇÃO acontece no servidor (MORPH-001), nunca aqui no cliente.
+  // A sala é pública (ADR: visitante assiste, mas não ocupa vaga — o aviso de
+  // login aparece ao clicar na vaga, dentro de /sala-mod1/:id). A senha de sala
+  // privada é guardada para o POST /join reutilizar — a VALIDAÇÃO acontece no
+  // servidor (MORPH-001), nunca aqui no cliente.
   const entrarNaSala = (sala: Sala, senha?: string) => {
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-    if (sala.temSenha && senha) {
+    if (user && sala.temSenha && senha) {
       guardarSenhaSala(sala.id, senha);
     }
     navigate(`/sala-mod1/${sala.id}`);
@@ -996,11 +993,9 @@ const Jogar = () => {
                   <div
                     key={sala.id}
                     onClick={() => {
-                      if (!user) {
-                        setShowLoginModal(true);
-                        return;
-                      }
-                      if (sala.temSenha && !jaEsta) {
+                      // Sala é pública: visitante assiste sem login (o aviso de
+                      // login aparece ao clicar na vaga dentro da sala).
+                      if (user && sala.temSenha && !jaEsta) {
                         setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
                       } else {
                         entrarNaSala(sala);
@@ -1066,11 +1061,8 @@ const Jogar = () => {
                       
                       <button
                         onClick={() => {
-                          if (!user) {
-                            setShowLoginModal(true);
-                            return;
-                          }
-                          if (sala.temSenha && !jaEsta) {
+                          // Sala pública: visitante navega (aviso de login na vaga).
+                          if (user && sala.temSenha && !jaEsta) {
                             setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
                           } else {
                             entrarNaSala(sala);
