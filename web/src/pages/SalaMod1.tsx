@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X, Trash2 } from 'lucide-react';
+import { Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X, Trash2, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { VagaSlot } from '../components/partidas/VagaSlot';
@@ -106,6 +106,42 @@ export default function SalaMod1() {
             if (codigoCopiadoTimeoutRef.current) clearTimeout(codigoCopiadoTimeoutRef.current);
             codigoCopiadoTimeoutRef.current = setTimeout(() => setCodigoCopiado(false), 2000);
         }
+    };
+
+    const [compartilhado, setCompartilhado] = useState(false);
+    const compartilhadoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // ── COMPARTILHAR SALA ─────────────────────────────
+    // Monta uma mensagem formatada convidando para a partida e copia para a
+    // área de transferência. 100% front — não depende do crawler de embeds.
+    const compartilharSala = () => {
+        if (!sala) return;
+
+        const nick = perfil?.riotId || perfil?.nome || 'Jogador';
+        const textoModo: Record<string, string> = {
+            '5v5': "5x5 Summoner's Rift",
+            'aram': 'ARAM Howling Abyss',
+            '1v1': '1v1 Howling Abyss',
+            'time_vs_time': 'Time vs Time Summoner\'s Rift',
+        };
+        const eloLinha = sala.eloMinimo ? `Mínimo: ${sala.eloMinimo}` : 'Free Elo';
+        const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} M7Coins` : 'Casual';
+        const link = `${window.location.origin}/sala-mod1/${sala.id}`;
+
+        const mensagem =
+`🎮 ${nick} convida você para jogar ${textoModo[sala.modo] || 'uma partida'} personalizado
+🎯 ${eloLinha}
+👥 ${jogadores.length}/${sala.maxJogadores} vagas preenchidas
+💰 ${premio}
+👇 Entre aqui
+
+${link}`;
+
+        navigator.clipboard.writeText(mensagem);
+        setCompartilhado(true);
+        if (compartilhadoTimeoutRef.current) clearTimeout(compartilhadoTimeoutRef.current);
+        compartilhadoTimeoutRef.current = setTimeout(() => setCompartilhado(false), 2000);
+        toast.success('Mensagem de convite copiada!');
     };
 
 
@@ -285,12 +321,12 @@ export default function SalaMod1() {
                         whileHover={{ scale: 1.15 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => navigate('/jogar')} 
-                        className="group relative flex items-center justify-center text-red-500 hover:text-red-400 transition-colors"
+                        className="group relative flex items-center justify-center text-red-500"
                         title="Sair da sala"
                     >
                         <motion.span
                             initial={{ rotate: 0 }}
-                            whileHover={{ rotate: 45 }}
+                            whileHover={{ rotate: 90 }}
                             transition={{ duration: 0.25, ease: 'easeOut' }}
                             className="flex"
                         >
@@ -318,6 +354,21 @@ export default function SalaMod1() {
                             <span className="text-[1.5vmin] font-black text-green-400 uppercase tracking-widest mt-0.5">{sala.mpoints > 0 ? `${sala.mpoints} MC` : 'Casual'}</span>
                         </div>
                     </div>
+
+                    {/* Compartilhar sala — copia convite formatado */}
+                    <motion.button
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={compartilharSala}
+                        className="w-[5vmin] h-[5vmin] rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/30 flex items-center justify-center text-[#FFB700] hover:bg-[#FFB700]/20 transition-colors backdrop-blur-md"
+                        title="Compartilhar sala"
+                    >
+                        {compartilhado ? (
+                            <Check className="w-[2.2vmin] h-[2.2vmin] text-green-400" />
+                        ) : (
+                            <Share2 className="w-[2.2vmin] h-[2.2vmin]" />
+                        )}
+                    </motion.button>
 
                     {/* Excluir sala — só admin/proprietário (validação real no servidor) */}
                     {ehAdminOuProprietario && (
