@@ -225,7 +225,7 @@ export default function App() {
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
               <Route path="/admin/criar-campeonato" element={<PrivateRoute><RouteWithSuspense element={<CreateCampPage />} /></PrivateRoute>} />
-              <Route path="/sala-mod1/:id" element={<PrivateRoute><RouteWithSuspense element={<SalaMod1 />} /></PrivateRoute>} />
+              <Route path="/sala-mod1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
               <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>
