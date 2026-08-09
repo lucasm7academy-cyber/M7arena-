@@ -359,9 +359,9 @@ export default function SalaMod1() {
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[70vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[74vmin]' : 'md:gap-[70vmin]'}`}>
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[60vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[64vmin]' : 'md:gap-[60vmin]'}`}>
                     {/* BLUE SIDE */}
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[44vmin]">
+                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[52vmin] shrink-0">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -430,7 +430,7 @@ export default function SalaMod1() {
                     )}
 
                     {/* RED SIDE */}
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[44vmin]">
+                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[52vmin] shrink-0">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
