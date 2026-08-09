@@ -423,6 +423,13 @@ export function useSalaSimples(
     // ── FECHAR MODAL DE ELEGIBILIDADE ─────────────────────────
     const fecharErroElegibilidade = useCallback(() => setErroElegibilidade(null), []);
 
+    // Dispara o modal de saldo insuficiente ANTES da chamada ao servidor
+    // (aviso antecipado no clique da vaga, design v3 §11). O servidor continua
+    // sendo a fonte da verdade; isto é só UX.
+    const mostrarSaldoFaltante = useCallback((faltam: number) => {
+        setErroElegibilidade({ tipo: 'saldo', faltam });
+    }, []);
+
     // ── ACEITAR TERMOS (modal `termos_nao_aceitos`) ────────────
     const aceitarTermos = useCallback(async () => {
         try {
@@ -507,7 +514,7 @@ export function useSalaSimples(
         sala, jogadores, loading, erro,
         timer, timerIniciandoPartida, codigoPartida,
         mostrarMensagem,
-        erroElegibilidade, fecharErroElegibilidade, aceitarTermos,
+        erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
         ociosidadeMin,
         atualizar: () => sincronizarTudo('manual'),
         entrar, sair, confirmar, recusar,
