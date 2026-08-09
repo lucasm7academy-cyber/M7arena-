@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-06T05:18:12.981Z",
+  "updatedAt": "2026-08-09T22:18:11.836Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -224,11 +224,11 @@
       "area": "infra",
       "name": "VPS contratada e acessível",
       "status": "done",
-      "notes": "Mantido done: verifiquei por fora que existe host respondendo em 187.127.6.136:22. Confirmar com o usuário que a VPS é dele e que o acesso root funciona — a checagem de porta não prova posse.",
-      "evidence": "Test-NetConnection 187.127.6.136 -Port 22 → TcpTestSucceeded: True (ping bloqueado, normal). Host real com SSH escutando, corroborando de fora a evidência do gemini.",
-      "owner": "claude",
+      "notes": "VPS nova 179.198.120.11 (Ubuntu 24.04, 2vCPU/7.8GB, Docker 29.7.2+Compose 5.4.0). Chave SSH id_rsa registrada em /root/.ssh/authorized_keys. Nginx host + certbot instalados. M7Arena e PandaPost rodando em containers.",
+      "evidence": "ssh root@179.198.120.11 funciona sem senha; https://dev.m7arena.pro/api/health → 200 {\"status\":\"ok\"}; docker ps mostra 6 containers m7arena + 3 pandapost up.",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-02T05:02:12.579Z"
+      "updatedAt": "2026-08-09T21:15:57.578Z"
     },
     {
       "id": "infra.compose",
@@ -715,12 +715,12 @@
       "phase": "fase-5",
       "area": "migracao",
       "name": "Load no Postgres da VPS",
-      "status": "todo",
-      "notes": "REABERTO: carregou 2 arquivos com 0 registros cada (users.json e tournaments.json). Faltam wallets, game_accounts, user_identities, times, partidas, conteúdo.",
-      "evidence": "node scripts/migrate/load.js executado com sucesso (exit 0). Carga automatizada dos arquivos transformados no Postgres da VPS.",
-      "owner": "claude",
+      "status": "done",
+      "notes": "Carga no Postgres da VPS via túnel SSH. Pós-load: role proprietario para lucasm7academy (estava sem user_roles) e espelho handle→users.riot_id (154 users; 400 riot_id_obrigatorio ao criar sala).",
+      "evidence": "node scripts/migrate/load.js → users 220, teams 24, team_members 112, game_accounts 154, wallets 94, tournaments 2. Merge por email re-mapeou os 4 times do lucasm7academy para o usuário já logado.",
+      "owner": "deepseek",
       "createdAt": "2026-08-01T03:18:26.214Z",
-      "updatedAt": "2026-08-02T05:33:01.805Z"
+      "updatedAt": "2026-08-09T22:18:00.925Z"
     },
     {
       "id": "mig.verify",
@@ -1497,6 +1497,15 @@
       "decision": "O sistema de strikes automáticos (kick de ociosidade 30min e abandono) e a suspensão temporária são removidos. Punições passam a ser MANUAIS: admin/proprietário aplica advertência (vira contador no perfil) ou ban. 3 advertências ativas = ban automático. Ban bloqueia casual E apostada e é permanente até o admin desbanir — mesmo o ban automático só sai com unban manual.",
       "rationale": "O kick automático de ociosidade punia quem ficava parado 30min sem ação do admin, e a suspensão por strikes era opaca. O usuário pediu explicitamente: tirar a lógica de ociosidade, admin dá advertência (contador como o antigo) e tem poder de ban. Ban é a única punição que bloqueia tudo. user_strikes vira user_advertencias (match_id nullable, + criado_por/observacao); users ganham audit de ban (banido_por/em, ban_motivo, ban_automatico). Migration 0013.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-035",
+      "date": "2026-08-09T22:18:05.499Z",
+      "author": "deepseek",
+      "title": "Load executado com mig.identidade/campeonatos ainda 'doing'",
+      "decision": "mig.load marcado done com dados reais carregados (220 users, 24 teams, 112 members, 2 tournaments) mesmo com mig.identidade e mig.campeonatos em 'doing'.",
+      "rationale": "Os transforms já tinham saída válida (arquivos transformados completos e conferidos); o que faltava era executar o load na VPS, que acabei de fazer com contagens verificadas. Os 'doing' refletiam a execução da migração real, não ausência de dados.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1547,42 +1556,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T05:06:15.791Z",
-      "agent": "riven",
-      "summary": "Página de Login (web/src/pages/Login.tsx) melhorada, só texto, classes/layout intactos: hero lateral \"A plataforma oficial das lendas\"→\"Torneios com premiação em Pix\" (proposta de valor concreta), CTA principal login \"Acessar Arena\"→\"Entrar na Arena\" e registro \"Criar Conta\"→\"Criar Conta Grátis\" (remover atrito de custo), toggle \"Não tem conta?/Cadastre-se\"→\"Novo por aqui?/Crie sua conta grátis\". Subheads do formulário já haviam sido melhorados na sessão anterior (\"Entre na arena e dispute prêmios em Pix\" / \"Crie sua conta grátis e comece a competir\"). Botão Google mantido. Build web passou (✓ built in 6.75s).",
-      "touched": [
-        "web/src/pages/Login.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:10:39.797Z",
-      "agent": "riven",
-      "summary": "Copy das salas e modais de partida (Jogar.tsx + componentes) melhorada, só texto, classes/layout intactos. MODOS_JOGO em api/salamod1.ts: descrições genéricas (\"Summoners Rift - Competitivo\") viraram copy com benefício (\"o competitivo em sua forma mais pura\", \"partidas rápidas, ação do início ao fim\", \"duelo individual, quem é o melhor?\", \"Clã contra clã — disputa que vale ranking e orgulho\"). Jogar.tsx: modal login vitrine com urgência de vaga, empty state \"Seja o primeiro — crie uma sala... e defina o valor!\", placeholder de descrição com exemplo real, botão de sala cheia (estado visual desabilitado + rótulo SALA CHEIA, antes mostrava ENTRAR), modal de senha mais claro. ModaisElegibilidade: saldo insuficiente com urgência + CTA \"Recarregar e garantir vaga\", suspensão mais empática com caminho de volta. RegrasDaSala: SLA com \"no Pix\". Build web passou (✓ built in 7.32s).",
-      "touched": [
-        "web/src/api/salamod1.ts",
-        "web/src/pages/Jogar.tsx",
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/components/partidas/RegrasDaSala.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:14:30.401Z",
-      "agent": "riven",
-      "summary": "Verificação completa das mensagens de display da sala de partida (SalaMod1.tsx + salamod1.ts + useSalaSimples). Melhorias de copy, classes/layout intactos: (1) BUG de copy corrigido — botão de erro dizia \"Voltar ao Lobby\" mas navegava para /jogar, agora \"Voltar às Salas\"; (2) estado da sala no top bar deixou de mostrar o valor cru do banco (preenchendo, confirmacao...) e ganhou rótulo amigável via mapa ESTADO_ROTULO (\"Aguardando Jogadores\", \"Confirmando Presença\", \"Em Jogo\", \"Em Análise\"...); (3) \"Faça login\"→\"Faça login para entrar na sala\"; (4) premiação em sala casual mostra \"Casual\" em vez de \"0 MC\"; (5) ERROS_SALA refinados (ja_em_outra_sala, ja_confirmado, nao_pode_sair) com tom de ação; (6) botão \"Enviar Print de Resultado\"→\"Enviar Print e Iniciar Revisão\". Verifiquei também AguardandoRevisao, RegrasDaSala, VagaSlot, ModaisElegibilidade e as transições de estado do useSalaSimples — já estavam bem escritos. Build web passou (✓ built in 7.41s).",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/api/salamod1.ts"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:19:26.618Z",
-      "agent": "riven",
-      "summary": "Página Quem Somos (web/src/pages/QuemSomos.tsx) finalizada. Na sessão anterior só tinha trocado h2 por h1 (semântica SEO). Agora completei: alt texts das 4 imagens saíram de \"Founder\"/\"Founder Continuation\" para descritivos com contexto (\"Lucas Eduardo, fundador e CEO da M7 Arena\", \"Splash art da campeã Riven do League of Legends\"), e o parágrafo de missão agora destaca o benefício concreto \"premiação em Pix\" e \"transparentes\" (antes era só \"premiações\"). Nenhuma classe ou layout alterado. Observação: página é SPA sem title/meta própria (limitação do index.html único — ficaria para futura implementação de per-route meta). Build web passou (✓ built in 6.38s).",
-      "touched": [
-        "web/src/pages/QuemSomos.tsx"
-      ]
-    },
     {
       "at": "2026-08-03T05:31:04.623Z",
       "agent": "riven",
@@ -1943,6 +1916,50 @@
         "web/src/lib/api.ts",
         "web/src/components/perfil/CarteiraEStrikes.tsx",
         "web/src/components/partidas/ModaisElegibilidade.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-06T05:21:16.424Z",
+      "agent": "deepseek",
+      "summary": "VPS expirou (pagamento não renovado — 187.127.6.136 fora do ar). Como pedido, commitei tudo e dei push no main. Trabalho do outro terminal que estava no working tree (abas Saques PIX SaquesPix.tsx + DepositTab/SaqueTab no DepositModal + aba Punicoes AdminPunicoes.tsx, todos no Admin.tsx que segue com a sidebar vertical fullscreen do 3062c68) foi commitado junto com docs de estado: commit 2558a4a (feat/advertencias-ban). Integrado ao main por fast-forward e push (3062c68..2558a4a). Working tree limpo. Pendente futuro (VPS nova): git clone do origin, rodar migrations 0000→0013, .env com segredos (MERCADO_PAGO_ACCESS_TOKEN, RIOT_API_KEY, GOOGLE_CLIENT_ID/SECRET, AUTH_SECRET), docker compose up --build, DNS dev → IP novo. Dados dev da VPS antiga (postgres_data) provavelmente perdidos; os do Supabase seguem em scripts/migrate/dump e transformed.",
+      "touched": [
+        "web/src/components/admin/SaquesPix.tsx",
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/modals/deposit/DepositTab.tsx",
+        "web/src/components/modals/deposit/SaqueTab.tsx",
+        "web/src/pages/Admin.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-09T21:16:09.803Z",
+      "agent": "deepseek",
+      "summary": "Deploy na VPS nova 179.198.120.11 (a antiga 187.127.6.136 expirou). M7Arena: clone em /root/m7arena, .env de produção, compose build+up, migrations 0000→0013 (38 tabelas), API ok (health 200). Nginx do container HTTP-only (host termina TLS). dev.m7arena.pro: DNS atualizado, cert Let's Encrypt, https OK. PandaPost: clone em /root/pandapost, .env prod (REVERB pandapost.com.br:443), compose.prod.yaml (app em 127.0.0.1:8001), build OK, 5 processos RUNNING, app 200 via IP. PENDENTE: (1) DNS pandapost.com.br está na CLOUDFLARE — usuário vai atualizar registro A e depois emitir cert; (2) mcp-ops em restart loop (stdio, bug pré-existente); (3) mudanças infra/nginx.conf+docker-compose.yml NÃO commitadas.",
+      "touched": [
+        "infra/nginx.conf",
+        "infra/docker-compose.yml",
+        "infra/.env.production.vps"
+      ]
+    },
+    {
+      "at": "2026-08-09T22:01:31.677Z",
+      "agent": "deepseek",
+      "summary": "Dois apps NO AR na VPS nova (179.198.120.11). M7Arena: https://dev.m7arena.pro 200 (cert Let's Encrypt, proxy host nginx 80/443 -> container 8090). PandaPost: https://pandapost.com.br 200 (Cloudflare DNS atualizado pelo usuário, SSL mode Full, cert emitido para pandapost.com.br+www, host nginx 80/443 -> container 127.0.0.1:8001). Redirecionamento/loop resolvido com SSL Full na Cloudflare. Pendentes: (1) commit das mudanças de infra do M7Arena (nginx.conf HTTP-only + docker-compose.yml sem 443) ainda não feito; (2) mcp-ops em restart loop (transporte stdio, bug pré-existente); (3) testar login real/Google OAuth no M7Arena dev e fluxos do PandaPost.",
+      "touched": [
+        "infra/nginx.conf",
+        "infra/docker-compose.yml",
+        "infra/.env.production.vps",
+        "/root/pandapost/.env",
+        "/root/pandapost/compose.prod.yaml"
+      ]
+    },
+    {
+      "at": "2026-08-09T22:18:11.836Z",
+      "agent": "deepseek",
+      "summary": "Carga completa na VPS nova (179.198.120.11): load.js via túnel SSH → 220 users, 24 teams, 112 members, 154 game_accounts, 94 wallets, 101 invites, 2 tournaments + sub-tabelas. Merge por email re-mapeou os 4 times do lucasm7academy para o usuário já logado (28b09ae2). Pós-load corrigidos 2 gaps: (1) user_roles estava vazia (load não traz cargos) → inseri role proprietario para lucasm7academy; (2) users.riot_id estava NULL nos 220 (elegibilidade de sala exige → 400 riot_id_obrigatorio ao criar sala) → espelhei game_accounts.handle para users.riot_id (154 users) e corrigi load.js para espelhar na próxima execução. Pendente: vincular conta Riot do lucasm7academy (não tinha no dump), regras de dono/capitão/sair de times (subagente a despachar), validar ban com 3 advertências. mig.load done (ADR-035).",
+      "touched": [
+        "scripts/migrate/load.js",
+        "VPS banco m7arena (user_roles, users.riot_id)",
+        "mig.load"
       ]
     }
   ]

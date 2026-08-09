@@ -35,8 +35,9 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
 
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
 
-    // Largura 100% uniforme para todos os cards
-    const cardWidth = 'w-full';
+    // Largura 100% uniforme para todos os cards. min-w-full + shrink-0 impedem
+    // o flex pai de encolher o card conforme o conteúdo (nick curto → card fino).
+    const cardWidth = 'w-full min-w-full shrink-0';
 
     // Cards 100% alinhados e centralizados em relação aos badges dos times
     const arcOffset = '0vmin';

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Play, ChevronLeft, ChevronRight, Trophy, Users, Coins,
   Search, Lock, Zap, Crown, X, LogIn, Plus, SlidersHorizontal,
-  Sword, Shield, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2
+  Sword, Shield, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2, Gamepad2
 } from 'lucide-react';
 import {
   MODOS_JOGO, OPCOES_ELO, OPCOES_MPOINTS, getModoInfo, getMPointsInfo,
@@ -264,6 +264,60 @@ const ModalLoginVitrine = ({ onClose }: any) => {
   );
 };
 
+// Modal de aviso: tentou criar sala sem conta Riot vinculada → oferece o
+// botão de vincular (a elegibilidade do servidor exige users.riot_id).
+const ModalVincularConta = ({ onClose, motivo }: any) => {
+  const navigate = useNavigate();
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+        className="relative w-full max-w-sm rounded-2xl overflow-hidden"
+        style={{
+          background: 'rgba(13, 13, 13, 0.9)',
+          border: '2px solid #FFB700',
+          boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
+          backdropFilter: 'blur(16px)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Gamepad2 className="w-5 h-5 text-yellow-400" />
+            <h2 className="text-white font-black text-lg uppercase tracking-tight">Vincule sua conta Riot</h2>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-white/60 text-sm leading-relaxed">
+            {motivo || 'Para criar sala e participar das partidas, você precisa vincular sua conta Riot.'}
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => navigate('/vincular')}
+              className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2"
+            >
+              <Gamepad2 className="w-4 h-4" /> Vincular Conta
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10"
+            >
+              Agora não
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 // ============================================
 // MODAL CRIAR SALA
 // ============================================
@@ -495,6 +549,7 @@ const Jogar = () => {
   
   // Modais
   const [showCriarModal, setShowCriarModal] = useState(false);
+  const [showVincularModal, setShowVincularModal] = useState(false);
   const [modoSelecionado, setModoSelecionado] = useState<ModoJogo>('5v5');
   const [showSenhaModal, setShowSenhaModal] = useState<{ salaId: number; nome: string } | null>(null);
   const [erroSenha, setErroSenha] = useState('');
@@ -675,13 +730,27 @@ const Jogar = () => {
       }
     } catch (error: any) {
       // Nunca engole erro: traduz o código do servidor para o usuário.
-      toast.error(traduzirErroSala(error?.message));
+      const codigo = error?.message;
+      // Sem conta Riot vinculada (ou termos não aceitos): abre o aviso com
+      // botão de vincular em vez de só um toast efêmero.
+      if (codigo === 'riot_id_obrigatorio' || codigo === 'termos_nao_aceitos') {
+        setShowCriarModal(false);
+        setShowVincularModal(true);
+        return;
+      }
+      toast.error(traduzirErroSala(codigo));
     }
   };
 
   const abrirModalCriar = (modo: ModoJogo) => {
     if (!user) {
       setShowLoginModal(true);
+      return;
+    }
+    // Sem conta Riot vinculada, a criação de sala vai falhar no servidor —
+    // avisa antes e oferece o botão de vincular.
+    if (!perfil?.contaVinculada) {
+      setShowVincularModal(true);
       return;
     }
     setModoSelecionado(modo);
@@ -1078,7 +1147,7 @@ const Jogar = () => {
                     <div
                       key={sala.id}
                       onClick={() => navigate(`/sala-mod1/${sala.id}`)}
-                      className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-[#FFB700]/50 transition-all snap-start group/card bg-black"
+                    className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-[#FFB700]/50 transition-all snap-start group/card bg-black"
                     >
                       {modoInfo.bgImage && (
                         <div className="absolute inset-0 z-0 bg-cover bg-center opacity-30 group-hover/card:opacity-50 transition-opacity grayscale"
@@ -1189,6 +1258,13 @@ const Jogar = () => {
       {/* Modal de login/cadastro da vitrine pública (design v3 §11) */}
       <AnimatePresence>
         {showLoginModal && <ModalLoginVitrine onClose={() => setShowLoginModal(false)} />}
+      </AnimatePresence>
+
+      {/* Aviso: criar sala exige conta Riot vinculada — botão leva a /vincular */}
+      <AnimatePresence>
+        {showVincularModal && (
+          <ModalVincularConta onClose={() => setShowVincularModal(false)} />
+        )}
       </AnimatePresence>
     </div>
   );

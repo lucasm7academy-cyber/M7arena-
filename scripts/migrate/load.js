@@ -83,6 +83,7 @@ async function loadUsers(users) {
 
 async function loadGameAccounts(accounts, supabaseToDbId) {
   let n = 0;
+  let espelhados = 0;
   for (const a of accounts) {
     const userId = supabaseToDbId[a.userId];
     if (!userId) continue;
@@ -104,8 +105,20 @@ async function loadGameAccounts(accounts, supabaseToDbId) {
       ]
     );
     if (r.rowCount > 0) n++;
+
+    // Espelha game_accounts.handle → users.riot_id (ADR-023): a elegibilidade
+    // das salas lê users.riot_id. Sem isso todo usuário migrado fica sem
+    // riot_id e a criação de sala devolve 400 riot_id_obrigatorio.
+    if (a.handle) {
+      const up = await pool.query(
+        `UPDATE users SET riot_id = $1, updated_at = $2
+         WHERE id = $3 AND riot_id IS NULL`,
+        [a.handle, new Date(), userId]
+      );
+      if (up.rowCount > 0) espelhados++;
+    }
   }
-  console.log(`[ETL Load] game_accounts inseridos: ${n}`);
+  console.log(`[ETL Load] game_accounts inseridos: ${n}, users.riot_id espelhados: ${espelhados}`);
 }
 
 async function loadWallets(wallets, supabaseToDbId) {
