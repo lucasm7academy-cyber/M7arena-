@@ -225,7 +225,12 @@ export default function App() {
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
               <Route path="/admin/criar-campeonato" element={<PrivateRoute><RouteWithSuspense element={<CreateCampPage />} /></PrivateRoute>} />
-              <Route path="/sala-mod1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
+              {/* Sala por modo: /5v5/:id, /aram/:id, /1v1/:id, /time_vs_time/:id.
+                  O slug reflete o modo real da sala (rota pública — visitante vê sem login). */}
+              <Route path="/5v5/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
+              <Route path="/aram/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
+              <Route path="/1v1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
+              <Route path="/time_vs_time/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
               <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>

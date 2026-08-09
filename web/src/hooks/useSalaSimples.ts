@@ -40,7 +40,7 @@ const TICK_DEBOUNCE_MS = 2500;
  */
 export type ErroElegibilidade =
   | { tipo: 'saldo'; faltam: number }
-  | { tipo: 'outra_sala'; salaNum: number }
+  | { tipo: 'outra_sala'; salaNum: number; modo?: string }
   | { tipo: 'riot_id' }
   | { tipo: 'termos' }
   | { tipo: 'banida' }
@@ -370,7 +370,7 @@ export function useSalaSimples(
                 if (r.erro === 'saldo_insuficiente') {
                     setErroElegibilidade({ tipo: 'saldo', faltam: r.faltam ?? 0 });
                 } else if (r.erro === 'ja_em_sala_apostada') {
-                    setErroElegibilidade({ tipo: 'outra_sala', salaNum: r.salaNum ?? 0 });
+                    setErroElegibilidade({ tipo: 'outra_sala', salaNum: r.salaNum ?? 0, modo: r.salaModo });
                 } else if (r.erro === 'riot_id_obrigatorio') {
                     setErroElegibilidade({ tipo: 'riot_id' });
                 } else if (r.erro === 'termos_nao_aceitos') {

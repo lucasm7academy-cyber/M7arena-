@@ -6,6 +6,9 @@ Disallow: /admin/contatos
 Disallow: /admin/criar-campeonato
 Disallow: /perfil
 Disallow: /partidas
-Disallow: /sala-mod1
+Disallow: /5v5
+Disallow: /aram
+Disallow: /1v1
+Disallow: /time_vs_time
 
 Sitemap: https://m7arena.pro/sitemap.xml

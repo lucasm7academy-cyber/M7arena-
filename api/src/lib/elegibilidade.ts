@@ -129,7 +129,7 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
   // 4. Uma sala apostada ativa por vez.
   if (!isAdmin) {
     const [outra] = await tx
-      .select({ salaNum: matches.salaNum })
+      .select({ salaNum: matches.salaNum, modo: matches.mode })
       .from(matchPlayers)
       .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
       .where(and(
@@ -139,7 +139,7 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
         ...(ignorarMatchId ? [ne(matches.id, ignorarMatchId)] : []),
       ))
       .limit(1);
-    if (outra) return { ok: false as const, erro: "ja_em_sala_apostada", extra: { sala_num: outra.salaNum } };
+    if (outra) return { ok: false as const, erro: "ja_em_sala_apostada", extra: { sala_num: outra.salaNum, modo: outra.modo } };
   }
 
   // 5. Termos aceitos (declaração de 18+ no cadastro).

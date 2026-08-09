@@ -109,7 +109,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
                     <button
                         onClick={() => {
                             onClose();
-                            navigate(`/sala-mod1/${erro.salaNum}`);
+                            navigate(`/${erro.modo || '5v5'}/${erro.salaNum}`);
                         }}
                         className={btnPrimario}
                     >
