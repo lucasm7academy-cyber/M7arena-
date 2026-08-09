@@ -96,7 +96,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
 
     if (ocupada) {
         const slotInner = (
-            <div style={{ transform: `translateX(${arcOffset})` }}>
+            <div className="w-full" style={{ transform: `translateX(${arcOffset})` }}>
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -188,7 +188,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     }
 
     return (
-        <div style={{ transform: `translateX(${arcOffset})` }}>
+        <div className="w-full" style={{ transform: `translateX(${arcOffset})` }}>
             <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.98 }}
