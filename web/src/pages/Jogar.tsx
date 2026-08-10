@@ -339,10 +339,17 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
     setLoading(true);
     const maxJogadores = getMaxJogadoresPorModo(modo);
     
+    const nomePadrao: Record<string, string> = {
+      '5v5': '5x5 Personalizada',
+      'aram': 'ARAM Personalizada',
+      '1v1': '1v1 Personalizada',
+      'time_vs_time': 'Time vs Time Personalizada',
+    };
+
     const dados: any = {
       modo,
       mpoints,
-      nome: nome || `Sala ${MODOS_JOGO[modo].nome} de ${usuarioAtual.nome}`,
+      nome: nome || nomePadrao[modo] || 'Sala Personalizada',
       descricao: descricao || MODOS_JOGO[modo].descricao,
       temSenha,
       senha: temSenha ? senha : undefined,
@@ -396,7 +403,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Nome da Sala</label>
             <input
               type="text" value={nome} onChange={(e) => setNome(e.target.value)}
-              placeholder={`Ex: Sala de ${usuarioAtual.nome}${usuarioAtual.tag}`}
+              placeholder={`Ex: 5x5 Personalizada`}
               className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-white/30"
             />
           </div>
