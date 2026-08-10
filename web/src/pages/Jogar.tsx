@@ -7,6 +7,7 @@ import {
   Search, Lock, Zap, Crown, X, LogIn, Plus, SlidersHorizontal,
   Sword, Shield, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2, Gamepad2
 } from 'lucide-react';
+import { GiTwoCoins } from 'react-icons/gi';
 import {
   MODOS_JOGO, OPCOES_ELO, OPCOES_MPOINTS, getModoInfo, getMPointsInfo,
   getMaxJogadoresPorModo, type ModoJogo, type Sala,
@@ -1176,7 +1177,7 @@ const Jogar = () => {
                           </span>
                           <span className="px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"
                             style={{ background: `${mpInfo.cor}20`, color: mpInfo.cor, border: `1px solid ${mpInfo.cor}40` }}>
-                            <Coins className="w-3 h-3" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
+                            <GiTwoCoins className="w-3 h-3" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
                           </span>
                           <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40">
                             Finalizada

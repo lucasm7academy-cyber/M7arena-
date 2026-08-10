@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, X, ImageIcon, Loader, Crown, Users, Scale } from 'lucide-react';
+import { GiTwoCoins } from 'react-icons/gi';
 import { api } from '../../lib/api';
 import { CardJogador } from './CardJogador';
 
@@ -73,8 +74,9 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest">
-            {sala?.mpoints > 0 ? `${sala.mpoints} MC` : 'Casual'}
+          <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center gap-1"
+            style={{ color: sala?.mpoints > 0 ? '#FFB700' : '#ffffff99' }}>
+            {sala?.mpoints > 0 ? (<><GiTwoCoins className="w-3.5 h-3.5" /> {sala.mpoints} MC</>) : 'Casual'}
           </span>
         </div>
 

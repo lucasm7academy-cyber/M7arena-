@@ -500,12 +500,12 @@ ${link}`;
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
                                 <div className="absolute top-10 flex flex-col items-center">
                                     <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
-                                    <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
-                                    {/* Partida apostada: aviso acima da contagem de confirmação */}
-                                    {ehApostada && (
-                                        <span className="mt-[1.5vmin] text-[1.1vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                            Partida Valendo MC
+                                    {ehApostada ? (
+                                        <span className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                            Partida Valendo!
                                         </span>
+                                    ) : (
+                                        <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
                                     )}
                                 </div>
                                 <div className="absolute bottom-10 flex flex-col items-center">
