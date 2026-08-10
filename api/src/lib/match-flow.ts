@@ -24,7 +24,7 @@ import { roleSlotToSlot } from "./match-shape.js";
 import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./escrow.js";
 
 const TEMPO_CONFIRMACAO_MS = 60_000;
-const TEMPO_INICIO_MS = 30_000;
+const TEMPO_INICIO_MS = 90_000;
 
 /** Usuário autenticado pela sessão (cookie httpOnly) ou Bearer token. */
 export async function getAuthUser(req: any) {
@@ -204,6 +204,17 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           .where(eq(matches.id, matchId));
         avancou = true;
       } else if (new Date(m.confirmacaoExpiresAt).getTime() < Date.now()) {
+        // Escrow: jogadores removidos pelo timeout de confirmação NÃO podem
+        // perder o stake. Devolver primeiro, deletar depois — a carteira é a
+        // fonte da verdade (escrow.ts: invariante mc + mc_reservado = total).
+        const removidos = await tx
+          .select({ userId: matchPlayers.userId })
+          .from(matchPlayers)
+          .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.confirmed, false), eq(matchPlayers.linked, false)));
+        const aposta = m.apostaMc ?? m.entryMp ?? 0;
+        for (const p of removidos) {
+          await devolverEntrada(tx, p.userId, aposta, matchId);
+        }
         await tx
           .delete(matchPlayers)
           .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.confirmed, false), eq(matchPlayers.linked, false)));
