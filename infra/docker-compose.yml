@@ -64,6 +64,14 @@ services:
       - uploads_data:/var/www/uploads
     depends_on:
       - pgbouncer
+    # Logs persistentes (json-file) com rotação generosa: o dev/teste consulta
+    # via `docker logs m7arena_app --tail N`; max-size/max-file evitam encher
+    # o disco na VPS.
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
 
   realtime:
     image: ${DOCKER_IMAGE:-m7arena-app:latest}
