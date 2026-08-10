@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
 import { users } from "../../../db/schema/identidade.js";
 import { pagarPremio, pagarEmpate, pagarCancelamento } from "../lib/escrow.js";
 import { getAuthUser, notifyMatchChange } from "../lib/match-flow.js";
@@ -141,6 +141,12 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
       // continuam `linked=true` e o join de outra sala bloqueia com
       // `ja_em_outra_sala` (matches.ts). A partida terminou — ninguém fica preso.
       await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, m.id));
+
+      // Garante o tournament code de volta ao pool (idempotente). O report-result
+      // e o cron de partida fantasma já liberam; este é o fallback para qualquer
+      // caminho que entre em revisão sem liberar — sem ele, o rodízio esgota e
+      // a próxima sala recebe "SEM-CODIGO-AGUARDE".
+      await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, m.id));
 
       return { ok: true, estado: winnerSide === "cancel" ? "cancelada" : "encerrada" };
     });

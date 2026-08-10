@@ -109,5 +109,9 @@ export const matchCodes = pgTable("match_codes", {
   code: varchar("code", { length: 100 }).notNull().unique(),
   matchId: uuid("match_id").references(() => matches.id, { onDelete: "set null" }),
   used: boolean("used").default(false).notNull(),
+  // Rodízio LRU (ADR-040): ao liberar, `last_used_at` fica salvo; a atribuição
+  // pega o código livre usado há MAIS tempo (nulls first = nunca usado primeiro).
+  // Quando todos já foram usados, volta ao primeiro — tempo dos anteriores terminarem.
+  lastUsedAt: timestamp("last_used_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
