@@ -573,7 +573,7 @@ ${link}`;
                             animate={{ opacity: 1, filter: 'blur(0px)' }}
                             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
                         >
-                            {/* Tutorial de como colar o código — dentro do display */}
+                            {/* Tutorial de como colar o código — dentro do display, sem textos */}
                             <motion.img
                                 initial={{ scale: 0.85, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -582,23 +582,6 @@ ${link}`;
                                 alt="Tutorial de como colar o código da sala"
                                 className="absolute inset-0 w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/5 to-black/80" />
-                            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative w-full h-full flex flex-col items-center justify-between p-[6vmin] text-center">
-                                <p className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.6em]">Preparar para a Batalha!</p>
-                                <div className="flex flex-col items-center gap-[1.5vmin]">
-                                    <p className="text-[1.2vmin] text-white/70">Use o código abaixo para entrar na sala oficial no League of Legends.</p>
-                                    {codigoPartida ? (
-                                        <span className="text-[4.5vmin] font-black text-white tracking-[0.3em] tabular-nums drop-shadow-[0_0_25px_rgba(255,183,0,0.5)]">
-                                            {codigoPartida}
-                                        </span>
-                                    ) : (
-                                        <div className="flex items-center gap-[1vmin]">
-                                            <div className="w-[6vmin] h-[1px] bg-gradient-to-r from-transparent via-[#FFB700] to-transparent animate-pulse" />
-                                            <div className="text-[#FFB700]/40 font-black text-[1.2vmin] uppercase tracking-widest animate-pulse">Gerando...</div>
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
                         </motion.div>
                     )}
 
@@ -699,7 +682,9 @@ ${link}`;
                     {/* PARTIDA CONFIRMADA — copiar código (mesmo lugar dos botões
                         de confirmar presença / enviar print) */}
                     {sala.estado === 'iniciando_partida' && codigoPartida && (
-                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
+                            className="flex flex-col items-center gap-[1.5vmin]">
+                            <p className="text-[1.4vmin] font-black text-[#FFB700] uppercase tracking-[0.5em]">Prepare-se para a batalha</p>
                             <motion.button
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
