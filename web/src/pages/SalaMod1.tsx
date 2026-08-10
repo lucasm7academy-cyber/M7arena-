@@ -309,7 +309,7 @@ ${link}`;
                 {/* Background Ryze Banner */}
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <img 
-                        src="/images/fundoryzecortado.png" 
+                        src="/images/fundoryzecortado.webp" 
                         alt="Ryze Background" 
                         className="w-full h-full object-cover opacity-35 object-center" 
                     />
@@ -419,7 +419,8 @@ ${link}`;
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
                 <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[66vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[70vmin]' : 'md:gap-[66vmin]'}`}>
-                    {/* BLUE SIDE */}
+                    {/* BLUE SIDE — oculto em aguardando_revisao (o card quadrado central mostra o lineup) */}
+                    {sala.estado !== 'aguardando_revisao' && (
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[48vmin] shrink-0">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
@@ -456,6 +457,7 @@ ${link}`;
                             })}
                         </div>
                     </div>
+                    )}
 
                     {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o card de
                         resultado central já ocupa o espaço). Desktop (md+): absoluto,
@@ -505,7 +507,8 @@ ${link}`;
                     </div>
                     )}
 
-                    {/* RED SIDE */}
+                    {/* RED SIDE — oculto em aguardando_revisao (o card quadrado central mostra o lineup) */}
+                    {sala.estado !== 'aguardando_revisao' && (
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[48vmin] shrink-0">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
@@ -542,6 +545,7 @@ ${link}`;
                             })}
                         </div>
                     </div>
+                    )}
                 </div>
 
                 {/* OVERLAYS (CONFIRMATION / VOTING/ ETC IN THE MIDDLE) */}
@@ -595,7 +599,7 @@ ${link}`;
                                 initial={{ scale: 0.85, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ duration: 0.6 }}
-                                src="/images/tutorial-codigo.jpeg"
+                                src="/images/tutorial-codigo.webp"
                                 alt="Tutorial de como colar o código da sala"
                                 className="absolute inset-0 w-full h-full object-cover"
                             />

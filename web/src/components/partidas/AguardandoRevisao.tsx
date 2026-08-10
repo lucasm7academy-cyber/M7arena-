@@ -142,7 +142,7 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                         <div>
                             <p className="text-white font-black text-sm uppercase tracking-widest">Partida Finalizada</p>
                             <p className="text-[11px] text-[#FFB700]/80 font-bold uppercase tracking-wider">
-                                Em análise · Pagamento {formatarHorasRestantes(sala?.revisao_desde)}
+                                Em análise
                             </p>
                         </div>
                     </div>
@@ -164,47 +164,66 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                         </div>
                     </div>
 
-                    {/* Lineup — quem jogou (Blue x Red), check verde em quem já
+                    {/* Lineup — quem jogou (Blue-Side x Red-Side) com a borda
+                        cortada das colunas laterais; check verde em quem já
                         enviou o print */}
                     <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-xl bg-blue-500/[0.06] border border-blue-500/20 p-2">
-                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Blue Side</p>
-                            <div className="space-y-1">
-                                {timeA.map((j: any) => (
-                                    <div key={j.user_id} className="flex items-center gap-1.5">
-                                        {j.avatar ? (
-                                            <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
-                                        ) : (
-                                            <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
-                                        )}
-                                        <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
-                                        {enviouPrint(j.user_id) ? (
-                                            <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
-                                        ) : (
-                                            <span className="w-3 h-3 rounded-full border border-white/15 shrink-0" />
-                                        )}
-                                    </div>
-                                ))}
+                        <div className="relative p-[1.5px] overflow-hidden"
+                            style={{
+                                backgroundColor: '#3B82F6',
+                                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                            }}>
+                            <div className="bg-blue-500/[0.07] p-2"
+                                style={{
+                                    clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
+                                }}>
+                                <p className="text-[9px] font-black text-[#3B82F6] uppercase tracking-[0.3em] mb-1.5 text-center">Blue-Side</p>
+                                <div className="space-y-1">
+                                    {timeA.map((j: any) => (
+                                        <div key={j.user_id} className="flex items-center gap-1.5">
+                                            {j.avatar ? (
+                                                <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                                            ) : (
+                                                <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
+                                            )}
+                                            <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
+                                            {enviouPrint(j.user_id) ? (
+                                                <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
+                                            ) : (
+                                                <span className="w-3 h-3 rounded-full border border-white/15 shrink-0" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                        <div className="rounded-xl bg-red-500/[0.06] border border-red-500/20 p-2">
-                            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1.5">Red Side</p>
-                            <div className="space-y-1">
-                                {timeB.map((j: any) => (
-                                    <div key={j.user_id} className="flex items-center gap-1.5">
-                                        {j.avatar ? (
-                                            <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
-                                        ) : (
-                                            <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
-                                        )}
-                                        <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
-                                        {enviouPrint(j.user_id) ? (
-                                            <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
-                                        ) : (
-                                            <span className="w-3 h-3 rounded-full border border-white/15 shrink-0" />
-                                        )}
-                                    </div>
-                                ))}
+                        <div className="relative p-[1.5px] overflow-hidden"
+                            style={{
+                                backgroundColor: '#ef4444',
+                                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                            }}>
+                            <div className="bg-red-500/[0.07] p-2"
+                                style={{
+                                    clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
+                                }}>
+                                <p className="text-[9px] font-black text-[#ef4444] uppercase tracking-[0.3em] mb-1.5 text-center">Red-Side</p>
+                                <div className="space-y-1">
+                                    {timeB.map((j: any) => (
+                                        <div key={j.user_id} className="flex items-center gap-1.5">
+                                            {j.avatar ? (
+                                                <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                                            ) : (
+                                                <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
+                                            )}
+                                            <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
+                                            {enviouPrint(j.user_id) ? (
+                                                <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
+                                            ) : (
+                                                <span className="w-3 h-3 rounded-full border border-white/15 shrink-0" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
