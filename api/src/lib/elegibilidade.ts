@@ -29,6 +29,21 @@ export const ESTADOS_ATIVOS = [
 ];
 
 /**
+ * Estados de sala APOSTADA que impedem o jogador de entrar em OUTRA sala
+ * apostada. `aguardando_revisao` NÃO está nesta lista: o jogo já acabou e só
+ * falta o admin decidir — o MC fica retido (mc_reservado) mas o jogador pode
+ * jogar de novo (intuito: não travar o jogador por falta de admin). A checagem
+ * de saldo usa `w.mc` (que exclui o retido), então ele só entra em outra
+ * apostada se tiver MC livre para reservar.
+ */
+export const ESTADOS_BLOQUEIO_NOVA_APOSTA = [
+  "preenchendo",
+  "confirmacao",
+  "iniciando_partida",
+  "partida_iniciada",
+];
+
+/**
  * Limites das punições (ADR-033). Centralizados aqui para ajuste fácil
  * enquanto não existe tabela app_config.
  */
@@ -126,7 +141,8 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
   const saldo = w?.mc ?? 0;
   if (saldo < apostaMc) return { ok: false as const, erro: "saldo_insuficiente", faltam: apostaMc - saldo };
 
-  // 4. Uma sala apostada ativa por vez.
+  // 4. Uma sala apostada em jogo por vez (salas em aguardando_revisao NÃO
+  //    prendem o jogador — ele pode jogar outra enquanto o admin decide).
   if (!isAdmin) {
     const [outra] = await tx
       .select({ salaNum: matches.salaNum, modo: matches.mode })
@@ -135,7 +151,7 @@ export async function validarElegibilidade(tx: any, userId: string, apostaMc: nu
       .where(and(
         eq(matchPlayers.userId, userId),
         gt(matches.apostaMc, 0),
-        inArray(matches.status, ESTADOS_ATIVOS),
+        inArray(matches.status, ESTADOS_BLOQUEIO_NOVA_APOSTA),
         ...(ignorarMatchId ? [ne(matches.id, ignorarMatchId)] : []),
       ))
       .limit(1);

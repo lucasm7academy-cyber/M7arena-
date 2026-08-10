@@ -1,15 +1,15 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { users, userWallets } from "../../db/schema/identidade.js";
 import { matches, matchPlayers } from "../../db/schema/matches.js";
 import { walletTransactions, platformRevenue } from "../../db/schema/economia.js";
 import { setupDb } from "./helpers.js";
 import { reservarEntrada, devolverEntrada, pagarPremio } from "../src/lib/escrow.js";
-import { entrarEmRevisao, avaliarTransicoes } from "../src/lib/match-flow.js";
+import { entrarEmRevisao, avaliarTransicoes, validarElegibilidade } from "../src/lib/match-flow.js";
 
 async function criaJogador(db: any, id: string, mc: number, mcReservado = 0) {
-  await db.insert(users).values({ id, email: id + "@x.com", displayName: "Jogador" });
+  await db.insert(users).values({ id, email: id + "@x.com", displayName: "Jogador", riotId: "RIOT-" + id, termosAceitosEm: new Date() });
   await db.insert(userWallets).values({ userId: id, mc, mcReservado });
 }
 
@@ -230,5 +230,38 @@ describe("máquina de estados com escrow", () => {
     await criaJogador(db, id11, 100, 0);
     const total = await db.select({ id: matchPlayers.userId }).from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
     assert.equal(total.length, 10, "a sala tem exatamente 10 jogadores (11o barrado)");
+  });
+
+  test("jogador em sala apostada aguardando_revisao com linked residual NAO prende (pode jogar de novo)", async () => {
+    // Regra nova (2026-08-10): o jogador não fica preso por falta de admin.
+    // Uma sala em `aguardando_revisao` — mesmo com `linked` residual (ex.:
+    // partida fantasma cron) — não bloqueia a entrada em outra sala. O MC
+    // continua retido até o admin decidir; a checagem de saldo usa `w.mc`
+    // (exclui o retido), então ele só entra se tiver MC livre.
+    const db = ctx.db;
+    const id = "eeeeeee1-0000-0000-0000-0000000000a1";
+    await criaJogador(db, id, 70, 30);
+    const salaRevisao = await criaSala(db, { status: "aguardando_revisao", apostaMc: 30, maxJogadores: 2 });
+    await db.insert(matchPlayers).values({
+      matchId: salaRevisao.id,
+      userId: id,
+      side: "blue",
+      slot: 0,
+      roleSlot: "TOP",
+      confirmed: true,
+      linked: true, // residual de partida fantasma (cron limpou, mas se chegar aqui...)
+    });
+
+    // A regra "1 sala apostada ativa por vez" agora ignora aguardando_revisao.
+    const [outra] = await db
+      .select()
+      .from(matchPlayers)
+      .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
+      .where(and(eq(matchPlayers.userId, id), eq(matchPlayers.linked, true), inArray(matches.status, ["preenchendo", "confirmacao", "iniciando_partida", "partida_iniciada"])));
+    assert.equal(outra, undefined, "sala em revisão não conta como vínculo ativo");
+
+    // E a elegibilidade libera a entrada (tem 70 livres para reservar 30).
+    const r = await validarElegibilidade(db as any, id, 30);
+    assert.equal(r.ok, true);
   });
 });
