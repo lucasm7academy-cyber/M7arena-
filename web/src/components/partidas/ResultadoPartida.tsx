@@ -54,7 +54,7 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[65] w-[min(90vw,520px)]"
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[65] w-[min(94vw,640px)]"
     >
       <div
         className="rounded-2xl overflow-hidden border shadow-[0_0_60px_rgba(255,183,0,0.15)]"
@@ -163,7 +163,7 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               src={api.prints.file(lightboxPrint.id)}
               alt={`Print de ${lightboxPrint.nomeJogador}`}
-              className="max-w-[min(1400px,94vw)] max-h-[92vh] object-contain rounded-2xl shadow-2xl"
+              className="w-full max-w-[min(1600px,96vw)] max-h-[94vh] object-contain rounded-2xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
             <button
