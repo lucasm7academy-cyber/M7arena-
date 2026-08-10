@@ -419,8 +419,9 @@ ${link}`;
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
                 <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[66vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[70vmin]' : 'md:gap-[66vmin]'}`}>
-                    {/* BLUE SIDE — oculto em aguardando_revisao (o card quadrado central mostra o lineup) */}
-                    {sala.estado !== 'aguardando_revisao' && (
+                    {/* BLUE SIDE — oculto em aguardando_revisao e encerrada (o card
+                        central mostra o lineup / resultado) */}
+                    {sala.estado !== 'aguardando_revisao' && sala.estado !== 'encerrada' && (
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[48vmin] shrink-0">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
@@ -509,8 +510,9 @@ ${link}`;
                     </div>
                     )}
 
-                    {/* RED SIDE — oculto em aguardando_revisao (o card quadrado central mostra o lineup) */}
-                    {sala.estado !== 'aguardando_revisao' && (
+                    {/* RED SIDE — oculto em aguardando_revisao e encerrada (o card
+                        central mostra o lineup / resultado) */}
+                    {sala.estado !== 'aguardando_revisao' && sala.estado !== 'encerrada' && (
                     <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[48vmin] shrink-0">
                         <div
                             className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"

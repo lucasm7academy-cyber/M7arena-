@@ -105,6 +105,7 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
         await pagarPremio(tx, m.id, aposta, players, winnerSide, taxa);
         await tx.update(matches).set({
           status: "encerrada",
+          winnerSide,
           resultado: winnerSide,
           decisaoId: decisionId ?? null,
           revisadoPor: user.id,
@@ -115,6 +116,7 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
         await pagarEmpate(tx, m.id, aposta, players);
         await tx.update(matches).set({
           status: "encerrada",
+          winnerSide: "draw",
           resultado: "draw",
           decisaoId: decisionId ?? null,
           revisadoPor: user.id,

@@ -109,7 +109,7 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     max_jogadores: m.maxJogadores ?? 10,
     elo_minimo: m.eloMinimo ?? null,
     estado: m.status,
-    vencedor: winnerSideToLegacy(m.winnerSide),
+    vencedor: winnerSideToLegacy(m.winnerSide ?? m.resultado),
     criador_id: m.createdBy,
     criador_nome: criadorNome || "Desconhecido",
     time_a_nome: m.timeANome ?? null,

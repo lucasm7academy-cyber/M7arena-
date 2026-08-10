@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ImagePlus, Loader, CheckCircle2, AlertTriangle, Gavel, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
+import { CardJogador } from './CardJogador';
 
 export const SLA_REVISAO_HORAS = 24;
 
@@ -164,69 +165,22 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                         </div>
                     </div>
 
-                    {/* Lineup — quem jogou (Blue-Side x Red-Side) com a borda
-                        cortada das colunas laterais; check verde em quem já
-                        enviou o print */}
+                    {/* Lineup — quem jogou (Blue-Side x Red-Side): cada jogador em
+                        card individual estilo VagaSlot (preto + borda da cor da
+                        side + ícone da rota + avatar + nick). Check verde em quem
+                        já enviou o print */}
                     <div className="grid grid-cols-2 gap-2">
-                        <div className="relative p-[1px] overflow-hidden"
-                            style={{
-                                backgroundColor: '#3B82F6',
-                                clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
-                            }}>
-                            <div className="bg-[#050505] p-2"
-                                style={{
-                                    clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
-                                }}>
-                                <p className="text-[10px] font-black text-[#3B82F6] uppercase tracking-[0.3em] mb-2 text-center">Blue-Side</p>
-                                <div className="space-y-1.5">
-                                    {timeA.map((j: any) => (
-                                        <div key={j.user_id} className="flex items-center gap-2">
-                                            {j.avatar ? (
-                                                <img src={j.avatar} alt={j.nome} className="w-6 h-6 rounded-full object-cover shrink-0 border border-blue-500/40" loading="lazy" />
-                                            ) : (
-                                                <div className="w-6 h-6 rounded-full bg-white/10 shrink-0" />
-                                            )}
-                                            <span className="flex-1 truncate text-xs font-black uppercase tracking-tight"
-                                                style={{ color: '#3B82F6', textShadow: '0 0 10px rgba(59,130,246,0.4)' }}>{j.nome}</span>
-                                            {enviouPrint(j.user_id) ? (
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                                            ) : (
-                                                <span className="w-3.5 h-3.5 rounded-full border border-white/15 shrink-0" />
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        <div className="space-y-1.5">
+                            <p className="text-[10px] font-black text-[#3B82F6] uppercase tracking-[0.3em] mb-2 text-center">Blue-Side</p>
+                            {timeA.map((j: any) => (
+                                <CardJogador key={j.user_id} jogador={j} cor="#3B82F6" avatarBorder="border-blue-500/40" check={enviouPrint(j.user_id)} />
+                            ))}
                         </div>
-                        <div className="relative p-[1px] overflow-hidden"
-                            style={{
-                                backgroundColor: '#ef4444',
-                                clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
-                            }}>
-                            <div className="bg-[#050505] p-2"
-                                style={{
-                                    clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
-                                }}>
-                                <p className="text-[10px] font-black text-[#ef4444] uppercase tracking-[0.3em] mb-2 text-center">Red-Side</p>
-                                <div className="space-y-1.5">
-                                    {timeB.map((j: any) => (
-                                        <div key={j.user_id} className="flex items-center gap-2">
-                                            {j.avatar ? (
-                                                <img src={j.avatar} alt={j.nome} className="w-6 h-6 rounded-full object-cover shrink-0 border border-red-500/40" loading="lazy" />
-                                            ) : (
-                                                <div className="w-6 h-6 rounded-full bg-white/10 shrink-0" />
-                                            )}
-                                            <span className="flex-1 truncate text-xs font-black uppercase tracking-tight"
-                                                style={{ color: '#ef4444', textShadow: '0 0 10px rgba(239,68,68,0.4)' }}>{j.nome}</span>
-                                            {enviouPrint(j.user_id) ? (
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                                            ) : (
-                                                <span className="w-3.5 h-3.5 rounded-full border border-white/15 shrink-0" />
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        <div className="space-y-1.5">
+                            <p className="text-[10px] font-black text-[#ef4444] uppercase tracking-[0.3em] mb-2 text-center">Red-Side</p>
+                            {timeB.map((j: any) => (
+                                <CardJogador key={j.user_id} jogador={j} cor="#ef4444" avatarBorder="border-red-500/40" check={enviouPrint(j.user_id)} />
+                            ))}
                         </div>
                     </div>
 
