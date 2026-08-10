@@ -689,7 +689,6 @@ ${link}`;
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
                             className="flex items-center gap-[2vmin]">
                             <motion.button
-                                whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={confirmar}
                                 className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
@@ -701,7 +700,6 @@ ${link}`;
                                 </span>
                             </motion.button>
                             <motion.button
-                                whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={recusar}
                                 className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
@@ -738,7 +736,6 @@ ${link}`;
                             className="flex flex-col items-center gap-[1.5vmin]">
                             <p className="text-[1.4vmin] font-black text-white uppercase tracking-[0.5em]">Prepare-se para a batalha</p>
                             <motion.button
-                                whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={copiarCodigo}
                                 className="pointer-events-auto relative p-[1.5px] bg-black"
@@ -765,7 +762,6 @@ ${link}`;
                             <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
                                 onChange={(e) => { const f = e.target.files?.[0]; if (f) enviarPrintPartida(f); }} />
                             <motion.button
-                                whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={enviandoPrint}
