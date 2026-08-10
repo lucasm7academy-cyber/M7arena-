@@ -692,10 +692,10 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={confirmar}
-                                className="pointer-events-auto relative p-[1.5px] bg-white hover:bg-[#FFB700] transition-colors"
+                                className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-white hover:text-black transition-colors relative z-10"
+                                <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 transition-colors relative z-10"
                                     style={{ clipPath: CUT_INNER }}>
                                     Confirmar Presença
                                 </span>
@@ -704,10 +704,10 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={recusar}
-                                className="pointer-events-auto relative p-[1.5px] bg-red-500/60 hover:bg-red-400 transition-colors"
+                                className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#050505] px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] text-red-400 hover:text-red-300 transition-colors relative z-10"
+                                <span className="block bg-red-500 px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] text-white hover:bg-red-600 transition-colors relative z-10"
                                     style={{ clipPath: CUT_INNER }}>
                                     Recusar
                                 </span>
@@ -719,10 +719,10 @@ ${link}`;
                     {sala.estado === 'confirmacao' && jogadorAtual && jogadorAtual.confirmado && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
                             <motion.div
-                                className="pointer-events-auto relative p-[1.5px] bg-green-500/60"
+                                className="pointer-events-auto relative p-[1.5px] bg-black"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-green-400 flex items-center gap-[1.5vmin]"
+                                <span className="block bg-green-500 px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black flex items-center gap-[1.5vmin]"
                                     style={{ clipPath: CUT_INNER }}>
                                     <Check className="w-[2.5vmin] h-[2.5vmin]" />
                                     Confirmado
@@ -741,10 +741,10 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={copiarCodigo}
-                                className="pointer-events-auto relative p-[1.5px] bg-[#FFB700] hover:bg-yellow-400 transition-colors"
+                                className="pointer-events-auto relative p-[1.5px] bg-black"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-[#FFB700] flex items-center justify-center gap-[1.5vmin]"
+                                <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.5vmin] transition-colors"
                                     style={{ clipPath: CUT_INNER }}>
                                     {codigoCopiado ? (
                                         <Check className="w-[2.2vmin] h-[2.2vmin]" />
@@ -769,10 +769,10 @@ ${link}`;
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={enviandoPrint}
-                                className="pointer-events-auto relative p-[1.5px] bg-[#FFB700] hover:bg-yellow-400 transition-colors disabled:opacity-50"
+                                className="pointer-events-auto relative p-[1.5px] bg-black disabled:opacity-50"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-[#FFB700] flex items-center justify-center gap-[1.5vmin]"
+                                <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.5vmin] transition-colors"
                                     style={{ clipPath: CUT_INNER }}>
                                     {enviandoPrint ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <ImagePlus className="w-[2.2vmin] h-[2.2vmin]" />}
                                     {enviandoPrint ? 'Enviando...' : 'Enviar Print e Iniciar Revisão'}
