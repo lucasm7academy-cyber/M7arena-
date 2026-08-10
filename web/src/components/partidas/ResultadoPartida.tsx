@@ -5,6 +5,7 @@
 // miniatura + lightbox do AguardandoRevisao). Quem venceu vem do servidor
 // (`sala.vencedor`) — aqui só apresentamos o resultado, em preto e branco.
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, X, ImageIcon, Loader, Crown, Users, Scale } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -160,7 +161,11 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
         </div>
       </div>
 
-      {/* Lightbox do print (mesmo padrão dos logos de time) */}
+      {/* Lightbox do print (mesmo padrão dos logos de time). Renderizado via
+          portal no body: o card raiz tem transform (translate do Tailwind +
+          animação y), que quebraria o position: fixed e prenderia o popup ao
+          tamanho do card. */}
+      {createPortal(
       <AnimatePresence>
         {lightboxPrint && (
           <motion.div
@@ -193,7 +198,9 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
     </motion.div>
   );
 }
