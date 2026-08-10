@@ -309,6 +309,7 @@ export function normalizarVaga(role: string | undefined, isTimeA: boolean) {
 // para as rotas manterem o import antigo de match-flow sem quebra.
 export {
   ESTADOS_ATIVOS,
+  ESTADOS_BLOQUEIO_NOVA_APOSTA,
   LIMITES,
   contarAdvertenciasAtivas,
   aplicarBanAutomaticoSeNecessario,

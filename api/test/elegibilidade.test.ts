@@ -123,6 +123,49 @@ describe("elegibilidade (ADR-033)", () => {
     assert.equal(r2.ok, true);
   });
 
+  test("sala apostada em aguardando_revisao NÃO prende o jogador (pode jogar de novo)", async () => {
+    const db = ctx.db;
+    const id = "aaaaaaaa-e000-0000-0000-00000000004c";
+    await criaJogador(db, id, { mc: 200, mcReservado: 50, riotId: "Revisao#BR1" });
+    const salaRevisao = await criaSala(db, { apostaMc: 50, status: "aguardando_revisao" });
+    await db.insert(matchPlayers).values({
+      matchId: salaRevisao.id,
+      userId: id,
+      side: "blue",
+      slot: 0,
+      roleSlot: "TOP",
+      confirmed: true,
+      linked: false,
+    });
+
+    // Com MC livre (200 - 50 retido = 150) pode entrar em outra apostada.
+    const r = await validarElegibilidade(db as any, id, 50);
+    assert.equal(r.ok, true, "sala em revisão não pode travar o jogador");
+  });
+
+  test("sala apostada em aguardando_revisao + saldo só do retido → saldo_insuficiente", async () => {
+    const db = ctx.db;
+    const id = "aaaaaaaa-e000-0000-0000-00000000004d";
+    // 0 livre, 50 retido na sala em revisão.
+    await criaJogador(db, id, { mc: 0, mcReservado: 50, riotId: "SemSaldo#BR1" });
+    const salaRevisao = await criaSala(db, { apostaMc: 50, status: "aguardando_revisao" });
+    await db.insert(matchPlayers).values({
+      matchId: salaRevisao.id,
+      userId: id,
+      side: "blue",
+      slot: 0,
+      roleSlot: "TOP",
+      confirmed: true,
+      linked: false,
+    });
+
+    // Não tem MC livre para reservar outra aposta — mas NÃO é "ja_em_sala_apostada",
+    // é saldo insuficiente (o retido não pode ser apostado duas vezes).
+    const r = await validarElegibilidade(db as any, id, 50);
+    assert.equal(r.ok, false);
+    assert.equal(r.erro, "saldo_insuficiente");
+  });
+
   test("advertências ativas não bloqueiam até atingir o teto (ban)", async () => {
     const db = ctx.db;
     const id = "aaaaaaaa-e000-0000-0000-000000000005";

@@ -34,6 +34,13 @@ export async function runCron(d: any = db) {
       .update(matches)
       .set({ status: "aguardando_revisao", revisaoDesde: agora })
       .where(eq(matches.id, sala.id));
+    // Consistência com report-result (matches-actions.ts:169): partida em
+    // revisão não tem jogador "vinculado" — libera o linked residual para o
+    // jogador poder entrar em outra partida enquanto o admin decide.
+    await d
+      .update(matchPlayers)
+      .set({ linked: false })
+      .where(and(eq(matchPlayers.matchId, sala.id), eq(matchPlayers.linked, true)));
     notifyMatchChange(sala.id); // jogadores veem "em análise" sem refresh
     fantasmas++;
   }

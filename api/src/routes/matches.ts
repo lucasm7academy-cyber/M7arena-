@@ -14,6 +14,7 @@ import {
   buscarSalaPorId,
   normalizarVaga,
   ESTADOS_ATIVOS,
+  ESTADOS_BLOQUEIO_NOVA_APOSTA,
   getAuthUser,
   notifyMatchChange,
   validarElegibilidade,
@@ -251,6 +252,8 @@ matchesRouter.post("/:id/join", async (req, res) => {
       // Bloqueia quem está vinculado (em partida) em outra sala. Só salas
       // ATIVAS contam: uma sala em `finalizacao`/`encerrada`/`cancelada` com
       // `linked` residual não pode prender o jogador (ajustarsala bug D).
+      // Salas em `aguardando_revisao` também NÃO prendem — o jogo acabou e só
+      // falta o admin decidir; o jogador pode entrar em outra partida.
       const outrosVinculos = await tx
         .select({ matchId: matchPlayers.matchId })
         .from(matchPlayers)
@@ -258,7 +261,7 @@ matchesRouter.post("/:id/join", async (req, res) => {
         .where(and(
           eq(matchPlayers.userId, user.id),
           eq(matchPlayers.linked, true),
-          inArray(matches.status, ESTADOS_ATIVOS),
+          inArray(matches.status, ESTADOS_BLOQUEIO_NOVA_APOSTA),
         ));
       if (outrosVinculos.some((p: any) => p.matchId !== match.id)) {
         return { ok: false, erro: "ja_em_outra_sala", estado: match.status, mudou: false };
