@@ -662,7 +662,7 @@ ${link}`;
             {sala.estado === 'confirmacao' && ehApostada && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                     className="absolute bottom-[2vh] left-1/2 -translate-x-1/2 z-[65] w-[min(620px,94vw)]">
-                    <RegrasDaSala aposta={sala.mpoints || 0} taxaPct={sala.taxa_pct ?? 8.99} />
+                    <RegrasDaSala aposta={sala.mpoints || 0} modo={sala.modo} />
                 </motion.div>
             )}
 

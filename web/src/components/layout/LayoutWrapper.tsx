@@ -113,6 +113,8 @@ export default function Layout() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const ehAdmin = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
+
   const navItems = [
     { label: 'Início', icon: SiLeagueoflegends, path: '/lobby' },
     { label: 'Jogar', icon: Gamepad2, path: '/jogar' },
@@ -122,6 +124,7 @@ export default function Layout() {
     { label: 'LIVES', icon: FaTwitch, path: '/streamers' },
     { label: 'Recrutamento', icon: UserPlus, path: '/recrutamento' },
     { label: 'Quem somos?', icon: UserCircle, path: '/quem-somos' },
+    ...(ehAdmin ? [{ label: 'Painel Admin', icon: Settings, path: '/admin' }] : []),
   ];
 
   const profileMenuItems = [
