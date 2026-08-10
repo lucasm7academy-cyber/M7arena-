@@ -243,6 +243,9 @@ export async function validarPrintDePartida(db: any, userId: string, matchId: st
     if (!player.confirmed) return { ok: false, erro: "nao_confirmado" };
   }
   const prints = await db.select().from(matchPrints).where(eq(matchPrints.matchId, matchId));
+  // Um print por jogador (decisão do usuário 2026-08-10): quem já enviou não
+  // pode anexar de novo — mesmo que ainda não tenha batido o teto da partida.
+  if (prints.some((p: any) => p.userId === userId)) return { ok: false, erro: "print_ja_enviado" };
   if (prints.length >= 3) return { ok: false, erro: "limite_prints" };
   return { ok: true, sala: m };
 }

@@ -28,6 +28,8 @@ function formatarHorasRestantes(desde: string | null | undefined): string {
 
 interface AguardandoRevisaoProps {
     sala: any;
+    /** Quem jogou a partida (lineup Blue/Red exibido no card). */
+    jogadores: any[];
     /** Usuário logado está confirmado na sala (condição para enviar print). */
     jogadorConfirmado: boolean;
     /** Id do usuário logado — marca a contestação dele na lista. */
@@ -36,7 +38,7 @@ interface AguardandoRevisaoProps {
     onAtualizar: () => void;
 }
 
-export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtualizar }: AguardandoRevisaoProps) {
+export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioId, onAtualizar }: AguardandoRevisaoProps) {
     const matchId = sala?.match_id as string | undefined;
     const recebidos = sala?.prints_recebidos ?? 0;
     const necessarios = sala?.prints_necessarios ?? 3;
@@ -50,6 +52,7 @@ export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtuali
     // Print em exibição ampliada (lightbox, mesmo padrão dos logos de time).
     const [lightboxPrint, setLightboxPrint] = useState<any>(null);
     const fileRef = useRef<HTMLInputElement>(null);
+    const jaEnviei = prints.some((p: any) => p.userId === usuarioId);
 
     const carregarPrints = useCallback(async () => {
         if (!matchId) return;
@@ -116,7 +119,13 @@ export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtuali
         }
     };
 
-    const podeEnviar = jogadorConfirmado && recebidos < necessarios && !enviando;
+    const podeEnviar = jogadorConfirmado && !jaEnviei && recebidos < necessarios && !enviando;
+
+    // Lineup de quem jogou (Blue x Red) — quem já anexou o print ganha um
+    // check verde na própria linha do card.
+    const timeA = jogadores.filter((j: any) => j.is_time_a);
+    const timeB = jogadores.filter((j: any) => !j.is_time_a);
+    const enviouPrint = (userId: string) => prints.some((p: any) => p.userId === userId);
 
     return (
         <motion.div
@@ -125,15 +134,15 @@ export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtuali
         >
             <div className="rounded-2xl overflow-hidden border border-[#FFB700]/30 shadow-[0_0_60px_rgba(255,183,0,0.15)]"
                 style={{ background: 'rgba(10,10,10,0.92)', backdropFilter: 'blur(16px)' }}>
-                {/* Cabeçalho */}
+                {/* Cabeçalho — Partida finalizada, status Em análise */}
                 <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }}
                             className="w-3 h-3 rounded-full bg-[#FFB700] shadow-[0_0_12px_rgba(255,183,0,0.8)]" />
                         <div>
-                            <p className="text-white font-black text-sm uppercase tracking-widest">Em Análise</p>
-                            <p className="text-[11px] text-[#FFB700]/70 font-bold uppercase tracking-wider">
-                                Pagamento {formatarHorasRestantes(sala?.revisao_desde)}
+                            <p className="text-white font-black text-sm uppercase tracking-widest">Partida Finalizada</p>
+                            <p className="text-[11px] text-[#FFB700]/80 font-bold uppercase tracking-wider">
+                                Em análise · Pagamento {formatarHorasRestantes(sala?.revisao_desde)}
                             </p>
                         </div>
                     </div>
@@ -152,6 +161,51 @@ export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtuali
                         <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                             <div className="h-full bg-[#FFB700] transition-all duration-500"
                                 style={{ width: `${Math.min(100, (recebidos / Math.max(1, necessarios)) * 100)}%` }} />
+                        </div>
+                    </div>
+
+                    {/* Lineup — quem jogou (Blue x Red), check verde em quem já
+                        enviou o print */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-xl bg-blue-500/[0.06] border border-blue-500/20 p-2">
+                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Blue Side</p>
+                            <div className="space-y-1">
+                                {timeA.map((j: any) => (
+                                    <div key={j.user_id} className="flex items-center gap-1.5">
+                                        {j.avatar ? (
+                                            <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                                        ) : (
+                                            <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
+                                        )}
+                                        <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
+                                        {enviouPrint(j.user_id) ? (
+                                            <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
+                                        ) : (
+                                            <span className="w-3 h-3 rounded-full border border-white/15 shrink-0" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="rounded-xl bg-red-500/[0.06] border border-red-500/20 p-2">
+                            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1.5">Red Side</p>
+                            <div className="space-y-1">
+                                {timeB.map((j: any) => (
+                                    <div key={j.user_id} className="flex items-center gap-1.5">
+                                        {j.avatar ? (
+                                            <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                                        ) : (
+                                            <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
+                                        )}
+                                        <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
+                                        {enviouPrint(j.user_id) ? (
+                                            <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
+                                        ) : (
+                                            <span className="w-3 h-3 rounded-full border border-white/15 shrink-0" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -178,26 +232,34 @@ export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtuali
                         </div>
                     )}
 
-                    {/* Upload de print */}
+                    {/* Upload de print — só quem é da partida e ainda não enviou */}
                     {podeEnviar ? (
                         <>
                             <input ref={fileRef} type="file" accept="image/*" className="hidden"
                                 onChange={(e) => { const f = e.target.files?.[0]; if (f) enviarPrint(f); }} />
+                            <p className="text-center text-white/60 text-[11px] font-bold uppercase tracking-wider">
+                                Mande o resultado da partida
+                            </p>
                             <button onClick={() => fileRef.current?.click()} disabled={enviando}
                                 className="w-full py-3 rounded-xl bg-[#FFB700] text-black text-sm font-black uppercase tracking-widest hover:bg-yellow-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                                 {enviando ? <Loader className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
                                 {enviando ? 'Enviando...' : `Enviar print ${recebidos >= 1 ? `(${recebidos}/${necessarios})` : 'da vitória'}`}
                             </button>
                         </>
+                    ) : jaEnviei ? (
+                        <div className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-green-500/5 border border-green-500/20 text-green-400 text-xs font-bold">
+                            <CheckCircle2 className="w-4 h-4 shrink-0" /> Print enviado — aguardando análise
+                        </div>
                     ) : (
                         <p className="text-center text-white/30 text-[10px] uppercase tracking-widest font-bold">
                             {recebidos >= necessarios
                                 ? 'Limite de prints atingido'
-                                : 'Aguardando confirmação dos outros jogadores'}
+                                : 'Aguardando os jogadores enviarem o resultado'}
                         </p>
                     )}
 
-                    {/* Contestação */}
+                    {/* Contestação — só participante confirmado da partida */}
+                    {jogadorConfirmado && (
                     <div className="pt-3 border-t border-white/10">
                         {minhaDisputa ? (
                             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-green-500/5 border border-green-500/20 text-green-400 text-xs font-bold">
@@ -225,6 +287,7 @@ export function AguardandoRevisao({ sala, jogadorConfirmado, usuarioId, onAtuali
                             </button>
                         )}
                     </div>
+                    )}
                 </div>
             </div>
 

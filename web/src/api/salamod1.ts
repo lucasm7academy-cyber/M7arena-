@@ -110,6 +110,7 @@ const ERROS_SALA: Record<string, string> = {
     motivo_invalido: 'O motivo da contestação precisa ter pelo menos 5 caracteres.',
     ja_contestou: 'Você já contestou o resultado desta partida.',
     limite_prints: 'Limite de 3 prints por partida atingido.',
+    print_ja_enviado: 'Você já enviou o print do resultado desta partida.',
     nao_confirmado: 'Você precisa estar confirmado na sala para enviar print.',
     nao_participante: 'Você não é participante desta partida.',
     sala_casual: 'Esta sala não é uma partida apostada.',
