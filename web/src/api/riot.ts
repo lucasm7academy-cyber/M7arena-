@@ -126,46 +126,16 @@ export async function buscarSugestoes(prefixo: string): Promise<Array<{ riotId: 
   return resultados;
 }
 
-const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
-
+// Estatísticas dos últimos N dias agora são agregadas no servidor
+// (GET /api/riot/stats/:puuid, com cache de 30min por puuid). O cliente faz
+// 1 única chamada em vez de ~80 requests à Riot.
 export async function buscarEstatisticasRecentes(puuid: string, days = 90) {
   try {
-    const startTime = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
-    const idsRes = await fetchWithTimeout(`/api/riot/matches/${puuid}?count=40&startTime=${startTime}`);
-    if (!idsRes.ok) return null;
-    const ids: string[] = await idsRes.json();
-    if (ids.length === 0) return { topChampions: [], roles: [], totalGames: 0 };
-
-    const allResults: any[] = [];
-    const BATCH = 5;
-    for (let i = 0; i < ids.length; i += BATCH) {
-      const batch = ids.slice(i, i + BATCH);
-      const results = await Promise.all(batch.map(id => fetchWithTimeout(`/api/riot/match/${id}`).then(r => r.ok ? r.json() : null).catch(() => null)));
-      allResults.push(...results);
-      if (i + BATCH < ids.length) await delay(600);
-    }
-
-    const matches = allResults.filter(Boolean);
-    const champMap: Record<string, { games: number; wins: number }> = {};
-    const roleMap: Record<string, number> = {};
-
-    for (const match of matches) {
-      const me = match?.info?.participants?.find((p: any) => p.puuid === puuid);
-      if (!me) continue;
-      const name = me.championName;
-      if (!champMap[name]) champMap[name] = { games: 0, wins: 0 };
-      champMap[name].games++;
-      if (me.win) champMap[name].wins++;
-      const pos = me.teamPosition || me.individualPosition || '';
-      if (pos) roleMap[pos] = (roleMap[pos] || 0) + 1;
-    }
-
-    const totalGames = matches.length;
-    const topChampions = Object.entries(champMap).map(([championName, s]) => ({ championName, games: s.games, wins: s.wins, winrate: Math.round((s.wins / s.games) * 100) })).sort((a, b) => b.games - a.games).slice(0, 10);
-    const roles = Object.entries(roleMap).map(([role, games]) => ({ role, games, percentage: totalGames > 0 ? Math.round((games / totalGames) * 100) : 0 })).sort((a, b) => b.games - a.games);
-
-    return { topChampions, roles, totalGames };
-  } catch {
+    const res = await fetchWithTimeout(`/api/riot/stats/${puuid}?days=${days}&count=40`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.warn('[riot] falha ao buscar estatísticas recentes:', err);
     return null;
   }
 }

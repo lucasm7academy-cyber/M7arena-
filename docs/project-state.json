@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-09T23:42:47.681Z",
+  "updatedAt": "2026-08-10T04:56:01.847Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1189,6 +1189,66 @@
       "owner": "deepseek",
       "createdAt": "2026-08-06T04:53:30.829Z",
       "updatedAt": "2026-08-06T04:53:30.829Z"
+    },
+    {
+      "id": "perf.heroes",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P1: Heróis webm → WebP animado",
+      "status": "done",
+      "notes": "Trocar 2 vídeos (7,3MB) por WebP animado (ffmpeg libwebp, 15fps, 720px) + substituir <video> por <img> com mesmas classes em Lobby e campeonatos. Plano: docs/planos/plano-otimizacao-performance.md",
+      "evidence": "ffmpeg libwebp fps=15/10, 720/640, q55/45 → 1.57MB+2.99MB; build ✓ 8.19s; tsc api+web exit 0",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T04:17:37.923Z",
+      "updatedAt": "2026-08-10T04:55:53.850Z"
+    },
+    {
+      "id": "perf.compressor",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P2: Compressor de imagens sharp + webp",
+      "status": "done",
+      "notes": "20/22 arquivos convertidos p/ webp q80 (16,52MB economizados). 15 originais apagados. Mantidos: 4 fundoCard*.png + logo (referenciados por web/src/api/salamod1.ts e api/src/routes/og.ts, fora da posse) e animated-*.webp.",
+      "evidence": "npm run images:optimize (sharp q80) → 44 imgs 21.2MB → 8.9MB; fundoCard 5.4→0.38MB; tsc exit 0; build ✓",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T04:17:38.894Z",
+      "updatedAt": "2026-08-10T04:55:54.525Z"
+    },
+    {
+      "id": "perf.riot-players",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P3: Rajada Riot no /players → refresh serial server-side",
+      "status": "done",
+      "notes": "POST /api/players/refresh-elos server-side (fetchLeague c/ cache 10min, lote 60, 3 paralelo, TTL 30min, retorna {atualizadas,total,erros}); players.tsx chama 1x em background + refetch pós-refresh. Manter endpoint antigo refresh-elo. Teste manual /players (1 chamada, sem 429) fica para validação local do supervisor.",
+      "evidence": "POST /api/players/refresh-elos (lote 3, TTL 30min); players.tsx faz 1 chamada; api tsc exit 0",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T04:17:39.773Z",
+      "updatedAt": "2026-08-10T04:55:55.161Z"
+    },
+    {
+      "id": "perf.riot-stats",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P4: Stats 90 dias server-side com cache",
+      "status": "done",
+      "notes": "GET /api/riot/stats/:puuid?days&count (cache 30min) agrega ids+details em lotes de 5 no servidor; web buscaEstatisticasRecentes faz 1 chamada. player.ts sem mudança (shape igual).",
+      "evidence": "GET /api/riot/stats/:puuid cache 30min; buscarEstatisticasRecentes = 1 chamada; api+web tsc exit 0",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T04:17:40.616Z",
+      "updatedAt": "2026-08-10T04:55:55.676Z"
+    },
+    {
+      "id": "perf.bundle",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P5: Bundle JS 681KB → deps mortas + code-split",
+      "status": "done",
+      "notes": "Remover @supabase/supabase-js se não usado, corrigir imports react-icons não-tree-shakeable. Sem tocar em visual. Plano: docs/planos/plano-otimizacao-performance.md",
+      "evidence": "Diagnóstico: @supabase/supabase-js em uso (7 arquivos), react-icons tree-shakeable → nenhuma mudança segura; bundle mantém 680KB até os app.swap.*",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T04:17:41.587Z",
+      "updatedAt": "2026-08-10T04:55:56.411Z"
     }
   ],
   "decisions": [
@@ -1515,6 +1575,24 @@
       "decision": "A página da sala passa a viver em /5v5/:id, /aram/:id, /1v1/:id, /time_vs_time/:id (slug = modo real da sala no banco), substituindo /sala-mod1/:id. O botão de compartilhar e todas as navegações usam a rota nova. API adiciona modo em /wallet/balance emPartida e no erro ja_em_sala_apostada para montar o link.",
       "rationale": "/sala-mod1/:id era feio e não refletia o conteúdo. Slug dinâmico por modo deixa a URL verdadeira e o link compartilhado já mostra o modo. Rota segue pública (visitante vê sem login). Sem mudança de schema — resposta de API aditiva + front.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-037",
+      "date": "2026-08-10T00:25:30.611Z",
+      "author": "deepseek",
+      "title": "RIOT_API_KEY configurada na VPS (dev key, não comitar valor)",
+      "decision": "A RIOT_API_KEY do usuário foi configurada no /root/m7arena/.env da VPS (estava vazia, causando 401 no vínculo Riot) e o container app foi recriado. O valor NÃO vai para o git/status — é segredo (invariante 3.4). É chave de desenvolvimento da Riot: expira em ~24h, depois o vínculo volta a falhar e o usuário precisa de uma key permanente (personal) para produção.",
+      "rationale": "401 BR1 no vínculo Riot era RIOT_API_KEY vazia no .env da VPS. Testado: GET /api/riot/account/lucasm7/BR1 agora retorna 200 com dados reais. Valor do segredo fica só na VPS.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-038",
+      "date": "2026-08-10T04:17:43.595Z",
+      "author": "deepseek",
+      "title": "Iniciativa de otimização de performance: 5 planos na Fase 1, deploy no final",
+      "decision": "Top 10 de peso medido vira plano em docs/planos/plano-otimizacao-performance.md. Fase 1 = itens #1–#5 (heróis webp, compressor sharp, refresh Riot server-side, stats server-side, bundle), cada um executado por 1 subagente supervisionado. Fase 2 = itens #6–#10 depois. Deploy na VPS apenas após validação local do usuário.",
+      "rationale": "Prioriza o maior peso por entrega (27MB de dist: 18MB imagens + 7MB vídeos) e o maior processamento externo (bursts da Riot API). WebP animado escolhido pelo usuário; sharp como compressor leve único. Deploy só no final evita janelas de deploy quebrado.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1562,171 +1640,18 @@
       "openedAt": "2026-08-05T19:53:04.996Z",
       "resolvedAt": "2026-08-05T20:39:54.145Z",
       "resolution": "Chave PIX aleatória cadastrada pelo usuário (8386e1ba-cfec-4dfb-a443-148c83a7c69f). Pedido PIX real criado com sucesso na VPS: payment 365c59a3 (R$5, 500 MC, status pending), QR code e brCode gerados, external_reference casando. Webhook fail-closed validado em produção (401 sem assinatura). Falta apenas pagar o PIX real para o crédito cair (teste final do usuário)."
+    },
+    {
+      "id": "BLK-006",
+      "description": "RIOT_API_KEY na VPS é chave de DESENVOLVIMENTO da Riot (expira em ~24h). O vínculo de conta Riot e o proxy /api/riot/* vão voltar a dar 401 quando expirar. Para produção é necessária uma chave permanente (personal key) no painel developer.riotgames.com — usuário precisa gerar e passar para configurar na VPS.",
+      "component": "app.riot-key",
+      "openedBy": "deepseek",
+      "openedAt": "2026-08-10T00:25:36.288Z",
+      "resolvedAt": null,
+      "resolution": null
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-03T05:31:04.623Z",
-      "agent": "riven",
-      "summary": "Redesign dos modais de depósito e elegibilidade (skill design-frontend). DepositModal.tsx: header com subtítulo de valor (\"Quanto maior o pacote, maior o bônus\"), grade de pacotes com destaque de seleção (check + gradiente dourado), badge \"Mais Escolhido\" no popular, badge de \"+X% bônus\" calculado relativo ao pacote R$10 nos maiores, resumo do pedido com \"Custo por MC\" (transparência de valor), CTA maior, tela de QR com valor a pagar em destaque. ModaisElegibilidade.tsx: ModalShell redesenhado (linha de acento no topo por cor de tipo, ícone por modal específico em vez de sempre AlertTriangle, botões com sombra/feedback de escala), modal de saldo com barra de progresso e microcopy \"Recarga em segundos via PIX\". Lógica de negócio e classes dos demais elementos intactas. Build web passou (✓ built in 10.18s).",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/partidas/ModaisElegibilidade.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:32:50.688Z",
-      "agent": "deepseek",
-      "summary": "Bug UX de salas: a contagem (timer de confirmação) não aparecia na hora quando a última vaga era preenchida em aba de background (Chrome congela o WebSocket). Diagnóstico: o `entrar()` só chamava `sincronizarJogadores()` (atualiza jogadores, ignora o estado que o servidor retorna), então a transição preenchendo→confirmacao não refletia no DOM até um refetch manual (reload/voltar pra aba). Solução (conforme pedido do usuário, sem polling): em useSalaSimples.ts, o `entrar()` agora checa `r.estado === 'confirmacao'` e nesse caso chama `sincronizarTudo('entrar')` (refetch da sala inteira) — a contagem aparece na hora mesmo com WebSocket congelado. Entrar/sair/confirmar/recusar no caso geral ficaram como estavam (realtime). Testado no browser MCP: última vaga → DOM mostra CONFIRME AGORA + timer sem reload. tsc web ok (só 2 pré-existentes), nginx rebuildado.",
-      "touched": [
-        "web/src/hooks/useSalaSimples.ts"
-      ]
-    },
-    {
-      "at": "2026-08-03T05:34:29.289Z",
-      "agent": "deepseek",
-      "summary": "Usuário validou em teste real (duas abas, duas contas): a contagem de confirmação agora aparece na hora ao preencher a última vaga. Registrado ADR-026 (refetch da sala inteira via r.estado no entrar, sem polling). Nada mais mudou — build já estava no ar.",
-      "touched": [
-        "web/src/hooks/useSalaSimples.ts"
-      ]
-    },
-    {
-      "at": "2026-08-03T06:05:50.821Z",
-      "agent": "deepseek",
-      "summary": "Unifiquei o resultado de todas as salas no admin (ADR-027): removi a votação red/blue de player (que ainda usava Supabase e apurava no cliente). Agora casual e apostada enviam print → aguardando_revisao → admin decide. Mudanças: match-flow entrarEmRevisao aceita casual; upload validarPrintDePartida aceita casual e revisor (admin/moderador); report-result sempre vai para revisão; cron fantasma cobre casual; front SalaMod1 remove botão \"Finalizar Partida\" (todas usam \"Enviar Print e Iniciar Revisão\"). Prints agora com lightbox ao clicar (mesmo padrão logos de time) no AguardandoRevisao e no RevisaoPartidas, mostrando quem anexou (ADR-028). Fix robustez: decisaoId validado como uuid (400 em vez de 500). Criei admin@m7arena.local/Admin@M7Arena2026. Novos smoke: scripts/smoke-casual-revisao.mjs 10/10. Testes API 45/45. Stack local rebuildada.",
-      "touched": [
-        "api/src/lib/match-flow.ts",
-        "api/src/routes/upload.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/src/routes/revisao.ts",
-        "api/src/cron.ts",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/components/partidas/AguardandoRevisao.tsx",
-        "web/src/components/admin/RevisaoPartidas.tsx",
-        "api/test/estados.test.ts",
-        "api/test/cron.test.ts",
-        "scripts/smoke-casual-revisao.mjs"
-      ]
-    },
-    {
-      "at": "2026-08-03T06:15:38.579Z",
-      "agent": "deepseek",
-      "summary": "Commit f25bc9a com todo o trabalho do app. Inclui: front P5 das salas apostadas (design v3 §11: vitrine pública, modais de elegibilidade, CarteiraEStrikes, avisos Riot ID/kick, painel Em Análise com prints+lightbox+contestação, RegrasDaSala), resultado unificado no admin para TODAS as salas (ADR-027, votação red/blue removida), fix do linked preso após decisão do admin, revisão valida decisionId uuid, upload aceita revisor, cron fantasma cobre casuais, scripts de senha do BLK-001 (57 hashes bcrypt), smokes 10/10 e 8/8, SEO da Riven (index.html/robots/sitemap), status docs (ADR-026/027/028). Working tree limpo. Usuário ia desligar o PC; quando voltar, próximo passo sugerido: resolver BLK-003 (credenciais de pagamento com a senha do Supabase) ou rodar sec.regras-servidor.",
-      "touched": [
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/components/partidas/",
-        "web/src/components/perfil/",
-        "api/src/routes/revisao.ts",
-        "api/src/lib/match-flow.ts",
-        "api/src/routes/upload.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/src/cron.ts",
-        "scripts/smoke-casual-revisao.mjs",
-        "scripts/migrate/extract-passwords.mjs",
-        "scripts/migrate/load-passwords.mjs"
-      ]
-    },
-    {
-      "at": "2026-08-04T03:10:31.099Z",
-      "agent": "deepseek",
-      "summary": "Sessao de deploy + fix de revisao. Commit 2038924 (remocao residuos votacao red/blue) + deploy na VPS. VPS estava em 892ef18 (atrasado): realtime do compose rodava dist que nao existe no host — fix usando imagem compilada do app (b9bc34e); migration 0009 (apostas/escrow/strikes) nao estava no banco — apliquei via psql. Defini cargo 'proprietario' para lucasm7academy@gmail.com. Bug: 403 em /api/revisao/pendentes para o dono — eRevisor so aceitava admin/moderador; fix incluiu proprietario (acesso-sala.ts + realtime), commit b2c0f30. Smoke VPS novo (scripts/smoke-vps-revisao.mjs) 13/13 ok: sala casual -> revisao pelo proprietario (403->200), decisao, encerrada, linked liberado, jogador entra em sala nova. Deploy no ar (lobby 200, health 200). Pendente: remover smoke.mjs/probe.mjs deixados em /app do container (nodeapp sem permissao); browser MCP nao conectou (Chrome sem porta 9222).",
-      "touched": [
-        "infra/docker-compose.yml",
-        "api/src/lib/acesso-sala.ts",
-        "api/src/realtime/index.ts",
-        "scripts/smoke-vps-revisao.mjs",
-        "api/src/lib/elegibilidade.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/src/routes/matches.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx",
-        "VPS:/root/m7arena"
-      ]
-    },
-    {
-      "at": "2026-08-04T04:14:40.892Z",
-      "agent": "deepseek",
-      "summary": "Forca-tarefa ajustarsala (planejamento, sem codigo). Teste VPS revelou 4 bugs. (D) Contas bloqueadas ja_em_outra_sala: sala 2 presa em 'finalizacao' (estado morto do ADR-027) segurava linked=true; join filtra so linked sem checar sala ativa (matches.ts:223). Destravei dados na VPS (one-off). (A) Contagem nao inicia p/ quem ja esta na sala: ADR-026 so cobre quem dispara; os outros dependem do WS (que estava fora ate b9bc34e). (B) Timer dessincronizado: useSalaSimples.ts:85 usa Date.now() local, sem clock offset. (C) 1v1 com 1 jogador: servidor conta so sala atual; provavel efeito combinado do A. Plano em ajustarsala.md com 5 fases. Nenhum codigo alterado — aguarda validacao do usuario.",
-      "touched": [
-        "ajustarsala.md",
-        "VPS:/root/m7arena (dados: sala 2 destravada)",
-        "api/src/routes/matches.ts",
-        "api/src/lib/match-flow.ts",
-        "api/src/lib/match-shape.ts",
-        "api/src/cron.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/hooks/useSalaRealtime.ts"
-      ]
-    },
-    {
-      "at": "2026-08-04T04:58:17.925Z",
-      "agent": "deepseek",
-      "summary": "Implementei o plano ajustarsala.md por fases, testando cada uma. F1: server_time no shape, join de salas protegido por ESTADOS_ATIVOS (fix bug D — linked residual em sala morta nao bloqueia), cron de saneamento de salas presas em 'finalizacao' e linked orfao. F2: clockSync.ts mede offset server_time-Date.now() e timers usam agoraServidor() (fix bug B). F3: fallback polling a cada 5s quando WS nao entrega ha 8s (fix bug A). Reforcos de regra: smoke-clock-sync.mjs simula relogios opostos (+5min/-3min) e prova convergencia (5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9 (1v1 nao abre com 1 jogador, deadline coerente, linked residual liberado). Tudo commitado e deployado na VPS (commit 8ad0cf4). Nao toquei em nada do pandapost. VPS: 2 vCPU, 7.8Gi RAM (2.3Gi usado, 5.5Gi livre), load 0.02, containers m7arena usam ~212MiB total.",
-      "touched": [
-        "ajustarsala.md",
-        "scripts/smoke-clock-sync.mjs",
-        "scripts/smoke-vps-salas.mjs",
-        "api/src/lib/match-shape.ts",
-        "api/src/routes/matches.ts",
-        "api/src/cron.ts",
-        "api/test/cron.test.ts",
-        "api/test/estados.test.ts",
-        "web/src/lib/clockSync.ts",
-        "web/src/lib/api.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/hooks/useSalaRealtime.ts"
-      ]
-    },
-    {
-      "at": "2026-08-04T05:22:58.637Z",
-      "agent": "deepseek",
-      "summary": "Fechei o plano ajustarsala (fases 1-5). Implementadas F1 (server_time no shape, join protegido por ESTADOS_ATIVOS, cron saneamento de salas mortas), F2 (clockSync.ts offset), F3 (fallback polling 5s). Reforcos de regra: smoke-clock-sync.mjs (relogios opostos +5min/-3min convergem, 5/5), teste de deadline now+60s no servidor, smoke-vps-salas.mjs 9/9. Teste visual com 2 contas reais via Chrome CDP (porta 9223): sala 1v1 #23 com 1 jogador ficou AGUARDANDO JOGADORES (bug C = efeito do bug A); conta 2 preencheu ultima vaga -> CONFIRMANDO PRESENCA, timer no servidor coerente com a tela (33s vs 47s). Tudo deployado e commitado (2e810f7). VPS saudavel. Nao mexi no pandapost.",
-      "touched": [
-        "ajustarsala.md",
-        "scripts/smoke-clock-sync.mjs",
-        "scripts/smoke-vps-salas.mjs",
-        "api/src/lib/match-shape.ts",
-        "api/src/routes/matches.ts",
-        "api/src/cron.ts",
-        "api/src/realtime/index.ts",
-        "api/src/lib/acesso-sala.ts",
-        "api/test/cron.test.ts",
-        "api/test/estados.test.ts",
-        "web/src/lib/clockSync.ts",
-        "web/src/lib/api.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/hooks/useSalaRealtime.ts"
-      ]
-    },
-    {
-      "at": "2026-08-04T05:57:03.352Z",
-      "agent": "deepseek",
-      "summary": "Reforcos finais do ajustarsala para o teste com 10 players. (1) Review de logica com 10 jogadores simultaneos: join/confirm usam FOR UPDATE na linha do match -> serializa cliques concorrentes; checagem de vaga e total>=max dentro do lock; 11o jogador barrado. (2) Corrigi polling fallback para rodar SO com WS morto (antes rodava a cada 5s em sala parada com 10 jogadores mesmo com WS perfeito, 2 req/s de desperdicio). (3) Otimizei sincronizarTudo para 1 GET unico (antes 2 GETs identicos de /matches/:id -> dobrava trafego com 10 jogadores e arriscava estados divergentes). (4) Novo teste de servidor: 5v5 com 10 jogadores preenchem -> confirmacao, 11o barrado (32/32 na suite). (5) NOVO smoke-clock-sync-vps.mjs: sala 1v1 real na VPS em confirmacao, 7 clientes simulados com relogios de -8min a +8min usando o codigo real de clockSync.ts -> SEM correcao cada um ve tempo diferente (0s a 540s), COM correcao todos veem 60s. 6/6. Tudo commitado e deployado.",
-      "touched": [
-        "scripts/smoke-clock-sync-vps.mjs",
-        "web/src/hooks/useSalaSimples.ts",
-        "api/test/estados.test.ts",
-        "ajustarsala.md"
-      ]
-    },
-    {
-      "at": "2026-08-04T06:03:41.107Z",
-      "agent": "morpheus",
-      "summary": "Auditoria ofensiva (Morpheus) do fluxo de salas pos-ajustarsala. Correcoes confirmadas solidas: race no join/confirm protegida por FOR UPDATE+transacao (10 confirms paralelos 8/8), clock sync validado com relogios diferentes, polling fallback so com WS morto, 1 GET unico. FINDINGS: (1) HIGH - senha da sala exposta no GET /api/matches/:id para qualquer autenticado (match-shape.ts:86); servidor nunca valida senha no join - protecao so cosmética. (2) MEDIUM - mass assignment na criacao: maxJogadores/taxaPct/apostaMc do body sem clamp (matches.ts:114-141); taxaPct negativo cria MC do nada no calcularPayout (escrow.ts:64-70). (3) MEDIUM - CORS origin:true+credentials ecoa origem arbitraria (mitigado por SameSite=Lax). (4) LOW - aposta negativa vira dado inconsistente. Upload bem defendido (memoryStorage+sanitize+uuid). Cookies httpOnly+secure+lax corretos.",
-      "touched": [
-        "api/src/routes/matches.ts",
-        "api/src/lib/match-shape.ts",
-        "api/src/lib/escrow.ts",
-        "api/src/index.ts",
-        "api/src/routes/upload.ts",
-        "api/src/lib/session.ts"
-      ]
-    },
     {
       "at": "2026-08-04T06:17:12.968Z",
       "agent": "morpheus",
@@ -1969,6 +1894,133 @@
         "scripts/migrate/load.js",
         "VPS banco m7arena (user_roles, users.riot_id)",
         "mig.load"
+      ]
+    },
+    {
+      "at": "2026-08-10T00:09:49.662Z",
+      "agent": "deepseek",
+      "summary": "Botão compartilhar sala + rota por modo + OG preview social. (1) Compartilhar copia mensagem formatada (emojis, nick, elo, vagas, MC, link) — implementado e commitado em 741618d. (2) Rota /sala-mod1/:id → /:modo/:id (5v5/aram/1v1/time_vs_time); API adiciona modo em wallet emPartida e erro ja_em_sala_apostada (ADR-036, commit c0b537a). (3) Página OG dinâmica /api/og/:modo/:id servida para crawlers (WhatsApp/Facebook/etc.) via nginx map de User-Agent — imagem do card do modo, nome, vagas, MC; fallback genérico. (4) Fix: compartilhar usava maxJogadores (camelCase) gerando '1/undefined' — corrigido para max_jogadores/elo_minimo (527a5c0). (5) Deploy VPS: merge local + compose build app/nginx, rota OG validada em produção (dev.m7arena.pro/5v5/8 → HTML OG com 1/10 vagas, imagem fundoCard5v5.png 200). Pendente: usuário testar preview no WhatsApp (cache antigo pode exigir ?v=2 ou nova mensagem); infra HTTP-only commitado junto (54e0a2b).",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/App.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/lib/api.ts",
+        "api/src/routes/og.ts",
+        "api/src/index.ts",
+        "infra/nginx.conf",
+        "infra/nginx.local.conf"
+      ]
+    },
+    {
+      "at": "2026-08-10T00:25:52.671Z",
+      "agent": "deepseek",
+      "summary": "Sessão: compartilhar sala, rota por modo, OG preview social, nome de sala e fix Riot. (1) Botão Compartilhar copia mensagem formatada com emojis/elo/vagas/MC/link (741618d). (2) Rota /sala-mod1/:id → /:modo/:id; API adiciona modo em wallet emPartida e erro ja_em_sala_apostada; ADR-036 (c0b537a). (3) Página OG /api/og/:modo/:id servida a crawlers via nginx map de User-Agent (og:image = fundoCard do modo); commits 2a00d25, 54e0a2b. (4) Fix undefined: compartilhar usava camelCase, shape da API é snake_case (527a5c0). (5) Nome default de sala sem nome = '<modo> Personalizada' (c5b471d). (6) Deploy VPS: merge + compose rebuild; OG validado (dev.m7arena.pro/5v5/8 → 1/10 vagas, fundoCard5v5.png 200). (7) RIOT_API_KEY estava VAZIA no .env da VPS → 401 no vínculo Riot; configurada key do usuário, validado 200 (ADR-037, BLK-006). Pendente: testar preview WhatsApp (cache antigo); RIOT key é dev key expira ~24h; front da VPS com merges locais não commitados.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/App.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/lib/api.ts",
+        "api/src/routes/og.ts",
+        "api/src/routes/riot.ts",
+        "api/src/index.ts",
+        "infra/nginx.conf",
+        "infra/nginx.local.conf",
+        ".env VPS (RIOT_API_KEY)"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:03:00.283Z",
+      "agent": "deepseek",
+      "summary": "Sala (SalaMod1.tsx): tutorial de como colar o código dentro do display. Imagem do usuário (Novo_Projeto_(18).png) copiada para web/public/images/tutorial-codigo.jpeg (1024x1024). Overlay 'PARTIDA CONFIRMADA' (estado iniciando_partida) agora exibe a imagem preenchendo o círculo com gradiente p/ legibilidade, título 'Preparar para a Batalha!' e o código da sala em destaque; botão 'Copiar Código' saiu do overlay e foi para o ACTION FOOTER no rodapé (mesmo padrão Confirmar/Enviar Print). Build local: npm run build ok (16.35s, dist com a imagem). tsc tem 2 erros pré-existentes não relacionados (ElectricBorder.tsx, Streamers.tsx). Deploy VPS: commit 8e7cac9 + push, merge a360cd6 na main, rebuild imagem nginx (front), validado: /images/tutorial-codigo.jpeg → HTTP 200 537433 bytes image/jpeg. Pendente: usuário testar na sala.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "web/public/images/tutorial-codigo.jpeg"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:07:08.951Z",
+      "agent": "deepseek",
+      "summary": "Sala (SalaMod1.tsx): refinamento do tutorial no display. Removidos todos os textos sobrepostos na imagem ('Preparar para a Batalha!', 'Use o código abaixo...', código 'SEM-CODIGO-AGUARDE' e o gradiente) — o display agora mostra só a imagem do tutorial, limpa. Texto 'Prepare-se para a batalha' pequeno (text-[1.4vmin] #FFB700 uppercase tracking) adicionado acima do botão 'Copiar Código' no rodapé, fora do display. Build local ok (8.95s). Deploy VPS: commit 0c603aa + push, merge na main, rebuild nginx, container reiniciado. Pendente: usuário testar.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:22:38.942Z",
+      "agent": "deepseek",
+      "summary": "P4 (perf.riot-stats) concluído. api/src/routes/riot.ts: novo GET /stats/:puuid (query days default 90 cap 365, count default 40 cap 100), cache próprio stats:{puuid}:{days}:{count} TTL 30min reutilizando getCached/setCache (setCache ganhou param ttlMs opcional, proxies seguem 10min); helper riotRaw (fetch cru + cache 10min, loga erro, null em falha); agregação agregada copiada do cliente (topChampions top10, roles %, totalGames=matches baixadas). ids vazio → empty cacheado; falha de ids → empty 200 sem cachear; catch loga warn. web/src/api/riot.ts: buscarEstatisticasRecentes chama /api/riot/stats/:puuid?days&count=40, null se !ok, catch com console.warn. web/src/api/player.ts confirmado sem mudança (consome statsRaw.topChampions/roles/totalGames). api tsc exit 0; web tsc so erros pre-existentes ElectricBorder/Streamers. Não rodei servidor/deploy/npm install.",
+      "touched": [
+        "api/src/routes/riot.ts",
+        "web/src/api/riot.ts",
+        "web/src/api/player.ts"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:22:43.858Z",
+      "agent": "deepseek",
+      "summary": "Sala (SalaMod1.tsx): (1) texto 'Prepare-se para a batalha' no rodapé mudou de #FFB700 para branco. (2) Durante partida_iniciada, o display (hub) agora mostra overlay 'FINALIZOU A PARTIDA?' + 'Envie os resultados no botão abaixo' (fundo escuro/blur sobre o mapa, animação suave) — fala com jogadores que ainda não voltaram da partida. Estado aguardando_revisao continua com o card quadrado AguardandoRevisao (já mostra Em Análise + prints X/3 + grid de prints enviados + botão de enviar) — não mexi nele. Build local ok (15.47s). Deploy VPS: commit c80d8de + push, merge, rebuild nginx, container reiniciado. Pendente: usuário testar e opinar se o card de revisão precisa de mais mensagens.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:30:00.292Z",
+      "agent": "deepseek",
+      "summary": "P3 perf.riot-players: refresh de elo movido p/ servidor. api/src/routes/players.ts: fetchLeague(puuid) (cache 10min, fetch nativo, sem chave/429/5xx/rede → [] + console.warn) + POST /api/players/refresh-elos (auth 401, stale = sem elo_cache OU stats_updated_at nulo/>30min, lote 60, 3 paralelo, retorna {atualizadas,total,erros}). Endpoint antigo mantido. web/src/pages/players.tsx: removido buscarElo e burst; atualizarElosServerSide chama 1x POST em background + refetch pós-refresh sem re-disparar. Visual intacto. api tsc exit 0; web tsc só erros pré-existentes (ElectricBorder/Streamers). Não toquei riot.ts. Sem deploy/npm install. Pendente: validação manual /players.",
+      "touched": [
+        "api/src/routes/players.ts",
+        "web/src/pages/players.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:36:16.128Z",
+      "agent": "deepseek",
+      "summary": "Regra + card de revisão (aguardando_revisao). API upload.ts: 1 print por jogador ('print_ja_enviado') antes do teto 3; prints.test.ts 10/10 ok. UI AguardandoRevisao.tsx + SalaMod1.tsx: card agora 'PARTIDA FINALIZADA' + 'Em análise', lineup Blue/Red com check verde em quem já enviou, botão enviar some pra quem já enviou ('Print enviado — aguardando análise'), mensagem 'Mande o resultado da partida', contestação só para participante confirmado. traduzirErroSala + print_ja_enviado. Builds ok. Deploy VPS commit 4b9d76c, rebuild app/realtime/nginx, site 200. Pendente: usuário testar fluxo de revisão.",
+      "touched": [
+        "api/src/routes/upload.ts",
+        "api/test/prints.test.ts",
+        "web/src/components/partidas/AguardandoRevisao.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/api/salamod1.ts"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:41:30.410Z",
+      "agent": "deepseek",
+      "summary": "P2 perf.compressor concluído. Script web/scripts/optimize-images.mjs (sharp q80, >15KB, mantém o menor, tabela+total) + script package.json images:optimize. 20/20 arquivos >15KB viraram webp vencedores (economia 16,52MB). Referências trocadas p/ .webp em Jogar, Lobby, SalaMod1, players, Tutorial, QuemSomos, Login, equipes, LayoutWrapper, DepositModal. 15 originais apagados. MANTIDOS (referenciados por arquivos fora da posse): fundoCard5v5/Aram/1v1/Time.png (web/src/api/salamod1.ts + api/src/routes/og.ts), cropped logo png (og.ts + index.html). Webp do logo removido (não referenciado). animated-*.webp intactos. tsc só erros pré-existentes; build ok. public/images 21,20MB→8,87MB.",
+      "touched": [
+        "web/scripts/optimize-images.mjs",
+        "web/package.json",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/pages/Tutorial.tsx",
+        "web/src/pages/QuemSomos.tsx",
+        "web/src/pages/Login.tsx",
+        "web/src/pages/equipes.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/public/images"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:51:29.531Z",
+      "agent": "deepseek",
+      "summary": "Sala revisão (SalaMod1 + AguardandoRevisao): (1) colunas laterais Blue/Red (VagaSlot) ficam ocultas em aguardando_revisao — os jogadores só aparecem dentro do card quadrado central. (2) Lineup dentro do card agora usa a borda cortada (clipPath polygon) igual às colunas laterais, com labels 'Blue-Side'/'Red-Side' e mantendo o fundo na cor da side. (3) Cabeçalho do card: status agora só 'Em análise' (removido '· Pagamento em até X'). Build web ok. Deploy VPS commit f20795a, rebuild nginx. Pendente: usuário testar.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/components/partidas/AguardandoRevisao.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T04:56:01.847Z",
+      "agent": "deepseek",
+      "summary": "Sala revisão — lineup do card quadrado restilizado para o padrão VagaSlot: borda 1px sólida na cor da side (blue/red) com corte (clipPath 12px/11.4px) e interior suave (bg-blue-500/10, bg-red-500/10), nicks na cor da side com brilho (VagaSlot nomeStyle), avatar com border na cor. Build web ok. Deploy VPS commit bdbd894, rebuild nginx. Pendente: usuário conferir visual.",
+      "touched": [
+        "web/src/components/partidas/AguardandoRevisao.tsx"
       ]
     }
   ]

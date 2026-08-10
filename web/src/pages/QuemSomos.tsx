@@ -37,7 +37,7 @@ export default function QuemSomos() {
                 >
                   <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
                     <img
-                      src="/images/lucasEdu.png"
+                      src="/images/lucasEdu.webp"
                       alt="Lucas Eduardo, fundador e CEO da M7 Arena"
                       className="w-full h-full object-cover"
                     />
@@ -75,7 +75,7 @@ export default function QuemSomos() {
 
                   <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden group">
                     <img
-                      src="/images/lucasEdu.png"
+                      src="/images/lucasEdu.webp"
                       alt="Lucas Eduardo, fundador e CEO da M7 Arena"
                       className="w-full h-full object-cover transition-all duration-700"
                     />

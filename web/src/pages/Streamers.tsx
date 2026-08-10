@@ -692,7 +692,7 @@ export default function Streamers() {
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 to-black/60 overflow-hidden">
                       <img
                         src={`https://static-cdn.jtvnw.net/previews-ttv/live_user_${stream.twitch_channel.toLowerCase()}-600x600.jpg`}
-                        alt={stream.profile?.nome || stream.twitch_channel}
+                        alt={stream.twitch_channel}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';

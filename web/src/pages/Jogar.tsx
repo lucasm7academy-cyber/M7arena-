@@ -69,7 +69,7 @@ const heroSlides: HeroSlide[] = [
     icon: Users,
     color: '#4ade80',
     bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
-    bgImage: '/images/heroSlide1.png',
+    bgImage: '/images/heroSlide1.webp',
     actionText: 'Criar Time',
     actionLink: '/times'
   },
@@ -81,7 +81,7 @@ const heroSlides: HeroSlide[] = [
     icon: Crown,
     color: '#fbbf24',
     bgGradient: 'from-yellow-500/20 via-yellow-500/5 to-transparent',
-    bgImage: '/images/heroSlide2.png',
+    bgImage: '/images/heroSlide2.webp',
     actionText: 'Seja VIP',
     actionLink: '/sejavip'
   },
@@ -93,7 +93,7 @@ const heroSlides: HeroSlide[] = [
     icon: Shield,
     color: '#3b82f6',
     bgGradient: 'from-blue-500/20 via-blue-500/5 to-transparent',
-    bgImage: '/images/heroSlide3.png',
+    bgImage: '/images/heroSlide3.webp',
     actionText: 'Código de Conduta',
     actionLink: '/politicas'
   }
@@ -111,7 +111,7 @@ const modosCards = [
     icone: Swords,
     cor: '#fbbf24',
     stats: 'Competitivo • Estratégia',
-    bgImage: '/images/fundoCard5v5.png'
+    bgImage: '/images/fundoCard5v5.webp'
   },
   {
     modo: 'aram' as ModoJogo,
@@ -120,7 +120,7 @@ const modosCards = [
     icone: Snowflake,
     cor: '#3b82f6',
     stats: 'Caótico • Diversão',
-    bgImage: '/images/fundoCardAram.png'
+    bgImage: '/images/fundoCardAram.webp'
   },
   {
     modo: '1v1' as ModoJogo,
@@ -129,7 +129,7 @@ const modosCards = [
     icone: Sword,
     cor: '#ef4444',
     stats: 'Individual • Habilidade',
-    bgImage: '/images/fundoCard1v1.png'
+    bgImage: '/images/fundoCard1v1.webp'
   },
   {
     modo: 'time_vs_time' as ModoJogo,
@@ -138,7 +138,7 @@ const modosCards = [
     icone: Trophy,
     cor: '#a855f7',
     stats: 'Clã • Ranking',
-    bgImage: '/images/fundoCardTime.png'
+    bgImage: '/images/fundoCardTime.webp'
   }
 ];
 

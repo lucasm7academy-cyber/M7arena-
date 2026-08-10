@@ -61,6 +61,8 @@ function rolesToCargo(roles: string[]): string {
   if (roles.includes('proprietario')) return 'proprietario';
   if (roles.includes('admin')) return 'admin';
   if (roles.includes('organizador') || roles.includes('organizer')) return 'organizador';
+  if (roles.includes('streamer')) return 'streamer';
+  if (roles.includes('caster')) return 'caster';
   return 'jogador';
 }
 

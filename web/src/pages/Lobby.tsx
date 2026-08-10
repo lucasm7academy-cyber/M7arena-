@@ -620,15 +620,12 @@ const Home = () => {
           {/* Background Image/Art Placeholder */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
+            <img
+              src="/images/animated-highnoon-lucian.webp"
+              alt=""
+              draggable={false}
               className="w-full h-full object-cover object-[center_15%] opacity-80 transition-transform duration-700 group-hover:scale-105"
-            >
-              <source src="/images/animated-highnoon-lucian.webm" type="video/webm" />
-            </video>
+            />
           </div>
 
           {/* Content Wrapper */}
@@ -774,7 +771,7 @@ const Home = () => {
               {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
                 <div className="hidden sm:flex group relative flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center rounded-2xl border border-[#9146FF]/30 overflow-hidden flex-col items-center justify-center p-6 text-center min-h-[220px] shadow-2xl bg-black">
                   <img
-                    src="/images/howling_abyss_night.jpeg"
+                    src="/images/howling_abyss_night.webp"
                     alt="Howling Abyss Night"
                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
                   />
@@ -1034,7 +1031,7 @@ const Home = () => {
               title: 'Crie sua Conta',
               desc: 'Cadastro rápido e seguro. Vincule sua conta Riot Games para checagem de elo oficial.',
               color: '#FFB700',
-              bgImage: '/images/poro_step1.jpeg',
+              bgImage: '/images/poro_step1.webp',
             },
             {
               n: '02',
@@ -1042,7 +1039,7 @@ const Home = () => {
               title: 'Monte seu Time',
               desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento — sem time, a gente ajuda a montar.',
               color: '#00F0FF',
-              bgImage: '/images/poro_step2.jpeg',
+              bgImage: '/images/poro_step2.webp',
             },
             {
               n: '03',
@@ -1050,7 +1047,7 @@ const Home = () => {
               title: 'Inscreva-se',
               desc: 'Escolha o campeonato ideal para o nível da sua equipe — do Bronze ao Desafiante — e garanta sua vaga nas chaves.',
               color: '#00FF41',
-              bgImage: '/images/poro_step3.jpeg',
+              bgImage: '/images/poro_step3.webp',
             },
             {
               n: '04',
@@ -1058,7 +1055,7 @@ const Home = () => {
               title: 'Compita e Suba',
               desc: 'Jogue partidas competitivas, acumule PDL no ranking global e dispute premiações em Pix.',
               color: '#D500FF',
-              bgImage: '/images/poro_step4.jpeg',
+              bgImage: '/images/poro_step4.webp',
             },
           ].map((step, idx) => (
             <motion.div

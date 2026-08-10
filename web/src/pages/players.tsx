@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { useSound } from '../hooks/useSound';
 import { api } from '../lib/api';
-import { buscarElo } from '../api/riot';
 import {
   PlayerDetailModal,
   type Jogador,
@@ -31,7 +30,6 @@ import {
   getIconeUrl,
 } from '../components/players/PlayerDetailModal';
 import { VipCrown } from '../components/ui/VipBadge';
-import ElectricBorder from '../components/ui/ElectricBorder';
 
 const IS_DEV = import.meta.env.DEV;
 const PLAYERS_PAGE = 40;
@@ -71,16 +69,19 @@ function statsDeRanqueada(c: any): { partidas: number; winRate: number } {
   return { partidas: 0, winRate: 0 };
 }
 
-// ✅ Atualiza o elo_cache (tier/rank/lp/wins/losses) das contas listadas, em paralelo.
+// ✅ Atualiza o elo_cache das contas stale NO SERVIDOR, em uma única chamada.
 //
-// Gatilho de atualização:
+// Gatilho de atualização (mantido o critério atual):
 //   - TTL expirado (1h, acelerado de 24h pra ver wins/losses chegarem rápido); ou
 //   - Não tem tier nenhum (jogador novo); ou
 //   - Tem tier mas o cache antigo não tem `wins`/`losses` (campo só criado agora).
 //
 // `force=true` ignora TTL e atualiza tudo que tiver puuid (botão "Atualizar dados").
+// O servidor decide as contas stale (TTL 30min), busca a Riot em lote serial
+// (3 em paralelo) e grava elo_cache + stats_updated_at — o cliente NÃO chama
+// mais buscarElo em massa.
 const TTL_MS = 60 * 60 * 1000; // 1h
-async function atualizarElosNecessarios(contas: any[], force = false): Promise<number> {
+async function atualizarElosServerSide(contas: any[], force = false): Promise<number> {
   const agora = Date.now();
   const contasParaAtualizar = contas.filter(conta => {
     if (!conta.puuid) return false;
@@ -97,49 +98,22 @@ async function atualizarElosNecessarios(contas: any[], force = false): Promise<n
     return eloAntigo || semElo || semWinsLosses;
   });
 
-  if (IS_DEV) console.log(`📡 atualizarElosNecessarios: ${contasParaAtualizar.length}/${contas.length} contas (force=${force})`);
+  if (IS_DEV) console.log(`📡 atualizarElosServerSide: ${contasParaAtualizar.length}/${contas.length} contas (force=${force})`);
   if (contasParaAtualizar.length === 0) return 0;
 
-  let atualizadas = 0;
-  await Promise.all(contasParaAtualizar.map(async (conta) => {
-    try {
-      const ranqueadas = await buscarElo(conta.puuid);
-      const soloEntry = ranqueadas?.find((r: any) => r.queueType === 'RANKED_SOLO_5x5');
-      const flexEntry = ranqueadas?.find((r: any) => r.queueType === 'RANKED_FLEX_SR');
-
-      // Sempre grava (mesmo quando ambos null) pra registrar que já buscamos
-      // — assim o TTL impede re-tentativa em loop. A escrita passa pela API
-      // (POST /players/refresh-elo), que seta stats_updated_at no servidor.
-      const eloCache = {
-        soloQ: soloEntry ? {
-          tier:   soloEntry.tier ?? 'IRON',
-          rank:   soloEntry.rank ?? 'IV',
-          lp:     soloEntry.leaguePoints ?? 0,
-          wins:   soloEntry.wins   ?? 0,
-          losses: soloEntry.losses ?? 0,
-        } : null,
-        flexQ: flexEntry ? {
-          tier:   flexEntry.tier ?? 'IRON',
-          rank:   flexEntry.rank ?? 'IV',
-          lp:     flexEntry.leaguePoints ?? 0,
-          wins:   flexEntry.wins   ?? 0,
-          losses: flexEntry.losses ?? 0,
-        } : null,
-      };
-
-      try {
-        await api.players.refreshElo([{ userId: conta.user_id, eloCache }]);
-        atualizadas++;
-      } catch (err: any) {
-        if (IS_DEV) console.warn('⚠️ refreshElo falhou:', conta.user_id, err?.message);
-      }
-    } catch (err: any) {
-      if (IS_DEV) console.warn('⚠️ buscarElo falhou:', conta.user_id, err?.message);
+  try {
+    const res = await fetch('/api/players/refresh-elos', { method: 'POST', credentials: 'include' });
+    if (!res.ok) {
+      console.warn('⚠️ refresh-elos falhou:', res.status, res.statusText);
+      return 0;
     }
-  }));
-
-  if (IS_DEV) console.log(`✅ atualizarElosNecessarios: ${atualizadas} contas atualizadas`);
-  return atualizadas;
+    const data = await res.json();
+    if (IS_DEV) console.log(`✅ refresh-elos: ${data?.atualizadas ?? 0} atualizadas / ${data?.total ?? 0} total / ${data?.erros ?? 0} erros`);
+    return data?.atualizadas ?? 0;
+  } catch (err: any) {
+    console.warn('⚠️ refresh-elos falhou:', err?.message);
+    return 0;
+  }
 }
 
 // Mapeamentos inversos para filtros server-side
@@ -160,7 +134,7 @@ async function carregarJogadores(
   filtroElo: EloType | 'todos' = 'todos',
   filtroRole: Role | 'todos' = 'todos',
   filtroSemTime = false,
-  opts: { refreshElos?: boolean; forceRefresh?: boolean } = {}
+  opts: { refreshElos?: boolean; forceRefresh?: boolean; onRefreshed?: () => void } = {}
 ): Promise<{ jogadores: Jogador[]; totalCount: number }> {
   const rows = await api.players.filtrados({
     p_offset:    offset,
@@ -175,25 +149,14 @@ async function carregarJogadores(
   const totalCount = Number(rows[0]?.total_count ?? 0);
   const userIds = rows.map((r: any) => r.user_id).filter(Boolean);
 
-  // ✅ Dispara refresh da Riot API em BACKGROUND (não bloqueia render).
-  //    Critério: TTL expirado, sem tier, OU sem wins/losses no cache antigo.
+  // ✅ Dispara refresh SERVER-SIDE do elo_cache em BACKGROUND (não bloqueia render).
+  //    O servidor decide as contas stale (TTL 30min) e busca a Riot em lote
+  //    serial (3 em paralelo) — o cliente faz UMA chamada em vez de ~154
+  //    buscarElo + ~154 escritas. Quando termina, refetch da página pra exibir o elo novo.
   if (opts.refreshElos !== false && userIds.length > 0) {
-    api.players.byIds(userIds)
-      .then((contasFresh) => {
-        if (!contasFresh) return;
-        // Mescla com `rows` da RPC pra ter soloq_wins/losses + stats_updated_at
-        const rowsMap = Object.fromEntries(rows.map((r: any) => [r.user_id, r]));
-        const contasMerged = contasFresh.map((c: any) => ({
-          ...c,
-          tier:         rowsMap[c.user_id]?.tier,
-          soloq_wins:   rowsMap[c.user_id]?.soloq_wins,
-          soloq_losses: rowsMap[c.user_id]?.soloq_losses,
-          flexq_wins:   rowsMap[c.user_id]?.flexq_wins,
-          flexq_losses: rowsMap[c.user_id]?.flexq_losses,
-        }));
-        return atualizarElosNecessarios(contasMerged, opts.forceRefresh ?? false);
-      })
-      .catch((err) => { if (IS_DEV) console.warn('⚠️ players.byIds falhou:', err?.message); });
+    atualizarElosServerSide(rows, opts.forceRefresh ?? false)
+      .then(() => { if (opts.onRefreshed) opts.onRefreshed(); })
+      .catch((err) => { if (IS_DEV) console.warn('⚠️ refresh-elos falhou:', err?.message); });
   }
 
   // ✅ Partidas/winRate agora vêm da ranqueada do LoL (RPC v3 entrega wins/losses).
@@ -381,7 +344,16 @@ export default function App() {
     if (isPageNav) setLoadingPage(true); else setLoading(true);
     const { jogadores: lista, totalCount: total } = await carregarJogadores(
       page * PLAYERS_PAGE, PLAYERS_PAGE, search, elo, role, semTime,
-      { forceRefresh }
+      {
+        forceRefresh,
+        onRefreshed: () => {
+          // Rebusca a página atual SEM spinner e SEM disparar outro refresh,
+          // pra mostrar o elo que acabou de ser atualizado no servidor.
+          carregarJogadores(page * PLAYERS_PAGE, PLAYERS_PAGE, search, elo, role, semTime, { refreshElos: false })
+            .then(({ jogadores: novos }) => { if (novos.length) setJogadores(novos); })
+            .catch((err: any) => { if (IS_DEV) console.warn('⚠️ refetch pós-refresh falhou:', err?.message); });
+        },
+      }
     );
     setJogadores(lista);
     setCurrentPage(page);
@@ -464,7 +436,7 @@ export default function App() {
       <div className="space-y-0 rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0a]/20 backdrop-blur-md mb-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden p-6">
           <div className="absolute inset-0 z-0">
-            <img src="/images/fundoryzecortado.png" alt="Arena" className="w-full h-full object-cover" />
+            <img src="/images/fundoryzecortado.webp" alt="Arena" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/10 to-white/0" />
           </div>
           <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -704,17 +676,9 @@ export default function App() {
                 className="group cursor-pointer"
               >
                 {jogador.isVIP ? (
-                  <div className="h-full p-1 rounded-[28px] cursor-pointer transition-all hover:-translate-y-1" style={{ background: PRIMARY_COLOR, filter: `drop-shadow(0 0 12px rgba(255, 183, 0, 0.3))` }}>
-                    <ElectricBorder
-                      color={PRIMARY_COLOR}
-                      speed={1}
-                      chaos={0.12}
-                      borderRadius={28}
-                      className="h-full rounded-[28px] w-full"
-                    >
+                    <div className="h-full p-1 rounded-[28px] cursor-pointer transition-all hover:-translate-y-1" style={{ background: PRIMARY_COLOR, filter: `drop-shadow(0 0 12px rgba(255, 183, 0, 0.3))` }}>
                       {cardInner}
-                    </ElectricBorder>
-                  </div>
+                    </div>
                 ) : (
                   <div
                     className="relative h-full p-1 rounded-[28px] cursor-pointer transition-all hover:-translate-y-1"

@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 // ── URLs CONSTANTES (não mudam, não precisam de query) ──
 const LOGO_URL = 'https://bfsusctegzvfrlehhink.supabase.co/storage/v1/object/public/public-images/logo-m7.png';
 const YASUO_URL = 'https://bfsusctegzvfrlehhink.supabase.co/storage/v1/object/public/public-images/Yasuo1.webp';
-const MAPA_BACKGROUND = '/images/mapa2.png';
+const MAPA_BACKGROUND = '/images/mapa2.webp';
 
 export default function Login() {
   const { user, login, register } = useAuth();
