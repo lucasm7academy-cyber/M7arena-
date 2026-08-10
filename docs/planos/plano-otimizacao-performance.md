@@ -245,17 +245,19 @@ npm install --save-dev sharp
 
 ---
 
-## Fase 2 — Itens #6–#10 (depois, novo ciclo)
+## Fase 2 — Itens #6–#10
 
-| Plano | Item | Resumo |
-|---|---|---|
-| P6 | #6 Realtime/refetch | `match_update` → broadcast com backoff/jitter; evitar refetch em massa de `GET /api/matches/:id`; polling fallback com jitter em `useSalaSimples` |
-| P7 | #7 Páginas-monstro | Quebrar `CampeonatoDetalhes`/`createCampPage` em módulos (recorte, não redesign) — **aguarda swaps do app.swap.* (ADR-010)** |
-| P8 | #8 Elo por membro no TimePage | Reutilizar `elo_cache` do banco; refresh serial server-side (reuso do P3) |
-| P9 | #9 NotificationBell | Cache de convites + evitar refetch por página; manter badge atualizado via WS |
-| P10 | #10 Externos + cron | Cache/CDN próprio para ícones (communitydragon/ddragon); revisar `@supabase/supabase-js` residual; cron com índice em `matches.updatedAt` |
+| Plano | Item | Status | Resumo |
+|---|---|---|---|
+| P6 | #6 Realtime/refetch | ✅ done | Jitter no refetch em massa (`useSalaRealtime`: debounce 250ms + jitter 0–600ms) e no polling fallback (`useSalaSimples`: 5–7s). Desincroniza clientes sem mudar comportamento |
+| P7 | #7 Páginas-monstro | 🔒 blocked | Corte de arquivos herdados acontece dentro dos `app.swap.*` (ADR-010) — nunca como tarefa isolada |
+| P8 | #8 Elo por membro no TimePage | ✅ done | `GET /api/teams/:id` devolve `elo` por membro do `elo_cache` do banco; TimePage usa cache + TIER_MAP e **removeu o `buscarElo` por membro** (Promise.all de N chamadas) |
+| P9 | #9 NotificationBell | ✅ done | **Decisão do usuário: sem WS/polling** — recarrega ao clicar (já era lazy-load); badge de pendentes calculado do último clique |
+| P10 | #10 Externos + cron | ✅ done | Index do cron **já existe** (migration 0009 `idx_matches_status_updated`); CDN de ícones não vale cache próprio; supabase residual é dos swaps. **Achados p/ cutover:** gap de cobertura no `verify-swap.js` (recrutamentos/transmissoes/votos_jogos/results/pagamentos) + 2 URLs hardcoded do Supabase em `Login.tsx:9-10` |
 
-**Regra:** nada da Fase 2 começa antes de fechar a Fase 1 e validar local + deploy.
+**Achados do P10 que precisam de decisão (não são performance):**
+- `Login.tsx:9-10` usa `bfsusctegzvfrlehhink.supabase.co` (logo + fundo Yasuo) — quebra no cutover se o Supabase cair.
+- `verify-swap.js` não conta domínios residuais (recrutamentos 7, transmissoes 5, votos_jogos 1, resultados_partidas 1, pagamentos 1) — portão pode declarar swap feito com chamadas restantes.
 
 ---
 

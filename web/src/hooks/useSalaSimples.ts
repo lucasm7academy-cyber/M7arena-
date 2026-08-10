@@ -315,7 +315,10 @@ export function useSalaSimples(
             sincronizarTudo('polling-fallback').finally(() => {
                 pollingAtivoRef.current = false;
             });
-        }, POLL_INTERVALO_MS);
+        // Jitter de 0–2000ms: com WS morto, TODOS os clientes cairiam no polling
+        // de 5s no mesmo instante (clientes sincronizados = rajada no GET). O
+        // intervalo de 5 a 7s dessincroniza os refetches sem atrasar a entrega.
+        }, POLL_INTERVALO_MS + Math.random() * 2000);
 
         return () => clearInterval(id);
     }, [salaAtiva, sincronizarTudo]);

@@ -65,6 +65,11 @@ const DOMINIOS = {
 const EXTRAS = {
   "client Supabase instanciado": /createClient\s*\(/g,
   "VITE_SUPABASE_*": /VITE_SUPABASE_\w+/g,
+  // Tabelas ainda consumidas via supabase.from() que NÃO têm swap/endpoint
+  // próprio (recrutamento, transmissoes de stream, votos, resultado de partida).
+  // O gate de --strict falha até virarem rota da API (app.swap.* pendente).
+  "supabase.from() sem swap (recrutamentos, transmissoes, votos_jogos, resultados_partidas)":
+    /supabase\s*\.\s*from\(\s*['"`](recrutamentos|transmissoes|votos_jogos|resultados_partidas)['"`]/g,
 };
 
 function arquivos(dir) {

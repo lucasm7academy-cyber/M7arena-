@@ -104,13 +104,22 @@ export default function NotificationBell() {
       });
 
       setNotifications(allNotifs);
-      setNotificationCount(0); // Limpa badge após abrir
     } catch (err) {
       console.error('❌ Erro ao carregar notificações:', err);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // ✅ Badge de pendentes SEM polling: calculado só a partir do que carregou
+  // no último clique no sino (join_request / invite_received). O valor fica no
+  // estado do componente até o próximo clique, que recarrega tudo do servidor.
+  useEffect(() => {
+    const pendentes = notifications.filter(
+      (n: any) => n.type === 'join_request' || n.type === 'invite_received'
+    ).length;
+    setNotificationCount(pendentes);
+  }, [notifications]);
 
   // ✅ Click outside
   useEffect(() => {

@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-10T04:56:01.847Z",
+  "updatedAt": "2026-08-10T05:26:48.001Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1249,6 +1249,66 @@
       "owner": "deepseek",
       "createdAt": "2026-08-10T04:17:41.587Z",
       "updatedAt": "2026-08-10T04:55:56.411Z"
+    },
+    {
+      "id": "perf.realtime",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P6: Realtime refetch jitter",
+      "status": "done",
+      "notes": "Jitter no refetch em massa (useSalaRealtime debounce 250ms + jitter ~600ms) e no polling fallback (useSalaSimples 5s + jitter) p/ desincronizar clientes.",
+      "evidence": "useSalaRealtime debounce 250ms + jitter 0-600ms; useSalaSimples polling 5-7s jitter; tsc web exit 0",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T05:17:20.742Z",
+      "updatedAt": "2026-08-10T05:26:47.270Z"
+    },
+    {
+      "id": "perf.paginas",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P7: Páginas-monstro (CampeonatoDetalhes/createCampPage)",
+      "status": "blocked",
+      "notes": "BLOQUEADO por ADR-010: corte de arquivos herdados acontece dentro dos app.swap.*, nunca como tarefa isolada. Reabrir quando os swaps chegarem lá.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T05:17:21.658Z",
+      "updatedAt": "2026-08-10T05:17:21.658Z"
+    },
+    {
+      "id": "perf.timepage",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P8: Elo por membro no TimePage do banco",
+      "status": "done",
+      "notes": "GET /api/teams/:id inclui elo por membro (elo_cache DB); TimePage usa TIER_MAP do cache, removido fetch buscarElo por membro (Promise.all N chamadas). tsc ok.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T05:17:22.685Z",
+      "updatedAt": "2026-08-10T05:17:22.685Z"
+    },
+    {
+      "id": "perf.notificacoes",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P9: NotificationBell carrega ao clicar",
+      "status": "done",
+      "notes": "Decisão do usuário: sem WS/polling, recarrega ao clicar (já era lazy-load). Badge agora mostra pendentes (join_request/invite_received) calculado do último clique, sem polling.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T05:17:23.711Z",
+      "updatedAt": "2026-08-10T05:17:23.711Z"
+    },
+    {
+      "id": "perf.externos",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "P10: Index cron + externos",
+      "status": "done",
+      "notes": "Tarefa A: index composto de matches(status,updated_at) JÁ EXISTE como constraint manual da migration 0009 (idx_matches_status_updated, IF NOT EXISTS). Nenhuma migration nova gerada — schema mantido intacto (revertido). Tarefa B: análise dos externos (CDN ícones, supabase-js residual, storage Supabase hardcoded) entregue como relatório. tsc api exit 0.",
+      "evidence": "Index do cron já existe (0009 idx_matches_status_updated). CDN ícones: não vale cache próprio. Achados: verify-swap gap + Login.tsx URLs supabase hardcoded. tsc api exit 0",
+      "owner": "deepseek",
+      "createdAt": "2026-08-10T05:17:24.678Z",
+      "updatedAt": "2026-08-10T05:26:48.001Z"
     }
   ],
   "decisions": [
@@ -1653,35 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-04T06:17:12.968Z",
-      "agent": "morpheus",
-      "summary": "Corrigi os 4 findings da auditoria Morpheus do fluxo de salas e subi para a VPS. MORPH-001 (HIGH): senha de sala removida do shape (sempre null), validacao movida para o servidor no POST /join com timingSafeEqual; front guarda a senha digitada no lobby em salaSenhaStore e envia no join; erro senha_incorreta traduzido. MORPH-002 (MEDIUM): clamp de apostaMc (0..1M), taxaPct (0..100), maxJogadores (2..10) na criacao + allowlist do modo (5v5/1v1/aram/time_vs_time) + defesa em profundidade no calcularPayout (taxa invalida nunca infla premio). MORPH-003 (MEDIUM): CORS com allowlist fixa (APP_URL + localhost), validado na VPS que origem arbitraria nao recebe Access-Control-Allow-Origin. MORPH-004 (LOW): coberto pelo clamp. Testes 36/36, tsc api exit 0, build web ok. Deploy na VPS: lobby 200, health 200. Commits 97172b8 e e73f7a2.",
-      "touched": [
-        "api/src/routes/matches.ts",
-        "api/src/lib/match-shape.ts",
-        "api/src/lib/escrow.ts",
-        "api/src/index.ts",
-        "api/test/escrow.test.ts",
-        "web/src/lib/salaSenhaStore.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/lib/api.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-04T17:44:47.940Z",
-      "agent": "deepseek",
-      "summary": "Investiguei o sistema M7COINS no código: MC JÁ É moeda global (user_wallets.mc + mc_reservado escrow, ledger wallet_transactions, platform_revenue) e o fluxo que o usuário descreveu JÁ está implementado: admin declara vencedor → pagarPremio com taxa 8,99% congelada; empate → pagarEmpate sem taxa devolve tudo; cancel → pagarCancelamento (revisao.ts:104-125 + escrow.ts). Criei docs/planos/plano-m7coins.md (plano próprio consolidado: estado atual, modelo de dados, fluxo fim a fim, arredondamento, 6 lacunas com ordem: edge-functions/BLK-003, PIX, extrato front, app_config, MP). Atualizei ARQUITETURA.md §3.6 e PLANO_MIGRACAO.md com referência cruzada. ADR-029 registrada. Peça economia.mc.plano fechada (done). Nenhum código de produto alterado — o botão Jogar na sidebar (LayoutWrapper.tsx:116) foi adicionado no início da sessão com build ok.",
-      "touched": [
-        "docs/planos/plano-m7coins.md",
-        "docs/ARQUITETURA.md",
-        "docs/PLANO_MIGRACAO.md",
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
       "at": "2026-08-04T17:58:14.801Z",
       "agent": "deepseek",
       "summary": "Deploy do saldo MC no header (dev.m7arena.pro). 1) Adicionei botao 'Jogar' (rota /jogar, icone Gamepad2) como 2o item da sidebar em LayoutWrapper.tsx. 2) Criei web/src/components/icons/GoldEssenceIcon.tsx (SVG da moeda extraido do DepositModal, com useId p/ evitar colisao de ids SVG) e refatorei DepositModal para importar dele (visual 1:1). 3) Header: ao lado do botao Depositar, Link /perfil com icone da moeda + perfil.saldo formatado pt-BR (so user logado), escondido em telas < sm. 4) npm run build via node_modules/.bin/vite.cmd (npm run build nao regenerava dist — outro terminal tambem usa a pasta). Commit 0efda3f push + deploy VPS (git pull + docker compose up -d --build app nginx). Validado: health 200, lobby 200, bundle index-C5GBnhr4.js contem 'Saldo em M7 Coins' e path do icone. Removi arquivos temporarios vazios api/at*.txt. docs do plano M7COINS tambem foram commitados.",
@@ -2021,6 +2052,35 @@
       "summary": "Sala revisão — lineup do card quadrado restilizado para o padrão VagaSlot: borda 1px sólida na cor da side (blue/red) com corte (clipPath 12px/11.4px) e interior suave (bg-blue-500/10, bg-red-500/10), nicks na cor da side com brilho (VagaSlot nomeStyle), avatar com border na cor. Build web ok. Deploy VPS commit bdbd894, rebuild nginx. Pendente: usuário conferir visual.",
       "touched": [
         "web/src/components/partidas/AguardandoRevisao.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T05:10:43.252Z",
+      "agent": "deepseek",
+      "summary": "Fase 1 otimização performance DEPLOYADA (commit 0716124, ADR-038). Heroes webm→webp 7,3→4,6MB; compressor sharp (images 21,2→~1MB, fundoCard 5,4→0,38); /players e stats Riot agora server-side com cache (1 chamada); bundle: sem ação (supabase-js em uso). Correções: rolesToCargo streamer/caster (painel streamer abria como jogador), Streamers alt, ElectricBorder removida. dist 27→7,9MB; tsc limpo. VPS: merge clean, containers recriados, webp validados, stats 200+cache. Pendente: validação visual do usuário.",
+      "touched": [
+        "docs/planos/plano-otimizacao-performance.md",
+        "docs/planos/performance-baseline.md",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/contexts/PerfilContext.tsx",
+        "web/src/api/riot.ts",
+        "api/src/routes/riot.ts",
+        "api/src/routes/players.ts"
+      ]
+    },
+    {
+      "at": "2026-08-10T05:25:21.013Z",
+      "agent": "deepseek",
+      "summary": "P10 (perf.externos): (A) Investigação do index para o cron. Descoberta: a migration 0009_white_wallflower.sql (commit 3634c26) JÁ cria o index composto 'idx_matches_status_updated ON matches (status, updated_at)' com IF NOT EXISTS — exatamente o que a tarefa pedia. Gerei o 0014 via drizzle-kit, detectei a duplicação, revertei schema/journal e apaguei os arquivos 0014. NENHUMA migration nova necessária. (B) Relatório de externos: supabase-js residual em 7 arquivos (recrutamentos x7, transmissoes x5, votos_jogos x1, resultados_partidas x1, pagamentos x1, functions.invoke x1, getSession x1) — todos cobertos por app.edge-functions (VipModal/DiscordCallback) ou por swaps não planejados; verify-swap.js NÃO cobre essas tabelas (gap de cobertura). Login.tsx tem 2 URLs hardcoded do storage do Supabase (logo-m7.png, Yasuo1.webp) — item externo de peso. CDN ddragon/communitydragon: não vale cache próprio (volume baixo). tsc api exit 0.",
+      "touched": [
+        "db/schema/matches.ts",
+        "db/migrations/0009_white_wallflower.sql",
+        "db/migrations/0014_matches_status_updated_at_idx.sql",
+        "scripts/verify-swap.js",
+        "web/src/pages/Login.tsx",
+        "web/src/api/riot.ts",
+        "api/src/routes/matches.ts"
       ]
     }
   ]
