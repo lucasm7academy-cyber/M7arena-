@@ -173,7 +173,7 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                                 backgroundColor: '#3B82F6',
                                 clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                             }}>
-                            <div className="bg-blue-500/10 p-2"
+                            <div className="bg-[#050505] p-2"
                                 style={{
                                     clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                                 }}>
@@ -203,7 +203,7 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                                 backgroundColor: '#ef4444',
                                 clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                             }}>
-                            <div className="bg-red-500/10 p-2"
+                            <div className="bg-[#050505] p-2"
                                 style={{
                                     clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                                 }}>
@@ -236,7 +236,7 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                         <div className="grid grid-cols-3 gap-2">
                             {prints.map((p) => (
                                 <button key={p.id} onClick={() => setLightboxPrint(p)}
-                                    className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group text-left cursor-pointer"
+                                    className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group text-left cursor-pointer"
                                     title={`Print de ${p.nomeJogador} — clique para ampliar`}>
                                     <img src={api.prints.file(p.id)} alt={`Print de ${p.nomeJogador}`}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />

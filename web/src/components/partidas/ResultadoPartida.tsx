@@ -131,7 +131,7 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
               <div className="grid grid-cols-3 gap-2">
                 {prints.map((p) => (
                   <button key={p.id} onClick={() => setLightboxPrint(p)}
-                    className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group text-left cursor-pointer"
+                    className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group text-left cursor-pointer"
                     title={`Print de ${p.nomeJogador} — clique para ampliar`}>
                     <img src={api.prints.file(p.id)} alt={`Print de ${p.nomeJogador}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
