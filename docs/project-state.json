@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-10T05:26:48.001Z",
+  "updatedAt": "2026-08-10T22:21:09.701Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1281,10 +1281,10 @@
       "name": "P8: Elo por membro no TimePage do banco",
       "status": "done",
       "notes": "GET /api/teams/:id inclui elo por membro (elo_cache DB); TimePage usa TIER_MAP do cache, removido fetch buscarElo por membro (Promise.all N chamadas). tsc ok.",
-      "evidence": "",
+      "evidence": "GET /api/teams/:id devolve elo por membro do elo_cache; TimePage sem buscarElo por membro; tsc api+web exit 0; validado VPS (MASTER I, GRANDMASTER I)",
       "owner": "deepseek",
       "createdAt": "2026-08-10T05:17:22.685Z",
-      "updatedAt": "2026-08-10T05:17:22.685Z"
+      "updatedAt": "2026-08-10T05:31:46.430Z"
     },
     {
       "id": "perf.notificacoes",
@@ -1293,10 +1293,10 @@
       "name": "P9: NotificationBell carrega ao clicar",
       "status": "done",
       "notes": "Decisão do usuário: sem WS/polling, recarrega ao clicar (já era lazy-load). Badge agora mostra pendentes (join_request/invite_received) calculado do último clique, sem polling.",
-      "evidence": "",
+      "evidence": "NotificationBell lazy-load ao clicar (sem WS/polling), badge de pendentes do último clique; tsc web exit 0; deploy commit 74f58f6",
       "owner": "deepseek",
       "createdAt": "2026-08-10T05:17:23.711Z",
-      "updatedAt": "2026-08-10T05:17:23.711Z"
+      "updatedAt": "2026-08-10T05:31:46.984Z"
     },
     {
       "id": "perf.externos",
@@ -1713,64 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-04T17:58:14.801Z",
-      "agent": "deepseek",
-      "summary": "Deploy do saldo MC no header (dev.m7arena.pro). 1) Adicionei botao 'Jogar' (rota /jogar, icone Gamepad2) como 2o item da sidebar em LayoutWrapper.tsx. 2) Criei web/src/components/icons/GoldEssenceIcon.tsx (SVG da moeda extraido do DepositModal, com useId p/ evitar colisao de ids SVG) e refatorei DepositModal para importar dele (visual 1:1). 3) Header: ao lado do botao Depositar, Link /perfil com icone da moeda + perfil.saldo formatado pt-BR (so user logado), escondido em telas < sm. 4) npm run build via node_modules/.bin/vite.cmd (npm run build nao regenerava dist — outro terminal tambem usa a pasta). Commit 0efda3f push + deploy VPS (git pull + docker compose up -d --build app nginx). Validado: health 200, lobby 200, bundle index-C5GBnhr4.js contem 'Saldo em M7 Coins' e path do icone. Removi arquivos temporarios vazios api/at*.txt. docs do plano M7COINS tambem foram commitados.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/components/icons/GoldEssenceIcon.tsx",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/lib/api.ts",
-        "docs/planos/plano-m7coins.md",
-        "docs/ARQUITETURA.md",
-        "docs/PLANO_MIGRACAO.md"
-      ]
-    },
-    {
-      "at": "2026-08-04T18:23:37.212Z",
-      "agent": "deepseek",
-      "summary": "Melhoria visual das partidas finalizadas (deploy na VPS, 4 commits). (1) Seção \"Partidas Finalizadas\" do /jogar: card agora usa a imagem do modo (bgImage) em grayscale como fundo, mesmo tamanho dos cards de salas ativas (w-full sm:w-[380px] h-[320px]), com escritas e bordas coloridas (badges modo/vencedor/MC). (2) Tela da sala finalizada (/sala-mod1/:id estado encerrada): novo componente ResultadoPartida.tsx mostra card central com resultado (Time A/B/Empate), vencedores destacados e prints com lightbox. (3) Hub central (círculo SISTEMA ANALÍTICO) ocultado quando encerrada — o card de resultado ocupa o centro. (4) Revertido: grayscale da sala inteira e cadeado/FINALIZADO nas vagas (usuário pediu cores normais e P&B só na imagem de fundo do card). Validado no browser: sala encerrada 28 sem hub e com card de resultado; sala aberta 30 com hub normal. Build web ok (só 2 erros pré-existentes do fork). ADR-030 registrada.",
-      "touched": [
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/components/partidas/ResultadoPartida.tsx",
-        "web/src/components/partidas/VagaSlot.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-04T18:40:09.218Z",
-      "agent": "deepseek",
-      "summary": "3 correções deployadas (commits 29905a8, ea90cea). (1) 403 /admin: getAdminUser não aceitava role 'proprietario' — content.ts agora normaliza proprietario=admin, organizador=organizer. (2) Riot ID obrigatório em toda sala (decisão do dono): elegibilidade.ts moveu a checagem antes do retorno de casual; teste atualizado. (3) Nome/tag da vaga derivados de game_accounts.handle (nick + #tag, como o legado). Backfill: 131/145 contas tinham users.riot_id NULL (espelho só nas rotas novas) → UPDATE 131, agora 145/145. tsc ok, testes 51/51, health 200.",
-      "touched": [
-        "api/src/lib/content.ts",
-        "api/src/lib/elegibilidade.ts",
-        "api/src/lib/match-shape.ts",
-        "api/src/routes/matches.ts",
-        "api/test/elegibilidade.test.ts"
-      ]
-    },
-    {
-      "at": "2026-08-05T05:42:44.082Z",
-      "agent": "deepseek",
-      "summary": "Melhoria do painel admin (/admin) a pedido do usuário, que reportou duplicação deixada pelo agente Riven. Confirmado: os 6 cards de atalho da aba \"Visão\" (Saldos/Ranking/Notícias/Highlights/Cargos/Contatos) duplicavam exatamente as abas do menu superior. Corrigi em web/src/pages/Admin.tsx: removi os atalhos duplicados e substituí por widget operacional real — card \"Revisão de Partidas\" com contagem viva da fila (api.revisao.pendentes()), só para admin/proprietario, com atalho para a aba revisao. Typecheck web: Admin.tsx limpo (2 erros pré-existentes do fork em ElectricBorder.tsx e Streamers.tsx). Build vite ok (8.75s, bundle Admin gerado). Não commitei nem fiz deploy.",
-      "touched": [
-        "web/src/pages/Admin.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-05T05:45:51.462Z",
-      "agent": "deepseek",
-      "summary": "Revalidou e fechou sec.upload com correções. Já protegia: sessão m7_session (upload.ts:261-274), magic bytes+MIME+5MB, sanitize anti-traversal, sem sobrescrita, match-prints p/ participante confirmado/revisor com leitura autenticada. Call sites reais: equipes.tsx:298, TimePage.tsx:133, createCampPage.tsx:135, SalaMod1.tsx:175, AguardandoRevisao.tsx:88. verify-swap storage OK 0. Gaps corrigidos: team-logos agora valida dono/capitão (path=teamId, pasta /uploads/team-logos/<team_id>/; front passou o id, 2 linhas); public-images restrito a admin/organizador; Nginx bloqueou /uploads/match-prints/ (403) nos dois nginx.conf. Teste novo upload-permissao.test.ts 4/4. Evidência: tsc api exit 0; tsx --test 56/57 (falha pré-existente test-realtime.mjs, exige WS+env); web tsc só 2 pré-existentes. Pendente: HTTP e2e não rodou (Docker daemon down) e validação ao vivo do nginx. Nota: evidência antiga citava 'prefixo do userId' que não existia — agora isolamento por time.",
-      "touched": [
-        "api/src/routes/upload.ts",
-        "api/test/upload-permissao.test.ts",
-        "infra/nginx.conf",
-        "infra/nginx.local.conf",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
       "at": "2026-08-05T05:50:21.735Z",
       "agent": "deepseek",
       "summary": "Print de resultado: lightbox da imagem crescia pouco porque estava capada em max-w-[min(480px,90vw)] max-h-[80vh]. Aumentei para max-w-[min(1400px,94vw)] max-h-[92vh] nos 3 lightboxes (AguardandoRevisao.tsx, RevisaoPartidas.tsx, ResultadoPartida.tsx). Commit 7b670aa push + deploy VPS (git pull + compose up --build app nginx). Health 200, lobby 200, bundle contém '1400px'. Docker Desktop local não abriu no Windows, então não subi a stack local (localhost:3000) — usuário pediu deploy direto. Pendente: usuário quer tentar desinstalar/reinstalar o Docker Desktop (risco: perde volumes/imagens locais; não afeta VPS).",
@@ -2081,6 +2023,56 @@
         "web/src/pages/Login.tsx",
         "web/src/api/riot.ts",
         "api/src/routes/matches.ts"
+      ]
+    },
+    {
+      "at": "2026-08-10T05:30:56.669Z",
+      "agent": "deepseek",
+      "summary": "Fase 2 do plano de performance concluída e DEPLOYADA (commit 74f58f6). P6: jitter no refetch realtime (250-850ms) e polling fallback (5-7s) desincroniza clientes. P8: GET /api/teams/:id devolve elo por membro do elo_cache; TimePage sem buscarElo por membro (validado: MASTER I/GRANDMASTER I). P9: notificações carregam ao clicar (decisão do usuário, sem WS/polling) + badge de pendentes. P10: index do cron já existia (migration 0009); verify-swap.js corrigido — agora conta supabase.from() sem swap (recrutamentos/transmissoes/votos_jogos/resultados_partidas = 14, Pendente 21). P7 bloqueado por ADR-010 (corte de arquivos só dentro dos app.swap.*). Tweak de 90s (match-flow/useSalaSimples) deixado fora via staging seletivo. tsc api+web exit 0. Deploy VPS: merge limpo, containers recriados, endpoints validados (home 200, hero webp 200, stats 200, time detail com elo). Pendente: validação visual do usuário; Login.tsx tem 2 URLs hardcoded do Supabase (quebram no cutover).",
+      "touched": [
+        "scripts/verify-swap.js",
+        "web/src/hooks/useSalaRealtime.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/pages/TimePage.tsx",
+        "web/src/components/notifications/NotificationBell.tsx",
+        "api/src/routes/teams.ts",
+        "docs/planos/plano-otimizacao-performance.md"
+      ]
+    },
+    {
+      "at": "2026-08-10T15:41:56.733Z",
+      "agent": "deepseek",
+      "summary": "Verifiquei preview OG do botão de compartilhar de sala (relato: imagem do modo sumiu no WhatsApp). Cadeia confirmada OK em dev.m7arena.pro: nginx detecta crawler (map $is_crawler) e reescreve /5v5/:id p/ /api/og/:modo/:id (api/src/routes/og.ts); para sala real (5v5/16) retorna og:image=images/fundoCard5v5.webp com dimensões válidas e HTTP 200 (Content-Type image/webp). fundoCard*.webp existem (compressão sharp do perf Fase 1 não quebrou). Causa provável do relato: cache de preview do WhatsApp ou link de sala inexistente caindo no fallback genérico (logo, sem imagem do modo). ACHADO RELEVANTE: m7arena.pro (produção) está parked na Hostinger (página \"Parked Domain\", DNS não aponta p/ VPS) — preview OG no domínio de produção só funcionará após cutover. Nenhuma correção necessária agora.",
+      "touched": [
+        "api/src/routes/og.ts",
+        "infra/nginx.conf"
+      ]
+    },
+    {
+      "at": "2026-08-10T22:11:33.884Z",
+      "agent": "deepseek",
+      "summary": "Corrigido o lightbox de prints de resultado que abria preso ao card em vez de cobrir a tela (prints de imagem larga como screenshot ficavam pequenos, imagem quadrada preenchia o card). Causa raiz: o card raiz de AguardandoRevisao e ResultadoPartida tem transform permanente (-translate-x-1/2 -translate-y-1/2 do Tailwind + animação y do framer-motion), que torna esse elemento o containing block do position:fixed — o overlay passou a ser relativo ao card (w-[min(94vw,640px)]) e não ao viewport. Fix: lightbox dos dois componentes renderizado via createPortal(..., document.body). npx tsc --noEmit (script lint do web) → exit 0. Pendente: validação visual pelo usuário (clicar na miniatura de um print largo numa sala em aguardando_revisao/encerrada). Admin (RevisaoPartidas) não tocado: ancestral não tem transform permanente.",
+      "touched": [
+        "web/src/components/partidas/AguardandoRevisao.tsx",
+        "web/src/components/partidas/ResultadoPartida.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T22:16:45.057Z",
+      "agent": "deepseek",
+      "summary": "Deploy do fix do lightbox para a VPS. Commit 0cc7910 na feat/advertencias-ban (só os 2 arquivos do lightbox), push, merge na main da VPS (049ce59), rebuild do container nginx (m7arena-nginx:latest) e up -d. Verificação no bundle servido: index-C06INUOI.js contém 'createPortal' e 'document.body'; SalaMod1-C7OomXf-.js contém 'createPortal' — portal ativo. Tweak de 90s (match-flow.ts/useSalaSimples.ts) deixado fora do commit de propósito (staging seletivo da sessão anterior). Pendente: teste do usuário clicando numa miniatura de print largo numa sala em aguardando_revisao/encerrada.",
+      "touched": [
+        "web/src/components/partidas/AguardandoRevisao.tsx",
+        "web/src/components/partidas/ResultadoPartida.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T22:21:09.700Z",
+      "agent": "deepseek",
+      "summary": "Reformulei o card RegrasDaSala (mostrado em salas apostadas no estado confirmacao, SalaMod1.tsx:665). Antes mostrava aposta + taxa 8,99% + SLA de pagamento + regra de abandono. Agora mostra só: Valor da aposta, Valor do pote (sala cheia = aposta × maxJogadores) e Ganho por jogador vencedor (= pote / jogadoresPorTime, floor). Removi imports de SLA_REVISAO_HORAS/Percent/Timer e troquei prop taxaPct por modo. Chamada atualizada para passar sala.modo. npx tsc --noEmit (web) → exit 0. Pendente: validação visual pelo usuário.",
+      "touched": [
+        "web/src/components/partidas/RegrasDaSala.tsx",
+        "web/src/pages/SalaMod1.tsx"
       ]
     }
   ]
