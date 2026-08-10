@@ -701,14 +701,14 @@ const Jogar = () => {
 
   // ── AÇÕES ──────────────────────────────────────────
   // A sala é pública (ADR: visitante assiste, mas não ocupa vaga — o aviso de
-  // login aparece ao clicar na vaga, dentro de /sala-mod1/:id). A senha de sala
+  // login aparece ao clicar na vaga, dentro da sala /:modo/:id). A senha de sala
   // privada é guardada para o POST /join reutilizar — a VALIDAÇÃO acontece no
   // servidor (MORPH-001), nunca aqui no cliente.
   const entrarNaSala = (sala: Sala, senha?: string) => {
     if (user && sala.temSenha && senha) {
       guardarSenhaSala(sala.id, senha);
     }
-    navigate(`/sala-mod1/${sala.id}`);
+    navigate(`/${sala.modo}/${sala.id}`);
     setShowSenhaModal(null);
     setErroSenha('');
   };
@@ -723,7 +723,7 @@ const Jogar = () => {
       const nova = await criarSala(dados, usuarioAtual);
       if (nova) {
         setShowCriarModal(false);
-        navigate(`/sala-mod1/${nova.id}`);
+        navigate(`/${nova.modo}/${nova.id}`);
       }
     } catch (error: any) {
       // Nunca engole erro: traduz o código do servidor para o usuário.
@@ -1138,7 +1138,7 @@ const Jogar = () => {
                   return (
                     <div
                       key={sala.id}
-                      onClick={() => navigate(`/sala-mod1/${sala.id}`)}
+                      onClick={() => navigate(`/${sala.modo}/${sala.id}`)}
                     className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-[#FFB700]/50 transition-all snap-start group/card bg-black"
                     >
                       {modoInfo.bgImage && (

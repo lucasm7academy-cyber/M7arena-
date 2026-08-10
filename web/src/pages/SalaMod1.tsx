@@ -126,7 +126,7 @@ export default function SalaMod1() {
         };
         const eloLinha = sala.eloMinimo ? `Mínimo: ${sala.eloMinimo}` : 'Free Elo';
         const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} M7Coins` : 'Casual';
-        const link = `${window.location.origin}/sala-mod1/${sala.id}`;
+        const link = `${window.location.origin}/${sala.modo}/${sala.id}`;
 
         const mensagem =
 `🎮 ${nick} convida você para jogar ${textoModo[sala.modo] || 'uma partida'} personalizado

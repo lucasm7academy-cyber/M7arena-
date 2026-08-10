@@ -43,7 +43,7 @@ walletRouter.get("/balance", async (req, res) => {
     // `mcReservado` é o que está travado em salas apostadas ativas; `emPartida`
     // lista as salas que seguram a reserva para o valor virar link no perfil.
     const emPartida = await db
-      .select({ salaNum: matches.salaNum, apostaMc: matches.apostaMc, nome: matches.nome })
+      .select({ salaNum: matches.salaNum, apostaMc: matches.apostaMc, nome: matches.nome, modo: matches.mode })
       .from(matchPlayers)
       .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
       .where(and(eq(matchPlayers.userId, user.id), gt(matches.apostaMc, 0), inArray(matches.status, ESTADOS_ATIVOS)));
@@ -53,7 +53,7 @@ walletRouter.get("/balance", async (req, res) => {
       mp: wallet?.mp || 0,
       mc: wallet?.mc || 0,
       mcReservado: wallet?.mcReservado || 0,
-      emPartida: emPartida.map((s) => ({ salaNum: s.salaNum, apostaMc: s.apostaMc ?? 0, nome: s.nome })),
+      emPartida: emPartida.map((s) => ({ salaNum: s.salaNum, apostaMc: s.apostaMc ?? 0, nome: s.nome, modo: s.modo })),
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao consultar saldo da carteira" });

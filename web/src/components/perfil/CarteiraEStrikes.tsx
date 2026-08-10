@@ -79,7 +79,7 @@ export function CarteiraEStrikes({ saldoDisponivel, advertencias, advertenciasMa
                             <div className="space-y-1.5 pt-1">
                                 <p className="text-[9px] text-white/30 uppercase tracking-widest font-bold">Reservado em:</p>
                                 {emPartida.map((s) => (
-                                    <button key={s.salaNum} onClick={() => navigate(`/sala-mod1/${s.salaNum}`)}
+                                    <button key={s.salaNum} onClick={() => navigate(`/${s.modo || '5v5'}/${s.salaNum}`)}
                                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.03] border border-white/5 hover:border-primary/40 hover:bg-white/5 transition-all text-left">
                                         <span className="text-white/60 text-[11px] font-bold uppercase tracking-wider truncate">
                                             #{String(s.salaNum).padStart(6, '0')} · {s.nome || 'Sala'}

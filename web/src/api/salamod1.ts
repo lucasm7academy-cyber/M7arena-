@@ -34,6 +34,8 @@ export interface ResultadoSalaRpc {
     faltam?: number;
     /** `ja_em_sala_apostada` — sala apostada ativa que segura a vaga do jogador. */
     salaNum?: number;
+    /** `ja_em_sala_apostada` — modo da sala que segura a vaga (para montar `/sala/:modo/:id`). */
+    salaModo?: string;
 }
 
 const IS_DEV = import.meta.env.DEV;
@@ -49,6 +51,7 @@ async function normalizarResultado(p: Promise<import('../lib/api').ApiSalaResult
             mudou: r?.mudou === true,
             faltam: r?.faltam,
             salaNum: r?.sala_num,
+            salaModo: r?.modo,
         };
     } catch (error: any) {
         if (IS_DEV) console.error(`❌ [Sala] ${error?.message}`);

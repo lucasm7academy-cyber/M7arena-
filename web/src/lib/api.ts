@@ -165,7 +165,7 @@ export interface ApiWalletBalance {
   /** MC travado em salas apostadas ativas (design v3 §11 — "em partida"). */
   mcReservado?: number;
   /** Salas apostadas ativas que seguram a reserva — valor vira link no perfil. */
-  emPartida?: { salaNum: number; apostaMc: number; nome: string | null }[];
+  emPartida?: { salaNum: number; apostaMc: number; nome: string | null; modo?: string }[];
 }
 
 /** Pacote de compra de MC vindo de GET /api/payments/packages (ADR-031). */
@@ -227,7 +227,7 @@ export interface ApiWithdrawal {
 
 /**
  * Shape legado de `salas` que as telas de Jogar/SalaMod1 consomem (ADR-005/010).
- * `id` é o `sala_num` público (numérico) — o fork navega em `/sala-mod1/:id`,
+ * `id` é o `sala_num` público (numérico) — o fork navega em `/:modo/:id`,
  * faz parseInt e deriva o código `#${String(id).padStart(6,'0')}`.
  */
 export interface ApiLegacySala {
@@ -293,6 +293,8 @@ export interface ApiSalaResultado {
   faltam?: number;
   /** Erro `ja_em_sala_apostada` — sala apostada ativa que segura a vaga do jogador. */
   sala_num?: number;
+  /** Erro `ja_em_sala_apostada` — modo da sala que segura a vaga (rota `/sala/:modo/:id`). */
+  modo?: string;
 }
 
 /** Print de prova de uma partida apostada (design v3 §6). */
