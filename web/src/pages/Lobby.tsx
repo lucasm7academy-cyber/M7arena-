@@ -620,12 +620,15 @@ const Home = () => {
           {/* Background Image/Art Placeholder */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
-            <img
-              src="/images/animated-highnoon-lucian.webp"
-              alt=""
-              draggable={false}
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
               className="w-full h-full object-cover object-[center_15%] opacity-80 transition-transform duration-700 group-hover:scale-105"
-            />
+            >
+              <source src="/images/animated-highnoon-lucian.webm" type="video/webm" />
+            </video>
           </div>
 
           {/* Content Wrapper */}

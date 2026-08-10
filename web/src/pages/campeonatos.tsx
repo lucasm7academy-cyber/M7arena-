@@ -190,12 +190,15 @@ const Campeonatos = () => {
             {/* Gradiente responsivo: vertical no mobile para legibilidade perfeita do texto na base, horizontal no desktop */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent sm:bg-gradient-to-r sm:from-black sm:via-black/40 sm:to-transparent z-10" />
 
-            <img
-              src="/images/animated-battle-academia.webp"
-              alt=""
-              draggable={false}
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
               className="w-full h-full object-cover object-[center_15%] opacity-60 transition-transform duration-700 group-hover:scale-105"
-            />
+            >
+              <source src="/images/animated-battle-academia.webm" type="video/webm" />
+            </video>
 
           </div>
 
