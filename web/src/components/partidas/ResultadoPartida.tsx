@@ -23,11 +23,8 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
   const jogadores = Array.isArray(sala?.jogadores) ? sala.jogadores : [];
   const timeANome = sala?.time_a_nome || 'Time Azul';
   const timeBNome = sala?.time_b_nome || 'Time Vermelho';
-
-  const vencedores =
-    vencedor === 'A' || vencedor === 'B'
-      ? jogadores.filter((j: any) => (vencedor === 'A' ? j.is_time_a : !j.is_time_a))
-      : [];
+  const timeA = jogadores.filter((j: any) => j.is_time_a);
+  const timeB = jogadores.filter((j: any) => !j.is_time_a);
 
   const corVencedor = vencedor === 'A' ? '#3b82f6' : vencedor === 'B' ? '#ef4444' : '#fbbf24';
   const nomeVencedor = vencedor === 'A' ? timeANome : vencedor === 'B' ? timeBNome : 'Empate';
@@ -80,37 +77,77 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Vencedores em destaque */}
-          <div>
-            <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-              <Crown className="w-3.5 h-3.5" style={{ color: corVencedor }} />
-              Vencedores
-            </p>
-            {vencedores.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {vencedores.map((j: any) => (
-                  <span key={j.user_id || j.id}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-black"
-                    style={{ background: `${corVencedor}15`, borderColor: `${corVencedor}40`, color: '#fff' }}>
-                    {j.nome}
-                    <span className="text-[9px] font-black uppercase opacity-60" style={{ color: corVencedor }}>
-                      {j.is_time_a ? 'Azul' : 'Vermelho'}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            ) : vencedor === 'empate' ? (
-              <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.02] text-white/60 text-xs font-bold">
-                <Scale className="w-4 h-4" />
-                Partida empatada — nenhum lado venceu.
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/5 bg-white/[0.02] text-white/30 text-xs">
-                <Users className="w-4 h-4" />
-                Sem jogadores registrados nesta partida.
-              </div>
-            )}
-          </div>
+          {/* Lineup — cards estilo VagaSlot (preto + borda da cor da side).
+              Lado que venceu: cor da side + coroa + "Vencedores". Lado que
+              perdeu: preto e branco (grayscale), sem cor. */}
+          {jogadores.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  lado: 'A' as const,
+                  venceu: vencedor === 'A',
+                  cor: '#3b82f6',
+                  rotulo: 'Blue-Side',
+                  time: timeA,
+                  avatarBorder: 'border-blue-500/40',
+                },
+                {
+                  lado: 'B' as const,
+                  venceu: vencedor === 'B',
+                  cor: '#ef4444',
+                  rotulo: 'Red-Side',
+                  time: timeB,
+                  avatarBorder: 'border-red-500/40',
+                },
+              ].map(({ venceu, cor, rotulo, time, avatarBorder }) => {
+                const corBorda = venceu ? cor : 'rgba(255,255,255,0.18)';
+                const corNick = venceu ? cor : '#9ca3af';
+                return (
+                  <div key={rotulo} className="relative p-[1px] overflow-hidden"
+                    style={{
+                      backgroundColor: corBorda,
+                      clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
+                    }}>
+                    <div className="bg-[#050505] p-2"
+                      style={{
+                        clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
+                      }}>
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-center flex items-center justify-center gap-1"
+                        style={{ color: venceu ? cor : '#6b7280' }}>
+                        {venceu && <Crown className="w-3 h-3" style={{ color: cor }} />}
+                        {venceu ? 'Vencedores' : rotulo}
+                      </p>
+                      <div className="space-y-1.5">
+                        {time.map((j: any) => (
+                          <div key={j.user_id || j.id} className="flex items-center gap-2">
+                            {j.avatar ? (
+                              <img src={j.avatar} alt={j.nome}
+                                className={`w-6 h-6 rounded-full object-cover shrink-0 border ${venceu ? avatarBorder : 'border-white/15'} ${venceu ? '' : 'grayscale'}`}
+                                loading="lazy" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-white/10 shrink-0" />
+                            )}
+                            <span className="flex-1 truncate text-xs font-black uppercase tracking-tight"
+                              style={{ color: corNick, textShadow: venceu ? `0 0 10px ${cor}44` : 'none' }}>{j.nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : vencedor === 'empate' ? (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.02] text-white/60 text-xs font-bold">
+              <Scale className="w-4 h-4" />
+              Partida empatada — nenhum lado venceu.
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/5 bg-white/[0.02] text-white/30 text-xs">
+              <Users className="w-4 h-4" />
+              Sem jogadores registrados nesta partida.
+            </div>
+          )}
 
           {/* Prints anexados */}
           <div>
