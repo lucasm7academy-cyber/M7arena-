@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, X, ImageIcon, Loader, Crown, Users, Scale } from 'lucide-react';
 import { api } from '../../lib/api';
+import { CardJogador } from './CardJogador';
 
 interface ResultadoPartidaProps {
   sala: any;
@@ -77,9 +78,10 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Lineup — cards estilo VagaSlot (preto + borda da cor da side).
-              Lado que venceu: cor da side + coroa + "Vencedores". Lado que
-              perdeu: preto e branco (grayscale), sem cor. */}
+          {/* Lineup — cada jogador em card individual estilo VagaSlot (preto +
+              borda da cor da side + ícone da rota + avatar + nick). Lado que
+              venceu: cor da side + coroa + "Vencedores". Lado que perdeu:
+              preto e branco (grayscale), sem cor. */}
           {jogadores.length > 0 ? (
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -99,43 +101,18 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
                   time: timeB,
                   avatarBorder: 'border-red-500/40',
                 },
-              ].map(({ venceu, cor, rotulo, time, avatarBorder }) => {
-                const corBorda = venceu ? cor : 'rgba(255,255,255,0.18)';
-                const corNick = venceu ? cor : '#9ca3af';
-                return (
-                  <div key={rotulo} className="relative p-[1px] overflow-hidden"
-                    style={{
-                      backgroundColor: corBorda,
-                      clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
-                    }}>
-                    <div className="bg-[#050505] p-2"
-                      style={{
-                        clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
-                      }}>
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-center flex items-center justify-center gap-1"
-                        style={{ color: venceu ? cor : '#6b7280' }}>
-                        {venceu && <Crown className="w-3 h-3" style={{ color: cor }} />}
-                        {venceu ? 'Vencedores' : rotulo}
-                      </p>
-                      <div className="space-y-1.5">
-                        {time.map((j: any) => (
-                          <div key={j.user_id || j.id} className="flex items-center gap-2">
-                            {j.avatar ? (
-                              <img src={j.avatar} alt={j.nome}
-                                className={`w-6 h-6 rounded-full object-cover shrink-0 border ${venceu ? avatarBorder : 'border-white/15'} ${venceu ? '' : 'grayscale'}`}
-                                loading="lazy" />
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-white/10 shrink-0" />
-                            )}
-                            <span className="flex-1 truncate text-xs font-black uppercase tracking-tight"
-                              style={{ color: corNick, textShadow: venceu ? `0 0 10px ${cor}44` : 'none' }}>{j.nome}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              ].map(({ venceu, cor, rotulo, time, avatarBorder }) => (
+                <div key={rotulo} className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-center flex items-center justify-center gap-1"
+                    style={{ color: venceu ? cor : '#6b7280' }}>
+                    {venceu && <Crown className="w-3 h-3" style={{ color: cor }} />}
+                    {venceu ? 'Vencedores' : rotulo}
+                  </p>
+                  {time.map((j: any) => (
+                    <CardJogador key={j.user_id || j.id} jogador={j} cor={venceu ? cor : null} avatarBorder={avatarBorder} grayscale={!venceu} />
+                  ))}
+                </div>
+              ))}
             </div>
           ) : vencedor === 'empate' ? (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.02] text-white/60 text-xs font-bold">
