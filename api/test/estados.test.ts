@@ -2,11 +2,11 @@ import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { eq, and, inArray } from "drizzle-orm";
 import { users, userWallets } from "../../db/schema/identidade.js";
-import { matches, matchPlayers } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes } from "../../db/schema/matches.js";
 import { walletTransactions, platformRevenue } from "../../db/schema/economia.js";
 import { setupDb } from "./helpers.js";
 import { reservarEntrada, devolverEntrada, pagarPremio } from "../src/lib/escrow.js";
-import { entrarEmRevisao, avaliarTransicoes, validarElegibilidade } from "../src/lib/match-flow.js";
+import { entrarEmRevisao, avaliarTransicoes, validarElegibilidade, atribuirCodigoPartida } from "../src/lib/match-flow.js";
 
 async function criaJogador(db: any, id: string, mc: number, mcReservado = 0) {
   await db.insert(users).values({ id, email: id + "@x.com", displayName: "Jogador", riotId: "RIOT-" + id, termosAceitosEm: new Date() });
@@ -263,5 +263,45 @@ describe("máquina de estados com escrow", () => {
     // E a elegibilidade libera a entrada (tem 70 livres para reservar 30).
     const r = await validarElegibilidade(db as any, id, 30);
     assert.equal(r.ok, true);
+  });
+
+  test("rodízio LRU de códigos: usa o livre usado há mais tempo, volta ao primeiro quando todos usados", async () => {
+    const db = ctx.db;
+    // Isola o teste: remove o seed da migration 0007 (4 códigos reais).
+    await db.delete(matchCodes);
+
+    // Códigos em ordem de criação: C1, C2 (C2 foi usado depois de C1).
+    const [c1] = await db.insert(matchCodes).values({ code: "BR-TEST-0001", used: false }).returning();
+    const [c2] = await db.insert(matchCodes).values({ code: "BR-TEST-0002", used: false }).returning();
+    await db.update(matchCodes).set({ used: false, lastUsedAt: new Date(Date.now() - 60_000) }).where(eq(matchCodes.id, c1.id));
+    await db.update(matchCodes).set({ used: false, lastUsedAt: new Date(Date.now() - 30_000) }).where(eq(matchCodes.id, c2.id));
+
+    const s1 = await criaSala(db, { apostaMc: 0 });
+    const s2 = await criaSala(db, { apostaMc: 0 });
+    const s3 = await criaSala(db, { apostaMc: 0 });
+    const s4 = await criaSala(db, { apostaMc: 0 });
+    const s5 = await criaSala(db, { apostaMc: 0 });
+
+    // C1 foi usado há mais tempo → primeiro a ser reutilizado.
+    const cod1 = await atribuirCodigoPartida(db as any, s1.id, "5v5");
+    assert.equal(cod1, "BR-TEST-0001", "primeiro código livre usado há mais tempo");
+
+    // C2 é o próximo.
+    const cod2 = await atribuirCodigoPartida(db as any, s2.id, "5v5");
+    assert.equal(cod2, "BR-TEST-0002");
+
+    // Todos usados → SEM-CODIGO-AGUARDE.
+    const cod3 = await atribuirCodigoPartida(db as any, s3.id, "5v5");
+    assert.equal(cod3, "SEM-CODIGO-AGUARDE");
+
+    // C1 libera (partida s1 terminou) → volta ao ciclo imediatamente.
+    await db.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.id, c1.id));
+    const cod4 = await atribuirCodigoPartida(db as any, s4.id, "5v5");
+    assert.equal(cod4, "BR-TEST-0001", "após liberar, o código volta ao rodízio");
+
+    // Nunca usado (last_used_at NULL) tem prioridade máxima sobre os usados.
+    const [c3] = await db.insert(matchCodes).values({ code: "BR-TEST-0003", used: false }).returning();
+    const cod5 = await atribuirCodigoPartida(db as any, s5.id, "5v5");
+    assert.equal(cod5, "BR-TEST-0003", "código nunca usado entra na frente do rodízio");
   });
 });

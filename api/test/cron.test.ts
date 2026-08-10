@@ -2,7 +2,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { users, userWallets } from "../../db/schema/identidade.js";
-import { matches, matchPlayers } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes } from "../../db/schema/matches.js";
 import { setupDb } from "./helpers.js";
 import { runCron } from "../src/cron.js";
 
@@ -69,6 +69,27 @@ describe("cron", () => {
       const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
       assert.equal(m.status, "aguardando_revisao");
       assert.ok(m.revisaoDesde);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("partida fantasma devolve o tournament code ao pool (fix SEM-CODIGO-AGUARDE)", async () => {
+    const { client, db } = await setupDb();
+    try {
+      const sala = await criaSala(db, {
+        status: "partida_iniciada",
+        apostaMc: 50,
+        updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
+      });
+      // Simula um código atribuído à sala (era assim que ficava preso).
+      const [codigo] = await db.insert(matchCodes).values({ code: "BR-TEST-FANTASMA-0001", used: true, matchId: sala.id }).returning();
+
+      await runCron(db);
+
+      const [c] = await db.select().from(matchCodes).where(eq(matchCodes.id, codigo.id));
+      assert.equal(c.used, false, "código de partida fantasma deve voltar ao pool");
+      assert.equal(c.matchId, null, "código não pode continuar vinculado à sala");
     } finally {
       await client.close();
     }

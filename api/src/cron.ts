@@ -1,6 +1,6 @@
 import { lt, and, eq, inArray, isNull, not } from "drizzle-orm";
 import { db } from "./db.js";
-import { matches, matchPlayers } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes } from "../../db/schema/matches.js";
 import { users } from "../../db/schema/identidade.js";
 import { notifyMatchChange } from "./lib/match-flow.js";
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
@@ -41,6 +41,14 @@ export async function runCron(d: any = db) {
       .update(matchPlayers)
       .set({ linked: false })
       .where(and(eq(matchPlayers.matchId, sala.id), eq(matchPlayers.linked, true)));
+    // Consistência com report-result (matches-actions.ts:170): libera o
+    // tournament code de volta ao pool. Sem isso, uma partida fantasma deixava
+    // o código preso (used=true) para sempre, esgotando o rodízio e causando
+    // "SEM-CODIGO-AGUARDE" nas próximas salas.
+    await d
+      .update(matchCodes)
+      .set({ used: false, matchId: null })
+      .where(eq(matchCodes.matchId, sala.id));
     notifyMatchChange(sala.id); // jogadores veem "em análise" sem refresh
     fantasmas++;
   }

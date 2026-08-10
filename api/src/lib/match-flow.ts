@@ -16,7 +16,7 @@
  * saldo_insuficiente.
  */
 
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import { db, pool } from "../db.js";
 import { users, userSessions } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
@@ -101,14 +101,19 @@ export async function reembolsarSeNecessario(tx: any, userId: string, entryMp: n
 /**
  * Reserva um tournament code real do pool (`match_codes`) com lock de linha
  * (FOR UPDATE SKIP LOCKED). Código é valor real da Riot que o jogador cola no
- * cliente do LoL — inventar um número quebra. Teto do pool: 4 partidas.
+ * cliente do LoL — inventar um número quebra.
+ *
+ * Rodízio LRU (ADR-040): pega o código livre usado há MAIS tempo (NULLS FIRST
+ * = nunca usado entra primeiro). Com N códigos e partidas que terminam, o
+ * ciclo natural é 1→2→…→N→1 — quando todos já foram usados, volta ao primeiro,
+ * que já teve tempo de terminar. Teto do pool: N partidas simultâneas.
  */
 export async function atribuirCodigoPartida(tx: any, matchId: string, _mode: string): Promise<string> {
   const [row]: any[] = await tx
     .select({ id: matchCodes.id, code: matchCodes.code })
     .from(matchCodes)
     .where(eq(matchCodes.used, false))
-    .orderBy(matchCodes.createdAt)
+    .orderBy(sql`${matchCodes.lastUsedAt} ASC NULLS FIRST`)
     .limit(1)
     .for("update", { skipLocked: true });
 
@@ -116,7 +121,7 @@ export async function atribuirCodigoPartida(tx: any, matchId: string, _mode: str
 
   await tx
     .update(matchCodes)
-    .set({ used: true, matchId })
+    .set({ used: true, matchId, lastUsedAt: new Date() })
     .where(eq(matchCodes.id, row.id));
   return row.code;
 }
