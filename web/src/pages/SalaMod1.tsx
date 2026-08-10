@@ -498,10 +498,10 @@ ${link}`;
 
                             {/* HUB HUD Overlay */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
-                                <div className="absolute top-10 flex flex-col items-center">
+                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[14vmin]' : 'top-10'}`}>
                                     <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
                                     {ehApostada ? (
-                                        <span className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                        <span className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.5em]">
                                             Partida Valendo!
                                         </span>
                                     ) : (
@@ -687,16 +687,15 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={confirmar}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-white text-black hover:bg-[#FFB700] hover:shadow-[0_0_50px_rgba(255,183,0,0.4)] transition-all shadow-2xl relative overflow-hidden group"
+                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-white text-black hover:bg-[#FFB700] transition-all shadow-2xl relative overflow-hidden group"
                             >
                                 <span className="relative z-10">Confirmar Presença</span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                             </motion.button>
                             <motion.button
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={recusar}
-                                className="pointer-events-auto px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] rounded-2xl bg-red-500/10 border-2 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-300 transition-all shadow-2xl"
+                                className="pointer-events-auto px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] rounded-2xl bg-red-500/10 border-2 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-300 transition-all"
                             >
                                 Recusar
                             </motion.button>
@@ -707,7 +706,7 @@ ${link}`;
                     {sala.estado === 'confirmacao' && jogadorAtual && jogadorAtual.confirmado && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
                             <motion.div
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-green-500/20 border-2 border-green-500/40 text-green-400 flex items-center gap-[1.5vmin] shadow-[0_0_40px_rgba(34,197,94,0.2)]"
+                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-green-500/20 border-2 border-green-500/40 text-green-400 flex items-center gap-[1.5vmin]"
                             >
                                 <Check className="w-[2.5vmin] h-[2.5vmin]" />
                                 <span className="relative z-10">Confirmado</span>
@@ -725,7 +724,7 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={copiarCodigo}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all shadow-[0_20px_50px_rgba(255,183,0,0.3)] flex items-center justify-center gap-[1.5vmin]"
+                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all flex items-center justify-center gap-[1.5vmin]"
                             >
                                 {codigoCopiado ? (
                                     <Check className="w-[2.2vmin] h-[2.2vmin]" />
@@ -749,7 +748,7 @@ ${link}`;
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={enviandoPrint}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all shadow-[0_20px_50px_rgba(255,183,0,0.3)] disabled:opacity-50 flex items-center justify-center gap-[1.5vmin]"
+                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all disabled:opacity-50 flex items-center justify-center gap-[1.5vmin]"
                             >
                                 {enviandoPrint ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <ImagePlus className="w-[2.2vmin] h-[2.2vmin]" />}
                                 {enviandoPrint ? 'Enviando...' : 'Enviar Print e Iniciar Revisão'}
