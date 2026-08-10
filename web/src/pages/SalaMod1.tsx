@@ -571,39 +571,33 @@ ${link}`;
                             key="overlay-partida-confirmada"
                             initial={{ opacity: 0, filter: 'blur(10px)' }} 
                             animate={{ opacity: 1, filter: 'blur(0px)' }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full bg-[#FFB700]/5 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-[6vmin] text-center border border-[#FFB700]/20"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
                         >
-                            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex flex-col items-center">
-                                <p className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.6em] mb-4">Preparar para a Batalha!</p>
-                                <p className="text-[1.2vmin] text-white/60 mb-6 max-w-[25vmin]">Use o código abaixo para entrar na sala oficial no League of Legends.</p>
-                                
-                                {codigoPartida ? (
-                                    <motion.button
-                                        whileHover={{ scale: 1.08 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={copiarCodigo}
-                                        className="group flex items-center gap-[1.5vmin] px-[4vmin] py-[1.5vmin] rounded-xl bg-[#FFB700]/15 border border-[#FFB700]/40 hover:border-[#FFB700]/70 transition-all shadow-[0_0_30px_rgba(255,183,0,0.15)]"
-                                    >
-                                        <span className="text-[1.4vmin] font-black text-[#FFB700] uppercase tracking-[0.3em] group-hover:text-white transition-colors">
-                                            {codigoCopiado ? '✓ Copiado!' : 'Copiar Código'}
+                            {/* Tutorial de como colar o código — dentro do display */}
+                            <motion.img
+                                initial={{ scale: 0.85, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.6 }}
+                                src="/images/tutorial-codigo.jpeg"
+                                alt="Tutorial de como colar o código da sala"
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/5 to-black/80" />
+                            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative w-full h-full flex flex-col items-center justify-between p-[6vmin] text-center">
+                                <p className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.6em]">Preparar para a Batalha!</p>
+                                <div className="flex flex-col items-center gap-[1.5vmin]">
+                                    <p className="text-[1.2vmin] text-white/70">Use o código abaixo para entrar na sala oficial no League of Legends.</p>
+                                    {codigoPartida ? (
+                                        <span className="text-[4.5vmin] font-black text-white tracking-[0.3em] tabular-nums drop-shadow-[0_0_25px_rgba(255,183,0,0.5)]">
+                                            {codigoPartida}
                                         </span>
-                                        <motion.div
-                                            animate={codigoCopiado ? { scale: [1, 1.2, 1] } : {}}
-                                            transition={{ duration: 0.4 }}
-                                        >
-                                            {codigoCopiado ? (
-                                                <Check className="w-[1.8vmin] h-[1.8vmin] text-green-400" />
-                                            ) : (
-                                                <Copy className="w-[1.8vmin] h-[1.8vmin] text-[#FFB700]" />
-                                            )}
-                                        </motion.div>
-                                    </motion.button>
-                                ) : (
-                                    <div className="flex items-center gap-[1vmin]">
-                                        <div className="w-[6vmin] h-[1px] bg-gradient-to-r from-transparent via-[#FFB700] to-transparent animate-pulse" />
-                                        <div className="text-[#FFB700]/40 font-black text-[1.2vmin] uppercase tracking-widest animate-pulse">Gerando...</div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="flex items-center gap-[1vmin]">
+                                            <div className="w-[6vmin] h-[1px] bg-gradient-to-r from-transparent via-[#FFB700] to-transparent animate-pulse" />
+                                            <div className="text-[#FFB700]/40 font-black text-[1.2vmin] uppercase tracking-widest animate-pulse">Gerando...</div>
+                                        </div>
+                                    )}
+                                </div>
                             </motion.div>
                         </motion.div>
                     )}
@@ -699,6 +693,26 @@ ${link}`;
                                 <Check className="w-[2.5vmin] h-[2.5vmin]" />
                                 <span className="relative z-10">Confirmado</span>
                             </motion.div>
+                        </motion.div>
+                    )}
+
+                    {/* PARTIDA CONFIRMADA — copiar código (mesmo lugar dos botões
+                        de confirmar presença / enviar print) */}
+                    {sala.estado === 'iniciando_partida' && codigoPartida && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
+                            <motion.button
+                                whileHover={{ scale: 1.05, y: -5 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={copiarCodigo}
+                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all shadow-[0_20px_50px_rgba(255,183,0,0.3)] flex items-center justify-center gap-[1.5vmin]"
+                            >
+                                {codigoCopiado ? (
+                                    <Check className="w-[2.2vmin] h-[2.2vmin]" />
+                                ) : (
+                                    <Copy className="w-[2.2vmin] h-[2.2vmin]" />
+                                )}
+                                {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
+                            </motion.button>
                         </motion.div>
                     )}
 
