@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { buildProfileIconUrl, buscarElo, buscarJogadorCompleto } from '../api/riot';
+import { buildProfileIconUrl, buscarJogadorCompleto } from '../api/riot';
 import { useSound } from '../hooks/useSound';
 import { AnimatePresence as AP } from 'motion/react';
 import {
@@ -1249,7 +1249,7 @@ export default function TimePage() {
             m.nivel   = c.level ?? 1;
             m.puuid   = c.puuid ?? undefined;
             const solo = c.elo_cache?.soloQ;
-            if (solo?.tier) m.elo = `${solo.tier} ${solo.rank ?? ''}`.trim();
+            if (solo?.tier) m.elo = TIER_MAP[solo.tier] ?? solo.tier;
           }
           m.balance = walletMap[m.userId] ?? 0;
         }
@@ -1294,56 +1294,6 @@ export default function TimePage() {
   useEffect(() => {
     load();
   }, [id, user]);
-
-  // Busca elo real dos membros em paralelo (otimização: antes era sequencial com 700ms entre cada)
-  useEffect(() => {
-    if (!time || time.membros.length === 0) return;
-    let cancelado = false;
-
-    const fetchElos = async () => {
-      // Paralelizar: Promise.all em vez de for loop sequencial
-      const promises = time.membros.map(async (membro) => {
-        if (!membro.puuid) return { userId: membro.userId, elo: '' };
-
-        let ranqueadas: any[] = [];
-        try {
-          ranqueadas = await buscarElo(membro.puuid);
-        } catch {
-          // Retry com delay apenas em caso de falha
-          await new Promise(r => setTimeout(r, 1500));
-          if (cancelado) return { userId: membro.userId, elo: '' };
-          try {
-            ranqueadas = await buscarElo(membro.puuid);
-          } catch {
-            ranqueadas = [];
-          }
-        }
-
-        if (cancelado) return { userId: membro.userId, elo: '' };
-        const solo = ranqueadas.find((r: any) => r.queueType === 'RANKED_SOLO_5x5');
-        const eloStr = solo ? (TIER_MAP[solo.tier] ?? solo.tier) : '';
-        return { userId: membro.userId, elo: eloStr };
-      });
-
-      const eloResults = await Promise.all(promises);
-
-      if (!cancelado) {
-        setTime((prev: TimeData | null) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            membros: prev.membros.map((m: Membro) => {
-              const result = eloResults.find(r => r.userId === m.userId);
-              return result ? { ...m, elo: result.elo } : m;
-            }),
-          };
-        });
-      }
-    };
-
-    fetchElos();
-    return () => { cancelado = true; };
-  }, [time?.id]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleUpdateTeam = async (updated: Partial<TimeData>) => {

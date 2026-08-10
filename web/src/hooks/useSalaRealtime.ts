@@ -18,6 +18,11 @@ const WS_URL = () =>
   `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
 
 const DEBOUNCE_MS = 250;
+// Jitter no refetch: quando o servidor emite um match_update, TODOS os clientes
+// inscritos reagem ao mesmo tempo e refazem GET /api/matches/:id — um
+// "thundering herd" no banco/API. Espalhar o disparo de 250 a 850ms evita a
+// rajada sincronizada sem mudar a cadência percebida do usuário.
+const REFETCH_JITTER_MS = 600;
 const RECONEXAO_BASE_MS = 1_000;
 const RECONEXAO_MAX_MS = 30_000;
 
@@ -62,7 +67,7 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
       debounceRef.current = window.setTimeout(() => {
         debounceRef.current = null;
         onUpdateRef.current(recebido);
-      }, DEBOUNCE_MS);
+      }, DEBOUNCE_MS + Math.random() * REFETCH_JITTER_MS);
     };
 
     const conectar = () => {

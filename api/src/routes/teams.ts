@@ -8,6 +8,7 @@ import {
   teamStats,
   teamInvites,
 } from "../../../db/schema/teams.js";
+import { gameAccounts } from "../../../db/schema/games.js";
 
 export const teamsRouter = Router();
 
@@ -66,7 +67,7 @@ function memberStatusToLegacy(status: string): string {
   return "ativo";
 }
 
-function toLegacyMember(m: any) {
+function toLegacyMember(m: any, elo?: string | null) {
   return {
     id: m.id,
     time_id: m.teamId,
@@ -79,6 +80,7 @@ function toLegacyMember(m: any) {
     guest_puuid: m.guestPuuid ?? null,
     guest_profile_icon_id: m.guestProfileIconId ?? null,
     guest_elo_cache: m.guestEloCache ?? null,
+    elo: elo ?? null,
   };
 }
 
@@ -316,10 +318,29 @@ teamsRouter.get("/:id", async (req, res) => {
       .from(teamMembers)
       .where(eq(teamMembers.teamId, team.id));
 
+    // Elo dos membros direto do cache do banco (metadata.elo_cache) — evita N
+    // chamadas à Riot por página de time (item #8 do plano de performance).
+    const memberUserIds = [...new Set(members.map((m) => m.userId).filter((id): id is string => !!id))];
+    const contas = memberUserIds.length
+      ? await db
+          .select()
+          .from(gameAccounts)
+          .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, memberUserIds)))
+      : [];
+    const eloPorMembro = new Map<string, string>();
+    for (const conta of contas) {
+      const meta = (conta.metadata as Record<string, any>) || {};
+      const soloQ = (meta.elo_cache as Record<string, any>)?.soloQ as
+        | Record<string, any>
+        | null
+        | undefined;
+      if (soloQ?.tier) eloPorMembro.set(conta.userId, `${soloQ.tier} ${soloQ.rank ?? ""}`.trim());
+    }
+
     const capitao = members.find((m) => m.isCaptain);
     return res.json({
       ...toLegacyTeam(team, stats || null, capitao?.userId ?? team.ownerId),
-      time_membros: members.map(toLegacyMember),
+      time_membros: members.map((m) => toLegacyMember(m, m.userId ? eloPorMembro.get(m.userId) : null)),
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar detalhes do time" });
