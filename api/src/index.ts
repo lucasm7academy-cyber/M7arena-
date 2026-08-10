@@ -22,6 +22,7 @@ import { disputasRouter } from "./routes/disputas.js";
 import { tournamentsRouter } from "./routes/tournaments.js";
 import { contentRouter } from "./routes/content.js";
 import { adminRouter } from "./routes/admin.js";
+import { ogRouter } from "./routes/og.js";
 
 dotenv.config();
 
@@ -70,6 +71,10 @@ app.use("/api/disputas", disputasRouter);
 app.use("/api/tournaments", tournamentsRouter);
 app.use("/api/content", contentRouter);
 app.use("/api/admin", adminRouter);
+
+// Página de preview social (OG) de uma sala — servida só para crawlers
+// (o Nginx desvia bots de /:modo/:id para cá). Ver routes/og.ts.
+app.use("/api/og", ogRouter);
 
 // Rota de Health Check da API Node
 app.get("/api/health", async (_req, res) => {
