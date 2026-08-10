@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-10T22:21:09.701Z",
+  "updatedAt": "2026-08-10T22:27:03.568Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1713,16 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-05T05:50:21.735Z",
-      "agent": "deepseek",
-      "summary": "Print de resultado: lightbox da imagem crescia pouco porque estava capada em max-w-[min(480px,90vw)] max-h-[80vh]. Aumentei para max-w-[min(1400px,94vw)] max-h-[92vh] nos 3 lightboxes (AguardandoRevisao.tsx, RevisaoPartidas.tsx, ResultadoPartida.tsx). Commit 7b670aa push + deploy VPS (git pull + compose up --build app nginx). Health 200, lobby 200, bundle contém '1400px'. Docker Desktop local não abriu no Windows, então não subi a stack local (localhost:3000) — usuário pediu deploy direto. Pendente: usuário quer tentar desinstalar/reinstalar o Docker Desktop (risco: perde volumes/imagens locais; não afeta VPS).",
-      "touched": [
-        "web/src/components/partidas/AguardandoRevisao.tsx",
-        "web/src/components/admin/RevisaoPartidas.tsx",
-        "web/src/components/partidas/ResultadoPartida.tsx"
-      ]
-    },
-    {
       "at": "2026-08-05T19:53:12.351Z",
       "agent": "deepseek",
       "summary": "Deploy do gateway MC completo na VPS: merge feat/gateway-mc→main (ecb6fe8, resolvidos 3 conflitos: _journal 0010+0011, api.ts payments+adminAdjustMc, SalaMod1 versão usuário), push, reset VPS para ecb6fe8, migration 0010 aplicada (mc_packages 6 seeds + payments.mc_credit), envs MERCADO_PAGO_* corrigidas no .env da VPS (estavam coladas na RIOT_API_KEY), rebuild app+nginx. Smoke: health ok, packages devolve 6 pacotes, webhook 200/401 correto, mc/order 401 sem auth. BLOQUEIO: criar pedido PIX real falha com erro MP 13253 'Collector user without key enabled for QR render' — a conta MP (user_id 3157267389) não tem chave PIX ativada. BLK-005 registrado. Falta: usuário ativar chave PIX no painel MP, depois testar pedido real + webhook credita MC.",
@@ -2071,6 +2061,16 @@
       "agent": "deepseek",
       "summary": "Reformulei o card RegrasDaSala (mostrado em salas apostadas no estado confirmacao, SalaMod1.tsx:665). Antes mostrava aposta + taxa 8,99% + SLA de pagamento + regra de abandono. Agora mostra só: Valor da aposta, Valor do pote (sala cheia = aposta × maxJogadores) e Ganho por jogador vencedor (= pote / jogadoresPorTime, floor). Removi imports de SLA_REVISAO_HORAS/Percent/Timer e troquei prop taxaPct por modo. Chamada atualizada para passar sala.modo. npx tsc --noEmit (web) → exit 0. Pendente: validação visual pelo usuário.",
       "touched": [
+        "web/src/components/partidas/RegrasDaSala.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-10T22:27:03.568Z",
+      "agent": "deepseek",
+      "summary": "Sidebar: item 'Painel Admin' (/admin) adicionado ao navItems do LayoutWrapper, visível apenas para cargo admin/proprietario (cobre sidebar desktop + menu mobile). Commit 4c95cd6 na branch feat/advertencias-ban, push feito. VPS: merge da branch na main (49fbbad), docker compose up -d --build nginx (web builda dentro do nginx), site responde 200 em https://dev.m7arena.pro. Timer 30s->90s de outro agente (match-flow.ts/useSalaSimples.ts) ficou fora do commit por decisao do usuario. Card RegrasDaSala (valores sem taxa/SLA) entrou no mesmo commit; pendente validacao visual do card pelo usuario.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
         "web/src/components/partidas/RegrasDaSala.tsx",
         "web/src/pages/SalaMod1.tsx"
       ]
