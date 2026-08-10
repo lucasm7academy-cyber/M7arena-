@@ -122,19 +122,44 @@ describe("prints (magic bytes, upload e leitura autenticada)", () => {
     assert.equal(r.erro, "nao_confirmado");
   });
 
-  test("upload: 4º print da mesma partida é rejeitado (máx 3)", async () => {
+  test("upload: mesmo jogador não pode enviar 2º print (1 por jogador)", async () => {
     const dono = "f1003000-0000-0000-0000-000000000001";
     await criaJogador(db, dono);
     const sala = await criaSalaIniciada(db, dono);
     await confirmaJogador(db, sala.id, dono);
+
+    const r1 = await upload.salvarPrintMatch(db, {
+      userId: dono, matchId: sala.id, originalname: "p.png", buffer: PNG, mimetype: "image/png",
+    });
+    assert.equal(r1.ok, true);
+
+    const r2 = await upload.salvarPrintMatch(db, {
+      userId: dono, matchId: sala.id, originalname: "p2.png", buffer: PNG, mimetype: "image/png",
+    });
+    assert.equal(r2.ok, false);
+    assert.equal(r2.erro, "print_ja_enviado");
+  });
+
+  test("upload: 4º print da mesma partida é rejeitado (máx 3)", async () => {
+    const dono = "f1003000-0000-0000-0000-000000000002";
+    await criaJogador(db, dono);
+    const sala = await criaSalaIniciada(db, dono);
+    await confirmaJogador(db, sala.id, dono);
+    // 3 jogadores DIFERENTES já enviaram um print cada (1 por jogador).
     for (let i = 0; i < 3; i++) {
+      const outro = `f1003000-0000-0000-0000-00000000000${3 + i}`;
+      await criaJogador(db, outro);
+      await confirmaJogador(db, sala.id, outro);
       await db.insert(matchPrints).values({
-        matchId: sala.id, userId: dono, url: `/uploads/match-prints/${sala.id}/p${i}.png`,
+        matchId: sala.id, userId: outro, url: `/uploads/match-prints/${sala.id}/p${i}.png`,
       });
     }
 
+    const quarto = "f1003000-0000-0000-0000-000000000007";
+    await criaJogador(db, quarto);
+    await confirmaJogador(db, sala.id, quarto);
     const r = await upload.salvarPrintMatch(db, {
-      userId: dono, matchId: sala.id, originalname: "quarto.png", buffer: PNG, mimetype: "image/png",
+      userId: quarto, matchId: sala.id, originalname: "quarto.png", buffer: PNG, mimetype: "image/png",
     });
     assert.equal(r.ok, false);
     assert.equal(r.erro, "limite_prints");

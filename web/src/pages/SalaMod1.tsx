@@ -637,6 +637,7 @@ ${link}`;
                 {sala.estado === 'aguardando_revisao' && (
                     <AguardandoRevisao
                         sala={sala}
+                        jogadores={jogadores}
                         jogadorConfirmado={jogadorConfirmado}
                         usuarioId={usuarioAtual.id}
                         onAtualizar={atualizar}
