@@ -465,14 +465,18 @@ ${link}`;
                         no fluxo vertical — vagas do time A → hub → vagas do time B. */}
                     {sala.estado !== 'encerrada' && (
                     <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[55vmin] h-[55vmin] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0">
-                        {/* Outer rings */}
+                        {/* Outer rings — ocultos no estado "Em análise" (o card central de resultado cobre o hub, não há display para decorar) */}
+                        {sala.estado !== 'aguardando_revisao' && (
+                        <>
                         <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
                         <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
+                        </>
+                        )}
 
                         {/* Main Hub Body */}
                         <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
-                            <ArcaneIndicators />
+                            {sala.estado !== 'aguardando_revisao' && <ArcaneIndicators />}
                             <CentralDisplay />
 
                             {/* PARTIDA INICIADA — prompt de envio do resultado no

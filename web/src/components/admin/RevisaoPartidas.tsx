@@ -344,7 +344,7 @@ export function RevisaoPartidas() {
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               src={api.prints.file(lightboxPrint.id)}
               alt={`Print de ${lightboxPrint.nomeJogador}`}
-              className="max-w-[min(1400px,94vw)] max-h-[92vh] object-contain rounded-2xl shadow-2xl"
+              className="w-full max-w-[min(1600px,96vw)] max-h-[94vh] object-contain rounded-2xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
             <button
