@@ -17,6 +17,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 
 // ── Componentes visuais ─────────────────────────────
+// Borda cortada no padrão das vagas/cards de campeonato: wrapper com
+// clipPath (frame) + conteúdo interno com clipPath um pouco menor (fill).
+const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
+const CUT_INNER = 'polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px)';
+
 function ArcaneIndicators() {
     return (
         <div className="absolute inset-0 rounded-full pointer-events-none z-10">
@@ -498,7 +503,7 @@ ${link}`;
 
                             {/* HUB HUD Overlay */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
-                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[14vmin]' : 'top-10'}`}>
+                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[12vmin]' : 'top-10'}`}>
                                     <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
                                     {ehApostada ? (
                                         <span className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.5em]">
@@ -687,17 +692,25 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={confirmar}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-white text-black hover:bg-[#FFB700] transition-all shadow-2xl relative overflow-hidden group"
+                                className="pointer-events-auto relative p-[1.5px] bg-white hover:bg-[#FFB700] transition-colors"
+                                style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="relative z-10">Confirmar Presença</span>
+                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-white hover:text-black transition-colors relative z-10"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    Confirmar Presença
+                                </span>
                             </motion.button>
                             <motion.button
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={recusar}
-                                className="pointer-events-auto px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] rounded-2xl bg-red-500/10 border-2 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-300 transition-all"
+                                className="pointer-events-auto relative p-[1.5px] bg-red-500/60 hover:bg-red-400 transition-colors"
+                                style={{ clipPath: CUT_FRAME }}
                             >
-                                Recusar
+                                <span className="block bg-[#050505] px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] text-red-400 hover:text-red-300 transition-colors relative z-10"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    Recusar
+                                </span>
                             </motion.button>
                         </motion.div>
                     )}
@@ -706,10 +719,14 @@ ${link}`;
                     {sala.estado === 'confirmacao' && jogadorAtual && jogadorAtual.confirmado && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
                             <motion.div
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-green-500/20 border-2 border-green-500/40 text-green-400 flex items-center gap-[1.5vmin]"
+                                className="pointer-events-auto relative p-[1.5px] bg-green-500/60"
+                                style={{ clipPath: CUT_FRAME }}
                             >
-                                <Check className="w-[2.5vmin] h-[2.5vmin]" />
-                                <span className="relative z-10">Confirmado</span>
+                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-green-400 flex items-center gap-[1.5vmin]"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    <Check className="w-[2.5vmin] h-[2.5vmin]" />
+                                    Confirmado
+                                </span>
                             </motion.div>
                         </motion.div>
                     )}
@@ -724,14 +741,18 @@ ${link}`;
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={copiarCodigo}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all flex items-center justify-center gap-[1.5vmin]"
+                                className="pointer-events-auto relative p-[1.5px] bg-[#FFB700] hover:bg-yellow-400 transition-colors"
+                                style={{ clipPath: CUT_FRAME }}
                             >
-                                {codigoCopiado ? (
-                                    <Check className="w-[2.2vmin] h-[2.2vmin]" />
-                                ) : (
-                                    <Copy className="w-[2.2vmin] h-[2.2vmin]" />
-                                )}
-                                {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
+                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-[#FFB700] flex items-center justify-center gap-[1.5vmin]"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    {codigoCopiado ? (
+                                        <Check className="w-[2.2vmin] h-[2.2vmin]" />
+                                    ) : (
+                                        <Copy className="w-[2.2vmin] h-[2.2vmin]" />
+                                    )}
+                                    {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
+                                </span>
                             </motion.button>
                         </motion.div>
                     )}
@@ -748,10 +769,14 @@ ${link}`;
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={enviandoPrint}
-                                className="pointer-events-auto px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] rounded-2xl bg-[#FFB700] text-black hover:bg-yellow-400 transition-all disabled:opacity-50 flex items-center justify-center gap-[1.5vmin]"
+                                className="pointer-events-auto relative p-[1.5px] bg-[#FFB700] hover:bg-yellow-400 transition-colors disabled:opacity-50"
+                                style={{ clipPath: CUT_FRAME }}
                             >
-                                {enviandoPrint ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <ImagePlus className="w-[2.2vmin] h-[2.2vmin]" />}
-                                {enviandoPrint ? 'Enviando...' : 'Enviar Print e Iniciar Revisão'}
+                                <span className="block bg-[#050505] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-[#FFB700] flex items-center justify-center gap-[1.5vmin]"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    {enviandoPrint ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <ImagePlus className="w-[2.2vmin] h-[2.2vmin]" />}
+                                    {enviandoPrint ? 'Enviando...' : 'Enviar Print e Iniciar Revisão'}
+                                </span>
                             </motion.button>
                         </motion.div>
                     )}
