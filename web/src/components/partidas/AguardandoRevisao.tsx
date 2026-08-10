@@ -4,6 +4,7 @@
 // prints de prova (máx. 3) e contestar o resultado. O envio nunca cai no vazio:
 // cada print aparece na lista na hora, com a URL autenticada do servidor.
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImagePlus, Loader, CheckCircle2, AlertTriangle, Gavel, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -266,7 +267,11 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                 </div>
             </div>
 
-            {/* Lightbox do print (mesmo padrão dos logos de time) */}
+            {/* Lightbox do print (mesmo padrão dos logos de time). Renderizado
+                via portal no body: o card raiz tem transform (translate do
+                Tailwind + animação y), que quebraria o position: fixed e
+                prenderia o popup ao tamanho do card. */}
+            {createPortal(
             <AnimatePresence>
                 {lightboxPrint && (
                     <motion.div
@@ -299,7 +304,9 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                         </div>
                     </motion.div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence>,
+            document.body,
+            )}
         </motion.div>
     );
 }
