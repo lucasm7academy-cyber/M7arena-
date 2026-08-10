@@ -473,6 +473,23 @@ ${link}`;
                             <ArcaneIndicators />
                             <CentralDisplay />
 
+                            {/* PARTIDA INICIADA — prompt de envio do resultado no
+                                display (fala com quem ainda não voltou da partida) */}
+                            {sala.estado === 'partida_iniciada' && (
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-[6vmin] text-center pointer-events-none">
+                                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.15 }}
+                                        className="flex flex-col items-center gap-[2.5vmin]">
+                                        <span className="text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
+                                            Finalizou a partida?
+                                        </span>
+                                        <span className="text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
+                                            Envie os resultados no botão abaixo
+                                        </span>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+
                             {/* HUB HUD Overlay */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
                                 <div className="absolute top-10 flex flex-col items-center">
@@ -684,7 +701,7 @@ ${link}`;
                     {sala.estado === 'iniciando_partida' && codigoPartida && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
                             className="flex flex-col items-center gap-[1.5vmin]">
-                            <p className="text-[1.4vmin] font-black text-[#FFB700] uppercase tracking-[0.5em]">Prepare-se para a batalha</p>
+                            <p className="text-[1.4vmin] font-black text-white uppercase tracking-[0.5em]">Prepare-se para a batalha</p>
                             <motion.button
                                 whileHover={{ scale: 1.05, y: -5 }}
                                 whileTap={{ scale: 0.95 }}
