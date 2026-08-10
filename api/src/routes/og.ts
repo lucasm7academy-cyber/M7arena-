@@ -16,10 +16,10 @@ export const ogRouter = Router();
 
 /** Imagem de fundo do card por modo (web/public/images — servida pelo Nginx). */
 const IMAGEM_POR_MODO: Record<string, string> = {
-  "5v5": "/images/fundoCard5v5.png",
-  aram: "/images/fundoCardAram.png",
-  "1v1": "/images/fundoCard1v1.png",
-  time_vs_time: "/images/fundoCardTime.png",
+  "5v5": "/images/fundoCard5v5.webp",
+  aram: "/images/fundoCardAram.webp",
+  "1v1": "/images/fundoCard1v1.webp",
+  time_vs_time: "/images/fundoCardTime.webp",
 };
 
 /** Rotula o estado da sala para a descrição do card (pt-BR). */

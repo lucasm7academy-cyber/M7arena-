@@ -405,7 +405,7 @@ export default function Layout() {
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#1a1b23] border-l-2 border-t-2 border-primary/50 -rotate-45 z-0"></div>
                 <div className="flex items-center gap-3 relative z-10">
                   <motion.img
-                    src="/images/poro1.png"
+                    src="/images/poro1.webp"
                     alt="Poro"
                     className="w-14 h-14 object-contain shrink-0"
                     animate={{

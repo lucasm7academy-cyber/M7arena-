@@ -69,7 +69,7 @@ export default function Tutorial() {
                 }}
               >
                 <img
-                  src="/images/poro1.png"
+                  src="/images/poro1.webp"
                   alt="Poro"
                   className="w-32 h-32 md:w-40 md:h-40 object-contain"
                 />

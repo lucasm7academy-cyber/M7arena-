@@ -377,7 +377,7 @@ export default function Equipes() {
         <div className="space-y-0 rounded-3xl overflow-hidden backdrop-blur-xl transition-all duration-500">
           <div className="relative overflow-hidden p-6 group transition-all duration-500">
             <div className="absolute inset-0 z-0">
-              <img src="/images/fundo fanaticaaa.png" alt="Fundo" className="w-full h-full object-cover" />
+              <img src="/images/fundo fanaticaaa.webp" alt="Fundo" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/10 to-white/0" />
             </div>
             <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">

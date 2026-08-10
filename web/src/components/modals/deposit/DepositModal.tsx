@@ -65,7 +65,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               initial={{ x: 40, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              src="/images/25947-5-twisted-fate-picture_800x800.png"
+              src="/images/25947-5-twisted-fate-picture_800x800.webp"
               alt="Twisted Fate"
               className="absolute -right-[240px] bottom-0 w-[640px] max-w-none z-0 pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] filter brightness-105 opacity-85 hidden md:block"
               referrerPolicy="no-referrer"
