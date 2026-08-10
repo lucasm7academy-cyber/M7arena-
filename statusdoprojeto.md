@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 09/08/2026 19:18 — por `deepseek`
+**Última atualização:** 09/08/2026 20:42 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -484,6 +484,14 @@ _06/08/2026 02:17 — deepseek_
 **Por quê:** Os transforms já tinham saída válida (arquivos transformados completos e conferidos); o que faltava era executar o load na VPS, que acabei de fazer com contagens verificadas. Os 'doing' refletiam a execução da migração real, não ausência de dados.
 
 _09/08/2026 19:18 — deepseek_
+
+### ADR-036 — Rota de sala por modo (/5v5/:id etc.) substitui /sala-mod1/:id
+
+**Decisão:** A página da sala passa a viver em /5v5/:id, /aram/:id, /1v1/:id, /time_vs_time/:id (slug = modo real da sala no banco), substituindo /sala-mod1/:id. O botão de compartilhar e todas as navegações usam a rota nova. API adiciona modo em /wallet/balance emPartida e no erro ja_em_sala_apostada para montar o link.
+
+**Por quê:** /sala-mod1/:id era feio e não refletia o conteúdo. Slug dinâmico por modo deixa a URL verdadeira e o link compartilhado já mostra o modo. Rota segue pública (visitante vê sem login). Sem mudança de schema — resposta de API aditiva + front.
+
+_09/08/2026 20:42 — deepseek_
 
 ## Bloqueios resolvidos
 
