@@ -168,25 +168,26 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                         cortada das colunas laterais; check verde em quem já
                         enviou o print */}
                     <div className="grid grid-cols-2 gap-2">
-                        <div className="relative p-[1.5px] overflow-hidden"
+                        <div className="relative p-[1px] overflow-hidden"
                             style={{
                                 backgroundColor: '#3B82F6',
-                                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                                clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                             }}>
-                            <div className="bg-blue-500/[0.07] p-2"
+                            <div className="bg-blue-500/10 p-2"
                                 style={{
-                                    clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
+                                    clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                                 }}>
                                 <p className="text-[9px] font-black text-[#3B82F6] uppercase tracking-[0.3em] mb-1.5 text-center">Blue-Side</p>
                                 <div className="space-y-1">
                                     {timeA.map((j: any) => (
                                         <div key={j.user_id} className="flex items-center gap-1.5">
                                             {j.avatar ? (
-                                                <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                                                <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0 border border-blue-500/40" loading="lazy" />
                                             ) : (
                                                 <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
                                             )}
-                                            <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
+                                            <span className="flex-1 truncate text-[10px] font-black uppercase tracking-tight"
+                                                style={{ color: '#3B82F6', textShadow: '0 0 10px rgba(59,130,246,0.4)' }}>{j.nome}</span>
                                             {enviouPrint(j.user_id) ? (
                                                 <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
                                             ) : (
@@ -197,25 +198,26 @@ export function AguardandoRevisao({ sala, jogadores, jogadorConfirmado, usuarioI
                                 </div>
                             </div>
                         </div>
-                        <div className="relative p-[1.5px] overflow-hidden"
+                        <div className="relative p-[1px] overflow-hidden"
                             style={{
                                 backgroundColor: '#ef4444',
-                                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                                clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                             }}>
-                            <div className="bg-red-500/[0.07] p-2"
+                            <div className="bg-red-500/10 p-2"
                                 style={{
-                                    clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
+                                    clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                                 }}>
                                 <p className="text-[9px] font-black text-[#ef4444] uppercase tracking-[0.3em] mb-1.5 text-center">Red-Side</p>
                                 <div className="space-y-1">
                                     {timeB.map((j: any) => (
                                         <div key={j.user_id} className="flex items-center gap-1.5">
                                             {j.avatar ? (
-                                                <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                                                <img src={j.avatar} alt={j.nome} className="w-4 h-4 rounded-full object-cover shrink-0 border border-red-500/40" loading="lazy" />
                                             ) : (
                                                 <div className="w-4 h-4 rounded-full bg-white/10 shrink-0" />
                                             )}
-                                            <span className="flex-1 truncate text-[10px] font-bold text-white/80">{j.nome}</span>
+                                            <span className="flex-1 truncate text-[10px] font-black uppercase tracking-tight"
+                                                style={{ color: '#ef4444', textShadow: '0 0 10px rgba(239,68,68,0.4)' }}>{j.nome}</span>
                                             {enviouPrint(j.user_id) ? (
                                                 <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />
                                             ) : (
