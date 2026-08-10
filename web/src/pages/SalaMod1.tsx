@@ -3,13 +3,13 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X, Trash2, Share2 } from 'lucide-react';
+import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { VagaSlot } from '../components/partidas/VagaSlot';
 import { ModaisElegibilidade } from '../components/partidas/ModaisElegibilidade';
 import { AguardandoRevisao } from '../components/partidas/AguardandoRevisao';
 import { ResultadoPartida } from '../components/partidas/ResultadoPartida';
-import { RegrasDaSala } from '../components/partidas/RegrasDaSala';
 import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
 import { lerSenhaSala, limparSenhaSala } from '../lib/salaSenhaStore';
@@ -181,6 +181,7 @@ ${link}`;
 
     // ── Salas apostadas (design v3 §11): aviso antecipado, print e regras ──
     const ehApostada = (sala.mpoints || 0) > 0;
+    const poteMC = ehApostada ? (sala.mpoints || 0) * (sala.max_jogadores || 10) : 0;
     const temRiotId = !!perfil?.riotId;
     const matchId = (sala.match_id as string) || '';
     const jogadorConfirmado = !!jogadorAtual?.confirmado;
@@ -500,10 +501,27 @@ ${link}`;
                                 <div className="absolute top-10 flex flex-col items-center">
                                     <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
                                     <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
+                                    {/* Partida apostada: aviso acima da contagem de confirmação */}
+                                    {ehApostada && (
+                                        <span className="mt-[1.5vmin] text-[1.1vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                            Partida Valendo MC
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="absolute bottom-10 flex flex-col items-center">
-                                    <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
-                                    <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                                    {ehApostada ? (
+                                        <>
+                                            <span className="flex items-center gap-[1vmin] text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                                <GiTwoCoins className="w-[2.2vmin] h-[2.2vmin]" /> Pote {poteMC.toLocaleString('pt-BR')} MC
+                                            </span>
+                                            <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-2" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
+                                            <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -657,14 +675,6 @@ ${link}`;
                     <ResultadoPartida sala={sala} />
                 )}
             </div>
-
-            {/* REGRAS VISÍVEIS ANTES DE CONFIRMAR (design v3 §11) */}
-            {sala.estado === 'confirmacao' && ehApostada && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                    className="absolute bottom-[2vh] left-1/2 -translate-x-1/2 z-[65] w-[min(620px,94vw)]">
-                    <RegrasDaSala aposta={sala.mpoints || 0} modo={sala.modo} />
-                </motion.div>
-            )}
 
             {/* ACTION FOOTER */}
             <div className="w-full h-[15vh] flex flex-col items-center justify-center z-[70] pb-[5vh] pointer-events-none">
