@@ -124,14 +124,14 @@ export default function SalaMod1() {
             '1v1': '1v1 Howling Abyss',
             'time_vs_time': 'Time vs Time Summoner\'s Rift',
         };
-        const eloLinha = sala.eloMinimo ? `Mínimo: ${sala.eloMinimo}` : 'Free Elo';
+        const eloLinha = sala.elo_minimo ? `Mínimo: ${sala.elo_minimo}` : 'Free Elo';
         const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} M7Coins` : 'Casual';
         const link = `${window.location.origin}/${sala.modo}/${sala.id}`;
 
         const mensagem =
 `🎮 ${nick} convida você para jogar ${textoModo[sala.modo] || 'uma partida'} personalizado
 🎯 ${eloLinha}
-👥 ${jogadores.length}/${sala.maxJogadores} vagas preenchidas
+👥 ${jogadores.length}/${sala.max_jogadores} vagas preenchidas
 💰 ${premio}
 👇 Entre aqui
 
