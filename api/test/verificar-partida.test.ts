@@ -75,6 +75,7 @@ describe("verificarPartida", () => {
       { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "TOP", confirmed: true, linked: true },
       { matchId: sala.id, userId: d, side: "red", slot: 1, roleSlot: "JG", confirmed: true, linked: true },
     ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-ENC-0001", used: true, matchId: sala.id });
 
     const r = await verificarPartida(db, sala.id, {
       buscarIds: async () => ["BR1_9999999999"],
@@ -89,6 +90,11 @@ describe("verificarPartida", () => {
     assert.equal(m.winnerSide, "blue");
     const [res] = await db.select().from(matchResults).where(eq(matchResults.matchId, sala.id));
     assert.ok(res, "deve gravar match_results");
+    const mps = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
+    for (const mp of mps) assert.equal(mp.linked, false, "jogadores liberados");
+    const [codigo] = await db.select().from(matchCodes).where(eq(matchCodes.code, "BR-TEST-ENC-0001"));
+    assert.equal(codigo.used, false, "código liberado após encerrar");
+    assert.equal(codigo.matchId, null, "código desatrelado da sala");
   });
 
   test("nick nao bate → cancelada + devolve", async () => {
@@ -105,6 +111,7 @@ describe("verificarPartida", () => {
       { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "TOP", confirmed: true, linked: true },
       { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "TOP", confirmed: true, linked: true },
     ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-NICK-0001", used: true, matchId: sala.id });
 
     // Partida com um impostor (PUUID_X no lugar de PUUID_C)
     const r = await verificarPartida(db, sala.id, {
@@ -126,6 +133,11 @@ describe("verificarPartida", () => {
     const [wa] = await db.select().from(userWallets).where(eq(userWallets.userId, a));
     assert.equal(wa.mc, 100, "reserva devolvida");
     assert.equal(wa.mcReservado, 0);
+    const mps = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
+    for (const mp of mps) assert.equal(mp.linked, false, "jogadores liberados");
+    const [codigo] = await db.select().from(matchCodes).where(eq(matchCodes.code, "BR-TEST-NICK-0001"));
+    assert.equal(codigo.used, false, "código liberado após cancelar");
+    assert.equal(codigo.matchId, null, "código desatrelado da sala");
   });
 
   test("nao achou < 3h → segue partida_iniciada", async () => {
@@ -170,5 +182,50 @@ describe("verificarPartida", () => {
     const sala = await criaSala(db, { status: "encerrada" });
     const r = await verificarPartida(db, sala.id, { buscarIds: async () => [], buscarMatch: async () => null });
     assert.equal(r.ok, false);
+  });
+
+  test("sem conta vinculada >= 3h → cancelada (nunca paga às cegas)", async () => {
+    const db = ctx.db;
+    const a = "aaaaaaa4-0000-0000-0000-000000000051";
+    // Jogador SEM linha em game_accounts (sem puuid) — cria direto, sem o
+    // helper criaJogador que insere a conta vinculada.
+    await db.insert(users).values({ id: a, email: a + "@x.com", displayName: "Jogador" });
+    await db.insert(userWallets).values({ userId: a, mc: 70, mcReservado: 30 });
+    const sala = await criaSala(db, { iniciandoPartidaAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000) });
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "TOP", confirmed: true, linked: true },
+    ]);
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => [],
+      buscarMatch: async () => null,
+    });
+    assert.equal(r.ok, true);
+    assert.equal(r.estado, "cancelada");
+    assert.equal(r.motivo, "nao_encontrada");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "cancelada");
+    const [wa] = await db.select().from(userWallets).where(eq(userWallets.userId, a));
+    assert.equal(wa.mc, 100, "reserva devolvida");
+    assert.equal(wa.mcReservado, 0);
+  });
+
+  test("sala orfa (sem jogadores) >= 3h → cancelada + código liberado", async () => {
+    const db = ctx.db;
+    const sala = await criaSala(db, { iniciandoPartidaAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000) });
+    await db.insert(matchCodes).values({ code: "BR-TEST-ORFAO-0001", used: true, matchId: sala.id });
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => [],
+      buscarMatch: async () => null,
+    });
+    assert.equal(r.ok, true);
+    assert.equal(r.estado, "cancelada");
+    assert.equal(r.motivo, "nao_encontrada");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "cancelada");
+    const [codigo] = await db.select().from(matchCodes).where(eq(matchCodes.code, "BR-TEST-ORFAO-0001"));
+    assert.equal(codigo.used, false, "código liberado após cancelar");
+    assert.equal(codigo.matchId, null, "código desatrelado da sala");
   });
 });
