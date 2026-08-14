@@ -125,3 +125,53 @@ export async function pagarCancelamento(tx: any, matchId: string, aposta: number
     await devolverEntrada(tx, p.userId, aposta, matchId);
   }
 }
+
+export type ResultadoReverter =
+  | { ok: true }
+  | { ok: false; erro: "saldo_insuficiente"; userId: string };
+
+/**
+ * Estorna um payout já aplicado (contestação procedente — spec
+ * verificacao-partida-riot). Devolve cada jogador ao estado pré-aposta:
+ * vencedores devolvem o prêmio E recebem a reserva de volta; perdedores
+ * recebem a reserva de volta; a taxa/resto sai de `platform_revenue`.
+ * Invariante `mc + mc_reservado = total` preservado (só move mc).
+ *
+ * Restrição: o estorno do vencedor exige `mc >= porVencedor` — se gastou o
+ * prêmio, retorna `saldo_insuficiente` e o admin decide manualmente.
+ */
+export async function reverterPayout(
+  tx: any,
+  matchId: string,
+  aposta: number,
+  players: { userId: string; side: string }[],
+  winnerSide: string,
+  taxaPct: number
+): Promise<ResultadoReverter> {
+  if (!aposta || aposta <= 0 || players.length === 0) return { ok: true };
+  const vencedores = players.filter((p) => p.side === winnerSide);
+  if (vencedores.length === 0) return { ok: true };
+
+  const calc = calcularPayout(aposta, players.length, taxaPct, vencedores.length);
+
+  for (const v of vencedores) {
+    const [w] = await tx.select().from(userWallets).where(eq(userWallets.userId, v.userId)).limit(1).for("update");
+    if ((w?.mc ?? 0) < calc.porVencedor) return { ok: false, erro: "saldo_insuficiente", userId: v.userId };
+    const novoMc = (w?.mc ?? 0) - calc.porVencedor + aposta;
+    await tx.update(userWallets).set({ mc: novoMc, updatedAt: new Date() }).where(eq(userWallets.userId, v.userId));
+    await gravarLancamento(tx, v.userId, -calc.porVencedor, "match_prize_revert", matchId, novoMc);
+    await gravarLancamento(tx, v.userId, aposta, "match_entry_refund", matchId, novoMc);
+  }
+
+  for (const p of players) {
+    if (p.side !== winnerSide) {
+      const [w] = await tx.select().from(userWallets).where(eq(userWallets.userId, p.userId)).limit(1).for("update");
+      const novoMc = (w?.mc ?? 0) + aposta;
+      await tx.update(userWallets).set({ mc: novoMc, updatedAt: new Date() }).where(eq(userWallets.userId, p.userId));
+      await gravarLancamento(tx, p.userId, aposta, "match_entry_refund", matchId, novoMc);
+    }
+  }
+
+  await tx.delete(platformRevenue).where(eq(platformRevenue.matchId, matchId));
+  return { ok: true };
+}

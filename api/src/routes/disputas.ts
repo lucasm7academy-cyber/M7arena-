@@ -36,17 +36,22 @@ export async function listarDisputas(db: any, matchId: string) {
 }
 
 /**
- * Abre a contestação de um participante. Regras: sala em `aguardando_revisao`,
- * usuário na sala, 1 por jogador (a constraint única é a trava final — o catch
- * de 23505 devolve o erro amigável).
+ * Abre a contestação de um participante. Regras: sala em `encerrada` (ou
+ * `aguardando_revisao`, legado), usuário na sala, 1 por jogador (a constraint
+ * única é a trava final — o catch de 23505 devolve o erro amigável).
  */
-export async function abrirDisputa(db: any, params: { userId: string; matchId: string; motivo: string }) {
+export async function abrirDisputa(db: any, params: { userId: string; matchId: string; motivo: string; contestacaoUrl?: string }) {
   const motivoLimpo = (params.motivo || "").trim();
   if (motivoLimpo.length < 5) return { ok: false, erro: "motivo_invalido" };
 
   const [m] = await db.select().from(matches).where(eq(matches.id, params.matchId)).limit(1);
   if (!m) return { ok: false, erro: "sala_nao_encontrada" };
-  if (m.status !== "aguardando_revisao") return { ok: false, erro: "estado_invalido", estado: m.status };
+  // Spec verificacao-partida-riot: com o resultado automático, a contestação
+  // mora em salas FINALIZADAS (encerrada). `aguardando_revisao` segue aceito
+  // como legado do fluxo antigo.
+  if (m.status !== "encerrada" && m.status !== "aguardando_revisao") {
+    return { ok: false, erro: "estado_invalido", estado: m.status };
+  }
 
   const [player] = await db
     .select()
@@ -57,7 +62,12 @@ export async function abrirDisputa(db: any, params: { userId: string; matchId: s
   if (!player) return { ok: false, erro: "nao_participante" };
 
   try {
-    await db.insert(matchDisputas).values({ matchId: params.matchId, userId: params.userId, motivo: motivoLimpo });
+    await db.insert(matchDisputas).values({
+      matchId: params.matchId,
+      userId: params.userId,
+      motivo: motivoLimpo,
+      contestacaoUrl: params.contestacaoUrl ?? null,
+    });
     return { ok: true };
   } catch (e: any) {
     if (e?.code === "23505") return { ok: false, erro: "ja_contestou" };
@@ -74,6 +84,7 @@ disputasRouter.post("/:matchId", async (req, res) => {
       userId: user.id,
       matchId: req.params.matchId,
       motivo: req.body?.motivo ?? "",
+      contestacaoUrl: req.body?.contestacao_url ?? undefined,
     });
     if (!r.ok) {
       const status = r.erro === "sala_nao_encontrada" ? 404 : r.erro === "nao_participante" ? 403 : 409;

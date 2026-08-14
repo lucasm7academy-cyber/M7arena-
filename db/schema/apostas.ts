@@ -67,6 +67,9 @@ export const matchDisputas = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     motivo: text("motivo").notNull(),
+    // Print de evidência da contestação (URL autenticada /api/prints/:id/arquivo).
+    // 1 por disputa; diferente do teto de 3 prints de prova do fluxo antigo.
+    contestacaoUrl: text("contestacao_url"),
     status: varchar("status", { length: 20 }).default("aberta").notNull(), // 'aberta' | 'resolvida'
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
