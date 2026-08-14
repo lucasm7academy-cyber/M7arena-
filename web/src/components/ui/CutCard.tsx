@@ -30,7 +30,7 @@ export function CutCard({
   return (
     <motion.div {...rest} className={`relative ${className}`}>
       <div className="absolute inset-0" style={{ backgroundColor: borderColor, clipPath: CUT_OUTER }} />
-      <div className="absolute inset-0" style={{ backgroundColor: background, clipPath: CUT_INNER }} />
+      <div className="absolute inset-[1px]" style={{ backgroundColor: background, clipPath: CUT_INNER }} />
       <div className={`relative ${contentClassName}`}>{children}</div>
     </motion.div>
   );
