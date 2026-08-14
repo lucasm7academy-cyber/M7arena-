@@ -13,7 +13,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
 import { registrarServerTime, agoraServidor } from '../lib/clockSync';
-import { tocarInicioConfirmacao, tocarTickConfirmacao, pararMusicaConfirmacao } from '../lib/somSala';
+import { tocarInicioConfirmacao, tocarTickConfirmacao, pararMusicaConfirmacao, desbloquearSom } from '../lib/somSala';
 import { useSalaRealtime } from './useSalaRealtime';
 import {
     buscarsalas,
@@ -185,6 +185,21 @@ export function useSalaSimples(
     useEffect(() => {
         return () => {
             if (mensagemTimeoutRef.current) clearTimeout(mensagemTimeoutRef.current);
+        };
+    }, []);
+
+    // ── DESBLOQUEIO DE ÁUDIO (iOS) ────────────────────
+    // O Safari só permite audio.play() dentro de um gesto do usuário. A
+    // contagem dispara via WS/polling (fora de gesto), então o primeiro
+    // tap/click na tela destrava os elementos — senão beep e música ficam
+    // mudos no iPhone.
+    useEffect(() => {
+        const unlock = () => desbloquearSom();
+        window.addEventListener('pointerdown', unlock, { once: true });
+        window.addEventListener('touchstart', unlock, { once: true });
+        return () => {
+            window.removeEventListener('pointerdown', unlock);
+            window.removeEventListener('touchstart', unlock);
         };
     }, []);
 

@@ -7,20 +7,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, X, ImageIcon, Loader, Crown, Users, Scale } from 'lucide-react';
+import { Trophy, X, ImageIcon, Loader, Crown, Users, Scale, AlertTriangle, Gavel, CheckCircle2 } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
+import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { CardJogador } from './CardJogador';
 
 interface ResultadoPartidaProps {
   sala: any;
+  usuarioId?: string;
 }
 
-export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
+export function ResultadoPartida({ sala, usuarioId }: ResultadoPartidaProps) {
   const matchId = sala?.match_id as string | undefined;
   const [prints, setPrints] = useState<any[]>([]);
   const [carregandoPrints, setCarregandoPrints] = useState(false);
   const [lightboxPrint, setLightboxPrint] = useState<any>(null);
+
+  const [contestando, setContestando] = useState(false);
+  const [motivo, setMotivo] = useState('');
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [minhaDisputa, setMinhaDisputa] = useState<any>(null);
 
   const vencedor = sala?.vencedor; // 'A' | 'B' | 'empate' | null
   const jogadores = Array.isArray(sala?.jogadores) ? sala.jogadores : [];
@@ -50,6 +58,38 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
   useEffect(() => {
     carregarPrints();
   }, [carregarPrints]);
+
+  useEffect(() => {
+    if (!matchId) return;
+    api.disputas.list(matchId)
+      .then((d) => setMinhaDisputa(d.find((x: any) => x.userId === usuarioId) ?? null))
+      .catch((e: any) => console.error('[Resultado] falha ao listar disputas:', e?.message));
+  }, [matchId, usuarioId]);
+
+  const abrirContestacao = async () => {
+    if (!matchId) return;
+    if (motivo.trim().length < 5) { toast.error('Descreva o motivo (mínimo 5 caracteres).'); return; }
+    setEnviando(true);
+    try {
+      let contestacaoUrl: string | undefined;
+      if (arquivo) {
+        const up = await api.prints.upload(matchId, arquivo);
+        contestacaoUrl = up.url;
+      }
+      await api.disputas.abrir(matchId, motivo.trim(), contestacaoUrl);
+      toast.success('Contestação registrada — o admin vai analisar.');
+      // Esconde o formulário imediatamente (bloco vira o banner verde); o
+      // useEffect re-busca a lista real na próxima montagem da tela.
+      setMinhaDisputa({ userId: usuarioId, status: 'aberta' });
+      setContestando(false);
+      setMotivo('');
+      setArquivo(null);
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível registrar a contestação.');
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
     <motion.div
@@ -160,6 +200,37 @@ export function ResultadoPartida({ sala }: ResultadoPartidaProps) {
               </div>
             )}
           </div>
+
+          {/* Contestação — só participante confirmado da partida finalizada */}
+          {jogadores.some((j: any) => j.user_id === usuarioId) && (
+            <div className="pt-3 border-t border-white/10">
+              {minhaDisputa ? (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-green-500/5 border border-green-500/20 text-green-400 text-xs font-bold">
+                  <CheckCircle2 className="w-4 h-4" /> Contestação registrada — aguardando análise
+                </div>
+              ) : contestando ? (
+                <div className="space-y-2">
+                  <input type="file" accept="image/*" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+                    className="block w-full text-xs text-white/50 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-white/10 file:text-white/70 file:font-bold" />
+                  <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Descreva o motivo da contestação (ex.: não fui eu que joguei, o nick não confere)..."
+                    rows={3} maxLength={500}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-[#FFB700]/50 placeholder:text-white/25" />
+                  <div className="flex gap-2">
+                    <button onClick={() => setContestando(false)} className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/50 text-xs font-bold hover:bg-white/10">Cancelar</button>
+                    <button onClick={abrirContestacao} disabled={enviando} className="flex-1 py-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-black uppercase tracking-widest hover:bg-red-500/25 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                      <Gavel className="w-3.5 h-3.5" /> {enviando ? 'Enviando...' : 'Enviar contestação'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setContestando(true)}
+                  className="w-full py-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-white/50 hover:text-red-300 hover:border-red-500/30 text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Contestar resultado
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
