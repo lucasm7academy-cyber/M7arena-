@@ -13,6 +13,7 @@ import { sincronizarContaRiot } from '../api/player';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { VipLabel } from '../components/ui/VipBadge';
+import { CutCard } from '../components/ui/CutCard';
 import { CarteiraEStrikes } from '../components/perfil/CarteiraEStrikes';
 
 // Imagens estáticas da página vivem na pasta 'public-images' do volume de
@@ -60,8 +61,8 @@ function EloBlock({ elo, label, delay = 0 }: any) {
   const total = elo.wins + elo.losses;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="rounded-3xl p-5 sm:p-8 transition-all border border-white/10 relative overflow-hidden group" style={getCardStyle()}>
+    <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+      className="overflow-hidden group" contentClassName="p-5 sm:p-8">
       <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-primary/10 transition-colors" />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
         <div className="lg:col-span-5 flex flex-col gap-6">
@@ -107,7 +108,7 @@ function EloBlock({ elo, label, delay = 0 }: any) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </CutCard>
   );
 }
 
@@ -124,8 +125,8 @@ function PerformanceSection({ stats, ddrVer, delay = 0 }: any) {
   if (!stats || stats.topChampions?.length === 0) return null;
   
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} 
-      className="rounded-3xl p-5 sm:p-8 space-y-8 relative overflow-hidden" style={getCardStyle()}>
+    <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+      className="overflow-hidden" contentClassName="p-5 sm:p-8 space-y-8">
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
       <div className="flex items-center justify-between relative z-10"><span className={LABEL_CLASS}>Análise de Performance</span></div>
       <div className="grid lg:grid-cols-2 gap-12 relative z-10">
@@ -169,7 +170,7 @@ function PerformanceSection({ stats, ddrVer, delay = 0 }: any) {
           </div>
         )}
       </div>
-    </motion.div>
+    </CutCard>
   );
 }
 
@@ -439,8 +440,8 @@ export default function Perfil() {
       <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-32">
         
         {/* HEADER - usando dados do PERFIL CONTEXT (leves) */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="relative rounded-3xl p-5 sm:p-10 overflow-visible z-10" style={getCardStyle()}>
+        <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="z-10" contentClassName="p-5 sm:p-10">
           <div className="relative flex flex-col gap-8 overflow-visible">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
               <div className="flex flex-col sm:flex-row items-center gap-8">
@@ -538,7 +539,7 @@ export default function Perfil() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </CutCard>
 
         {/* WALLET + ADVERTÊNCIAS (ADR-033) */}
         <CarteiraEStrikes
@@ -551,8 +552,8 @@ export default function Perfil() {
         />
 
         {/* EQUIPE */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="rounded-3xl p-5 sm:p-8" style={getCardStyle()}>
+        <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+          contentClassName="p-5 sm:p-8">
           <div className="flex items-center justify-between mb-6"><span className={LABEL_CLASS}>Minha Equipe</span><Users className="w-5 h-5 text-primary/40" /></div>
           {equipe ? (
             <motion.div
@@ -650,12 +651,12 @@ export default function Perfil() {
               </button>
             </div>
           )}
-        </motion.div>
+        </CutCard>
 
         {/* E-mail de Acesso */}
         <div className="grid md:grid-cols-1 gap-8">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} 
-            className="rounded-3xl p-5 sm:p-8" style={getCardStyle()}>
+          <CutCard initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
+            contentClassName="p-5 sm:p-8">
             <div className="flex items-center justify-between mb-8"><span className={LABEL_CLASS}>E-mail de Acesso</span><ShieldCheck className="w-5 h-5 text-primary/40" /></div>
             <div className="space-y-6">
               <div>
@@ -670,7 +671,7 @@ export default function Perfil() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </CutCard>
           
         </div>
 
@@ -690,7 +691,7 @@ export default function Perfil() {
 
         {/* REDES SOCIAIS */}
         <div className="grid md:grid-cols-1 gap-8">
-          <motion.div className="rounded-3xl p-5 sm:p-8 space-y-6" style={getCardStyle()}>
+          <CutCard contentClassName="p-5 sm:p-8 space-y-6">
             <div className="flex items-center justify-between"><span className={LABEL_CLASS}>Conexões Sociais</span></div>
             <div className="space-y-4">
               {[
@@ -705,7 +706,7 @@ export default function Perfil() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </CutCard>
         </div>
 
         {/* AÇÕES */}

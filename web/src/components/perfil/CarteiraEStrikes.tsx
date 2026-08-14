@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { LoaderCircle, ShieldAlert, Ban } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import { api, type ApiWalletBalance } from '../../lib/api';
+import { CutCard } from '../ui/CutCard';
 
 interface CarteiraEStrikesProps {
     saldoDisponivel: number;
@@ -50,7 +51,7 @@ export function CarteiraEStrikes({ saldoDisponivel, advertencias, advertenciasMa
     return (
         <div className="grid md:grid-cols-2 gap-8">
             {/* Wallet */}
-            <div className="rounded-3xl p-5 sm:p-8 relative overflow-hidden border border-white/10" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(16px)' }}>
+            <CutCard className="overflow-hidden" contentClassName="p-5 sm:p-8">
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="flex items-center justify-between mb-5">
                     <span className="text-xs text-white/30 font-normal uppercase tracking-widest">Carteira</span>
@@ -91,10 +92,10 @@ export function CarteiraEStrikes({ saldoDisponivel, advertencias, advertenciasMa
                         )}
                     </div>
                 )}
-            </div>
+            </CutCard>
 
             {/* Advertências / Ban */}
-            <div className="rounded-3xl p-5 sm:p-8 relative overflow-hidden border border-white/10" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(16px)' }}>
+            <CutCard className="overflow-hidden" contentClassName="p-5 sm:p-8">
                 <div className="flex items-center justify-between mb-5">
                     <span className="text-xs text-white/30 font-normal uppercase tracking-widest">Punições</span>
                     <ShieldAlert className="w-5 h-5 text-red-400/50" />
@@ -139,7 +140,7 @@ export function CarteiraEStrikes({ saldoDisponivel, advertencias, advertenciasMa
                         </div>
                     )}
                 </div>
-            </div>
+            </CutCard>
         </div>
     );
 }
