@@ -12,6 +12,7 @@ import {
   pagarPremio,
   pagarEmpate,
   pagarCancelamento,
+  reverterPayout,
 } from "../src/lib/escrow.js";
 
 /** Cria um usuário + wallet (FK de user_wallets exige o usuário). */
@@ -155,5 +156,63 @@ describe("escrow", () => {
     const kinds = txs.map((t) => t.kind);
     assert.ok(kinds.includes("match_prize"));
     assert.ok(kinds.includes("match_loss"));
+  });
+
+  test("reverterPayout: todos voltam ao saldo pré-aposta e estorna a taxa", async () => {
+    const db = ctx.db;
+    const v = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"; // vencedor blue
+    const p = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"; // perdedor red
+    await db.insert(users).values({ id: v, email: v + "@x.com", displayName: "V" });
+    await db.insert(userWallets).values({ userId: v, mc: 70, mcReservado: 0 });
+    await db.insert(users).values({ id: p, email: p + "@x.com", displayName: "P" });
+    await db.insert(userWallets).values({ userId: p, mc: 70, mcReservado: 0 });
+    const salaId = "00000000-0000-0000-0000-000000000004";
+    const dono = "00000000-0000-0000-0000-00000000cafe";
+    await db.insert(matches).values({ id: salaId, gameId: "lol", mode: "1v1", createdBy: dono, status: "encerrada", apostaMc: 30, taxaPct: "8.99", winnerSide: "blue", resultado: "blue" });
+    const players = [
+      { userId: v, side: "blue" },
+      { userId: p, side: "red" },
+    ];
+    // Simula o payout que já ocorreu
+    await pagarPremio(db as any, salaId, 30, players, "blue", 8.99);
+    const calc = calcularPayout(30, 2, 8.99, 1);
+    const [vAntes] = await db.select().from(userWallets).where(eq(userWallets.userId, v));
+    assert.equal(vAntes.mc, 70 + calc.porVencedor);
+
+    // Reverte
+    const r = await reverterPayout(db as any, salaId, 30, players, "blue", 8.99);
+    assert.equal(r.ok, true);
+    const [vPos] = await db.select().from(userWallets).where(eq(userWallets.userId, v));
+    const [pPos] = await db.select().from(userWallets).where(eq(userWallets.userId, p));
+    assert.equal(vPos.mc, 100, "vencedor volta ao pré-aposta (70 + reserva 30)");
+    assert.equal(vPos.mcReservado, 0);
+    assert.equal(pPos.mc, 100, "perdedor volta ao pré-aposta");
+    const revs = await db.select().from(platformRevenue).where(eq(platformRevenue.matchId, salaId));
+    assert.equal(revs.length, 0, "taxa estornada");
+  });
+
+  test("reverterPayout: vencedor sem saldo → erro saldo_insuficiente", async () => {
+    const db = ctx.db;
+    const v = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4";
+    const p = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5";
+    await db.insert(users).values({ id: v, email: v + "@x.com", displayName: "V" });
+    await db.insert(userWallets).values({ userId: v, mc: 0, mcReservado: 0 }); // gastou o prêmio
+    await db.insert(users).values({ id: p, email: p + "@x.com", displayName: "P" });
+    await db.insert(userWallets).values({ userId: p, mc: 70, mcReservado: 0 });
+    const salaId = "00000000-0000-0000-0000-000000000005";
+    const dono = "00000000-0000-0000-0000-00000000cafe";
+    await db.insert(matches).values({ id: salaId, gameId: "lol", mode: "1v1", createdBy: dono, status: "encerrada", apostaMc: 30, taxaPct: "8.99", winnerSide: "blue", resultado: "blue" });
+    const players = [{ userId: v, side: "blue" }, { userId: p, side: "red" }];
+    await pagarPremio(db as any, salaId, 30, players, "blue", 8.99);
+
+    // Vencedor gastou o prêmio antes do estorno: fica com menos do que o
+    // porVencedor a devolver (54). O estorno precisa falhar com
+    // saldo_insuficiente.
+    const calc = calcularPayout(30, 2, 8.99, 1);
+    await db.update(userWallets).set({ mc: calc.porVencedor - 1 }).where(eq(userWallets.userId, v));
+    const r = await reverterPayout(db as any, salaId, 30, players, "blue", 8.99);
+    assert.equal(r.ok, false);
+    assert.equal(r.erro, "saldo_insuficiente");
+    assert.equal(r.userId, v);
   });
 });
