@@ -399,6 +399,9 @@ export interface ApiMatchesSdk {
   vote: (id: number | string, teamTag: string) => Promise<{ ok: boolean }>;
   /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
   excluir: (id: number | string) => Promise<{ ok: boolean; id: string; salaNum: number }>;
+  /** Dispara a verificação automática na hora (acelerador do polling). */
+  verificar: (id: number) =>
+    Promise<{ ok: boolean; estado: string; vencedor?: 'A' | 'B' | null; motivo?: string; matchIdRiot?: string | null }>;
 }
 
 /**
@@ -752,6 +755,8 @@ export const api = {
     /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
     excluir: (id: number | string) =>
       api.delete<{ ok: boolean; id: string; salaNum: number }>(`/matches/${id}`),
+    verificar: (id: number) =>
+      api.post<{ ok: boolean; estado: string; vencedor?: 'A' | 'B' | null; motivo?: string; matchIdRiot?: string | null }>(`/matches/${id}/verificar`),
   } as ApiMatchesSdk,
 
   profiles: {

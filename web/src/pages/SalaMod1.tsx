@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Copy, Check, AlertTriangle, LinkIcon, ImagePlus, Loader, Clock, X, Trash2, Share2 } from 'lucide-react';
+import { Copy, Check, AlertTriangle, LinkIcon, Loader, Clock, X, Trash2, Share2 } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
@@ -101,8 +101,7 @@ export default function SalaMod1() {
     const codigoCopiadoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [showAvisoRiotId, setShowAvisoRiotId] = useState(false);
     const [showAvisoLogin, setShowAvisoLogin] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [enviandoPrint, setEnviandoPrint] = useState(false);
+    const [verificandoPartida, setVerificandoPartida] = useState(false);
 
     const copiarCodigo = () => {
         if (codigoPartida) {
@@ -188,7 +187,6 @@ ${link}`;
     const ehApostada = (sala.mpoints || 0) > 0;
     const poteMC = ehApostada ? (sala.mpoints || 0) * (sala.max_jogadores || 10) : 0;
     const temRiotId = !!perfil?.riotId;
-    const matchId = (sala.match_id as string) || '';
     const jogadorConfirmado = !!jogadorAtual?.confirmado;
     const minutosParaKick = ehApostada ? Math.max(0, Math.ceil(30 - ociosidadeMin)) : 0;
 
@@ -215,21 +213,25 @@ ${link}`;
         entrar(role, isTimeA, senha || undefined);
     };
 
-    // Print de prova durante `partida_iniciada` — é o gatilho que leva a sala
-    // apostada para `aguardando_revisao` (design v3 §6). Nunca cai no vazio:
-    // toast de sucesso + refetch imediato + realtime.
-    const enviarPrintPartida = async (file: File) => {
-        if (!matchId || !file) return;
-        setEnviandoPrint(true);
+    // Acelerador do polling: dispara a verificação automática via Riot na hora.
+    // O servidor decide quem venceu e leva a sala para `encerrada`/`cancelada`.
+    const verificarPartidaAgora = async () => {
+        if (!salaId) return;
+        setVerificandoPartida(true);
         try {
-            await api.prints.upload(matchId, file);
-            toast.success('Print enviado — entrando em análise.');
+            const r = await api.matches.verificar(Number(salaId));
+            if (r.estado === 'encerrada') {
+                toast.success(`Partida finalizada! ${r.vencedor === 'A' ? 'Time Azul' : 'Time Vermelho'} venceu.`);
+            } else if (r.estado === 'cancelada') {
+                toast.error('Partida cancelada — os nicks não conferiram ou o jogo não foi encontrado.');
+            } else {
+                toast('Partida ainda em andamento ou não encontrada. Verificação automática continua.');
+            }
             await atualizar();
         } catch (e: any) {
             toast.error(traduzirErroSala(e?.message));
         } finally {
-            setEnviandoPrint(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            setVerificandoPartida(false);
         }
     };
 
@@ -601,6 +603,9 @@ ${link}`;
                                 className="flex flex-col items-center gap-4 mt-4"
                             >
                                 <span className="text-[1.8vmin] font-black text-[#FFB700] uppercase tracking-[1em]">CONFIRME AGORA</span>
+                                <span className="text-[1.1vmin] font-bold text-white/50 uppercase tracking-[0.2em] text-center max-w-[40vmin]">
+                                    Confiram os nicks — quem jogar no lugar do dono da vaga cancela a partida
+                                </span>
                                 <div className="w-[12vmin] h-[4px] bg-white/10 rounded-full overflow-hidden">
                                     <motion.div 
                                         className="h-full bg-[#FFB700]" 
@@ -754,24 +759,22 @@ ${link}`;
                         </motion.div>
                     )}
 
-                    {/* PARTIDA INICIADA — envio de print é o gatilho da revisão
-                        (design v3 §6; decisão 2026-08-03: TODAS as salas, casuais
-                        e apostadas, passam pelo admin — sem votação no cliente) */}
+                    {/* PARTIDA INICIADA — verificação automática via Riot (acelerador
+                        do polling) substitui o envio de print nesta etapa; o print
+                        existe só na contestação em ResultadoPartida */}
                     {sala.estado === 'partida_iniciada' && jogadorAtual && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
-                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-                                onChange={(e) => { const f = e.target.files?.[0]; if (f) enviarPrintPartida(f); }} />
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={enviandoPrint}
+                                onClick={verificarPartidaAgora}
+                                disabled={verificandoPartida}
                                 className="pointer-events-auto relative p-[1.5px] bg-black disabled:opacity-50"
                                 style={{ clipPath: CUT_FRAME }}
                             >
                                 <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.5vmin] transition-colors"
                                     style={{ clipPath: CUT_INNER }}>
-                                    {enviandoPrint ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <ImagePlus className="w-[2.2vmin] h-[2.2vmin]" />}
-                                    {enviandoPrint ? 'Enviando...' : 'Enviar Print e Iniciar Revisão'}
+                                    {verificandoPartida ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <Check className="w-[2.2vmin] h-[2.2vmin]" />}
+                                    {verificandoPartida ? 'Verificando...' : 'Verificar Partida'}
                                 </span>
                             </motion.button>
                         </motion.div>
