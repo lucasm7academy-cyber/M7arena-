@@ -1,56 +1,37 @@
-import { lt, and, eq, inArray, isNull, not } from "drizzle-orm";
+import { and, eq, inArray, isNull, not } from "drizzle-orm";
 import { db } from "./db.js";
 import { matches, matchPlayers, matchCodes } from "../../db/schema/matches.js";
 import { users } from "../../db/schema/identidade.js";
-import { notifyMatchChange } from "./lib/match-flow.js";
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
-
-const FANTASMA_MS = 3 * 60 * 60 * 1000;
+import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
 
 /**
- * Job único a cada 10 min (design v3 §8): partida fantasma + saneamento de
- * estados mortos. ADR-033 removeu o kick de ociosidade, o strike de abandono
- * e a reativação de suspensão — punições são manuais (admin), então o cron
- * nunca escreve em user_advertencias nem mexe no status do usuário.
+ * Job único a cada 10 min (design v3 §8): verificação automática de partidas +
+ * saneamento de estados mortos. ADR-033 removeu o kick de ociosidade, o strike
+ * de abandono e a reativação de suspensão — punições são manuais (admin), então
+ * o cron nunca escreve em user_advertencias nem mexe no status do usuário.
  * Nunca escreve estado por fora da máquina — cada ação reusa a lógica com
  * FOR UPDATE.
  */
 export async function runCron(d: any = db) {
   const agora = new Date();
-  const fantasmaLimite = new Date(agora.getTime() - FANTASMA_MS);
 
-  let fantasmas = 0;
+  let verificadas = 0;
+  let canceladas = 0;
   let sanitizadas = 0;
 
-  // 1. Partida fantasma: 'partida_iniciada' há 3h sem print. Vale para TODAS as
-  //    salas (decisão de 2026-08-03: o resultado é sempre decidido pelo admin;
-  //    casuais e apostadas sem print em 3h entram na fila de revisão).
-  const fantasmasList = await d
-    .select()
-    .from(matches)
-    .where(and(eq(matches.status, "partida_iniciada"), lt(matches.updatedAt, fantasmaLimite)));
-  for (const sala of fantasmasList) {
-    await d
-      .update(matches)
-      .set({ status: "aguardando_revisao", revisaoDesde: agora })
-      .where(eq(matches.id, sala.id));
-    // Consistência com report-result (matches-actions.ts:169): partida em
-    // revisão não tem jogador "vinculado" — libera o linked residual para o
-    // jogador poder entrar em outra partida enquanto o admin decide.
-    await d
-      .update(matchPlayers)
-      .set({ linked: false })
-      .where(and(eq(matchPlayers.matchId, sala.id), eq(matchPlayers.linked, true)));
-    // Consistência com report-result (matches-actions.ts:170): libera o
-    // tournament code de volta ao pool. Sem isso, uma partida fantasma deixava
-    // o código preso (used=true) para sempre, esgotando o rodízio e causando
-    // "SEM-CODIGO-AGUARDE" nas próximas salas.
-    await d
-      .update(matchCodes)
-      .set({ used: false, matchId: null })
-      .where(eq(matchCodes.matchId, sala.id));
-    notifyMatchChange(sala.id); // jogadores veem "em análise" sem refresh
-    fantasmas++;
+  // 1. Verificação automática (spec verificacao-partida-riot): varre TODAS as
+  //    salas em `partida_iniciada`. O motor decide: encontrou + nicks batem →
+  //    encerra e paga; encontrou com nick errado → cancela; não encontrou ≥ 3h →
+  //    cancela (devolve MC). Sem chave da Riot, `riotRaw` retorna null e o motor
+  //    trata como "não encontrada" — o teto de 3h é o fallback honesto.
+  const emJogo = await d.select().from(matches).where(eq(matches.status, "partida_iniciada"));
+  for (const sala of emJogo) {
+    const r = await verificarPartida(d, sala.id, { agora });
+    if (r.ok) {
+      if (r.estado === "cancelada") canceladas++;
+      else if (r.estado === "encerrada") verificadas++;
+    }
   }
 
   // 2. Saneamento (ajustarsala bug D): salas presas em estados mortos (ex.:
@@ -93,5 +74,5 @@ export async function runCron(d: any = db) {
     console.log(`[cron] saneamento: ${linkedOrfao.length} vinculo(s) orfao(s) liberado(s) em ${idsOrfaos.length} sala(s)`);
   }
 
-  return { fantasmas, sanitizadas };
+  return { verificadas, canceladas, sanitizadas };
 }

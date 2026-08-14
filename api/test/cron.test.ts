@@ -44,7 +44,8 @@ describe("cron", () => {
       });
 
       const r = await runCron(db);
-      assert.equal(r.fantasmas, 0);
+      assert.equal(r.verificadas, 0, "cron não encerra sala em preenchimento");
+      assert.equal(r.canceladas, 0, "cron não cancela sala em preenchimento");
 
       // A vaga continua lá, o usuário não perde nada (punição é manual agora).
       const vagas = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
@@ -54,21 +55,27 @@ describe("cron", () => {
     }
   });
 
-  test("partida fantasma move para aguardando_revisao", async () => {
+  test("partida fantasma (>= 3h) vira cancelada e devolve", async () => {
     const { client, db } = await setupDb();
     try {
+      const jogador = "aaaaaaa3-0000-0000-0000-000000000050";
+      await db.insert(users).values({ id: jogador, email: jogador + "@x.com", displayName: "Jogador" });
+      await db.insert(userWallets).values({ userId: jogador, mc: 50, mcReservado: 50 });
       const sala = await criaSala(db, {
         status: "partida_iniciada",
         apostaMc: 50,
-        updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
+        codigoPartida: "BR-TEST-FANTASMA-0002",
+        iniciandoPartidaAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
       });
+      await db.insert(matchPlayers).values({ matchId: sala.id, userId: jogador, side: "blue", slot: 0, roleSlot: "TOP", confirmed: true, linked: true });
 
       const r = await runCron(db);
-      assert.equal(r.fantasmas, 1);
-
+      assert.ok(r.canceladas >= 1, "fantasma de 3h deve cancelar");
       const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
-      assert.equal(m.status, "aguardando_revisao");
-      assert.ok(m.revisaoDesde);
+      assert.equal(m.status, "cancelada");
+      const [w] = await db.select().from(userWallets).where(eq(userWallets.userId, jogador));
+      assert.equal(w.mc, 100, "reserva devolvida");
+      assert.equal(w.mcReservado, 0);
     } finally {
       await client.close();
     }
@@ -80,7 +87,8 @@ describe("cron", () => {
       const sala = await criaSala(db, {
         status: "partida_iniciada",
         apostaMc: 50,
-        updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
+        codigoPartida: "BR-TEST-FANTASMA-0001",
+        iniciandoPartidaAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
       });
       // Simula um código atribuído à sala (era assim que ficava preso).
       const [codigo] = await db.insert(matchCodes).values({ code: "BR-TEST-FANTASMA-0001", used: true, matchId: sala.id }).returning();
@@ -95,19 +103,19 @@ describe("cron", () => {
     }
   });
 
-  test("partida casual (aposta 0) iniciada há 3h sem print também vira fantasma", async () => {
+  test("partida casual (aposta 0) >= 3h vira cancelada", async () => {
     const { client, db } = await setupDb();
     try {
       const sala = await criaSala(db, {
         status: "partida_iniciada",
         apostaMc: 0,
-        updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
+        codigoPartida: "BR-TEST-FANTASMA-0003",
+        iniciandoPartidaAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000),
       });
-
       const r = await runCron(db);
-      assert.equal(r.fantasmas, 1);
+      assert.ok(r.canceladas >= 1);
       const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
-      assert.equal(m.status, "aguardando_revisao");
+      assert.equal(m.status, "cancelada");
     } finally {
       await client.close();
     }

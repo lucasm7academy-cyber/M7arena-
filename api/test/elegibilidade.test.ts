@@ -248,19 +248,24 @@ describe("elegibilidade (ADR-033)", () => {
     assert.equal(r.ok, true);
   });
 
-  test("cron NÃO gera mais punições (só partida fantasma e saneamento)", async () => {
+  test("cron NÃO gera mais punições (fantasma vira cancelamento e saneamento)", async () => {
     const db = ctx.db;
     const id = "aaaaaaaa-e000-0000-0000-00000000000b";
     await criaJogador(db, id, { mc: 100, riotId: "Nada#BR1" });
-    const sala = await criaSala(db, { status: "partida_iniciada", apostaMc: 50, updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000) });
+    const sala = await criaSala(db, {
+      status: "partida_iniciada",
+      apostaMc: 50,
+      codigoPartida: "BR-TEST-ELIG-0001",
+      iniciandoPartidaAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+    });
 
     const r = await runCron(db);
-    assert.equal(r.fantasmas, 1);
+    assert.equal(r.canceladas, 1);
 
     const advertencias = await db.select().from(userAdvertencias).where(eq(userAdvertencias.userId, id));
     assert.equal(advertencias.length, 0);
 
     const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(m.status, "aguardando_revisao");
+    assert.equal(m.status, "cancelada");
   });
 });
