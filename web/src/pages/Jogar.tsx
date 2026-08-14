@@ -805,7 +805,8 @@ const Jogar = () => {
         {/* ============================================ */}
         {/* HERO BANNER */}
         {/* ============================================ */}
-        <div className="relative w-full rounded-xl overflow-hidden bg-black border border-white/10 shadow-2xl group">
+        <div className="relative w-full p-[1px] bg-white/10 shadow-2xl group" style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}>
+          <div className="relative w-full h-full bg-black overflow-hidden" style={{ clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)' }}>
           <div className="relative w-full p-8 md:p-14 flex items-center justify-between min-h-[320px]">
             {currentSlide.bgImage && (
               <motion.div
@@ -878,6 +879,7 @@ const Jogar = () => {
                 className={`h-1.5 rounded-full transition-all ${idx === activeHero ? 'w-8 bg-[#FFB700]' : 'w-1.5 bg-white/20 hover:bg-white/40'}`}
               />
             ))}
+          </div>
           </div>
         </div>
 

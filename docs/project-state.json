@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-10T22:27:03.568Z",
+  "updatedAt": "2026-08-14T22:55:42.992Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1713,16 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-05T19:53:12.351Z",
-      "agent": "deepseek",
-      "summary": "Deploy do gateway MC completo na VPS: merge feat/gateway-mc→main (ecb6fe8, resolvidos 3 conflitos: _journal 0010+0011, api.ts payments+adminAdjustMc, SalaMod1 versão usuário), push, reset VPS para ecb6fe8, migration 0010 aplicada (mc_packages 6 seeds + payments.mc_credit), envs MERCADO_PAGO_* corrigidas no .env da VPS (estavam coladas na RIOT_API_KEY), rebuild app+nginx. Smoke: health ok, packages devolve 6 pacotes, webhook 200/401 correto, mc/order 401 sem auth. BLOQUEIO: criar pedido PIX real falha com erro MP 13253 'Collector user without key enabled for QR render' — a conta MP (user_id 3157267389) não tem chave PIX ativada. BLK-005 registrado. Falta: usuário ativar chave PIX no painel MP, depois testar pedido real + webhook credita MC.",
-      "touched": [
-        "VPS:/root/m7arena/.env",
-        "VPS:/root/m7arena (git reset ecb6fe8 + migration 0010)",
-        "docs/superpowers/plans/2026-08-05-gateway-pagamento-mc.md"
-      ]
-    },
-    {
       "at": "2026-08-05T20:40:32.457Z",
       "agent": "deepseek",
       "summary": "Gateway MC 100% no ar. Chave PIX aleatória cadastrada pelo usuário destravou o fluxo: pedido PIX real criado na VPS (R$5, 500 MC, QR+brCode gerados, payment pending no banco com external_reference casando), webhook fail-closed validado (401 sem assinatura), smoke test limpo. BLK-005 resolvido, app.payments done. Falta teste final manual: pagar um PIX real e ver o webhook creditar os MCs. Nota: notification_url é enviado por pedido, então funciona mesmo sem trocar a URL global no painel do MP (recomendado trocar para https://dev.m7arena.pro/api/payments/webhook para evitar notificações duplicadas).",
@@ -2073,6 +2063,16 @@
         "web/src/components/layout/LayoutWrapper.tsx",
         "web/src/components/partidas/RegrasDaSala.tsx",
         "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-14T22:55:42.992Z",
+      "agent": "deepseek",
+      "summary": "Troquei a borda dos 3 heroes para o estilo \"cortado\" (clip-path 12px) usado nos cards de campeonato/vagas sala: Lobby.tsx (hero), campeonatos.tsx (BANNER PRINCIPAL) e Jogar.tsx (HERO BANNER). Padrão: frame externo p-[1px] bg-white/10 com clipPath polygon(12px...) + div interna bg-black com clipPath 11.4px (borda 0,6px), substituindo rounded-*/border-white/10. npx tsc --noEmit exit 0 e npx vite build ✓ built in 14.59s. Pendente validação visual do usuário no dev.m7arena.pro.",
+      "touched": [
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/campeonatos.tsx"
       ]
     }
   ]

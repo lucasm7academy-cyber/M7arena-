@@ -615,8 +615,13 @@ const Home = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="relative rounded-2xl overflow-hidden border border-white/10 aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full flex group bg-black shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full group bg-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
         >
+          <div
+            className="relative w-full h-full bg-black overflow-hidden"
+            style={{ clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)' }}
+          >
           {/* Background Image/Art Placeholder */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
@@ -686,6 +691,7 @@ const Home = () => {
               <div className="w-1.5 h-1.5 rounded-full bg-[#FFB700] animate-pulse" />
               <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Temporada 2026</span>
             </div>
+          </div>
           </div>
         </motion.div>
       </section>
