@@ -110,4 +110,51 @@ describe("print em modo contestacao (sala encerrada)", () => {
     const [m] = await db.select().from(matches).where(eq(matches.id, sala.id)).limit(1);
     assert.equal(m.status, "encerrada");
   });
+
+  test("contestacao ignora teto de 3 prints da partida; revisao mantém", async () => {
+    const dono = "c1004000-0000-0000-0000-000000000001";
+    const p1 = "c1004000-0000-0000-0000-000000000002";
+    const p2 = "c1004000-0000-0000-0000-000000000003";
+    const p3 = "c1004000-0000-0000-0000-000000000004";
+    const p4 = "c1004000-0000-0000-0000-000000000005";
+    for (const id of [dono, p1, p2, p3, p4]) await criaJogador(id);
+
+    // Sala encerrada com 3 prints já gravados: 4º contestante passa em
+    // contestacao (cap da partida não se aplica)…
+    const sala = await criaSalaEncerrada(dono, p1);
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: p2, side: "blue", slot: 1, roleSlot: "JGL", confirmed: true, linked: false },
+      { matchId: sala.id, userId: p3, side: "red", slot: 0, roleSlot: "TOP", confirmed: true, linked: false },
+      { matchId: sala.id, userId: p4, side: "red", slot: 1, roleSlot: "JGL", confirmed: true, linked: false },
+    ]);
+    await db.insert(matchPrints).values([
+      { matchId: sala.id, userId: p1, url: "/uploads/match-prints/a/1.png" },
+      { matchId: sala.id, userId: p2, url: "/uploads/match-prints/a/2.png" },
+      { matchId: sala.id, userId: p3, url: "/uploads/match-prints/a/3.png" },
+    ]);
+
+    const ok = await validarPrintDePartida(db, p4, sala.id, "contestacao");
+    assert.equal(ok.ok, true);
+
+    // …enquanto numa sala em partida_iniciada o modo revisao mantém o cap de 3.
+    const [sala2] = await db.insert(matches).values({
+      gameId: "lol", mode: "5v5", createdBy: dono, status: "partida_iniciada",
+      apostaMc: 0, taxaPct: "8.99",
+    }).returning();
+    await db.insert(matchPlayers).values([
+      { matchId: sala2.id, userId: p1, side: "blue", slot: 0, roleSlot: "TOP", confirmed: true, linked: false },
+      { matchId: sala2.id, userId: p2, side: "blue", slot: 1, roleSlot: "JGL", confirmed: true, linked: false },
+      { matchId: sala2.id, userId: p3, side: "red", slot: 0, roleSlot: "TOP", confirmed: true, linked: false },
+      { matchId: sala2.id, userId: p4, side: "red", slot: 1, roleSlot: "JGL", confirmed: true, linked: false },
+    ]);
+    await db.insert(matchPrints).values([
+      { matchId: sala2.id, userId: p1, url: "/uploads/match-prints/b/1.png" },
+      { matchId: sala2.id, userId: p2, url: "/uploads/match-prints/b/2.png" },
+      { matchId: sala2.id, userId: p3, url: "/uploads/match-prints/b/3.png" },
+    ]);
+
+    const rejeitado = await validarPrintDePartida(db, p4, sala2.id, "revisao");
+    assert.equal(rejeitado.ok, false);
+    assert.equal(rejeitado.erro, "limite_prints");
+  });
 });

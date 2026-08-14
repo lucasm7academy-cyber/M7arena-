@@ -529,7 +529,7 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
   }
 
   if (!response.ok) {
-    const errorMsg = typeof data === "object" && data?.error ? data.error : `Erro HTTP ${response.status}`;
+    const errorMsg = typeof data === "object" && (data?.error || data?.erro) ? (data.error || data.erro) : `Erro HTTP ${response.status}`;
     throw new Error(errorMsg);
   }
 

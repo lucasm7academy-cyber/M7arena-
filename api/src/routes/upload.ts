@@ -258,7 +258,10 @@ export async function validarPrintDePartida(
   // Um print por jogador (decisão do usuário 2026-08-10): quem já enviou não
   // pode anexar de novo — mesmo que ainda não tenha batido o teto da partida.
   if (prints.some((p: any) => p.userId === userId)) return { ok: false, erro: "print_ja_enviado" };
-  if (prints.length >= 3) return { ok: false, erro: "limite_prints" };
+  // Teto de 3 prints vale para o resultado (revisao); na CONTESTAÇÃO cada
+  // contestante anexa exatamente 1 print de prova, então o cap da partida não
+  // se aplica — o print_ja_enviado acima já limita a 1 por disputante.
+  if (modo !== "contestacao" && prints.length >= 3) return { ok: false, erro: "limite_prints" };
   return { ok: true, sala: m };
 }
 
