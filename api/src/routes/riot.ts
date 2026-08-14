@@ -66,7 +66,7 @@ async function riotFetch(res: any, cacheKey: string, url: string) {
  * /stats, que precisa do JSON bruto (ids e detalhes) para agregar.
  * Retorna null em erro (403/404/429/5xx) e loga — nunca engole silencioso.
  */
-async function riotRaw(cacheKey: string, url: string): Promise<any | null> {
+export async function riotRaw(cacheKey: string, url: string): Promise<any | null> {
   const apiKey = process.env.RIOT_API_KEY;
   if (!apiKey) {
     console.warn("[riot] RIOT_API_KEY não configurada no servidor");
