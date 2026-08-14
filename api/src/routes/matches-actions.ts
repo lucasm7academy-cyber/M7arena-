@@ -192,11 +192,22 @@ matchesActionsRouter.post("/:id/verificar", async (req, res) => {
       const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
       if (match.status !== "partida_iniciada") return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
-      const [player] = await tx.select().from(matchPlayers).where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id))).limit(1);
+      // Participante CONFIRMADO é o único caso permitido: quem confirmou a vaga
+      // (ou a preencheu sem etapa de confirmação) pode disparar o acelerador.
+      // Um pendente (unconfirmed) também é negado com nao_participante.
+      const [player] = await tx
+        .select()
+        .from(matchPlayers)
+        .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id), eq(matchPlayers.confirmed, true)))
+        .limit(1);
       if (!player) return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
       return { ok: true, matchId: match.id };
     });
-    if (!r.ok) return res.json(r);
+    if (!r.ok) {
+      const status =
+        r.erro === "sala_nao_encontrada" ? 404 : r.erro === "estado_invalido" ? 409 : r.erro === "nao_participante" ? 403 : 400;
+      return res.status(status).json(r);
+    }
 
     // Verificação fora da transação (rede): o motor aplica a própria transação
     // com lock no momento de decidir — não seguramos lock durante a Riot.
