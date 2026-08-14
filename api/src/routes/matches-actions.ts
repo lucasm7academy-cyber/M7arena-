@@ -214,10 +214,20 @@ matchesActionsRouter.post("/:id/verificar", async (req, res) => {
     // Verificação fora da transação (rede): o motor aplica a própria transação
     // com lock no momento de decidir — não seguramos lock durante a Riot.
     const vr = await verificarPartida(db, r.matchId);
-    if (!vr.ok) return res.json({ ok: false, estado: vr.estado, motivo: vr.motivo, matchIdRiot: vr.matchIdRiot ?? null });
-    notifyMatchChange(String(req.params.id));
-    const vencedor = vr.estado === "encerrada" ? (vr.winnerSide === "blue" ? "A" : "B") : null;
-    return res.json({ ok: true, estado: vr.estado, vencedor, matchIdRiot: vr.matchIdRiot ?? null });
+    // O cron pode ter resolvido a sala entre a checagem da rota (status
+    // partida_iniciada) e a fase B do motor — nesse caso o motor responde
+    // ok:false com estado "encerrada"/"cancelada", e o front precisa ver
+    // sucesso (SalaMod1 mostra "Time venceu" para estado encerrada).
+    if (vr.estado === "encerrada" || vr.estado === "cancelada") {
+      notifyMatchChange(String(req.params.id));
+      let vencedor: "A" | "B" | null = null;
+      if (vr.estado === "encerrada") {
+        const winnerSide = vr.ok ? vr.winnerSide : (await db.select().from(matches).where(eq(matches.id, r.matchId)).limit(1))[0]?.winnerSide;
+        vencedor = winnerSide === "blue" ? "A" : "B";
+      }
+      return res.json({ ok: true, estado: vr.estado, vencedor, matchIdRiot: vr.ok ? vr.matchIdRiot ?? null : null });
+    }
+    return res.json({ ok: false, estado: vr.estado, motivo: vr.motivo, matchIdRiot: vr.matchIdRiot ?? null });
   } catch (e: any) {
     return res.status(500).json({ ok: false, erro: e?.message || "rpc_falhou", estado: null, mudou: false });
   }
