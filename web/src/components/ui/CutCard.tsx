@@ -27,9 +27,9 @@ export function CutCard({
 }: CutCardProps) {
   return (
     <motion.div {...rest} className={`relative ${className}`}>
-      <div className="absolute inset-0 p-[1px]" style={{ backgroundColor: borderColor, clipPath: CUT_OUTER }}>
-        <div className="w-full h-full" style={{ clipPath: CUT_INNER, background, backdropFilter: 'blur(16px)' }} />
-      </div>
+      <div className="absolute inset-0" style={{ backgroundColor: borderColor, clipPath: CUT_OUTER }} />
+      <div className="absolute inset-0" style={{ backgroundColor: '#0A0A0A', clipPath: CUT_INNER }} />
+      <div className="absolute inset-0" style={{ clipPath: CUT_INNER, background, backdropFilter: 'blur(16px)' }} />
       <div className={`relative ${contentClassName}`}>{children}</div>
     </motion.div>
   );
