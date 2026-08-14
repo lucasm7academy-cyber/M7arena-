@@ -351,15 +351,22 @@ export async function verificarPartida(
 
   // PUUIDs esperados da sala (conta Riot vinculada de cada participante).
   const players = await d.select().from(matchPlayers).where(eq(matchPlayers.matchId, matchId));
-  if (players.length === 0) return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
-  const contas = await d
-    .select({ puuid: gameAccounts.externalId })
-    .from(gameAccounts)
-    .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, players.map((p: any) => p.userId))));
+  const contas = players.length
+    ? await d
+        .select({ puuid: gameAccounts.externalId })
+        .from(gameAccounts)
+        .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, players.map((p: any) => p.userId))))
+    : [];
   const puuids = contas.map((c: any) => c.puuid);
-  // Alguém sem conta vinculada → impossível confirmar os nicks. Trata como não
-  // verificável: segue no polling até o teto de 3h (nunca paga às cegas).
-  if (puuids.length !== players.length) return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
+  // Sala sem jogadores OU alguém sem conta vinculada → impossível confirmar os
+  // nicks. Trata como não verificável: segue no polling até o teto de 3h e
+  // então cancela (nunca paga às cegas). O teto também cobre salas órfãs, que
+  // precisam liberar o tournament code mesmo sem ninguém na vaga.
+  if (players.length === 0 || puuids.length !== players.length) {
+    const decorrido = agora.getTime() - new Date(m.iniciandoPartidaAt ?? m.createdAt).getTime();
+    if (decorrido >= FANTASMA_MS) return aplicarCancelamento(d, m, players, "nao_encontrada");
+    return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
+  }
 
   const inicio = Math.floor(new Date(m.createdAt).getTime() / 1000);
   const fim = Math.floor(agora.getTime() / 1000);
@@ -941,10 +948,15 @@ Adicionar em `api/test/escrow.test.ts`:
     const players = [{ userId: v, side: "blue" }, { userId: p, side: "red" }];
     await pagarPremio(db as any, salaId, 30, players, "blue", 8.99);
 
-    // Vencedor gastou tudo: reverte seu prêmio (54) mas não tem saldo
+    // Vencedor gastou o prêmio antes do estorno: fica com menos do que o
+    // porVencedor a devolver (54). O estorno precisa falhar com
+    // saldo_insuficiente.
+    const calc = calcularPayout(30, 2, 8.99, 1);
+    await db.update(userWallets).set({ mc: calc.porVencedor - 1 }).where(eq(userWallets.userId, v));
     const r = await reverterPayout(db as any, salaId, 30, players, "blue", 8.99);
     assert.equal(r.ok, false);
     assert.equal(r.erro, "saldo_insuficiente");
+    assert.equal(r.userId, v);
   });
 ```
 
