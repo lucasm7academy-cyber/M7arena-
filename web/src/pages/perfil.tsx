@@ -13,7 +13,7 @@ import { sincronizarContaRiot } from '../api/player';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { VipLabel } from '../components/ui/VipBadge';
-import { CutCard } from '../components/ui/CutCard';
+import { CutCard, CUT_OUTER, CUT_INNER } from '../components/ui/CutCard';
 import { CarteiraEStrikes } from '../components/perfil/CarteiraEStrikes';
 
 // Imagens estáticas da página vivem na pasta 'public-images' do volume de
@@ -711,8 +711,16 @@ export default function Perfil() {
 
         {/* AÇÕES */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <button onClick={() => navigate('/vincular')} className="flex-1 py-4 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 text-[10px] font-black uppercase"><LinkIcon className="w-4 h-4 text-primary" />Vincular Nova Conta</button>
-          <button onClick={handleSair} className="flex-1 py-4 bg-red-500/5 border border-red-500/20 text-red-400 rounded-2xl hover:bg-red-500/10 transition-all flex items-center justify-center gap-3 text-[10px] font-black uppercase"><LogOut className="w-4 h-4" />Encerrar Sessão</button>
+          <button onClick={() => navigate('/vincular')} className="group relative flex-1">
+            <div className="absolute inset-0 bg-white/10 transition-colors group-hover:bg-white/25" style={{ clipPath: CUT_OUTER }} />
+            <div className="absolute inset-0 bg-[#0A0A0A] transition-colors group-hover:bg-[#121212]" style={{ clipPath: CUT_INNER }} />
+            <div className="relative flex items-center justify-center gap-3 py-4 text-[10px] font-black uppercase text-white"><LinkIcon className="w-4 h-4 text-primary" />Vincular Nova Conta</div>
+          </button>
+          <button onClick={handleSair} className="group relative flex-1">
+            <div className="absolute inset-0 bg-red-500/20 transition-colors group-hover:bg-red-500/40" style={{ clipPath: CUT_OUTER }} />
+            <div className="absolute inset-0 bg-[#0A0A0A] transition-colors group-hover:bg-[#151010]" style={{ clipPath: CUT_INNER }} />
+            <div className="relative flex items-center justify-center gap-3 py-4 text-[10px] font-black uppercase text-red-400"><LogOut className="w-4 h-4" />Encerrar Sessão</div>
+          </button>
         </div>
       </div>
     </div>
