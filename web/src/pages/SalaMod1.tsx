@@ -649,12 +649,12 @@ ${link}`;
                             exit={{ opacity: 0, scale: 0.8, y: 20 }}
                             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center gap-[2vmin] p-[5vmin]"
                         >
-                            <div className="w-[40vmin] h-[40vmin] rounded-full bg-red-500/10 backdrop-blur-md border-2 border-red-500/30 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(239,68,68,0.3)]">
+                            <div className="w-[55vmin] h-[55vmin] rounded-full bg-red-600 border-2 border-red-400 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(239,68,68,0.4)]">
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.1 }}
-                                    className="text-[12vmin] font-black text-red-500 mb-[2vmin]"
+                                    className="text-[12vmin] font-black text-white mb-[2vmin]"
                                 >
                                     ✕
                                 </motion.div>
@@ -662,7 +662,7 @@ ${link}`;
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.2 }}
-                                    className="text-[2vmin] font-black text-red-100 uppercase tracking-[0.2em] text-center"
+                                    className="text-[2vmin] font-black text-white uppercase tracking-[0.2em] text-center"
                                 >
                                     {mostrarMensagem.texto}
                                 </motion.p>
