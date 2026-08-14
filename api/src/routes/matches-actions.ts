@@ -9,6 +9,7 @@ import {
   getAuthUser,
   notifyMatchChange,
 } from "../lib/match-flow.js";
+import { verificarPartida } from "../lib/verificar-partida.js";
 
 export const matchesActionsRouter = Router();
 
@@ -175,5 +176,36 @@ matchesActionsRouter.post("/:id/report-result", async (req, res) => {
     return res.json(r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+// POST /api/matches/:id/verificar — Acelerador do polling (spec
+// verificacao-partida-riot): qualquer participante confirmado dispara a mesma
+// verificação na hora. Achou + nicks batem → finaliza e paga; não achou →
+// segue no polling (3h). Idempotente para salas já encerradas/canceladas.
+matchesActionsRouter.post("/:id/verificar", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+
+    const r = await db.transaction(async (tx: any) => {
+      const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
+      if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+      if (match.status !== "partida_iniciada") return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
+      const [player] = await tx.select().from(matchPlayers).where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id))).limit(1);
+      if (!player) return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
+      return { ok: true, matchId: match.id };
+    });
+    if (!r.ok) return res.json(r);
+
+    // Verificação fora da transação (rede): o motor aplica a própria transação
+    // com lock no momento de decidir — não seguramos lock durante a Riot.
+    const vr = await verificarPartida(db, r.matchId);
+    if (!vr.ok) return res.json({ ok: false, estado: vr.estado, motivo: vr.motivo, matchIdRiot: vr.matchIdRiot ?? null });
+    notifyMatchChange(String(req.params.id));
+    const vencedor = vr.estado === "encerrada" ? (vr.winnerSide === "blue" ? "A" : "B") : null;
+    return res.json({ ok: true, estado: vr.estado, vencedor, matchIdRiot: vr.matchIdRiot ?? null });
+  } catch (e: any) {
+    return res.status(500).json({ ok: false, erro: e?.message || "rpc_falhou", estado: null, mudou: false });
   }
 });
