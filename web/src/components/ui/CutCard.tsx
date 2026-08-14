@@ -23,7 +23,7 @@ export function CutCard({
   className = '',
   contentClassName = '',
   background = '#0A0A0A',
-  borderColor = 'rgba(255,255,255,0.1)',
+  borderColor = '#FFB800',
   children,
   ...rest
 }: CutCardProps) {
