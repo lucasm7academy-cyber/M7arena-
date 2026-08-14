@@ -173,20 +173,23 @@ describe("escrow", () => {
       { userId: v, side: "blue" },
       { userId: p, side: "red" },
     ];
-    // Simula o payout que já ocorreu
+    // Fluxo real: reserva (70 -> 40 mc + 30 reservado) e depois payout.
+    await reservarEntrada(db as any, v, 30, salaId);
+    await reservarEntrada(db as any, p, 30, salaId);
     await pagarPremio(db as any, salaId, 30, players, "blue", 8.99);
     const calc = calcularPayout(30, 2, 8.99, 1);
-    const [vAntes] = await db.select().from(userWallets).where(eq(userWallets.userId, v));
-    assert.equal(vAntes.mc, 70 + calc.porVencedor);
+    const [vPago] = await db.select().from(userWallets).where(eq(userWallets.userId, v));
+    assert.equal(vPago.mc, 40 + calc.porVencedor, "vencedor recebeu o prêmio em cima da reserva");
 
-    // Reverte
+    // Reverte: todos voltam ao pré-aposta (70, reservado 0).
     const r = await reverterPayout(db as any, salaId, 30, players, "blue", 8.99);
     assert.equal(r.ok, true);
     const [vPos] = await db.select().from(userWallets).where(eq(userWallets.userId, v));
     const [pPos] = await db.select().from(userWallets).where(eq(userWallets.userId, p));
-    assert.equal(vPos.mc, 100, "vencedor volta ao pré-aposta (70 + reserva 30)");
+    assert.equal(vPos.mc, 70, "vencedor volta ao pré-aposta");
     assert.equal(vPos.mcReservado, 0);
-    assert.equal(pPos.mc, 100, "perdedor volta ao pré-aposta");
+    assert.equal(pPos.mc, 70, "perdedor volta ao pré-aposta");
+    assert.equal(pPos.mcReservado, 0);
     const revs = await db.select().from(platformRevenue).where(eq(platformRevenue.matchId, salaId));
     assert.equal(revs.length, 0, "taxa estornada");
   });
