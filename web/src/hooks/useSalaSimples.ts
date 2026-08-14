@@ -318,7 +318,7 @@ export function useSalaSimples(
     // confirmei, toca um tick a cada segundo (tipo música de contagem) e a
     // música de fundo segue. Para tudo quando eu confirmar ou a sala sair de
     // `confirmacao`.
-    const euConfirmei = !!jogadores.find((j: any) => j.user_id === usuarioAtual.id)?.confirmed;
+    const euConfirmei = !!jogadores.find((j: any) => j.user_id === usuarioAtual.id)?.confirmado;
     useEffect(() => {
         if (sala?.estado !== 'confirmacao' || euConfirmei) return;
 
