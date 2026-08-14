@@ -862,11 +862,12 @@ export const api = {
 
   prints: {
     /** Envia o print de prova de uma partida apostada (bucket privado match-prints). */
-    upload: (matchId: string, file: File) => {
+    upload: (matchId: string, file: File, modo?: 'revisao' | 'contestacao') => {
       const form = new FormData();
       form.append("file", file);
       form.append("bucket", "match-prints");
       form.append("path", matchId);
+      if (modo) form.append("modo", modo);
       return api.post<{ url: string; printId: string }>("/upload", form);
     },
     /** Lista os prints da partida (participante ou revisor). */
