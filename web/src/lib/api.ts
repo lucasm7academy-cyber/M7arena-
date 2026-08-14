@@ -877,8 +877,8 @@ export const api = {
 
   disputas: {
     /** Abre contestação de resultado (1 por jogador por partida, §6.1). */
-    abrir: (matchId: string, motivo: string) =>
-      api.post<{ ok: boolean }>(`/disputas/${matchId}`, { motivo }),
+    abrir: (matchId: string, motivo: string, contestacaoUrl?: string) =>
+      api.post<{ ok: boolean }>(`/disputas/${matchId}`, { motivo, contestacao_url: contestacaoUrl }),
     /** Lista as disputas da partida (participante ou revisor). */
     list: (matchId: string) => api.get<ApiDisputa[]>(`/disputas/${matchId}`),
   },

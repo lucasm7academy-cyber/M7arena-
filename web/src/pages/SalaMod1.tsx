@@ -682,7 +682,7 @@ ${link}`;
 
                 {/* PARTIDA FINALIZADA — resultado no centro (prints + vencedores) */}
                 {sala.estado === 'encerrada' && (
-                    <ResultadoPartida sala={sala} />
+                    <ResultadoPartida sala={sala} usuarioId={usuarioAtual.id} />
                 )}
             </div>
 
