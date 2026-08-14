@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-14T22:55:42.992Z",
+  "updatedAt": "2026-08-14T23:15:34.709Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1713,19 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-05T20:40:32.457Z",
-      "agent": "deepseek",
-      "summary": "Gateway MC 100% no ar. Chave PIX aleatória cadastrada pelo usuário destravou o fluxo: pedido PIX real criado na VPS (R$5, 500 MC, QR+brCode gerados, payment pending no banco com external_reference casando), webhook fail-closed validado (401 sem assinatura), smoke test limpo. BLK-005 resolvido, app.payments done. Falta teste final manual: pagar um PIX real e ver o webhook creditar os MCs. Nota: notification_url é enviado por pedido, então funciona mesmo sem trocar a URL global no painel do MP (recomendado trocar para https://dev.m7arena.pro/api/payments/webhook para evitar notificações duplicadas).",
-      "touched": [
-        "VPS:/root/m7arena/.env",
-        "VPS migration 0010",
-        "api/src/routes/payments.ts",
-        "api/src/lib/mercado-pago.ts",
-        "api/src/lib/pagamentos.ts",
-        "web/src/components/modals/deposit/DepositModal.tsx"
-      ]
-    },
-    {
       "at": "2026-08-06T03:56:31.810Z",
       "agent": "deepseek",
       "summary": "Dashboard financeiro admin (app.admin-financeiro, doing). Endpoint GET /api/admin/financeiro (api/src/routes/admin.ts), período today/7/30/all. ADR-032: faturamento=payments approved (R$), lucro=MC retido em taxas platform_revenue/100 (lojas futuras somam), dinheiroNoProjeto=user_wallets mc+mc_reservado/100, saques=0 até sec.pix. Hoje por hora, resto por dia. Front: api.adminFinanceiro.get + tipo ApiFinanceiro (web/src/lib/api.ts); componente FinanceiroDashboard.tsx (gráfico SVG estilo barbearia: cards clicáveis, período, hover, legenda, card Dinheiro no Projeto); montado na aba Visão do Admin.tsx. Verificação: tsc api exit 0, vite build web ok. 2 erros TS do web são pré-existentes no HEAD (ElectricBorder/Streamers), não meus. Pendente: testar SQL contra Postgres real e deploy. Não commitei.",
@@ -2073,6 +2060,14 @@
         "web/src/pages/Jogar.tsx",
         "web/src/pages/Lobby.tsx",
         "web/src/pages/campeonatos.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-14T23:15:34.707Z",
+      "agent": "deepseek",
+      "summary": "Sidebar: ícone do item 'Jogar' trocado de Gamepad2 (lucide-react) para AiOutlineAim (react-icons/ai) em web/src/components/layout/LayoutWrapper.tsx. Import de Gamepad2 removido (ficou sem uso). npx tsc --noEmit (web) → exit 0.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx"
       ]
     }
   ]

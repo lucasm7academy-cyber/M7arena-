@@ -9,7 +9,6 @@ import {
   LogOut,
   Wallet,
   User as UserIcon,
-  Gamepad2,
   Users,
   Link as LinkIcon,
   Settings,
@@ -25,6 +24,7 @@ import {
 import { FaTwitch, FaDiscord } from 'react-icons/fa6';
 import { SiLeagueoflegends } from 'react-icons/si';
 import { FaFontAwesomeFlag } from 'react-icons/fa';
+import { AiOutlineAim } from 'react-icons/ai';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useSound } from '../../hooks/useSound';
@@ -117,7 +117,7 @@ export default function Layout() {
 
   const navItems = [
     { label: 'Início', icon: SiLeagueoflegends, path: '/lobby' },
-    { label: 'Jogar', icon: Gamepad2, path: '/jogar' },
+    { label: 'Jogar', icon: AiOutlineAim, path: '/jogar' },
     { label: 'Campeonatos', icon: Trophy, path: '/campeonatos' },
     { label: 'Times', icon: FaFontAwesomeFlag, path: '/times' },
     { label: 'Jogadores', icon: UserIcon, path: '/players' },
