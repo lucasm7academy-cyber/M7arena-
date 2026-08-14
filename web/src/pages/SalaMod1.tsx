@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { VagaSlot } from '../components/partidas/VagaSlot';
 import { ModaisElegibilidade } from '../components/partidas/ModaisElegibilidade';
-import { AguardandoRevisao } from '../components/partidas/AguardandoRevisao';
 import { ResultadoPartida } from '../components/partidas/ResultadoPartida';
 import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
@@ -669,15 +668,21 @@ ${link}`;
                     )}
                 </AnimatePresence>
 
-                {/* ESTADO PÓS-PRINT — "Em análise, prints X/3, pagamento em até 24h" */}
+                {/* ESTADO PÓS-PRINT (LEGADO) — nenhuma sala nova entra em
+                    aguardando_revisao desde a verificação automática via Riot
+                    (Tasks 3-10). Se uma sala antiga em voo ainda estiver nesse
+                    estado, mostra um card simples em vez do fluxo de print. */}
                 {sala.estado === 'aguardando_revisao' && (
-                    <AguardandoRevisao
-                        sala={sala}
-                        jogadores={jogadores}
-                        jogadorConfirmado={jogadorConfirmado}
-                        usuarioId={usuarioAtual.id}
-                        onAtualizar={atualizar}
-                    />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[65]"
+                    >
+                        <div className="bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center">
+                            <p className="text-white/60 text-xs uppercase tracking-widest font-bold">
+                                Partida em análise — aguarde o admin
+                            </p>
+                        </div>
+                    </motion.div>
                 )}
 
                 {/* PARTIDA FINALIZADA — resultado no centro (prints + vencedores) */}

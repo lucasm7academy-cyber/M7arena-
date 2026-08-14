@@ -147,8 +147,10 @@ matchesActionsRouter.post("/:id/tick", async (req, res) => {
   }
 });
 
-// POST /api/matches/:id/report-result - Reporta o resultado (print enviado no
-// app) e leva a sala para a revisão do admin.
+// LEGADO — POST /api/matches/:id/report-result. O front não chama mais esta
+// rota: desde a verificação automática via Riot (tasks 3-10), o resultado é
+// decidido no servidor pelo motor de verificação. Mantida apenas para não
+// quebrar salas antigas que já estavam em voo no fluxo de print/revisão.
 matchesActionsRouter.post("/:id/report-result", async (req, res) => {
   try {
     const user = await getAuthUser(req);
