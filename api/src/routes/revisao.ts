@@ -222,7 +222,14 @@ revisaoRouter.post("/disputas/:id/decidir", async (req, res) => {
         }
         // Reversão total: todos voltam ao pré-aposta e a sala vira cancelada.
         const rv = await reverterPayout(tx, sala.id, aposta, players, winnerSide, taxa);
-        if (!rv.ok) return rv; // saldo_insuficiente
+        // Saldo insuficiente precisa de ROLLBACK: em Drizzle/pg, RETURN de uma
+        // transação COMMITA — e reverterPayout já escreveu os vencedores anteriores
+        // antes de achar o sem saldo. THROW desfaz tudo e o 409 sai no catch.
+        if (!rv.ok) {
+          const err: any = new Error(rv.erro);
+          err.userId = rv.userId;
+          throw err;
+        }
         await tx.update(matches).set({
           status: "cancelada", resultado: null, canceladoEm: new Date(),
           revisadoPor: user.id, revisadoEm: new Date(),
@@ -230,9 +237,11 @@ revisaoRouter.post("/disputas/:id/decidir", async (req, res) => {
         await tx.update(matchDisputas).set({ status: "resolvida" }).where(eq(matchDisputas.id, disputa.id));
         await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, sala.id));
         await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, sala.id));
-        notifyMatchChange(disputa.matchId);
         return { ok: true, procedente: true };
       });
+      // Só notifica DEPOIS do commit: dentro da transação a notificação saía antes
+      // do rollback (ex.: ledger 23505) — anunciava cancelamento de sala intacta.
+      if (r2.ok) notifyMatchChange(disputa.matchId);
       if (!r2.ok) {
         const status = r2.erro === "disputa_ja_resolvida" ? 409 : r2.erro === "sala_nao_encontrada" ? 404 : r2.erro === "saldo_insuficiente" ? 409 : 400;
         const userId = "userId" in r2 ? r2.userId : undefined;
@@ -245,6 +254,11 @@ revisaoRouter.post("/disputas/:id/decidir", async (req, res) => {
     await db.update(matchDisputas).set({ status: "resolvida" }).where(eq(matchDisputas.id, disputa.id));
     return res.json({ ok: true, procedente: false });
   } catch (e: any) {
+    // saldo_insuficiente: reverterPayout estourou no meio do loop — o throw
+    // no callback já fez o rollback; aqui só devolve o 409 com quem travou.
+    if (e?.message === "saldo_insuficiente") {
+      return res.status(409).json({ erro: "saldo_insuficiente", userId: e?.userId });
+    }
     return res.status(500).json({ erro: e?.message || "erro_interno" });
   }
 });
