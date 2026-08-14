@@ -9,9 +9,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Check, X, Scale, Loader2, AlertTriangle, RefreshCw, Image as ImageIcon,
-  Swords, Clock, Coins,
+  Swords, Clock, Coins, Gavel, User,
 } from 'lucide-react';
-import { api, type ApiRevisaoSala } from '../../lib/api';
+import { api, type ApiRevisaoSala, type ApiDisputaAdmin } from '../../lib/api';
 
 type Lado = 'blue' | 'red';
 
@@ -84,6 +84,13 @@ export function RevisaoPartidas() {
   // Print em exibição ampliada (lightbox, mesmo padrão dos logos de time).
   const [lightboxPrint, setLightboxPrint] = useState<{ id: string; nomeJogador: string } | null>(null);
 
+  // Contestações de resultado (spec verificacao-partida-riot §6.1).
+  const [disputas, setDisputas] = useState<ApiDisputaAdmin[]>([]);
+  const [carregandoDisputas, setCarregandoDisputas] = useState(true);
+  const [processandoDisputaId, setProcessandoDisputaId] = useState<string | null>(null);
+  const [saldoInsuficienteId, setSaldoInsuficienteId] = useState<string | null>(null);
+  const [lightboxContestacao, setLightboxContestacao] = useState<{ url: string; nomeJogador: string } | null>(null);
+
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
@@ -96,9 +103,23 @@ export function RevisaoPartidas() {
     }
   }, []);
 
+  const carregarDisputas = useCallback(async () => {
+    setCarregandoDisputas(true);
+    try {
+      setDisputas(await api.revisao.disputas());
+      setSaldoInsuficienteId(null);
+    } catch (e: any) {
+      setDisputas([]);
+      setPopup({ tipo: 'erro', msg: `Falha ao carregar contestações: ${e?.message || 'erro'}` });
+    } finally {
+      setCarregandoDisputas(false);
+    }
+  }, []);
+
   useEffect(() => {
     carregar();
-  }, [carregar]);
+    carregarDisputas();
+  }, [carregar, carregarDisputas]);
 
   const decidir = useCallback(
     async (sala: ApiRevisaoSala, lado: Lado | 'cancel' | 'draw') => {
@@ -123,6 +144,33 @@ export function RevisaoPartidas() {
     [carregar]
   );
 
+  const decidirDisputa = useCallback(
+    async (d: ApiDisputaAdmin, procedente: boolean) => {
+      setProcessandoDisputaId(d.id);
+      setSaldoInsuficienteId(null);
+      try {
+        const r = await api.revisao.decidirDisputa(d.id, { procedente });
+        if (r.ok) {
+          setPopup({ tipo: 'sucesso', msg: procedente ? 'Resultado revertido e sala cancelada.' : 'Contestação resolvida.' });
+        }
+      } catch (e: any) {
+        if (e?.message === 'saldo_insuficiente') {
+          setSaldoInsuficienteId(d.id);
+          setPopup({ tipo: 'erro', msg: 'Estorno bloqueado: vencedor sem saldo. Decida manualmente.' });
+        } else if (e?.message === 'disputa_ja_resolvida') {
+          setPopup({ tipo: 'info', msg: 'Esta contestação já foi resolvida por outro revisor.' });
+        } else {
+          setPopup({ tipo: 'erro', msg: `Falha ao decidir: ${e?.message || 'erro'}` });
+        }
+      } finally {
+        setProcessandoDisputaId(null);
+        setTimeout(() => setPopup(null), 4000);
+        carregarDisputas();
+      }
+    },
+    [carregarDisputas]
+  );
+
   return (
     <div className="space-y-4">
       {/* Toast (mesmo padrão das abas do Admin.tsx) */}
@@ -136,6 +184,135 @@ export function RevisaoPartidas() {
           <RefreshCw className={`w-3.5 h-3.5 ${carregando ? 'animate-spin' : ''}`} />
           Atualizar
         </button>
+      </div>
+
+      {/* Contestações de resultado (spec verificacao-partida-riot §6.1) */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Gavel className="w-4 h-4 text-amber-400" />
+          <h3 className="text-white font-black text-sm uppercase tracking-widest text-white/70">Contestações</h3>
+          {!carregandoDisputas && disputas.length > 0 && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest">
+              <AlertTriangle className="w-3 h-3" />
+              {disputas.length} aberta{disputas.length === 1 ? '' : 's'}
+            </span>
+          )}
+        </div>
+
+        {carregandoDisputas && disputas.length === 0 && (
+          <div className="rounded-2xl p-8 flex items-center justify-center gap-3" style={CardStyle()}>
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <p className="text-white/40 text-sm font-bold">Carregando contestações...</p>
+          </div>
+        )}
+
+        {!carregandoDisputas && disputas.length === 0 && (
+          <div className="rounded-2xl p-8 text-center" style={CardStyle()}>
+            <Check className="w-6 h-6 text-green-400 mx-auto mb-2" />
+            <p className="text-white/40 text-sm font-bold">Nenhuma contestação pendente.</p>
+          </div>
+        )}
+
+        {disputas.map((d) => {
+          const processando = processandoDisputaId === d.id;
+          const semSaldo = saldoInsuficienteId === d.id;
+          return (
+            <div key={d.id} className="rounded-2xl p-5 lg:p-6 space-y-5" style={CardStyle()}>
+              {/* Cabeçalho da disputa */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                    <Gavel className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-black text-sm uppercase tracking-tight">Sala #{d.salaNum} · {MODO_LABEL[d.mode] || d.mode}</p>
+                    <p className="text-white/40 text-xs flex items-center gap-1.5 mt-0.5">
+                      <User className="w-3 h-3" />
+                      {d.nomeJogador} contestou {horasDesde(d.createdAt)}
+                    </p>
+                  </div>
+                </div>
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[10px] font-black uppercase tracking-widest">
+                  <Coins className="w-3 h-3" />
+                  {d.apostaMc} MC
+                </span>
+              </div>
+
+              {/* Resultado verificado */}
+              <div className="rounded-xl p-4 bg-white/5 border border-white/10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">Resultado verificado</p>
+                <p className="text-white font-black text-sm">
+                  {d.winnerSide ? (
+                    <span className={d.winnerSide === 'blue' ? 'text-blue-300' : 'text-red-300'}>
+                      Vitória do Time {LADO_LABEL[d.winnerSide as Lado]}
+                    </span>
+                  ) : (
+                    <span className="text-white/60">{d.resultado || '—'}</span>
+                  )}
+                </p>
+              </div>
+
+              {/* Motivo da contestação */}
+              <div className="rounded-xl p-4 bg-amber-500/5 border border-amber-500/15">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-400/80 mb-1">Motivo</p>
+                <p className="text-amber-100/90 text-sm">{d.motivo}</p>
+              </div>
+
+              {/* Print da contestação */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Print da contestação</p>
+                {d.contestacaoUrl ? (
+                  <button
+                    onClick={() => setLightboxContestacao({ url: d.contestacaoUrl, nomeJogador: d.nomeJogador })}
+                    className="rounded-xl overflow-hidden border border-white/10 bg-black/40 text-left cursor-pointer group"
+                    title={`Print de ${d.nomeJogador} — clique para ampliar`}
+                  >
+                    <img
+                      src={d.contestacaoUrl}
+                      alt={`Print de ${d.nomeJogador}`}
+                      loading="lazy"
+                      className="w-full max-w-sm aspect-video object-cover bg-black/60 group-hover:opacity-80 transition-opacity"
+                    />
+                    <p className="px-2 py-1.5 text-[10px] font-black text-white/40">Clique para ampliar</p>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/5 bg-white/[0.02] text-white/25 text-xs">
+                    <ImageIcon className="w-4 h-4" />
+                    Sem print anexado.
+                  </div>
+                )}
+              </div>
+
+              {/* Estorno bloqueado */}
+              {semSaldo && (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-xs font-bold">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  Estorno bloqueado: vencedor sem saldo. Decida manualmente.
+                </div>
+              )}
+
+              {/* Decisão da contestação */}
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button
+                  onClick={() => decidirDisputa(d, false)}
+                  disabled={processando}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
+                >
+                  {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                  Improcedente
+                </button>
+                <button
+                  onClick={() => decidirDisputa(d, true)}
+                  disabled={processando}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-green-500/15 border-green-500/30 text-green-300 hover:bg-green-500/25"
+                >
+                  {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Procedente
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <AnimatePresence>
@@ -356,6 +533,41 @@ export function RevisaoPartidas() {
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-sm">
               <span className="text-white/80 text-xs font-black uppercase tracking-widest">
                 Print de {lightboxPrint.nomeJogador}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox do print da contestação */}
+      <AnimatePresence>
+        {lightboxContestacao && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxContestacao(null)}
+            className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center cursor-zoom-out"
+          >
+            <motion.img
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              src={lightboxContestacao.url}
+              alt={`Print de ${lightboxContestacao.nomeJogador}`}
+              className="w-full max-w-[min(1600px,96vw)] max-h-[94vh] object-contain rounded-2xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setLightboxContestacao(null)}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-sm">
+              <span className="text-white/80 text-xs font-black uppercase tracking-widest">
+                Print de {lightboxContestacao.nomeJogador}
               </span>
             </div>
           </motion.div>

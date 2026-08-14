@@ -218,15 +218,27 @@ function rateLimitPermitido(userId: string): boolean {
  * pelo admin, sem votação no cliente). A checagem de participante e status
  * re-roda dentro da transação de gravação (via `entrarEmRevisao`, que re-locka
  * a linha), então um golpe no intervalo não vira print órfão.
+ *
+ * No modo `contestacao` a sala aceita prints em `encerrada` (o participante
+ * contesta o resultado e anexa a prova do print) em vez de `partida_iniciada`/
+ * `aguardando_revisao`. As demais checagens (participante confirmado ou
+ * revisor, 1 print por jogador, máximo 3) valem igual nos dois modos.
  */
 export type ValidacaoPrint =
   | { ok: false; erro: string; estado?: string; sala?: any }
   | { ok: true; sala: any };
 
-export async function validarPrintDePartida(db: any, userId: string, matchId: string): Promise<ValidacaoPrint> {
+export async function validarPrintDePartida(
+  db: any,
+  userId: string,
+  matchId: string,
+  modo: "revisao" | "contestacao" = "revisao"
+): Promise<ValidacaoPrint> {
   const [m] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
   if (!m) return { ok: false, erro: "sala_nao_encontrada" };
-  if (m.status !== "partida_iniciada" && m.status !== "aguardando_revisao") {
+  const estadosPermitidos =
+    modo === "contestacao" ? ["encerrada"] : ["partida_iniciada", "aguardando_revisao"];
+  if (!estadosPermitidos.includes(m.status)) {
     return { ok: false, erro: "estado_invalido", estado: m.status };
   }
   // Revisor (admin/moderador) pode anexar de qualquer sala; participante só se
@@ -246,7 +258,10 @@ export async function validarPrintDePartida(db: any, userId: string, matchId: st
   // Um print por jogador (decisão do usuário 2026-08-10): quem já enviou não
   // pode anexar de novo — mesmo que ainda não tenha batido o teto da partida.
   if (prints.some((p: any) => p.userId === userId)) return { ok: false, erro: "print_ja_enviado" };
-  if (prints.length >= 3) return { ok: false, erro: "limite_prints" };
+  // Teto de 3 prints vale para o resultado (revisao); na CONTESTAÇÃO cada
+  // contestante anexa exatamente 1 print de prova, então o cap da partida não
+  // se aplica — o print_ja_enviado acima já limita a 1 por disputante.
+  if (modo !== "contestacao" && prints.length >= 3) return { ok: false, erro: "limite_prints" };
   return { ok: true, sala: m };
 }
 
@@ -263,9 +278,10 @@ export type ResultadoSalvarPrint =
 
 export async function salvarPrintMatch(
   db: any,
-  params: { userId: string; matchId: string; originalname: string; buffer: Buffer; mimetype: string }
+  params: { userId: string; matchId: string; originalname: string; buffer: Buffer; mimetype: string; modo?: "revisao" | "contestacao" }
 ): Promise<ResultadoSalvarPrint> {
-  const v = await validarPrintDePartida(db, params.userId, params.matchId);
+  const modo = params.modo ?? "revisao";
+  const v = await validarPrintDePartida(db, params.userId, params.matchId, modo);
   if (!v.ok) return v;
 
   const img = validarArquivoImagem(params.buffer, params.mimetype);
@@ -285,6 +301,9 @@ export async function salvarPrintMatch(
         .insert(matchPrints)
         .values({ matchId: params.matchId, userId: params.userId, url: publicUrl })
         .returning();
+      // Modo contestação: a sala já está encerrada — só insere a evidência, o
+      // resultado fica de pé até o admin decidir a disputa (sem entrar em revisão).
+      if (modo === "contestacao") return { print, entrouEmRevisao: false };
       const t = await entrarEmRevisao(tx, params.matchId);
       // Já estava em revisão: só insere o print e não transiciona (4º é bloqueado
       // na validação). Qualquer outro estado inválido aborta e desfaz a escrita.
@@ -376,6 +395,7 @@ uploadRouter.post(
           originalname: file.originalname,
           buffer: file.buffer,
           mimetype: file.mimetype,
+          modo: req.body?.modo === "contestacao" ? "contestacao" : undefined,
         });
         if (!r.ok) return res.status(400).json({ error: r.erro });
         // Notifica revisores quando a sala entra em revisão nesta escrita.

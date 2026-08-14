@@ -73,7 +73,7 @@ export function ResultadoPartida({ sala, usuarioId }: ResultadoPartidaProps) {
     try {
       let contestacaoUrl: string | undefined;
       if (arquivo) {
-        const up = await api.prints.upload(matchId, arquivo);
+        const up = await api.prints.upload(matchId, arquivo, 'contestacao');
         contestacaoUrl = up.url;
       }
       await api.disputas.abrir(matchId, motivo.trim(), contestacaoUrl);

@@ -218,4 +218,68 @@ describe("escrow", () => {
     assert.equal(r.erro, "saldo_insuficiente");
     assert.equal(r.userId, v);
   });
+
+  test("reverterPayout: 2º vencedor sem saldo → rollback total, NADA persiste (contrato da rota)", async () => {
+    const db = ctx.db;
+    const w1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa61"; // vencedor blue com saldo
+    const w2 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa62"; // vencedor blue que gastou o prêmio
+    const l1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa63"; // perdedor red
+    const l2 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa64"; // perdedor red
+    const salaId = "00000000-0000-0000-0000-000000000006";
+    const dono = "00000000-0000-0000-0000-00000000cafe"; // já existe (criado no 1º teste)
+    for (const u of [w1, w2, l1, l2]) {
+      await db.insert(users).values({ id: u, email: u + "@x.com", displayName: "Jogador" });
+      await db.insert(userWallets).values({ userId: u, mc: 70, mcReservado: 0 });
+    }
+    await db.insert(matches).values({ id: salaId, gameId: "lol", mode: "5v5", createdBy: dono, status: "encerrada", apostaMc: 30, taxaPct: "8.99", winnerSide: "blue", resultado: "blue" });
+    const players = [
+      { userId: w1, side: "blue" },
+      { userId: w2, side: "blue" },
+      { userId: l1, side: "red" },
+      { userId: l2, side: "red" },
+    ];
+    // Fluxo real: reserva → payout → vencedor 2 gastou o prêmio.
+    for (const p of players) await reservarEntrada(db as any, p.userId, 30, salaId);
+    await pagarPremio(db as any, salaId, 30, players, "blue", 8.99);
+    const calc = calcularPayout(30, 4, 8.99, 2);
+    assert.equal(calc.porVencedor, 54, "pote 120, taxa 11 → prêmio 109/2 vencedores = 54");
+    const [w2Pago] = await db.select().from(userWallets).where(eq(userWallets.userId, w2));
+    assert.equal(w2Pago.mc, 40 + calc.porVencedor, "vencedor 2 recebeu o prêmio em cima da reserva");
+    await db.update(userWallets).set({ mc: calc.porVencedor - 1 }).where(eq(userWallets.userId, w2));
+
+    // Contrato da rota (revisao.ts /disputas/:id/decidir): reverterPayout roda
+    // dentro de transação; se um vencedor não tem saldo, o THROW no callback
+    // faz o ROLLBACK — senão o w1 (estornado antes de achar o w2) ficaria
+    // parcialmente revertido para sempre.
+    await assert.rejects(
+      () =>
+        db.transaction(async (tx: any) => {
+          const r = await reverterPayout(tx, salaId, 30, players, "blue", 8.99);
+          if (!r.ok) throw Object.assign(new Error(r.erro), { userId: r.userId });
+        }),
+      (e: any) => e.message === "saldo_insuficiente" && e.userId === w2
+    );
+
+    // NADA persistiu: w1 NÃO foi estornado em parte, w2 não foi revertido,
+    // perdedores não foram reembolsados e a taxa segue na plataforma.
+    const [w1Pos] = await db.select().from(userWallets).where(eq(userWallets.userId, w1));
+    const [w2Pos] = await db.select().from(userWallets).where(eq(userWallets.userId, w2));
+    const [l1Pos] = await db.select().from(userWallets).where(eq(userWallets.userId, l1));
+    const [l2Pos] = await db.select().from(userWallets).where(eq(userWallets.userId, l2));
+    assert.equal(w1Pos.mc, 40 + calc.porVencedor, "vencedor 1 intocado (rollback desfez o estorno parcial)");
+    assert.equal(w1Pos.mcReservado, 0);
+    assert.equal(w2Pos.mc, calc.porVencedor - 1, "vencedor 2 continua como gastou");
+    assert.equal(w2Pos.mcReservado, 0);
+    assert.equal(l1Pos.mc, 40, "perdedor não reembolsado");
+    assert.equal(l1Pos.mcReservado, 0);
+    assert.equal(l2Pos.mc, 40, "perdedor não reembolsado");
+    assert.equal(l2Pos.mcReservado, 0);
+    const [rev] = await db.select().from(platformRevenue).where(eq(platformRevenue.matchId, salaId));
+    assert.ok(rev, "taxa continua na plataforma");
+    assert.equal(rev.mcFee, calc.taxa);
+    assert.equal(rev.mcFeeRounding, calc.resto);
+    const reverts = await db.select().from(walletTransactions).where(eq(walletTransactions.refId, salaId));
+    const kinds = reverts.map((t: any) => t.kind);
+    assert.ok(!kinds.includes("match_prize_revert"), "nenhum estorno persistiu no ledger");
+  });
 });

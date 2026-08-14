@@ -73,7 +73,7 @@ export async function verificarPartida(
   // precisam liberar o tournament code mesmo sem ninguém na vaga.
   if (players.length === 0 || puuids.length !== players.length) {
     const decorrido = agora.getTime() - new Date(m.iniciandoPartidaAt ?? m.createdAt).getTime();
-    if (decorrido >= FANTASMA_MS) return aplicarCancelamento(d, m, players, "nao_encontrada");
+    if (decorrido >= FANTASMA_MS) return aplica(d, m, () => aplicarCancelamento(d, m, players, "nao_encontrada"));
     return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
   }
 
@@ -99,7 +99,7 @@ export async function verificarPartida(
 
   if (!melhor) {
     const decorrido = agora.getTime() - new Date(m.iniciandoPartidaAt ?? m.createdAt).getTime();
-    if (decorrido >= FANTASMA_MS) return aplicarCancelamento(d, m, players, "nao_encontrada");
+    if (decorrido >= FANTASMA_MS) return aplica(d, m, () => aplicarCancelamento(d, m, players, "nao_encontrada"));
     return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
   }
 
@@ -113,12 +113,23 @@ export async function verificarPartida(
   const todosBatem =
     matchRiot.info.participants.length === players.length && puuids.every((p) => puuidsPartida.has(p));
   if (!todosBatem) {
-    return aplicarCancelamento(d, m, players, "nick_nao_bate", matchRiot.metadata.matchId);
+    return aplica(d, m, () => aplicarCancelamento(d, m, players, "nick_nao_bate", matchRiot.metadata.matchId));
   }
 
   const teamVencedor = matchRiot.info.teams.find((t) => t.win);
   const winnerSide: "blue" | "red" = teamVencedor?.teamId === 200 ? "red" : "blue";
-  return aplicarEncerramento(d, m, players, winnerSide, matchRiot);
+  return aplica(d, m, () => aplicarEncerramento(d, m, players, winnerSide, matchRiot));
+}
+
+/**
+ * Fase B + notificação pós-commit. As funções aplicar* rodam transação própria;
+ * a notificação realtime só dispara DEPOIS do commit — se o rollback estourar
+ * (ex.: ledger 23505), ninguém é avisado de um estado que nunca existiu.
+ */
+async function aplica(d: any, m: any, acao: () => Promise<ResultadoVerificacao>): Promise<ResultadoVerificacao> {
+  const r = await acao();
+  if (r.ok) notifyMatchChange(m.id);
+  return r;
 }
 
 /** Fase B: aplica o encerramento em transação com lock (evita dupla-finalização). */
@@ -132,7 +143,6 @@ async function aplicarEncerramento(d: any, m: any, players: any[], winnerSide: "
     await tx.update(matches).set({ status: "encerrada", winnerSide, resultado: winnerSide, endedAt: new Date() }).where(eq(matches.id, m2.id));
     await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, m2.id));
     await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, m2.id));
-    notifyMatchChange(m2.id);
     return { ok: true as const, estado: "encerrada" as const, winnerSide, matchIdRiot: matchRiot.metadata.matchId };
   });
 }
@@ -147,7 +157,6 @@ async function aplicarCancelamento(d: any, m: any, players: any[], motivo: "nick
     await tx.update(matches).set({ status: "cancelada", resultado: null, canceladoEm: new Date() }).where(eq(matches.id, m2.id));
     await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, m2.id));
     await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, m2.id));
-    notifyMatchChange(m2.id);
     return { ok: true as const, estado: "cancelada" as const, motivo, matchIdRiot };
   });
 }
