@@ -3,11 +3,12 @@ import { eq } from "drizzle-orm";
 import { db } from "../db.js";
 import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
 import { users } from "../../../db/schema/identidade.js";
-import { pagarPremio, pagarEmpate, pagarCancelamento } from "../lib/escrow.js";
+import { pagarPremio, pagarEmpate, pagarCancelamento, reverterPayout } from "../lib/escrow.js";
 import { getAuthUser, notifyMatchChange } from "../lib/match-flow.js";
 import { getRoles, eRevisor } from "../lib/acesso-sala.js";
 import { listarPrints } from "./prints.js";
 import { listarDisputas } from "./disputas.js";
+import { matchDisputas } from "../../../db/schema/apostas.js";
 
 export const revisaoRouter = Router();
 
@@ -156,6 +157,108 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
   } catch (e: any) {
     // constraint única do ledger estourou = já pago -> rollback já aconteceu
     if (e?.code === "23505") return res.status(409).json({ erro: "partida_ja_decidida" });
+    return res.status(500).json({ erro: e?.message || "erro_interno" });
+  }
+});
+
+// GET /api/revisao/disputas — disputas abertas em partidas ENCERRADAS (spec
+// verificacao-partida-riot). O fluxo normal não gera mais aguardando_revisao;
+// o painel do admin vira "contestações a julgar".
+revisaoRouter.get("/disputas", async (req, res) => {
+  try {
+    const r = await exigeRevisor(req, res);
+    if (!r.user) return;
+    const rows = await db
+      .select({
+        id: matchDisputas.id,
+        matchId: matchDisputas.matchId,
+        userId: matchDisputas.userId,
+        motivo: matchDisputas.motivo,
+        contestacaoUrl: matchDisputas.contestacaoUrl,
+        status: matchDisputas.status,
+        createdAt: matchDisputas.createdAt,
+        nomeJogador: users.displayName,
+        salaNum: matches.salaNum,
+        mode: matches.mode,
+        apostaMc: matches.apostaMc,
+        winnerSide: matches.winnerSide,
+        resultado: matches.resultado,
+      })
+      .from(matchDisputas)
+      .innerJoin(users, eq(users.id, matchDisputas.userId))
+      .innerJoin(matches, eq(matches.id, matchDisputas.matchId))
+      .where(eq(matchDisputas.status, "aberta"))
+      .orderBy(matchDisputas.createdAt);
+    return res.json(rows);
+  } catch (e: any) {
+    return res.status(500).json({ erro: e?.message || "erro_interno" });
+  }
+});
+
+// POST /api/revisao/disputas/:id/decidir — { procedente: boolean }
+revisaoRouter.post("/disputas/:id/decidir", async (req, res) => {
+  try {
+    const r = await exigeRevisor(req, res);
+    if (!r.user) return;
+    const user = r.user;
+
+    const [disputa] = await db.select().from(matchDisputas).where(eq(matchDisputas.id, req.params.id)).limit(1);
+    if (!disputa) return res.status(404).json({ erro: "disputa_nao_encontrada" });
+    if (disputa.status !== "aberta") return res.status(409).json({ erro: "disputa_ja_resolvida" });
+
+    const procedente = req.body?.procedente === true;
+
+    if (procedente) {
+      const r2 = await db.transaction(async (tx: any) => {
+        const [sala] = await tx.select().from(matches).where(eq(matches.id, disputa.matchId)).limit(1).for("update");
+        if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
+        if (sala.status !== "encerrada") return { ok: false, erro: "estado_invalido", estado: sala.status };
+        const players = await tx.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
+        const aposta = sala.apostaMc ?? 0;
+        const taxa = Number(sala.taxaPct ?? 8.99);
+        const winnerSide = sala.winnerSide;
+        if (!winnerSide || (winnerSide !== "blue" && winnerSide !== "red")) {
+          return { ok: false, erro: "sem_vencedor_pago" };
+        }
+        // Reversão total: todos voltam ao pré-aposta e a sala vira cancelada.
+        const rv = await reverterPayout(tx, sala.id, aposta, players, winnerSide, taxa);
+        // Saldo insuficiente precisa de ROLLBACK: em Drizzle/pg, RETURN de uma
+        // transação COMMITA — e reverterPayout já escreveu os vencedores anteriores
+        // antes de achar o sem saldo. THROW desfaz tudo e o 409 sai no catch.
+        if (!rv.ok) {
+          const err: any = new Error(rv.erro);
+          err.userId = rv.userId;
+          throw err;
+        }
+        await tx.update(matches).set({
+          status: "cancelada", resultado: null, canceladoEm: new Date(),
+          revisadoPor: user.id, revisadoEm: new Date(),
+        }).where(eq(matches.id, sala.id));
+        await tx.update(matchDisputas).set({ status: "resolvida" }).where(eq(matchDisputas.id, disputa.id));
+        await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, sala.id));
+        await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, sala.id));
+        return { ok: true, procedente: true };
+      });
+      // Só notifica DEPOIS do commit: dentro da transação a notificação saía antes
+      // do rollback (ex.: ledger 23505) — anunciava cancelamento de sala intacta.
+      if (r2.ok) notifyMatchChange(disputa.matchId);
+      if (!r2.ok) {
+        const status = r2.erro === "disputa_ja_resolvida" ? 409 : r2.erro === "sala_nao_encontrada" ? 404 : r2.erro === "saldo_insuficiente" ? 409 : 400;
+        const userId = "userId" in r2 ? r2.userId : undefined;
+        return res.status(status).json({ erro: r2.erro, userId });
+      }
+      return res.json(r2);
+    }
+
+    // Improcedente: fecha a disputa, escrow intocado, sala continua encerrada.
+    await db.update(matchDisputas).set({ status: "resolvida" }).where(eq(matchDisputas.id, disputa.id));
+    return res.json({ ok: true, procedente: false });
+  } catch (e: any) {
+    // saldo_insuficiente: reverterPayout estourou no meio do loop — o throw
+    // no callback já fez o rollback; aqui só devolve o 409 com quem travou.
+    if (e?.message === "saldo_insuficiente") {
+      return res.status(409).json({ erro: "saldo_insuficiente", userId: e?.userId });
+    }
     return res.status(500).json({ erro: e?.message || "erro_interno" });
   }
 });

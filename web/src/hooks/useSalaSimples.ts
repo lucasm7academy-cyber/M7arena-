@@ -13,7 +13,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
 import { registrarServerTime, agoraServidor } from '../lib/clockSync';
-import { tocarInicioConfirmacao, tocarTickConfirmacao } from '../lib/somSala';
+import { tocarInicioConfirmacao, tocarTickConfirmacao, pararMusicaConfirmacao } from '../lib/somSala';
 import { useSalaRealtime } from './useSalaRealtime';
 import {
     buscarsalas,
@@ -298,16 +298,20 @@ export function useSalaSimples(
         return () => cancelAnimationFrame(rafId);
     }, [estadoComTimer, sala?.confirmacao_expires_at, sala?.iniciando_partida_at, tabFocusTick]);
 
-    // ── TICK SONORO DE CONFIRMAÇÃO ────────────────────
+    // ── SOM DE CONFIRMAÇÃO (tick + música de fundo) ──
     // Enquanto a contagem de confirmação estiver aberta e eu ainda não
-    // confirmei, toca um tick a cada segundo (tipo música de contagem). Para
-    // quando eu confirmar ou a sala sair de `confirmacao`.
+    // confirmei, toca um tick a cada segundo (tipo música de contagem) e a
+    // música de fundo segue. Para tudo quando eu confirmar ou a sala sair de
+    // `confirmacao`.
     const euConfirmei = !!jogadores.find((j: any) => j.user_id === usuarioAtual.id)?.confirmed;
     useEffect(() => {
         if (sala?.estado !== 'confirmacao' || euConfirmei) return;
 
         const id = setInterval(() => tocarTickConfirmacao(), 1000);
-        return () => clearInterval(id);
+        return () => {
+            clearInterval(id);
+            pararMusicaConfirmacao();
+        };
     }, [sala?.estado, euConfirmei, sala?.confirmacao_expires_at]);
 
     // ── FALLBACK POLLING (ajustarsala bug A) ──────────
