@@ -40,6 +40,36 @@ function somTick(): HTMLAudioElement | null {
   return tickEl;
 }
 
+function unlock(el: HTMLAudioElement | null) {
+  if (!el) return;
+  const v = el.volume;
+  el.volume = 0.001;
+  const p = el.play();
+  if (p) {
+    p.then(() => {
+      el.pause();
+      el.currentTime = 0;
+      el.volume = v;
+    }).catch(() => {
+      el.volume = v;
+    });
+  } else {
+    el.volume = v;
+  }
+}
+
+/**
+ * Destrava o áudio no primeiro gesto do usuário. O iOS Safari só permite
+ * play() de <audio> dentro de um gesto (tap/click); como a contagem dispara
+ * via WebSocket/polling (fora de gesto), sem isso o beep e a música ficam
+ * mudos no celular.
+ */
+export function desbloquearSom() {
+  unlock(somAbertura());
+  unlock(somMusica());
+  unlock(somTick());
+}
+
 /** Notificação de abertura + música de fundo até confirmar. */
 export function tocarInicioConfirmacao() {
   const abertura = somAbertura();
