@@ -183,11 +183,11 @@ const Campeonatos = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.8/1] w-full group bg-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
-          style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
+          style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
         >
           <div
             className="relative w-full h-full bg-black overflow-hidden"
-            style={{ clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)' }}
+            style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}
           >
           {/* Background Image/Art Placeholder */}
           <div className="absolute inset-0 z-0 overflow-hidden">
