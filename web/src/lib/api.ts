@@ -319,6 +319,23 @@ export interface ApiDisputa {
   createdAt: string;
 }
 
+/** Disputa em partida encerrada para o painel do admin (spec verificacao-partida-riot). */
+export interface ApiDisputaAdmin {
+  id: string;
+  matchId: string;
+  userId: string;
+  motivo: string;
+  contestacaoUrl: string | null;
+  status: string;
+  createdAt: string;
+  nomeJogador: string;
+  salaNum: number;
+  mode: string;
+  apostaMc: number;
+  winnerSide: string | null;
+  resultado: string | null;
+}
+
 /** Jogador da sala no painel de revisão. */
 export interface ApiRevisaoJogador {
   userId: string;
@@ -867,5 +884,10 @@ export const api = {
     /** Decide a partida: 'blue' | 'red' | 'draw' | 'cancel', com decisionId idempotente. */
     decidir: (id: string, data: { winnerSide: 'blue' | 'red' | 'draw' | 'cancel'; decisionId: string }) =>
       api.post<ApiDecisaoResultado>(`/revisao/${id}/decidir`, data),
+    /** Disputas abertas em partidas encerradas (spec verificacao-partida-riot). */
+    disputas: () => api.get<ApiDisputaAdmin[]>("/revisao/disputas"),
+    /** Decide uma contestação: procedente → estorna e cancela; improcedente → fecha. */
+    decidirDisputa: (id: string, data: { procedente: boolean }) =>
+      api.post<{ ok: boolean; procedente: boolean }>(`/revisao/disputas/${id}/decidir`, data),
   },
 };
