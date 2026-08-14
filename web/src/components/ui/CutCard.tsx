@@ -21,7 +21,7 @@ export function CutCard({
   className = '',
   contentClassName = '',
   background = 'rgba(255,255,255,0.03)',
-  borderColor = 'rgba(255,255,255,0.1)',
+  borderColor = '#FFB800',
   children,
   ...rest
 }: CutCardProps) {
