@@ -13,6 +13,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
 import { registrarServerTime, agoraServidor } from '../lib/clockSync';
+import { tocarInicioConfirmacao, tocarTickConfirmacao } from '../lib/somSala';
 import { useSalaRealtime } from './useSalaRealtime';
 import {
     buscarsalas,
@@ -96,11 +97,11 @@ export function useSalaSimples(
     const agora = agoraServidor();
     const timer = sala?.confirmacao_expires_at
         ? Math.max(0, Math.round((new Date(sala.confirmacao_expires_at).getTime() - agora) / 1000))
-        : 60;
+        : 75;
 
     const timerIniciandoPartida = sala?.iniciando_partida_at
-        ? Math.max(0, Math.round((new Date(sala.iniciando_partida_at).getTime() + 30000 - agora) / 1000))
-        : 30;
+        ? Math.max(0, Math.round((new Date(sala.iniciando_partida_at).getTime() + 90000 - agora) / 1000))
+        : 90;
 
     // ── MENSAGEM TRANSITÓRIA ─────────────────────────
     // ⚠️ Erros de ação vão para `mostrarMensagem`, NUNCA para `erro`:
@@ -134,7 +135,15 @@ export function useSalaSimples(
         const dadosJogadores = dadosSala.jogadores || [];
         setJogadores(dadosJogadores);
         jogadoresRef.current = dadosJogadores;
+
+        // Som de abertura da contagem: o polling/realtime/entrar refaz o GET
+        // da sala; quando o estado transiciona para `confirmacao`, a contagem
+        // acabou de abrir — avisa com um ding (tipo notificação).
+        const estadoAnterior = ultimoEstadoRef.current;
         ultimoEstadoRef.current = dadosSala.estado;
+        if (estadoAnterior !== 'confirmacao' && dadosSala.estado === 'confirmacao') {
+            tocarInicioConfirmacao();
+        }
 
         if (IS_DEV) {
             console.log(`🔄 [Sync:${motivo}] estado=${dadosSala.estado}, jogadores=${dadosJogadores.length}`);
@@ -288,6 +297,18 @@ export function useSalaSimples(
 
         return () => cancelAnimationFrame(rafId);
     }, [estadoComTimer, sala?.confirmacao_expires_at, sala?.iniciando_partida_at, tabFocusTick]);
+
+    // ── TICK SONORO DE CONFIRMAÇÃO ────────────────────
+    // Enquanto a contagem de confirmação estiver aberta e eu ainda não
+    // confirmei, toca um tick a cada segundo (tipo música de contagem). Para
+    // quando eu confirmar ou a sala sair de `confirmacao`.
+    const euConfirmei = !!jogadores.find((j: any) => j.user_id === usuarioAtual.id)?.confirmed;
+    useEffect(() => {
+        if (sala?.estado !== 'confirmacao' || euConfirmei) return;
+
+        const id = setInterval(() => tocarTickConfirmacao(), 1000);
+        return () => clearInterval(id);
+    }, [sala?.estado, euConfirmei, sala?.confirmacao_expires_at]);
 
     // ── FALLBACK POLLING (ajustarsala bug A) ──────────
     // Quando o WS não está ENTREGANDO (socket morto, OU aba em background com o

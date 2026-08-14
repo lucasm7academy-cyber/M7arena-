@@ -158,8 +158,8 @@ describe("máquina de estados com escrow", () => {
     assert.equal(losses.length, 1);
   });
 
-  test("regra de timer: preencher a ultima vaga seta confirmacaoExpiresAt = now + 60s", async () => {
-    // Reforço do ajustarsala F2: o deadline é definido no SERVIDOR (now+60s),
+  test("regra de timer: preencher a ultima vaga seta confirmacaoExpiresAt = now + 75s", async () => {
+    // Reforço do ajustarsala F2: o deadline é definido no SERVIDOR (now+75s),
     // nunca derivado do relógio de um cliente. Se isso falhar, clientes com
     // relógios diferentes divergem (bug B: 20s vs 75s).
     const db = ctx.db;
@@ -180,8 +180,8 @@ describe("máquina de estados com escrow", () => {
     assert.equal(m.status, "confirmacao");
     assert.ok(m.confirmacaoExpiresAt, "confirmacao_expires_at deve existir");
     const diff = new Date(m.confirmacaoExpiresAt).getTime() - antes;
-    // Tolerância generosa: >=55s (latência do teste) e <70s.
-    assert.ok(diff >= 55_000 && diff < 70_000, `deadline ~60s a partir do now do servidor (foi ${Math.round(diff / 1000)}s)`);
+    // Tolerância generosa: >=70s (latência do teste) e <80s.
+    assert.ok(diff >= 70_000 && diff < 80_000, `deadline ~75s a partir do now do servidor (foi ${Math.round(diff / 1000)}s)`);
   });
 
   test("5v5: 10 jogadores preenchem a sala -> confirmacao; o 11o NAO entra", async () => {
