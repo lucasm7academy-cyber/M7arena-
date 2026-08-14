@@ -23,7 +23,7 @@ import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js
 import { roleSlotToSlot } from "./match-shape.js";
 import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./escrow.js";
 
-const TEMPO_CONFIRMACAO_MS = 60_000;
+const TEMPO_CONFIRMACAO_MS = 75_000;
 const TEMPO_INICIO_MS = 90_000;
 
 /** Usuário autenticado pela sessão (cookie httpOnly) ou Bearer token. */
