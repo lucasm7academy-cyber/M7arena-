@@ -483,71 +483,6 @@ ${link}`;
             {/* MAIN CENTRAL AREA */}
             <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
 
-                {/* HEADER DE RESULTADO — partida finalizada: vencedor + placar +
-                    duração no topo, no padrão de borda cortada, sem o círculo. */}
-                {sala.estado === 'encerrada' && (
-                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                        className="w-full flex justify-center mb-4 md:mb-[2vmin] z-20 px-3 md:px-0">
-                        <div className="relative p-[1.5px] max-w-[440px] md:max-w-none w-full md:w-auto" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
-                            <div className="bg-[#0A0A0A] px-3 py-2 sm:px-6 sm:py-3 md:px-[4vmin] md:py-[1.4vmin] flex flex-wrap md:flex-nowrap items-center justify-center gap-2 sm:gap-4 md:gap-[2.5vmin]"
-                                style={{ clipPath: CUT_INNER }}>
-                                <div className="w-8 h-8 md:w-[4vmin] md:h-[4vmin] rounded-lg flex items-center justify-center shrink-0"
-                                    style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60` }}>
-                                    <Trophy className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" style={{ color: corVencedor }} />
-                                </div>
-                                <div className="text-left shrink-0">
-                                    <p className="text-[10px] md:text-[0.9vmin] font-black text-white/40 uppercase tracking-[0.4em]">Partida Finalizada</p>
-                                    <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black uppercase tracking-[0.15em]"
-                                        style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
-                                        {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
-                                    </p>
-                                    {sala.modo === '1v1' && sala.vitoria_motivo && (
-                                        <p className="mt-[0.3vmin] text-[9px] md:text-[0.9vmin] font-black uppercase tracking-[0.3em] text-white/40">
-                                            Vitória por {sala.vitoria_motivo === 'first_blood' ? 'First Blood' : '100 de Farm'}
-                                        </p>
-                                    )}
-                                </div>
-                                {placarFinalizada && (
-                                    <div className="flex items-center gap-2 md:gap-[1.5vmin] pl-2 md:pl-[2vmin] border-l border-white/10">
-                                        <div className="text-center">
-                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
-                                            <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
-                                        </div>
-                                        <span className="text-xs md:text-[1.1vmin] font-black text-white/25">×</span>
-                                        <div className="text-center">
-                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-red-400">Red</p>
-                                            <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {duracaoFinalizada && (
-                                    <div className="flex items-center pl-2 md:pl-[2vmin] border-l border-white/10 shrink-0">
-                                        <span className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums tracking-wide">
-                                            {duracaoFinalizada}
-                                        </span>
-                                    </div>
-                                )}
-                                {ehApostada && (
-                                    <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.8vmin] pl-2 md:pl-[2vmin] border-l border-white/10 shrink-0">
-                                        <div className="text-center">
-                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-[#FFB700]/70">Pote Total</p>
-                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] tabular-nums leading-tight flex items-center justify-center gap-1 md:gap-[0.4vmin]">
-                                                <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.6vmin] md:h-[1.6vmin]" /> {poteBruto} MC
-                                            </p>
-                                        </div>
-                                        <div className="text-center pl-2 md:pl-[1.5vmin] border-l border-white/10">
-                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-emerald-400/80">Prêmio / Jogador</p>
-                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-emerald-400 tabular-nums leading-tight">
-                                                +{premioPorJogador} MC
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
                 <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-0 py-2 md:py-0 ${
@@ -674,6 +609,7 @@ ${link}`;
                     </div>
                     )}
 
+
                     {/* RED SIDE — oculto apenas em aguardando_revisao (o card
                         central mostra o lineup); na encerrada fica visível com as
                         vagas mostrando campeão + KDA + CS da Riot. */}
@@ -732,7 +668,7 @@ ${link}`;
                             initial={{ opacity: 0, scale: 1.1 }} 
                             animate={{ opacity: 1, scale: 1 }} 
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 md:p-[5vmin] border border-[#FFB700]/20"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 md:p-[5vmin] border border-[#FFB700]/20"
                         >
                             <motion.span 
                                 initial={{ y: 20, opacity: 0 }} 
@@ -769,7 +705,7 @@ ${link}`;
                             key="overlay-partida-confirmada"
                             initial={{ opacity: 0, filter: 'blur(10px)' }} 
                             animate={{ opacity: 1, filter: 'blur(0px)' }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
                         >
                             {/* Tutorial de como colar o código — dentro do display, sem textos */}
                             <motion.img
@@ -790,14 +726,14 @@ ${link}`;
                             initial={{ opacity: 0, scale: 0.8, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center gap-[2vmin] p-[5vmin]"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center"
                         >
-                            <div className="w-[55vmin] h-[55vmin] rounded-full bg-red-600 border-2 border-red-400 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(239,68,68,0.4)]">
+                            <div className="w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-red-600 border-2 border-red-400 flex flex-col items-center justify-center p-4 md:p-[5vmin] shadow-[0_0_60px_rgba(239,68,68,0.4)]">
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.1 }}
-                                    className="text-[12vmin] font-black text-white mb-[2vmin]"
+                                    className="text-6xl md:text-[12vmin] font-black text-white mb-2 md:mb-[2vmin]"
                                 >
                                     ✕
                                 </motion.div>
@@ -805,7 +741,7 @@ ${link}`;
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.2 }}
-                                    className="text-[2vmin] font-black text-white uppercase tracking-[0.2em] text-center"
+                                    className="text-xs md:text-[2vmin] font-black text-white uppercase tracking-[0.2em] text-center max-w-[260px] md:max-w-[40vmin]"
                                 >
                                     {mostrarMensagem.texto}
                                 </motion.p>

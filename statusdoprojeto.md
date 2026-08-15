@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 15/08/2026 01:20 — por `gemini`
+**Última atualização:** 15/08/2026 01:25 — por `gemini`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -538,6 +538,7 @@ _15/08/2026 00:02 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 15/08/2026 01:25 | gemini | Corrigido o tamanho do overlay da contagem/confirmação e demais overlays em SalaMod1.tsx: adicionadas classes md:max-w-none md:max-h-none para não limitar o círculo a 340px no desktop e expandir para os 55vmin exatos do display central. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
 | 15/08/2026 01:20 | gemini | Ajuste visual no DepositModal: corrigido corte do badge 'Mais Escolhido' no DepositTab, posicionado TF de forma suave no fundo com gradiente escuro sem poluir o SaqueTab, e refinada a estética dark gold M7Arena nos botões e cards de depósito e saque. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/components/modals/deposit/DepositTab.tsx`, `web/src/components/modals/deposit/SaqueTab.tsx`_ |
 | 15/08/2026 01:14 | gemini | Restaurada com precisão 1:1 toda a estrutura e proporções do display central (hub de 55vmin e anel arcano de 70vmin com ticks em -35vmin), Side Grid com gap de 70vmin/74vmin e cards de vagas em 44vmin com escala vmin pura no desktop. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`, `web/src/components/partidas/VagaSlot.tsx`_ |
 | 15/08/2026 01:09 | gemini | Restaurado o tamanho original e proporções do display central (hub circular) no desktop (55vmin, tela cheia com overflow-hidden e ticks arcanos alinhados), mantendo a responsividade aperfeiçoada no mobile. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
@@ -552,7 +553,6 @@ _15/08/2026 00:02 — deepseek_
 | 14/08/2026 22:41 | deepseek | BUG CORRIGIDO (400 estado_invalido eterno na contestação): disputa e52e6eb1 da sala #28 ficou aberta quando a sala foi cancelada via /revisao/:id/decidir — essa rota não fechava disputas órfãs, e a rota /revisao/disputas/:id/decidir exigia sala 'encerrada' (revisao.ts:215), devolvendo 400 para sempre. Correção em api/src/routes/revisao.ts: (1) decisão de disputa trata sala 'cancelada' como já revertida — fecha a disputa sem reverter de novo; (2) winnerSide='cancel' fecha disputas abertas da sala na mesma transação. npx tsc --noEmit exit 0; 22/22 testes (disputas+revisao+escrow) passam. Commit a3f452a, push, deploy VPS (rebuild app só), site 200. <br>_tocou: `api/src/routes/revisao.ts`_ |
 | 14/08/2026 20:34 | deepseek | Borda cortada (clip-path 12px, padrão dos cards de campeonato/vagas sala) aplicada em TODOS os cards da tela de perfil: header, Carteira, Punições (CarteiraEStrikes), Minha Equipe, E-mail de Acesso, EloBlocks (solo/flex), Performance e Conexões Sociais. Criei componente reutilizável web/src/components/ui/CutCard.tsx (fundo absoluto clipado + conteúdo fluindo sem clip, preservando dropdowns de lane do header e overflow-hidden onde havia blur decorativo). tsc --noEmit exit 0, vite build ✓ 6.93s, deploy na VPS feito (nginx rebuild, index-CHueIp44.js servido, site 200). Pendente validação visual do usuário. <br>_tocou: `web/src/pages/perfil.tsx`, `web/src/components/perfil/CarteiraEStrikes.tsx`, `web/src/components/ui/CutCard.tsx`_ |
 | 14/08/2026 20:20 | deepseek | Ícone AiOutlineAim no Jogar: commitado (42ff5ad), push na branch feat/advertencias-ban, merge na main do VPS (fast-forward), rebuild do nginx (vite build ✓ 11.49s) e site responde 200 em dev.m7arena.pro. GitHub main sincronizado: origin/main atualizado de 45dc8cd para 42ff5ad (push vps/main:main) — o VPS não tem credencial de push (fatal could not read Username), então o sync foi feito da máquina local. <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`_ |
-| 14/08/2026 20:15 | deepseek | Sidebar: ícone do item 'Jogar' trocado de Gamepad2 (lucide-react) para AiOutlineAim (react-icons/ai) em web/src/components/layout/LayoutWrapper.tsx. Import de Gamepad2 removido (ficou sem uso). npx tsc --noEmit (web) → exit 0. <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`_ |
 
 ---
 

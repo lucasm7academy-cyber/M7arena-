@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T04:20:05.895Z",
+  "updatedAt": "2026-08-15T04:25:27.571Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1722,14 +1722,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-10T04:22:43.858Z",
-      "agent": "deepseek",
-      "summary": "Sala (SalaMod1.tsx): (1) texto 'Prepare-se para a batalha' no rodapé mudou de #FFB700 para branco. (2) Durante partida_iniciada, o display (hub) agora mostra overlay 'FINALIZOU A PARTIDA?' + 'Envie os resultados no botão abaixo' (fundo escuro/blur sobre o mapa, animação suave) — fala com jogadores que ainda não voltaram da partida. Estado aguardando_revisao continua com o card quadrado AguardandoRevisao (já mostra Em Análise + prints X/3 + grid de prints enviados + botão de enviar) — não mexi nele. Build local ok (15.47s). Deploy VPS: commit c80d8de + push, merge, rebuild nginx, container reiniciado. Pendente: usuário testar e opinar se o card de revisão precisa de mais mensagens.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-10T04:30:00.292Z",
       "agent": "deepseek",
       "summary": "P3 perf.riot-players: refresh de elo movido p/ servidor. api/src/routes/players.ts: fetchLeague(puuid) (cache 10min, fetch nativo, sem chave/429/5xx/rede → [] + console.warn) + POST /api/players/refresh-elos (auth 401, stale = sem elo_cache OU stats_updated_at nulo/>30min, lote 60, 3 paralelo, retorna {atualizadas,total,erros}). Endpoint antigo mantido. web/src/pages/players.tsx: removido buscarElo e burst; atualizarElosServerSide chama 1x POST em background + refetch pós-refresh sem re-disparar. Visual intacto. api tsc exit 0; web tsc só erros pré-existentes (ElectricBorder/Streamers). Não toquei riot.ts. Sem deploy/npm install. Pendente: validação manual /players.",
@@ -2030,6 +2022,14 @@
         "web/src/components/modals/deposit/DepositModal.tsx",
         "web/src/components/modals/deposit/DepositTab.tsx",
         "web/src/components/modals/deposit/SaqueTab.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T04:25:27.571Z",
+      "agent": "gemini",
+      "summary": "Corrigido o tamanho do overlay da contagem/confirmação e demais overlays em SalaMod1.tsx: adicionadas classes md:max-w-none md:max-h-none para não limitar o círculo a 340px no desktop e expandir para os 55vmin exatos do display central. Verificado via tsc e build.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
       ]
     }
   ]
