@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T02:57:35.586Z",
+  "updatedAt": "2026-08-15T03:16:13.105Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1653,6 +1653,15 @@
       "decision": "Top 10 de peso medido vira plano em docs/planos/plano-otimizacao-performance.md. Fase 1 = itens #1–#5 (heróis webp, compressor sharp, refresh Riot server-side, stats server-side, bundle), cada um executado por 1 subagente supervisionado. Fase 2 = itens #6–#10 depois. Deploy na VPS apenas após validação local do usuário.",
       "rationale": "Prioriza o maior peso por entrega (27MB de dist: 18MB imagens + 7MB vídeos) e o maior processamento externo (bursts da Riot API). WebP animado escolhido pelo usuário; sharp como compressor leve único. Deploy só no final evita janelas de deploy quebrado.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-039",
+      "date": "2026-08-15T03:02:29.469Z",
+      "author": "deepseek",
+      "title": "Partidas abortadas (1v1): vencedor por win condition — first blood ou 100 CS",
+      "decision": "Quando a partida termina sem GameComplete (desistência/abandono, ex.: Abort_TooFewPlayers), o motor encerra a sala decidindo o vencedor pelas win conditions do 1v1: 1) first blood (prioridade), 2) 100 de farm (CS >= 100). Sem condição atingida, segue partida_iniciada até o teto de 3h e cancela.",
+      "rationale": "No 1v1 o jogo nunca chega a GameComplete: quem atinge a condição (FB/100 CS) quita, e a Riot marca a partida como abortada com ambos win=false. O motor anterior só aceitava GameComplete e travava a sala em partida_iniciada por até 3h. Regra confirmada pelo usuário (win conditions do modo X1).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1712,28 +1721,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-09T22:01:31.677Z",
-      "agent": "deepseek",
-      "summary": "Dois apps NO AR na VPS nova (179.198.120.11). M7Arena: https://dev.m7arena.pro 200 (cert Let's Encrypt, proxy host nginx 80/443 -> container 8090). PandaPost: https://pandapost.com.br 200 (Cloudflare DNS atualizado pelo usuário, SSL mode Full, cert emitido para pandapost.com.br+www, host nginx 80/443 -> container 127.0.0.1:8001). Redirecionamento/loop resolvido com SSL Full na Cloudflare. Pendentes: (1) commit das mudanças de infra do M7Arena (nginx.conf HTTP-only + docker-compose.yml sem 443) ainda não feito; (2) mcp-ops em restart loop (transporte stdio, bug pré-existente); (3) testar login real/Google OAuth no M7Arena dev e fluxos do PandaPost.",
-      "touched": [
-        "infra/nginx.conf",
-        "infra/docker-compose.yml",
-        "infra/.env.production.vps",
-        "/root/pandapost/.env",
-        "/root/pandapost/compose.prod.yaml"
-      ]
-    },
-    {
-      "at": "2026-08-09T22:18:11.836Z",
-      "agent": "deepseek",
-      "summary": "Carga completa na VPS nova (179.198.120.11): load.js via túnel SSH → 220 users, 24 teams, 112 members, 154 game_accounts, 94 wallets, 101 invites, 2 tournaments + sub-tabelas. Merge por email re-mapeou os 4 times do lucasm7academy para o usuário já logado (28b09ae2). Pós-load corrigidos 2 gaps: (1) user_roles estava vazia (load não traz cargos) → inseri role proprietario para lucasm7academy; (2) users.riot_id estava NULL nos 220 (elegibilidade de sala exige → 400 riot_id_obrigatorio ao criar sala) → espelhei game_accounts.handle para users.riot_id (154 users) e corrigi load.js para espelhar na próxima execução. Pendente: vincular conta Riot do lucasm7academy (não tinha no dump), regras de dono/capitão/sair de times (subagente a despachar), validar ban com 3 advertências. mig.load done (ADR-035).",
-      "touched": [
-        "scripts/migrate/load.js",
-        "VPS banco m7arena (user_roles, users.riot_id)",
-        "mig.load"
-      ]
-    },
     {
       "at": "2026-08-10T00:09:49.662Z",
       "agent": "deepseek",
@@ -2036,6 +2023,27 @@
       "at": "2026-08-15T02:57:35.586Z",
       "agent": "gemini",
       "summary": "Ajustes na tela de partida finalizada: (1) Ocultado botão/badge de check verde em partidas finalizadas; (2) Jogador confirmado que não jogou (ex: desistente sem stats) exibido em preto e branco com badge vermelho 'Desistente'; (3) Duração no card de resultado exibida diretamente como número grande e branco (ex: 25:47). tsc e build ok.",
+      "touched": [
+        "web/src/components/partidas/VagaSlot.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T03:02:32.250Z",
+      "agent": "deepseek",
+      "summary": "Sala finalizada com dados reais da Riot: criei a sala 37 (5v5, match BR1_3271569603, time azul venceu 36x18, 25:47) com match_results + payload completo; corrigi role_slot (TOP/JG/MID/ADC/SUP). Redesenhei a tela de partida finalizada: removi o quadrado ResultadoPartida, resultado direto na tela com header no topo (vencedor+placar+duração, borda cortada), sem o círculo central, e vagas mostrando nick+tag do jogador + ícone do campeão + KDA + CS (adicionei champion_id ao resultado_riot). Correção do motor verificar-partida: partida abortada (desistência) no 1v1 decide vencedor por win condition (first blood > 100 CS) e encerra na hora em vez de travar 3h em partida_iniciada — +3 testes (10/10 pass). Deploy na VPS: a sala 39 (1v1 One Lucks x CDC Kuri, Abort_TooFewPlayers) já foi encerrada automaticamente com One Lucks (red) vencedor via first blood.",
+      "touched": [
+        "api/src/lib/verificar-partida.ts",
+        "api/test/verificar-partida.test.ts",
+        "api/src/lib/match-shape.ts",
+        "web/src/components/partidas/VagaSlot.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T03:16:13.105Z",
+      "agent": "gemini",
+      "summary": "Implementado suporte visual completo para partidas valendo MC (apostadas) tanto no lobby/sala ativa quanto na sala finalizada: (1) Top bar e Central Hub exibem Pote Total e Prêmio por vencedor; (2) Header de resultado exibe Pote Total e Prêmio por jogador; (3) Cards de jogadores no VagaSlot exibem badge dourada/verde de +MC para vencedores, -MC para derrotados e Desistente (-MC) para abandonos; (4) Action footer mostra resumo de ganho/perda pessoal com botão de Minha Carteira. Verificado via tsc e build.",
       "touched": [
         "web/src/components/partidas/VagaSlot.tsx",
         "web/src/pages/SalaMod1.tsx"

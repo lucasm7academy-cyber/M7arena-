@@ -219,12 +219,23 @@ ${link}`;
         : null;
     const placarFinalizada = sala?.resultado_riot?.placar;
 
-    // ── Salas apostadas (design v3 §11): aviso antecipado, print e regras ──
-    const ehApostada = (sala.mpoints || 0) > 0;
-    const poteMC = ehApostada ? (sala.mpoints || 0) * (sala.max_jogadores || 10) : 0;
+    // ── Salas apostadas (design v3 §11): cálculo financeiro, aviso antecipado, print e regras ──
+    const apostaPorJogador = Number(sala.aposta_mc ?? sala.mpoints ?? 0);
+    const ehApostada = apostaPorJogador > 0;
+    const numJogadores = isX1 ? 2 : (sala.max_jogadores || 10);
+    const poteBruto = ehApostada ? apostaPorJogador * numJogadores : 0;
+    const taxaPct = Number(sala.taxa_pct || 8.99);
+    const poteLiquido = ehApostada ? Math.round(poteBruto * (1 - taxaPct / 100)) : 0;
+    const numVencedores = isX1 ? 1 : 5;
+    const premioPorJogador = ehApostada && numVencedores > 0 ? Math.floor(poteLiquido / numVencedores) : 0;
     const temRiotId = !!perfil?.riotId;
     const jogadorConfirmado = !!jogadorAtual?.confirmado;
     const minutosParaKick = ehApostada ? Math.max(0, Math.ceil(30 - ociosidadeMin)) : 0;
+
+    const usuarioParticipou = !!jogadorAtual;
+    const usuarioVenceu = jogadorAtual ? (
+        (jogadorAtual.is_time_a && vencedorSala === 'A') || (!jogadorAtual.is_time_a && vencedorSala === 'B')
+    ) : false;
 
     // Intercepta o clique na vaga: visitante sem login, sem Riot ID ou sem MC
     // (sala apostada) avisa ANTES de tentar entrar (design v3 §11) — o servidor
@@ -238,8 +249,8 @@ ${link}`;
             setShowAvisoRiotId(true);
             return;
         }
-        if (ehApostada && (perfil?.saldo ?? 0) < (sala.mpoints || 0)) {
-            mostrarSaldoFaltante((sala.mpoints || 0) - (perfil?.saldo ?? 0));
+        if (ehApostada && (perfil?.saldo ?? 0) < apostaPorJogador) {
+            mostrarSaldoFaltante(apostaPorJogador - (perfil?.saldo ?? 0));
             return;
         }
         // Senha de sala privada (MORPH-001): vem do store preenchido no lobby
@@ -397,8 +408,17 @@ ${link}`;
                             <span className={`text-[1.5vmin] font-black uppercase tracking-widest mt-0.5 ${coresModo[sala.modo] || 'text-white'}`}>{sala.modo}</span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Premiação</span>
-                            <span className="text-[1.5vmin] font-black text-green-400 uppercase tracking-widest mt-0.5">{sala.mpoints > 0 ? `${sala.mpoints} MC` : 'Casual'}</span>
+                            <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Aposta / Pote</span>
+                            <span className="text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5 flex items-center gap-[0.4vmin]">
+                                {ehApostada ? (
+                                    <>
+                                        <GiTwoCoins className="w-[1.6vmin] h-[1.6vmin] text-[#FFB700]" />
+                                        {apostaPorJogador} MC (Pote {poteBruto} MC)
+                                    </>
+                                ) : (
+                                    <span className="text-green-400">Casual</span>
+                                )}
+                            </span>
                         </div>
                     </div>
 
@@ -502,6 +522,22 @@ ${link}`;
                                         </span>
                                     </div>
                                 )}
+                                {ehApostada && (
+                                    <div className="flex items-center gap-[1.8vmin] pl-[2vmin] border-l border-white/10 shrink-0">
+                                        <div className="text-center">
+                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-[#FFB700]/70">Pote Total</p>
+                                            <p className="text-[1.6vmin] font-black text-[#FFB700] tabular-nums leading-tight flex items-center justify-center gap-[0.4vmin]">
+                                                <GiTwoCoins className="w-[1.6vmin] h-[1.6vmin]" /> {poteBruto} MC
+                                            </p>
+                                        </div>
+                                        <div className="text-center pl-[1.5vmin] border-l border-white/10">
+                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-emerald-400/80">Prêmio / Jogador</p>
+                                            <p className="text-[1.6vmin] font-black text-emerald-400 tabular-nums leading-tight">
+                                                +{premioPorJogador} MC
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -553,6 +589,9 @@ ${link}`;
                                         vipTier={isVip ? 'vip' : 'free'}
                                         stats={statsDoJogador(jogador)}
                                         isFinalizada={sala.estado === 'encerrada'}
+                                        apostaMC={apostaPorJogador}
+                                        premioMC={premioPorJogador}
+                                        timeVencedor={vencedorSala}
                                     />
                                 );
                             })}
@@ -611,7 +650,10 @@ ${link}`;
                                     {ehApostada ? (
                                         <>
                                             <span className="flex items-center gap-[1vmin] text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                                <GiTwoCoins className="w-[2.2vmin] h-[2.2vmin]" /> Pote {poteMC.toLocaleString('pt-BR')} MC
+                                                <GiTwoCoins className="w-[2.2vmin] h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                            </span>
+                                            <span className="text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                                                Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
                                             </span>
                                             <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-2" />
                                         </>
@@ -664,6 +706,9 @@ ${link}`;
                                         vipTier={isVip ? 'vip' : 'free'}
                                         stats={statsDoJogador(jogador)}
                                         isFinalizada={sala.estado === 'encerrada'}
+                                        apostaMC={apostaPorJogador}
+                                        premioMC={premioPorJogador}
+                                        timeVencedor={vencedorSala}
                                     />
                                 );
                             })}
@@ -689,7 +734,7 @@ ${link}`;
                                 animate={{ y: 0, opacity: 1 }}
                                 className="text-[15vmin] font-black text-white tabular-nums leading-none drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                             >
-                                {timer}
+                                {timer ?? 0}
                             </motion.span>
                             <motion.div 
                                 initial={{ y: 20, opacity: 0 }} 
@@ -880,20 +925,60 @@ ${link}`;
                         </motion.div>
                     )}
 
-                    {/* PARTIDA FINALIZADA — botão de voltar ao lobby */}
+                    {/* PARTIDA FINALIZADA — status financeiro pessoal e botões de ação */}
                     {sala.estado === 'encerrada' && (
-                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => navigate('/jogar')}
-                                className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
-                                style={{ clipPath: CUT_FRAME }}
-                            >
-                                <span className="block bg-[#FFB700] px-[8vmin] py-[2vmin] font-black uppercase tracking-[0.4em] text-[1.5vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1vmin] transition-colors"
-                                    style={{ clipPath: CUT_INNER }}>
-                                    Voltar ao Lobby
-                                </span>
-                            </motion.button>
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
+                            className="flex flex-col items-center gap-[1.5vmin] z-30">
+                            {ehApostada && usuarioParticipou && (
+                                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                                    className={`px-[3.5vmin] py-[1vmin] rounded-full border backdrop-blur-md flex items-center gap-[1vmin] ${
+                                        usuarioVenceu 
+                                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
+                                            : 'bg-white/5 border-white/10 text-white/60'
+                                    }`}>
+                                    {usuarioVenceu ? (
+                                        <>
+                                            <GiTwoCoins className="w-[2vmin] h-[2vmin] text-[#FFB700]" />
+                                            <span className="text-[1.3vmin] font-black uppercase tracking-wider">
+                                                Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} MC</strong> nesta partida!
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-[1.2vmin] font-bold uppercase tracking-wider text-white/50">
+                                            Partida finalizada • Débito da entrada: -{apostaPorJogador} MC
+                                        </span>
+                                    )}
+                                </motion.div>
+                            )}
+
+                            <div className="flex items-center gap-[2vmin]">
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => navigate('/jogar')}
+                                    className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
+                                    style={{ clipPath: CUT_FRAME }}
+                                >
+                                    <span className="block bg-[#FFB700] px-[7vmin] py-[1.8vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1vmin] transition-colors"
+                                        style={{ clipPath: CUT_INNER }}>
+                                        Voltar ao Lobby
+                                    </span>
+                                </motion.button>
+
+                                {ehApostada && (
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => navigate('/perfil')}
+                                        className="pointer-events-auto relative p-[1.5px] bg-white/20 hover:bg-white/40 transition-colors"
+                                        style={{ clipPath: CUT_FRAME }}
+                                    >
+                                        <span className="block bg-[#0A0A0A] px-[4vmin] py-[1.8vmin] font-black uppercase tracking-[0.3em] text-[1.3vmin] text-white hover:text-[#FFB700] flex items-center justify-center gap-[1vmin] transition-colors"
+                                            style={{ clipPath: CUT_INNER }}>
+                                            <GiTwoCoins className="w-[1.8vmin] h-[1.8vmin] text-[#FFB700]" />
+                                            Minha Carteira
+                                        </span>
+                                    </motion.button>
+                                )}
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

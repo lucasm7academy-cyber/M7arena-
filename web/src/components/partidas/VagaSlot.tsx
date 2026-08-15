@@ -21,6 +21,9 @@ interface VagaSlotProps {
     // avatar/nick padrão. `venceu` destaca o lado ganhador.
     stats?: { campeao: string; championId?: number; kills: number; deaths: number; assists: number; cs: number; venceu: boolean } | null;
     isFinalizada?: boolean;
+    apostaMC?: number;
+    premioMC?: number;
+    timeVencedor?: 'A' | 'B' | 'empate' | null;
 }
 
 const CHAMPION_ICON_URL = (id: number) =>
@@ -40,10 +43,18 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     vipTier = 'free',
     stats = null,
     isFinalizada = false,
+    apostaMC = 0,
+    premioMC = 0,
+    timeVencedor = null,
 }) => {
 
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
     const isDesistente = isFinalizada && ocupada && !stats;
+    const venceu = isFinalizada
+        ? timeVencedor
+            ? (isTimeA && timeVencedor === 'A') || (!isTimeA && timeVencedor === 'B')
+            : !!stats?.venceu
+        : false;
 
     // Largura 100% uniforme para todos os cards. min-w-full + shrink-0 impedem
     // o flex pai de encolher o card conforme o conteúdo (nick curto → card fino).
@@ -200,11 +211,11 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                 {isDesistente ? (
                                     <>
                                         <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight text-white/40">
+                                            <span className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight text-white/40 line-through">
                                                 {nome}
                                             </span>
                                             <span className="px-[0.8vmin] py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[min(2.4vw,1vmin)] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
-                                                Desistente
+                                                {apostaMC > 0 ? `Desistente (-${apostaMC} MC)` : 'Desistente'}
                                             </span>
                                         </div>
                                         <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
@@ -242,6 +253,17 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                                 <span className="text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
                                                     {stats.cs} CS
                                                 </span>
+                                                {apostaMC > 0 && isFinalizada && (
+                                                    venceu ? (
+                                                        <span className="text-[min(2.4vw,1.05vmin)] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 px-[0.6vmin] py-[0.1vmin] rounded shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                                                            +{premioMC} MC
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[min(2.2vw,0.95vmin)] font-bold text-white/40 uppercase tracking-wider bg-white/5 border border-white/10 px-[0.5vmin] py-[0.1vmin] rounded">
+                                                            -{apostaMC} MC
+                                                        </span>
+                                                    )
+                                                )}
                                             </div>
                                         ) : (
                                             <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
@@ -312,6 +334,9 @@ export const VagaSlot = React.memo(
             prev.isTimeA === next.isTimeA &&
             prev.roleIconImg === next.roleIconImg &&
             prev.isFinalizada === next.isFinalizada &&
+            prev.apostaMC === next.apostaMC &&
+            prev.premioMC === next.premioMC &&
+            prev.timeVencedor === next.timeVencedor &&
             prev.stats?.kills === next.stats?.kills &&
             prev.stats?.deaths === next.stats?.deaths &&
             prev.stats?.assists === next.stats?.assists &&
