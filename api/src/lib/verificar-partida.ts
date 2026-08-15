@@ -133,9 +133,11 @@ export async function verificarPartida(
   // GameComplete. Em 5v5/aram/time_vs_time uma partida abortada sem surrender
   // não é vitória legítima → segue até o teto e cancela (como antes).
   if (m.mode === "1v1") {
-    const ladoCondicao = vencedorPorWinCondition(matchRiot);
-    if (ladoCondicao) {
-      return aplica(d, m, () => aplicarEncerramento(d, m, players, ladoCondicao, matchRiot));
+    const condicao = vencedorPorWinCondition(matchRiot);
+    if (condicao) {
+      return aplica(d, m, () =>
+        aplicarEncerramento(d, m, players, condicao.lado, matchRiot, condicao.motivo)
+      );
     }
   }
 
@@ -144,22 +146,22 @@ export async function verificarPartida(
 
 /**
  * Decide o vencedor de uma partida 1v1 que terminou sem "GameComplete"
- * (abortada por desistência). Win conditions do modo:
+ * (abortada por desistência) e POR QUE venceu. Win conditions do modo:
  *  1. First blood — quem matou primeiro vence (ordem de prioridade);
  *  2. 100 de farm — primeiro a chegar em 100 CS vence.
- * Retorna "blue" | "red" quando alguma condição foi atingida, senão null
+ * Retorna { lado, motivo } quando alguma condição foi atingida, senão null
  * (partida ainda em jogo, ou sem condição → segue até o teto e cancela).
  */
-function vencedorPorWinCondition(match: RiotMatch): "blue" | "red" | null {
+function vencedorPorWinCondition(match: RiotMatch): { lado: "blue" | "red"; motivo: "first_blood" | "100_cs" } | null {
   const parts = match.info.participants ?? [];
   const cs = (p: any) => (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
   const lado = (p: any) => (p.teamId === 200 ? "red" : "blue") as "blue" | "red";
 
   const primeiroAbate = parts.find((p: any) => p.firstBloodKill);
-  if (primeiroAbate) return lado(primeiroAbate);
+  if (primeiroAbate) return { lado: lado(primeiroAbate), motivo: "first_blood" };
 
   const cemFarm = parts.find((p: any) => cs(p) >= 100);
-  if (cemFarm) return lado(cemFarm);
+  if (cemFarm) return { lado: lado(cemFarm), motivo: "100_cs" };
 
   return null;
 }
@@ -176,14 +178,14 @@ async function aplica(d: any, m: any, acao: () => Promise<ResultadoVerificacao>)
 }
 
 /** Fase B: aplica o encerramento em transação com lock (evita dupla-finalização). */
-async function aplicarEncerramento(d: any, m: any, players: any[], winnerSide: "blue" | "red", matchRiot: RiotMatch) {
+async function aplicarEncerramento(d: any, m: any, players: any[], winnerSide: "blue" | "red", matchRiot: RiotMatch, vitoriaMotivo?: "first_blood" | "100_cs") {
   return d.transaction(async (tx: any) => {
     const [m2] = await tx.select().from(matches).where(eq(matches.id, m.id)).limit(1).for("update");
     if (!m2 || m2.status !== "partida_iniciada") return { ok: false, estado: m2?.status ?? "partida_iniciada", motivo: "nao_encontrada" };
     const aposta = m2.apostaMc ?? 0;
     await pagarPremio(tx, m2.id, aposta, players, winnerSide, Number(m2.taxaPct ?? 8.99));
     await tx.insert(matchResults).values({ matchId: m2.id, winnerSide, payload: matchRiot as any });
-    await tx.update(matches).set({ status: "encerrada", winnerSide, resultado: winnerSide, endedAt: new Date() }).where(eq(matches.id, m2.id));
+    await tx.update(matches).set({ status: "encerrada", winnerSide, resultado: winnerSide, vitoriaMotivo, endedAt: new Date() }).where(eq(matches.id, m2.id));
     await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, m2.id));
     await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, m2.id));
     return { ok: true as const, estado: "encerrada" as const, winnerSide, matchIdRiot: matchRiot.metadata.matchId };

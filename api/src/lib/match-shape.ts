@@ -161,6 +161,8 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     time_b_tag: m.timeBTag ?? null,
     time_b_logo: m.timeBLogo ?? null,
     codigo_partida: m.codigoPartida ?? null,
+    // Motivo da vitória no 1v1 (first_blood | 100_cs) — ADR-039. Só no modo 1v1.
+    vitoria_motivo: m.vitoriaMotivo ?? null,
     confirmacao_expires_at: m.confirmacaoExpiresAt ?? null,
     iniciando_partida_at: m.iniciandoPartidaAt ?? null,
     created_at: m.createdAt,

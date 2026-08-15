@@ -264,6 +264,7 @@ describe("verificarPartida", () => {
     const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
     assert.equal(m.status, "encerrada");
     assert.equal(m.winnerSide, "red");
+    assert.equal(m.vitoriaMotivo, "first_blood");
     const [res] = await db.select().from(matchResults).where(eq(matchResults.matchId, sala.id));
     assert.ok(res, "deve gravar match_results");
   });
@@ -302,6 +303,7 @@ describe("verificarPartida", () => {
     assert.equal(r.winnerSide, "blue");
     const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
     assert.equal(m.status, "encerrada");
+    assert.equal(m.vitoriaMotivo, "100_cs");
   });
 
   test("abortada sem condição (nem FB nem 100 CS) → segue partida_iniciada", async () => {

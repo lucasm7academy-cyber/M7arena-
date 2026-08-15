@@ -50,6 +50,9 @@ export const matches = pgTable(
     timeBTag: text("time_b_tag"),
     timeBLogo: text("time_b_logo"),
     codigoPartida: text("codigo_partida"),
+    // Motivo da vitória no 1v1 (win condition): 'first_blood' | '100_cs'. Null
+    // nos demais modos (partida completa/surrender decide por win da Riot).
+    vitoriaMotivo: varchar("vitoria_motivo", { length: 20 }),
     confirmacaoExpiresAt: timestamp("confirmacao_expires_at", { mode: "date" }),
     iniciandoPartidaAt: timestamp("iniciando_partida_at", { mode: "date" }),
     stateDeadlineAt: timestamp("state_deadline_at", { mode: "date" }),
