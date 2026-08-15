@@ -20,6 +20,8 @@ interface CardJogadorProps {
   check?: boolean;
   /** Cor da borda do check (estilo VagaSlot). */
   checkCor?: string;
+  /** KDA real da partida (Riot), ex.: "7/5/9" — mostrado à direita do nick. */
+  kda?: string | null;
 }
 
 const clipOuter = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
@@ -33,6 +35,7 @@ export function CardJogador({
   grayscale = false,
   check = false,
   checkCor = '#22c55e',
+  kda = null,
 }: CardJogadorProps) {
   const role = jogador?.role as Role | undefined;
   const roleImg = ROLE_CONFIG[role ?? 'RES']?.img;
@@ -66,6 +69,14 @@ export function CardJogador({
         >
           {jogador?.nome || 'Jogador'}
         </span>
+        {kda && (
+          <span
+            className="shrink-0 text-[9px] font-black tabular-nums"
+            style={{ color: grayscale ? '#6b7280' : corNick, opacity: 0.85 }}
+          >
+            {kda}
+          </span>
+        )}
         {check && (
           <span
             className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"

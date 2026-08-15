@@ -7,7 +7,7 @@ import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/sch
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
 import { platformRevenue } from "../../../db/schema/economia.js";
-import { toLegacyMatch } from "../lib/match-shape.js";
+import { toLegacyMatch, resumoRiot } from "../lib/match-shape.js";
 import {
   avaliarTransicoes,
   buscarSalaPorNumero,
@@ -57,7 +57,12 @@ async function shapeSala(m: any, ctx: any = db) {
   // a partir da conta LoL vinculada, não do avatar genérico do email.
   const accountsRows: any[] = userIds.length
     ? await ctx
-        .select({ userId: gameAccounts.userId, handle: gameAccounts.handle, metadata: gameAccounts.metadata })
+        .select({
+          userId: gameAccounts.userId,
+          handle: gameAccounts.handle,
+          metadata: gameAccounts.metadata,
+          externalId: gameAccounts.externalId,
+        })
         .from(gameAccounts)
         .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, userIds)))
     : [];
@@ -65,9 +70,11 @@ async function shapeSala(m: any, ctx: any = db) {
   const riotIconMap = new Map<string, number>(
     accountsRows.map((a: any) => [a.userId, (a.metadata as any)?.profile_icon_id ?? null])
   );
+  const riotPuuidMap = new Map<string, string>(accountsRows.map((a: any) => [a.userId, a.externalId]));
   usersRows.forEach((u: any) => {
     u.__riotHandle = riotMap.get(u.id) ?? null;
     u.__riotIconId = riotIconMap.get(u.id) ?? null;
+    u.__riotPuuid = riotPuuidMap.get(u.id) ?? null;
   });
 
   const playersEnriched = players.map((p: any) => ({
@@ -85,7 +92,15 @@ async function shapeSala(m: any, ctx: any = db) {
     printsRecebidos = printsRows.length;
   }
 
-  return toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos);
+  // Salas encerradas verificadas pela Riot levam o resumo da partida real
+  // (matchResults.payload) para o front mostrar vencedor + stats.
+  let resultadoRiot: any = null;
+  if (m.status === "encerrada") {
+    const [mr] = await ctx.select().from(matchResults).where(eq(matchResults.matchId, m.id)).limit(1);
+    resultadoRiot = mr ? resumoRiot(mr.payload) : null;
+  }
+
+  return toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot);
 }
 
 // GET /api/matches - Lista salas em shape legado

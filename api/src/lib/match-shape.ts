@@ -63,6 +63,9 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
     nome,
     tag,
     elo: "Sem Elo",
+    // PUUID da conta LoL vinculada — usado pelo front para cruzar os stats da
+    // Riot (resultado_riot.participantes[].puuid) na partida finalizada.
+    puuid: user?.__riotPuuid ?? null,
     // Avatar: prioriza o profile icon da conta LoL vinculada (mesma URL que o
     // front monta em buildProfileIconUrl) — é o "ícone do jogador" que o site
     // original mostrava. Sem conta vinculada, cai no avatar do email/URL.
@@ -83,12 +86,50 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
 }
 
 /**
+ * Resumo estruturado do match_results (payload da Riot) para as telas de
+ * partida finalizada: vencedor real, duração e stats por time/jogador.
+ * `payload` é o JSON v5 da Riot (matchResults.payload).
+ */
+export function resumoRiot(payload: any) {
+  if (!payload?.info?.teams || !payload?.info?.participants) return null;
+  const info = payload.info;
+  const times = new Map<number, any>(info.teams.map((t: any) => [t.teamId, t]));
+  const porTime = (teamId: number) => info.participants.filter((p: any) => p.teamId === teamId);
+  const kills = (teamId: number) => porTime(teamId).reduce((s: number, p: any) => s + (p.kills || 0), 0);
+  const gold = (teamId: number) => porTime(teamId).reduce((s: number, p: any) => s + (p.goldEarned || 0), 0);
+  const teamWin = (teamId: number) => !!times.get(teamId)?.win;
+
+  return {
+    match_id_riot: payload.metadata?.matchId ?? null,
+    vencedor: teamWin(100) ? "blue" : teamWin(200) ? "red" : null,
+    duracao_s: info.gameDuration ?? 0,
+    game_version: info.gameVersion ?? null,
+    placar: {
+      blue: { kills: kills(100), gold: gold(100), venceu: teamWin(100) },
+      red: { kills: kills(200), gold: gold(200), venceu: teamWin(200) },
+    },
+    participantes: info.participants.map((p: any) => ({
+      puuid: p.puuid,
+      nome: p.summonerName ?? null,
+      campeao: p.championName ?? null,
+      side: p.teamId === 100 ? "blue" : "red",
+      venceu: !!p.win,
+      kills: p.kills ?? 0,
+      deaths: p.deaths ?? 0,
+      assists: p.assists ?? 0,
+      ouro: p.goldEarned ?? 0,
+      cs: (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0),
+    })),
+  };
+}
+
+/**
  * Shape legado de `salas`. `players` são as linhas de `match_players` já
  * enriquecidas com user + isVip pelo chamador. `criadorNome` vem do dono.
  * `printsRecebidos` é opcional (contagem de `match_prints` para o estado
  * `aguardando_revisao` — design v3 §6); só a rota de detalhe/painel envia.
  */
-export function toLegacyMatch(m: any, players: any[], criadorNome: string, printsRecebidos = 0) {
+export function toLegacyMatch(m: any, players: any[], criadorNome: string, printsRecebidos = 0, resultadoRiot: any = null) {
   const jogadores = players.map((p) =>
     toLegacyPlayer(p, p.__user, !!p.__isVip, m.salaNum)
   );
@@ -132,6 +173,9 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     prints_necessarios: 3,                // máx. 3 prints por partida (design v3 §6)
     // O fork conta jogadores em `sala.jogadores.length` na listagem.
     jogadores,
+    // Dados reais da partida puxados da Riot (matchResults.payload) — só para
+    // salas encerradas que foram verificadas. `null` quando não houver.
+    resultado_riot: resultadoRiot,
   };
 }
 

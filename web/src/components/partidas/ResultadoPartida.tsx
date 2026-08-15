@@ -37,6 +37,15 @@ export function ResultadoPartida({ sala, usuarioId }: ResultadoPartidaProps) {
   const timeA = jogadores.filter((j: any) => j.is_time_a);
   const timeB = jogadores.filter((j: any) => !j.is_time_a);
 
+  // Dados reais da partida puxados da Riot (matchResults.payload → resumoRiot).
+  // `null` quando a sala foi encerrada sem verificação automática.
+  const rr = sala?.resultado_riot;
+  const statsPorPuuid = new Map<string, any>(
+    (rr?.participantes ?? []).map((p: any) => [p.puuid, p])
+  );
+  const formatarDuracao = (s: number) =>
+    s > 0 ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : null;
+
   const corVencedor = vencedor === 'A' ? '#3b82f6' : vencedor === 'B' ? '#ef4444' : '#fbbf24';
   const nomeVencedor = vencedor === 'A' ? timeANome : vencedor === 'B' ? timeBNome : 'Empate';
   const ladoVencedor = vencedor === 'A' ? 'Time A' : vencedor === 'B' ? 'Time B' : null;
@@ -121,6 +130,26 @@ export function ResultadoPartida({ sala, usuarioId }: ResultadoPartidaProps) {
         </div>
 
         <div className="p-5 space-y-4">
+          {/* Placar e duração reais da partida (Riot) — quando disponível */}
+          {rr && (
+            <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.02]">
+              <div className="flex-1 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-blue-400">Blue</p>
+                <p className="text-2xl font-black text-white tabular-nums">{rr.placar.blue.kills}</p>
+              </div>
+              <div className="text-center px-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                  {formatarDuracao(rr.duracao_s) ? `Partida · ${formatarDuracao(rr.duracao_s)}` : 'Partida'}
+                </p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-0.5">Abates</p>
+              </div>
+              <div className="flex-1 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-red-400">Red</p>
+                <p className="text-2xl font-black text-white tabular-nums">{rr.placar.red.kills}</p>
+              </div>
+            </div>
+          )}
+
           {/* Lineup — cada jogador em card individual estilo VagaSlot (preto +
               borda da cor da side + ícone da rota + avatar + nick). Lado que
               venceu: cor da side + coroa + "Vencedores". Lado que perdeu:
@@ -151,9 +180,19 @@ export function ResultadoPartida({ sala, usuarioId }: ResultadoPartidaProps) {
                     {venceu && <Crown className="w-3 h-3" style={{ color: cor }} />}
                     {venceu ? 'Vencedores' : rotulo}
                   </p>
-                  {time.map((j: any) => (
-                    <CardJogador key={j.user_id || j.id} jogador={j} cor={venceu ? cor : null} avatarBorder={avatarBorder} grayscale={!venceu} />
-                  ))}
+                  {time.map((j: any) => {
+                    const stats = statsPorPuuid.get(j.puuid);
+                    return (
+                      <CardJogador
+                        key={j.user_id || j.id}
+                        jogador={j}
+                        cor={venceu ? cor : null}
+                        avatarBorder={avatarBorder}
+                        grayscale={!venceu}
+                        kda={stats ? `${stats.kills}/${stats.deaths}/${stats.assists}` : null}
+                      />
+                    );
+                  })}
                 </div>
               ))}
             </div>
