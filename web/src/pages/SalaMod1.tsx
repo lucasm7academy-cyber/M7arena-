@@ -539,9 +539,56 @@ ${link}`;
                     </div>
                     )}
 
-                    {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o header
-                        de resultado no topo + lados blue/red mostram tudo) e no
-                        estado "Em análise" (o card quadrado central mostra o lineup).
+                    {/* CENTRO — partida finalizada: card de resultado (vencedor +
+                        motivo no 1v1 + placar) centralizado entre os lados, no padrão
+                        das laterais red/blue side, na cor do time que venceu. */}
+                    {sala.estado === 'encerrada' && (
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[46vmin] md:max-w-none shrink-0 my-4 md:my-0 z-10 flex items-center justify-center px-3 md:px-0">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                            className="relative p-[1.5px] w-full" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
+                            <div className="bg-[#0A0A0A] px-4 py-3 sm:px-6 sm:py-4 md:px-[2.5vmin] md:py-[2vmin] flex flex-col items-center gap-1 md:gap-[1vmin] text-center"
+                                style={{ clipPath: CUT_INNER }}>
+                                <div className="w-9 h-9 md:w-[4vmin] md:h-[4vmin] rounded-lg flex items-center justify-center"
+                                    style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60` }}>
+                                    <Trophy className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" style={{ color: corVencedor }} />
+                                </div>
+                                <p className="text-[9px] md:text-[0.8vmin] font-black text-white/40 uppercase tracking-[0.4em]">Partida Finalizada</p>
+                                <p className="text-sm sm:text-base md:text-[1.9vmin] font-black uppercase tracking-[0.1em] leading-tight"
+                                    style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
+                                    {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu${sala.modo === '1v1' && sala.vitoria_motivo ? ` por ${sala.vitoria_motivo === 'first_blood' ? 'First Blood' : '100 de Farm'}` : ''}`}
+                                </p>
+                                {placarFinalizada && (
+                                    <div className="flex items-center gap-2 md:gap-[1.5vmin] mt-1 md:mt-[0.6vmin]">
+                                        <div className="text-center">
+                                            <p className="text-[8px] md:text-[0.7vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
+                                        </div>
+                                        <span className="text-xs md:text-[1.1vmin] font-black text-white/25">×</span>
+                                        <div className="text-center">
+                                            <p className="text-[8px] md:text-[0.7vmin] font-black uppercase tracking-widest text-red-400">Red</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {duracaoFinalizada && (
+                                    <p className="text-[8px] md:text-[0.8vmin] font-black text-white/30 uppercase tracking-[0.3em]">Duração {duracaoFinalizada}</p>
+                                )}
+                                {ehApostada && (
+                                    <div className="flex items-center gap-2 md:gap-[1.5vmin] mt-0.5 md:mt-[0.4vmin]">
+                                        <span className="text-[9px] md:text-[0.85vmin] font-black text-[#FFB700] uppercase tracking-widest flex items-center gap-1">
+                                            <GiTwoCoins className="w-3 h-3 md:w-[1.4vmin] md:h-[1.4vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                        </span>
+                                        <span className="text-[9px] md:text-[0.85vmin] font-black text-emerald-400 uppercase tracking-widest">
+                                            Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                    )}
+
+                    {/* CÍRCULO CENTRAL HUB — no jogo, entre os dois times.
                         Desktop (md+): absoluto, no centro geométrico do MAIN entre os
                         dois times. Mobile: entra no fluxo vertical — vagas do time A →
                         hub → vagas do time B. */}
