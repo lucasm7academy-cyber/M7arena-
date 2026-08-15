@@ -202,6 +202,16 @@ export interface Sala {
   jogadores?: any[];
   timeANome?: string;
   timeBNome?: string;
+  resultado_riot?: {
+    match_id_riot?: string | null;
+    vencedor?: 'blue' | 'red' | null;
+    duracao_s?: number;
+    placar: { blue: { kills: number; gold: number; venceu: boolean }; red: { kills: number; gold: number; venceu: boolean } };
+    participantes?: Array<{
+      puuid?: string; nome?: string; campeao?: string; side?: string; venceu?: boolean;
+      kills?: number; deaths?: number; assists?: number; ouro?: number; cs?: number;
+    }>;
+  };
 }
 
 // ============================================================

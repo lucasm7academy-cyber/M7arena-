@@ -1186,6 +1186,16 @@ const Jogar = () => {
                           </span>
                         </div>
 
+                        {sala.resultado_riot && (
+                          <div className="flex items-center justify-center gap-3 mb-4 px-3 py-2 rounded-xl bg-black/60 border border-white/10">
+                            <span className="text-sm font-black text-blue-400 tabular-nums">{sala.resultado_riot.placar.blue.kills}</span>
+                            <span className="text-[9px] font-black uppercase text-white/30 tracking-widest">
+                              {sala.resultado_riot.duracao_s > 0 ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}min` : 'Placar'}
+                            </span>
+                            <span className="text-sm font-black text-red-400 tabular-nums">{sala.resultado_riot.placar.red.kills}</span>
+                          </div>
+                        )}
+
                         <div className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-4">
                           Criador: {sala.criadorNome}
                           {sala.timeANome && <span className="ml-2 text-blue-400">• {sala.timeANome}</span>}
