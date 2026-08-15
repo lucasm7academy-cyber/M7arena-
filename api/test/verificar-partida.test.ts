@@ -228,4 +228,114 @@ describe("verificarPartida", () => {
     assert.equal(codigo.used, false, "código liberado após cancelar");
     assert.equal(codigo.matchId, null, "código desatrelado da sala");
   });
+
+  test("abortada com first blood (1v1) → encerrada com o time do first blood", async () => {
+    const db = ctx.db;
+    const a = "aaaaaaa4-0000-0000-0000-000000000061"; // blue
+    const c = "aaaaaaa4-0000-0000-0000-000000000062"; // red, first blood
+    await criaJogador(db, a, "PUUID_FBA", 70, 30);
+    await criaJogador(db, c, "PUUID_FBC", 70, 30);
+    const sala = await criaSala(db);
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+      { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+    ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-ABORT-0001", used: true, matchId: sala.id });
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => ["BR1_9999999999"],
+      buscarMatch: async () =>
+        partidaRiot({
+          endOfGameResult: "Abort_TooFewPlayers",
+          participants: [
+            { puuid: "PUUID_FBA", teamId: 100, firstBloodKill: false, totalMinionsKilled: 40 },
+            { puuid: "PUUID_FBC", teamId: 200, firstBloodKill: true, totalMinionsKilled: 30 },
+          ],
+          teams: [
+            { teamId: 100, win: false },
+            { teamId: 200, win: false },
+          ],
+        }),
+    });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.estado, "encerrada");
+    assert.equal(r.winnerSide, "red");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "encerrada");
+    assert.equal(m.winnerSide, "red");
+    const [res] = await db.select().from(matchResults).where(eq(matchResults.matchId, sala.id));
+    assert.ok(res, "deve gravar match_results");
+  });
+
+  test("abortada com 100 CS (1v1) → encerrada com quem chegou a 100 de farm", async () => {
+    const db = ctx.db;
+    const a = "aaaaaaa4-0000-0000-0000-000000000071"; // blue, 100 CS
+    const c = "aaaaaaa4-0000-0000-0000-000000000072"; // red
+    await criaJogador(db, a, "PUUID_FARMA", 70, 30);
+    await criaJogador(db, c, "PUUID_FARMC", 70, 30);
+    const sala = await criaSala(db);
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+      { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+    ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-ABORT-CS-0001", used: true, matchId: sala.id });
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => ["BR1_9999999999"],
+      buscarMatch: async () =>
+        partidaRiot({
+          endOfGameResult: "Abort_TooFewPlayers",
+          participants: [
+            { puuid: "PUUID_FARMA", teamId: 100, firstBloodKill: false, totalMinionsKilled: 99, neutralMinionsKilled: 1 },
+            { puuid: "PUUID_FARMC", teamId: 200, firstBloodKill: false, totalMinionsKilled: 50 },
+          ],
+          teams: [
+            { teamId: 100, win: false },
+            { teamId: 200, win: false },
+          ],
+        }),
+    });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.estado, "encerrada");
+    assert.equal(r.winnerSide, "blue");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "encerrada");
+  });
+
+  test("abortada sem condição (nem FB nem 100 CS) → segue partida_iniciada", async () => {
+    const db = ctx.db;
+    const a = "aaaaaaa4-0000-0000-0000-000000000081";
+    const c = "aaaaaaa4-0000-0000-0000-000000000082";
+    await criaJogador(db, a, "PUUID_SEMCOND_A", 70, 30);
+    await criaJogador(db, c, "PUUID_SEMCOND_C", 70, 30);
+    const sala = await criaSala(db);
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+      { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+    ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-ABORT-ND-0001", used: true, matchId: sala.id });
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => ["BR1_9999999999"],
+      buscarMatch: async () =>
+        partidaRiot({
+          endOfGameResult: "Abort_TooFewPlayers",
+          participants: [
+            { puuid: "PUUID_SEMCOND_A", teamId: 100, firstBloodKill: false, totalMinionsKilled: 20 },
+            { puuid: "PUUID_SEMCOND_C", teamId: 200, firstBloodKill: false, totalMinionsKilled: 15 },
+          ],
+          teams: [
+            { teamId: 100, win: false },
+            { teamId: 200, win: false },
+          ],
+        }),
+    });
+
+    assert.equal(r.ok, false);
+    assert.equal(r.estado, "partida_iniciada");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "partida_iniciada");
+  });
 });

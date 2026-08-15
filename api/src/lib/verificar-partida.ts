@@ -13,7 +13,14 @@ export interface RiotMatch {
     tournamentCode?: string;
     gameCreation: number;
     endOfGameResult?: string;
-    participants: { puuid: string; teamId: number }[];
+    participants: {
+      puuid: string;
+      teamId: number;
+      firstBloodKill?: boolean;
+      kills?: number;
+      totalMinionsKilled?: number;
+      neutralMinionsKilled?: number;
+    }[];
     teams: { teamId: number; win: boolean }[];
   };
 }
@@ -104,11 +111,8 @@ export async function verificarPartida(
   }
 
   const matchRiot = melhor.match;
-  if (matchRiot.info.endOfGameResult !== "GameComplete") {
-    return { ok: false, estado: "partida_iniciada", motivo: "ainda_em_jogo", matchIdRiot: matchRiot.metadata.matchId };
-  }
 
-  // Confere os 10 nicks: mesmo conjunto de participantes e todos os esperados lá.
+  // Confere os nicks: mesmo conjunto de participantes e todos os esperados lá.
   const puuidsPartida = new Set(matchRiot.info.participants.map((p) => p.puuid));
   const todosBatem =
     matchRiot.info.participants.length === players.length && puuids.every((p) => puuidsPartida.has(p));
@@ -116,9 +120,45 @@ export async function verificarPartida(
     return aplica(d, m, () => aplicarCancelamento(d, m, players, "nick_nao_bate", matchRiot.metadata.matchId));
   }
 
-  const teamVencedor = matchRiot.info.teams.find((t) => t.win);
-  const winnerSide: "blue" | "red" = teamVencedor?.teamId === 200 ? "red" : "blue";
-  return aplica(d, m, () => aplicarEncerramento(d, m, players, winnerSide, matchRiot));
+  // Partida completa normalmente: o time com `win` vence.
+  if (matchRiot.info.endOfGameResult === "GameComplete") {
+    const teamVencedor = matchRiot.info.teams.find((t) => t.win);
+    const winnerSide: "blue" | "red" = teamVencedor?.teamId === 200 ? "red" : "blue";
+    return aplica(d, m, () => aplicarEncerramento(d, m, players, winnerSide, matchRiot));
+  }
+
+  // Partida ABORTADA (desistência/abandono — "Abort", "Abort_TooFewPlayers",
+  // "GameLength", etc.). No 1v1 as win conditions são 100 de farm (CS) ou
+  // first blood: quem atinge a condição quita, então o jogo NUNCA chega a
+  // GameComplete — o motor decide o vencedor pelas condições da partida.
+  const ladoCondicao = vencedorPorWinCondition(matchRiot);
+  if (ladoCondicao) {
+    return aplica(d, m, () => aplicarEncerramento(d, m, players, ladoCondicao, matchRiot));
+  }
+
+  return { ok: false, estado: "partida_iniciada", motivo: "ainda_em_jogo", matchIdRiot: matchRiot.metadata.matchId };
+}
+
+/**
+ * Decide o vencedor de uma partida 1v1 que terminou sem "GameComplete"
+ * (abortada por desistência). Win conditions do modo:
+ *  1. First blood — quem matou primeiro vence (ordem de prioridade);
+ *  2. 100 de farm — primeiro a chegar em 100 CS vence.
+ * Retorna "blue" | "red" quando alguma condição foi atingida, senão null
+ * (partida ainda em jogo, ou sem condição → segue até o teto e cancela).
+ */
+function vencedorPorWinCondition(match: RiotMatch): "blue" | "red" | null {
+  const parts = match.info.participants ?? [];
+  const cs = (p: any) => (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0);
+  const lado = (p: any) => (p.teamId === 200 ? "red" : "blue") as "blue" | "red";
+
+  const primeiroAbate = parts.find((p: any) => p.firstBloodKill);
+  if (primeiroAbate) return lado(primeiroAbate);
+
+  const cemFarm = parts.find((p: any) => cs(p) >= 100);
+  if (cemFarm) return lado(cemFarm);
+
+  return null;
 }
 
 /**
