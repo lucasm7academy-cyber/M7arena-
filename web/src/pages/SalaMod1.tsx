@@ -362,7 +362,7 @@ ${link}`;
             {/* TOP BAR BANNER - LARGURA TOTAL SEM BORDAS */}
             <motion.div 
                 initial={{ y: -100 }} animate={{ y: 0 }}
-                className="w-full h-[10vh] bg-[#050505] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50 relative flex items-center px-[4vmin] justify-between overflow-hidden shrink-0"
+                className="w-full min-h-[64px] h-auto py-2 md:py-0 md:h-[10vh] bg-[#050505] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50 relative flex items-center px-4 md:px-[4vmin] justify-between overflow-hidden shrink-0 flex-wrap md:flex-nowrap gap-2 md:gap-0"
             >
                 {/* Background Ryze Banner */}
                 <div className="absolute inset-0 z-0 pointer-events-none">
@@ -374,9 +374,9 @@ ${link}`;
                     <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/60 to-[#050505]" />
                 </div>
 
-                <div className="flex items-center gap-[3vmin] z-10">
+                <div className="flex items-center gap-3 md:gap-[3vmin] z-10">
                     <motion.button 
-                        whileHover={{ scale: 1.15 }}
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => navigate('/jogar')} 
                         className="group relative flex items-center justify-center text-red-500"
@@ -388,31 +388,31 @@ ${link}`;
                             transition={{ duration: 0.25, ease: 'easeOut' }}
                             className="flex"
                         >
-                            <X className="w-[5vmin] h-[5vmin]" strokeWidth={3.5} />
+                            <X className="w-8 h-8 md:w-[5vmin] md:h-[5vmin]" strokeWidth={3.5} />
                         </motion.span>
                     </motion.button>
                     <div className="flex flex-col">
-                        <h1 className="text-[2.2vmin] font-black tracking-widest text-white uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{sala.nome}</h1>
-                        <span className="text-[1.7vmin] font-black text-[#FFB700] tracking-widest mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">#{String(sala.id).padStart(6, '0')}</span>
+                        <h1 className="text-base md:text-[2.2vmin] font-black tracking-widest text-white uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{sala.nome}</h1>
+                        <span className="text-xs md:text-[1.7vmin] font-black text-[#FFB700] tracking-widest mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">#{String(sala.id).padStart(6, '0')}</span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-[5vmin] z-10">
-                    <div className="flex items-center gap-[4vmin]">
+                <div className="flex items-center gap-3 sm:gap-6 md:gap-[5vmin] z-10">
+                    <div className="flex items-center gap-3 sm:gap-6 md:gap-[4vmin]">
                         <div className="flex flex-col items-center">
-                            <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Estado</span>
-                            <span className="text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5">{estadoRotulo}</span>
+                            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Estado</span>
+                            <span className="text-xs md:text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5">{estadoRotulo}</span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Modo</span>
-                            <span className={`text-[1.5vmin] font-black uppercase tracking-widest mt-0.5 ${coresModo[sala.modo] || 'text-white'}`}>{sala.modo}</span>
+                            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Modo</span>
+                            <span className={`text-xs md:text-[1.5vmin] font-black uppercase tracking-widest mt-0.5 ${coresModo[sala.modo] || 'text-white'}`}>{sala.modo}</span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Aposta / Pote</span>
-                            <span className="text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5 flex items-center gap-[0.4vmin]">
+                            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Aposta / Pote</span>
+                            <span className="text-xs md:text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5 flex items-center gap-1 md:gap-[0.4vmin]">
                                 {ehApostada ? (
                                     <>
-                                        <GiTwoCoins className="w-[1.6vmin] h-[1.6vmin] text-[#FFB700]" />
+                                        <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.6vmin] md:h-[1.6vmin] text-[#FFB700]" />
                                         {apostaPorJogador} MC (Pote {poteBruto} MC)
                                     </>
                                 ) : (
@@ -427,13 +427,13 @@ ${link}`;
                         whileHover={{ scale: 1.08 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={compartilharSala}
-                        className="w-[5vmin] h-[5vmin] rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/30 flex items-center justify-center text-[#FFB700] hover:bg-[#FFB700]/20 transition-colors backdrop-blur-md"
+                        className="w-8 h-8 md:w-[5vmin] md:h-[5vmin] rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/30 flex items-center justify-center text-[#FFB700] hover:bg-[#FFB700]/20 transition-colors backdrop-blur-md shrink-0"
                         title="Compartilhar sala"
                     >
                         {compartilhado ? (
-                            <Check className="w-[2.2vmin] h-[2.2vmin] text-green-400" />
+                            <Check className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin] text-green-400" />
                         ) : (
-                            <Share2 className="w-[2.2vmin] h-[2.2vmin]" />
+                            <Share2 className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" />
                         )}
                     </motion.button>
 
@@ -443,10 +443,10 @@ ${link}`;
                             whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={excluirSala}
-                            className="w-[5vmin] h-[5vmin] rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500/20 hover:text-red-400 transition-colors backdrop-blur-md"
+                            className="w-8 h-8 md:w-[5vmin] md:h-[5vmin] rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500/20 hover:text-red-400 transition-colors backdrop-blur-md shrink-0"
                             title="Excluir sala permanentemente"
                         >
-                            <Trash2 className="w-[2.2vmin] h-[2.2vmin]" />
+                            <Trash2 className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" />
                         </motion.button>
                     )}
                 </div>
@@ -458,11 +458,11 @@ ${link}`;
                     className="absolute top-[13vh] left-1/2 -translate-x-1/2 z-[45] w-[min(600px,92vw)]">
                     <div className="px-4 py-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 backdrop-blur-md flex items-center gap-3 shadow-2xl">
                         <LinkIcon className="w-4 h-4 text-blue-400 shrink-0" />
-                        <p className="flex-1 text-blue-100 text-[1.4vmin] font-black uppercase tracking-wider">
+                        <p className="flex-1 text-blue-100 text-xs md:text-[1.4vmin] font-black uppercase tracking-wider">
                             Vincule seu Riot ID para jogar valendo MC
                         </p>
                         <button onClick={() => navigate('/vincular')}
-                            className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-[1.2vmin] font-black uppercase tracking-widest hover:bg-blue-500/30 transition-all">
+                            className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs md:text-[1.2vmin] font-black uppercase tracking-widest hover:bg-blue-500/30 transition-all">
                             Vincular
                         </button>
                     </div>
@@ -473,66 +473,66 @@ ${link}`;
             {sala.estado === 'preenchendo' && ociosidadeMin >= 25 && (
                 <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                     className="absolute top-[13vh] left-1/2 -translate-x-1/2 z-[45]">
-                    <div className="px-5 py-2 rounded-full border border-orange-500/40 bg-orange-500/10 backdrop-blur-md text-orange-300 text-[1.4vmin] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
-                        <Clock className="w-[1.6vmin] h-[1.6vmin]" />
+                    <div className="px-4 py-2 rounded-full border border-orange-500/40 bg-orange-500/10 backdrop-blur-md text-orange-300 text-xs md:text-[1.4vmin] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
+                        <Clock className="w-4 h-4 md:w-[1.6vmin] md:h-[1.6vmin]" />
                         Ocioso — removido da vaga em {minutosParaKick} min
                     </div>
                 </motion.div>
             )}
 
             {/* MAIN CENTRAL AREA */}
-            <div className="w-full relative flex flex-col items-center justify-center md:flex-1 overflow-visible py-[2vmin] min-h-[70vh] md:min-h-0">
+            <div className="w-full relative flex flex-col items-center justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin] min-h-[70vh] md:min-h-0">
 
                 {/* HEADER DE RESULTADO — partida finalizada: vencedor + placar +
                     duração no topo, no padrão de borda cortada, sem o círculo. */}
                 {sala.estado === 'encerrada' && (
                     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                        className="w-full flex justify-center mb-[2vmin] z-20">
-                        <div className="relative p-[1.5px]" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
-                            <div className="bg-[#0A0A0A] px-[4vmin] py-[1.4vmin] flex items-center gap-[2.5vmin]"
+                        className="w-full flex justify-center mb-4 md:mb-[2vmin] z-20 px-3 md:px-0">
+                        <div className="relative p-[1.5px] max-w-[440px] md:max-w-none w-full md:w-auto" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
+                            <div className="bg-[#0A0A0A] px-3 py-2 sm:px-6 sm:py-3 md:px-[4vmin] md:py-[1.4vmin] flex flex-wrap md:flex-nowrap items-center justify-center gap-2 sm:gap-4 md:gap-[2.5vmin]"
                                 style={{ clipPath: CUT_INNER }}>
-                                <div className="w-[4vmin] h-[4vmin] rounded-lg flex items-center justify-center shrink-0"
+                                <div className="w-8 h-8 md:w-[4vmin] md:h-[4vmin] rounded-lg flex items-center justify-center shrink-0"
                                     style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60` }}>
-                                    <Trophy className="w-[2vmin] h-[2vmin]" style={{ color: corVencedor }} />
+                                    <Trophy className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" style={{ color: corVencedor }} />
                                 </div>
                                 <div className="text-left shrink-0">
-                                    <p className="text-[0.9vmin] font-black text-white/40 uppercase tracking-[0.4em]">Partida Finalizada</p>
-                                    <p className="text-[1.8vmin] font-black uppercase tracking-[0.15em]"
+                                    <p className="text-[10px] md:text-[0.9vmin] font-black text-white/40 uppercase tracking-[0.4em]">Partida Finalizada</p>
+                                    <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black uppercase tracking-[0.15em]"
                                         style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
                                         {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
                                     </p>
                                 </div>
                                 {placarFinalizada && (
-                                    <div className="flex items-center gap-[1.5vmin] pl-[2vmin] border-l border-white/10">
+                                    <div className="flex items-center gap-2 md:gap-[1.5vmin] pl-2 md:pl-[2vmin] border-l border-white/10">
                                         <div className="text-center">
-                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
-                                            <p className="text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
                                         </div>
-                                        <span className="text-[1.1vmin] font-black text-white/25">×</span>
+                                        <span className="text-xs md:text-[1.1vmin] font-black text-white/25">×</span>
                                         <div className="text-center">
-                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-red-400">Red</p>
-                                            <p className="text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-red-400">Red</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
                                         </div>
                                     </div>
                                 )}
                                 {duracaoFinalizada && (
-                                    <div className="flex items-center pl-[2vmin] border-l border-white/10 shrink-0">
-                                        <span className="text-[1.8vmin] font-black text-white tabular-nums tracking-wide">
+                                    <div className="flex items-center pl-2 md:pl-[2vmin] border-l border-white/10 shrink-0">
+                                        <span className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums tracking-wide">
                                             {duracaoFinalizada}
                                         </span>
                                     </div>
                                 )}
                                 {ehApostada && (
-                                    <div className="flex items-center gap-[1.8vmin] pl-[2vmin] border-l border-white/10 shrink-0">
+                                    <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.8vmin] pl-2 md:pl-[2vmin] border-l border-white/10 shrink-0">
                                         <div className="text-center">
-                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-[#FFB700]/70">Pote Total</p>
-                                            <p className="text-[1.6vmin] font-black text-[#FFB700] tabular-nums leading-tight flex items-center justify-center gap-[0.4vmin]">
-                                                <GiTwoCoins className="w-[1.6vmin] h-[1.6vmin]" /> {poteBruto} MC
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-[#FFB700]/70">Pote Total</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] tabular-nums leading-tight flex items-center justify-center gap-1 md:gap-[0.4vmin]">
+                                                <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.6vmin] md:h-[1.6vmin]" /> {poteBruto} MC
                                             </p>
                                         </div>
-                                        <div className="text-center pl-[1.5vmin] border-l border-white/10">
-                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-emerald-400/80">Prêmio / Jogador</p>
-                                            <p className="text-[1.6vmin] font-black text-emerald-400 tabular-nums leading-tight">
+                                        <div className="text-center pl-2 md:pl-[1.5vmin] border-l border-white/10">
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-emerald-400/80">Prêmio / Jogador</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-emerald-400 tabular-nums leading-tight">
                                                 +{premioPorJogador} MC
                                             </p>
                                         </div>
@@ -545,7 +545,7 @@ ${link}`;
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] py-[2vmin] md:py-0 ${
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-6 md:gap-[4vmin] py-2 md:py-0 ${
                     sala.estado === 'encerrada'
                         ? 'md:gap-[8vmin]'
                         : isX1
@@ -556,9 +556,9 @@ ${link}`;
                         central mostra o lineup); na encerrada fica visível com as
                         vagas mostrando campeão + KDA + CS da Riot. */}
                     {sala.estado !== 'aguardando_revisao' && (
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[48vmin] shrink-0">
+                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[48vmin] md:max-w-none px-3 md:px-0 shrink-0">
                         <div
-                            className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
+                            className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
                                 backgroundColor: '#3B82F6',
                                 clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
@@ -570,10 +570,10 @@ ${link}`;
                                     clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
                                 }}
                             >
-                                <span className="block text-[1.4vmin] font-black text-[#3B82F6] uppercase tracking-[0.4em]">Blue-Side</span>
+                                <span className="block text-xs md:text-[1.4vmin] font-black text-[#3B82F6] uppercase tracking-[0.4em]">Blue-Side</span>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-[1.5vmin] items-center w-full">
+                        <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
                             {roles.map((role) => {
                                 const jogador = timeA.find((j: any) => j.role === role);
                                 const isAtual = jogador?.user_id === usuarioAtual.id;
@@ -606,7 +606,7 @@ ${link}`;
                         dois times. Mobile: entra no fluxo vertical — vagas do time A →
                         hub → vagas do time B. */}
                     {sala.estado !== 'encerrada' && sala.estado !== 'aguardando_revisao' && (
-                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[55vmin] h-[55vmin] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0">
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
                         {/* Outer rings */}
                         <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
                         <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
@@ -621,13 +621,13 @@ ${link}`;
                                 display (fala com quem ainda não voltou da partida) */}
                             {sala.estado === 'partida_iniciada' && (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-[6vmin] text-center pointer-events-none">
+                                    className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none">
                                     <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.15 }}
-                                        className="flex flex-col items-center gap-[2.5vmin]">
-                                        <span className="text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
+                                        className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
+                                        <span className="text-xl md:text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
                                             Finalizou a partida?
                                         </span>
-                                        <span className="text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
+                                        <span className="text-xs md:text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
                                             Envie os resultados no botão abaixo
                                         </span>
                                     </motion.div>
@@ -636,31 +636,31 @@ ${link}`;
 
                             {/* HUB HUD Overlay */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
-                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[12vmin]' : 'top-10'}`}>
-                                    <div className="w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-2" />
+                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[14%] md:top-[12vmin]' : 'top-8 md:top-10'}`}>
+                                    <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-1 md:mb-2" />
                                     {ehApostada ? (
-                                        <span className="text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.5em]">
+                                        <span className="text-xs md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.4em] md:tracking-[0.5em]">
                                             Partida Valendo!
                                         </span>
                                     ) : (
-                                        <span className="text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
+                                        <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
                                     )}
                                 </div>
-                                <div className="absolute bottom-10 flex flex-col items-center">
+                                <div className="absolute bottom-8 md:bottom-10 flex flex-col items-center">
                                     {ehApostada ? (
                                         <>
-                                            <span className="flex items-center gap-[1vmin] text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                                <GiTwoCoins className="w-[2.2vmin] h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                            <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                                <GiTwoCoins className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
                                             </span>
-                                            <span className="text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                                            <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-0.5 md:mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
                                                 Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
                                             </span>
-                                            <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-2" />
+                                            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-1 md:mt-2" />
                                         </>
                                     ) : (
                                         <>
-                                            <span className="text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
-                                            <div className="w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                                            <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
+                                            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
                                         </>
                                     )}
                                 </div>
@@ -673,9 +673,9 @@ ${link}`;
                         central mostra o lineup); na encerrada fica visível com as
                         vagas mostrando campeão + KDA + CS da Riot. */}
                     {sala.estado !== 'aguardando_revisao' && (
-                    <div className="flex flex-col gap-[1.5vmin] items-center w-[90vw] md:w-[48vmin] shrink-0">
+                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[48vmin] md:max-w-none px-3 md:px-0 shrink-0">
                         <div
-                            className="relative mb-[1vmin] p-[1.5px] overflow-hidden self-center"
+                            className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
                                 backgroundColor: '#ef4444',
                                 clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
@@ -687,10 +687,10 @@ ${link}`;
                                     clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
                                 }}
                             >
-                                <span className="block text-[1.4vmin] font-black text-[#ef4444] uppercase tracking-[0.4em]">Red-Side</span>
+                                <span className="block text-xs md:text-[1.4vmin] font-black text-[#ef4444] uppercase tracking-[0.4em]">Red-Side</span>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-[1.5vmin] items-center w-full">
+                        <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
                             {roles.map((role) => {
                                 const jogador = timeB.find((j: any) => j.role === role);
                                 const isAtual = jogador?.user_id === usuarioAtual.id;
@@ -727,12 +727,12 @@ ${link}`;
                             initial={{ opacity: 0, scale: 1.1 }} 
                             animate={{ opacity: 1, scale: 1 }} 
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-[5vmin] border border-[#FFB700]/20"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 md:p-[5vmin] border border-[#FFB700]/20"
                         >
                             <motion.span 
                                 initial={{ y: 20, opacity: 0 }} 
                                 animate={{ y: 0, opacity: 1 }}
-                                className="text-[15vmin] font-black text-white tabular-nums leading-none drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                                className="text-6xl md:text-[15vmin] font-black text-white tabular-nums leading-none drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                             >
                                 {timer ?? 0}
                             </motion.span>
@@ -740,13 +740,13 @@ ${link}`;
                                 initial={{ y: 20, opacity: 0 }} 
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="flex flex-col items-center gap-4 mt-4"
+                                className="flex flex-col items-center gap-2 md:gap-4 mt-2 md:mt-4"
                             >
-                                <span className="text-[1.8vmin] font-black text-[#FFB700] uppercase tracking-[1em]">CONFIRME AGORA</span>
-                                <span className="text-[1.1vmin] font-bold text-white/50 uppercase tracking-[0.2em] text-center max-w-[40vmin]">
+                                <span className="text-xs md:text-[1.8vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] md:tracking-[1em]">CONFIRME AGORA</span>
+                                <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/50 uppercase tracking-[0.2em] text-center max-w-[280px] md:max-w-[40vmin]">
                                     Confiram os nicks — quem jogar no lugar do dono da vaga cancela a partida
                                 </span>
-                                <div className="w-[12vmin] h-[4px] bg-white/10 rounded-full overflow-hidden">
+                                <div className="w-24 md:w-[12vmin] h-[4px] bg-white/10 rounded-full overflow-hidden">
                                     <motion.div 
                                         className="h-full bg-[#FFB700]" 
                                         initial={{ width: '100%' }}

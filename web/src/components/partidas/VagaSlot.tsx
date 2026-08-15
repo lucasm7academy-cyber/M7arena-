@@ -104,14 +104,14 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 <img
                     src={icone}
                     alt={nome}
-                    className={`w-[min(12vw,5vmin)] h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
+                    className={`w-10 h-10 md:w-[min(12vw,5vmin)] md:h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                     style={config.avatarFilter ? { filter: config.avatarFilter } : {}}
                 />
             </div>
         )
         : (
-            <div className={`w-[min(12vw,5vmin)] h-[min(12vw,5vmin)] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
-                <span className="text-[min(4vw,1.8vmin)] text-white/20 font-black uppercase">{nome?.[0] || '?'}</span>
+            <div className={`w-10 h-10 md:w-[min(12vw,5vmin)] md:h-[min(12vw,5vmin)] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
+                <span className="text-sm md:text-[min(4vw,1.8vmin)] text-white/20 font-black uppercase">{nome?.[0] || '?'}</span>
             </div>
         );
 
@@ -122,7 +122,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     whileHover={{ scale: 1.015 }}
-                    className={`relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] group overflow-hidden`}
+                    className={`relative ${cardWidth} h-[60px] md:h-[min(16vw,8.2vmin)] p-[1px] group overflow-hidden`}
                     style={{
                         backgroundColor: isDesistente ? '#374151' : teamColor,
                         clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
@@ -130,7 +130,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 >
                     <div
                         className={`
-                            w-full h-full bg-[#050505] flex items-center px-[2.5vmin] relative overflow-hidden
+                            w-full h-full bg-[#050505] flex items-center px-3 md:px-[2.5vmin] relative overflow-hidden
                             ${isTimeA ? 'flex-row' : 'flex-row-reverse'}
                         `}
                         style={{
@@ -150,10 +150,10 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className={`absolute mid-[0vmin] ${isTimeA ? 'right-[2.5vmin]' : 'left-[2.5vmin]'} z-20`}
+                                className={`absolute mid-[0vmin] ${isTimeA ? 'right-2.5 md:right-[2.5vmin]' : 'left-2.5 md:left-[2.5vmin]'} z-20`}
                             >
-                                <div className="w-[3vmin] h-[3vmin] bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] border-[3px] border-[#050505]">
-                                    <Check className="w-[1.5vmin] h-[1.5vmin] text-black stroke-[3px]" />
+                                <div className="w-6 h-6 md:w-[3vmin] md:h-[3vmin] bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] border-[2px] md:border-[3px] border-[#050505]">
+                                    <Check className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-black stroke-[3px]" />
                                 </div>
                             </motion.div>
                         )}
@@ -166,20 +166,20 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                         e.stopPropagation();
                                         aoSair();
                                     }}
-                                    className="px-[2.5vmin] py-[0.8vmin] bg-red-600/30 hover:bg-red-600 border border-red-500/60 hover:border-red-400 rounded-xl text-red-100 hover:text-white text-[1.3vmin] font-black uppercase tracking-widest flex items-center gap-[1vmin] shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95"
+                                    className="px-3 py-1.5 md:px-[2.5vmin] md:py-[0.8vmin] bg-red-600/30 hover:bg-red-600 border border-red-500/60 hover:border-red-400 rounded-xl text-red-100 hover:text-white text-xs md:text-[1.3vmin] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-[1vmin] shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95"
                                 >
-                                    <X className="w-[1.6vmin] h-[1.6vmin] text-red-400 group-hover:text-white" />
+                                    <X className="w-4 h-4 md:w-[1.6vmin] md:h-[1.6vmin] text-red-400 group-hover:text-white" />
                                     <span>Sair da Vaga</span>
                                 </button>
                             </div>
                         )}
 
-                        <div className={`flex items-center gap-[2vmin] flex-1 overflow-hidden ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                        <div className={`flex items-center gap-2.5 md:gap-[2vmin] flex-1 overflow-hidden ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                             {/* Ícone da Rota */}
                             <img
                                 src={roleIconImg}
                                 alt={role}
-                                className={`w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0 ${isDesistente ? 'grayscale opacity-30' : ''}`}
+                                className={`w-8 h-8 md:w-[min(12vw,4.8vmin)] md:h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0 ${isDesistente ? 'grayscale opacity-30' : ''}`}
                             />
 
                             {/* Ícone: Desistente (avatar em P&B), Campeão se finalizada, Avatar se normal */}
@@ -194,7 +194,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                         alt={stats.campeao || nome}
                                         title={stats.campeao || 'Campeão'}
                                         loading="lazy"
-                                        className={`w-[min(12vw,5vmin)] h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
+                                        className={`w-10 h-10 md:w-[min(12vw,5vmin)] md:h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                                         onError={(e) => {
                                             if (stats.campeao && !e.currentTarget.src.includes('ddragon')) {
                                                 e.currentTarget.src = `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`;
@@ -210,64 +210,64 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             <div className={`flex flex-col min-w-0 flex-1 ${isTimeA ? 'text-left items-start' : 'text-right items-end'}`}>
                                 {isDesistente ? (
                                     <>
-                                        <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight text-white/40 line-through">
+                                        <div className={`flex items-center gap-1.5 md:gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span className="text-sm md:text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight text-white/40 line-through">
                                                 {nome}
                                             </span>
-                                            <span className="px-[0.8vmin] py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[min(2.4vw,1vmin)] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
+                                            <span className="px-2 py-0.5 md:px-[0.8vmin] md:py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] md:text-[min(2.4vw,1vmin)] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
                                                 {apostaMC > 0 ? `Desistente (-${apostaMC} MC)` : 'Desistente'}
                                             </span>
                                         </div>
-                                        <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-[min(2.6vw,1.1vmin)] font-bold text-red-400/60 uppercase tracking-[0.2em] leading-none">
+                                        <div className={`flex items-center gap-1 md:gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span className="text-[11px] md:text-[min(2.6vw,1.1vmin)] font-bold text-red-400/60 uppercase tracking-[0.2em] leading-none">
                                                 {tag || 'Não jogou'}
                                             </span>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                        <div className={`flex items-center gap-1.5 md:gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                                             <span
-                                                className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight"
+                                                className="text-sm md:text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight"
                                                 style={config.nomeStyle}
                                             >
                                                 {nome}
                                             </span>
                                             {vipTier === 'vip' && (
-                                                <span className="px-[0.6vmin] py-[0.2vmin] bg-gradient-to-r from-[#FFB700] to-[#ffd54f] text-black text-[0.7vmin] font-black rounded shrink-0 shadow-[0_0_8px_rgba(255,183,0,0.5)]">
+                                                <span className="px-1.5 py-0.5 md:px-[0.6vmin] md:py-[0.2vmin] bg-gradient-to-r from-[#FFB700] to-[#ffd54f] text-black text-[9px] md:text-[0.7vmin] font-black rounded shrink-0 shadow-[0_0_8px_rgba(255,183,0,0.5)]">
                                                     VIP
                                                 </span>
                                             )}
                                         </div>
 
                                         {stats ? (
-                                            <div className={`flex items-center gap-[1.2vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <div className={`flex items-center gap-2 md:gap-[1.2vmin] mt-0.5 md:mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                                                 {tag && (
-                                                    <span className="text-[min(2.5vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                    <span className="text-[11px] md:text-[min(2.5vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
                                                         {tag}
                                                     </span>
                                                 )}
-                                                <span className="text-[min(3.2vw,1.4vmin)] font-black tabular-nums text-white">
+                                                <span className="text-xs md:text-[min(3.2vw,1.4vmin)] font-black tabular-nums text-white">
                                                     {stats.kills}/{stats.deaths}/{stats.assists}
                                                 </span>
-                                                <span className="text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
+                                                <span className="text-[11px] md:text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
                                                     {stats.cs} CS
                                                 </span>
                                                 {apostaMC > 0 && isFinalizada && (
                                                     venceu ? (
-                                                        <span className="text-[min(2.4vw,1.05vmin)] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 px-[0.6vmin] py-[0.1vmin] rounded shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                                                        <span className="text-[10px] md:text-[min(2.4vw,1.05vmin)] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 px-1.5 py-0.5 md:px-[0.6vmin] md:py-[0.1vmin] rounded shadow-[0_0_8px_rgba(16,185,129,0.3)]">
                                                             +{premioMC} MC
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[min(2.2vw,0.95vmin)] font-bold text-white/40 uppercase tracking-wider bg-white/5 border border-white/10 px-[0.5vmin] py-[0.1vmin] rounded">
+                                                        <span className="text-[10px] md:text-[min(2.2vw,0.95vmin)] font-bold text-white/40 uppercase tracking-wider bg-white/5 border border-white/10 px-1 py-0.5 md:px-[0.5vmin] md:py-[0.1vmin] rounded">
                                                             -{apostaMC} MC
                                                         </span>
                                                     )
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                                <span className="text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                            <div className={`flex items-center gap-1 md:gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                                <span className="text-xs md:text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
                                                     {tag}
                                                 </span>
                                             </div>
@@ -290,27 +290,27 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 whileHover={isFinalizada ? undefined : { scale: 1.015 }}
                 whileTap={isFinalizada ? undefined : { scale: 0.98 }}
                 onClick={isFinalizada ? undefined : aoEntrar}
-                className={`group relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] ${isFinalizada ? 'bg-white/5 opacity-40 cursor-default' : 'bg-white/10 hover:bg-white/30 transition-colors duration-300 cursor-pointer'} overflow-hidden`}
+                className={`group relative ${cardWidth} h-[60px] md:h-[min(16vw,8.2vmin)] p-[1px] ${isFinalizada ? 'bg-white/5 opacity-40 cursor-default' : 'bg-white/10 hover:bg-white/30 transition-colors duration-300 cursor-pointer'} overflow-hidden`}
                 style={{
                     clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                 }}
             >
                 <div
-                    className={`w-full h-full bg-[#050505] flex items-center justify-center gap-[2.5vmin] transition-all duration-300 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}
+                    className={`w-full h-full bg-[#050505] flex items-center justify-center gap-3 md:gap-[2.5vmin] transition-all duration-300 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}
                     style={{
                         clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                     }}
                 >
-                    <div className="w-[min(14vw,6vmin)] h-[min(14vw,6vmin)] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300">
-                        <UserPlus className="w-[min(6vw,2.5vmin)] h-[min(6vw,2.5vmin)] text-white/10 group-hover:text-white/60 transition-colors" />
+                    <div className="w-10 h-10 md:w-[min(14vw,6vmin)] md:h-[min(14vw,6vmin)] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300 shrink-0">
+                        <UserPlus className="w-5 h-5 md:w-[min(6vw,2.5vmin)] md:h-[min(6vw,2.5vmin)] text-white/10 group-hover:text-white/60 transition-colors" />
                     </div>
                     <div className={`flex flex-col ${isTimeA ? 'items-start' : 'items-end'}`}>
-                        <span className="text-[min(4vw,1.6vmin)] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">
+                        <span className="text-xs md:text-[min(4vw,1.6vmin)] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">
                             {isFinalizada ? 'VAZIO' : 'ENTRAR'}
                         </span>
-                        <div className={`flex items-center gap-[1vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            <img src={roleIconImg} className="w-[min(5vw,2vmin)] h-[min(5vw,2vmin)] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
-                            <span className="text-[min(3.5vw,1.4vmin)] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
+                        <div className={`flex items-center gap-2 md:gap-[1vmin] mt-0.5 md:mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                            <img src={roleIconImg} className="w-4 h-4 md:w-[min(5vw,2vmin)] md:h-[min(5vw,2vmin)] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
+                            <span className="text-[11px] md:text-[min(3.5vw,1.4vmin)] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
                         </div>
                     </div>
                 </div>
