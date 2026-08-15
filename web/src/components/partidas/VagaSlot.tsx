@@ -104,14 +104,14 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 <img
                     src={icone}
                     alt={nome}
-                    className={`w-10 h-10 md:w-[min(12vw,5vmin)] md:h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
+                    className={`w-10 h-10 md:w-[5vmin] md:h-[5vmin] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                     style={config.avatarFilter ? { filter: config.avatarFilter } : {}}
                 />
             </div>
         )
         : (
-            <div className={`w-10 h-10 md:w-[min(12vw,5vmin)] md:h-[min(12vw,5vmin)] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
-                <span className="text-sm md:text-[min(4vw,1.8vmin)] text-white/20 font-black uppercase">{nome?.[0] || '?'}</span>
+            <div className={`w-10 h-10 md:w-[5vmin] md:h-[5vmin] bg-white/5 rounded-full flex items-center justify-center border ${config.avatarBorder} shrink-0`}>
+                <span className="text-sm md:text-[1.8vmin] text-white/20 font-black uppercase">{nome?.[0] || '?'}</span>
             </div>
         );
 
@@ -122,7 +122,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     whileHover={{ scale: 1.015 }}
-                    className={`relative ${cardWidth} h-[60px] md:h-[min(16vw,8.2vmin)] p-[1px] group overflow-hidden`}
+                    className={`relative ${cardWidth} h-[60px] md:h-[8.2vmin] p-[1px] group overflow-hidden`}
                     style={{
                         backgroundColor: isDesistente ? '#374151' : teamColor,
                         clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
@@ -179,7 +179,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             <img
                                 src={roleIconImg}
                                 alt={role}
-                                className={`w-8 h-8 md:w-[min(12vw,4.8vmin)] md:h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0 ${isDesistente ? 'grayscale opacity-30' : ''}`}
+                                className={`w-8 h-8 md:w-[4.8vmin] md:h-[4.8vmin] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0 ${isDesistente ? 'grayscale opacity-30' : ''}`}
                             />
 
                             {/* Ícone: Desistente (avatar em P&B), Campeão se finalizada, Avatar se normal */}
@@ -194,7 +194,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                         alt={stats.campeao || nome}
                                         title={stats.campeao || 'Campeão'}
                                         loading="lazy"
-                                        className={`w-10 h-10 md:w-[min(12vw,5vmin)] md:h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
+                                        className={`w-10 h-10 md:w-[5vmin] md:h-[5vmin] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                                         onError={(e) => {
                                             if (stats.campeao && !e.currentTarget.src.includes('ddragon')) {
                                                 e.currentTarget.src = `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`;
@@ -211,15 +211,15 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                 {isDesistente ? (
                                     <>
                                         <div className={`flex items-center gap-1.5 md:gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-sm md:text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight text-white/40 line-through">
+                                            <span className="text-sm md:text-[2vmin] font-black truncate uppercase tracking-tight text-white/40 line-through">
                                                 {nome}
                                             </span>
-                                            <span className="px-2 py-0.5 md:px-[0.8vmin] md:py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] md:text-[min(2.4vw,1vmin)] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
+                                            <span className="px-2 py-0.5 md:px-[0.8vmin] md:py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] md:text-[1vmin] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
                                                 {apostaMC > 0 ? `Desistente (-${apostaMC} MC)` : 'Desistente'}
                                             </span>
                                         </div>
                                         <div className={`flex items-center gap-1 md:gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-[11px] md:text-[min(2.6vw,1.1vmin)] font-bold text-red-400/60 uppercase tracking-[0.2em] leading-none">
+                                            <span className="text-[11px] md:text-[1.1vmin] font-bold text-red-400/60 uppercase tracking-[0.2em] leading-none">
                                                 {tag || 'Não jogou'}
                                             </span>
                                         </div>
@@ -228,7 +228,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                     <>
                                         <div className={`flex items-center gap-1.5 md:gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                                             <span
-                                                className="text-sm md:text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight"
+                                                className="text-sm md:text-[2vmin] font-black truncate uppercase tracking-tight"
                                                 style={config.nomeStyle}
                                             >
                                                 {nome}
@@ -243,23 +243,23 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                         {stats ? (
                                             <div className={`flex items-center gap-2 md:gap-[1.2vmin] mt-0.5 md:mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                                                 {tag && (
-                                                    <span className="text-[11px] md:text-[min(2.5vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                    <span className="text-[11px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
                                                         {tag}
                                                     </span>
                                                 )}
-                                                <span className="text-xs md:text-[min(3.2vw,1.4vmin)] font-black tabular-nums text-white">
+                                                <span className="text-xs md:text-[1.4vmin] font-black tabular-nums text-white">
                                                     {stats.kills}/{stats.deaths}/{stats.assists}
                                                 </span>
-                                                <span className="text-[11px] md:text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
+                                                <span className="text-[11px] md:text-[1.1vmin] font-bold text-[#FFB700] uppercase tracking-wider">
                                                     {stats.cs} CS
                                                 </span>
                                                 {apostaMC > 0 && isFinalizada && (
                                                     venceu ? (
-                                                        <span className="text-[10px] md:text-[min(2.4vw,1.05vmin)] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 px-1.5 py-0.5 md:px-[0.6vmin] md:py-[0.1vmin] rounded shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                                                        <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 px-1.5 py-0.5 md:px-[0.6vmin] md:py-[0.1vmin] rounded shadow-[0_0_8px_rgba(16,185,129,0.3)]">
                                                             +{premioMC} MC
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[10px] md:text-[min(2.2vw,0.95vmin)] font-bold text-white/40 uppercase tracking-wider bg-white/5 border border-white/10 px-1 py-0.5 md:px-[0.5vmin] md:py-[0.1vmin] rounded">
+                                                        <span className="text-[10px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-wider bg-white/5 border border-white/10 px-1 py-0.5 md:px-[0.5vmin] md:py-[0.1vmin] rounded">
                                                             -{apostaMC} MC
                                                         </span>
                                                     )
@@ -267,7 +267,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                             </div>
                                         ) : (
                                             <div className={`flex items-center gap-1 md:gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                                <span className="text-xs md:text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                <span className="text-xs md:text-[1.2vmin] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
                                                     {tag}
                                                 </span>
                                             </div>
@@ -290,7 +290,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 whileHover={isFinalizada ? undefined : { scale: 1.015 }}
                 whileTap={isFinalizada ? undefined : { scale: 0.98 }}
                 onClick={isFinalizada ? undefined : aoEntrar}
-                className={`group relative ${cardWidth} h-[60px] md:h-[min(16vw,8.2vmin)] p-[1px] ${isFinalizada ? 'bg-white/5 opacity-40 cursor-default' : 'bg-white/10 hover:bg-white/30 transition-colors duration-300 cursor-pointer'} overflow-hidden`}
+                className={`group relative ${cardWidth} h-[60px] md:h-[8.2vmin] p-[1px] ${isFinalizada ? 'bg-white/5 opacity-40 cursor-default' : 'bg-white/10 hover:bg-white/30 transition-colors duration-300 cursor-pointer'} overflow-hidden`}
                 style={{
                     clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                 }}
@@ -301,16 +301,16 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         clipPath: 'polygon(11.4px 0, 100% 0, 100% calc(100% - 11.4px), calc(100% - 11.4px) 100%, 0 100%, 0 11.4px)',
                     }}
                 >
-                    <div className="w-10 h-10 md:w-[min(14vw,6vmin)] md:h-[min(14vw,6vmin)] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300 shrink-0">
-                        <UserPlus className="w-5 h-5 md:w-[min(6vw,2.5vmin)] md:h-[min(6vw,2.5vmin)] text-white/10 group-hover:text-white/60 transition-colors" />
+                    <div className="w-10 h-10 md:w-[6vmin] md:h-[6vmin] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300 shrink-0">
+                        <UserPlus className="w-5 h-5 md:w-[2.5vmin] md:h-[2.5vmin] text-white/10 group-hover:text-white/60 transition-colors" />
                     </div>
                     <div className={`flex flex-col ${isTimeA ? 'items-start' : 'items-end'}`}>
-                        <span className="text-xs md:text-[min(4vw,1.6vmin)] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">
+                        <span className="text-xs md:text-[1.6vmin] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">
                             {isFinalizada ? 'VAZIO' : 'ENTRAR'}
                         </span>
                         <div className={`flex items-center gap-2 md:gap-[1vmin] mt-0.5 md:mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            <img src={roleIconImg} className="w-4 h-4 md:w-[min(5vw,2vmin)] md:h-[min(5vw,2vmin)] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
-                            <span className="text-[11px] md:text-[min(3.5vw,1.4vmin)] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
+                            <img src={roleIconImg} className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
+                            <span className="text-[11px] md:text-[1.4vmin] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
                         </div>
                     </div>
                 </div>

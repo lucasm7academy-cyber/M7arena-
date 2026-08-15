@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T04:09:55.987Z",
+  "updatedAt": "2026-08-15T04:14:26.525Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1722,14 +1722,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-10T04:07:08.951Z",
-      "agent": "deepseek",
-      "summary": "Sala (SalaMod1.tsx): refinamento do tutorial no display. Removidos todos os textos sobrepostos na imagem ('Preparar para a Batalha!', 'Use o código abaixo...', código 'SEM-CODIGO-AGUARDE' e o gradiente) — o display agora mostra só a imagem do tutorial, limpa. Texto 'Prepare-se para a batalha' pequeno (text-[1.4vmin] #FFB700 uppercase tracking) adicionado acima do botão 'Copiar Código' no rodapé, fora do display. Build local ok (8.95s). Deploy VPS: commit 0c603aa + push, merge na main, rebuild nginx, container reiniciado. Pendente: usuário testar.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-10T04:22:38.942Z",
       "agent": "deepseek",
       "summary": "P4 (perf.riot-stats) concluído. api/src/routes/riot.ts: novo GET /stats/:puuid (query days default 90 cap 365, count default 40 cap 100), cache próprio stats:{puuid}:{days}:{count} TTL 30min reutilizando getCached/setCache (setCache ganhou param ttlMs opcional, proxies seguem 10min); helper riotRaw (fetch cru + cache 10min, loga erro, null em falha); agregação agregada copiada do cliente (topChampions top10, roles %, totalGames=matches baixadas). ids vazio → empty cacheado; falha de ids → empty 200 sem cachear; catch loga warn. web/src/api/riot.ts: buscarEstatisticasRecentes chama /api/riot/stats/:puuid?days&count=40, null se !ok, catch com console.warn. web/src/api/player.ts confirmado sem mudança (consome statsRaw.topChampions/roles/totalGames). api tsc exit 0; web tsc so erros pre-existentes ElectricBorder/Streamers. Não rodei servidor/deploy/npm install.",
@@ -2029,6 +2021,15 @@
       "summary": "Restaurado o tamanho original e proporções do display central (hub circular) no desktop (55vmin, tela cheia com overflow-hidden e ticks arcanos alinhados), mantendo a responsividade aperfeiçoada no mobile. Verificado via tsc e build.",
       "touched": [
         "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T04:14:26.525Z",
+      "agent": "gemini",
+      "summary": "Restaurada com precisão 1:1 toda a estrutura e proporções do display central (hub de 55vmin e anel arcano de 70vmin com ticks em -35vmin), Side Grid com gap de 70vmin/74vmin e cards de vagas em 44vmin com escala vmin pura no desktop. Verificado via tsc e build.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/components/partidas/VagaSlot.tsx"
       ]
     }
   ]

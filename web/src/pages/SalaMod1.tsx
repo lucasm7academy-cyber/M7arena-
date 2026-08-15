@@ -28,7 +28,7 @@ function ArcaneIndicators() {
                     key={`tick-${i}`}
                     className="absolute top-1/2 left-1/2 w-[1px] bg-white/5 origin-bottom"
                     style={{
-                        transform: `translate(-50%, -50%) rotate(${i * 12}deg) translateY(-27.5vmin)`,
+                        transform: `translate(-50%, -50%) rotate(${i * 12}deg) translateY(-35vmin)`,
                         height: i % 5 === 0 ? '2.5vmin' : '1.2vmin',
                         backgroundColor: i % 5 === 0 ? 'rgba(255, 183, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                     }}
@@ -545,18 +545,18 @@ ${link}`;
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[4vmin] py-2 md:py-0 ${
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-0 py-2 md:py-0 ${
                     sala.estado === 'encerrada'
                         ? 'md:gap-[8vmin]'
                         : isX1
-                            ? 'md:gap-[70vmin]'
-                            : 'md:gap-[66vmin]'
+                            ? 'md:gap-[74vmin]'
+                            : 'md:gap-[70vmin]'
                 }`}>
                     {/* BLUE SIDE — oculto apenas em aguardando_revisao (o card
                         central mostra o lineup); na encerrada fica visível com as
                         vagas mostrando campeão + KDA + CS da Riot. */}
                     {sala.estado !== 'aguardando_revisao' && (
-                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[48vmin] md:max-w-none px-3 md:px-0 shrink-0">
+                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
                         <div
                             className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -606,7 +606,7 @@ ${link}`;
                         dois times. Mobile: entra no fluxo vertical — vagas do time A →
                         hub → vagas do time B. */}
                     {sala.estado !== 'encerrada' && sala.estado !== 'aguardando_revisao' && (
-                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
                         {/* Outer rings */}
                         <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
                         <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
@@ -673,7 +673,7 @@ ${link}`;
                         central mostra o lineup); na encerrada fica visível com as
                         vagas mostrando campeão + KDA + CS da Riot. */}
                     {sala.estado !== 'aguardando_revisao' && (
-                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[48vmin] md:max-w-none px-3 md:px-0 shrink-0">
+                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
                         <div
                             className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
