@@ -172,7 +172,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {packages.map((pkg, idx) => {
+                      {packages.map((pkg) => {
                         // Bônus promocional definido no servidor (ADR-031):
                         // % sobre o MC base (ex.: R$50 → 300/5000 = 6%).
                         const bonusPct = pkg.bonusMc > 0 ? Math.round((pkg.bonusMc / pkg.baseMc) * 100) : 0;
@@ -183,36 +183,37 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                           onClick={() => handleSelectPackage(pkg)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className={`relative p-4 rounded-2xl border transition-all duration-200 text-left flex flex-col gap-2.5 overflow-hidden ${
+                          className={`relative p-4 rounded-2xl border transition-all duration-200 text-left flex flex-col justify-between gap-3 ${
                             isSelected
-                              ? 'border-[#FFD700] bg-gradient-to-b from-[#FFD700]/15 to-[#FFD700]/5 shadow-[0_0_25px_rgba(255,215,0,0.25)]'
-                              : 'border-white/10 bg-black/40 hover:border-white/25 hover:bg-white/5'
+                              ? 'border-[#FFB700] bg-[#FFB700]/10 shadow-[0_0_25px_rgba(255,183,0,0.25)]'
+                              : 'border-white/10 bg-black/60 hover:border-white/25 hover:bg-white/5'
                           }`}
                         >
-                          {pkg.popular && (
-                            <span className="absolute -top-2 right-3 bg-[#FFD700] text-black text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md">
-                              Mais Escolhido
-                            </span>
-                          )}
-                          {bonusPct > 0 && (
-                            <span className="absolute top-2.5 right-3 bg-green-500/15 border border-green-500/30 text-green-400 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md">
-                              +{bonusPct}% bônus
-                            </span>
-                          )}
-
-                          <div className="flex items-center justify-between">
-                            <span className={`text-base font-black tracking-tight ${isSelected ? 'text-[#FFD700]' : 'text-white'}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <span className={`text-base font-black tracking-tight ${isSelected ? 'text-[#FFB700]' : 'text-white'}`}>
                               {pkg.label}
                             </span>
-                            {isSelected && (
-                              <CheckCircle2 size={16} className="text-[#FFD700]" />
-                            )}
+                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                              {pkg.popular && (
+                                <span className="bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-[0_0_10px_rgba(255,183,0,0.4)] shrink-0">
+                                  Mais Escolhido
+                                </span>
+                              )}
+                              {bonusPct > 0 && !pkg.popular && (
+                                <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-[0_0_8px_rgba(16,185,129,0.3)] shrink-0">
+                                  +{bonusPct}% bônus
+                                </span>
+                              )}
+                              {isSelected && (
+                                <CheckCircle2 size={16} className="text-[#FFB700] shrink-0" />
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2.5">
                             <GoldEssenceIcon size={22} className={isSelected ? 'opacity-100' : 'opacity-80'} />
                             <div className="text-2xl font-black text-white tracking-tight">
-                              {pkg.mcs.toLocaleString('pt-BR')} <span className="text-[10px] font-medium text-white/40">MCs</span>
+                              {pkg.mcs.toLocaleString('pt-BR')} <span className="text-xs font-bold text-white/40 uppercase">MC</span>
                             </div>
                           </div>
                         </motion.button>
@@ -223,15 +224,18 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                   </div>
 
                   {/* Resumo do Pedido Glassmorphism */}
-                  <div className="bg-black/60 border border-[#FFD700]/30 rounded-2xl p-5 backdrop-blur-lg space-y-4 shadow-xl z-10 lg:sticky lg:top-0">
-                    <p className="text-[#FFD700] text-[10px] uppercase tracking-widest font-black">Resumo do Pedido</p>
+                  <div className="bg-[#0a0a0d]/90 border border-[#FFB700]/30 rounded-2xl p-5 backdrop-blur-xl space-y-4 shadow-2xl z-10 lg:sticky lg:top-0">
+                    <p className="text-[#FFB700] text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5">
+                      <Zap size={12} className="text-[#FFB700]" fill="currentColor" />
+                      Resumo do Pedido
+                    </p>
 
                     {selectedPackage ? (
                       <>
                         <div className="space-y-3">
                           <div className="flex justify-between items-baseline">
                             <span className="text-white/50 text-xs font-bold uppercase">Total a Pagar</span>
-                            <span className="text-3xl font-black text-[#FFD700] tracking-tight">
+                            <span className="text-3xl font-black text-[#FFB700] tracking-tight drop-shadow-[0_0_15px_rgba(255,183,0,0.3)]">
                               R$ {selectedPackage.priceInReais.toFixed(2).replace('.', ',')}
                             </span>
                           </div>
@@ -253,16 +257,16 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                         </div>
 
                         <div className="flex items-center gap-2 pt-1 text-white/50 text-[10px]">
-                          <CheckCircle2 size={12} className="text-[#FFD700] shrink-0" />
+                          <CheckCircle2 size={12} className="text-[#FFB700] shrink-0" />
                           <span>Liberação imediata pós-PIX • Sem taxas</span>
                         </div>
 
                         <button
                           onClick={handleBuyClick}
                           disabled={!selectedPackage || loading}
-                          className={`relative w-full py-4 rounded-xl font-black uppercase tracking-wider text-xs md:text-sm text-black transition-all duration-300 overflow-hidden ${
+                          className={`relative w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs md:text-sm text-black transition-all duration-300 ${
                             selectedPackage && !loading
-                              ? 'bg-gradient-to-r from-[#E6A600] via-[#FFD700] to-[#E6A600] hover:brightness-110 shadow-[0_8px_25px_rgba(230,166,0,0.35)] cursor-pointer active:scale-95'
+                              ? 'bg-[#FFB700] hover:bg-yellow-400 shadow-[0_8px_25px_rgba(255,183,0,0.35)] cursor-pointer active:scale-95'
                               : 'bg-white/10 text-white/20 cursor-not-allowed opacity-50'
                           }`}
                         >

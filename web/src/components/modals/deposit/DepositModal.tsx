@@ -61,15 +61,20 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           >
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700] to-transparent rounded-t-3xl" />
 
-            <motion.img
-              initial={{ x: 40, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              src="/images/25947-5-twisted-fate-picture_800x800.webp"
-              alt="Twisted Fate"
-              className="absolute -right-[240px] bottom-0 w-[640px] max-w-none z-0 pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] filter brightness-105 opacity-85 hidden md:block"
-              referrerPolicy="no-referrer"
-            />
+            {/* Background Glow & Atmospheric TF Artwork */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
+              <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-[#FFB700]/10 blur-[130px] rounded-full" />
+              <motion.img
+                initial={{ x: 40, opacity: 0 }}
+                animate={{ x: 0, opacity: 0.28 }}
+                transition={{ delay: 0.15, duration: 0.6 }}
+                src="/images/25947-5-twisted-fate-picture_800x800.webp"
+                alt="Twisted Fate"
+                className="absolute -right-24 -bottom-10 w-[520px] max-w-none z-0 pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] filter brightness-95 contrast-125 select-none hidden md:block"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0d] via-[#0a0a0d]/90 to-transparent pointer-events-none" />
+            </div>
 
             <div className="relative p-6 md:p-8 z-10">
               <button
@@ -80,29 +85,31 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 <X size={18} />
               </button>
 
-              <div className="mb-7">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 mb-3">
-                  <Zap className="w-3 h-3 text-[#FFD700]" fill="currentColor" />
-                  <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">{info.badge}</span>
+              <div className="mb-6">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFB700]/10 border border-[#FFB700]/30 mb-3 shadow-[0_0_15px_rgba(255,183,0,0.15)]">
+                  <Zap className="w-3.5 h-3.5 text-[#FFB700]" fill="currentColor" />
+                  <span className="text-[#FFB700] font-black text-[10px] uppercase tracking-widest">{info.badge}</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
-                  {info.title.split('M7 COINS')[0]}
-                  <span className="text-[#FFD700]">M7 COINS</span>
+                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
+                  <span>{info.title.split('M7 COINS')[0]}</span>
+                  <span className="text-[#FFB700] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">M7 COINS</span>
                 </h2>
-                <p className="text-white/45 text-sm mt-1.5 leading-relaxed max-w-md">{info.desc}</p>
+                <p className="text-white/50 text-sm mt-1.5 leading-relaxed max-w-md">{info.desc}</p>
               </div>
 
-              {/* Toggle Depósito | Saque (Depósito padrão) */}
-              <div className="flex gap-1.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/5 mb-6 max-w-xs">
+              {/* Toggle Depósito | Saque */}
+              <div className="flex gap-1.5 p-1.5 rounded-2xl bg-black/60 border border-white/10 mb-6 max-w-xs backdrop-blur-md">
                 {(['deposito', 'saque'] as Aba[]).map((a) => (
                   <button
                     key={a}
                     onClick={() => setAba(a)}
                     className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
-                      aba === a ? 'bg-white text-black shadow-lg shadow-white/10' : 'text-white/40 hover:text-white hover:bg-white/5'
+                      aba === a 
+                        ? 'bg-[#FFB700] text-black shadow-[0_0_20px_rgba(255,183,0,0.35)]' 
+                        : 'text-white/40 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    {a === 'deposito' ? <ArrowDownCircle size={14} /> : <ArrowUpCircle size={14} />}
+                    {a === 'deposito' ? <ArrowDownCircle size={15} /> : <ArrowUpCircle size={15} />}
                     {a === 'deposito' ? 'Depósito' : 'Saque'}
                   </button>
                 ))}

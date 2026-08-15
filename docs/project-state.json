@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T04:14:26.525Z",
+  "updatedAt": "2026-08-15T04:20:05.895Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1722,16 +1722,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-10T04:22:38.942Z",
-      "agent": "deepseek",
-      "summary": "P4 (perf.riot-stats) concluído. api/src/routes/riot.ts: novo GET /stats/:puuid (query days default 90 cap 365, count default 40 cap 100), cache próprio stats:{puuid}:{days}:{count} TTL 30min reutilizando getCached/setCache (setCache ganhou param ttlMs opcional, proxies seguem 10min); helper riotRaw (fetch cru + cache 10min, loga erro, null em falha); agregação agregada copiada do cliente (topChampions top10, roles %, totalGames=matches baixadas). ids vazio → empty cacheado; falha de ids → empty 200 sem cachear; catch loga warn. web/src/api/riot.ts: buscarEstatisticasRecentes chama /api/riot/stats/:puuid?days&count=40, null se !ok, catch com console.warn. web/src/api/player.ts confirmado sem mudança (consome statsRaw.topChampions/roles/totalGames). api tsc exit 0; web tsc so erros pre-existentes ElectricBorder/Streamers. Não rodei servidor/deploy/npm install.",
-      "touched": [
-        "api/src/routes/riot.ts",
-        "web/src/api/riot.ts",
-        "web/src/api/player.ts"
-      ]
-    },
-    {
       "at": "2026-08-10T04:22:43.858Z",
       "agent": "deepseek",
       "summary": "Sala (SalaMod1.tsx): (1) texto 'Prepare-se para a batalha' no rodapé mudou de #FFB700 para branco. (2) Durante partida_iniciada, o display (hub) agora mostra overlay 'FINALIZOU A PARTIDA?' + 'Envie os resultados no botão abaixo' (fundo escuro/blur sobre o mapa, animação suave) — fala com jogadores que ainda não voltaram da partida. Estado aguardando_revisao continua com o card quadrado AguardandoRevisao (já mostra Em Análise + prints X/3 + grid de prints enviados + botão de enviar) — não mexi nele. Build local ok (15.47s). Deploy VPS: commit c80d8de + push, merge, rebuild nginx, container reiniciado. Pendente: usuário testar e opinar se o card de revisão precisa de mais mensagens.",
@@ -2030,6 +2020,16 @@
       "touched": [
         "web/src/pages/SalaMod1.tsx",
         "web/src/components/partidas/VagaSlot.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T04:20:05.895Z",
+      "agent": "gemini",
+      "summary": "Ajuste visual no DepositModal: corrigido corte do badge 'Mais Escolhido' no DepositTab, posicionado TF de forma suave no fundo com gradiente escuro sem poluir o SaqueTab, e refinada a estética dark gold M7Arena nos botões e cards de depósito e saque.",
+      "touched": [
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/modals/deposit/DepositTab.tsx",
+        "web/src/components/modals/deposit/SaqueTab.tsx"
       ]
     }
   ]

@@ -103,12 +103,12 @@ export default function SaqueTab() {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] gap-6 items-start">
       {/* Coluna esquerda: formulário de saque */}
       <div className="space-y-4">
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4">
+        <div className="rounded-2xl border border-white/10 bg-black/60 p-5 space-y-4 backdrop-blur-md">
           <div className="flex items-center justify-between">
-            <p className="text-white/50 text-xs uppercase tracking-wider font-bold">Seu saldo</p>
+            <p className="text-white/50 text-xs uppercase tracking-wider font-bold">Seu saldo disponível</p>
             <div className="flex items-center gap-2">
-              <GoldEssenceIcon size={18} />
-              <span className="text-white font-black text-lg tabular-nums">
+              <GoldEssenceIcon size={20} />
+              <span className="text-[#FFB700] font-black text-lg tabular-nums">
                 {saldoMc.toLocaleString('pt-BR')} MC
               </span>
               <span className="text-white/40 text-xs font-bold">= {brl(saldoMc / MC_POR_REAL)}</span>
@@ -122,15 +122,15 @@ export default function SaqueTab() {
                 <div>
                   <p className="text-white font-black text-sm">{nomePix || 'Sem nome'}</p>
                   <p className="text-white/40 text-xs mt-0.5">
-                    {tipoPix && <span className="uppercase mr-1">[{tipoPix}]</span>}
+                    {tipoPix && <span className="uppercase mr-1 text-[#FFB700]/80">[{tipoPix}]</span>}
                     {mascararPix(chavePix)}
                   </p>
                 </div>
-                <CheckCircle2 size={16} className="text-green-400 shrink-0" />
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
               </div>
             ) : (
               <div className="flex items-center gap-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 px-4 py-3 text-yellow-300 text-xs font-bold">
-                <PiggyBank size={16} className="shrink-0" />
+                <PiggyBank size={16} className="shrink-0 text-yellow-400" />
                 Cadastre sua chave PIX na página de perfil antes de solicitar o saque.
               </div>
             )}
@@ -140,7 +140,7 @@ export default function SaqueTab() {
             <p className="text-white/50 text-xs uppercase tracking-wider font-bold">Valor do saque</p>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[180px]">
-                <GoldEssenceIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2" />
+                <GoldEssenceIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-80" />
                 <input
                   type="number"
                   min={VALOR_MINIMO_MC}
@@ -148,25 +148,25 @@ export default function SaqueTab() {
                   value={mcInput}
                   onChange={(e) => setMcInput(e.target.value)}
                   placeholder={`Mínimo ${VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC`}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-[#FFD700]/40 placeholder:text-white/20"
+                  className="w-full bg-black/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-[#FFB700] focus:ring-1 focus:ring-[#FFB700] placeholder:text-white/20 transition-all"
                 />
               </div>
-              <div className="flex items-center gap-1.5 text-[#FFD700] font-black">
-                <span className="text-xs uppercase tracking-widest">=</span>
-                <span className="text-2xl tabular-nums">{brlEquiv}</span>
+              <div className="flex items-center gap-1.5 text-[#FFB700] font-black">
+                <span className="text-xs uppercase tracking-widest text-white/40">=</span>
+                <span className="text-2xl tabular-nums drop-shadow-[0_0_12px_rgba(255,183,0,0.3)]">{brlEquiv}</span>
               </div>
             </div>
             <p className={`text-[10px] font-bold uppercase tracking-widest ${acimaMinimo ? 'text-white/30' : 'text-yellow-400/80'}`}>
-              Mínimo de R$20,00 · Sem taxas · 100 MC = R$1,00
+              Mínimo de R$20,00 ({VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC) · Sem taxas · 100 MC = R$1,00
             </p>
           </div>
 
           <button
             onClick={solicitar}
             disabled={!podeSolicitar}
-            className={`relative w-full py-4 rounded-xl font-black uppercase tracking-wider text-xs md:text-sm transition-all duration-300 ${
+            className={`relative w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs md:text-sm transition-all duration-300 ${
               podeSolicitar
-                ? 'bg-gradient-to-r from-[#E6A600] via-[#FFD700] to-[#E6A600] text-black hover:brightness-110 shadow-[0_8px_25px_rgba(230,166,0,0.35)] cursor-pointer active:scale-95'
+                ? 'bg-[#FFB700] hover:bg-yellow-400 text-black shadow-[0_8px_25px_rgba(255,183,0,0.35)] cursor-pointer active:scale-95'
                 : 'bg-white/10 text-white/20 cursor-not-allowed opacity-50'
             }`}
           >
@@ -221,13 +221,28 @@ export default function SaqueTab() {
       </div>
 
       {/* Coluna direita: resumo fixo */}
-      <div className="bg-black/60 border border-[#FFD700]/30 rounded-2xl p-5 backdrop-blur-lg space-y-4 shadow-xl lg:sticky lg:top-0">
-        <p className="text-[#FFD700] text-[10px] uppercase tracking-widest font-black">Como funciona</p>
-        <ul className="space-y-2.5 text-white/50 text-xs leading-relaxed">
-          <li>O valor sai do seu saldo assim que você solicita.</li>
-          <li>O admin paga o PIX fora do sistema e confirma no painel.</li>
-          <li>Se o pedido for rejeitado, os MC voltam para o seu saldo.</li>
-          <li>Conversão fixa: <span className="text-white/80 font-black">100 MC = R$1,00</span>.</li>
+      <div className="bg-[#0a0a0d]/90 border border-[#FFB700]/30 rounded-2xl p-5 backdrop-blur-xl space-y-4 shadow-2xl z-10 lg:sticky lg:top-0">
+        <p className="text-[#FFB700] text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5">
+          <ArrowUpCircle size={13} className="text-[#FFB700]" />
+          Como funciona
+        </p>
+        <ul className="space-y-2.5 text-white/60 text-xs leading-relaxed">
+          <li className="flex items-start gap-2">
+            <span className="text-[#FFB700] font-black">•</span>
+            <span>O valor sai do seu saldo assim que você solicita.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-[#FFB700] font-black">•</span>
+            <span>O admin paga o PIX para sua chave cadastrada e confirma.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-[#FFB700] font-black">•</span>
+            <span>Se o pedido for rejeitado, os MC voltam para o seu saldo.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-[#FFB700] font-black">•</span>
+            <span>Conversão fixa: <strong className="text-white font-black">100 MC = R$ 1,00</strong>.</span>
+          </li>
         </ul>
       </div>
     </div>
