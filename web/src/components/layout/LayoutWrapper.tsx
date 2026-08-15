@@ -24,7 +24,7 @@ import {
 import { FaTwitch, FaDiscord } from 'react-icons/fa6';
 import { SiLeagueoflegends } from 'react-icons/si';
 import { FaFontAwesomeFlag } from 'react-icons/fa';
-import { AiOutlineAim } from 'react-icons/ai';
+import { AiOutlineHome } from 'react-icons/ai';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useSound } from '../../hooks/useSound';
@@ -116,8 +116,8 @@ export default function Layout() {
   const ehAdmin = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
 
   const navItems = [
-    { label: 'Início', icon: SiLeagueoflegends, path: '/lobby' },
-    { label: 'Jogar', icon: AiOutlineAim, path: '/jogar' },
+    { label: 'Início', icon: AiOutlineHome, path: '/lobby' },
+    { label: 'Jogar', icon: SiLeagueoflegends, path: '/jogar' },
     { label: 'Campeonatos', icon: Trophy, path: '/campeonatos' },
     { label: 'Times', icon: FaFontAwesomeFlag, path: '/times' },
     { label: 'Jogadores', icon: UserIcon, path: '/players' },
