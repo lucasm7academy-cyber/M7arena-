@@ -111,6 +111,33 @@ export const broadcasts = pgTable(
   ]
 );
 
+// Transmissões de streamer — espelha a tabela `transmissoes` do Supabase (swap
+// app.swap.conteudo). O streamer abre a live pelo painel em /streamers e ela
+// aparece na vitrine pública enquanto `ativo` e não expirada.
+export const transmissoes = pgTable(
+  "transmissoes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    twitchChannel: varchar("twitch_channel", { length: 100 }).notNull(),
+    titulo: text("titulo"),
+    campeonatoId: uuid("campeonato_id"),
+    duracaoHoras: integer("duracao_horas").default(1).notNull(),
+    ativo: boolean("ativo").default(true).notNull(),
+    criadoEm: timestamp("criado_em", { mode: "date" }).defaultNow().notNull(),
+    expiraEm: timestamp("expira_em", { mode: "date" }),
+    modo: varchar("modo", { length: 20 }).default("padrao").notNull(), // 'padrao' | 'amistoso' | 'campeonato'
+    time1Id: uuid("time1_id"),
+    time2Id: uuid("time2_id"),
+  },
+  (table) => [
+    index("transmissoes_ativo_idx").on(table.ativo),
+    index("transmissoes_user_idx").on(table.userId),
+  ]
+);
+
 export const recruitmentPosts = pgTable(
   "recruitment_posts",
   {

@@ -97,13 +97,23 @@ playersRouter.get("/search", async (req, res) => {
 });
 
 // GET /api/players/by-ids?ids=a,b,c — lote de contas Riot por user_id
+// POST /api/players/by-ids — body { ids: string[] } (mesma busca; o GET estoura
+// o request line do nginx com a base cheia — 232+ ids ≈ 8.5KB → 414).
 playersRouter.get("/by-ids", async (req, res) => {
+  return buscarContasPorIds(String(req.query.ids || ""), req, res);
+});
+playersRouter.post("/by-ids", async (req, res) => {
+  const idsRaw = Array.isArray(req.body?.ids) ? (req.body.ids as string[]).join(",") : "";
+  return buscarContasPorIds(idsRaw, req, res);
+});
+
+async function buscarContasPorIds(idsRaw: string, req: any, res: any) {
   try {
     const user = await getAuthUser(req);
     if (!user) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    const ids = String(req.query.ids || "")
+    const ids = idsRaw
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
@@ -121,7 +131,7 @@ playersRouter.get("/by-ids", async (req, res) => {
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar contas" });
   }
-});
+}
 
 // GET /api/players/by-puuid/:puuid — conta Riot por PUUID (público)
 playersRouter.get("/by-puuid/:puuid", async (req, res) => {

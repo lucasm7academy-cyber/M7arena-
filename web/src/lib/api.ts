@@ -783,8 +783,10 @@ export const api = {
   players: {
     /** Busca jogadores pelo Riot ID (parcial) — substitui a leitura de contas_riot. */
     search: (q: string) => api.get<ApiLegacyRiotAccount[]>(`/players/search?q=${encodeURIComponent(q)}`),
-    /** Lote de contas Riot por user_id (lista de times/painel). */
-    byIds: (ids: string[]) => api.get<ApiLegacyRiotAccount[]>(`/players/by-ids?ids=${ids.join(",")}`),
+    /** Lote de contas Riot por user_id (lista de times/painel). POST com body:
+     *  a query string estoura o request line do nginx (~8KB) com a base cheia
+     *  (232+ ids ≈ 8.5KB → 414). O body via JSON não tem esse limite. */
+    byIds: (ids: string[]) => api.post<ApiLegacyRiotAccount[]>("/players/by-ids", { ids }),
     /** Conta Riot por PUUID (público) — checa vínculo já existente. */
     byPuuid: (puuid: string) => api.get<ApiLegacyRiotAccount | null>(`/players/by-puuid/${puuid}`),
     /** Total de contas Riot vinculadas (dashboard admin). */
@@ -807,6 +809,23 @@ export const api = {
     /** Vincula o Discord do usuário logado (identidade + tag). */
     link: (data: { state: string; discordId: string; discordTag: string }) =>
       api.post<{ ok: boolean }>("/discord/link", data),
+  },
+
+  streams: {
+    /** Vitrine pública: transmissoes ativas não expiradas (Lobby/Streamers). */
+    ativas: () => api.get<Array<{
+      id: string; user_id: string; twitch_channel: string; titulo: string | null;
+      campeonato_id: string | null; duracao_horas: number; ativo: boolean;
+      criado_em: string | null; expira_em: string | null; modo: string;
+      time1_id: string | null; time2_id: string | null;
+    }>>("/streams"),
+    /** Live ativa do usuário logado (painel do streamer). */
+    minha: () => api.get<{ id: string; user_id: string; twitch_channel: string; titulo: string | null; campeonato_id: string | null; ativo: boolean; criado_em: string | null; modo: string } | null>("/streams/minha"),
+    /** Inicia transmissão (requer cargo streamer + twitch no perfil). */
+    iniciar: (data: { titulo?: string; campeonatoId?: string | null; duracaoHoras?: number; modo?: string; time1Id?: string | null; time2Id?: string | null }) =>
+      api.post<{ id: string; user_id: string; twitch_channel: string; titulo: string | null; ativo: boolean }>("/streams", data),
+    /** Encerra a live (só o dono). */
+    parar: (id: string) => api.post<{ ok: boolean }>(`/streams/${id}/parar`),
   },
 
   adminCargos: {

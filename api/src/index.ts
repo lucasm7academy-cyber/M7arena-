@@ -21,6 +21,7 @@ import { printsRouter } from "./routes/prints.js";
 import { disputasRouter } from "./routes/disputas.js";
 import { tournamentsRouter } from "./routes/tournaments.js";
 import { contentRouter } from "./routes/content.js";
+import { streamsRouter } from "./routes/streams.js";
 import { adminRouter } from "./routes/admin.js";
 import { ogRouter } from "./routes/og.js";
 
@@ -70,6 +71,7 @@ app.use("/api/prints", printsRouter);
 app.use("/api/disputas", disputasRouter);
 app.use("/api/tournaments", tournamentsRouter);
 app.use("/api/content", contentRouter);
+app.use("/api/streams", streamsRouter);
 app.use("/api/admin", adminRouter);
 
 // Página de preview social (OG) de uma sala — servida só para crawlers

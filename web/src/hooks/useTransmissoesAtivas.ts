@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 
 interface TimeInfo {
@@ -38,15 +37,13 @@ export function useTransmissoesAtivas() {
         const now = new Date().toISOString();
 
         // Buscar transmissões ativas não expiradas
-        const { data: txData, error: txError } = await supabase
-          .from('transmissoes')
-          .select('id, user_id, twitch_channel, titulo, modo, time1_id, time2_id, campeonato_id')
-          .eq('ativo', true)
-          .gt('expira_em', now);
+        const txData = await api.streams.ativas();
 
         if (cancelled) return;
 
-        if (txError || !txData || txData.length === 0) {
+        const aindaAtivas = (txData || []).filter((tx: any) => tx.expira_em && tx.expira_em > now);
+
+        if (aindaAtivas.length === 0) {
           setTransmissoes([]);
           setLoading(false);
           return;
@@ -54,7 +51,7 @@ export function useTransmissoesAtivas() {
 
         // Deduplicate por user_id
         const seenUsers = new Set<string>();
-        const uniqueTx = txData.filter((tx: any) => {
+        const uniqueTx = aindaAtivas.filter((tx: any) => {
           if (seenUsers.has(tx.user_id)) return false;
           seenUsers.add(tx.user_id);
           return true;

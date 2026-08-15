@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { motion } from 'motion/react';
 import { ExternalLink, Play, StopCircle, Copy, Check, Loader, Tv2 } from 'lucide-react';
@@ -136,20 +135,8 @@ export default function Streamers() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('transmissoes')
-        .select('id, user_id, twitch_channel, titulo, campeonato_id, ativo, criado_em')
-        .eq('user_id', user.id)
-        .eq('ativo', true)
-        .maybeSingle();
-
-      if (error) {
-        console.error('❌ Erro ao buscar live do usuário:', error.message);
-        setUserStream(null);
-        return;
-      }
-
-      setUserStream(data || null);
+      const data = await api.streams.minha();
+      setUserStream(data as any);
     } catch (err) {
       console.error('❌ Erro ao buscar live do usuário:', err);
       setUserStream(null);
@@ -224,27 +211,24 @@ export default function Streamers() {
       const now = new Date();
       const expiraEm = new Date(now.getTime() + duracao * 60 * 60 * 1000); // Duração em horas
 
-      const { data, error } = await supabase
-        .from('transmissoes')
-        .insert({
-          user_id: user.id,
-          twitch_channel: perfil.twitch,
-          titulo: finalTitle,
-          campeonato_id: null,
-          duracao_horas: duracao,
-          ativo: true,
-          expira_em: expiraEm.toISOString(),
-          modo: transmissionMode,
-          time1_id: selectedTeams[0] || null,
-          time2_id: selectedTeams[1] || null
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await api.streams.iniciar({
+        titulo: finalTitle,
+        campeonatoId: null,
+        duracaoHoras: duracao,
+        modo: transmissionMode,
+        time1Id: selectedTeams[0] || null,
+        time2Id: selectedTeams[1] || null
+      });
 
       playSound('success');
-      setUserStream(data);
+      setUserStream({
+        ...data,
+        twitch_channel: perfil.twitch,
+        campeonato_id: null,
+        criado_em: new Date().toISOString(),
+        modo: transmissionMode,
+        expira_em: expiraEm.toISOString(),
+      });
       setTitle('');
       setSelectedTeams([]);
       setSelectedCampeonato('');
@@ -278,12 +262,7 @@ export default function Streamers() {
     setLoadingAction(true);
 
     try {
-      const { error } = await supabase
-        .from('transmissoes')
-        .update({ ativo: false })
-        .eq('id', userStream.id);
-
-      if (error) throw error;
+      await api.streams.parar(userStream.id);
 
       playSound('success');
       const userIdToRemove = userStream.user_id;
@@ -325,26 +304,18 @@ export default function Streamers() {
     try {
       // ✅ Fetch active streams from transmissoes que ainda não expiraram
       const now = new Date().toISOString();
-      const { data: transmissoes, error: streamsError } = await supabase
-        .from('transmissoes')
-        .select('id, user_id, twitch_channel, titulo, campeonato_id, duracao_horas, ativo, criado_em, expira_em')
-        .eq('ativo', true)
-        .gt('expira_em', now);
+      const transmissoes = await api.streams.ativas();
 
-      if (streamsError) {
-        console.error('❌ Erro ao buscar transmissões:', streamsError);
-        setStreams([]);
-        return;
-      }
+      const aindaAtivas = (transmissoes || []).filter((tx: any) => tx.expira_em && tx.expira_em > now);
 
-      if (!transmissoes || transmissoes.length === 0) {
+      if (!aindaAtivas || aindaAtivas.length === 0) {
         setStreams([]);
         return;
       }
 
       // Deduplicate: keep only ONE stream per user_id
       const seenUsers = new Set<string>();
-      const uniqueTransmissoes = transmissoes.filter((tx: any) => {
+      const uniqueTransmissoes = aindaAtivas.filter((tx: any) => {
         if (seenUsers.has(tx.user_id)) {
           return false;
         }
