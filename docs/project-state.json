@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T02:33:30.019Z",
+  "updatedAt": "2026-08-15T02:57:35.586Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1713,16 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-09T21:16:09.803Z",
-      "agent": "deepseek",
-      "summary": "Deploy na VPS nova 179.198.120.11 (a antiga 187.127.6.136 expirou). M7Arena: clone em /root/m7arena, .env de produção, compose build+up, migrations 0000→0013 (38 tabelas), API ok (health 200). Nginx do container HTTP-only (host termina TLS). dev.m7arena.pro: DNS atualizado, cert Let's Encrypt, https OK. PandaPost: clone em /root/pandapost, .env prod (REVERB pandapost.com.br:443), compose.prod.yaml (app em 127.0.0.1:8001), build OK, 5 processos RUNNING, app 200 via IP. PENDENTE: (1) DNS pandapost.com.br está na CLOUDFLARE — usuário vai atualizar registro A e depois emitir cert; (2) mcp-ops em restart loop (stdio, bug pré-existente); (3) mudanças infra/nginx.conf+docker-compose.yml NÃO commitadas.",
-      "touched": [
-        "infra/nginx.conf",
-        "infra/docker-compose.yml",
-        "infra/.env.production.vps"
-      ]
-    },
-    {
       "at": "2026-08-09T22:01:31.677Z",
       "agent": "deepseek",
       "summary": "Dois apps NO AR na VPS nova (179.198.120.11). M7Arena: https://dev.m7arena.pro 200 (cert Let's Encrypt, proxy host nginx 80/443 -> container 8090). PandaPost: https://pandapost.com.br 200 (Cloudflare DNS atualizado pelo usuário, SSL mode Full, cert emitido para pandapost.com.br+www, host nginx 80/443 -> container 127.0.0.1:8001). Redirecionamento/loop resolvido com SSL Full na Cloudflare. Pendentes: (1) commit das mudanças de infra do M7Arena (nginx.conf HTTP-only + docker-compose.yml sem 443) ainda não feito; (2) mcp-ops em restart loop (transporte stdio, bug pré-existente); (3) testar login real/Google OAuth no M7Arena dev e fluxos do PandaPost.",
@@ -2037,6 +2027,15 @@
       "at": "2026-08-15T02:33:30.013Z",
       "agent": "gemini",
       "summary": "Tela de partidas finalizadas ajustada: layout direto na tela (sem hub circular claro, gap proporcional e header de resultado centralizado), cards de vagas mantidos com dimensões e estilos idênticos, exibindo o ícone do campeão escolhido no lugar do avatar e KDA + CS (farm) com fallback resiliente por PUUID/nome. TypeScript e build passando com sucesso.",
+      "touched": [
+        "web/src/components/partidas/VagaSlot.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T02:57:35.586Z",
+      "agent": "gemini",
+      "summary": "Ajustes na tela de partida finalizada: (1) Ocultado botão/badge de check verde em partidas finalizadas; (2) Jogador confirmado que não jogou (ex: desistente sem stats) exibido em preto e branco com badge vermelho 'Desistente'; (3) Duração no card de resultado exibida diretamente como número grande e branco (ex: 25:47). tsc e build ok.",
       "touched": [
         "web/src/components/partidas/VagaSlot.tsx",
         "web/src/pages/SalaMod1.tsx"

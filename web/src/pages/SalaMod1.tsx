@@ -496,9 +496,11 @@ ${link}`;
                                     </div>
                                 )}
                                 {duracaoFinalizada && (
-                                    <span className="text-[0.95vmin] font-black text-white/30 uppercase tracking-[0.25em] shrink-0 border-l border-white/10 pl-[2vmin]">
-                                        Duração {duracaoFinalizada}
-                                    </span>
+                                    <div className="flex items-center pl-[2vmin] border-l border-white/10 shrink-0">
+                                        <span className="text-[1.8vmin] font-black text-white tabular-nums tracking-wide">
+                                            {duracaoFinalizada}
+                                        </span>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -550,6 +552,7 @@ ${link}`;
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
                                         stats={statsDoJogador(jogador)}
+                                        isFinalizada={sala.estado === 'encerrada'}
                                     />
                                 );
                             })}
@@ -660,6 +663,7 @@ ${link}`;
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
                                         stats={statsDoJogador(jogador)}
+                                        isFinalizada={sala.estado === 'encerrada'}
                                     />
                                 );
                             })}

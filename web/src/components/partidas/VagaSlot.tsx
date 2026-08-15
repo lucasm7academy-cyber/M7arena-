@@ -20,6 +20,7 @@ interface VagaSlotProps {
     // Modo partida finalizada: mostra campeão (ícone) + KDA + CS no lugar do
     // avatar/nick padrão. `venceu` destaca o lado ganhador.
     stats?: { campeao: string; championId?: number; kills: number; deaths: number; assists: number; cs: number; venceu: boolean } | null;
+    isFinalizada?: boolean;
 }
 
 const CHAMPION_ICON_URL = (id: number) =>
@@ -38,9 +39,11 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     roleIconImg,
     vipTier = 'free',
     stats = null,
+    isFinalizada = false,
 }) => {
 
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
+    const isDesistente = isFinalizada && ocupada && !stats;
 
     // Largura 100% uniforme para todos os cards. min-w-full + shrink-0 impedem
     // o flex pai de encolher o card conforme o conteúdo (nick curto → card fino).
@@ -110,7 +113,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                     whileHover={{ scale: 1.015 }}
                     className={`relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] group overflow-hidden`}
                     style={{
-                        backgroundColor: teamColor,
+                        backgroundColor: isDesistente ? '#374151' : teamColor,
                         clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                     }}
                 >
@@ -124,7 +127,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         }}
                     >
                         {/* Efeito extra Premium - anel pulsante */}
-                        {vipTier === 'premium' && (
+                        {vipTier === 'premium' && !isDesistente && (
                             <motion.div
                                 animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.05, 1] }}
                                 transition={{ duration: 3, repeat: Infinity }}
@@ -132,7 +135,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             />
                         )}
 
-                        {isConfirmado && (
+                        {isConfirmado && !isFinalizada && (
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
@@ -145,7 +148,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         )}
 
                         {/* Overlay Hover Centrado para Sair */}
-                        {aoSair && (
+                        {aoSair && !isFinalizada && (
                             <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-30 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
                                 <button
                                     onClick={(e) => {
@@ -165,11 +168,15 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             <img
                                 src={roleIconImg}
                                 alt={role}
-                                className="w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0"
+                                className={`w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0 ${isDesistente ? 'grayscale opacity-30' : ''}`}
                             />
 
-                            {/* Ícone: Campeão se finalizada, Avatar se normal */}
-                            {stats && (stats.championId || stats.campeao) ? (
+                            {/* Ícone: Desistente (avatar em P&B), Campeão se finalizada, Avatar se normal */}
+                            {isDesistente ? (
+                                <div className="relative shrink-0 grayscale opacity-40">
+                                    {avatarEl}
+                                </div>
+                            ) : stats && (stats.championId || stats.campeao) ? (
                                 <div className="relative shrink-0">
                                     <img
                                         src={stats.championId ? CHAMPION_ICON_URL(stats.championId) : `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`}
@@ -190,40 +197,60 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
 
                             {/* Info do Jogador */}
                             <div className={`flex flex-col min-w-0 flex-1 ${isTimeA ? 'text-left items-start' : 'text-right items-end'}`}>
-                                <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                    <span
-                                        className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight"
-                                        style={config.nomeStyle}
-                                    >
-                                        {nome}
-                                    </span>
-                                    {vipTier === 'vip' && (
-                                        <span className="px-[0.6vmin] py-[0.2vmin] bg-gradient-to-r from-[#FFB700] to-[#ffd54f] text-black text-[0.7vmin] font-black rounded shrink-0 shadow-[0_0_8px_rgba(255,183,0,0.5)]">
-                                            VIP
-                                        </span>
-                                    )}
-                                </div>
-
-                                {stats ? (
-                                    <div className={`flex items-center gap-[1.2vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                        {tag && (
-                                            <span className="text-[min(2.5vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
-                                                {tag}
+                                {isDesistente ? (
+                                    <>
+                                        <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight text-white/40">
+                                                {nome}
                                             </span>
-                                        )}
-                                        <span className="text-[min(3.2vw,1.4vmin)] font-black tabular-nums text-white">
-                                            {stats.kills}/{stats.deaths}/{stats.assists}
-                                        </span>
-                                        <span className="text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
-                                            {stats.cs} CS
-                                        </span>
-                                    </div>
+                                            <span className="px-[0.8vmin] py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[min(2.4vw,1vmin)] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
+                                                Desistente
+                                            </span>
+                                        </div>
+                                        <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span className="text-[min(2.6vw,1.1vmin)] font-bold text-red-400/60 uppercase tracking-[0.2em] leading-none">
+                                                {tag || 'Não jogou'}
+                                            </span>
+                                        </div>
+                                    </>
                                 ) : (
-                                    <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                        <span className="text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
-                                            {tag}
-                                        </span>
-                                    </div>
+                                    <>
+                                        <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span
+                                                className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight"
+                                                style={config.nomeStyle}
+                                            >
+                                                {nome}
+                                            </span>
+                                            {vipTier === 'vip' && (
+                                                <span className="px-[0.6vmin] py-[0.2vmin] bg-gradient-to-r from-[#FFB700] to-[#ffd54f] text-black text-[0.7vmin] font-black rounded shrink-0 shadow-[0_0_8px_rgba(255,183,0,0.5)]">
+                                                    VIP
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {stats ? (
+                                            <div className={`flex items-center gap-[1.2vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                                {tag && (
+                                                    <span className="text-[min(2.5vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                        {tag}
+                                                    </span>
+                                                )}
+                                                <span className="text-[min(3.2vw,1.4vmin)] font-black tabular-nums text-white">
+                                                    {stats.kills}/{stats.deaths}/{stats.assists}
+                                                </span>
+                                                <span className="text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
+                                                    {stats.cs} CS
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                                <span className="text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                    {tag}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -282,6 +309,7 @@ export const VagaSlot = React.memo(
             prev.role === next.role &&
             prev.isTimeA === next.isTimeA &&
             prev.roleIconImg === next.roleIconImg &&
+            prev.isFinalizada === next.isFinalizada &&
             prev.stats?.kills === next.stats?.kills &&
             prev.stats?.deaths === next.stats?.deaths &&
             prev.stats?.assists === next.stats?.assists &&
