@@ -179,8 +179,13 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                     <div className={`flex flex-col min-w-0 ${isTimeA ? 'text-left items-start' : 'text-right items-end'}`}>
                                         <span className="text-[min(4.5vw,1.8vmin)] font-black truncate uppercase tracking-tight"
                                             style={{ color: teamColor, textShadow: `0 0 10px ${teamColor}44` }}>
-                                            {stats.campeao || nome}
+                                            {nome}
                                         </span>
+                                        <div className={`flex items-center gap-[0.8vmin] mt-[0.1vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span className="text-[min(2.6vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                {tag}
+                                            </span>
+                                        </div>
                                         <div className={`flex items-center gap-[1.2vmin] mt-[0.3vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                                             <span className="text-[min(3.5vw,1.6vmin)] font-black tabular-nums text-white">
                                                 {stats.kills}/{stats.deaths}/{stats.assists}

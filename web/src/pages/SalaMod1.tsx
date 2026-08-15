@@ -67,50 +67,6 @@ function CentralDisplay() {
     );
 }
 
-// Display do resultado no centro da sala finalizada: vencedor + placar + duração,
-// sem a imagem clara do Summoner's Rift (o "display claro" fica só em jogo).
-function ResultadoDisplay({ sala }: { sala: any }) {
-    const rr = sala?.resultado_riot;
-    const vencedor = sala?.vencedor; // 'A' | 'B' | 'empate' | null
-    const corVencedor = vencedor === 'A' ? '#3b82f6' : vencedor === 'B' ? '#ef4444' : '#fbbf24';
-    const nomeVencedor =
-        vencedor === 'A' ? (sala?.time_a_nome || 'Time Azul')
-        : vencedor === 'B' ? (sala?.time_b_nome || 'Time Vermelho')
-        : 'Empate';
-    const duracao = rr?.duracao_s
-        ? `${Math.floor(rr.duracao_s / 60)}:${String(Math.round(rr.duracao_s % 60)).padStart(2, '0')}`
-        : null;
-    const placar = rr?.placar;
-    return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[2.2vmin] z-30 p-[4vmin] text-center">
-            <div className="w-[7vmin] h-[7vmin] rounded-full flex items-center justify-center shrink-0"
-                style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60`, boxShadow: `0 0 25px ${corVencedor}40` }}>
-                <Trophy className="w-[3.5vmin] h-[3.5vmin]" style={{ color: corVencedor }} />
-            </div>
-            <div>
-                <p className="text-[1.1vmin] font-black text-white/40 uppercase tracking-[0.5em]">Partida Finalizada</p>
-                <p className="text-[2.4vmin] font-black uppercase tracking-[0.15em] mt-[0.6vmin]" style={{ color: corVencedor, textShadow: `0 0 20px ${corVencedor}55` }}>
-                    {vencedor === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
-                </p>
-            </div>
-            {placar && (
-                <div className="flex items-center gap-[2.5vmin] px-[3vmin] py-[1.2vmin] rounded-xl bg-white/[0.03] border border-white/10">
-                    <div className="text-center">
-                        <p className="text-[0.9vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
-                        <p className="text-[2.4vmin] font-black text-white tabular-nums leading-tight">{placar.blue.kills}</p>
-                    </div>
-                    <span className="text-[1.4vmin] font-black text-white/25">×</span>
-                    <div className="text-center">
-                        <p className="text-[0.9vmin] font-black uppercase tracking-widest text-red-400">Red</p>
-                        <p className="text-[2.4vmin] font-black text-white tabular-nums leading-tight">{placar.red.kills}</p>
-                    </div>
-                </div>
-            )}
-            {duracao && <p className="text-[1vmin] font-black text-white/30 uppercase tracking-[0.3em]">Duração {duracao}</p>}
-        </div>
-    );
-}
-
 // ── PÁGINA ──────────────────────────────────────────
 export default function SalaMod1() {
     const { id } = useParams<{ id: string }>();
@@ -244,6 +200,18 @@ ${link}`;
             venceu: !!p.venceu,
         };
     };
+
+    // Resultado da partida finalizada (header no topo da tela, sem o círculo).
+    const vencedorSala = sala?.vencedor; // 'A' | 'B' | 'empate' | null
+    const corVencedor = vencedorSala === 'A' ? '#3b82f6' : vencedorSala === 'B' ? '#ef4444' : '#fbbf24';
+    const nomeVencedor =
+        vencedorSala === 'A' ? (sala?.time_a_nome || 'Time Azul')
+        : vencedorSala === 'B' ? (sala?.time_b_nome || 'Time Vermelho')
+        : 'Empate';
+    const duracaoFinalizada = sala?.resultado_riot?.duracao_s
+        ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}:${String(Math.round(sala.resultado_riot.duracao_s % 60)).padStart(2, '0')}`
+        : null;
+    const placarFinalizada = sala?.resultado_riot?.placar;
 
     // ── Salas apostadas (design v3 §11): aviso antecipado, print e regras ──
     const ehApostada = (sala.mpoints || 0) > 0;
@@ -489,6 +457,47 @@ ${link}`;
             {/* MAIN CENTRAL AREA */}
             <div className="w-full relative flex items-start justify-start md:flex-1 md:items-center md:justify-center overflow-visible py-[3vmin] min-h-[70vh] md:min-h-0">
 
+                {/* HEADER DE RESULTADO — partida finalizada: vencedor + placar +
+                    duração no topo, no padrão de borda cortada, sem o círculo. */}
+                {sala.estado === 'encerrada' && (
+                    <div className="w-full flex justify-center mb-[3vmin] z-20">
+                        <div className="relative p-[1.5px]" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
+                            <div className="bg-[#0A0A0A] px-[5vmin] py-[1.6vmin] flex items-center gap-[3vmin]"
+                                style={{ clipPath: CUT_INNER }}>
+                                <div className="w-[4.5vmin] h-[4.5vmin] rounded-lg flex items-center justify-center shrink-0"
+                                    style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60` }}>
+                                    <Trophy className="w-[2.2vmin] h-[2.2vmin]" style={{ color: corVencedor }} />
+                                </div>
+                                <div className="text-left shrink-0">
+                                    <p className="text-[1vmin] font-black text-white/40 uppercase tracking-[0.5em]">Partida Finalizada</p>
+                                    <p className="text-[1.9vmin] font-black uppercase tracking-[0.15em]"
+                                        style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
+                                        {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
+                                    </p>
+                                </div>
+                                {placarFinalizada && (
+                                    <div className="flex items-center gap-[1.5vmin] pl-[2vmin] border-l border-white/10">
+                                        <div className="text-center">
+                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
+                                            <p className="text-[2vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
+                                        </div>
+                                        <span className="text-[1.2vmin] font-black text-white/25">×</span>
+                                        <div className="text-center">
+                                            <p className="text-[0.8vmin] font-black uppercase tracking-widest text-red-400">Red</p>
+                                            <p className="text-[2vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {duracaoFinalizada && (
+                                    <span className="text-[1vmin] font-black text-white/30 uppercase tracking-[0.3em] shrink-0">
+                                        Duração {duracaoFinalizada}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
                 <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[66vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[70vmin]' : 'md:gap-[66vmin]'}`}>
@@ -535,15 +544,13 @@ ${link}`;
                     </div>
                     )}
 
-                    {/* CÍRCULO CENTRAL HUB — oculto no estado "Em análise" (o card
-                        quadrado central mostra o lineup). Na partida finalizada o
-                        hub aparece SEM o display claro: mostra o resultado
-                        (vencedor + placar + duração) no centro, e os lados
-                        blue/red ficam visíveis com campeão + KDA + CS.
+                    {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o header
+                        de resultado no topo + lados blue/red mostram tudo) e no
+                        estado "Em análise" (o card quadrado central mostra o lineup).
                         Desktop (md+): absoluto, no centro geométrico do MAIN entre os
                         dois times. Mobile: entra no fluxo vertical — vagas do time A →
                         hub → vagas do time B. */}
-                    {sala.estado !== 'aguardando_revisao' && (
+                    {sala.estado !== 'encerrada' && sala.estado !== 'aguardando_revisao' && (
                     <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[55vmin] h-[55vmin] md:w-[55vmin] md:h-[55vmin] rounded-full z-10 flex items-center justify-center shrink-0">
                         {/* Outer rings */}
                         <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
@@ -553,11 +560,7 @@ ${link}`;
                         <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
                             <ArcaneIndicators />
-                            {sala.estado === 'encerrada' ? (
-                                <ResultadoDisplay sala={sala} />
-                            ) : (
-                                <CentralDisplay />
-                            )}
+                            <CentralDisplay />
 
                             {/* PARTIDA INICIADA — prompt de envio do resultado no
                                 display (fala com quem ainda não voltou da partida) */}
