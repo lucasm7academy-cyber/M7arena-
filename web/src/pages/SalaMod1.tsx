@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Copy, Check, AlertTriangle, LinkIcon, Loader, Clock, X, Trash2, Share2, Trophy } from 'lucide-react';
+import { Copy, Check, AlertTriangle, LinkIcon, Loader, Clock, X, Trash2, Share2, Trophy, ArrowLeft, Swords, Gamepad2, Zap, Shield } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
@@ -359,96 +359,145 @@ ${link}`;
                 )}
             </AnimatePresence>
 
-            {/* TOP BAR BANNER - LARGURA TOTAL SEM BORDAS */}
+            {/* TOP BAR BANNER - DESIGN ESPORTS MODERNO E CLEAN */}
             <motion.div 
                 initial={{ y: -100 }} animate={{ y: 0 }}
-                className="w-full min-h-[64px] h-auto py-2 md:py-0 md:h-[10vh] bg-[#050505] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50 relative flex items-center px-4 md:px-[4vmin] justify-between overflow-hidden shrink-0 flex-wrap md:flex-nowrap gap-2 md:gap-0"
+                className="w-full min-h-[64px] h-auto py-2.5 md:py-0 md:h-[9.5vh] bg-[#07060a]/90 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-50 relative flex items-center px-4 md:px-[4vmin] justify-between shrink-0 flex-wrap md:flex-nowrap gap-3 md:gap-0 overflow-hidden"
             >
-                {/* Background Ryze Banner */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                    <img 
-                        src="/images/fundoryzecortado.webp" 
-                        alt="Ryze Background" 
-                        className="w-full h-full object-cover opacity-35 object-center" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/60 to-[#050505]" />
-                </div>
+                {/* Ambient Top Glow Highlight */}
+                <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(255,183,0,0.08),transparent_70%)]" />
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#FFB700]/30 to-transparent pointer-events-none" />
 
-                <div className="flex items-center gap-3 md:gap-[3vmin] z-10">
+                {/* Left Side: Exit Button, Mode Icon & Title */}
+                <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
                     <motion.button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.9 }}
+                        whileHover={{ scale: 1.06 }}
+                        whileTap={{ scale: 0.92 }}
                         onClick={() => navigate('/jogar')} 
-                        className="group relative flex items-center justify-center text-red-500"
+                        className="group relative w-9 h-9 sm:w-10 sm:h-10 md:w-[4.6vmin] md:h-[4.6vmin] rounded-xl bg-white/[0.04] hover:bg-red-500/15 border border-white/[0.08] hover:border-red-500/40 flex items-center justify-center text-white/60 hover:text-red-400 transition-all duration-200 shadow-lg shrink-0"
                         title="Sair da sala"
                     >
-                        <motion.span
-                            initial={{ rotate: 0 }}
-                            whileHover={{ rotate: 90 }}
-                            transition={{ duration: 0.25, ease: 'easeOut' }}
-                            className="flex"
-                        >
-                            <X className="w-8 h-8 md:w-[5vmin] md:h-[5vmin]" strokeWidth={3.5} />
-                        </motion.span>
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin] transition-transform group-hover:-translate-x-0.5" />
                     </motion.button>
-                    <div className="flex flex-col">
-                        <h1 className="text-base md:text-[2.2vmin] font-black tracking-widest text-white uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{sala.nome}</h1>
-                        <span className="text-xs md:text-[1.7vmin] font-black text-[#FFB700] tracking-widest mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">#{String(sala.id).padStart(6, '0')}</span>
+
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-[4.6vmin] md:h-[4.6vmin] rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.1] flex items-center justify-center text-[#FFB700] shadow-inner shrink-0">
+                            {sala.modo === '1v1' ? (
+                                <Swords className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                            ) : sala.modo === '5v5' ? (
+                                <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                            ) : sala.modo === 'aram' ? (
+                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                            ) : (
+                                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                            )}
+                        </div>
+
+                        <div className="flex flex-col">
+                            <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                                {sala.nome}
+                            </h1>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFB700]/10 border border-[#FFB700]/25 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono">
+                                    #{String(sala.id).padStart(6, '0')}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-6 md:gap-[5vmin] z-10">
-                    <div className="flex items-center gap-3 sm:gap-6 md:gap-[4vmin]">
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Estado</span>
-                            <span className="text-xs md:text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5">{estadoRotulo}</span>
+                {/* Right Side: Status Cards & Actions */}
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-[2vmin] z-10 flex-wrap sm:flex-nowrap">
+                    {/* Card Estado */}
+                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2 shadow-inner">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] md:text-[1vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                Estado
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                    sala.estado === 'encerrada' ? 'bg-purple-400' :
+                                    sala.estado === 'aguardando_revisao' ? 'bg-indigo-400 animate-pulse' :
+                                    sala.estado === 'partida_iniciada' ? 'bg-cyan-400 animate-pulse' :
+                                    sala.estado === 'confirmacao' ? 'bg-amber-400 animate-ping' :
+                                    sala.estado === 'cancelada' ? 'bg-red-400' :
+                                    'bg-emerald-400 animate-pulse'
+                                }`} />
+                                <span className="text-xs md:text-[1.4vmin] font-black text-white uppercase tracking-wider leading-none">
+                                    {estadoRotulo}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Modo</span>
-                            <span className={`text-xs md:text-[1.5vmin] font-black uppercase tracking-widest mt-0.5 ${coresModo[sala.modo] || 'text-white'}`}>{sala.modo}</span>
+                    </div>
+
+                    {/* Card Modo */}
+                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2 shadow-inner">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] md:text-[1vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                Modo
+                            </span>
+                            <span className={`text-xs md:text-[1.4vmin] font-black uppercase tracking-wider mt-1 leading-none ${coresModo[sala.modo] || 'text-white'}`}>
+                                {sala.modo.toUpperCase()}
+                            </span>
                         </div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/40 uppercase tracking-widest">Aposta / Pote</span>
-                            <span className="text-xs md:text-[1.5vmin] font-black text-[#FFB700] uppercase tracking-widest mt-0.5 flex items-center gap-1 md:gap-[0.4vmin]">
+                    </div>
+
+                    {/* Card Aposta / Pote */}
+                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2 shadow-inner">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] md:text-[1vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                {ehApostada ? 'Aposta / Pote' : 'Modalidade'}
+                            </span>
+                            <span className="text-xs md:text-[1.4vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
                                 {ehApostada ? (
                                     <>
                                         <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.6vmin] md:h-[1.6vmin] text-[#FFB700]" />
-                                        {apostaPorJogador} MC (Pote {poteBruto} MC)
+                                        <span className="text-[#FFB700]">{apostaPorJogador} MC</span>
+                                        <span className="text-white/30 text-[10px] md:text-[1.1vmin]">• Pote {poteBruto} MC</span>
                                     </>
                                 ) : (
-                                    <span className="text-green-400">Casual</span>
+                                    <span className="text-emerald-400 flex items-center gap-1">
+                                        <Shield className="w-3 h-3 text-emerald-400" /> Casual
+                                    </span>
                                 )}
                             </span>
                         </div>
                     </div>
 
-                    {/* Compartilhar sala — copia convite formatado */}
-                    <motion.button
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={compartilharSala}
-                        className="w-8 h-8 md:w-[5vmin] md:h-[5vmin] rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/30 flex items-center justify-center text-[#FFB700] hover:bg-[#FFB700]/20 transition-colors backdrop-blur-md shrink-0"
-                        title="Compartilhar sala"
-                    >
-                        {compartilhado ? (
-                            <Check className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin] text-green-400" />
-                        ) : (
-                            <Share2 className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" />
-                        )}
-                    </motion.button>
-
-                    {/* Excluir sala — só admin/proprietário (validação real no servidor) */}
-                    {ehAdminOuProprietario && (
+                    {/* Action Buttons: Compartilhar & Excluir */}
+                    <div className="flex items-center gap-2 pl-1 sm:pl-2 border-l border-white/[0.08]">
                         <motion.button
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={excluirSala}
-                            className="w-8 h-8 md:w-[5vmin] md:h-[5vmin] rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500/20 hover:text-red-400 transition-colors backdrop-blur-md shrink-0"
-                            title="Excluir sala permanentemente"
+                            whileHover={{ scale: 1.06 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={compartilharSala}
+                            className="h-9 px-3 sm:px-3.5 md:h-[4.6vmin] md:px-[1.8vmin] rounded-xl bg-[#FFB700]/10 hover:bg-[#FFB700]/20 border border-[#FFB700]/30 hover:border-[#FFB700]/50 flex items-center justify-center gap-2 text-[#FFB700] transition-all shadow-[0_0_15px_rgba(255,183,0,0.15)] shrink-0"
+                            title="Compartilhar sala"
                         >
-                            <Trash2 className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                            {compartilhado ? (
+                                <>
+                                    <Check className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-emerald-400" />
+                                    <span className="text-[11px] md:text-[1.2vmin] font-black uppercase tracking-wider text-emerald-400 hidden sm:inline">Copiado!</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Share2 className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
+                                    <span className="text-[11px] md:text-[1.2vmin] font-black uppercase tracking-wider hidden sm:inline">Convidar</span>
+                                </>
+                            )}
                         </motion.button>
-                    )}
+
+                        {ehAdminOuProprietario && (
+                            <motion.button
+                                whileHover={{ scale: 1.06 }}
+                                whileTap={{ scale: 0.92 }}
+                                onClick={excluirSala}
+                                className="w-9 h-9 md:w-[4.6vmin] md:h-[4.6vmin] rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 flex items-center justify-center text-red-400 hover:text-red-300 transition-all shadow-lg shrink-0"
+                                title="Excluir sala permanentemente"
+                            >
+                                <Trash2 className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
+                            </motion.button>
+                        )}
+                    </div>
                 </div>
             </motion.div>
 
