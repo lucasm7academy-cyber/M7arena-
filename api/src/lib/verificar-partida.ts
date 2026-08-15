@@ -128,12 +128,15 @@ export async function verificarPartida(
   }
 
   // Partida ABORTADA (desistência/abandono — "Abort", "Abort_TooFewPlayers",
-  // "GameLength", etc.). No 1v1 as win conditions são 100 de farm (CS) ou
-  // first blood: quem atinge a condição quita, então o jogo NUNCA chega a
-  // GameComplete — o motor decide o vencedor pelas condições da partida.
-  const ladoCondicao = vencedorPorWinCondition(matchRiot);
-  if (ladoCondicao) {
-    return aplica(d, m, () => aplicarEncerramento(d, m, players, ladoCondicao, matchRiot));
+  // "GameLength", etc.). A win condition por first blood / 100 CS vale SÓ para
+  // o modo 1v1: quem atinge a condição quita, então o jogo NUNCA chega a
+  // GameComplete. Em 5v5/aram/time_vs_time uma partida abortada sem surrender
+  // não é vitória legítima → segue até o teto e cancela (como antes).
+  if (m.mode === "1v1") {
+    const ladoCondicao = vencedorPorWinCondition(matchRiot);
+    if (ladoCondicao) {
+      return aplica(d, m, () => aplicarEncerramento(d, m, players, ladoCondicao, matchRiot));
+    }
   }
 
   return { ok: false, estado: "partida_iniciada", motivo: "ainda_em_jogo", matchIdRiot: matchRiot.metadata.matchId };

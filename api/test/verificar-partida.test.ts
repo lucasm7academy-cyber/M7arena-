@@ -235,7 +235,7 @@ describe("verificarPartida", () => {
     const c = "aaaaaaa4-0000-0000-0000-000000000062"; // red, first blood
     await criaJogador(db, a, "PUUID_FBA", 70, 30);
     await criaJogador(db, c, "PUUID_FBC", 70, 30);
-    const sala = await criaSala(db);
+    const sala = await criaSala(db, { mode: "1v1" });
     await db.insert(matchPlayers).values([
       { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
       { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
@@ -274,7 +274,7 @@ describe("verificarPartida", () => {
     const c = "aaaaaaa4-0000-0000-0000-000000000072"; // red
     await criaJogador(db, a, "PUUID_FARMA", 70, 30);
     await criaJogador(db, c, "PUUID_FARMC", 70, 30);
-    const sala = await criaSala(db);
+    const sala = await criaSala(db, { mode: "1v1" });
     await db.insert(matchPlayers).values([
       { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
       { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
@@ -325,6 +325,41 @@ describe("verificarPartida", () => {
           participants: [
             { puuid: "PUUID_SEMCOND_A", teamId: 100, firstBloodKill: false, totalMinionsKilled: 20 },
             { puuid: "PUUID_SEMCOND_C", teamId: 200, firstBloodKill: false, totalMinionsKilled: 15 },
+          ],
+          teams: [
+            { teamId: 100, win: false },
+            { teamId: 200, win: false },
+          ],
+        }),
+    });
+
+    assert.equal(r.ok, false);
+    assert.equal(r.estado, "partida_iniciada");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.status, "partida_iniciada");
+  });
+
+  test("5v5 abortada com first blood → NÃO decide por FB (win condition só no 1v1)", async () => {
+    const db = ctx.db;
+    const a = "aaaaaaa4-0000-0000-0000-000000000091"; // blue, FB
+    const c = "aaaaaaa4-0000-0000-0000-000000000092"; // red
+    await criaJogador(db, a, "PUUID_5V5_A", 70, 30);
+    await criaJogador(db, c, "PUUID_5V5_C", 70, 30);
+    const sala = await criaSala(db, { mode: "5v5" });
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "TOP", confirmed: true, linked: true },
+      { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "TOP", confirmed: true, linked: true },
+    ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-ABORT-5V5-0001", used: true, matchId: sala.id });
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => ["BR1_9999999999"],
+      buscarMatch: async () =>
+        partidaRiot({
+          endOfGameResult: "Abort_TooFewPlayers",
+          participants: [
+            { puuid: "PUUID_5V5_A", teamId: 100, firstBloodKill: true, totalMinionsKilled: 10 },
+            { puuid: "PUUID_5V5_C", teamId: 200, firstBloodKill: false, totalMinionsKilled: 8 },
           ],
           teams: [
             { teamId: 100, win: false },
