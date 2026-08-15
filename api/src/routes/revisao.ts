@@ -134,6 +134,9 @@ revisaoRouter.post("/:id/decidir", async (req, res) => {
           revisadoPor: user.id,
           revisadoEm: new Date(),
         }).where(eq(matches.id, m.id));
+        // Cancelamento já reverte tudo — disputas abertas da sala ficam órfãs
+        // (painel de contestações tentaria reverter de novo → 400 eterno).
+        await tx.update(matchDisputas).set({ status: "resolvida" }).where(eq(matchDisputas.matchId, m.id));
       } else {
         return { ok: false, erro: "resultado_invalido" };
       }
@@ -212,6 +215,14 @@ revisaoRouter.post("/disputas/:id/decidir", async (req, res) => {
       const r2 = await db.transaction(async (tx: any) => {
         const [sala] = await tx.select().from(matches).where(eq(matches.id, disputa.matchId)).limit(1).for("update");
         if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
+        // Sala já cancelada: a reversão total (escrow de volta, sala cancelada)
+        // já foi aplicada pela decisão de cancelamento. Procedente aqui é no-op —
+        // só fecha a disputa, sem tentar reverter de novo (estornaria saldo já
+        // devolvido e devolveria 400 estado_invalido para sempre).
+        if (sala.status === "cancelada") {
+          await tx.update(matchDisputas).set({ status: "resolvida" }).where(eq(matchDisputas.id, disputa.id));
+          return { ok: true, procedente: true };
+        }
         if (sala.status !== "encerrada") return { ok: false, erro: "estado_invalido", estado: sala.status };
         const players = await tx.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
         const aposta = sala.apostaMc ?? 0;
