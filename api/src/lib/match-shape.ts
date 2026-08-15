@@ -112,6 +112,7 @@ export function resumoRiot(payload: any) {
       puuid: p.puuid,
       nome: p.summonerName ?? null,
       campeao: p.championName ?? null,
+      champion_id: p.championId ?? null,
       side: p.teamId === 100 ? "blue" : "red",
       venceu: !!p.win,
       kills: p.kills ?? 0,

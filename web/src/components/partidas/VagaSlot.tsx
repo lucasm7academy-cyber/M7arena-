@@ -17,7 +17,13 @@ interface VagaSlotProps {
     roleIconImg: string;
     // NOVO - Sistema VIP
     vipTier?: 'free' | 'vip' | 'premium';
+    // Modo partida finalizada: mostra campeão (ícone) + KDA + CS no lugar do
+    // avatar/nick padrão. `venceu` destaca o lado ganhador.
+    stats?: { campeao: string; championId?: number; kills: number; deaths: number; assists: number; cs: number; venceu: boolean } | null;
 }
+
+const CHAMPION_ICON_URL = (id: number) =>
+    `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${id}.png`;
 
 const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     ocupada,
@@ -31,6 +37,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     aoSair,
     roleIconImg,
     vipTier = 'free',
+    stats = null,
 }) => {
 
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
@@ -154,6 +161,38 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         )}
 
                         <div className={`flex items-center gap-[2vmin] flex-1 overflow-hidden ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                            {stats ? (
+                                <>
+                                    {stats.championId ? (
+                                        <img
+                                            src={CHAMPION_ICON_URL(stats.championId)}
+                                            alt={stats.campeao}
+                                            loading="lazy"
+                                            className="w-[min(14vw,6vmin)] h-[min(14vw,6vmin)] object-cover rounded-lg shrink-0"
+                                            style={{ border: `1px solid ${teamColor}80`, boxShadow: `0 0 12px ${teamColor}33` }}
+                                        />
+                                    ) : (
+                                        <div className="w-[min(14vw,6vmin)] h-[min(14vw,6vmin)] rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                            <img src={roleIconImg} className="w-[min(8vw,3vmin)] h-[min(8vw,3vmin)] brightness-0 invert opacity-60" alt={role} />
+                                        </div>
+                                    )}
+                                    <div className={`flex flex-col min-w-0 ${isTimeA ? 'text-left items-start' : 'text-right items-end'}`}>
+                                        <span className="text-[min(4.5vw,1.8vmin)] font-black truncate uppercase tracking-tight"
+                                            style={{ color: teamColor, textShadow: `0 0 10px ${teamColor}44` }}>
+                                            {stats.campeao || nome}
+                                        </span>
+                                        <div className={`flex items-center gap-[1.2vmin] mt-[0.3vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <span className="text-[min(3.5vw,1.6vmin)] font-black tabular-nums text-white">
+                                                {stats.kills}/{stats.deaths}/{stats.assists}
+                                            </span>
+                                            <span className="text-[min(2.6vw,1.1vmin)] font-bold text-white/40 uppercase tracking-widest">
+                                                {stats.cs} CS
+                                            </span>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
                             <img src={roleIconImg} alt={role} className="w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
                             {avatarEl}
                             <div className={`flex flex-col min-w-0 ${isTimeA ? 'text-left' : 'text-right'}`}>
@@ -178,6 +217,8 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                     )}
                                 </div>
                             </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </motion.div>
@@ -235,7 +276,8 @@ export const VagaSlot = React.memo(
             prev.vipTier === next.vipTier &&
             prev.role === next.role &&
             prev.isTimeA === next.isTimeA &&
-            prev.roleIconImg === next.roleIconImg
+            prev.roleIconImg === next.roleIconImg &&
+            prev.stats === next.stats
         );
     }
 );
