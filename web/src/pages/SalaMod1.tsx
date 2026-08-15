@@ -19,6 +19,8 @@ import { usePerfil } from '../contexts/PerfilContext';
 // clipPath (frame) + conteúdo interno com clipPath um pouco menor (fill).
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
 const CUT_INNER = 'polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px)';
+const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
 
 function ArcaneIndicators() {
     return (
@@ -371,26 +373,33 @@ ${link}`;
                 {/* Left Side: Exit Button, Mode Icon & Title */}
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
                     <motion.button 
-                        whileHover={{ scale: 1.06 }}
-                        whileTap={{ scale: 0.92 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.94 }}
                         onClick={() => navigate('/jogar')} 
-                        className="group relative w-9 h-9 sm:w-10 sm:h-10 md:w-[4.6vmin] md:h-[4.6vmin] rounded-xl bg-white/[0.04] hover:bg-red-500/15 border border-white/[0.08] hover:border-red-500/40 flex items-center justify-center text-white/60 hover:text-red-400 transition-all duration-200 shadow-lg shrink-0"
+                        className="group relative p-[1px] bg-white/15 hover:bg-red-500/50 transition-colors shrink-0 shadow-lg"
+                        style={{ clipPath: CUT_BUTTON }}
                         title="Sair da sala"
                     >
-                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin] transition-transform group-hover:-translate-x-0.5" />
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0A0A0A] hover:bg-red-950/40 flex items-center justify-center text-white/70 hover:text-red-400 transition-colors"
+                            style={{ clipPath: CUT_BUTTON }}>
+                            <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin] transition-transform group-hover:-translate-x-0.5" />
+                        </div>
                     </motion.button>
 
                     <div className="flex items-center gap-2.5 sm:gap-3">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-[4.6vmin] md:h-[4.6vmin] rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.1] flex items-center justify-center text-[#FFB700] shadow-inner shrink-0">
-                            {sala.modo === '1v1' ? (
-                                <Swords className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
-                            ) : sala.modo === '5v5' ? (
-                                <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
-                            ) : sala.modo === 'aram' ? (
-                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
-                            ) : (
-                                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
-                            )}
+                        <div className="relative p-[1px] bg-white/15 shrink-0" style={{ clipPath: CUT_BUTTON }}>
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0d0d10] flex items-center justify-center text-[#FFB700] shadow-inner"
+                                style={{ clipPath: CUT_BUTTON }}>
+                                {sala.modo === '1v1' ? (
+                                    <Swords className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                ) : sala.modo === '5v5' ? (
+                                    <Gamepad2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                ) : sala.modo === 'aram' ? (
+                                    <Zap className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                ) : (
+                                    <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex flex-col">
@@ -398,7 +407,8 @@ ${link}`;
                                 {sala.nome}
                             </h1>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFB700]/10 border border-[#FFB700]/25 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 border border-[#FFB700]/30 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono"
+                                    style={{ clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)' }}>
                                     #{String(sala.id).padStart(6, '0')}
                                 </span>
                             </div>
@@ -407,15 +417,15 @@ ${link}`;
                 </div>
 
                 {/* Right Side: Status Cards & Actions */}
-                <div className="flex items-center gap-2 sm:gap-3 md:gap-[2vmin] z-10 flex-wrap sm:flex-nowrap">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.5vmin] z-10 flex-wrap sm:flex-nowrap">
                     {/* Card Estado */}
-                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2 shadow-inner">
-                        <div className="flex flex-col">
-                            <span className="text-[9px] md:text-[1vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                    <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE }}>
+                            <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
                                 Estado
                             </span>
                             <div className="flex items-center gap-1.5 mt-1">
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                <span className={`w-1.5 h-1.5 shrink-0 ${
                                     sala.estado === 'encerrada' ? 'bg-purple-400' :
                                     sala.estado === 'aguardando_revisao' ? 'bg-indigo-400 animate-pulse' :
                                     sala.estado === 'partida_iniciada' ? 'bg-cyan-400 animate-pulse' :
@@ -423,7 +433,7 @@ ${link}`;
                                     sala.estado === 'cancelada' ? 'bg-red-400' :
                                     'bg-emerald-400 animate-pulse'
                                 }`} />
-                                <span className="text-xs md:text-[1.4vmin] font-black text-white uppercase tracking-wider leading-none">
+                                <span className="text-xs md:text-[1.35vmin] font-black text-white uppercase tracking-wider leading-none">
                                     {estadoRotulo}
                                 </span>
                             </div>
@@ -431,29 +441,29 @@ ${link}`;
                     </div>
 
                     {/* Card Modo */}
-                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2 shadow-inner">
-                        <div className="flex flex-col">
-                            <span className="text-[9px] md:text-[1vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                    <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE }}>
+                            <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
                                 Modo
                             </span>
-                            <span className={`text-xs md:text-[1.4vmin] font-black uppercase tracking-wider mt-1 leading-none ${coresModo[sala.modo] || 'text-white'}`}>
+                            <span className={`text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none ${coresModo[sala.modo] || 'text-white'}`}>
                                 {sala.modo.toUpperCase()}
                             </span>
                         </div>
                     </div>
 
                     {/* Card Aposta / Pote */}
-                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2 shadow-inner">
-                        <div className="flex flex-col">
-                            <span className="text-[9px] md:text-[1vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                    <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE }}>
+                            <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
                                 {ehApostada ? 'Aposta / Pote' : 'Modalidade'}
                             </span>
-                            <span className="text-xs md:text-[1.4vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
+                            <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
                                 {ehApostada ? (
                                     <>
-                                        <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.6vmin] md:h-[1.6vmin] text-[#FFB700]" />
+                                        <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
                                         <span className="text-[#FFB700]">{apostaPorJogador} MC</span>
-                                        <span className="text-white/30 text-[10px] md:text-[1.1vmin]">• Pote {poteBruto} MC</span>
+                                        <span className="text-white/35 text-[9.5px] md:text-[1.05vmin]">• Pote {poteBruto} MC</span>
                                     </>
                                 ) : (
                                     <span className="text-emerald-400 flex items-center gap-1">
@@ -467,34 +477,42 @@ ${link}`;
                     {/* Action Buttons: Compartilhar & Excluir */}
                     <div className="flex items-center gap-2 pl-1 sm:pl-2 border-l border-white/[0.08]">
                         <motion.button
-                            whileHover={{ scale: 1.06 }}
-                            whileTap={{ scale: 0.92 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.94 }}
                             onClick={compartilharSala}
-                            className="h-9 px-3 sm:px-3.5 md:h-[4.6vmin] md:px-[1.8vmin] rounded-xl bg-[#FFB700]/10 hover:bg-[#FFB700]/20 border border-[#FFB700]/30 hover:border-[#FFB700]/50 flex items-center justify-center gap-2 text-[#FFB700] transition-all shadow-[0_0_15px_rgba(255,183,0,0.15)] shrink-0"
+                            className="relative p-[1px] bg-[#FFB700]/30 hover:bg-[#FFB700]/60 transition-colors shrink-0 shadow-[0_0_15px_rgba(255,183,0,0.15)]"
+                            style={{ clipPath: CUT_BUTTON }}
                             title="Compartilhar sala"
                         >
-                            {compartilhado ? (
-                                <>
-                                    <Check className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-emerald-400" />
-                                    <span className="text-[11px] md:text-[1.2vmin] font-black uppercase tracking-wider text-emerald-400 hidden sm:inline">Copiado!</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Share2 className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
-                                    <span className="text-[11px] md:text-[1.2vmin] font-black uppercase tracking-wider hidden sm:inline">Convidar</span>
-                                </>
-                            )}
+                            <div className="h-8 sm:h-9 md:h-[4.4vmin] px-3 sm:px-3.5 md:px-[1.6vmin] bg-[#120e03] hover:bg-[#1a1405] flex items-center justify-center gap-1.5 text-[#FFB700] transition-colors"
+                                style={{ clipPath: CUT_BUTTON }}>
+                                {compartilhado ? (
+                                    <>
+                                        <Check className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-emerald-400" />
+                                        <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider text-emerald-400 hidden sm:inline">Copiado!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Share2 className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                                        <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">Convidar</span>
+                                    </>
+                                )}
+                            </div>
                         </motion.button>
 
                         {ehAdminOuProprietario && (
                             <motion.button
-                                whileHover={{ scale: 1.06 }}
-                                whileTap={{ scale: 0.92 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.94 }}
                                 onClick={excluirSala}
-                                className="w-9 h-9 md:w-[4.6vmin] md:h-[4.6vmin] rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 flex items-center justify-center text-red-400 hover:text-red-300 transition-all shadow-lg shrink-0"
+                                className="relative p-[1px] bg-red-500/30 hover:bg-red-500/60 transition-colors shrink-0"
+                                style={{ clipPath: CUT_BUTTON }}
                                 title="Excluir sala permanentemente"
                             >
-                                <Trash2 className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
+                                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#140507] hover:bg-[#20080a] flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
+                                    style={{ clipPath: CUT_BUTTON }}>
+                                    <Trash2 className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                                </div>
                             </motion.button>
                         )}
                     </div>
