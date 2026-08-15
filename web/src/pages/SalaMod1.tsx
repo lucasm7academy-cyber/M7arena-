@@ -181,14 +181,20 @@ ${link}`;
     const timeB = jogadores.filter((j: any) => !j.is_time_a);
     const jogadorAtual = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
 
-    // Stats reais da partida (resultado_riot, da Riot) por PUUID — as vagas da
+    // Stats reais da partida (resultado_riot, da Riot) por PUUID ou Nome — as vagas da
     // sala finalizada mostram campeão + KDA + CS cruzando por este mapa.
     const statsPorPuuid = new Map<string, any>(
         (sala?.resultado_riot?.participantes ?? []).map((p: any) => [p.puuid, p])
     );
+    const statsPorNome = new Map<string, any>(
+        (sala?.resultado_riot?.participantes ?? []).map((p: any) => [p.nome?.toLowerCase()?.trim(), p])
+    );
     const statsDoJogador = (j: any) => {
-        if (!j?.puuid) return null;
-        const p = statsPorPuuid.get(j.puuid);
+        if (!j) return null;
+        let p = j?.puuid ? statsPorPuuid.get(j.puuid) : null;
+        if (!p && j?.nome) {
+            p = statsPorNome.get(j.nome.toLowerCase().trim());
+        }
         if (!p) return null;
         return {
             campeao: p.campeao,
@@ -455,22 +461,23 @@ ${link}`;
             )}
 
             {/* MAIN CENTRAL AREA */}
-            <div className="w-full relative flex items-start justify-start md:flex-1 md:items-center md:justify-center overflow-visible py-[3vmin] min-h-[70vh] md:min-h-0">
+            <div className="w-full relative flex flex-col items-center justify-center md:flex-1 overflow-visible py-[2vmin] min-h-[70vh] md:min-h-0">
 
                 {/* HEADER DE RESULTADO — partida finalizada: vencedor + placar +
                     duração no topo, no padrão de borda cortada, sem o círculo. */}
                 {sala.estado === 'encerrada' && (
-                    <div className="w-full flex justify-center mb-[3vmin] z-20">
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                        className="w-full flex justify-center mb-[2vmin] z-20">
                         <div className="relative p-[1.5px]" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
-                            <div className="bg-[#0A0A0A] px-[5vmin] py-[1.6vmin] flex items-center gap-[3vmin]"
+                            <div className="bg-[#0A0A0A] px-[4vmin] py-[1.4vmin] flex items-center gap-[2.5vmin]"
                                 style={{ clipPath: CUT_INNER }}>
-                                <div className="w-[4.5vmin] h-[4.5vmin] rounded-lg flex items-center justify-center shrink-0"
+                                <div className="w-[4vmin] h-[4vmin] rounded-lg flex items-center justify-center shrink-0"
                                     style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60` }}>
-                                    <Trophy className="w-[2.2vmin] h-[2.2vmin]" style={{ color: corVencedor }} />
+                                    <Trophy className="w-[2vmin] h-[2vmin]" style={{ color: corVencedor }} />
                                 </div>
                                 <div className="text-left shrink-0">
-                                    <p className="text-[1vmin] font-black text-white/40 uppercase tracking-[0.5em]">Partida Finalizada</p>
-                                    <p className="text-[1.9vmin] font-black uppercase tracking-[0.15em]"
+                                    <p className="text-[0.9vmin] font-black text-white/40 uppercase tracking-[0.4em]">Partida Finalizada</p>
+                                    <p className="text-[1.8vmin] font-black uppercase tracking-[0.15em]"
                                         style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
                                         {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
                                     </p>
@@ -479,28 +486,34 @@ ${link}`;
                                     <div className="flex items-center gap-[1.5vmin] pl-[2vmin] border-l border-white/10">
                                         <div className="text-center">
                                             <p className="text-[0.8vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
-                                            <p className="text-[2vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
+                                            <p className="text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
                                         </div>
-                                        <span className="text-[1.2vmin] font-black text-white/25">×</span>
+                                        <span className="text-[1.1vmin] font-black text-white/25">×</span>
                                         <div className="text-center">
                                             <p className="text-[0.8vmin] font-black uppercase tracking-widest text-red-400">Red</p>
-                                            <p className="text-[2vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
+                                            <p className="text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
                                         </div>
                                     </div>
                                 )}
                                 {duracaoFinalizada && (
-                                    <span className="text-[1vmin] font-black text-white/30 uppercase tracking-[0.3em] shrink-0">
+                                    <span className="text-[0.95vmin] font-black text-white/30 uppercase tracking-[0.25em] shrink-0 border-l border-white/10 pl-[2vmin]">
                                         Duração {duracaoFinalizada}
                                     </span>
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] md:gap-[66vmin] py-[3vmin] md:py-0 ${isX1 ? 'md:gap-[70vmin]' : 'md:gap-[66vmin]'}`}>
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-[4vmin] py-[2vmin] md:py-0 ${
+                    sala.estado === 'encerrada'
+                        ? 'md:gap-[8vmin]'
+                        : isX1
+                            ? 'md:gap-[70vmin]'
+                            : 'md:gap-[66vmin]'
+                }`}>
                     {/* BLUE SIDE — oculto apenas em aguardando_revisao (o card
                         central mostra o lineup); na encerrada fica visível com as
                         vagas mostrando campeão + KDA + CS da Riot. */}
@@ -858,6 +871,23 @@ ${link}`;
                                     style={{ clipPath: CUT_INNER }}>
                                     {verificandoPartida ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <Check className="w-[2.2vmin] h-[2.2vmin]" />}
                                     {verificandoPartida ? 'Verificando...' : 'Verificar Partida'}
+                                </span>
+                            </motion.button>
+                        </motion.div>
+                    )}
+
+                    {/* PARTIDA FINALIZADA — botão de voltar ao lobby */}
+                    {sala.estado === 'encerrada' && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/jogar')}
+                                className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
+                                style={{ clipPath: CUT_FRAME }}
+                            >
+                                <span className="block bg-[#FFB700] px-[8vmin] py-[2vmin] font-black uppercase tracking-[0.4em] text-[1.5vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1vmin] transition-colors"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    Voltar ao Lobby
                                 </span>
                             </motion.button>
                         </motion.div>

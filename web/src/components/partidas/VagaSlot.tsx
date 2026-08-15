@@ -161,69 +161,71 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         )}
 
                         <div className={`flex items-center gap-[2vmin] flex-1 overflow-hidden ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            {stats ? (
-                                <>
-                                    {stats.championId ? (
-                                        <img
-                                            src={CHAMPION_ICON_URL(stats.championId)}
-                                            alt={stats.campeao}
-                                            loading="lazy"
-                                            className="w-[min(14vw,6vmin)] h-[min(14vw,6vmin)] object-cover rounded-lg shrink-0"
-                                            style={{ border: `1px solid ${teamColor}80`, boxShadow: `0 0 12px ${teamColor}33` }}
-                                        />
-                                    ) : (
-                                        <div className="w-[min(14vw,6vmin)] h-[min(14vw,6vmin)] rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                            <img src={roleIconImg} className="w-[min(8vw,3vmin)] h-[min(8vw,3vmin)] brightness-0 invert opacity-60" alt={role} />
-                                        </div>
-                                    )}
-                                    <div className={`flex flex-col min-w-0 ${isTimeA ? 'text-left items-start' : 'text-right items-end'}`}>
-                                        <span className="text-[min(4.5vw,1.8vmin)] font-black truncate uppercase tracking-tight"
-                                            style={{ color: teamColor, textShadow: `0 0 10px ${teamColor}44` }}>
-                                            {nome}
-                                        </span>
-                                        <div className={`flex items-center gap-[0.8vmin] mt-[0.1vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-[min(2.6vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
-                                                {tag}
-                                            </span>
-                                        </div>
-                                        <div className={`flex items-center gap-[1.2vmin] mt-[0.3vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                            <span className="text-[min(3.5vw,1.6vmin)] font-black tabular-nums text-white">
-                                                {stats.kills}/{stats.deaths}/{stats.assists}
-                                            </span>
-                                            <span className="text-[min(2.6vw,1.1vmin)] font-bold text-white/40 uppercase tracking-widest">
-                                                {stats.cs} CS
-                                            </span>
-                                        </div>
-                                    </div>
-                                </>
+                            {/* Ícone da Rota */}
+                            <img
+                                src={roleIconImg}
+                                alt={role}
+                                className="w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0"
+                            />
+
+                            {/* Ícone: Campeão se finalizada, Avatar se normal */}
+                            {stats && (stats.championId || stats.campeao) ? (
+                                <div className="relative shrink-0">
+                                    <img
+                                        src={stats.championId ? CHAMPION_ICON_URL(stats.championId) : `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`}
+                                        alt={stats.campeao || nome}
+                                        title={stats.campeao || 'Campeão'}
+                                        loading="lazy"
+                                        className={`w-[min(12vw,5vmin)] h-[min(12vw,5vmin)] rounded-full object-cover border ${config.avatarBorder} transition-all`}
+                                        onError={(e) => {
+                                            if (stats.campeao && !e.currentTarget.src.includes('ddragon')) {
+                                                e.currentTarget.src = `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`;
+                                            }
+                                        }}
+                                    />
+                                </div>
                             ) : (
-                                <>
-                            <img src={roleIconImg} alt={role} className="w-[min(12vw,4.8vmin)] h-[min(12vw,4.8vmin)] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
-                            {avatarEl}
-                            <div className={`flex flex-col min-w-0 ${isTimeA ? 'text-left' : 'text-right'}`}>
-                                <div className="flex items-center gap-[1vmin]">
+                                avatarEl
+                            )}
+
+                            {/* Info do Jogador */}
+                            <div className={`flex flex-col min-w-0 flex-1 ${isTimeA ? 'text-left items-start' : 'text-right items-end'}`}>
+                                <div className={`flex items-center gap-[1vmin] max-w-full ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                                     <span
-                                        className="text-[min(5vw,2vmin)] font-black truncate uppercase tracking-tight"
+                                        className="text-[min(4.8vw,1.9vmin)] font-black truncate uppercase tracking-tight"
                                         style={config.nomeStyle}
                                     >
                                         {nome}
                                     </span>
-                                </div>
-                                <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                                    <span className="text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
-                                        {tag}
-                                    </span>
                                     {vipTier === 'vip' && (
-                                        <span className="px-[0.6vmin] py-[0.2vmin] bg-gradient-to-r from-[#FFB700] to-[#ffd54f] text-black text-[0.7vmin] font-black rounded" style={{
-                                            boxShadow: '0 0 8px rgba(255, 183, 0, 0.5)'
-                                        }}>
+                                        <span className="px-[0.6vmin] py-[0.2vmin] bg-gradient-to-r from-[#FFB700] to-[#ffd54f] text-black text-[0.7vmin] font-black rounded shrink-0 shadow-[0_0_8px_rgba(255,183,0,0.5)]">
                                             VIP
                                         </span>
                                     )}
                                 </div>
+
+                                {stats ? (
+                                    <div className={`flex items-center gap-[1.2vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                        {tag && (
+                                            <span className="text-[min(2.5vw,1.1vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                                {tag}
+                                            </span>
+                                        )}
+                                        <span className="text-[min(3.2vw,1.4vmin)] font-black tabular-nums text-white">
+                                            {stats.kills}/{stats.deaths}/{stats.assists}
+                                        </span>
+                                        <span className="text-[min(2.5vw,1.1vmin)] font-bold text-[#FFB700] uppercase tracking-wider">
+                                            {stats.cs} CS
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className={`flex items-center gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
+                                        <span className="text-[min(3vw,1.2vmin)] font-bold text-white/40 uppercase tracking-[0.2em] leading-none">
+                                            {tag}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
-                                </>
-                            )}
                         </div>
                     </div>
                 </motion.div>
@@ -267,11 +269,9 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
 };
 
 // Memoizar VagaSlot para evitar re-renders desnecessários
-// Comparação customizada: só re-renderiza se props que importam mudarem
 export const VagaSlot = React.memo(
     VagaSlotComponent,
     (prev, next) => {
-        // true = não renderiza, false = renderiza
         return (
             prev.ocupada === next.ocupada &&
             prev.nome === next.nome &&
@@ -282,7 +282,12 @@ export const VagaSlot = React.memo(
             prev.role === next.role &&
             prev.isTimeA === next.isTimeA &&
             prev.roleIconImg === next.roleIconImg &&
-            prev.stats === next.stats
+            prev.stats?.kills === next.stats?.kills &&
+            prev.stats?.deaths === next.stats?.deaths &&
+            prev.stats?.assists === next.stats?.assists &&
+            prev.stats?.cs === next.stats?.cs &&
+            prev.stats?.championId === next.stats?.championId &&
+            prev.stats?.campeao === next.stats?.campeao
         );
     }
 );

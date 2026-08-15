@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-14T23:15:34.709Z",
-  "updatedBy": "deepseek",
+  "updatedAt": "2026-08-15T02:33:30.019Z",
+  "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -1713,98 +1713,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-06T03:56:31.810Z",
-      "agent": "deepseek",
-      "summary": "Dashboard financeiro admin (app.admin-financeiro, doing). Endpoint GET /api/admin/financeiro (api/src/routes/admin.ts), período today/7/30/all. ADR-032: faturamento=payments approved (R$), lucro=MC retido em taxas platform_revenue/100 (lojas futuras somam), dinheiroNoProjeto=user_wallets mc+mc_reservado/100, saques=0 até sec.pix. Hoje por hora, resto por dia. Front: api.adminFinanceiro.get + tipo ApiFinanceiro (web/src/lib/api.ts); componente FinanceiroDashboard.tsx (gráfico SVG estilo barbearia: cards clicáveis, período, hover, legenda, card Dinheiro no Projeto); montado na aba Visão do Admin.tsx. Verificação: tsc api exit 0, vite build web ok. 2 erros TS do web são pré-existentes no HEAD (ElectricBorder/Streamers), não meus. Pendente: testar SQL contra Postgres real e deploy. Não commitei.",
-      "touched": [
-        "api/src/routes/admin.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/Admin.tsx",
-        "web/src/components/admin/FinanceiroDashboard.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-06T04:10:29.694Z",
-      "agent": "deepseek",
-      "summary": "Deploy do dashboard financeiro na VPS dev. Commit 3d9af47 (feat/gateway-mc → main via worktree m7-deploy): app.admin-financeiro (GET /api/admin/financeiro em admin.ts, FinanceiroDashboard.tsx na aba Visão, api.adminFinanceiro no sdk) + WIP de outros terminais (SalaMod1/VagaSlot mobile, suspensão 48h→12h, WS quieto 8s→5s, spec saque PIX). Push main, pull VPS, compose up --build app nginx. Validação com sessão admin temporária (criada e removida): periodo=30 → 200 faturamento 5, saques 0, lucro 1.08, MC circulação 17147 = R$171.47; today → 5 buckets horários; sem auth → 401. Bundle Admin tem o dashboard. app.admin-financeiro done. Pendente: usuário validar visual em /admin.",
-      "touched": [
-        "api/src/routes/admin.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/Admin.tsx",
-        "web/src/components/admin/FinanceiroDashboard.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-06T04:33:36.939Z",
-      "agent": "deepseek",
-      "summary": "Painel admin em tela cheia: rota /admin movida para fora do Layout em web/src/App.tsx (sem header/sidebar do site); Admin.tsx reescrito com sidebar vertical própria (tópicos antes horizontais), botão \"Voltar ao site\" com ArrowLeft, header mobile com voltar + scroll. tsc/vite build ok. Commit 3062c68 (feat/advertencias-ban, base=origin/main) incluiu também WIP de outro terminal (saque PIX: migrations 0012/0013, user_advertencias ADR-033). Merge ff em main, push ok (3d9af47..3062c68). API tsc exit 0. BLOQUEIO: VPS ficou inacessível durante o deploy (ssh e https timeout). git pull rodou, mas migrations 0012/0013 NÃO aplicadas e rebuild app/nginx NÃO feito. Pendente quando a VPS voltar: aplicar 0012 e 0013, depois compose up --build app nginx.",
-      "touched": [
-        "web/src/App.tsx",
-        "web/src/pages/Admin.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-06T04:53:59.366Z",
-      "agent": "deepseek",
-      "summary": "Implementei o SAQUE de MC via PIX (spec/plano 2026-08-06-saque-mc-pix, componente novo app.saque). Regras aprovadas: 100MC=R$1, mín. R$20, sem taxa, MC debitado na solicitação (withdrawal_hold; paid consolida; rejected devolve withdrawal_refund), snapshot do PIX, admin paga fora e confirma.\n\nBACKEND commitado pelo outro agente (3062c68): migration 0012, lib/withdrawals.ts, rotas, 6 testes PGlite, SDK.\n\nFRONT escrito/verificado, NÃO commitado: DepositModal com abas Depósito(padrão)/Saque; admin aba Saques (FIFO, Marcar Pago/Rejeitar).\n\nVerificação: tsx --test 73/73, tsc api exit 0, tsc web 2 pré-existentes, build ok.\n\nPENDENTE (usuário decide): commit front + migration 0012 na VPS + deploy + teste ao vivo. CUIDADO: working tree tem trabalho uncommitado de outro agente (Punicoes, advertencias/ban) — não commitar com git add -A sem revisar. app.saque doing até deploy.",
-      "touched": [
-        "db/schema/economia.ts",
-        "db/migrations/0012_magical_sharon_ventura.sql",
-        "api/src/lib/withdrawals.ts",
-        "api/test/withdrawals.test.ts",
-        "api/src/routes/withdrawals.ts",
-        "api/src/index.ts",
-        "web/src/lib/api.ts",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/deposit/DepositTab.tsx",
-        "web/src/components/modals/deposit/SaqueTab.tsx",
-        "web/src/components/admin/SaquesPix.tsx",
-        "web/src/pages/Admin.tsx",
-        "mcp/status-server/lib/plan.js",
-        "docs/superpowers/specs/2026-08-06-saque-mc-pix-design.md",
-        "docs/superpowers/plans/2026-08-06-saque-mc-pix.md"
-      ]
-    },
-    {
-      "at": "2026-08-06T05:18:12.981Z",
-      "agent": "deepseek",
-      "summary": "ADR-034: punições manuais (advertências + ban) no lugar de strikes/suspensão automáticos. Removi kick de ociosidade, strike de abandono e suspensão do cron (só fantasma+saneamento). user_strikes→user_advertencias (migration 0013: match_id nullable, criado_por; users ganham audit de ban). 3 advertências = ban automático, que só sai com unban manual. Rotas: POST/DELETE /admin/advertencias, POST /admin/usuarios/:id/ban|unban, GET /admin/usuarios?q=. Painel: aba Punições (busca+advertir/remover/banir/desbanir+histórico). Perfil: contador X/3 + status de ban. Testes 73/73 API, tsc limpo (web só erros pré-existentes). Commit f748b10 na branch feat/advertencias-ban. ATENÇÃO: commit 3062c68 do outro CLI entrou na minha branch com backend parcial quebrado; f748b10 corrige. Pendente: aplicar migration 0013 na VPS + deploy.",
-      "touched": [
-        "api/src/lib/elegibilidade.ts",
-        "api/src/lib/match-flow.ts",
-        "api/src/cron.ts",
-        "api/src/routes/admin.ts",
-        "api/src/routes/profiles.ts",
-        "api/src/routes/matches.ts",
-        "api/test/cron.test.ts",
-        "api/test/elegibilidade.test.ts",
-        "db/schema/apostas.ts",
-        "db/schema/identidade.ts",
-        "db/migrations/0013_advertencias_ban.sql",
-        "web/src/pages/AdminPunicoes.tsx",
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/contexts/PerfilContext.tsx",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/lib/api.ts",
-        "web/src/components/perfil/CarteiraEStrikes.tsx",
-        "web/src/components/partidas/ModaisElegibilidade.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-06T05:21:16.424Z",
-      "agent": "deepseek",
-      "summary": "VPS expirou (pagamento não renovado — 187.127.6.136 fora do ar). Como pedido, commitei tudo e dei push no main. Trabalho do outro terminal que estava no working tree (abas Saques PIX SaquesPix.tsx + DepositTab/SaqueTab no DepositModal + aba Punicoes AdminPunicoes.tsx, todos no Admin.tsx que segue com a sidebar vertical fullscreen do 3062c68) foi commitado junto com docs de estado: commit 2558a4a (feat/advertencias-ban). Integrado ao main por fast-forward e push (3062c68..2558a4a). Working tree limpo. Pendente futuro (VPS nova): git clone do origin, rodar migrations 0000→0013, .env com segredos (MERCADO_PAGO_ACCESS_TOKEN, RIOT_API_KEY, GOOGLE_CLIENT_ID/SECRET, AUTH_SECRET), docker compose up --build, DNS dev → IP novo. Dados dev da VPS antiga (postgres_data) provavelmente perdidos; os do Supabase seguem em scripts/migrate/dump e transformed.",
-      "touched": [
-        "web/src/components/admin/SaquesPix.tsx",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/deposit/DepositTab.tsx",
-        "web/src/components/modals/deposit/SaqueTab.tsx",
-        "web/src/pages/Admin.tsx"
-      ]
-    },
-    {
       "at": "2026-08-09T21:16:09.803Z",
       "agent": "deepseek",
       "summary": "Deploy na VPS nova 179.198.120.11 (a antiga 187.127.6.136 expirou). M7Arena: clone em /root/m7arena, .env de produção, compose build+up, migrations 0000→0013 (38 tabelas), API ok (health 200). Nginx do container HTTP-only (host termina TLS). dev.m7arena.pro: DNS atualizado, cert Let's Encrypt, https OK. PandaPost: clone em /root/pandapost, .env prod (REVERB pandapost.com.br:443), compose.prod.yaml (app em 127.0.0.1:8001), build OK, 5 processos RUNNING, app 200 via IP. PENDENTE: (1) DNS pandapost.com.br está na CLOUDFLARE — usuário vai atualizar registro A e depois emitir cert; (2) mcp-ops em restart loop (stdio, bug pré-existente); (3) mudanças infra/nginx.conf+docker-compose.yml NÃO commitadas.",
@@ -2068,6 +1976,70 @@
       "summary": "Sidebar: ícone do item 'Jogar' trocado de Gamepad2 (lucide-react) para AiOutlineAim (react-icons/ai) em web/src/components/layout/LayoutWrapper.tsx. Import de Gamepad2 removido (ficou sem uso). npx tsc --noEmit (web) → exit 0.",
       "touched": [
         "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-14T23:20:01.902Z",
+      "agent": "deepseek",
+      "summary": "Ícone AiOutlineAim no Jogar: commitado (42ff5ad), push na branch feat/advertencias-ban, merge na main do VPS (fast-forward), rebuild do nginx (vite build ✓ 11.49s) e site responde 200 em dev.m7arena.pro. GitHub main sincronizado: origin/main atualizado de 45dc8cd para 42ff5ad (push vps/main:main) — o VPS não tem credencial de push (fatal could not read Username), então o sync foi feito da máquina local.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-14T23:34:52.953Z",
+      "agent": "deepseek",
+      "summary": "Borda cortada (clip-path 12px, padrão dos cards de campeonato/vagas sala) aplicada em TODOS os cards da tela de perfil: header, Carteira, Punições (CarteiraEStrikes), Minha Equipe, E-mail de Acesso, EloBlocks (solo/flex), Performance e Conexões Sociais. Criei componente reutilizável web/src/components/ui/CutCard.tsx (fundo absoluto clipado + conteúdo fluindo sem clip, preservando dropdowns de lane do header e overflow-hidden onde havia blur decorativo). tsc --noEmit exit 0, vite build ✓ 6.93s, deploy na VPS feito (nginx rebuild, index-CHueIp44.js servido, site 200). Pendente validação visual do usuário.",
+      "touched": [
+        "web/src/pages/perfil.tsx",
+        "web/src/components/perfil/CarteiraEStrikes.tsx",
+        "web/src/components/ui/CutCard.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T01:41:45.934Z",
+      "agent": "deepseek",
+      "summary": "BUG CORRIGIDO (400 estado_invalido eterno na contestação): disputa e52e6eb1 da sala #28 ficou aberta quando a sala foi cancelada via /revisao/:id/decidir — essa rota não fechava disputas órfãs, e a rota /revisao/disputas/:id/decidir exigia sala 'encerrada' (revisao.ts:215), devolvendo 400 para sempre. Correção em api/src/routes/revisao.ts: (1) decisão de disputa trata sala 'cancelada' como já revertida — fecha a disputa sem reverter de novo; (2) winnerSide='cancel' fecha disputas abertas da sala na mesma transação. npx tsc --noEmit exit 0; 22/22 testes (disputas+revisao+escrow) passam. Commit a3f452a, push, deploy VPS (rebuild app só), site 200.",
+      "touched": [
+        "api/src/routes/revisao.ts"
+      ]
+    },
+    {
+      "at": "2026-08-15T02:02:26.180Z",
+      "agent": "deepseek",
+      "summary": "(1) Cargos corrigido: 'Erro ao carregar usuários' era 414 — byIds montava URL com 232 UUIDs (~8.5KB) e o nginx estoura o request line. byIds agora usa POST body (players.ts aceita POST /by-ids). (2) Cargo streamer confirmado: One Lucks (d6a76e2c, 78787878one@gmail.com). (3) 'Erro ao iniciar transmissão' corrigido: Streamers.tsx/useTransmissoesAtivas falavam com supabase.from('transmissoes') e a tabela não existia. Swap completo: tabela transmissoes (migration 0016 manual, padrão 0014/0015), rota /api/streams, SDK api.streams, front trocado. verify-swap: transmissoes sai (restam 9 = recrutamentos/votos_jogos/resultados_partidas). Deploy VPS: migration aplicada, app+nginx rebuild, site 200. Commit b880e53.",
+      "touched": [
+        "web/src/lib/api.ts",
+        "web/src/pages/AdminCargos.tsx",
+        "web/src/pages/Streamers.tsx",
+        "web/src/hooks/useTransmissoesAtivas.ts",
+        "api/src/routes/players.ts",
+        "api/src/routes/streams.ts",
+        "api/src/index.ts",
+        "db/schema/conteudo.ts",
+        "db/migrations/0016_transmissoes.sql"
+      ]
+    },
+    {
+      "at": "2026-08-15T02:05:58.637Z",
+      "agent": "deepseek",
+      "summary": "Partidas finalizadas com dados reais da Riot. Descoberto: match_results estava vazio (verificação automática nunca salvou payload) e o front só mostrava badge A/B/empate. Puxei da Riot o match real BR1_3271585963 (tournamentCode BR04fa2-dd6e4394, sala 30 5v5, 32min) via script na VPS, corrigi winner_side da sala 30 para 'blue' (o real — banco tinha 'red' de outro caminho) e inseri match_results com payload completo. API: match-shape ganhou resumoRiot() e o shape de salas encerradas agora devolve resultado_riot (vencedor, duração, placar kills/ouro, participantes com KDA/campeão/cs); jogadores do shape ganharam puuid. Front: ResultadoPartida mostra placar + duração + KDA por jogador (CardJogador ganhou kda), card de finalizadas do Jogar mostra placar real. tsc+build ok, deploy na VPS (app+nginx). Pendente validação visual do usuário em /5v5/30 e Jogar→Partidas Finalizadas.",
+      "touched": [
+        "api/src/lib/match-shape.ts",
+        "api/src/routes/matches.ts",
+        "web/src/components/partidas/ResultadoPartida.tsx",
+        "web/src/components/partidas/CardJogador.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/api/salamod1.ts"
+      ]
+    },
+    {
+      "at": "2026-08-15T02:33:30.013Z",
+      "agent": "gemini",
+      "summary": "Tela de partidas finalizadas ajustada: layout direto na tela (sem hub circular claro, gap proporcional e header de resultado centralizado), cards de vagas mantidos com dimensões e estilos idênticos, exibindo o ícone do campeão escolhido no lugar do avatar e KDA + CS (farm) com fallback resiliente por PUUID/nome. TypeScript e build passando com sucesso.",
+      "touched": [
+        "web/src/components/partidas/VagaSlot.tsx",
+        "web/src/pages/SalaMod1.tsx"
       ]
     }
   ]
