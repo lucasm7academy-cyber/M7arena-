@@ -347,6 +347,17 @@ export function RevisaoPartidas() {
         </div>
       )}
 
+      {/* Fila de partidas aguardando revisão */}
+      <div className="flex items-center gap-2">
+        <Swords className="w-4 h-4 text-primary" />
+        <h3 className="text-white font-black text-sm uppercase tracking-widest text-white/70">Partidas em análise</h3>
+        {!carregando && salas.length > 0 && (
+          <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
+            {salas.length} na fila
+          </span>
+        )}
+      </div>
+
       {!carregando && !erro && salas.length === 0 && (
         <div className="rounded-2xl p-10 text-center" style={CardStyle()}>
           <Check className="w-6 h-6 text-green-400 mx-auto mb-2" />
