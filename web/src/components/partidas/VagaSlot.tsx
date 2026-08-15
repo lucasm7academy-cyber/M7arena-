@@ -265,10 +265,10 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     return (
         <div className="w-full" style={{ transform: `translateX(${arcOffset})` }}>
             <motion.div
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={aoEntrar}
-                className={`group relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] bg-white/10 hover:bg-white/30 transition-colors duration-300 overflow-hidden cursor-pointer`}
+                whileHover={isFinalizada ? undefined : { scale: 1.015 }}
+                whileTap={isFinalizada ? undefined : { scale: 0.98 }}
+                onClick={isFinalizada ? undefined : aoEntrar}
+                className={`group relative ${cardWidth} h-[min(16vw,8.2vmin)] p-[1px] ${isFinalizada ? 'bg-white/5 opacity-40 cursor-default' : 'bg-white/10 hover:bg-white/30 transition-colors duration-300 cursor-pointer'} overflow-hidden`}
                 style={{
                     clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
                 }}
@@ -283,7 +283,9 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         <UserPlus className="w-[min(6vw,2.5vmin)] h-[min(6vw,2.5vmin)] text-white/10 group-hover:text-white/60 transition-colors" />
                     </div>
                     <div className={`flex flex-col ${isTimeA ? 'items-start' : 'items-end'}`}>
-                        <span className="text-[min(4vw,1.6vmin)] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">ENTRAR</span>
+                        <span className="text-[min(4vw,1.6vmin)] font-black text-white/10 uppercase tracking-[0.4em] group-hover:text-white/60 transition-colors">
+                            {isFinalizada ? 'VAZIO' : 'ENTRAR'}
+                        </span>
                         <div className={`flex items-center gap-[1vmin] mt-[0.2vmin] ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
                             <img src={roleIconImg} className="w-[min(5vw,2vmin)] h-[min(5vw,2vmin)] opacity-[0.05] group-hover:opacity-40 transition-opacity brightness-0 invert" alt={role} />
                             <span className="text-[min(3.5vw,1.4vmin)] font-black text-white/5 uppercase tracking-widest group-hover:text-white/20">{role}</span>
