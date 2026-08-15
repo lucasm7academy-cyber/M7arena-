@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T03:59:01.669Z",
+  "updatedAt": "2026-08-15T04:03:32.179Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1722,24 +1722,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-10T00:25:52.671Z",
-      "agent": "deepseek",
-      "summary": "Sessão: compartilhar sala, rota por modo, OG preview social, nome de sala e fix Riot. (1) Botão Compartilhar copia mensagem formatada com emojis/elo/vagas/MC/link (741618d). (2) Rota /sala-mod1/:id → /:modo/:id; API adiciona modo em wallet emPartida e erro ja_em_sala_apostada; ADR-036 (c0b537a). (3) Página OG /api/og/:modo/:id servida a crawlers via nginx map de User-Agent (og:image = fundoCard do modo); commits 2a00d25, 54e0a2b. (4) Fix undefined: compartilhar usava camelCase, shape da API é snake_case (527a5c0). (5) Nome default de sala sem nome = '<modo> Personalizada' (c5b471d). (6) Deploy VPS: merge + compose rebuild; OG validado (dev.m7arena.pro/5v5/8 → 1/10 vagas, fundoCard5v5.png 200). (7) RIOT_API_KEY estava VAZIA no .env da VPS → 401 no vínculo Riot; configurada key do usuário, validado 200 (ADR-037, BLK-006). Pendente: testar preview WhatsApp (cache antigo); RIOT key é dev key expira ~24h; front da VPS com merges locais não commitados.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/App.tsx",
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/lib/api.ts",
-        "api/src/routes/og.ts",
-        "api/src/routes/riot.ts",
-        "api/src/index.ts",
-        "infra/nginx.conf",
-        "infra/nginx.local.conf",
-        ".env VPS (RIOT_API_KEY)"
-      ]
-    },
-    {
       "at": "2026-08-10T04:03:00.283Z",
       "agent": "deepseek",
       "summary": "Sala (SalaMod1.tsx): tutorial de como colar o código dentro do display. Imagem do usuário (Novo_Projeto_(18).png) copiada para web/public/images/tutorial-codigo.jpeg (1024x1024). Overlay 'PARTIDA CONFIRMADA' (estado iniciando_partida) agora exibe a imagem preenchendo o círculo com gradiente p/ legibilidade, título 'Preparar para a Batalha!' e o código da sala em destaque; botão 'Copiar Código' saiu do overlay e foi para o ACTION FOOTER no rodapé (mesmo padrão Confirmar/Enviar Print). Build local: npm run build ok (16.35s, dist com a imagem). tsc tem 2 erros pré-existentes não relacionados (ElectricBorder.tsx, Streamers.tsx). Deploy VPS: commit 8e7cac9 + push, merge a360cd6 na main, rebuild imagem nginx (front), validado: /images/tutorial-codigo.jpeg → HTTP 200 537433 bytes image/jpeg. Pendente: usuário testar na sala.",
@@ -2039,6 +2021,14 @@
       "summary": "Ajustada a responsividade mobile das salas (SalaMod1 e VagaSlot): (1) Cards de jogadores com altura confortável (60px no mobile em vez de ficarem espremidos), com avatares/ícones de campeão 40x40px nítidos e fontes legíveis; (2) Largura padronizada e centralizada (max-w-[440px] centralizado); (3) Display central no fluxo vertical responsivo do mobile entre os times com proporção circular perfeita (84vw max 340px); (4) Header de resultado da partida finalizada centralizado e adaptado a telas pequenas. Verificado via tsc e build.",
       "touched": [
         "web/src/components/partidas/VagaSlot.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T04:03:32.178Z",
+      "agent": "gemini",
+      "summary": "Ajustado layout sequencial no eixo Y para telas mobile em SalaMod1.tsx: (1) O conteúdo agora flui de cima para baixo com espaçamento sequencial natural (sem centralização vertical no Y) e centralização perfeita no eixo X; (2) Botão de 'Voltar ao Lobby' e demais botões do rodapé (Minha Carteira, Confirmar, Copiar Código, Verificar) aumentados para touch-target mobile confortável com preenchimento generoso e tipografia nítida. Verificado via tsc e build.",
+      "touched": [
         "web/src/pages/SalaMod1.tsx"
       ]
     }

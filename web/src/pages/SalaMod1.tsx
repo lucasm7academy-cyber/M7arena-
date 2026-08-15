@@ -335,7 +335,7 @@ ${link}`;
     };
 
     return (
-        <div className="flex-1 w-full min-h-full bg-[#050505] flex flex-col items-center p-0 font-sans relative overflow-hidden md:h-full md:justify-between text-white">
+        <div className="flex-1 w-full min-h-screen bg-[#050505] flex flex-col items-center justify-start md:justify-between p-0 font-sans relative overflow-x-hidden text-white">
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0">
@@ -481,7 +481,7 @@ ${link}`;
             )}
 
             {/* MAIN CENTRAL AREA */}
-            <div className="w-full relative flex flex-col items-center justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin] min-h-[70vh] md:min-h-0">
+            <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
 
                 {/* HEADER DE RESULTADO — partida finalizada: vencedor + placar +
                     duração no topo, no padrão de borda cortada, sem o círculo. */}
@@ -545,7 +545,7 @@ ${link}`;
 
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
-                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-6 md:gap-[4vmin] py-2 md:py-0 ${
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[4vmin] py-2 md:py-0 ${
                     sala.estado === 'encerrada'
                         ? 'md:gap-[8vmin]'
                         : isX1
@@ -764,16 +764,16 @@ ${link}`;
                             key="overlay-partida-confirmada"
                             initial={{ opacity: 0, filter: 'blur(10px)' }} 
                             animate={{ opacity: 1, filter: 'blur(0px)' }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55vmin] h-[55vmin] rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
                         >
                             {/* Tutorial de como colar o código — dentro do display, sem textos */}
                             <motion.img
                                 initial={{ scale: 0.85, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ duration: 0.6 }}
-                                src="/images/tutorial-codigo.webp"
-                                alt="Tutorial de como colar o código da sala"
-                                className="absolute inset-0 w-full h-full object-cover"
+                                src="/images/tutorial.png"
+                                alt="Como entrar na partida personalizada"
+                                className="w-[85%] h-[85%] object-contain rounded-full select-none pointer-events-none drop-shadow-[0_0_30px_rgba(255,183,0,0.35)]"
                             />
                         </motion.div>
                     )}
@@ -832,19 +832,19 @@ ${link}`;
             </div>
 
             {/* ACTION FOOTER */}
-            <div className="w-full h-[15vh] flex flex-col items-center justify-center z-[70] pb-[5vh] pointer-events-none">
+            <div className="w-full min-h-[80px] md:h-[15vh] flex flex-col items-center justify-center z-[70] pt-4 pb-8 md:pb-[5vh] pointer-events-none shrink-0">
                 <AnimatePresence>
                     {/* ✅ BOTÃO DE CONFIRMAR - Aparece apenas se NÃO confirmou ainda */}
                     {sala.estado === 'confirmacao' && jogadorAtual && !jogadorAtual.confirmado && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
-                            className="flex items-center gap-[2vmin]">
+                            className="flex items-center gap-3 md:gap-[2vmin]">
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={confirmar}
                                 className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 transition-colors relative z-10"
+                                <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 transition-colors relative z-10"
                                     style={{ clipPath: CUT_INNER }}>
                                     Confirmar Presença
                                 </span>
@@ -855,7 +855,7 @@ ${link}`;
                                 className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-red-500 px-[6vmin] py-[2.5vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] text-white hover:bg-red-600 transition-colors relative z-10"
+                                <span className="block bg-red-500 px-6 py-3.5 md:px-[6vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-sm md:text-[1.4vmin] text-white hover:bg-red-600 transition-colors relative z-10"
                                     style={{ clipPath: CUT_INNER }}>
                                     Recusar
                                 </span>
@@ -870,9 +870,9 @@ ${link}`;
                                 className="pointer-events-auto relative p-[1.5px] bg-black"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-green-500 px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black flex items-center gap-[1.5vmin]"
+                                <span className="block bg-green-500 px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black flex items-center gap-2 md:gap-[1.5vmin]"
                                     style={{ clipPath: CUT_INNER }}>
-                                    <Check className="w-[2.5vmin] h-[2.5vmin]" />
+                                    <Check className="w-5 h-5 md:w-[2.5vmin] md:h-[2.5vmin]" />
                                     Confirmado
                                 </span>
                             </motion.div>
@@ -883,20 +883,20 @@ ${link}`;
                         de confirmar presença / enviar print) */}
                     {sala.estado === 'iniciando_partida' && codigoPartida && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
-                            className="flex flex-col items-center gap-[1.5vmin]">
-                            <p className="text-[1.4vmin] font-black text-white uppercase tracking-[0.5em]">Prepare-se para a batalha</p>
+                            className="flex flex-col items-center gap-2 md:gap-[1.5vmin]">
+                            <p className="text-xs md:text-[1.4vmin] font-black text-white uppercase tracking-[0.4em] md:tracking-[0.5em]">Prepare-se para a batalha</p>
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={copiarCodigo}
                                 className="pointer-events-auto relative p-[1.5px] bg-black"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.5vmin] transition-colors"
+                                <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.5vmin] transition-colors"
                                     style={{ clipPath: CUT_INNER }}>
                                     {codigoCopiado ? (
-                                        <Check className="w-[2.2vmin] h-[2.2vmin]" />
+                                        <Check className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
                                     ) : (
-                                        <Copy className="w-[2.2vmin] h-[2.2vmin]" />
+                                        <Copy className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
                                     )}
                                     {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
                                 </span>
@@ -916,9 +916,9 @@ ${link}`;
                                 className="pointer-events-auto relative p-[1.5px] bg-black disabled:opacity-50"
                                 style={{ clipPath: CUT_FRAME }}
                             >
-                                <span className="block bg-[#FFB700] px-[12vmin] py-[2.5vmin] font-black uppercase tracking-[0.5em] text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.5vmin] transition-colors"
+                                <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.5vmin] transition-colors"
                                     style={{ clipPath: CUT_INNER }}>
-                                    {verificandoPartida ? <Loader className="w-[2.2vmin] h-[2.2vmin] animate-spin" /> : <Check className="w-[2.2vmin] h-[2.2vmin]" />}
+                                    {verificandoPartida ? <Loader className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin] animate-spin" /> : <Check className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />}
                                     {verificandoPartida ? 'Verificando...' : 'Verificar Partida'}
                                 </span>
                             </motion.button>
@@ -928,37 +928,37 @@ ${link}`;
                     {/* PARTIDA FINALIZADA — status financeiro pessoal e botões de ação */}
                     {sala.estado === 'encerrada' && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
-                            className="flex flex-col items-center gap-[1.5vmin] z-30">
+                            className="flex flex-col items-center gap-3 md:gap-[1.5vmin] z-30 w-full px-3 md:px-0">
                             {ehApostada && usuarioParticipou && (
                                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                                    className={`px-[3.5vmin] py-[1vmin] rounded-full border backdrop-blur-md flex items-center gap-[1vmin] ${
+                                    className={`px-4 py-2 md:px-[3.5vmin] md:py-[1vmin] rounded-full border backdrop-blur-md flex items-center gap-2 md:gap-[1vmin] text-center ${
                                         usuarioVenceu 
                                             ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
                                             : 'bg-white/5 border-white/10 text-white/60'
                                     }`}>
                                     {usuarioVenceu ? (
                                         <>
-                                            <GiTwoCoins className="w-[2vmin] h-[2vmin] text-[#FFB700]" />
-                                            <span className="text-[1.3vmin] font-black uppercase tracking-wider">
+                                            <GiTwoCoins className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
+                                            <span className="text-xs md:text-[1.3vmin] font-black uppercase tracking-wider">
                                                 Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} MC</strong> nesta partida!
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="text-[1.2vmin] font-bold uppercase tracking-wider text-white/50">
+                                        <span className="text-[11px] md:text-[1.2vmin] font-bold uppercase tracking-wider text-white/50">
                                             Partida finalizada • Débito da entrada: -{apostaPorJogador} MC
                                         </span>
                                     )}
                                 </motion.div>
                             )}
 
-                            <div className="flex items-center gap-[2vmin]">
+                            <div className="flex flex-wrap items-center justify-center gap-3 md:gap-[2vmin] w-full max-w-[440px]">
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => navigate('/jogar')}
-                                    className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
+                                    className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors flex-1 sm:flex-initial"
                                     style={{ clipPath: CUT_FRAME }}
                                 >
-                                    <span className="block bg-[#FFB700] px-[7vmin] py-[1.8vmin] font-black uppercase tracking-[0.4em] text-[1.4vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1vmin] transition-colors"
+                                    <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[7vmin] md:py-[1.8vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-sm md:text-[1.4vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1vmin] transition-colors shadow-[0_0_25px_rgba(255,183,0,0.35)]"
                                         style={{ clipPath: CUT_INNER }}>
                                         Voltar ao Lobby
                                     </span>
@@ -968,12 +968,12 @@ ${link}`;
                                     <motion.button
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => navigate('/perfil')}
-                                        className="pointer-events-auto relative p-[1.5px] bg-white/20 hover:bg-white/40 transition-colors"
+                                        className="pointer-events-auto relative p-[1.5px] bg-white/20 hover:bg-white/40 transition-colors flex-1 sm:flex-initial"
                                         style={{ clipPath: CUT_FRAME }}
                                     >
-                                        <span className="block bg-[#0A0A0A] px-[4vmin] py-[1.8vmin] font-black uppercase tracking-[0.3em] text-[1.3vmin] text-white hover:text-[#FFB700] flex items-center justify-center gap-[1vmin] transition-colors"
+                                        <span className="block bg-[#0A0A0A] px-6 py-3.5 md:px-[4vmin] md:py-[1.8vmin] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs sm:text-sm md:text-[1.3vmin] text-white hover:text-[#FFB700] flex items-center justify-center gap-2 md:gap-[1vmin] transition-colors"
                                             style={{ clipPath: CUT_INNER }}>
-                                            <GiTwoCoins className="w-[1.8vmin] h-[1.8vmin] text-[#FFB700]" />
+                                            <GiTwoCoins className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-[#FFB700]" />
                                             Minha Carteira
                                         </span>
                                     </motion.button>
