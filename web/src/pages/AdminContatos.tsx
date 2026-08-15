@@ -105,19 +105,19 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-black text-white uppercase">Contatos dos Times</h2>
-        <p className="text-white/30 text-xs mt-1">Visualize e gerencie WhatsApp e Discord dos responsáveis.</p>
+        <p className="text-zinc-400 text-xs mt-1">Visualize e gerencie WhatsApp e Discord dos responsáveis.</p>
       </div>
 
       {!loading && (
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input
               type="text"
               placeholder="Buscar por nome ou tag..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-white/20 placeholder:text-white/20"
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all shadow-sm"
             />
           </div>
           <div className="flex gap-2">
@@ -125,15 +125,15 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
               onClick={() => setFilterComContato(!filterComContato)}
               className={`px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
                 filterComContato
-                  ? 'bg-white text-black'
-                  : 'bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+                  ? 'bg-gradient-to-r from-primary to-yellow-500 text-black shadow-md'
+                  : 'bg-[#0e1320] border border-white/15 text-zinc-300 hover:text-white hover:bg-white/10'
               }`}
             >
               {filterComContato ? '✓ Com Contato' : 'Todos'}
             </button>
             <button
               onClick={handleExportCSV}
-              className="px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
+              className="px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-[#0e1320] border border-white/15 text-zinc-300 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2 shadow-sm"
             >
               <Download className="w-4 h-4" />
               CSV
@@ -150,11 +150,11 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
 
       {!loading && timesFiltered.length > 0 && (
         <div className="space-y-2">
-          <div className="grid grid-cols-12 gap-3 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
-            <div className="col-span-4 text-[10px] text-white/40 uppercase font-black tracking-widest">Time</div>
-            <div className="col-span-4 text-[10px] text-white/40 uppercase font-black tracking-widest flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp</div>
-            <div className="col-span-3 text-[10px] text-white/40 uppercase font-black tracking-widest flex items-center gap-1"><Phone className="w-3 h-3" /> Discord</div>
-            <div className="col-span-1 text-[10px] text-white/40 uppercase font-black tracking-widest text-right">#</div>
+          <div className="grid grid-cols-12 gap-3 px-4 py-2 bg-[#0e1320] rounded-xl border border-white/10">
+            <div className="col-span-4 text-[10px] text-zinc-400 uppercase font-black tracking-widest">Time</div>
+            <div className="col-span-4 text-[10px] text-zinc-400 uppercase font-black tracking-widest flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp</div>
+            <div className="col-span-3 text-[10px] text-zinc-400 uppercase font-black tracking-widest flex items-center gap-1"><Phone className="w-3 h-3" /> Discord</div>
+            <div className="col-span-1 text-[10px] text-zinc-400 uppercase font-black tracking-widest text-right">#</div>
           </div>
 
           <AnimatePresence>
@@ -180,19 +180,19 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="grid grid-cols-12 gap-3 px-4 py-3 bg-white/[0.02] border border-white/10 rounded-xl hover:border-white/20 hover:bg-white/5 transition-all"
+                  className="grid grid-cols-12 gap-3 px-4 py-3 bg-[#131a29] border border-white/10 rounded-xl hover:border-white/20 hover:bg-[#192236] transition-all shadow-md items-center"
                 >
                   <div className="col-span-4 flex items-center gap-3">
                     {time.logo_url ? (
-                      <img src={time.logo_url} alt={time.nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                      <img src={time.logo_url} alt={time.nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-white/10" />
                     ) : (
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] text-white/40 flex-shrink-0" style={{ background: `linear-gradient(135deg, ${time.gradient_from}, ${time.gradient_from}30)` }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] text-white/50 flex-shrink-0" style={{ background: `linear-gradient(135deg, ${time.gradient_from}, ${time.gradient_from}30)` }}>
                         {time.tag}
                       </div>
                     )}
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-white truncate">{time.nome}</p>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest">#{time.tag}</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-widest">#{time.tag}</p>
                     </div>
                   </div>
 
@@ -205,13 +205,13 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
                           {formatarTelefone(time.whatsapp)}
                         </a>
                         <button onClick={handleCopyWhatsapp}
-                          className={`flex-shrink-0 p-2 rounded-lg transition-all ${copiedWa ? 'bg-green-500/30 text-green-400' : 'bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70'}`}
+                          className={`flex-shrink-0 p-2 rounded-lg transition-all ${copiedWa ? 'bg-green-500/30 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white'}`}
                           title="Copiar WhatsApp">
                           {copiedWa ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         </button>
                       </>
                     ) : (
-                      <p className="text-xs text-white/20 italic">-</p>
+                      <p className="text-xs text-zinc-600 italic">-</p>
                     )}
                   </div>
 
@@ -222,13 +222,13 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
                           {time.discord}
                         </div>
                         <button onClick={handleCopyDiscord}
-                          className={`flex-shrink-0 p-2 rounded-lg transition-all ${copiedDisc ? 'bg-blue-500/30 text-blue-400' : 'bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70'}`}
+                          className={`flex-shrink-0 p-2 rounded-lg transition-all ${copiedDisc ? 'bg-blue-500/30 text-blue-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white'}`}
                           title="Copiar Discord">
                           {copiedDisc ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         </button>
                       </>
                     ) : (
-                      <p className="text-xs text-white/20 italic">-</p>
+                      <p className="text-xs text-zinc-600 italic">-</p>
                     )}
                   </div>
 
@@ -243,33 +243,33 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
       )}
 
       {!loading && times.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl">
-          <AlertCircle className="w-12 h-12 mx-auto text-white/20 mb-3" />
+        <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl bg-[#0e1320]/60">
+          <AlertCircle className="w-12 h-12 mx-auto text-zinc-600 mb-3" />
           <h2 className="text-white font-black uppercase mb-1">Nenhum time cadastrado</h2>
-          <p className="text-white/40 text-sm">Quando times forem criados, seus contatos aparecerão aqui.</p>
+          <p className="text-zinc-400 text-sm">Quando times forem criados, seus contatos aparecerão aqui.</p>
         </div>
       )}
 
       {!loading && times.length > 0 && timesFiltered.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl">
-          <Search className="w-12 h-12 mx-auto text-white/20 mb-3" />
+        <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl bg-[#0e1320]/60">
+          <Search className="w-12 h-12 mx-auto text-zinc-600 mb-3" />
           <h2 className="text-white font-black uppercase mb-1">Nenhum resultado</h2>
-          <p className="text-white/40 text-sm">Ajuste seus filtros e tente novamente.</p>
+          <p className="text-zinc-400 text-sm">Ajuste seus filtros e tente novamente.</p>
         </div>
       )}
 
       {!loading && times.length > 0 && (
-        <div className="flex justify-center gap-8 py-6 border-t border-white/5">
+        <div className="flex justify-center gap-8 py-6 border-t border-white/10">
           <div className="text-center">
-            <p className="text-white/30 text-[10px] uppercase font-black tracking-widest mb-1">Total</p>
+            <p className="text-zinc-400 text-[10px] uppercase font-black tracking-widest mb-1">Total</p>
             <p className="text-2xl font-black text-primary">{times.length}</p>
           </div>
           <div className="text-center">
-            <p className="text-white/30 text-[10px] uppercase font-black tracking-widest mb-1">Com Contato</p>
+            <p className="text-zinc-400 text-[10px] uppercase font-black tracking-widest mb-1">Com Contato</p>
             <p className="text-2xl font-black text-green-400">{times.filter(t => t.whatsapp || t.discord).length}</p>
           </div>
           <div className="text-center">
-            <p className="text-white/30 text-[10px] uppercase font-black tracking-widest mb-1">Sem Contato</p>
+            <p className="text-zinc-400 text-[10px] uppercase font-black tracking-widest mb-1">Sem Contato</p>
             <p className="text-2xl font-black text-red-400">{times.filter(t => !t.whatsapp && !t.discord).length}</p>
           </div>
         </div>
@@ -289,11 +289,11 @@ export default function AdminContatos() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
-    <div className="flex-1 bg-[#050505] min-h-screen">
+    <div className="flex-1 bg-[#0b0f19] min-h-screen text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,184,0,0.08),rgba(255,255,255,0))]">
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
         <button
           onClick={() => navigate('/admin')}
-          className="flex items-center gap-2 text-white/40 hover:text-white text-sm font-black uppercase tracking-widest transition-colors"
+          className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-black uppercase tracking-widest transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para o painel

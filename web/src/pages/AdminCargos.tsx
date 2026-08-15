@@ -99,40 +99,40 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-black text-white uppercase">Gerenciar Cargos</h2>
-        <p className="text-white/30 text-xs mt-1">
+        <p className="text-zinc-400 text-xs mt-1">
           {isProprietario ? 'Atribua funções a usuários.' : 'Visualização apenas — somente proprietários editam.'}
         </p>
       </div>
 
       {!isProprietario && (
-        <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm font-bold">
+        <div className="p-3.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-sm font-bold shadow-sm">
           🔒 Apenas proprietários podem alterar cargos.
         </div>
       )}
 
       {erro && (
-        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold">{erro}</div>
+        <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-sm font-bold shadow-sm">{erro}</div>
       )}
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
         <input
           type="text"
           placeholder="Buscar por email ou Riot ID..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/20 focus:outline-none focus:border-white/20"
+          className="w-full pl-10 pr-4 py-3 bg-[#0e1320] border border-white/15 rounded-xl text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all shadow-sm"
         />
       </div>
 
-      <div className="overflow-auto rounded-xl border border-white/10" style={{ background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)' }}>
+      <div className="overflow-auto rounded-xl border border-white/10 shadow-xl" style={{ background: 'linear-gradient(180deg, rgba(22, 28, 44, 0.8) 0%, rgba(15, 19, 30, 0.9) 100%)', backdropFilter: 'blur(16px)' }}>
         <table className="w-full text-left text-sm">
-          <thead className="bg-white/5 border-b border-white/10 sticky top-0">
+          <thead className="bg-[#0e1320] border-b border-white/10 sticky top-0">
             <tr>
-              <th className="px-4 py-3 font-black text-white/60 uppercase tracking-widest text-[10px]">Email</th>
-              <th className="px-4 py-3 font-black text-white/60 uppercase tracking-widest text-[10px]">Usuário</th>
-              <th className="px-4 py-3 font-black text-white/60 uppercase tracking-widest text-[10px]">Cargo</th>
-              <th className="px-4 py-3 font-black text-white/60 uppercase tracking-widest text-[10px]">Ações</th>
+              <th className="px-4 py-3 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Email</th>
+              <th className="px-4 py-3 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Usuário</th>
+              <th className="px-4 py-3 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Cargo</th>
+              <th className="px-4 py-3 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -143,13 +143,13 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
               const cargoColorsSelecionado = CARGO_COLORS[cargoSelecionado];
 
               return (
-                <tr key={usuario.user_id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-4 py-3 text-white/80 text-sm font-medium">{usuario.email}</td>
+                <tr key={usuario.user_id} className="hover:bg-white/[0.04] transition-colors">
+                  <td className="px-4 py-3 text-zinc-200 text-sm font-medium">{usuario.email}</td>
                   <td className="px-4 py-3 text-sm">
                     {usuario.riotId !== 'Sem LOL' ? (
-                      <span className="text-white/80 font-medium">{usuario.riotId}</span>
+                      <span className="text-white font-bold">{usuario.riotId}</span>
                     ) : (
-                      <span className="text-red-400/60 text-xs">Sem Riot ID</span>
+                      <span className="text-zinc-500 text-xs font-bold">Sem Riot ID</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -157,14 +157,14 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
                       <select
                         value={cargoSelecionado}
                         onChange={(e) => setNovosCargos({ ...novosCargos, [usuario.user_id]: e.target.value as CargoAdmin })}
-                        className={`px-2.5 py-1.5 rounded border font-bold text-xs cursor-pointer ${cargoColorsSelecionado.bg} ${cargoColorsSelecionado.border} ${cargoColorsSelecionado.text} focus:outline-none`}
+                        className={`px-2.5 py-1.5 rounded-lg border font-bold text-xs cursor-pointer ${cargoColorsSelecionado.bg} ${cargoColorsSelecionado.border} ${cargoColorsSelecionado.text} focus:outline-none`}
                       >
                         {(['proprietario', 'admin', 'organizador', 'streamer', 'coach', 'jogador'] as CargoAdmin[]).map(cargo => (
-                          <option key={cargo} value={cargo} className="bg-[#111]">{CARGO_LABELS[cargo]}</option>
+                          <option key={cargo} value={cargo} className="bg-[#131a29] text-white">{CARGO_LABELS[cargo]}</option>
                         ))}
                       </select>
                     ) : (
-                      <span className={`px-2.5 py-1 rounded font-bold text-xs ${colors.bg} ${colors.border} ${colors.text} border inline-block`}>
+                      <span className={`px-2.5 py-1 rounded-lg font-bold text-xs ${colors.bg} ${colors.border} ${colors.text} border inline-block`}>
                         {CARGO_LABELS[usuario.cargo]}
                       </span>
                     )}
@@ -174,7 +174,7 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSalvar(usuario.user_id)}
-                          className="p-2 rounded-lg bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30"
+                          className="p-2 rounded-lg bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 shadow-sm"
                         >
                           <Save className="w-4 h-4" />
                         </button>
@@ -184,7 +184,7 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
                             const { [usuario.user_id]: _, ...restante } = novosCargos;
                             setNovosCargos(restante);
                           }}
-                          className="p-2 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30"
+                          className="p-2 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30 shadow-sm"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -198,8 +198,8 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
                         }}
                         className={`p-2 rounded-lg border transition-colors ${
                           isProprietario
-                            ? 'bg-blue-500/20 border-blue-500/40 text-blue-400 hover:bg-blue-500/30 cursor-pointer'
-                            : 'bg-gray-500/10 border-gray-500/20 text-gray-500 cursor-not-allowed opacity-50'
+                            ? 'bg-blue-500/20 border-blue-500/40 text-blue-400 hover:bg-blue-500/30 cursor-pointer shadow-sm'
+                            : 'bg-zinc-800/40 border-white/5 text-zinc-600 cursor-not-allowed opacity-50'
                         }`}
                         disabled={!isProprietario}
                         title={!isProprietario ? 'Apenas proprietários podem editar cargos' : 'Editar cargo'}
@@ -215,14 +215,14 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
         </table>
 
         {usuariosFiltrados.length === 0 && (
-          <div className="p-8 text-center text-white/30">
-            <Shield className="w-10 h-10 mx-auto mb-3 opacity-20" />
+          <div className="p-8 text-center text-zinc-500">
+            <Shield className="w-10 h-10 mx-auto mb-3 opacity-30 text-zinc-600" />
             <p className="text-sm font-black uppercase tracking-widest">Nenhum usuário encontrado</p>
           </div>
         )}
       </div>
 
-      <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+      <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/25 shadow-sm">
         <p className="text-xs text-blue-300">
           <strong>ℹ Informação:</strong> Novos usuários recebem cargo "Jogador" automaticamente.
         </p>
@@ -240,11 +240,11 @@ export default function AdminCargos() {
   const adminCargo = (perfil?.cargo as CargoAdmin) || 'jogador';
 
   return (
-    <div className="flex-1 bg-[#050505] min-h-screen">
+    <div className="flex-1 bg-[#0b0f19] min-h-screen text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,184,0,0.08),rgba(255,255,255,0))]">
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <button
           onClick={() => navigate('/admin')}
-          className="flex items-center gap-2 text-white/40 hover:text-white text-sm font-black uppercase tracking-widest transition-colors"
+          className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-black uppercase tracking-widest transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para o painel

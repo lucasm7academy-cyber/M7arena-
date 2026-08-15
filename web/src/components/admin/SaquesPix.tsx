@@ -9,7 +9,12 @@ import {
 import { api, type ApiWithdrawal } from '../../lib/api';
 
 function CardStyle() {
-  return { border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)' };
+  return {
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'linear-gradient(180deg, rgba(22, 28, 44, 0.8) 0%, rgba(15, 19, 30, 0.9) 100%)',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.35)',
+    backdropFilter: 'blur(16px)',
+  };
 }
 
 function gerarUuid(): string {
@@ -39,9 +44,9 @@ function horasDesde(iso?: string | null): string {
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  pending: { label: 'Pendente', cls: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' },
-  paid: { label: 'Pago', cls: 'bg-green-500/10 border-green-500/20 text-green-400' },
-  rejected: { label: 'Rejeitado', cls: 'bg-red-500/10 border-red-500/20 text-red-400' },
+  pending: { label: 'Pendente', cls: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400' },
+  paid: { label: 'Pago', cls: 'bg-green-500/15 border-green-500/30 text-green-400' },
+  rejected: { label: 'Rejeitado', cls: 'bg-red-500/15 border-red-500/30 text-red-400' },
 };
 
 export function SaquesPix() {
@@ -109,7 +114,7 @@ export function SaquesPix() {
         <button
           onClick={carregar}
           disabled={carregando}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-white/40 hover:text-white hover:bg-white/5 font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-30"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-white/15 bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-30 shadow-sm"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${carregando ? 'animate-spin' : ''}`} />
           Atualizar
@@ -123,9 +128,9 @@ export function SaquesPix() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${
-              popup.tipo === 'sucesso' ? 'bg-green-500/10 border-green-500/20 text-green-400'
-              : popup.tipo === 'info' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
-              : 'bg-red-500/10 border-red-500/20 text-red-400'
+              popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400'
+              : popup.tipo === 'info' ? 'bg-purple-500/15 border-purple-500/30 text-purple-400'
+              : 'bg-red-500/15 border-red-500/30 text-red-400'
             }`}
           >
             {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : popup.tipo === 'info' ? <AlertTriangle className="w-4 h-4" /> : <X className="w-4 h-4" />}
@@ -135,14 +140,14 @@ export function SaquesPix() {
       </AnimatePresence>
 
       {carregando && pendentes.length === 0 && (
-        <div className="rounded-2xl p-10 flex flex-col items-center gap-3" style={CardStyle()}>
+        <div className="rounded-2xl p-10 flex flex-col items-center gap-3 shadow-xl" style={CardStyle()}>
           <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          <p className="text-white/40 text-sm font-bold">Carregando solicitações...</p>
+          <p className="text-zinc-400 text-sm font-bold">Carregando solicitações...</p>
         </div>
       )}
 
       {!carregando && erro && (
-        <div className="rounded-2xl p-8 border border-red-500/20 bg-red-500/5 text-center">
+        <div className="rounded-2xl p-8 border border-red-500/30 bg-red-500/10 text-center shadow-xl">
           <AlertTriangle className="w-6 h-6 text-red-400 mx-auto mb-2" />
           <p className="text-red-300 text-sm font-bold">{erro}</p>
         </div>
@@ -150,52 +155,52 @@ export function SaquesPix() {
 
       {/* Fila dos pendentes */}
       <div>
-        <p className="text-white/40 text-xs font-black uppercase mb-3">
+        <p className="text-zinc-400 text-xs font-black uppercase tracking-wider mb-3">
           Pendentes ({pendentes.length})
         </p>
         {pendentes.length === 0 ? (
-          <div className="rounded-2xl p-8 text-center" style={CardStyle()}>
+          <div className="rounded-2xl p-8 text-center shadow-xl" style={CardStyle()}>
             <Check className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <p className="text-white/40 text-sm font-bold">Nenhum saque aguardando pagamento.</p>
+            <p className="text-zinc-400 text-sm font-bold">Nenhum saque aguardando pagamento.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {pendentes.map((p) => {
               const processando = processandoId === p.id;
               return (
-                <div key={p.id} className="rounded-2xl p-5 space-y-4" style={CardStyle()}>
+                <div key={p.id} className="rounded-2xl p-5 space-y-4 shadow-xl" style={CardStyle()}>
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/30 flex items-center justify-center shrink-0">
-                        <ArrowDownCircle className="w-5 h-5 text-[#FFD700]" />
+                      <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/35 flex items-center justify-center shrink-0 shadow-sm">
+                        <ArrowDownCircle className="w-5 h-5 text-primary" />
                       </div>
                       <div>
                         <p className="text-white font-black text-sm">
                           {p.displayName || p.riotId || 'Jogador'}
-                          {p.riotId && <span className="text-white/40 text-xs ml-2">{p.riotId}</span>}
+                          {p.riotId && <span className="text-zinc-400 text-xs ml-2">[{p.riotId}]</span>}
                         </p>
-                        <p className="text-white/40 text-xs flex items-center gap-1.5 mt-0.5">
-                          <Clock className="w-3 h-3" />
+                        <p className="text-zinc-400 text-xs flex items-center gap-1.5 mt-0.5">
+                          <Clock className="w-3.5 h-3.5" />
                           Solicitado {horasDesde(p.createdAt)}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] text-[10px] font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-[10px] font-black uppercase tracking-widest">
                         <Coins className="w-3 h-3" />
                         {p.mcAmount.toLocaleString('pt-BR')} MC
                       </span>
-                      <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 text-[10px] font-black uppercase tracking-widest">
+                      <span className="px-2.5 py-1 rounded-lg bg-[#0e1320] border border-white/10 text-zinc-300 text-[10px] font-black uppercase tracking-widest">
                         {brl(p.amountBrl)}
                       </span>
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">Chave PIX de destino</p>
+                  <div className="rounded-xl border border-white/10 bg-[#0e1320] px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Chave PIX de destino</p>
                     <p className="text-white font-black text-sm">{p.pixName}</p>
-                    <p className="text-white/60 text-xs mt-0.5">
-                      [{p.pixType}] <span className="font-bold">{p.pixKey}</span>
+                    <p className="text-zinc-300 text-xs mt-0.5">
+                      [{p.pixType}] <span className="font-bold text-white">{p.pixKey}</span>
                     </p>
                   </div>
 
@@ -203,7 +208,7 @@ export function SaquesPix() {
                     <button
                       onClick={() => decidir(p, 'paid')}
                       disabled={processando}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border bg-green-500/15 border-green-500/30 text-green-300 hover:bg-green-500/25 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border bg-green-500/20 border-green-500/40 text-green-300 hover:bg-green-500/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                     >
                       {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       Marcar como Pago
@@ -211,7 +216,7 @@ export function SaquesPix() {
                     <button
                       onClick={() => decidir(p, 'rejected')}
                       disabled={processando}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border bg-red-500/5 border-red-500/20 text-red-400/80 hover:bg-red-500/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border bg-red-500/10 border-red-500/25 text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                     >
                       {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                       Rejeitar (devolve MC)
@@ -227,18 +232,18 @@ export function SaquesPix() {
       {/* Histórico recente */}
       {historico.length > 0 && (
         <div>
-          <p className="text-white/40 text-xs font-black uppercase mb-3">Histórico recente</p>
+          <p className="text-zinc-400 text-xs font-black uppercase tracking-wider mb-3">Histórico recente</p>
           <div className="space-y-2">
             {historico.slice(0, 20).map((p) => {
               const st = STATUS[p.status] || STATUS.pending;
               return (
-                <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 border border-white/5 bg-white/[0.02]">
+                <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 border border-white/10 bg-[#131a29] hover:bg-[#192236] transition-all">
                   <div className="min-w-0">
                     <p className="text-white font-black text-sm truncate">
                       {p.displayName || p.riotId || 'Jogador'}
-                      <span className="text-white/40 text-xs ml-2">{p.mcAmount.toLocaleString('pt-BR')} MC · {brl(p.amountBrl)}</span>
+                      <span className="text-zinc-400 text-xs ml-2">{p.mcAmount.toLocaleString('pt-BR')} MC · {brl(p.amountBrl)}</span>
                     </p>
-                    <p className="text-white/30 text-[10px] mt-0.5 truncate">{p.pixKey}</p>
+                    <p className="text-zinc-400 text-[10px] mt-0.5 truncate">{p.pixKey}</p>
                   </div>
                   <span className={`shrink-0 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest ${st.cls}`}>
                     {st.label}

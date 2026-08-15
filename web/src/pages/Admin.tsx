@@ -103,7 +103,12 @@ function BadgeCargo({ cargo }: { cargo: CargoAdmin }) {
   return <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${c.text} ${c.bg} ${c.border}`}>{CARGO_LABELS[cargo]}</span>;
 }
 function CardStyle() {
-  return { border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)' };
+  return {
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'linear-gradient(180deg, rgba(22, 28, 44, 0.8) 0%, rgba(15, 19, 30, 0.9) 100%)',
+    backdropFilter: 'blur(16px)',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.35)',
+  };
 }
 
 // ── ABA: DISPUTAS ──────────────────────────────────
@@ -166,24 +171,128 @@ function AbaSaldos({ adminCargo }: { adminCargo: CargoAdmin }) {
 
   return (
     <div className="space-y-6">
-      <div><h2 className="text-xl font-black text-white uppercase">Saldos MPoints</h2><p className="text-white/30 text-xs mt-1">{podeMexer ? 'Adicione ou remova MPoints.' : 'Sem permissão.'}</p></div>
-      <AnimatePresence>{popup && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>{popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}{popup.msg}</motion.div>}</AnimatePresence>
+      <div>
+        <h2 className="text-xl font-black text-white uppercase">Saldos MPoints</h2>
+        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Adicione ou remova MPoints.' : 'Sem permissão.'}</p>
+      </div>
+      <AnimatePresence>
+        {popup && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
+            {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {popup.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl p-6 space-y-4" style={CardStyle()}>
-          <p className="text-white/40 text-xs font-black uppercase">Buscar Jogador</p>
-          <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><input type="text" value={busca} onChange={e => { setBusca(e.target.value); setSelecionado(null); }} placeholder="Nick#TAG..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none placeholder:text-white/20" />{buscando && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 animate-spin" />}</div>
-          {resultados.length > 0 && <div className="space-y-2 max-h-64 overflow-y-auto">{resultados.map(j => <button key={j.userId} onClick={() => setSelecionado(j)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left ${selecionado?.userId === j.userId ? 'bg-primary/10 border-primary/30' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}><div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0">{j.iconId ? <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/20 text-xs font-black">{j.nome[0]}</div>}</div><div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{j.riotId}</p><p className="text-white/40 text-xs">{j.saldo.toLocaleString('pt-BR')} MP</p></div>{selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}</button>)}</div>}
+        <div className="rounded-2xl p-6 space-y-4 shadow-xl" style={CardStyle()}>
+          <p className="text-zinc-300 text-xs font-black uppercase tracking-wider">Buscar Jogador</p>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input
+              type="text"
+              value={busca}
+              onChange={e => { setBusca(e.target.value); setSelecionado(null); }}
+              placeholder="Nick#TAG..."
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+            />
+            {buscando && <RefreshCw className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 animate-spin" />}
+          </div>
+          {resultados.length > 0 && (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {resultados.map(j => (
+                <button
+                  key={j.userId}
+                  onClick={() => setSelecionado(j)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                    selecionado?.userId === j.userId
+                      ? 'bg-primary/15 border-primary/40 shadow-sm'
+                      : 'bg-[#131a29] border-white/10 hover:bg-[#192236] hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/10">
+                    {j.iconId ? (
+                      <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xs font-black">{j.nome[0]}</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-sm truncate">{j.riotId}</p>
+                    <p className="text-zinc-400 text-xs">{j.saldo.toLocaleString('pt-BR')} MP</p>
+                  </div>
+                  {selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="rounded-2xl p-6 space-y-5" style={CardStyle()}>
-          {!selecionado ? <div className="flex flex-col items-center justify-center h-full py-12"><Users className="w-8 h-8 text-white/10 mb-3" /><p className="text-white/20 text-sm font-black uppercase">Selecione um jogador</p></div>
-          : <>
-            <div className="flex items-center gap-3 pb-4 border-b border-white/5"><div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden shrink-0">{selecionado.iconId ? <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/30 font-black">{selecionado.nome[0]}</div>}</div><div><p className="text-white font-black">{selecionado.riotId}</p><div className="flex items-center gap-1.5 mt-0.5"><Coins className="w-3.5 h-3.5 text-primary" /><span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MP</span></div></div></div>
-            {podeMexer && <>
-              <div className="flex gap-2">{(['adicionar', 'remover'] as const).map(op => <button key={op} onClick={() => setOperacao(op)} className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border ${operacao === op ? (op === 'adicionar' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400') : 'bg-white/5 border-white/5 text-white/30'}`}>{op === 'adicionar' ? '+ Adicionar' : '− Remover'}</button>)}</div>
-              <div><label className="text-white/30 text-[10px] font-black uppercase block mb-2">Quantidade (MP)</label><input type="number" min="1" value={valor} onChange={e => setValor(e.target.value)} placeholder="Ex: 500" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" /></div>
-              <button onClick={aplicarSaldo} disabled={salvando || !valor || parseInt(valor) <= 0} className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 ${operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}>{salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MP`}</button>
-            </>}
-          </>}
+        <div className="rounded-2xl p-6 space-y-5 shadow-xl" style={CardStyle()}>
+          {!selecionado ? (
+            <div className="flex flex-col items-center justify-center h-full py-12">
+              <Users className="w-9 h-9 text-zinc-600 mb-3" />
+              <p className="text-zinc-400 text-sm font-black uppercase tracking-wider">Selecione um jogador</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                <div className="w-12 h-12 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/15">
+                  {selecionado.iconId ? (
+                    <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-zinc-400 font-black">{selecionado.nome[0]}</div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white font-black">{selecionado.riotId}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Coins className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MP</span>
+                  </div>
+                </div>
+              </div>
+              {podeMexer && (
+                <>
+                  <div className="flex gap-2">
+                    {(['adicionar', 'remover'] as const).map(op => (
+                      <button
+                        key={op}
+                        onClick={() => setOperacao(op)}
+                        className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border transition-all ${
+                          operacao === op
+                            ? op === 'adicionar'
+                              ? 'bg-green-500/20 border-green-500/40 text-green-400 shadow-sm'
+                              : 'bg-red-500/20 border-red-500/40 text-red-400 shadow-sm'
+                            : 'bg-[#0e1320] border-white/10 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        {op === 'adicionar' ? '+ Adicionar' : '− Remover'}
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Quantidade (MP)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={valor}
+                      onChange={e => setValor(e.target.value)}
+                      placeholder="Ex: 500"
+                      className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+                    />
+                  </div>
+                  <button
+                    onClick={aplicarSaldo}
+                    disabled={salvando || !valor || parseInt(valor) <= 0}
+                    className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 transition-all shadow-md ${
+                      operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
+                    }`}
+                  >
+                    {salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MP`}
+                  </button>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -244,25 +353,138 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
 
   return (
     <div className="space-y-6">
-      <div><h2 className="text-xl font-black text-white uppercase">Saldo M7 Coins (MC)</h2><p className="text-white/30 text-xs mt-1">{podeMexer ? 'Adicione ou remova M7 Coins (MC).' : 'Sem permissão.'}</p></div>
-      <AnimatePresence>{popup && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>{popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}{popup.msg}</motion.div>}</AnimatePresence>
+      <div>
+        <h2 className="text-xl font-black text-white uppercase">Saldo M7 Coins (MC)</h2>
+        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Adicione ou remova M7 Coins (MC).' : 'Sem permissão.'}</p>
+      </div>
+      <AnimatePresence>
+        {popup && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
+            {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {popup.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl p-6 space-y-4" style={CardStyle()}>
-          <p className="text-white/40 text-xs font-black uppercase">Buscar Jogador</p>
-          <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><input type="text" value={busca} onChange={e => { setBusca(e.target.value); setSelecionado(null); }} placeholder="Nick#TAG..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none placeholder:text-white/20" />{buscando && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 animate-spin" />}</div>
-          {resultados.length > 0 && <div className="space-y-2 max-h-64 overflow-y-auto">{resultados.map(j => <button key={j.userId} onClick={() => setSelecionado(j)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left ${selecionado?.userId === j.userId ? 'bg-primary/10 border-primary/30' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}><div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0">{j.iconId ? <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/20 text-xs font-black">{j.nome[0]}</div>}</div><div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{j.riotId}</p><p className="text-white/40 text-xs">{j.saldo.toLocaleString('pt-BR')} MC</p></div>{selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}</button>)}</div>}
+        <div className="rounded-2xl p-6 space-y-4 shadow-xl" style={CardStyle()}>
+          <p className="text-zinc-300 text-xs font-black uppercase tracking-wider">Buscar Jogador</p>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input
+              type="text"
+              value={busca}
+              onChange={e => { setBusca(e.target.value); setSelecionado(null); }}
+              placeholder="Nick#TAG..."
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+            />
+            {buscando && <RefreshCw className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 animate-spin" />}
+          </div>
+          {resultados.length > 0 && (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {resultados.map(j => (
+                <button
+                  key={j.userId}
+                  onClick={() => setSelecionado(j)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                    selecionado?.userId === j.userId
+                      ? 'bg-primary/15 border-primary/40 shadow-sm'
+                      : 'bg-[#131a29] border-white/10 hover:bg-[#192236] hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/10">
+                    {j.iconId ? (
+                      <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xs font-black">{j.nome[0]}</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-sm truncate">{j.riotId}</p>
+                    <p className="text-zinc-400 text-xs">{j.saldo.toLocaleString('pt-BR')} MC</p>
+                  </div>
+                  {selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="rounded-2xl p-6 space-y-5" style={CardStyle()}>
-          {!selecionado ? <div className="flex flex-col items-center justify-center h-full py-12"><Users className="w-8 h-8 text-white/10 mb-3" /><p className="text-white/20 text-sm font-black uppercase">Selecione um jogador</p></div>
-          : <>
-            <div className="flex items-center gap-3 pb-4 border-b border-white/5"><div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden shrink-0">{selecionado.iconId ? <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/30 font-black">{selecionado.nome[0]}</div>}</div><div><p className="text-white font-black">{selecionado.riotId}</p><div className="flex items-center gap-1.5 mt-0.5"><Coins className="w-3.5 h-3.5 text-primary" /><span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MC</span></div></div></div>
-            {podeMexer && <>
-              <div className="flex gap-2">{(['adicionar', 'remover'] as const).map(op => <button key={op} onClick={() => setOperacao(op)} className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border ${operacao === op ? (op === 'adicionar' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400') : 'bg-white/5 border-white/5 text-white/30'}`}>{op === 'adicionar' ? '+ Adicionar' : '− Remover'}</button>)}</div>
-              <div><label className="text-white/30 text-[10px] font-black uppercase block mb-2">Quantidade (MC)</label><input type="number" min="1" value={valor} onChange={e => setValor(e.target.value)} placeholder="Ex: 500" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" /></div>
-              <div><label className="text-white/30 text-[10px] font-black uppercase block mb-2">Motivo</label><input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ex: teste de saldo MC" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" /></div>
-              <button onClick={aplicarSaldo} disabled={salvando || !valor || parseInt(valor) <= 0} className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 ${operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}>{salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MC`}</button>
-            </>}
-          </>}
+        <div className="rounded-2xl p-6 space-y-5 shadow-xl" style={CardStyle()}>
+          {!selecionado ? (
+            <div className="flex flex-col items-center justify-center h-full py-12">
+              <Users className="w-9 h-9 text-zinc-600 mb-3" />
+              <p className="text-zinc-400 text-sm font-black uppercase tracking-wider">Selecione um jogador</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                <div className="w-12 h-12 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/15">
+                  {selecionado.iconId ? (
+                    <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-zinc-400 font-black">{selecionado.nome[0]}</div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white font-black">{selecionado.riotId}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Coins className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MC</span>
+                  </div>
+                </div>
+              </div>
+              {podeMexer && (
+                <>
+                  <div className="flex gap-2">
+                    {(['adicionar', 'remover'] as const).map(op => (
+                      <button
+                        key={op}
+                        onClick={() => setOperacao(op)}
+                        className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border transition-all ${
+                          operacao === op
+                            ? op === 'adicionar'
+                              ? 'bg-green-500/20 border-green-500/40 text-green-400 shadow-sm'
+                              : 'bg-red-500/20 border-red-500/40 text-red-400 shadow-sm'
+                            : 'bg-[#0e1320] border-white/10 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        {op === 'adicionar' ? '+ Adicionar' : '− Remover'}
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Quantidade (MC)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={valor}
+                      onChange={e => setValor(e.target.value)}
+                      placeholder="Ex: 500"
+                      className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Motivo</label>
+                    <input
+                      type="text"
+                      value={motivo}
+                      onChange={e => setMotivo(e.target.value)}
+                      placeholder="Ex: teste de saldo MC"
+                      className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+                    />
+                  </div>
+                  <button
+                    onClick={aplicarSaldo}
+                    disabled={salvando || !valor || parseInt(valor) <= 0}
+                    className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 transition-all shadow-md ${
+                      operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
+                    }`}
+                  >
+                    {salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MC`}
+                  </button>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -359,12 +581,12 @@ function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-black text-white uppercase">Ranking — Times</h2>
-        <p className="text-white/30 text-xs mt-1">{podeMexer ? 'Ajuste PDL, vitórias e derrotas manualmente.' : 'Sem permissão para editar.'}</p>
+        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Ajuste PDL, vitórias e derrotas manualmente.' : 'Sem permissão para editar.'}</p>
       </div>
       <AnimatePresence>
         {popup && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
             {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
             {popup.msg}
           </motion.div>
@@ -372,54 +594,54 @@ function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
       </AnimatePresence>
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Lista de times */}
-        <div className="rounded-2xl p-6 space-y-4" style={CardStyle()}>
-          <p className="text-white/40 text-xs font-black uppercase">Times ({times.length})</p>
+        <div className="rounded-2xl p-6 space-y-4 shadow-xl" style={CardStyle()}>
+          <p className="text-zinc-300 text-xs font-black uppercase tracking-wider">Times ({times.length})</p>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input type="text" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar por nome ou TAG..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none placeholder:text-white/20" />
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
           </div>
           {carregando ? (
-            <div className="flex justify-center py-8"><RefreshCw className="w-5 h-5 text-white/20 animate-spin" /></div>
+            <div className="flex justify-center py-8"><RefreshCw className="w-5 h-5 text-zinc-400 animate-spin" /></div>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
               {timesFiltrados.map(t => (
                 <button key={t.id} onClick={() => { setSelecionado(t); setDeltaPdl(''); setDeltaWins(''); setDeltaLosses(''); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${selecionado?.id === t.id ? 'bg-primary/10 border-primary/30' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}>
-                  <span className="text-white/20 font-black text-xs w-6 text-center shrink-0">#{t.ranking}</span>
-                  <div className="w-8 h-8 rounded-lg bg-white/10 overflow-hidden shrink-0 flex items-center justify-center border border-white/10">
-                    {t.logo_url ? <img src={t.logo_url} className="w-full h-full object-cover" alt="" /> : <ShieldCheck className="w-4 h-4 text-white/20" />}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${selecionado?.id === t.id ? 'bg-primary/15 border-primary/40 shadow-sm' : 'bg-[#131a29] border-white/10 hover:bg-[#192236] hover:border-white/20'}`}>
+                  <span className="text-zinc-400 font-black text-xs w-6 text-center shrink-0">#{t.ranking}</span>
+                  <div className="w-8 h-8 rounded-lg bg-[#0e1320] overflow-hidden shrink-0 flex items-center justify-center border border-white/10">
+                    {t.logo_url ? <img src={t.logo_url} className="w-full h-full object-cover" alt="" /> : <ShieldCheck className="w-4 h-4 text-zinc-400" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm truncate">{t.nome} <span className="text-white/30 text-[10px]">[{t.tag}]</span></p>
-                    <p className="text-white/40 text-xs">{t.pdl.toLocaleString('pt-BR')} PDL · {t.wins}V {Math.max(0, t.games_played - t.wins)}D</p>
+                    <p className="text-white font-black text-sm truncate">{t.nome} <span className="text-zinc-400 text-[10px]">[{t.tag}]</span></p>
+                    <p className="text-zinc-400 text-xs">{t.pdl.toLocaleString('pt-BR')} PDL · {t.wins}V {Math.max(0, t.games_played - t.wins)}D</p>
                   </div>
                   {selecionado?.id === t.id && <Check className="w-4 h-4 text-primary shrink-0" />}
                 </button>
               ))}
-              {timesFiltrados.length === 0 && <p className="text-white/20 text-sm text-center py-8">Nenhum time encontrado.</p>}
+              {timesFiltrados.length === 0 && <p className="text-zinc-500 text-sm text-center py-8 font-bold">Nenhum time encontrado.</p>}
             </div>
           )}
         </div>
         {/* Painel de ajuste */}
-        <div className="rounded-2xl p-6 space-y-5" style={CardStyle()}>
+        <div className="rounded-2xl p-6 space-y-5 shadow-xl" style={CardStyle()}>
           {!selecionado ? (
             <div className="flex flex-col items-center justify-center h-full py-12 gap-3">
-              <Trophy className="w-8 h-8 text-white/10" />
-              <p className="text-white/20 text-sm font-black uppercase">Selecione um time</p>
+              <Trophy className="w-9 h-9 text-zinc-600" />
+              <p className="text-zinc-400 text-sm font-black uppercase tracking-wider">Selecione um time</p>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div className="flex items-center gap-3 pb-4 border-b border-white/5">
-                <div className="w-12 h-12 rounded-xl bg-white/10 overflow-hidden shrink-0 flex items-center justify-center border border-white/10">
-                  {selecionado.logo_url ? <img src={selecionado.logo_url} className="w-full h-full object-cover" alt="" /> : <ShieldCheck className="w-6 h-6 text-white/20" />}
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                <div className="w-12 h-12 rounded-xl bg-[#0e1320] overflow-hidden shrink-0 flex items-center justify-center border border-white/15">
+                  {selecionado.logo_url ? <img src={selecionado.logo_url} className="w-full h-full object-cover" alt="" /> : <ShieldCheck className="w-6 h-6 text-zinc-400" />}
                 </div>
                 <div>
-                  <p className="text-white font-black">{selecionado.nome} <span className="text-white/30 text-xs">[{selecionado.tag}]</span></p>
+                  <p className="text-white font-black">{selecionado.nome} <span className="text-zinc-400 text-xs">[{selecionado.tag}]</span></p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-primary font-black text-sm">{selecionado.pdl.toLocaleString('pt-BR')} PDL</span>
-                    <span className="text-white/20 text-xs">· #{selecionado.ranking}</span>
+                    <span className="text-zinc-400 text-xs">· #{selecionado.ranking}</span>
                   </div>
                 </div>
               </div>
@@ -430,8 +652,8 @@ function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
                   { label: 'Derrotas', value: losses,           color: '#FF3131' },
                   { label: 'Win Rate', value: `${selecionado.winrate}%`, color: '#FFB700' },
                 ].map(stat => (
-                  <div key={stat.label} className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">{stat.label}</p>
+                  <div key={stat.label} className="bg-[#0e1320] rounded-xl p-3 text-center border border-white/10 shadow-inner">
+                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{stat.label}</p>
                     <p className="text-lg font-black" style={{ color: stat.color }}>{stat.value}</p>
                   </div>
                 ))}
@@ -440,33 +662,33 @@ function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
                 <>
                   {/* Linha PDL */}
                   <div className="space-y-1.5">
-                    <label className="text-white/30 text-[10px] font-black uppercase tracking-widest">PDL</label>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">PDL</label>
                     <div className="flex gap-2">
                       <ToggleOp op={opPdl} setOp={setOpPdl} />
                       <input type="number" min="1" value={deltaPdl} onChange={e => setDeltaPdl(e.target.value)} placeholder="Qtd."
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" />
+                        className="flex-1 bg-[#0e1320] border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
                     </div>
                   </div>
                   {/* Linha Vitórias */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#00FF4166' }}>Vitórias</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#00FF41' }}>Vitórias</label>
                     <div className="flex gap-2">
                       <ToggleOp op={opWins} setOp={setOpWins} />
                       <input type="number" min="1" value={deltaWins} onChange={e => setDeltaWins(e.target.value)} placeholder="Qtd."
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" />
+                        className="flex-1 bg-[#0e1320] border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
                     </div>
                   </div>
                   {/* Linha Derrotas */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#FF313166' }}>Derrotas</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#FF3131' }}>Derrotas</label>
                     <div className="flex gap-2">
                       <ToggleOp op={opLosses} setOp={setOpLosses} />
                       <input type="number" min="1" value={deltaLosses} onChange={e => setDeltaLosses(e.target.value)} placeholder="Qtd."
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none placeholder:text-white/20" />
+                        className="flex-1 bg-[#0e1320] border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
                     </div>
                   </div>
                   <button onClick={aplicarAjuste} disabled={salvando || !temAlgo}
-                    className="w-full py-3 rounded-xl font-black text-sm uppercase bg-white text-black hover:bg-white/90 disabled:opacity-30 transition-all">
+                    className="w-full py-3 rounded-xl font-black text-sm uppercase bg-gradient-to-r from-primary to-yellow-500 text-black hover:brightness-110 disabled:opacity-30 transition-all shadow-lg shadow-primary/20">
                     {salvando ? 'Aplicando...' : `Aplicar ajuste em ${selecionado.tag}`}
                   </button>
                 </>
@@ -538,13 +760,13 @@ function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-black text-white uppercase">Highlights da Comunidade</h2>
-        <p className="text-white/30 text-xs mt-1">Clipes que aparecem no Lobby quando não há lives ativas. As lives sempre aparecem primeiro.</p>
+        <p className="text-zinc-400 text-xs mt-1">Clipes que aparecem no Lobby quando não há lives ativas. As lives sempre aparecem primeiro.</p>
       </div>
 
       <AnimatePresence>
         {popup && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className={`p-4 rounded-xl border font-black text-sm ${popup.tipo === 'sucesso' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
+            className={`p-4 rounded-xl border font-black text-sm ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
             {popup.msg}
           </motion.div>
         )}
@@ -552,25 +774,25 @@ function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
 
       {/* Formulário de adição */}
       {podeMexer && (
-        <div className="rounded-2xl p-6 space-y-3" style={CardStyle()}>
-          <h3 className="text-white/50 text-[10px] font-black uppercase tracking-widest">Adicionar Clipe</h3>
+        <div className="rounded-2xl p-6 space-y-3 shadow-xl" style={CardStyle()}>
+          <h3 className="text-zinc-300 text-xs font-black uppercase tracking-widest">Adicionar Clipe</h3>
           <input value={form.titulo} onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
             placeholder="Título  (ex: Top 5 jogadas da semana)"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/20 placeholder:text-white/20" />
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
           <input value={form.link} onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
             placeholder="Link do clipe  (twitch.tv/channel/clip/...)"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/20 placeholder:text-white/20" />
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
           <input value={form.thumbnail_url} onChange={e => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
             placeholder="URL da thumbnail  (opcional — imagem de capa do card)"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/20 placeholder:text-white/20" />
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
           <select value={form.categoria} onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/20">
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all">
             {HIGHLIGHT_CATEGORIAS.map(c => (
-              <option key={c.value} value={c.value} className="bg-[#111]">{c.label}</option>
+              <option key={c.value} value={c.value} className="bg-[#131a29] text-white">{c.label}</option>
             ))}
           </select>
           <button onClick={salvar} disabled={salvando || !form.titulo.trim() || !form.link.trim()}
-            className="w-full py-3 rounded-xl bg-[#FFB700]/20 border border-[#FFB700]/40 text-[#FFB700] font-black text-sm uppercase tracking-widest hover:bg-[#FFB700]/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            className="w-full py-3 rounded-xl bg-[#FFB700]/20 border border-[#FFB700]/40 text-[#FFB700] font-black text-sm uppercase tracking-widest hover:bg-[#FFB700]/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
             {salvando ? 'Salvando...' : '+ Adicionar Highlight'}
           </button>
         </div>
@@ -580,31 +802,31 @@ function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
       {loading ? (
         <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-2 border-[#FFB700] border-t-transparent" /></div>
       ) : list.length === 0 ? (
-        <p className="text-white/20 text-sm text-center py-8 uppercase tracking-widest">Nenhum highlight cadastrado.</p>
+        <p className="text-zinc-500 text-sm text-center py-8 uppercase tracking-widest font-bold">Nenhum highlight cadastrado.</p>
       ) : (
         <div className="space-y-3">
           {list.map(h => (
-            <div key={h.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${h.ativo ? 'border-white/10' : 'border-white/5 opacity-40'}`} style={CardStyle()}>
+            <div key={h.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${h.ativo ? 'border-white/10' : 'border-white/5 opacity-50'}`} style={CardStyle()}>
               {h.thumbnail_url ? (
-                <img src={h.thumbnail_url} alt={h.titulo} className="w-24 h-14 object-cover rounded-lg shrink-0 bg-white/5" />
+                <img src={h.thumbnail_url} alt={h.titulo} className="w-24 h-14 object-cover rounded-lg shrink-0 bg-[#0e1320] border border-white/10" />
               ) : (
-                <div className="w-24 h-14 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                  <Film className="w-5 h-5 text-white/20" />
+                <div className="w-24 h-14 rounded-lg bg-[#0e1320] border border-white/10 flex items-center justify-center shrink-0">
+                  <Film className="w-5 h-5 text-zinc-500" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-white font-black text-sm truncate">{h.titulo}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-[#9146FF]/20 text-[#9146FF] border border-[#9146FF]/20">
+                  <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-[#9146FF]/20 text-[#A78BFA] border border-[#9146FF]/30">
                     {HIGHLIGHT_CATEGORIAS.find(c => c.value === h.categoria)?.label ?? h.categoria}
                   </span>
-                  <p className="text-white/30 text-xs truncate">{h.link}</p>
+                  <p className="text-zinc-400 text-xs truncate">{h.link}</p>
                 </div>
               </div>
               {podeMexer && (
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => toggleAtivo(h)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase border transition-all ${h.ativo ? 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-white/10 text-white/30 hover:bg-white/5'}`}>
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all ${h.ativo ? 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-white/10 text-zinc-400 hover:bg-white/5'}`}>
                     {h.ativo ? 'Ativo' : 'Inativo'}
                   </button>
                   <button onClick={() => deletar(h.id)}
@@ -717,7 +939,6 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
     }
     setTimeout(() => setPopup(null), 3500);
   };
-
   const toggleAtivo = async (n: NoticiaAdmin) => {
     const novoStatus = !(n.ativo ?? true);
     await api.content.newsUpdate(n.id, { ativo: novoStatus });
@@ -744,7 +965,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
             <Newspaper className="w-5 h-5 text-[#00F0FF]" />
             Gerenciar Informa & Esportes (Notícias da Home)
           </h2>
-          <p className="text-white/40 text-xs mt-1">
+          <p className="text-zinc-400 text-xs mt-1">
             Publique novidades, regras de campeonatos, patch notes e avisos que aparecem nos cards da página inicial.
           </p>
         </div>
@@ -757,7 +978,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                 setMostrarForm(!mostrarForm);
               }
             }}
-            className="px-4 py-2.5 rounded-xl bg-[#00F0FF]/10 border border-[#00F0FF]/30 text-[#00F0FF] font-black text-xs uppercase tracking-widest hover:bg-[#00F0FF]/20 transition-all flex items-center justify-center gap-2 shrink-0"
+            className="px-4 py-2.5 rounded-xl bg-[#00F0FF]/15 border border-[#00F0FF]/40 text-[#00F0FF] font-black text-xs uppercase tracking-widest hover:bg-[#00F0FF]/25 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm"
           >
             {mostrarForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {mostrarForm ? 'Fechar Formulário' : '+ Nova Notícia'}
@@ -773,8 +994,8 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
             exit={{ opacity: 0 }}
             className={`p-4 rounded-xl border font-black text-sm ${
               popup.tipo === 'sucesso'
-                ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                : 'bg-red-500/10 border-red-500/30 text-red-400'
+                ? 'bg-green-500/15 border-green-500/30 text-green-400'
+                : 'bg-red-500/15 border-red-500/30 text-red-400'
             }`}
           >
             {popup.msg}
@@ -788,7 +1009,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="rounded-2xl p-6 space-y-4 border border-[#00F0FF]/20 bg-[#00F0FF]/[0.02]"
+          className="rounded-2xl p-6 space-y-4 border border-[#00F0FF]/30 bg-[#00F0FF]/[0.03] shadow-xl"
           style={CardStyle()}
         >
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -797,7 +1018,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
               {editandoId ? `Editar Notícia #${editandoId}` : 'Criar Nova Notícia / Card'}
             </h3>
             {editandoId && (
-              <button onClick={resetForm} className="text-xs text-white/40 hover:text-white underline">
+              <button onClick={resetForm} className="text-xs text-zinc-400 hover:text-white underline">
                 Cancelar Edição
               </button>
             )}
@@ -805,28 +1026,28 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                 Título da Notícia *
               </label>
               <input
                 value={form.titulo}
                 onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
                 placeholder="Ex: Grande Torneio M7 de Final de Semana"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50 placeholder:text-white/20"
+                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                 Categoria
               </label>
               <select
                 value={form.categoria}
                 onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50"
+                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 transition-all"
               >
                 {NOTICIA_CATEGORIAS.map(c => (
-                  <option key={c.value} value={c.value}>
+                  <option key={c.value} value={c.value} className="bg-[#131a29] text-white">
                     {c.label}
                   </option>
                 ))}
@@ -835,19 +1056,19 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+            <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
               Resumo curto (Aparece no Card da Home) *
             </label>
             <input
               value={form.resumo}
               onChange={e => setForm(p => ({ ...p, resumo: e.target.value }))}
               placeholder="Ex: Premiação recorde em Pix, inscrições abertas para todos os elos..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50 placeholder:text-white/20"
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+            <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
               Conteúdo Completo (Texto da Matéria ao clicar no card)
             </label>
             <textarea
@@ -855,44 +1076,44 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
               value={form.conteudo}
               onChange={e => setForm(p => ({ ...p, conteudo: e.target.value }))}
               placeholder="Escreva a matéria detalhada ou aviso completo aqui..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50 placeholder:text-white/20 resize-none"
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 resize-none transition-all"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
-              <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                 URL da Imagem de Capa
               </label>
               <input
                 value={form.thumbnail_url}
                 onChange={e => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
                 placeholder="https://images.unsplash.com/..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50 placeholder:text-white/20"
+                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                 Link do Botão (Opcional)
               </label>
               <input
                 value={form.link_url}
                 onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))}
                 placeholder="https://... ou /campeonatos"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50 placeholder:text-white/20"
+                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                 Texto do Botão
               </label>
               <input
                 value={form.link_texto}
                 onChange={e => setForm(p => ({ ...p, link_texto: e.target.value }))}
                 placeholder="Ex: Inscreva-se Agora, Ver Regulamento"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/50 placeholder:text-white/20"
+                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
               />
             </div>
           </div>
@@ -905,7 +1126,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                 onChange={e => setForm(p => ({ ...p, destaque: e.target.checked }))}
                 className="w-4 h-4 accent-[#FFB700] rounded"
               />
-              <span className="text-xs font-bold text-white/80">Destacar na Home</span>
+              <span className="text-xs font-bold text-zinc-200">Destacar na Home</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -915,7 +1136,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                 onChange={e => setForm(p => ({ ...p, ativo: e.target.checked }))}
                 className="w-4 h-4 accent-[#00F0FF] rounded"
               />
-              <span className="text-xs font-bold text-white/80">Ativo / Publicado</span>
+              <span className="text-xs font-bold text-zinc-200">Ativo / Publicado</span>
             </label>
           </div>
 
@@ -930,7 +1151,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
             {editandoId && (
               <button
                 onClick={resetForm}
-                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-xs uppercase hover:bg-white/10 transition-all"
+                className="px-6 py-3 rounded-xl bg-[#0e1320] border border-white/10 text-zinc-300 font-bold text-xs uppercase hover:bg-white/10 transition-all"
               >
                 Cancelar
               </button>
@@ -945,12 +1166,12 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#00F0FF] border-t-transparent" />
         </div>
       ) : list.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl border border-white/5 bg-white/[0.01]">
-          <BookOpen className="w-8 h-8 text-white/20 mx-auto mb-2" />
-          <p className="text-white/40 text-sm font-bold uppercase tracking-wider">
+        <div className="text-center py-12 rounded-2xl border border-white/10 bg-[#0e1320]/60">
+          <BookOpen className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
+          <p className="text-zinc-400 text-sm font-bold uppercase tracking-wider">
             Nenhuma notícia cadastrada no banco.
           </p>
-          <p className="text-white/20 text-xs mt-1">
+          <p className="text-zinc-500 text-xs mt-1">
             Clique no botão acima para adicionar a primeira notícia que aparecerá no site.
           </p>
         </div>
@@ -960,7 +1181,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
             <div
               key={n.id}
               className={`relative flex flex-col justify-between p-4 rounded-xl border transition-all ${
-                n.ativo !== false ? 'border-white/10' : 'border-white/5 opacity-50 bg-black/40'
+                n.ativo !== false ? 'border-white/10' : 'border-white/5 opacity-50 bg-[#0e1320]/40'
               }`}
               style={CardStyle()}
             >
@@ -969,11 +1190,11 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                   <img
                     src={n.thumbnail_url}
                     alt={n.titulo}
-                    className="w-24 h-20 object-cover rounded-lg shrink-0 bg-black"
+                    className="w-24 h-20 object-cover rounded-lg shrink-0 bg-[#0e1320] border border-white/10"
                   />
                 ) : (
-                  <div className="w-24 h-20 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                    <BookOpen className="w-6 h-6 text-white/20" />
+                  <div className="w-24 h-20 rounded-lg bg-[#0e1320] border border-white/10 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-6 h-6 text-zinc-500" />
                   </div>
                 )}
 
@@ -987,24 +1208,24 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                         ⭐ Destaque
                       </span>
                     )}
-                    <span className="text-[9px] font-bold text-white/30 ml-auto">
+                    <span className="text-[9px] font-bold text-zinc-400 ml-auto">
                       {new Date(n.publicado_em).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
 
                   <h4 className="text-white font-black text-sm line-clamp-1">{n.titulo}</h4>
-                  <p className="text-white/40 text-xs line-clamp-2 mt-0.5 leading-relaxed">{n.resumo}</p>
+                  <p className="text-zinc-300 text-xs line-clamp-2 mt-0.5 leading-relaxed">{n.resumo}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/5">
+              <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/10">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleAtivo(n)}
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center gap-1 ${
                       n.ativo !== false
                         ? 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20'
-                        : 'border-white/10 text-white/30 hover:bg-white/5'
+                        : 'border-white/10 text-zinc-400 hover:bg-white/5'
                     }`}
                   >
                     {n.ativo !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -1016,7 +1237,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center gap-1 ${
                       n.destaque
                         ? 'border-[#FFB700]/40 text-[#FFB700] bg-[#FFB700]/10 hover:bg-[#FFB700]/20'
-                        : 'border-white/10 text-white/30 hover:bg-white/5'
+                        : 'border-white/10 text-zinc-400 hover:bg-white/5'
                     }`}
                   >
                     <Star className="w-3 h-3" />
@@ -1028,7 +1249,7 @@ function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => iniciarEdicao(n)}
-                      className="p-1.5 rounded-lg border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                      className="p-1.5 rounded-lg border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10 transition-all"
                       title="Editar Notícia"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -1086,10 +1307,10 @@ function StatsCards() {
   }, []);
 
   const cards = [
-    { label: 'Jogadores',      value: stats?.jogadores,    icon: Users,    color: '#9146FF' },
-    { label: 'Salas Ativas',   value: stats?.salasAtivas,  icon: Gamepad2, color: '#00FF41' },
-    { label: 'Times',          value: stats?.times,        icon: Trophy,   color: '#FFB700' },
-    { label: 'MP em Circulação', value: stats?.mpDistribuido, icon: Coins,  color: '#FF3131' },
+    { label: 'Jogadores',        value: stats?.jogadores,      icon: Users,    color: '#A78BFA' },
+    { label: 'Salas Ativas',     value: stats?.salasAtivas,    icon: Gamepad2, color: '#00FF41' },
+    { label: 'Times',            value: stats?.times,          icon: Trophy,   color: '#FFB800' },
+    { label: 'MC em Circulação', value: stats?.mpDistribuido,  icon: Coins,    color: '#FF4D4D' },
   ];
 
   const fmt = (v?: number) => {
@@ -1102,11 +1323,11 @@ function StatsCards() {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map(({ label, value, icon: Icon, color }) => (
-        <div key={label} className="rounded-2xl p-4 lg:p-5" style={CardStyle()}>
+        <div key={label} className="rounded-2xl p-4 lg:p-5 shadow-xl" style={CardStyle()}>
           <div className="flex items-start justify-between mb-2">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
-              <Icon className="w-4 h-4" style={{ color }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+              style={{ background: `${color}18`, border: `1px solid ${color}35` }}>
+              <Icon className="w-5 h-5" style={{ color }} />
             </div>
           </div>
           {stats === null ? (
@@ -1116,7 +1337,7 @@ function StatsCards() {
               {fmt(value)}
             </p>
           )}
-          <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">{label}</p>
+          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">{label}</p>
         </div>
       ))}
     </div>
@@ -1155,7 +1376,7 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-black text-white uppercase">Bem-vindo ao painel</h2>
-        <p className="text-white/30 text-xs mt-1">Visão geral operacional da plataforma.</p>
+        <p className="text-zinc-400 text-xs mt-1">Visão geral operacional da plataforma.</p>
       </div>
 
       {/* Dashboard financeiro (ADR-032): faturamento/saques/lucro/MC em circulação */}
@@ -1165,16 +1386,16 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
         {podeRevisar && (
           <button
             onClick={() => onNavigate('revisao')}
-            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01]"
+            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] shadow-xl hover:border-white/20"
             style={CardStyle()}
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.3)' }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.35)' }}>
               <Swords className="w-5 h-5 text-[#A78BFA]" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-black text-sm uppercase tracking-wide">Revisão de Partidas</p>
-              <p className="text-white/40 text-xs mt-0.5">
+              <p className="text-zinc-400 text-xs mt-0.5">
                 {filaRevisao === null
                   ? 'Carregando fila...'
                   : filaRevisao === 0
@@ -1182,22 +1403,22 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
                     : `${filaRevisao} ${filaRevisao === 1 ? 'partida aguardando' : 'partidas aguardando'} sua decisão`}
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
+            <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
           </button>
         )}
         {podeRevisar && (
           <button
             onClick={() => onNavigate('saques')}
-            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01]"
+            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] shadow-xl hover:border-white/20"
             style={CardStyle()}
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)' }}>
-              <Banknote className="w-5 h-5 text-[#FFD700]" />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ background: 'rgba(255,184,0,0.12)', border: '1px solid rgba(255,184,0,0.35)' }}>
+              <Banknote className="w-5 h-5 text-[#FFB800]" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-black text-sm uppercase tracking-wide">Saques PIX</p>
-              <p className="text-white/40 text-xs mt-0.5">
+              <p className="text-zinc-400 text-xs mt-0.5">
                 {filaSaques === null
                   ? 'Carregando...'
                   : filaSaques === 0
@@ -1205,20 +1426,20 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
                     : `${filaSaques} ${filaSaques === 1 ? 'saque aguardando' : 'saques aguardando'} pagamento`}
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
+            <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
           </button>
         )}
       </div>
 
-      <div className="rounded-2xl p-6 flex items-center gap-4" style={{ ...CardStyle(), borderColor: 'rgba(145,70,255,0.15)', background: 'rgba(145,70,255,0.04)' }}>
-        <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+      <div className="rounded-2xl p-6 flex items-center gap-4 border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent shadow-xl backdrop-blur-md">
+        <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0 shadow-sm">
           <Sparkles className="w-5 h-5 text-primary" />
         </div>
         <div>
           <p className="text-white font-black text-sm">M7 Arena — Painel Administrativo</p>
-          <p className="text-white/40 text-xs mt-0.5">
+          <p className="text-zinc-300 text-xs mt-0.5">
             Você está logado como <span className="text-primary font-black">{CARGO_LABELS[adminCargo]}</span>.
-            Use as abas acima para navegar pelas seções disponíveis.
+            Use as abas laterais para gerenciar usuários, transações e partidas.
           </p>
         </div>
       </div>
@@ -1234,7 +1455,7 @@ export default function Admin() {
 
   if (!perfil) {
     return (
-      <div className="flex-1 bg-[#050505] flex items-center justify-center">
+      <div className="flex-1 bg-[#0b0f19] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
       </div>
     );
@@ -1243,12 +1464,12 @@ export default function Admin() {
   const adminCargo = (perfil.cargo as CargoAdmin) || 'jogador';
   if (adminCargo === 'jogador') {
     return (
-      <div className="flex-1 bg-[#050505] flex flex-col items-center justify-center gap-4 p-8">
-        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+      <div className="flex-1 bg-[#0b0f19] flex flex-col items-center justify-center gap-4 p-8">
+        <div className="w-16 h-16 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shadow-lg">
           <ShieldCheck className="w-8 h-8 text-red-400" />
         </div>
         <h1 className="text-white font-black text-xl uppercase">Acesso Restrito</h1>
-        <p className="text-white/30 text-sm text-center max-w-xs">Você não tem permissão.</p>
+        <p className="text-zinc-400 text-sm text-center max-w-xs">Você não tem permissão para acessar esta área.</p>
       </div>
     );
   }
@@ -1271,24 +1492,22 @@ export default function Admin() {
   ];
 
   return (
-    <div className="flex h-screen bg-[#050505] text-white overflow-hidden">
+    <div className="flex h-screen bg-[#0b0f19] text-white overflow-hidden bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,184,0,0.08),rgba(255,255,255,0))]">
       {/* ── SIDEBAR PRÓPRIA ───────────────────────── */}
-      <aside className="hidden md:flex w-[220px] xl:w-[240px] shrink-0 flex-col border-r border-white/5 bg-[#070707]/90 backdrop-blur-md relative z-20">
-        <div className="absolute top-0 right-0 w-0 h-full bg-primary shadow-[-10px_0_15px_rgba(255,183,0,0.25)] z-50"></div>
-
+      <aside className="hidden md:flex w-[230px] xl:w-[250px] shrink-0 flex-col border-r border-white/10 bg-[#0f1422]/95 backdrop-blur-xl relative z-20 shadow-2xl">
         {/* Logo / marca */}
-        <div className="flex items-center gap-3 px-5 pt-6 pb-5 border-b border-white/5">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(145,70,255,0.15)]">
+        <div className="flex items-center gap-3 px-5 pt-6 pb-5 border-b border-white/10">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/35 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,184,0,0.15)]">
             <ShieldCheck className="w-5 h-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="text-sm font-black text-white uppercase tracking-tighter leading-tight">Painel Admin</h1>
-            <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">M7 Arena</p>
+            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">M7 Arena</p>
           </div>
         </div>
 
-        {/* Navegação vertical (tópicos que eram as abas horizontais) */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+        {/* Navegação vertical */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 custom-scrollbar">
           {abas.map(({ id, label, icon: Icon, bloqueada }) => {
             const ativa = abaAtiva === id;
             return (
@@ -1296,22 +1515,15 @@ export default function Admin() {
                 key={id}
                 onClick={() => !bloqueada && setAbaAtiva(id)}
                 disabled={bloqueada}
-                className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all text-left ${
+                className={`group relative w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-left ${
                   ativa
-                    ? 'bg-white text-black shadow-lg shadow-white/10'
+                    ? 'bg-gradient-to-r from-primary to-yellow-500 text-black shadow-lg shadow-primary/20 font-black'
                     : bloqueada
-                    ? 'text-white/15 cursor-not-allowed'
-                    : 'text-white/45 hover:text-white hover:bg-white/5'
+                    ? 'text-zinc-600 cursor-not-allowed'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
-                {ativa && (
-                  <motion.span
-                    layoutId="admin-tab-active"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r"
-                    transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
-                  />
-                )}
-                <Icon className={`w-4 h-4 shrink-0 ${ativa ? 'text-black' : bloqueada ? 'text-white/15' : 'text-primary/70 group-hover:text-primary'}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${ativa ? 'text-black' : bloqueada ? 'text-zinc-600' : 'text-primary/80 group-hover:text-primary'}`} />
                 <span className="flex-1">{label}</span>
                 {bloqueada && <Lock className="w-3 h-3 shrink-0" />}
               </button>
@@ -1320,13 +1532,13 @@ export default function Admin() {
         </nav>
 
         {/* Usuário + voltar ao site */}
-        <div className="px-3 py-5 border-t border-white/5 space-y-3">
-          <div className="flex items-center gap-2.5 px-2">
-            <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden shrink-0 border border-primary/30">
+        <div className="px-4 py-5 border-t border-white/10 space-y-3 bg-[#0d121e]/80">
+          <div className="flex items-center gap-3 px-1">
+            <div className="w-9 h-9 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-primary/40 shadow-sm">
               {perfil.avatar ? (
                 <img src={perfil.avatar} className="w-full h-full object-cover" alt="" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-white/40 text-xs font-black">
+                <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xs font-black">
                   {(perfil.riotId || perfil.nome || '?')[0].toUpperCase()}
                 </div>
               )}
@@ -1338,7 +1550,7 @@ export default function Admin() {
           </div>
           <button
             onClick={() => navigate('/lobby')}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all font-black text-[10px] uppercase tracking-widest"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-zinc-300 hover:text-white hover:bg-white/10 transition-all font-black text-[10px] uppercase tracking-widest shadow-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Voltar ao site
@@ -1349,33 +1561,33 @@ export default function Admin() {
       {/* ── CONTEÚDO ─────────────────────────────── */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Header mobile: voltar + título + tópicos horizontais */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-4 border-b border-white/5 bg-gradient-to-b from-primary/[0.04] via-white/[0.01] to-transparent">
+        <div className="md:hidden flex items-center gap-3 px-4 py-4 border-b border-white/10 bg-[#0f1422]/95 backdrop-blur-xl">
           <button
             onClick={() => navigate('/lobby')}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all shrink-0"
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-300 hover:text-white hover:bg-white/20 transition-all shrink-0"
             aria-label="Voltar ao site"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="min-w-0">
             <h1 className="text-base font-black text-white uppercase tracking-tighter leading-tight">Painel Admin</h1>
-            <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">{perfil.riotId || perfil.nome}</p>
+            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{perfil.riotId || perfil.nome}</p>
           </div>
         </div>
 
         {/* Tópicos em scroll horizontal no mobile */}
-        <div className="md:hidden flex gap-1.5 p-2.5 bg-white/[0.02] border-b border-white/5 overflow-x-auto">
+        <div className="md:hidden flex gap-1.5 p-2.5 bg-[#0f1422]/80 border-b border-white/10 overflow-x-auto">
           {abas.map(({ id, label, icon: Icon, bloqueada }) => (
             <button
               key={id}
               onClick={() => !bloqueada && setAbaAtiva(id)}
               disabled={bloqueada}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
                 abaAtiva === id
-                  ? 'bg-white text-black shadow-lg shadow-white/10'
+                  ? 'bg-gradient-to-r from-primary to-yellow-500 text-black font-black shadow-md'
                   : bloqueada
-                  ? 'text-white/15 cursor-not-allowed'
-                  : 'text-white/45 hover:text-white hover:bg-white/5'
+                  ? 'text-zinc-600 cursor-not-allowed'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.08]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -1388,12 +1600,12 @@ export default function Admin() {
         {/* Corpo rolável */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {/* Header (gradient + glow) */}
-          <div className="relative border-b border-white/5 bg-gradient-to-b from-primary/[0.04] via-white/[0.01] to-transparent">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(145,70,255,0.08),transparent_70%)] pointer-events-none" />
+          <div className="relative border-b border-white/10 bg-gradient-to-b from-primary/[0.08] via-white/[0.02] to-transparent">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,184,0,0.12),transparent_70%)] pointer-events-none" />
             <div className="relative max-w-6xl mx-auto px-4 py-8 lg:py-10">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(145,70,255,0.15)]">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/35 flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(255,184,0,0.15)]">
                     <ShieldCheck className="w-7 h-7 text-primary" />
                   </div>
                   <div>
@@ -1401,12 +1613,12 @@ export default function Admin() {
                       <h1 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter">Painel Admin</h1>
                       <BadgeCargo cargo={adminCargo} />
                     </div>
-                    <p className="text-white/40 text-sm font-medium mt-1">M7 Arena · gerenciamento da plataforma</p>
+                    <p className="text-zinc-400 text-sm font-medium mt-1">M7 Arena · gerenciamento da plataforma</p>
                   </div>
                 </div>
                 <div className="hidden sm:flex flex-col items-end gap-1">
                   <p className="text-white font-black text-sm">{perfil.riotId || perfil.nome}</p>
-                  <p className="text-white/30 text-[10px] uppercase tracking-widest">Logado como admin</p>
+                  <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Logado como admin</p>
                 </div>
               </div>
             </div>
@@ -1432,10 +1644,10 @@ export default function Admin() {
                 {abaAtiva === 'noticias'   && <AbaNoticias adminCargo={adminCargo} />}
                 {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
                 {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
-            {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
-            {abaAtiva === 'revisao'    && <RevisaoPartidas />}
-            {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
-            {abaAtiva === 'saques'     && <SaquesPix />}
+                {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
+                {abaAtiva === 'revisao'    && <RevisaoPartidas />}
+                {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
+                {abaAtiva === 'saques'     && <SaquesPix />}
               </motion.div>
             </AnimatePresence>
           </div>
