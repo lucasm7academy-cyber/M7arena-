@@ -43,7 +43,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-hidden"
           onClick={handleClose}
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
@@ -61,20 +61,16 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           >
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700] to-transparent rounded-t-3xl" />
 
-            {/* Background Glow & Atmospheric TF Artwork */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
-              <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-[#FFB700]/10 blur-[130px] rounded-full" />
-              <motion.img
-                initial={{ x: 40, opacity: 0 }}
-                animate={{ x: 0, opacity: 0.28 }}
-                transition={{ delay: 0.15, duration: 0.6 }}
-                src="/images/25947-5-twisted-fate-picture_800x800.webp"
-                alt="Twisted Fate"
-                className="absolute -right-24 -bottom-10 w-[520px] max-w-none z-0 pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] filter brightness-95 contrast-125 select-none hidden md:block"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0d] via-[#0a0a0d]/90 to-transparent pointer-events-none" />
-            </div>
+            {/* Personagem Twisted Fate na Lateral Direita (fora/ao lado do modal) */}
+            <motion.img
+              initial={{ x: 60, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              src="/images/25947-5-twisted-fate-picture_800x800.webp"
+              alt="Twisted Fate"
+              className="absolute -right-[300px] lg:-right-[380px] bottom-0 w-[680px] lg:w-[820px] max-w-none z-[-1] pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)] filter brightness-110 opacity-100 hidden md:block select-none"
+              referrerPolicy="no-referrer"
+            />
 
             <div className="relative p-6 md:p-8 z-10">
               <button
