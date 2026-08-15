@@ -28,7 +28,7 @@ function ArcaneIndicators() {
                     key={`tick-${i}`}
                     className="absolute top-1/2 left-1/2 w-[1px] bg-white/5 origin-bottom"
                     style={{
-                        transform: `translate(-50%, -50%) rotate(${i * 12}deg) translateY(-35vmin)`,
+                        transform: `translate(-50%, -50%) rotate(${i * 12}deg) translateY(-27.5vmin)`,
                         height: i % 5 === 0 ? '2.5vmin' : '1.2vmin',
                         backgroundColor: i % 5 === 0 ? 'rgba(255, 183, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                     }}
@@ -335,7 +335,7 @@ ${link}`;
     };
 
     return (
-        <div className="flex-1 w-full min-h-screen bg-[#050505] flex flex-col items-center justify-start md:justify-between p-0 font-sans relative overflow-x-hidden text-white">
+        <div className="flex-1 w-full min-h-screen md:min-h-0 bg-[#050505] flex flex-col items-center justify-start md:justify-between p-0 font-sans relative overflow-x-hidden md:overflow-hidden md:h-full text-white">
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0">
