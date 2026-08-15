@@ -501,6 +501,11 @@ ${link}`;
                                         style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
                                         {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu`}
                                     </p>
+                                    {sala.modo === '1v1' && sala.vitoria_motivo && (
+                                        <p className="mt-[0.3vmin] text-[9px] md:text-[0.9vmin] font-black uppercase tracking-[0.3em] text-white/40">
+                                            Vitória por {sala.vitoria_motivo === 'first_blood' ? 'First Blood' : '100 de Farm'}
+                                        </p>
+                                    )}
                                 </div>
                                 {placarFinalizada && (
                                     <div className="flex items-center gap-2 md:gap-[1.5vmin] pl-2 md:pl-[2vmin] border-l border-white/10">
