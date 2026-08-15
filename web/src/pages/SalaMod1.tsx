@@ -483,6 +483,66 @@ ${link}`;
             {/* MAIN CENTRAL AREA */}
             <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
 
+                {/* HEADER DE RESULTADO — partida finalizada: vencedor + motivo
+                    (1v1) + placar no topo, no padrão de borda cortada. */}
+                {sala.estado === 'encerrada' && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                        className="w-full flex justify-center mb-4 md:mb-[2vmin] z-20 px-3 md:px-0">
+                        <div className="relative p-[1.5px] max-w-[440px] md:max-w-none w-full md:w-auto" style={{ clipPath: CUT_FRAME, backgroundColor: corVencedor }}>
+                            <div className="bg-[#0A0A0A] px-3 py-2 sm:px-6 sm:py-3 md:px-[4vmin] md:py-[1.4vmin] flex flex-wrap md:flex-nowrap items-center justify-center gap-2 sm:gap-4 md:gap-[2.5vmin]"
+                                style={{ clipPath: CUT_INNER }}>
+                                <div className="w-8 h-8 md:w-[4vmin] md:h-[4vmin] rounded-lg flex items-center justify-center shrink-0"
+                                    style={{ background: `${corVencedor}20`, border: `1px solid ${corVencedor}60` }}>
+                                    <Trophy className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" style={{ color: corVencedor }} />
+                                </div>
+                                <div className="text-left shrink-0">
+                                    <p className="text-[10px] md:text-[0.9vmin] font-black text-white/40 uppercase tracking-[0.4em]">Partida Finalizada</p>
+                                    <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black uppercase tracking-[0.15em]"
+                                        style={{ color: corVencedor, textShadow: `0 0 18px ${corVencedor}55` }}>
+                                        {vencedorSala === 'empate' ? '⚖️ Empate' : `${nomeVencedor} venceu${sala.modo === '1v1' && sala.vitoria_motivo ? ` por ${sala.vitoria_motivo === 'first_blood' ? 'First Blood' : '100 de Farm'}` : ''}`}
+                                    </p>
+                                </div>
+                                {placarFinalizada && (
+                                    <div className="flex items-center gap-2 md:gap-[1.5vmin] pl-2 md:pl-[2vmin] border-l border-white/10">
+                                        <div className="text-center">
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-blue-400">Blue</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.blue.kills}</p>
+                                        </div>
+                                        <span className="text-xs md:text-[1.1vmin] font-black text-white/25">×</span>
+                                        <div className="text-center">
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-red-400">Red</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums leading-tight">{placarFinalizada.red.kills}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {duracaoFinalizada && (
+                                    <div className="flex items-center pl-2 md:pl-[2vmin] border-l border-white/10 shrink-0">
+                                        <span className="text-xs sm:text-sm md:text-[1.8vmin] font-black text-white tabular-nums tracking-wide">
+                                            {duracaoFinalizada}
+                                        </span>
+                                    </div>
+                                )}
+                                {ehApostada && (
+                                    <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.8vmin] pl-2 md:pl-[2vmin] border-l border-white/10 shrink-0">
+                                        <div className="text-center">
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-[#FFB700]/70">Pote Total</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] tabular-nums leading-tight flex items-center justify-center gap-1 md:gap-[0.4vmin]">
+                                                <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.6vmin] md:h-[1.6vmin]" /> {poteBruto} MC
+                                            </p>
+                                        </div>
+                                        <div className="text-center pl-2 md:pl-[1.5vmin] border-l border-white/10">
+                                            <p className="text-[9px] md:text-[0.8vmin] font-black uppercase tracking-widest text-emerald-400/80">Prêmio / Jogador</p>
+                                            <p className="text-xs sm:text-sm md:text-[1.6vmin] font-black text-emerald-400 tabular-nums leading-tight">
+                                                +{premioPorJogador} MC
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
                 {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
                     hub → time B); desktop: times nas laterais do hub central */}
                 <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-0 py-2 md:py-0 ${
