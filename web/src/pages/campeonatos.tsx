@@ -182,7 +182,7 @@ const Campeonatos = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.8/1] w-full group bg-[#FFB800] shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.8/1] w-full group bg-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
           style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
         >
           <div

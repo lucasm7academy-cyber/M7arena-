@@ -805,7 +805,7 @@ const Jogar = () => {
         {/* ============================================ */}
         {/* HERO BANNER */}
         {/* ============================================ */}
-        <div className="relative w-full p-[1px] bg-[#FFB800] shadow-2xl group" style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}>
+        <div className="relative w-full p-[1px] bg-white/10 shadow-2xl group" style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}>
           <div className="relative w-full h-full bg-black overflow-hidden" style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}>
           <div className="relative w-full p-8 md:p-14 flex items-center justify-between min-h-[320px]">
             {currentSlide.bgImage && (
