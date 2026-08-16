@@ -10,8 +10,9 @@
  *  1. Cookie `m7_session` validado no handshake (sessão viva na tabela
  *     `user_sessions`, mesma regra de routes/auth.ts e match-flow.ts).
  *  2. `Origin` conferido contra `APP_URL` antes de aceitar o upgrade.
- *  3. `subscribe_match` só é aceito se o usuário é participante da sala
- *     (`match_players`) ou tem role admin/moderador (`user_roles`).
+ *  3. `subscribe_match` é aceito para qualquer usuário autenticado (o estado
+ *     da sala é público e o chat é para todos na sala — ADR-040); enviar chat
+ *     continua exigindo Riot vinculado (`enviarChat`).
  *  4. Os dados nunca vêm do socket — o cliente refaz o GET.
  *  5. Máx. 10 conexões por usuário (derruba a mais antiga) + matchId validado.
  *  6. Ping/pong a cada 30s; conexão que não responde 2 pings é derrubada.
@@ -116,18 +117,6 @@ async function buscarMatch(ref: string): Promise<{ id: string; salaNum: number }
   return { id, salaNum };
 }
 
-/** Trava 3: participante de match_players OU admin/moderador em user_roles. */
-async function temPermissao(userId: string, matchId: string): Promise<boolean> {
-  const r = await authPool.query(
-    `SELECT 1 AS ok FROM match_players WHERE match_id = $1 AND user_id = $2
-     UNION ALL
-     SELECT 1 FROM user_roles WHERE user_id = $2 AND role IN ('admin', 'moderador', 'proprietario')
-     LIMIT 1`,
-    [matchId, userId]
-  );
-  return (r.rowCount ?? 0) > 0;
-}
-
 function enviar(ws: WebSocket, payload: unknown) {
   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload));
 }
@@ -190,9 +179,13 @@ async function assinarSala(ws: WebSocket, msg: any) {
       enviar(ws, { type: "error", error: "sala_nao_encontrada" });
       return;
     }
+    // Qualquer usuário autenticado pode assinar a sala (o estado da sala é
+    // público e o chat é para todos que estão na sala, na vaga ou não — ADR-040).
+    // A sessão já foi validada no handshake (trava 1); enviar mensagem continua
+    // exigindo Riot vinculado, checado em `enviarChat`.
     const userId = socketUser.get(ws);
-    if (!userId || !(await temPermissao(userId, match.id))) {
-      enviar(ws, { type: "error", error: "sem_permissao" });
+    if (!userId) {
+      enviar(ws, { type: "error", error: "nao_autenticado" });
       return;
     }
     removerDaSala(ws);

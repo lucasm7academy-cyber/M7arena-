@@ -141,10 +141,10 @@ matchesRouter.get("/:id", async (req, res) => {
   }
 });
 
-// GET /api/matches/:id/mensagens - Histórico do chat (ADR-040). Só
-// participante/staff. Faz purge preguiçoso das mensagens expiradas (>5min).
+// GET /api/matches/:id/mensagens - Histórico do chat (ADR-040). Qualquer
+// usuário autenticado na sala lê (a sala é pública); enviar exige Riot
+// vinculado (realtime). Faz purge preguiçoso das mensagens expiradas (>5min).
 const CINCO_MINUTOS_MS = 5 * 60 * 1000;
-const ROLES_STAFF_CHAT = ["admin", "moderador", "proprietario"];
 
 matchesRouter.get("/:id/mensagens", async (req, res) => {
   try {
@@ -153,18 +153,6 @@ matchesRouter.get("/:id/mensagens", async (req, res) => {
 
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ error: "nao_autenticado" });
-
-    const [participante] = await db
-      .select({ userId: matchPlayers.userId })
-      .from(matchPlayers)
-      .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id)))
-      .limit(1);
-    const [staff] = await db
-      .select({ role: userRoles.role })
-      .from(userRoles)
-      .where(and(eq(userRoles.userId, user.id), inArray(userRoles.role, ROLES_STAFF_CHAT)))
-      .limit(1);
-    if (!participante && !staff) return res.status(403).json({ error: "sem_permissao" });
 
     // Purge preguiçoso: apaga o que já expirou antes de ler (tabela pequena).
     await db.delete(salaMensagens).where(lt(salaMensagens.createdAt, new Date(Date.now() - CINCO_MINUTOS_MS)));

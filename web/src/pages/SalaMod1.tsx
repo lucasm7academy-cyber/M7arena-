@@ -199,8 +199,7 @@ ${link}`;
     // está na vaga (jogadorAtual) ou é staff. O fetch do histórico é disparado
     // pelo mount do ChatDaSala + pelo onReconnect do realtime.
     const ESTADOS_CHAT = ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'];
-    const ehStaff = ['admin', 'moderador', 'proprietario'].some((r) => user?.roles?.includes(r));
-    const chatHabilitado = !!sala && ESTADOS_CHAT.includes(sala.estado) && (!!jogadorAtual || ehStaff);
+    const chatHabilitado = !!sala && ESTADOS_CHAT.includes(sala.estado) && !!user;
 
     // Stats reais da partida (resultado_riot, da Riot) por PUUID ou Nome — as vagas da
     // sala finalizada mostram campeão + KDA + CS cruzando por este mapa.
