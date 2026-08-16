@@ -195,11 +195,14 @@ ${link}`;
     const timeB = jogadores.filter((j: any) => !j.is_time_a);
     const jogadorAtual = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
 
-    // Chat da sala (ADR-040): disponível apenas nos estados ativos e para quem
-    // está na vaga (jogadorAtual) ou é staff. O fetch do histórico é disparado
-    // pelo mount do ChatDaSala + pelo onReconnect do realtime.
+    // Chat da sala (ADR-040): disponível nos estados ativos para qualquer
+    // usuário logado (na vaga ou não). Enviar exige Riot vinculado (servidor).
+    // O histórico é disparado pelo mount do ChatDaSala + onReconnect do realtime.
     const ESTADOS_CHAT = ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'];
     const chatHabilitado = !!sala && ESTADOS_CHAT.includes(sala.estado) && !!user;
+    // Cor do chat: espelha o time do jogador (blue/red) se ele está na vaga;
+    // fora da vaga, fica no dourado padrão da sala.
+    const corChat = jogadorAtual ? (jogadorAtual.is_time_a ? '#3B82F6' : '#ef4444') : '#FFB700';
 
     // Stats reais da partida (resultado_riot, da Riot) por PUUID ou Nome — as vagas da
     // sala finalizada mostram campeão + KDA + CS cruzando por este mapa.
@@ -1182,8 +1185,8 @@ ${link}`;
                 )}
             </AnimatePresence>
 
-            {/* CHAT DA SALA (ADR-040) — widget flutuante, só em estados ativos
-                e para quem participa da sala ou é staff. */}
+            {/* CHAT DA SALA (ADR-040) — widget flutuante no canto inferior
+                esquerdo, só em estados ativos e para usuários logados. */}
             {chatHabilitado && (
                 <ChatDaSala
                     mensagens={mensagensChat}
@@ -1191,6 +1194,7 @@ ${link}`;
                     onMarcarLidas={marcarLidasChat}
                     enviarChat={enviarChat}
                     carregarHistorico={carregarHistoricoChat}
+                    cor={corChat}
                 />
             )}
 
