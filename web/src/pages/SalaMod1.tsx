@@ -847,7 +847,7 @@ ${link}`;
                                 initial={{ scale: 0.85, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ duration: 0.6 }}
-                                src="/images/tutorial.png"
+                                src="/images/tutorial-codigo.webp"
                                 alt="Como entrar na partida personalizada"
                                 className="w-[85%] h-[85%] object-contain rounded-full select-none pointer-events-none drop-shadow-[0_0_30px_rgba(255,183,0,0.35)]"
                             />
