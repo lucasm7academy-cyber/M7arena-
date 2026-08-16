@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { timingSafeEqual } from "crypto";
-import { eq, and, gt, inArray, desc } from "drizzle-orm";
+import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userWallets, userRoles } from "../../../db/schema/identidade.js";
-import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchResults, matchCodes, salaMensagens } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
 import { platformRevenue } from "../../../db/schema/economia.js";
@@ -138,6 +138,65 @@ matchesRouter.get("/:id", async (req, res) => {
     return res.json(await shapeSala(match));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar sala" });
+  }
+});
+
+// GET /api/matches/:id/mensagens - Histórico do chat (ADR-040). Só
+// participante/staff. Faz purge preguiçoso das mensagens expiradas (>5min).
+const CINCO_MINUTOS_MS = 5 * 60 * 1000;
+const ROLES_STAFF_CHAT = ["admin", "moderador", "proprietario"];
+
+matchesRouter.get("/:id/mensagens", async (req, res) => {
+  try {
+    const match = await resolverSala(req.params.id);
+    if (!match) return res.status(404).json({ error: "Partida não encontrada" });
+
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "nao_autenticado" });
+
+    const [participante] = await db
+      .select({ userId: matchPlayers.userId })
+      .from(matchPlayers)
+      .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id)))
+      .limit(1);
+    const [staff] = await db
+      .select({ role: userRoles.role })
+      .from(userRoles)
+      .where(and(eq(userRoles.userId, user.id), inArray(userRoles.role, ROLES_STAFF_CHAT)))
+      .limit(1);
+    if (!participante && !staff) return res.status(403).json({ error: "sem_permissao" });
+
+    // Purge preguiçoso: apaga o que já expirou antes de ler (tabela pequena).
+    await db.delete(salaMensagens).where(lt(salaMensagens.createdAt, new Date(Date.now() - CINCO_MINUTOS_MS)));
+
+    const after = Number(req.query.after);
+    const condicoes = [eq(salaMensagens.matchId, match.id)];
+    if (Number.isFinite(after) && after > 0) condicoes.push(gt(salaMensagens.id, after));
+    const rows = await db
+      .select()
+      .from(salaMensagens)
+      .where(and(...condicoes))
+      .orderBy(asc(salaMensagens.id))
+      .limit(200);
+
+    const userIds = [...new Set(rows.map((r) => r.userId))];
+    const usersRows: any[] = userIds.length ? await db.select().from(users).where(inArray(users.id, userIds)) : [];
+    const userMap = new Map<string, any>(usersRows.map((u: any) => [u.id, u] as [string, any]));
+
+    const msgs = rows.map((r) => {
+      const u = userMap.get(r.userId);
+      return {
+        id: r.id,
+        user_id: r.userId,
+        nome: u?.displayName || "Jogador",
+        avatar: u?.avatarUrl ?? null,
+        body: r.body,
+        created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString(),
+      };
+    });
+    return res.json(msgs);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar mensagens" });
   }
 });
 

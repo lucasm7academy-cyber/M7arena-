@@ -8,9 +8,12 @@ import {
   timestamp,
   jsonb,
   numeric,
+  bigserial,
   primaryKey,
   index,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { users } from "./identidade.js";
 import { games } from "./games.js";
 
@@ -118,3 +121,25 @@ export const matchCodes = pgTable("match_codes", {
   lastUsedAt: timestamp("last_used_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
+
+// Chat da sala (ADR-040): conversa geral entre participantes. Mensagens são
+// autoexcluídas após 5 min (cron + purge preguiçoso) — a tabela nunca acumula.
+export const salaMensagens = pgTable(
+  "sala_mensagens",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("sala_mensagens_match_id_id_idx").on(table.matchId, table.id),
+    index("sala_mensagens_created_at_idx").on(table.createdAt),
+    check("sala_mensagens_body_len", sql`char_length(${table.body}) BETWEEN 1 AND 200`),
+  ]
+);

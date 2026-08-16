@@ -6,8 +6,10 @@ import { Copy, Check, AlertTriangle, LinkIcon, Loader, X, Trash2, Share2, Trophy
 import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
+import { useSalaChat } from '../hooks/useSalaChat';
 import { VagaSlot } from '../components/partidas/VagaSlot';
 import { ModaisElegibilidade } from '../components/partidas/ModaisElegibilidade';
+import ChatDaSala from '../components/partidas/ChatDaSala';
 import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
 import { lerSenhaSala, limparSenhaSala } from '../lib/salaSenhaStore';
@@ -89,13 +91,23 @@ export default function SalaMod1() {
     };
 
     const {
+        mensagens: mensagensChat, naoLidas: naoLidasChat,
+        receber: receberChat, carregarHistorico: carregarHistoricoChat, marcarLidas: marcarLidasChat,
+    } = useSalaChat(salaId, usuarioAtual.id);
+
+    const {
         sala, jogadores, loading, erro,
         timer, codigoPartida,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
         atualizar,
         entrar, sair, confirmar, recusar,
-    } = useSalaSimples(salaId, usuarioAtual);
+        enviarChat,
+    } = useSalaSimples(salaId, usuarioAtual, {
+        onChatMessage: receberChat,
+        onChatError: (codigo) => toast.error(traduzirErroSala(codigo)),
+        onReconnect: carregarHistoricoChat,
+    });
 
     const [codigoCopiado, setCodigoCopiado] = useState(false);
     const codigoCopiadoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,6 +194,13 @@ ${link}`;
     const timeA = jogadores.filter((j: any) => j.is_time_a);
     const timeB = jogadores.filter((j: any) => !j.is_time_a);
     const jogadorAtual = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
+
+    // Chat da sala (ADR-040): disponível apenas nos estados ativos e para quem
+    // está na vaga (jogadorAtual) ou é staff. O fetch do histórico é disparado
+    // pelo mount do ChatDaSala + pelo onReconnect do realtime.
+    const ESTADOS_CHAT = ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'];
+    const ehStaff = ['admin', 'moderador', 'proprietario'].some((r) => user?.roles?.includes(r));
+    const chatHabilitado = !!sala && ESTADOS_CHAT.includes(sala.estado) && (!!jogadorAtual || ehStaff);
 
     // Stats reais da partida (resultado_riot, da Riot) por PUUID ou Nome — as vagas da
     // sala finalizada mostram campeão + KDA + CS cruzando por este mapa.
@@ -1163,6 +1182,18 @@ ${link}`;
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* CHAT DA SALA (ADR-040) — widget flutuante, só em estados ativos
+                e para quem participa da sala ou é staff. */}
+            {chatHabilitado && (
+                <ChatDaSala
+                    mensagens={mensagensChat}
+                    naoLidas={naoLidasChat}
+                    onMarcarLidas={marcarLidasChat}
+                    enviarChat={enviarChat}
+                    carregarHistorico={carregarHistoricoChat}
+                />
+            )}
 
             {/* Edge Fog */}
             <div className="absolute inset-y-0 left-0 w-[15vw] bg-gradient-to-r from-black via-black/40 to-transparent z-[5] pointer-events-none" />

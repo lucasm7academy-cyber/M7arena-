@@ -43,6 +43,12 @@ const RECONEXAO_MAX_MS = 30_000;
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// ── Chat (ADR-040): validações e rate limit do chat_send. ──
+const CHAT_MIN_INTERVALO_MS = 1_000;        // 1 msg/s por usuário
+const CHAT_MAX_EM_5MIN = 40;                // teto por janela
+const CHAT_JANELA_MS = 5 * 60 * 1000;       // janela do rate limit
+const CHAT_BODY_MAX = 200;
+
 // ── Origens permitidas. APP_URL pode ser lista separada por vírgula. ──
 const allowedOrigins = new Set<string>();
 for (const o of (process.env.APP_URL || "http://localhost:3000").split(",")) {
@@ -61,6 +67,10 @@ const socketRoom = new Map<WebSocket, number>();
 const userSockets = new Map<string, Set<WebSocket>>();
 // userId por socket, setado no handshake (handleUpgrade não leva argumento extra).
 const socketUser = new Map<WebSocket, string>();
+// Socket → uuid interno do match (para o INSERT do chat, que referencia matches.id).
+const socketMatchId = new Map<WebSocket, string>();
+// userId → timestamps das mensagens (rate limit em memória; processo único).
+const chatTimestamps = new Map<string, number[]>();
 // Estado de liveness do ping/pong.
 const socketState = new WeakMap<WebSocket, { isAlive: boolean }>();
 // cache uuid → sala_num (o NOTIFY às vezes traz o uuid interno de matches.id).
@@ -123,6 +133,7 @@ function enviar(ws: WebSocket, payload: unknown) {
 }
 
 function removerDaSala(ws: WebSocket) {
+  socketMatchId.delete(ws);
   const salaNum = socketRoom.get(ws);
   if (salaNum === undefined) return;
   socketRoom.delete(ws);
@@ -159,8 +170,14 @@ async function tratarMensagem(ws: WebSocket, raw: RawData) {
     enviar(ws, { type: "error", error: "mensagem_invalida" });
     return;
   }
-  if (msg?.type !== "subscribe_match") return;
+  if (msg?.type === "subscribe_match") {
+    await assinarSala(ws, msg);
+  } else if (msg?.type === "chat_send") {
+    await enviarChat(ws, msg);
+  }
+}
 
+async function assinarSala(ws: WebSocket, msg: any) {
   const ref = String(msg.matchId ?? "").trim();
   if (!/^[0-9]+$/.test(ref) && !uuidRegex.test(ref)) {
     enviar(ws, { type: "error", error: "match_id_invalido" });
@@ -180,6 +197,7 @@ async function tratarMensagem(ws: WebSocket, raw: RawData) {
     }
     removerDaSala(ws);
     socketRoom.set(ws, match.salaNum);
+    socketMatchId.set(ws, match.id);
     let set = rooms.get(match.salaNum);
     if (!set) {
       set = new Set();
@@ -190,6 +208,88 @@ async function tratarMensagem(ws: WebSocket, raw: RawData) {
   } catch (err: any) {
     console.error(`[m7arena-realtime] Erro ao assinar sala: ${err?.message}`);
     enviar(ws, { type: "error", error: "erro_interno" });
+  }
+}
+
+// ── CHAT (ADR-040) ───────────────────────────────
+function permitidoNoRateLimit(userId: string): boolean {
+  const agora = Date.now();
+  const limiar = agora - CHAT_JANELA_MS;
+  const ts = (chatTimestamps.get(userId) ?? []).filter((t) => t > limiar);
+  if (ts.length >= CHAT_MAX_EM_5MIN) return false;
+  if (ts.length > 0 && agora - ts[ts.length - 1] < CHAT_MIN_INTERVALO_MS) return false;
+  ts.push(agora);
+  chatTimestamps.set(userId, ts);
+  return true;
+}
+
+/** chat_send: valida (assinado, body, ban, Riot, rate limit) → INSERT → fan-out. */
+async function enviarChat(ws: WebSocket, msg: any) {
+  const salaNum = socketRoom.get(ws);
+  const matchId = socketMatchId.get(ws);
+  if (salaNum === undefined || !matchId) {
+    enviar(ws, { type: "chat_error", error: "nao_assinado" });
+    return;
+  }
+  const body = typeof msg?.body === "string" ? msg.body.trim() : "";
+  if (body.length < 1 || body.length > CHAT_BODY_MAX) {
+    enviar(ws, { type: "chat_error", error: "body_invalido" });
+    return;
+  }
+  const userId = socketUser.get(ws);
+  if (!userId) {
+    enviar(ws, { type: "chat_error", error: "nao_autenticado" });
+    return;
+  }
+  if (!permitidoNoRateLimit(userId)) {
+    enviar(ws, { type: "chat_error", error: "rate_limited" });
+    return;
+  }
+
+  try {
+    const { rows: [u] } = await authPool.query(
+      `SELECT id, display_name AS "displayName", avatar_url AS "avatarUrl", status, riot_id AS "riotId"
+         FROM users WHERE id = $1 LIMIT 1`,
+      [userId]
+    );
+    if (!u) {
+      enviar(ws, { type: "chat_error", error: "nao_autenticado" });
+      return;
+    }
+    if (u.status === "banida") {
+      enviar(ws, { type: "chat_error", error: "conta_banida" });
+      return;
+    }
+    if (!u.riotId) {
+      enviar(ws, { type: "chat_error", error: "riot_id_necessario" });
+      return;
+    }
+
+    const { rows: [row] } = await authPool.query(
+      `INSERT INTO sala_mensagens (match_id, user_id, body)
+       VALUES ($1, $2, $3)
+       RETURNING id, created_at`,
+      [matchId, userId, body]
+    );
+
+    const msgObj = {
+      id: Number(row.id),
+      user_id: userId,
+      nome: u.displayName || "Jogador",
+      avatar: u.avatarUrl ?? null,
+      body,
+      created_at: new Date(row.created_at).toISOString(),
+    };
+    const payload = JSON.stringify({ type: "chat_message", matchId: salaNum, msg: msgObj });
+    const room = rooms.get(salaNum);
+    if (room) {
+      for (const cliente of room) {
+        if (cliente.readyState === WebSocket.OPEN) cliente.send(payload);
+      }
+    }
+  } catch (err: any) {
+    console.error(`[m7arena-realtime] Erro no chat: ${err?.message}`);
+    enviar(ws, { type: "chat_error", error: "erro_interno" });
   }
 }
 

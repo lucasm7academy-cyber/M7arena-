@@ -12,7 +12,8 @@
  * passou offline). Cleanup no unmount.
  */
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import type { ApiSalaChatMensagem } from "../lib/api";
 
 const WS_URL = () =>
   `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
@@ -33,12 +34,16 @@ export interface UseSalaRealtimeOptions {
   onReconnect?: () => void;
   /** Notifica mudança de estado do socket (true = conectado/assinado). */
   onStatusChange?: (conectado: boolean) => void;
+  /** Chat (ADR-040): recebe uma mensagem nova da sala (sem debounce). */
+  onChatMessage?: (msg: ApiSalaChatMensagem) => void;
+  /** Chat (ADR-040): erro de envio (body_invalido, rate_limited, ...). */
+  onChatError?: (codigo: string) => void;
   /** Pausa a conexão quando false (default true). */
   enabled?: boolean;
 }
 
 export function useSalaRealtime(matchId: string | number, options: UseSalaRealtimeOptions) {
-  const { onUpdate, onReconnect, onStatusChange, enabled = true } = options;
+  const { onUpdate, onReconnect, onStatusChange, onChatMessage, onChatError, enabled = true } = options;
 
   const wsRef = useRef<WebSocket | null>(null);
   const debounceRef = useRef<number | null>(null);
@@ -50,10 +55,14 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
   const onUpdateRef = useRef(onUpdate);
   const onReconnectRef = useRef(onReconnect);
   const onStatusChangeRef = useRef(onStatusChange);
+  const onChatMessageRef = useRef(onChatMessage);
+  const onChatErrorRef = useRef(onChatError);
   const matchIdRef = useRef(matchId);
   onUpdateRef.current = onUpdate;
   onReconnectRef.current = onReconnect;
   onStatusChangeRef.current = onStatusChange;
+  onChatMessageRef.current = onChatMessage;
+  onChatErrorRef.current = onChatError;
   matchIdRef.current = matchId;
 
   useEffect(() => {
@@ -94,6 +103,10 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
         }
         if (dados?.type === "match_update") {
           agendarUpdate(dados.matchId ?? matchIdRef.current);
+        } else if (dados?.type === "chat_message") {
+          onChatMessageRef.current?.(dados.msg);
+        } else if (dados?.type === "chat_error") {
+          onChatErrorRef.current?.(dados.error);
         }
       };
 
@@ -127,4 +140,15 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
       onStatusChangeRef.current?.(false);
     };
   }, [enabled, matchId]);
+
+  const enviarChat = useCallback((body: string) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      onChatErrorRef.current?.("nao_assinado");
+      return;
+    }
+    ws.send(JSON.stringify({ type: "chat_send", matchId: matchIdRef.current, body }));
+  }, []);
+
+  return { enviarChat };
 }

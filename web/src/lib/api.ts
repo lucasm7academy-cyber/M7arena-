@@ -297,6 +297,16 @@ export interface ApiSalaResultado {
   modo?: string;
 }
 
+/** Mensagem do chat de sala (ADR-040). */
+export interface ApiSalaChatMensagem {
+  id: number;
+  user_id: string;
+  nome: string;
+  avatar: string | null;
+  body: string;
+  created_at: string;
+}
+
 /** Print de prova de uma partida apostada (design v3 §6). */
 export interface ApiPrint {
   id: string;
@@ -402,6 +412,8 @@ export interface ApiMatchesSdk {
   /** Dispara a verificação automática na hora (acelerador do polling). */
   verificar: (id: number) =>
     Promise<{ ok: boolean; estado: string; vencedor?: 'A' | 'B' | null; motivo?: string; matchIdRiot?: string | null }>;
+  /** Histórico do chat da sala (ADR-040) — a partir do id `after` (bigserial). */
+  mensagens: (id: number | string, after?: number) => Promise<ApiSalaChatMensagem[]>;
 }
 
 /**
@@ -757,6 +769,8 @@ export const api = {
       api.delete<{ ok: boolean; id: string; salaNum: number }>(`/matches/${id}`),
     verificar: (id: number) =>
       api.post<{ ok: boolean; estado: string; vencedor?: 'A' | 'B' | null; motivo?: string; matchIdRiot?: string | null }>(`/matches/${id}/verificar`),
+    mensagens: (id: number | string, after?: number) =>
+      api.get<ApiSalaChatMensagem[]>(`/matches/${id}/mensagens${after && after > 0 ? `?after=${after}` : ""}`),
   } as ApiMatchesSdk,
 
   profiles: {

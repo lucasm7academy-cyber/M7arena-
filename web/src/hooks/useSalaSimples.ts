@@ -55,7 +55,12 @@ export function useSalaSimples(
         tag: string;
         elo: string;
         avatar?: string;
-    }
+    },
+    opts: {
+        onChatMessage?: (msg: import("../lib/api").ApiSalaChatMensagem) => void;
+        onChatError?: (codigo: string) => void;
+        onReconnect?: () => void;
+    } = {}
 ) {
     const [sala, setSala] = useState<any>(null);
     const [jogadores, setJogadores] = useState<any[]>([]);
@@ -250,7 +255,7 @@ export function useSalaSimples(
     // GET /api/matches/:id (que revalida permissão no servidor). Substitui o
     // supabase.channel (ADR-009): as mensagens de transição de estado passam a
     // ser derivadas comparando o estado antes/depois do refetch.
-    useSalaRealtime(salaId, {
+    const { enviarChat } = useSalaRealtime(salaId, {
         onUpdate: async () => {
             ultimoUpdateRef.current = Date.now();
             const estadoAnterior = ultimoEstadoRef.current;
@@ -272,10 +277,13 @@ export function useSalaSimples(
         onReconnect: () => {
             if (IS_DEV) console.log(`🔌 [Realtime] Reconectado — refazendo GET da sala ${salaId}`);
             sincronizarTudo('reconexao');
+            opts.onReconnect?.();
         },
         onStatusChange: (conectado) => {
             wsVivoRef.current = conectado;
         },
+        onChatMessage: opts.onChatMessage,
+        onChatError: opts.onChatError,
     });
 
     // ── LOOP DE RE-RENDER DOS TIMERS DERIVADOS ────────
@@ -526,5 +534,6 @@ export function useSalaSimples(
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
         atualizar: () => sincronizarTudo('manual'),
         entrar, sair, confirmar, recusar,
+        enviarChat: enviarChat,
     };
 }

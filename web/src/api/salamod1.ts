@@ -114,6 +114,12 @@ const ERROS_SALA: Record<string, string> = {
     nao_confirmado: 'Você precisa estar confirmado na sala para enviar print.',
     nao_participante: 'Você não é participante desta partida.',
     sala_casual: 'Esta sala não é uma partida apostada.',
+    // ── Chat de sala (ADR-040) ──
+    body_invalido: 'A mensagem precisa ter entre 1 e 200 caracteres.',
+    rate_limited: 'Você está enviando mensagens rápido demais. Aguarde um instante.',
+    nao_assinado: 'Você ainda não está conectado a esta sala.',
+    riot_id_necessario: 'Vincule seu Riot ID para usar o chat da sala.',
+    erro_interno: 'Não foi possível enviar a mensagem. Tente novamente.',
 };
 
 export function traduzirErroSala(codigo: string | null | undefined): string {

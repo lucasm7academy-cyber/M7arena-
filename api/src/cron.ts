@@ -1,6 +1,6 @@
-import { and, eq, inArray, isNull, not } from "drizzle-orm";
+import { and, eq, lt, inArray, isNull, not } from "drizzle-orm";
 import { db } from "./db.js";
-import { matches, matchPlayers, matchCodes } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes, salaMensagens } from "../../db/schema/matches.js";
 import { users } from "../../db/schema/identidade.js";
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
 import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
@@ -73,6 +73,16 @@ export async function runCron(d: any = db) {
     }
     console.log(`[cron] saneamento: ${linkedOrfao.length} vinculo(s) orfao(s) liberado(s) em ${idsOrfaos.length} sala(s)`);
   }
+
+  // 3. Chat (ADR-040): mensagens de sala expiram em 5 min. O purge preguiçoso
+  //    (no GET de histórico) já limpa na leitura; aqui é a rede de segurança
+  //    para a tabela nunca acumular mesmo sem leituras.
+  const corteChat = new Date(Date.now() - 5 * 60 * 1000);
+  const [purgadas] = await d
+    .delete(salaMensagens)
+    .where(lt(salaMensagens.createdAt, corteChat))
+    .returning({ id: salaMensagens.id });
+  if (purgadas.length > 0) console.log(`[cron] chat: ${purgadas.length} mensagem(ns) expirada(s) purgada(s)`);
 
   return { verificadas, canceladas, sanitizadas };
 }
