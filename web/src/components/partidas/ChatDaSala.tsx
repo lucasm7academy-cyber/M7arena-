@@ -1,7 +1,7 @@
 // src/components/partidas/ChatDaSala.tsx
-// Chat da sala (ADR-040): widget flutuante no canto inferior direito, quase
-// encostado na borda. Visual no padrão da sala (glass escuro + dourado #FFB700,
-// cantos cortados). Só é montado em salas ativas (SalaMod1 decide).
+// Chat da sala (ADR-040): widget flutuante no canto inferior esquerdo, quase
+// encostado na borda, aberto por padrão. Visual no padrão da sala (glass escuro
+// + dourado #FFB700, cantos cortados). Só é montado em salas ativas (SalaMod1).
 
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
@@ -18,7 +18,7 @@ interface ChatDaSalaProps {
 }
 
 export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarChat, carregarHistorico }: ChatDaSalaProps) {
-    const [aberto, setAberto] = useState(false);
+    const [aberto, setAberto] = useState(true);
     const [texto, setTexto] = useState('');
     const [roladoPraCima, setRoladoPraCima] = useState(false);
     const listaRef = useRef<HTMLDivElement | null>(null);
@@ -129,7 +129,7 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     );
 
     return (
-        <div className="fixed bottom-4 right-4 z-[120]">
+        <div className="fixed bottom-4 left-4 z-[120]">
             {aberto ? expandido : minimizado}
         </div>
     );
