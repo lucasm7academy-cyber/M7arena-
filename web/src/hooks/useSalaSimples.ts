@@ -67,7 +67,6 @@ export function useSalaSimples(
     const [codigoPartida, setCodigoPartida] = useState<string | null>(null);
     const [mostrarMensagem, setMostrarMensagem] = useState<{ tipo: 'erro' | 'sucesso'; texto: string } | null>(null);
     const [erroElegibilidade, setErroElegibilidade] = useState<ErroElegibilidade>(null);
-    const [kickTick, setKickTick] = useState(0); // re-render periódico do aviso de ociosidade
 
     // ── Refs (apenas UI/anti-clique-duplo — NADA de coordenação de estado) ──
     const mensagemTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -78,9 +77,6 @@ export function useSalaSimples(
     const tickRef = useRef<{ chave: string; ts: number } | null>(null);
     const tickEmVooRef = useRef(false);
     const jogadoresRef = useRef<any[]>([]);
-    // Timestamp da última saída VOLUNTÁRIA: o realtime que chega logo depois
-    // não pode virar o aviso de "removido por ociosidade".
-    const saiuProprioRef = useRef(0);
     // ── Fallback polling (ajustarsala bug A) ──
     // O WS é a via principal, mas se ele cai (serviço fora, aba em background,
     // mensagem perdida) o jogador que já está na sala não vê a transição.
@@ -258,20 +254,9 @@ export function useSalaSimples(
         onUpdate: async () => {
             ultimoUpdateRef.current = Date.now();
             const estadoAnterior = ultimoEstadoRef.current;
-            const tinhaEu = jogadoresRef.current.some((j: any) => j.user_id === usuarioAtual.id);
             const dadosSala = await sincronizarTudo('realtime');
             if (!dadosSala) return;
             const novoEstado = dadosSala.estado;
-
-            // Kick por ociosidade (design v3 §8): minha vaga sumiu sem eu ter
-            // saído e a sala CONTINUA em `preenchendo` → aviso do strike na hora
-            // (design v3 §11). Remoção por timeout de confirmação (confirmacao→
-            // preenchendo) NÃO gera strike e já tem a própria mensagem abaixo.
-            const saiuHagora = Date.now() - saiuProprioRef.current < 5000;
-            const tinhaEuAgora = jogadoresRef.current.some((j: any) => j.user_id === usuarioAtual.id);
-            if (tinhaEu && !saiuHagora && !tinhaEuAgora && estadoAnterior === 'preenchendo' && novoEstado === 'preenchendo') {
-                mostrar('erro', 'Você foi removido da vaga por ociosidade — strike registrado.');
-            }
 
             if (novoEstado === estadoAnterior) return;
 
@@ -455,8 +440,6 @@ export function useSalaSimples(
                 mostrar('erro', traduzirErroSala(r.erro));
                 return;
             }
-            // Marca a saída como voluntária para o realtime não virar "kick".
-            saiuProprioRef.current = Date.now();
             await sincronizarJogadores();
         } finally {
             saindoRef.current = false;
@@ -485,24 +468,7 @@ export function useSalaSimples(
         }
     }, [mostrar]);
 
-    // ── TICKER DE OCIOSIDADE (aviso de kick aos 25 min, design v3 §8) ──
-    // Enquanto eu estiver numa vaga de sala em `preenchendo`, re-renderiza a
-    // cada 15s para o badge "será removido em 5 min" derivar de `created_at`
-    // (o servidor kicka aos 30 min desde o created_at da vaga).
-    useEffect(() => {
-        if (sala?.estado !== 'preenchendo') return;
-        const temVaga = jogadores.some((j: any) => j.user_id === usuarioAtual.id && !!j.created_at);
-        if (!temVaga) return;
-        const id = setInterval(() => setKickTick((t) => t + 1), 15_000);
-        return () => clearInterval(id);
-    }, [sala?.estado, jogadores, usuarioAtual.id]);
-
-    // ── OCIOSIDADE DERIVADA DO SERVIDOR (minutos desde a entrada na vaga) ──
-    const minhaVaga = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
-    const ociosidadeMin = sala?.estado === 'preenchendo' && minhaVaga?.created_at
-        ? Math.max(0, (Date.now() - new Date(minhaVaga.created_at).getTime()) / 60_000)
-        : 0;
-
+    // ── OCIOSIDADE ─────────────────────────────
     const confirmar = async () => {
         if (confirmandoRef.current) {
             if (IS_DEV) console.log(`⚠️ [confirmar] Requisição em voo, ignorando clique duplo`);
@@ -558,7 +524,6 @@ export function useSalaSimples(
         timer, timerIniciandoPartida, codigoPartida,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
-        ociosidadeMin,
         atualizar: () => sincronizarTudo('manual'),
         entrar, sair, confirmar, recusar,
     };

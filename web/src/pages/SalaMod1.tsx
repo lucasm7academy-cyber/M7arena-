@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Copy, Check, AlertTriangle, LinkIcon, Loader, Clock, X, Trash2, Share2, Trophy, ArrowLeft, Swords, Gamepad2, Zap, Shield } from 'lucide-react';
+import { Copy, Check, AlertTriangle, LinkIcon, Loader, X, Trash2, Share2, Trophy, ArrowLeft, Swords, Gamepad2, Zap, Shield } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
@@ -93,7 +93,7 @@ export default function SalaMod1() {
         timer, codigoPartida,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
-        ociosidadeMin, atualizar,
+        atualizar,
         entrar, sair, confirmar, recusar,
     } = useSalaSimples(salaId, usuarioAtual);
 
@@ -232,7 +232,6 @@ ${link}`;
     const premioPorJogador = ehApostada && numVencedores > 0 ? Math.floor(poteLiquido / numVencedores) : 0;
     const temRiotId = !!perfil?.riotId;
     const jogadorConfirmado = !!jogadorAtual?.confirmado;
-    const minutosParaKick = ehApostada ? Math.max(0, Math.ceil(30 - ociosidadeMin)) : 0;
 
     const usuarioParticipou = !!jogadorAtual;
     const usuarioVenceu = jogadorAtual ? (
@@ -532,17 +531,6 @@ ${link}`;
                             className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs md:text-[1.2vmin] font-black uppercase tracking-widest hover:bg-blue-500/30 transition-all">
                             Vincular
                         </button>
-                    </div>
-                </motion.div>
-            )}
-
-            {/* AVISO DE KICK POR OCIOSIDADE (aos 25 min, design v3 §8) */}
-            {sala.estado === 'preenchendo' && ociosidadeMin >= 25 && (
-                <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                    className="absolute top-[13vh] left-1/2 -translate-x-1/2 z-[45]">
-                    <div className="px-4 py-2 rounded-full border border-orange-500/40 bg-orange-500/10 backdrop-blur-md text-orange-300 text-xs md:text-[1.4vmin] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
-                        <Clock className="w-4 h-4 md:w-[1.6vmin] md:h-[1.6vmin]" />
-                        Ocioso — removido da vaga em {minutosParaKick} min
                     </div>
                 </motion.div>
             )}
