@@ -1,14 +1,18 @@
 // src/components/partidas/ChatDaSala.tsx
 // Chat da sala (ADR-040): widget flutuante no canto inferior esquerdo, quase
 // encostado na borda, aberto por padrão. Visual no padrão da sala (glass escuro
-// + cantos cortados). A cor do accent espelha o time do jogador (blue/red) ou
-// o dourado padrão fora da vaga. Só é montado em salas ativas (SalaMod1).
+// + cantos cortados com frame dourado). Só o nome do jogador muda de cor (blue/
+// red/dourado conforme o time); o resto do accent é o dourado padrão.
 
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
 import type { ApiSalaChatMensagem } from '../../lib/api';
 
-const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+// Borda cortada no padrão das vagas/cards: wrapper com clipPath (frame) +
+// conteúdo interno com clipPath um pouco menor (fill). O p-[1.5px] do frame
+// expõe a cor do frame como borda — clip-path não corta o `border` nativo.
+const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
+const CUT_INNER = 'polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px)';
 
 interface ChatDaSalaProps {
   mensagens: ApiSalaChatMensagem[];
@@ -16,10 +20,9 @@ interface ChatDaSalaProps {
   onMarcarLidas: () => void;
   enviarChat: (body: string) => void;
   carregarHistorico: () => void;
-  cor: string;
 }
 
-export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarChat, carregarHistorico, cor }: ChatDaSalaProps) {
+export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarChat, carregarHistorico }: ChatDaSalaProps) {
     const [aberto, setAberto] = useState(true);
     const [texto, setTexto] = useState('');
     const [roladoPraCima, setRoladoPraCima] = useState(false);
@@ -63,12 +66,12 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     const minimizado = (
         <button
             onClick={() => setAberto(true)}
-            className="relative p-[1.5px] bg-black hover:bg-black transition-colors"
-            style={{ clipPath: CUT_BUTTON }}
+            className="relative p-[1.5px] bg-[#FFB700]/60 transition-colors"
+            style={{ clipPath: CUT_FRAME }}
             aria-label="Abrir chat da sala"
         >
-            <span className="flex items-center gap-2 bg-[#0A0A0A] px-4 py-3"
-                style={{ clipPath: CUT_BUTTON, color: cor }}>
+            <span className="flex items-center gap-2 bg-[#0A0A0A] px-4 py-3 text-[#FFB700]"
+                style={{ clipPath: CUT_INNER }}>
                 <MessageSquare className="w-5 h-5" />
                 <span className="text-xs font-black uppercase tracking-widest">Chat</span>
             </span>
@@ -81,51 +84,54 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     );
 
     const expandido = (
-        <div className="w-[calc(100vw-32px)] max-w-[320px] h-[380px] flex flex-col bg-black/80 backdrop-blur-md border overflow-hidden"
-            style={{ clipPath: CUT_BUTTON, borderColor: cor + '40' }}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/60">
-                <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" style={{ color: cor }} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Chat da Sala</span>
-                </div>
-                <button onClick={() => setAberto(false)} className="text-white/40 hover:text-white" aria-label="Minimizar chat">
-                    <X className="w-4 h-4" />
-                </button>
-            </div>
-
-            <div ref={listaRef} onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-                {mensagens.length === 0 && (
-                    <p className="text-xs text-white/40 text-center pt-6">
-                        Nenhuma mensagem ainda. As mensagens somem após 5 minutos.
-                    </p>
-                )}
-                {mensagens.map((m) => (
-                    <div key={m.id} className="space-y-0.5">
-                        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: cor }}>{m.nome}</p>
-                        <p className="text-sm text-white/90 break-words leading-snug">{m.body}</p>
+        <div className="w-[calc(100vw-32px)] max-w-[320px] p-[1.5px] bg-[#FFB700]/60"
+            style={{ clipPath: CUT_FRAME }}>
+            <div className="h-[380px] flex flex-col bg-black/85 backdrop-blur-md overflow-hidden"
+                style={{ clipPath: CUT_INNER }}>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/60">
+                    <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-[#FFB700]" />
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Chat da Sala</span>
                     </div>
-                ))}
-            </div>
+                    <button onClick={() => setAberto(false)} className="text-white/40 hover:text-white" aria-label="Minimizar chat">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
 
-            <div className="p-2 border-t border-white/10 flex items-center gap-2">
-                <input
-                    value={texto}
-                    onChange={(e) => setTexto(e.target.value.slice(0, 200))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') enviar(); }}
-                    maxLength={200}
-                    placeholder="Digite sua mensagem..."
-                    className="flex-1 bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-white/30"
-                />
-                <button onClick={enviar}
-                    className="p-[1.5px] hover:opacity-90 transition-opacity shrink-0"
-                    style={{ clipPath: CUT_BUTTON, backgroundColor: cor }}
-                    aria-label="Enviar mensagem">
-                    <span className="flex items-center justify-center px-3 py-2 text-black"
-                        style={{ clipPath: CUT_BUTTON, backgroundColor: cor }}>
-                        <Send className="w-4 h-4" />
-                    </span>
-                </button>
+                <div ref={listaRef} onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+                    {mensagens.length === 0 && (
+                        <p className="text-xs text-white/40 text-center pt-6">
+                            Nenhuma mensagem ainda. As mensagens somem após 5 minutos.
+                        </p>
+                    )}
+                    {mensagens.map((m) => (
+                        <div key={m.id} className="space-y-0.5">
+                            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: m.cor || '#FFB700' }}>{m.nome}</p>
+                            <p className="text-sm text-white/90 break-words leading-snug">{m.body}</p>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="p-2 border-t border-white/10 flex items-center gap-2">
+                    <input
+                        value={texto}
+                        onChange={(e) => setTexto(e.target.value.slice(0, 200))}
+                        onKeyDown={(e) => { if (e.key === 'Enter') enviar(); }}
+                        maxLength={200}
+                        placeholder="Digite sua mensagem..."
+                        className="flex-1 bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-white/30"
+                    />
+                    <button onClick={enviar}
+                        className="p-[1.5px] bg-black hover:bg-black transition-colors shrink-0"
+                        style={{ clipPath: CUT_FRAME }}
+                        aria-label="Enviar mensagem">
+                        <span className="flex items-center justify-center bg-[#FFB700] px-3 py-2 text-black"
+                            style={{ clipPath: CUT_INNER }}>
+                            <Send className="w-4 h-4" />
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     );

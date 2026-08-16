@@ -258,11 +258,19 @@ async function enviarChat(ws: WebSocket, msg: any) {
       return;
     }
 
+    // Cor do nick = time do remetente NO MOMENTO do envio (ADR-040): a mensagem
+    // nasce com a cor e não muda se o jogador trocar de lado depois.
+    const { rows: [sideRow] } = await authPool.query(
+      `SELECT side FROM match_players WHERE match_id = $1 AND user_id = $2 LIMIT 1`,
+      [matchId, userId]
+    );
+    const cor = sideRow ? (sideRow.side === "red" ? "#ef4444" : "#3B82F6") : "#FFB700";
+
     const { rows: [row] } = await authPool.query(
-      `INSERT INTO sala_mensagens (match_id, user_id, body)
-       VALUES ($1, $2, $3)
+      `INSERT INTO sala_mensagens (match_id, user_id, body, cor)
+       VALUES ($1, $2, $3, $4)
        RETURNING id, created_at`,
-      [matchId, userId, body]
+      [matchId, userId, body, cor]
     );
 
     const msgObj = {
@@ -271,6 +279,7 @@ async function enviarChat(ws: WebSocket, msg: any) {
       nome: u.displayName || "Jogador",
       avatar: u.avatarUrl ?? null,
       body,
+      cor,
       created_at: new Date(row.created_at).toISOString(),
     };
     const payload = JSON.stringify({ type: "chat_message", matchId: salaNum, msg: msgObj });

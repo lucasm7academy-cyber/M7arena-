@@ -200,9 +200,6 @@ ${link}`;
     // O histórico é disparado pelo mount do ChatDaSala + onReconnect do realtime.
     const ESTADOS_CHAT = ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'];
     const chatHabilitado = !!sala && ESTADOS_CHAT.includes(sala.estado) && !!user;
-    // Cor do chat: espelha o time do jogador (blue/red) se ele está na vaga;
-    // fora da vaga, fica no dourado padrão da sala.
-    const corChat = jogadorAtual ? (jogadorAtual.is_time_a ? '#3B82F6' : '#ef4444') : '#FFB700';
 
     // Stats reais da partida (resultado_riot, da Riot) por PUUID ou Nome — as vagas da
     // sala finalizada mostram campeão + KDA + CS cruzando por este mapa.
@@ -1194,7 +1191,6 @@ ${link}`;
                     onMarcarLidas={marcarLidasChat}
                     enviarChat={enviarChat}
                     carregarHistorico={carregarHistoricoChat}
-                    cor={corChat}
                 />
             )}
 

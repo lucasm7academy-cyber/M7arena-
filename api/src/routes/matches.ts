@@ -179,6 +179,7 @@ matchesRouter.get("/:id/mensagens", async (req, res) => {
         nome: u?.displayName || "Jogador",
         avatar: u?.avatarUrl ?? null,
         body: r.body,
+        cor: r.cor ?? null,
         created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString(),
       };
     });

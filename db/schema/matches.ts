@@ -135,6 +135,10 @@ export const salaMensagens = pgTable(
       .notNull()
       .references(() => users.id),
     body: text("body").notNull(),
+    // Cor do time do remetente no MOMENTO do envio (ADR-040): a mensagem nasce
+    // com a cor ('#3B82F6' blue, '#ef4444' red, '#FFB700' fora da vaga) e ela
+    // não muda se o jogador trocar de lado depois. Qualquer um que entrar vê.
+    cor: varchar("cor", { length: 10 }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
   (table) => [

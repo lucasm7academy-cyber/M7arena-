@@ -304,6 +304,8 @@ export interface ApiSalaChatMensagem {
   nome: string;
   avatar: string | null;
   body: string;
+  /** Cor do nick no momento do envio (blue/red/gold). Null → dourado. */
+  cor?: string | null;
   created_at: string;
 }
 

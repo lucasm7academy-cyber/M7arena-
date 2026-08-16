@@ -1,0 +1,1 @@
+ALTER TABLE "sala_mensagens" ADD COLUMN "cor" varchar(10);
