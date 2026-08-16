@@ -134,6 +134,20 @@
       "when": 1786849628257,
       "tag": "0018_workable_clea",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786863229824,
+      "tag": "0019_gifted_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786865385442,
+      "tag": "0020_separar_fila_codigos_x1",
+      "breakpoints": true
     }
   ]
 }

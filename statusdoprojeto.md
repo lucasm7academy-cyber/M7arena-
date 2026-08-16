@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 15/08/2026 23:18 — por `deepseek`
+**Última atualização:** 16/08/2026 04:35 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`█████████████████████████░░░ 76/86` concluído
+`█████████████████████████░░░ 77/88` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
-| Fase 1 — Schema do banco | ████████████ 12/12 | — | — |
+| Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 45/50 | 1 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 45/51 | 2 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 3 | — |
 
@@ -39,9 +39,9 @@
 | Área | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Governança & Agentes | ████████████ 6/6 | — | — |
-| Banco de Dados | ████████████ 13/13 | — | — |
+| Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ████████████ 9/9 | — | — |
-| Aplicação (React + Vite) | ███████████░ 38/41 | 1 | 2 |
+| Aplicação (React + Vite) | ███████████░ 38/42 | 2 | 2 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 3 | — |
@@ -72,6 +72,7 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
 - `mig.identidade` **Transform: identidade** — deepseek · Verificação/execução do transform de identidade: confirmar que users.json (220) tem passwordHash vindo de passwords.json (57 hashes) e completude de game_accounts/user_wallets. Supervisor despachou subagente. BLK-001 pode estar parcialmente resolvido pelos scripts de senha.
 - `mig.campeonatos` **Transform: explodir o JSONB de campeonatos** — deepseek · Retomando o transform de campeonatos com o dump real (campeonatos.json 156KB): tournaments.json transformado está vazio (rodou sobre dump vazio). Supervisor despachou subagente para corrigir o transform-campeonatos.js.
 - `app.saque` **Saque de MC via PIX (withdrawals + admin decide)** — deepseek · Fluxo de saque implementado e testado. Backend commitado por outro agente (3062c68: migration 0012, lib/routes/testes/SDK). Front (Tasks 5-6: DepositTab/SaqueTab/SaquesPix/Admin) escrito e buildando, AINDA NÃO COMMITADO nem deployado. Falta: commit do front + aplicar migration 0012 na VPS + deploy.
+- `app.chat.mensagens` **Chat de sala via WebSocket (envio + histórico + purge)** — deepseek · Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
 
 ## Componentes
 
@@ -100,6 +101,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 - `[x]` **Retenção: audit_log particionado + jobs de purge** `db.retencao`<br>  Schema Drizzle de auditoria (auditLogs) e estratégia de retenção criada.<br>  _evidência:_ `db/schema/retencao.ts:1`<br>  _concluído 01/08/2026 00:45 por gemini_
 - `[x]` **Não migrar as 15 tabelas mortas** `db.descarte`<br>  Mapeamento e documentação formal das 15 tabelas e 5 views legadas mortas excluídas do schema Drizzle e ETL.<br>  _evidência:_ `db/schema/DISCARDED.md:1`<br>  _concluído 01/08/2026 00:44 por gemini_
 - `[x]` **Normalização completa campeonatos (8 blobs → tabelas)** `db.campeonatos.normalizado`<br>  Normalização completa (ADR-016, supersede ADR-014): os 8 jsonb de tournaments eliminados → tournament_teams(+paid/discord/whatsapp/group_id), tournament_matches(+colunas de exibição), tournament_groups, tournament_standings, bracket_matches, tournaments.seed_order/booleans. Migration 0005 aplicada na VPS. API shape/store reconstruindo legado 1:1 + 6 endpoints (inscrições/aprovar/reabrir/cronograma/merge/recalcular-pdl). Front: 8 RPCs migradas, verify-swap=0. Smoke test ao vivo 12/12 checks.<br>  _evidência:_ `Migration 0005 aplicada na VPS (docker exec psql, ON_ERROR_STOP=1). Smoke test dev.m7arena.pro: health/register/login/create/PUT blocos/inscrever/aprovar/merge/recalcular/list/401 = OK. api tsc exit 0, web tsc 2 erros pré-existentes.`<br>  _concluído 02/08/2026 16:15 por claude_
+- `[x]` **Tabela sala_mensagens (chat de sala)** `db.chat.mensagens`<br>  Migration 0018 aplicada na VPS (dev.m7arena.pro). Journal 0014-0017 reconstruido (ADR-041).<br>  _evidência:_ `psql na VPS (docker exec m7arena_postgres) aplicou 0018_workable_clea.sql com ON_ERROR_STOP=1 → CREATE TABLE + 2 ALTER (FKs) + 2 CREATE INDEX, sem erro`<br>  _concluído 16/08/2026 03:02 por deepseek_
 
 ### Fase 2 — Infraestrutura (Docker/VPS)
 
@@ -182,6 +184,7 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **P8: Elo por membro no TimePage do banco** `perf.timepage`<br>  GET /api/teams/:id inclui elo por membro (elo_cache DB); TimePage usa TIER_MAP do cache, removido fetch buscarElo por membro (Promise.all N chamadas). tsc ok.<br>  _evidência:_ `GET /api/teams/:id devolve elo por membro do elo_cache; TimePage sem buscarElo por membro; tsc api+web exit 0; validado VPS (MASTER I, GRANDMASTER I)`<br>  _concluído 10/08/2026 02:31 por deepseek_
 - `[x]` **P9: NotificationBell carrega ao clicar** `perf.notificacoes`<br>  Decisão do usuário: sem WS/polling, recarrega ao clicar (já era lazy-load). Badge agora mostra pendentes (join_request/invite_received) calculado do último clique, sem polling.<br>  _evidência:_ `NotificationBell lazy-load ao clicar (sem WS/polling), badge de pendentes do último clique; tsc web exit 0; deploy commit 74f58f6`<br>  _concluído 10/08/2026 02:31 por deepseek_
 - `[x]` **P10: Index cron + externos** `perf.externos`<br>  Tarefa A: index composto de matches(status,updated_at) JÁ EXISTE como constraint manual da migration 0009 (idx_matches_status_updated, IF NOT EXISTS). Nenhuma migration nova gerada — schema mantido intacto (revertido). Tarefa B: análise dos externos (CDN ícones, supabase-js residual, storage Supabase hardcoded) entregue como relatório. tsc api exit 0.<br>  _evidência:_ `Index do cron já existe (0009 idx_matches_status_updated). CDN ícones: não vale cache próprio. Achados: verify-swap gap + Login.tsx URLs supabase hardcoded. tsc api exit 0`<br>  _concluído 10/08/2026 02:26 por deepseek_
+- `[~]` **Chat de sala via WebSocket (envio + histórico + purge)** `app.chat.mensagens`<br>  Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
 
 **Design & Paridade Visual**
 
@@ -529,6 +532,30 @@ _10/08/2026 01:17 — deepseek_
 
 _15/08/2026 00:02 — deepseek_
 
+### ADR-040 — Chat da sala: WebSocket próprio + TTL 5min + Riot vinculado para enviar
+
+**Decisão:** Chat de conversa geral nas salas de partida: mensagens trafegam pelo WebSocket próprio (api/src/realtime, novos tipos chat_send/chat_message, fan-out no mesmo rooms map), com tabela sala_mensagens e purge de mensagens > 5 min no cron. Envio exige ser participante do match_players (qualquer vaga/cargo) OU staff, E ter conta Riot vinculada (users.riot_id). UI nova flutuante no canto inferior direito (design novo — fora da paridade 1:1).
+
+**Por quê:** Custo ≈ zero: socket já existe e participantes já estão assinados; fan-out em memória, INSERT ~0,1ms, zero requests HTTP extras. Chat piggyback no GET da sala faria cada mensagem refazer a sala inteira; polling de 5s por usuário pesaria o VPS. Riot vinculado combate spam/alt e reusa a elegibilidade existente.
+
+_15/08/2026 23:25 — deepseek_
+
+### ADR-041 — Journal de migrations: reconstruir 0014–0017 + aplicar 0018 via psql
+
+**Decisão:** Journal de migrations reconstruído para incluir 0014–0017 (snapshots + entradas), e a migration 0018 do chat será aplicada na VPS via psql (não `drizzle-kit migrate`). O journal no HEAD só registrava até 0013 apesar dos SQL 0014–0017 existirem — falha pré-existente que violava o invariante 3.5 (git clone + migrate não reconstruía o banco completo). A reconstrução foi validada: re-run do `drizzle-kit generate` retorna "no changes".
+
+**Por quê:** Com o journal corrigido, `drizzle-kit generate` para de emitir uma 0014 duplicada a cada execução e um clone limpo + migrate agora produz o banco completo (invariante 3.5). Como as migrations 0014–0017 já estão aplicadas manualmente na VPS, `drizzle-kit migrate` a partir de agora tentaria reaplicá-las e falhar — por isso 0018 entra via psql direto no SQL versionado.
+
+_16/08/2026 00:09 — deepseek_
+
+### ADR-042 — Fila de tournament codes por modo (1v1 ARAM x1 separado dos 5v5)
+
+**Decisão:** match_codes ganha coluna mode (migration 0020): os 2 códigos BR050c8-* são marcados mode='1v1' (exclusivos do x1/ARAM 1v1) e os 6 códigos BR04fa2-* ficam mode NULL (genéricos, servem 5v5/aram/time_vs_time). atribuirCodigoPartida filtra por modo: 1v1 só pega mode='1v1'; demais modos só pegam mode IS NULL. Nenhum modo cruza para a fila do outro.
+
+**Por quê:** Os códigos BR04fa2-* que o usuário forneceu antes são Summoner's Rift 5v5 Tournament Draft (não funcionam num 1v1 ARAM). O x1 joga em Howling Abyss com códigos próprios (BR050c8-*). Antes o pool era único e uma sala 1v1 podia pegar um código 5v5 (quebra o jogo). Separação por mode com rodízio LRU preservado (ADR-040) dentro de cada fila. Decisão direta do usuário em conversa.
+
+_16/08/2026 04:35 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -538,6 +565,12 @@ _15/08/2026 00:02 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 16/08/2026 03:03 | deepseek | Commitado (cd40a84 + fix 3121834) e deployado o chat de sala (ADR-040) na VPS dev.m7arena.pro. Fluxo: commit em feat/chat-sala, push origin+vps, merge ff na VPS main, migration 0018 aplicada via psql (CREATE TABLE + FKs + índices, ON_ERROR_STOP=1 sem erro), rebuild app+nginx, up -d. Site 200, realtime ouvindo. Corrigi bug de deploy: purge do cron usava const [purgadas] (destructuring) -> TypeError 'reading length' quando vazio; troquei para const purgadas e redeployei. __drizzle_migrations NAO existe na VPS (migrations sempre via psql), entao o item de reconciliacao da revisao final e moot. PENDENTE: usuario testar manualmente com 2 contas (envio/recebimento, autoexclusao 5min, ban/Riot, sala encerrada sem chat). <br>_tocou: `api/src/cron.ts`_ |
+| 16/08/2026 02:38 | deepseek | Chat de sala (ADR-040) implementado via subagent-driven, SEM commits, branch feat/chat-sala. 8 tasks + fix final, todas aprovadas (0 Critical). Backend: migration 0018 sala_mensagens (journal 0014-0017 reconstruido, ADR-041), GET /api/matches/:id/mensagens (participante/staff, purge preguiçoso), chat_send no realtime (ban/Riot/rate limit 1s+40/5min, INSERT, fan-out), purge TTL 5min no cron. Front: SDK, useSalaRealtime/useSalaSimples (enviarChat), useSalaChat (historico+autoexclusao 5min+naoLidas), ChatDaSala canto inf. direito, integracao SalaMod1 (gate estados ativos + participante/staff). tsc api+web exit 0, vite build ok. PENDENTE: deploy VPS (aplicar 0018 via psql E reconciliar __drizzle_migrations) + teste manual 2 contas. Minors: chatTimestamps sem eviction; onReconnect de visitante dispara GET 403. <br>_tocou: `db/schema/matches.ts`, `db/migrations/0018_workable_clea.sql`, `db/migrations/meta/_journal.json`, `api/src/routes/matches.ts`, `api/src/realtime/index.ts`, `api/src/cron.ts`, `web/src/lib/api.ts`, `web/src/hooks/useSalaRealtime.ts`, `web/src/hooks/useSalaSimples.ts`, `web/src/hooks/useSalaChat.ts`, `web/src/api/salamod1.ts`, `web/src/components/partidas/ChatDaSala.tsx`, `web/src/pages/SalaMod1.tsx`_ |
+| 16/08/2026 02:10 | deepseek | Ajuste na tela de partida finalizada: mantém o lineup de vagas (cards Blue/Red de jogadores) e remove APENAS o título 'Blue-Side'/'Red-Side' (barra chanfrada colorida) quando sala.estado === 'encerrada'. Commit 0e49e50 na branch feat/chat-sala (branch local tinha trocado; push criou origin/feat/chat-sala), merge ff-only na main da VPS, rebuild nginx. Site 200, bundle SalaMod1-DPVUr55G.js com condição t.estado!=="encerrada" no título confirmada. Atenção: branch local ficou em feat/chat-sala com trabalho não-commitado de outra sessão (chat-sala) que NÃO foi tocado. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
+| 16/08/2026 02:06 | deepseek | Task 3 do Chat de Sala (ADR-040) em api/src/realtime/index.ts: chat constants + maps socketMatchId/chatTimestamps, removerDaSala limpa socketMatchId, tratarMensagem virou dispatcher, assinarSala registra matchId, permitidoNoRateLimit (1s/40 por 5min) e enviarChat (valida assinado/body/autenticado/ban/Riot → INSERT sala_mensagens → fan-out chat_message incluindo o remetente). npm run build (tsc) exit 0. Desvio: brief usava `const [u] = await authPool.query(...)` que não compila com @types/pg (TS2488, QueryResult sem iterator); usei `const { rows: [u] } = ...` (idioma do resto do código). SEM COMMIT (modo da task). app.chat.mensagens marcado doing; faltam Tasks 4-8. <br>_tocou: `api/src/realtime/index.ts`, `.superpowers/sdd/task-3-report.md`, `app.chat.mensagens`_ |
+| 15/08/2026 23:43 | deepseek | Discutido e planejado o chat de sala (ADR-040): análise de performance concluiu que chat pelo WebSocket próprio custa ~zero (socket já assinado; fan-out em memória; INSERT ~0,1ms), descartando polling/piggyback. Decisões do usuário: conversa geral, mensagens autoexcluídas em 5min, widget canto inferior direito, sem chat em partidas finalizadas, permissão = participante (qualquer vaga/cargo) ou staff com Riot vinculado. Escrito spec (docs/superpowers/specs/2026-08-16-chat-sala-design.md) e plano (docs/superpowers/plans/2026-08-16-chat-sala.md, 8 tasks). Componentes db.chat.mensagens e app.chat.mensagens criados. Implementação ainda não iniciada. <br>_tocou: `docs/superpowers/specs/2026-08-16-chat-sala-design.md`, `docs/superpowers/plans/2026-08-16-chat-sala.md`_ |
+| 15/08/2026 23:25 | deepseek | Deploy na VPS da remoção dos cards Blue-Side/Red-Side da partida finalizada (web/src/pages/SalaMod1.tsx). Commit 1231292 na feat/advertencias-ban, push, merge ff-only na main da VPS (179.198.120.11, /root/m7arena), rebuild nginx via docker compose --env-file. Site 200, bundle SalaMod1-Bs7cJrVy.js com a condição 'encerrada' nos blocos de lado confirmada. <br>_tocou: `web/src/pages/SalaMod1.tsx`, `infra/docker-compose.yml`_ |
 | 15/08/2026 23:18 | deepseek | Removidos os cards Blue-Side e Red-Side (lineup de vagas) da tela de partida finalizada em web/src/pages/SalaMod1.tsx. As seções de lado agora só renderizam quando sala.estado não é 'aguardando_revisao' nem 'encerrada' — a finalizada mostra apenas o header de resultado (vencedor + placar + duração). Pedido direto do usuário. Build verificado: vite build exit 0. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
 | 15/08/2026 22:54 | deepseek | (1) Removido todo o aviso/toast de kick por ociosidade do front: useSalaSimples.ts (kickTick, saiuProprioRef, efeito ticker 15s, ociosidadeMin, detecção de remoção no realtime) e SalaMod1.tsx (banner 'Ocioso — removido da vaga em X min', minutosParaKick, import Clock). Comportamento agora bate com o servidor (ADR-033/034): ninguém é kickado. (2) Corrigido src da imagem de tutorial no display de iniciando_partida: apontava para /images/tutorial.png (inexistente, retornava index.html text/html → img quebrada); o arquivo real é tutorial-codigo.webp (commit 6cae1c7 tinha trocado por engano). Builds locais ok (vite build exit 0), commits e06c620 + 55e70e8, push origin feat/advertencias-ban e main, merge ff-only na VPS, nginx rebuild. Verificado no container: SalaMod1-BCdJ7gCB.js contém 'tutorial-codigo.webp' e não contém 'Ocioso'. Site 200. <br>_tocou: `web/src/hooks/useSalaSimples.ts`, `web/src/pages/SalaMod1.tsx`_ |
 | 15/08/2026 20:46 | deepseek | Ícones da sidebar trocados em LayoutWrapper.tsx: Início (/lobby) passou de SiLeagueoflegends para AiOutlineHome (ícone padrão de home), e Jogar (/jogar) recebeu o SiLeagueoflegends. Import AiOutlineAim removido (sem uso). Build local passou (vite build ok), commit 31fca05 na feat/advertencias-ban, push GitHub, merge ff-only na VPS, nginx rebuild (vite build 11.7s), site 200 em dev.m7arena.pro, origin/main sincronizado (42ff5ad..31fca05). <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`_ |
@@ -547,12 +580,6 @@ _15/08/2026 00:02 — deepseek_
 | 15/08/2026 16:07 | gemini | Implementado o card de título de Partida Finalizada em Salas no estilo Liga RK com a fonte Anton e update-strip. Rebuild e deploy executados na VPS (dev.m7arena.pro). <br>_tocou: `web/src/index.css`, `web/src/pages/SalaMod1.tsx`_ |
 | 15/08/2026 01:25 | gemini | Corrigido o tamanho do overlay da contagem/confirmação e demais overlays em SalaMod1.tsx: adicionadas classes md:max-w-none md:max-h-none para não limitar o círculo a 340px no desktop e expandir para os 55vmin exatos do display central. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
 | 15/08/2026 01:20 | gemini | Ajuste visual no DepositModal: corrigido corte do badge 'Mais Escolhido' no DepositTab, posicionado TF de forma suave no fundo com gradiente escuro sem poluir o SaqueTab, e refinada a estética dark gold M7Arena nos botões e cards de depósito e saque. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/components/modals/deposit/DepositTab.tsx`, `web/src/components/modals/deposit/SaqueTab.tsx`_ |
-| 15/08/2026 01:14 | gemini | Restaurada com precisão 1:1 toda a estrutura e proporções do display central (hub de 55vmin e anel arcano de 70vmin com ticks em -35vmin), Side Grid com gap de 70vmin/74vmin e cards de vagas em 44vmin com escala vmin pura no desktop. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`, `web/src/components/partidas/VagaSlot.tsx`_ |
-| 15/08/2026 01:09 | gemini | Restaurado o tamanho original e proporções do display central (hub circular) no desktop (55vmin, tela cheia com overflow-hidden e ticks arcanos alinhados), mantendo a responsividade aperfeiçoada no mobile. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
-| 15/08/2026 01:03 | gemini | Ajustado layout sequencial no eixo Y para telas mobile em SalaMod1.tsx: (1) O conteúdo agora flui de cima para baixo com espaçamento sequencial natural (sem centralização vertical no Y) e centralização perfeita no eixo X; (2) Botão de 'Voltar ao Lobby' e demais botões do rodapé (Minha Carteira, Confirmar, Copiar Código, Verificar) aumentados para touch-target mobile confortável com preenchimento generoso e tipografia nítida. Verificado via tsc e build. <br>_tocou: `web/src/pages/SalaMod1.tsx`_ |
-| 15/08/2026 00:59 | gemini | Ajustada a responsividade mobile das salas (SalaMod1 e VagaSlot): (1) Cards de jogadores com altura confortável (60px no mobile em vez de ficarem espremidos), com avatares/ícones de campeão 40x40px nítidos e fontes legíveis; (2) Largura padronizada e centralizada (max-w-[440px] centralizado); (3) Display central no fluxo vertical responsivo do mobile entre os times com proporção circular perfeita (84vw max 340px); (4) Header de resultado da partida finalizada centralizado e adaptado a telas pequenas. Verificado via tsc e build. <br>_tocou: `web/src/components/partidas/VagaSlot.tsx`, `web/src/pages/SalaMod1.tsx`_ |
-| 15/08/2026 00:16 | gemini | Implementado suporte visual completo para partidas valendo MC (apostadas) tanto no lobby/sala ativa quanto na sala finalizada: (1) Top bar e Central Hub exibem Pote Total e Prêmio por vencedor; (2) Header de resultado exibe Pote Total e Prêmio por jogador; (3) Cards de jogadores no VagaSlot exibem badge dourada/verde de +MC para vencedores, -MC para derrotados e Desistente (-MC) para abandonos; (4) Action footer mostra resumo de ganho/perda pessoal com botão de Minha Carteira. Verificado via tsc e build. <br>_tocou: `web/src/components/partidas/VagaSlot.tsx`, `web/src/pages/SalaMod1.tsx`_ |
-| 15/08/2026 00:02 | deepseek | Sala finalizada com dados reais da Riot: criei a sala 37 (5v5, match BR1_3271569603, time azul venceu 36x18, 25:47) com match_results + payload completo; corrigi role_slot (TOP/JG/MID/ADC/SUP). Redesenhei a tela de partida finalizada: removi o quadrado ResultadoPartida, resultado direto na tela com header no topo (vencedor+placar+duração, borda cortada), sem o círculo central, e vagas mostrando nick+tag do jogador + ícone do campeão + KDA + CS (adicionei champion_id ao resultado_riot). Correção do motor verificar-partida: partida abortada (desistência) no 1v1 decide vencedor por win condition (first blood > 100 CS) e encerra na hora em vez de travar 3h em partida_iniciada — +3 testes (10/10 pass). Deploy na VPS: a sala 39 (1v1 One Lucks x CDC Kuri, Abort_TooFewPlayers) já foi encerrada automaticamente com One Lucks (red) vencedor via first blood. <br>_tocou: `api/src/lib/verificar-partida.ts`, `api/test/verificar-partida.test.ts`, `api/src/lib/match-shape.ts`, `web/src/components/partidas/VagaSlot.tsx`, `web/src/pages/SalaMod1.tsx`_ |
 
 ---
 

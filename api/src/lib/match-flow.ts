@@ -16,7 +16,7 @@
  * saldo_insuficiente.
  */
 
-import { eq, and, gt, sql } from "drizzle-orm";
+import { eq, and, gt, sql, isNull } from "drizzle-orm";
 import { db, pool } from "../db.js";
 import { users, userSessions } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
@@ -103,16 +103,26 @@ export async function reembolsarSeNecessario(tx: any, userId: string, entryMp: n
  * (FOR UPDATE SKIP LOCKED). Código é valor real da Riot que o jogador cola no
  * cliente do LoL — inventar um número quebra.
  *
+ * Fila por modo (ADR-041): o modo 1v1 (x1) só usa códigos com `mode='1v1'`
+ * (os 2 códigos ARAM BR050c8-*); os demais modos (5v5/aram/time_vs_time) usam
+ * os códigos genéricos (`mode IS NULL`, os 6 BR04fa2-* 5v5 Tournament Draft).
+ * Um modo nunca pega código da fila do outro.
+ *
  * Rodízio LRU (ADR-040): pega o código livre usado há MAIS tempo (NULLS FIRST
  * = nunca usado entra primeiro). Com N códigos e partidas que terminam, o
  * ciclo natural é 1→2→…→N→1 — quando todos já foram usados, volta ao primeiro,
  * que já teve tempo de terminar. Teto do pool: N partidas simultâneas.
  */
-export async function atribuirCodigoPartida(tx: any, matchId: string, _mode: string): Promise<string> {
+export async function atribuirCodigoPartida(tx: any, matchId: string, mode: string): Promise<string> {
   const [row]: any[] = await tx
     .select({ id: matchCodes.id, code: matchCodes.code })
     .from(matchCodes)
-    .where(eq(matchCodes.used, false))
+    .where(
+      and(
+        eq(matchCodes.used, false),
+        mode === "1v1" ? eq(matchCodes.mode, "1v1") : isNull(matchCodes.mode)
+      )
+    )
     .orderBy(sql`${matchCodes.lastUsedAt} ASC NULLS FIRST`)
     .limit(1)
     .for("update", { skipLocked: true });

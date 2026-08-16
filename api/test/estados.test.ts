@@ -304,4 +304,34 @@ describe("máquina de estados com escrow", () => {
     const cod5 = await atribuirCodigoPartida(db as any, s5.id, "5v5");
     assert.equal(cod5, "BR-TEST-0003", "código nunca usado entra na frente do rodízio");
   });
+
+  test("fila por modo (ADR-041): 1v1 só pega código 1v1; 5v5 só pega genérico", async () => {
+    const db = ctx.db;
+    await db.delete(matchCodes);
+
+    // Genérico (mode NULL) = código 5v5 Tournament Draft; 1v1 = código ARAM x1.
+    const [gen] = await db.insert(matchCodes).values({ code: "BR-TEST-GEN-0001", used: false }).returning();
+    const [x1] = await db.insert(matchCodes).values({ code: "BR-TEST-X1-0001", used: false, mode: "1v1" }).returning();
+
+    // Sala 5v5 não pode pegar o código do x1, mesmo sendo o único livre do modo errado.
+    const sA = await criaSala(db, { apostaMc: 0 });
+    const cod5v5 = await atribuirCodigoPartida(db as any, sA.id, "5v5");
+    assert.equal(cod5v5, "BR-TEST-GEN-0001", "5v5 pega só o genérico, nunca o do x1");
+
+    // Sala 1v1 pega o código do x1.
+    const sB = await criaSala(db, { apostaMc: 0, mode: "1v1" });
+    const cod1v1 = await atribuirCodigoPartida(db as any, sB.id, "1v1");
+    assert.equal(cod1v1, "BR-TEST-X1-0001", "1v1 pega só o código marcado como 1v1");
+
+    // Todos os genéricos usados + 1v1 usado → SEM-CODIGO-AGUARDE para ambos.
+    const sC = await criaSala(db, { apostaMc: 0 });
+    assert.equal(await atribuirCodigoPartida(db as any, sC.id, "5v5"), "SEM-CODIGO-AGUARDE");
+    const sD = await criaSala(db, { apostaMc: 0, mode: "1v1" });
+    assert.equal(await atribuirCodigoPartida(db as any, sD.id, "1v1"), "SEM-CODIGO-AGUARDE");
+
+    // Libera o genérico → 5v5 volta ao ciclo, mas 1v1 continua sem código.
+    await db.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.id, gen.id));
+    assert.equal(await atribuirCodigoPartida(db as any, sC.id, "5v5"), "BR-TEST-GEN-0001");
+    assert.equal(await atribuirCodigoPartida(db as any, sD.id, "1v1"), "SEM-CODIGO-AGUARDE", "1v1 nunca pega código genérico");
+  });
 });

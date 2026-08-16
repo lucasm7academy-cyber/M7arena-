@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-16T02:18:38.286Z",
+  "updatedAt": "2026-08-16T07:35:26.814Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1309,6 +1309,30 @@
       "owner": "deepseek",
       "createdAt": "2026-08-10T05:17:24.678Z",
       "updatedAt": "2026-08-10T05:26:48.001Z"
+    },
+    {
+      "id": "db.chat.mensagens",
+      "phase": "fase-1",
+      "area": "banco",
+      "name": "Tabela sala_mensagens (chat de sala)",
+      "status": "done",
+      "notes": "Migration 0018 aplicada na VPS (dev.m7arena.pro). Journal 0014-0017 reconstruido (ADR-041).",
+      "evidence": "psql na VPS (docker exec m7arena_postgres) aplicou 0018_workable_clea.sql com ON_ERROR_STOP=1 → CREATE TABLE + 2 ALTER (FKs) + 2 CREATE INDEX, sem erro",
+      "owner": "deepseek",
+      "createdAt": "2026-08-16T02:43:05.645Z",
+      "updatedAt": "2026-08-16T06:02:46.293Z"
+    },
+    {
+      "id": "app.chat.mensagens",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Chat de sala via WebSocket (envio + histórico + purge)",
+      "status": "doing",
+      "notes": "Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-16T02:43:06.977Z",
+      "updatedAt": "2026-08-16T06:02:54.620Z"
     }
   ],
   "decisions": [
@@ -1662,6 +1686,33 @@
       "decision": "Quando a partida termina sem GameComplete (desistência/abandono, ex.: Abort_TooFewPlayers), o motor encerra a sala decidindo o vencedor pelas win conditions do 1v1: 1) first blood (prioridade), 2) 100 de farm (CS >= 100). Sem condição atingida, segue partida_iniciada até o teto de 3h e cancela.",
       "rationale": "No 1v1 o jogo nunca chega a GameComplete: quem atinge a condição (FB/100 CS) quita, e a Riot marca a partida como abortada com ambos win=false. O motor anterior só aceitava GameComplete e travava a sala em partida_iniciada por até 3h. Regra confirmada pelo usuário (win conditions do modo X1).",
       "supersedes": null
+    },
+    {
+      "id": "ADR-040",
+      "date": "2026-08-16T02:25:48.769Z",
+      "author": "deepseek",
+      "title": "Chat da sala: WebSocket próprio + TTL 5min + Riot vinculado para enviar",
+      "decision": "Chat de conversa geral nas salas de partida: mensagens trafegam pelo WebSocket próprio (api/src/realtime, novos tipos chat_send/chat_message, fan-out no mesmo rooms map), com tabela sala_mensagens e purge de mensagens > 5 min no cron. Envio exige ser participante do match_players (qualquer vaga/cargo) OU staff, E ter conta Riot vinculada (users.riot_id). UI nova flutuante no canto inferior direito (design novo — fora da paridade 1:1).",
+      "rationale": "Custo ≈ zero: socket já existe e participantes já estão assinados; fan-out em memória, INSERT ~0,1ms, zero requests HTTP extras. Chat piggyback no GET da sala faria cada mensagem refazer a sala inteira; polling de 5s por usuário pesaria o VPS. Riot vinculado combate spam/alt e reusa a elegibilidade existente.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-041",
+      "date": "2026-08-16T03:09:36.233Z",
+      "author": "deepseek",
+      "title": "Journal de migrations: reconstruir 0014–0017 + aplicar 0018 via psql",
+      "decision": "Journal de migrations reconstruído para incluir 0014–0017 (snapshots + entradas), e a migration 0018 do chat será aplicada na VPS via psql (não `drizzle-kit migrate`). O journal no HEAD só registrava até 0013 apesar dos SQL 0014–0017 existirem — falha pré-existente que violava o invariante 3.5 (git clone + migrate não reconstruía o banco completo). A reconstrução foi validada: re-run do `drizzle-kit generate` retorna \"no changes\".",
+      "rationale": "Com o journal corrigido, `drizzle-kit generate` para de emitir uma 0014 duplicada a cada execução e um clone limpo + migrate agora produz o banco completo (invariante 3.5). Como as migrations 0014–0017 já estão aplicadas manualmente na VPS, `drizzle-kit migrate` a partir de agora tentaria reaplicá-las e falhar — por isso 0018 entra via psql direto no SQL versionado.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-042",
+      "date": "2026-08-16T07:35:26.814Z",
+      "author": "deepseek",
+      "title": "Fila de tournament codes por modo (1v1 ARAM x1 separado dos 5v5)",
+      "decision": "match_codes ganha coluna mode (migration 0020): os 2 códigos BR050c8-* são marcados mode='1v1' (exclusivos do x1/ARAM 1v1) e os 6 códigos BR04fa2-* ficam mode NULL (genéricos, servem 5v5/aram/time_vs_time). atribuirCodigoPartida filtra por modo: 1v1 só pega mode='1v1'; demais modos só pegam mode IS NULL. Nenhum modo cruza para a fila do outro.",
+      "rationale": "Os códigos BR04fa2-* que o usuário forneceu antes são Summoner's Rift 5v5 Tournament Draft (não funcionam num 1v1 ARAM). O x1 joga em Howling Abyss com códigos próprios (BR050c8-*). Antes o pool era único e uma sala 1v1 podia pegar um código 5v5 (quebra o jogo). Separação por mode com rodízio LRU preservado (ADR-040) dentro de cada fila. Decisão direta do usuário em conversa.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1721,66 +1772,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-10T05:30:56.669Z",
-      "agent": "deepseek",
-      "summary": "Fase 2 do plano de performance concluída e DEPLOYADA (commit 74f58f6). P6: jitter no refetch realtime (250-850ms) e polling fallback (5-7s) desincroniza clientes. P8: GET /api/teams/:id devolve elo por membro do elo_cache; TimePage sem buscarElo por membro (validado: MASTER I/GRANDMASTER I). P9: notificações carregam ao clicar (decisão do usuário, sem WS/polling) + badge de pendentes. P10: index do cron já existia (migration 0009); verify-swap.js corrigido — agora conta supabase.from() sem swap (recrutamentos/transmissoes/votos_jogos/resultados_partidas = 14, Pendente 21). P7 bloqueado por ADR-010 (corte de arquivos só dentro dos app.swap.*). Tweak de 90s (match-flow/useSalaSimples) deixado fora via staging seletivo. tsc api+web exit 0. Deploy VPS: merge limpo, containers recriados, endpoints validados (home 200, hero webp 200, stats 200, time detail com elo). Pendente: validação visual do usuário; Login.tsx tem 2 URLs hardcoded do Supabase (quebram no cutover).",
-      "touched": [
-        "scripts/verify-swap.js",
-        "web/src/hooks/useSalaRealtime.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/pages/TimePage.tsx",
-        "web/src/components/notifications/NotificationBell.tsx",
-        "api/src/routes/teams.ts",
-        "docs/planos/plano-otimizacao-performance.md"
-      ]
-    },
-    {
-      "at": "2026-08-10T15:41:56.733Z",
-      "agent": "deepseek",
-      "summary": "Verifiquei preview OG do botão de compartilhar de sala (relato: imagem do modo sumiu no WhatsApp). Cadeia confirmada OK em dev.m7arena.pro: nginx detecta crawler (map $is_crawler) e reescreve /5v5/:id p/ /api/og/:modo/:id (api/src/routes/og.ts); para sala real (5v5/16) retorna og:image=images/fundoCard5v5.webp com dimensões válidas e HTTP 200 (Content-Type image/webp). fundoCard*.webp existem (compressão sharp do perf Fase 1 não quebrou). Causa provável do relato: cache de preview do WhatsApp ou link de sala inexistente caindo no fallback genérico (logo, sem imagem do modo). ACHADO RELEVANTE: m7arena.pro (produção) está parked na Hostinger (página \"Parked Domain\", DNS não aponta p/ VPS) — preview OG no domínio de produção só funcionará após cutover. Nenhuma correção necessária agora.",
-      "touched": [
-        "api/src/routes/og.ts",
-        "infra/nginx.conf"
-      ]
-    },
-    {
-      "at": "2026-08-10T22:11:33.884Z",
-      "agent": "deepseek",
-      "summary": "Corrigido o lightbox de prints de resultado que abria preso ao card em vez de cobrir a tela (prints de imagem larga como screenshot ficavam pequenos, imagem quadrada preenchia o card). Causa raiz: o card raiz de AguardandoRevisao e ResultadoPartida tem transform permanente (-translate-x-1/2 -translate-y-1/2 do Tailwind + animação y do framer-motion), que torna esse elemento o containing block do position:fixed — o overlay passou a ser relativo ao card (w-[min(94vw,640px)]) e não ao viewport. Fix: lightbox dos dois componentes renderizado via createPortal(..., document.body). npx tsc --noEmit (script lint do web) → exit 0. Pendente: validação visual pelo usuário (clicar na miniatura de um print largo numa sala em aguardando_revisao/encerrada). Admin (RevisaoPartidas) não tocado: ancestral não tem transform permanente.",
-      "touched": [
-        "web/src/components/partidas/AguardandoRevisao.tsx",
-        "web/src/components/partidas/ResultadoPartida.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-10T22:16:45.057Z",
-      "agent": "deepseek",
-      "summary": "Deploy do fix do lightbox para a VPS. Commit 0cc7910 na feat/advertencias-ban (só os 2 arquivos do lightbox), push, merge na main da VPS (049ce59), rebuild do container nginx (m7arena-nginx:latest) e up -d. Verificação no bundle servido: index-C06INUOI.js contém 'createPortal' e 'document.body'; SalaMod1-C7OomXf-.js contém 'createPortal' — portal ativo. Tweak de 90s (match-flow.ts/useSalaSimples.ts) deixado fora do commit de propósito (staging seletivo da sessão anterior). Pendente: teste do usuário clicando numa miniatura de print largo numa sala em aguardando_revisao/encerrada.",
-      "touched": [
-        "web/src/components/partidas/AguardandoRevisao.tsx",
-        "web/src/components/partidas/ResultadoPartida.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-10T22:21:09.700Z",
-      "agent": "deepseek",
-      "summary": "Reformulei o card RegrasDaSala (mostrado em salas apostadas no estado confirmacao, SalaMod1.tsx:665). Antes mostrava aposta + taxa 8,99% + SLA de pagamento + regra de abandono. Agora mostra só: Valor da aposta, Valor do pote (sala cheia = aposta × maxJogadores) e Ganho por jogador vencedor (= pote / jogadoresPorTime, floor). Removi imports de SLA_REVISAO_HORAS/Percent/Timer e troquei prop taxaPct por modo. Chamada atualizada para passar sala.modo. npx tsc --noEmit (web) → exit 0. Pendente: validação visual pelo usuário.",
-      "touched": [
-        "web/src/components/partidas/RegrasDaSala.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-10T22:27:03.568Z",
-      "agent": "deepseek",
-      "summary": "Sidebar: item 'Painel Admin' (/admin) adicionado ao navItems do LayoutWrapper, visível apenas para cargo admin/proprietario (cobre sidebar desktop + menu mobile). Commit 4c95cd6 na branch feat/advertencias-ban, push feito. VPS: merge da branch na main (49fbbad), docker compose up -d --build nginx (web builda dentro do nginx), site responde 200 em https://dev.m7arena.pro. Timer 30s->90s de outro agente (match-flow.ts/useSalaSimples.ts) ficou fora do commit por decisao do usuario. Card RegrasDaSala (valores sem taxa/SLA) entrou no mesmo commit; pendente validacao visual do card pelo usuario.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/components/partidas/RegrasDaSala.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
     {
       "at": "2026-08-14T22:55:42.992Z",
       "agent": "deepseek",
@@ -2007,6 +1998,70 @@
       "summary": "Removidos os cards Blue-Side e Red-Side (lineup de vagas) da tela de partida finalizada em web/src/pages/SalaMod1.tsx. As seções de lado agora só renderizam quando sala.estado não é 'aguardando_revisao' nem 'encerrada' — a finalizada mostra apenas o header de resultado (vencedor + placar + duração). Pedido direto do usuário. Build verificado: vite build exit 0.",
       "touched": [
         "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-16T02:25:54.690Z",
+      "agent": "deepseek",
+      "summary": "Deploy na VPS da remoção dos cards Blue-Side/Red-Side da partida finalizada (web/src/pages/SalaMod1.tsx). Commit 1231292 na feat/advertencias-ban, push, merge ff-only na main da VPS (179.198.120.11, /root/m7arena), rebuild nginx via docker compose --env-file. Site 200, bundle SalaMod1-Bs7cJrVy.js com a condição 'encerrada' nos blocos de lado confirmada.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx",
+        "infra/docker-compose.yml"
+      ]
+    },
+    {
+      "at": "2026-08-16T02:43:09.092Z",
+      "agent": "deepseek",
+      "summary": "Discutido e planejado o chat de sala (ADR-040): análise de performance concluiu que chat pelo WebSocket próprio custa ~zero (socket já assinado; fan-out em memória; INSERT ~0,1ms), descartando polling/piggyback. Decisões do usuário: conversa geral, mensagens autoexcluídas em 5min, widget canto inferior direito, sem chat em partidas finalizadas, permissão = participante (qualquer vaga/cargo) ou staff com Riot vinculado. Escrito spec (docs/superpowers/specs/2026-08-16-chat-sala-design.md) e plano (docs/superpowers/plans/2026-08-16-chat-sala.md, 8 tasks). Componentes db.chat.mensagens e app.chat.mensagens criados. Implementação ainda não iniciada.",
+      "touched": [
+        "docs/superpowers/specs/2026-08-16-chat-sala-design.md",
+        "docs/superpowers/plans/2026-08-16-chat-sala.md"
+      ]
+    },
+    {
+      "at": "2026-08-16T05:06:49.268Z",
+      "agent": "deepseek",
+      "summary": "Task 3 do Chat de Sala (ADR-040) em api/src/realtime/index.ts: chat constants + maps socketMatchId/chatTimestamps, removerDaSala limpa socketMatchId, tratarMensagem virou dispatcher, assinarSala registra matchId, permitidoNoRateLimit (1s/40 por 5min) e enviarChat (valida assinado/body/autenticado/ban/Riot → INSERT sala_mensagens → fan-out chat_message incluindo o remetente). npm run build (tsc) exit 0. Desvio: brief usava `const [u] = await authPool.query(...)` que não compila com @types/pg (TS2488, QueryResult sem iterator); usei `const { rows: [u] } = ...` (idioma do resto do código). SEM COMMIT (modo da task). app.chat.mensagens marcado doing; faltam Tasks 4-8.",
+      "touched": [
+        "api/src/realtime/index.ts",
+        ".superpowers/sdd/task-3-report.md",
+        "app.chat.mensagens"
+      ]
+    },
+    {
+      "at": "2026-08-16T05:10:34.804Z",
+      "agent": "deepseek",
+      "summary": "Ajuste na tela de partida finalizada: mantém o lineup de vagas (cards Blue/Red de jogadores) e remove APENAS o título 'Blue-Side'/'Red-Side' (barra chanfrada colorida) quando sala.estado === 'encerrada'. Commit 0e49e50 na branch feat/chat-sala (branch local tinha trocado; push criou origin/feat/chat-sala), merge ff-only na main da VPS, rebuild nginx. Site 200, bundle SalaMod1-DPVUr55G.js com condição t.estado!==\"encerrada\" no título confirmada. Atenção: branch local ficou em feat/chat-sala com trabalho não-commitado de outra sessão (chat-sala) que NÃO foi tocado.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-16T05:38:21.894Z",
+      "agent": "deepseek",
+      "summary": "Chat de sala (ADR-040) implementado via subagent-driven, SEM commits, branch feat/chat-sala. 8 tasks + fix final, todas aprovadas (0 Critical). Backend: migration 0018 sala_mensagens (journal 0014-0017 reconstruido, ADR-041), GET /api/matches/:id/mensagens (participante/staff, purge preguiçoso), chat_send no realtime (ban/Riot/rate limit 1s+40/5min, INSERT, fan-out), purge TTL 5min no cron. Front: SDK, useSalaRealtime/useSalaSimples (enviarChat), useSalaChat (historico+autoexclusao 5min+naoLidas), ChatDaSala canto inf. direito, integracao SalaMod1 (gate estados ativos + participante/staff). tsc api+web exit 0, vite build ok. PENDENTE: deploy VPS (aplicar 0018 via psql E reconciliar __drizzle_migrations) + teste manual 2 contas. Minors: chatTimestamps sem eviction; onReconnect de visitante dispara GET 403.",
+      "touched": [
+        "db/schema/matches.ts",
+        "db/migrations/0018_workable_clea.sql",
+        "db/migrations/meta/_journal.json",
+        "api/src/routes/matches.ts",
+        "api/src/realtime/index.ts",
+        "api/src/cron.ts",
+        "web/src/lib/api.ts",
+        "web/src/hooks/useSalaRealtime.ts",
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/hooks/useSalaChat.ts",
+        "web/src/api/salamod1.ts",
+        "web/src/components/partidas/ChatDaSala.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-16T06:03:02.556Z",
+      "agent": "deepseek",
+      "summary": "Commitado (cd40a84 + fix 3121834) e deployado o chat de sala (ADR-040) na VPS dev.m7arena.pro. Fluxo: commit em feat/chat-sala, push origin+vps, merge ff na VPS main, migration 0018 aplicada via psql (CREATE TABLE + FKs + índices, ON_ERROR_STOP=1 sem erro), rebuild app+nginx, up -d. Site 200, realtime ouvindo. Corrigi bug de deploy: purge do cron usava const [purgadas] (destructuring) -> TypeError 'reading length' quando vazio; troquei para const purgadas e redeployei. __drizzle_migrations NAO existe na VPS (migrations sempre via psql), entao o item de reconciliacao da revisao final e moot. PENDENTE: usuario testar manualmente com 2 contas (envio/recebimento, autoexclusao 5min, ban/Riot, sala encerrada sem chat).",
+      "touched": [
+        "api/src/cron.ts"
       ]
     }
   ]
