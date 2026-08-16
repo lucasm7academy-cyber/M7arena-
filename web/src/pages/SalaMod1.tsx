@@ -627,11 +627,12 @@ ${link}`;
                             ? 'md:gap-[74vmin]'
                             : 'md:gap-[70vmin]'
                 }`}>
-                    {/* BLUE SIDE — oculto em aguardando_revisao (o card central
-                        mostra o lineup) e na partida finalizada (só o resultado
-                        do header). O lineup de vagas existe apenas na sala ativa. */}
-                    {sala.estado !== 'aguardando_revisao' && sala.estado !== 'encerrada' && (
+                    {/* BLUE SIDE — oculto apenas em aguardando_revisao (o card
+                        central mostra o lineup). Na encerrada o título Blue-Side
+                        some (só o resultado do header), mas o lineup de vagas fica. */}
+                    {sala.estado !== 'aguardando_revisao' && (
                     <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
+                        {sala.estado !== 'encerrada' && (
                         <div
                             className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -648,6 +649,7 @@ ${link}`;
                                 <span className="block text-xs md:text-[1.4vmin] font-black text-[#3B82F6] uppercase tracking-[0.4em]">Blue-Side</span>
                             </div>
                         </div>
+                        )}
                         <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
                             {roles.map((role) => {
                                 const jogador = timeA.find((j: any) => j.role === role);
@@ -745,11 +747,12 @@ ${link}`;
                     )}
 
 
-                    {/* RED SIDE — oculto em aguardando_revisao (o card central
-                        mostra o lineup) e na partida finalizada (só o resultado
-                        do header). O lineup de vagas existe apenas na sala ativa. */}
-                    {sala.estado !== 'aguardando_revisao' && sala.estado !== 'encerrada' && (
+                    {/* RED SIDE — oculto apenas em aguardando_revisao (o card
+                        central mostra o lineup). Na encerrada o título Red-Side
+                        some (só o resultado do header), mas o lineup de vagas fica. */}
+                    {sala.estado !== 'aguardando_revisao' && (
                     <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
+                        {sala.estado !== 'encerrada' && (
                         <div
                             className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
                             style={{
@@ -766,6 +769,7 @@ ${link}`;
                                 <span className="block text-xs md:text-[1.4vmin] font-black text-[#ef4444] uppercase tracking-[0.4em]">Red-Side</span>
                             </div>
                         </div>
+                        )}
                         <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
                             {roles.map((role) => {
                                 const jogador = timeB.find((j: any) => j.role === role);
