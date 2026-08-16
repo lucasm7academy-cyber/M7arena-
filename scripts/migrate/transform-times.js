@@ -26,6 +26,18 @@ const TIME_STATUS = { ativo: "active", "em_fase_de_grupos": "active", finalizado
 const MEMBRO_STATUS = { ativo: "accepted", pendente: "pending", recusado: "declined" };
 const CONVITE_STATUS = { pendente: "pending", aceito: "accepted", recusado: "declined" };
 const CONVITE_TIPO = { convite: "invite", solicitacao: "request" };
+// A coluna role_slot do schema novo usa o vocabulário top/jungle/mid/adc/support/sub/coach.
+// O dump do Supabase traz o rótulo legado (TOP/JG/MID/ADC/SUP/RES/COACH) — traduzir aqui
+// evita gravar valor que a API de times não reconhece (bug: todo membro virava TOP).
+const LANE_LEGACY_TO_SLOT = {
+  TOP: "top",
+  JG: "jungle",
+  MID: "mid",
+  ADC: "adc",
+  SUP: "support",
+  RES: "sub",
+  COACH: "coach",
+};
 
 // teams
 const teams = times.map((t) => ({
@@ -58,7 +70,7 @@ const teamMembers = membros.map((m) => {
     guestPuuid: m.guest_puuid ?? null,
     guestProfileIconId: m.guest_profile_icon_id ?? null,
     guestEloCache: m.guest_elo_cache ?? null,
-    roleSlot: m.lane ?? "SUB",
+    roleSlot: LANE_LEGACY_TO_SLOT[m.lane] ?? "sub",
     isCaptain: !!m.is_capitao,
     status: MEMBRO_STATUS[m.status] ?? "accepted",
     createdAt: m.joined_at ?? new Date().toISOString(),

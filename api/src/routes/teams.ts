@@ -54,11 +54,17 @@ const ROLE_SLOT_TO_LEGACY: Record<string, string> = {
 };
 
 function slotToLegacy(slot: string | null): string {
-  return (slot && ROLE_SLOT_TO_LEGACY[slot]) || "TOP";
+  if (!slot) return "TOP";
+  // Aceita o vocabulário do schema novo (top/jungle/...) e o legado do dump
+  // (TOP/JG/...) — a migração gravou os dois na VPS.
+  const legacy = ROLE_SLOT_TO_LEGACY[slot] ?? ROLE_SLOT_TO_LEGACY[ROLE_LEGACY_TO_SLOT[slot]];
+  return legacy || "TOP";
 }
 
 function legacyToSlot(role: string | null | undefined): string {
-  return (role && ROLE_LEGACY_TO_SLOT[role]) || "top";
+  if (!role) return "top";
+  const slot = ROLE_LEGACY_TO_SLOT[role] ?? (ROLE_LEGACY_TO_SLOT[ROLE_SLOT_TO_LEGACY[role]] as string | undefined);
+  return slot || "top";
 }
 
 function memberStatusToLegacy(status: string): string {
