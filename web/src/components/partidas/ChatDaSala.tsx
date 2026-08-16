@@ -1,15 +1,15 @@
 // src/components/partidas/ChatDaSala.tsx
 // Chat da sala (ADR-040): widget flutuante no canto inferior esquerdo, quase
-// encostado na borda, aberto por padrão. Visual no padrão da sala (glass escuro
-// + cantos cortados com frame dourado). Só o nome do jogador muda de cor (blue/
-// red/dourado conforme o time); o resto do accent é o dourado padrão.
+// encostado na borda, aberto por padrão. Fundo preto sólido + borda dourada
+// cortada (frame). Só o nome do jogador muda de cor (blue/red/dourado conforme
+// o time do envio); o resto do accent é o dourado padrão.
 
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
 import type { ApiSalaChatMensagem } from '../../lib/api';
 
 // Borda cortada no padrão das vagas/cards: wrapper com clipPath (frame) +
-// conteúdo interno com clipPath um pouco menor (fill). O p-[1.5px] do frame
+// conteúdo interno com clipPath um pouco menor (fill). O p-[2px] do frame
 // expõe a cor do frame como borda — clip-path não corta o `border` nativo.
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
 const CUT_INNER = 'polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px)';
@@ -66,7 +66,7 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     const minimizado = (
         <button
             onClick={() => setAberto(true)}
-            className="relative p-[1.5px] bg-[#FFB700]/60 transition-colors"
+            className="relative p-[2px] bg-[#FFB700] transition-colors"
             style={{ clipPath: CUT_FRAME }}
             aria-label="Abrir chat da sala"
         >
@@ -84,11 +84,11 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     );
 
     const expandido = (
-        <div className="w-[calc(100vw-32px)] max-w-[320px] p-[1.5px] bg-[#FFB700]/60"
+        <div className="w-[calc(100vw-32px)] max-w-[320px] p-[2px] bg-[#FFB700]"
             style={{ clipPath: CUT_FRAME }}>
-            <div className="h-[380px] flex flex-col bg-black/85 backdrop-blur-md overflow-hidden"
+            <div className="h-[380px] flex flex-col bg-[#0A0A0A] overflow-hidden"
                 style={{ clipPath: CUT_INNER }}>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/60">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                     <div className="flex items-center gap-2">
                         <MessageSquare className="w-4 h-4 text-[#FFB700]" />
                         <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Chat da Sala</span>
