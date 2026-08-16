@@ -78,7 +78,7 @@ export async function runCron(d: any = db) {
   //    (no GET de histórico) já limpa na leitura; aqui é a rede de segurança
   //    para a tabela nunca acumular mesmo sem leituras.
   const corteChat = new Date(Date.now() - 5 * 60 * 1000);
-  const [purgadas] = await d
+  const purgadas = await d
     .delete(salaMensagens)
     .where(lt(salaMensagens.createdAt, corteChat))
     .returning({ id: salaMensagens.id });
