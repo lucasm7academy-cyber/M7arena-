@@ -66,7 +66,7 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     const minimizado = (
         <button
             onClick={() => setAberto(true)}
-            className="relative p-[2px] bg-[#FFB700] transition-colors"
+            className="relative p-[1px] bg-[#FFB700] transition-colors"
             style={{ clipPath: CUT_FRAME }}
             aria-label="Abrir chat da sala"
         >
@@ -84,7 +84,7 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     );
 
     const expandido = (
-        <div className="w-[calc(100vw-32px)] max-w-[320px] p-[2px] bg-[#FFB700]"
+        <div className="w-[calc(100vw-32px)] max-w-[320px] p-[1px] bg-[#FFB700]"
             style={{ clipPath: CUT_FRAME }}>
             <div className="h-[380px] flex flex-col bg-[#0A0A0A] overflow-hidden"
                 style={{ clipPath: CUT_INNER }}>
