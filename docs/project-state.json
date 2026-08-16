@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-15T04:25:27.571Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-08-16T02:18:38.286Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -1722,93 +1722,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-10T04:30:00.292Z",
-      "agent": "deepseek",
-      "summary": "P3 perf.riot-players: refresh de elo movido p/ servidor. api/src/routes/players.ts: fetchLeague(puuid) (cache 10min, fetch nativo, sem chave/429/5xx/rede → [] + console.warn) + POST /api/players/refresh-elos (auth 401, stale = sem elo_cache OU stats_updated_at nulo/>30min, lote 60, 3 paralelo, retorna {atualizadas,total,erros}). Endpoint antigo mantido. web/src/pages/players.tsx: removido buscarElo e burst; atualizarElosServerSide chama 1x POST em background + refetch pós-refresh sem re-disparar. Visual intacto. api tsc exit 0; web tsc só erros pré-existentes (ElectricBorder/Streamers). Não toquei riot.ts. Sem deploy/npm install. Pendente: validação manual /players.",
-      "touched": [
-        "api/src/routes/players.ts",
-        "web/src/pages/players.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-10T04:36:16.128Z",
-      "agent": "deepseek",
-      "summary": "Regra + card de revisão (aguardando_revisao). API upload.ts: 1 print por jogador ('print_ja_enviado') antes do teto 3; prints.test.ts 10/10 ok. UI AguardandoRevisao.tsx + SalaMod1.tsx: card agora 'PARTIDA FINALIZADA' + 'Em análise', lineup Blue/Red com check verde em quem já enviou, botão enviar some pra quem já enviou ('Print enviado — aguardando análise'), mensagem 'Mande o resultado da partida', contestação só para participante confirmado. traduzirErroSala + print_ja_enviado. Builds ok. Deploy VPS commit 4b9d76c, rebuild app/realtime/nginx, site 200. Pendente: usuário testar fluxo de revisão.",
-      "touched": [
-        "api/src/routes/upload.ts",
-        "api/test/prints.test.ts",
-        "web/src/components/partidas/AguardandoRevisao.tsx",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/api/salamod1.ts"
-      ]
-    },
-    {
-      "at": "2026-08-10T04:41:30.410Z",
-      "agent": "deepseek",
-      "summary": "P2 perf.compressor concluído. Script web/scripts/optimize-images.mjs (sharp q80, >15KB, mantém o menor, tabela+total) + script package.json images:optimize. 20/20 arquivos >15KB viraram webp vencedores (economia 16,52MB). Referências trocadas p/ .webp em Jogar, Lobby, SalaMod1, players, Tutorial, QuemSomos, Login, equipes, LayoutWrapper, DepositModal. 15 originais apagados. MANTIDOS (referenciados por arquivos fora da posse): fundoCard5v5/Aram/1v1/Time.png (web/src/api/salamod1.ts + api/src/routes/og.ts), cropped logo png (og.ts + index.html). Webp do logo removido (não referenciado). animated-*.webp intactos. tsc só erros pré-existentes; build ok. public/images 21,20MB→8,87MB.",
-      "touched": [
-        "web/scripts/optimize-images.mjs",
-        "web/package.json",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/Tutorial.tsx",
-        "web/src/pages/QuemSomos.tsx",
-        "web/src/pages/Login.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/public/images"
-      ]
-    },
-    {
-      "at": "2026-08-10T04:51:29.531Z",
-      "agent": "deepseek",
-      "summary": "Sala revisão (SalaMod1 + AguardandoRevisao): (1) colunas laterais Blue/Red (VagaSlot) ficam ocultas em aguardando_revisao — os jogadores só aparecem dentro do card quadrado central. (2) Lineup dentro do card agora usa a borda cortada (clipPath polygon) igual às colunas laterais, com labels 'Blue-Side'/'Red-Side' e mantendo o fundo na cor da side. (3) Cabeçalho do card: status agora só 'Em análise' (removido '· Pagamento em até X'). Build web ok. Deploy VPS commit f20795a, rebuild nginx. Pendente: usuário testar.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/components/partidas/AguardandoRevisao.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-10T04:56:01.847Z",
-      "agent": "deepseek",
-      "summary": "Sala revisão — lineup do card quadrado restilizado para o padrão VagaSlot: borda 1px sólida na cor da side (blue/red) com corte (clipPath 12px/11.4px) e interior suave (bg-blue-500/10, bg-red-500/10), nicks na cor da side com brilho (VagaSlot nomeStyle), avatar com border na cor. Build web ok. Deploy VPS commit bdbd894, rebuild nginx. Pendente: usuário conferir visual.",
-      "touched": [
-        "web/src/components/partidas/AguardandoRevisao.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-10T05:10:43.252Z",
-      "agent": "deepseek",
-      "summary": "Fase 1 otimização performance DEPLOYADA (commit 0716124, ADR-038). Heroes webm→webp 7,3→4,6MB; compressor sharp (images 21,2→~1MB, fundoCard 5,4→0,38); /players e stats Riot agora server-side com cache (1 chamada); bundle: sem ação (supabase-js em uso). Correções: rolesToCargo streamer/caster (painel streamer abria como jogador), Streamers alt, ElectricBorder removida. dist 27→7,9MB; tsc limpo. VPS: merge clean, containers recriados, webp validados, stats 200+cache. Pendente: validação visual do usuário.",
-      "touched": [
-        "docs/planos/plano-otimizacao-performance.md",
-        "docs/planos/performance-baseline.md",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/contexts/PerfilContext.tsx",
-        "web/src/api/riot.ts",
-        "api/src/routes/riot.ts",
-        "api/src/routes/players.ts"
-      ]
-    },
-    {
-      "at": "2026-08-10T05:25:21.013Z",
-      "agent": "deepseek",
-      "summary": "P10 (perf.externos): (A) Investigação do index para o cron. Descoberta: a migration 0009_white_wallflower.sql (commit 3634c26) JÁ cria o index composto 'idx_matches_status_updated ON matches (status, updated_at)' com IF NOT EXISTS — exatamente o que a tarefa pedia. Gerei o 0014 via drizzle-kit, detectei a duplicação, revertei schema/journal e apaguei os arquivos 0014. NENHUMA migration nova necessária. (B) Relatório de externos: supabase-js residual em 7 arquivos (recrutamentos x7, transmissoes x5, votos_jogos x1, resultados_partidas x1, pagamentos x1, functions.invoke x1, getSession x1) — todos cobertos por app.edge-functions (VipModal/DiscordCallback) ou por swaps não planejados; verify-swap.js NÃO cobre essas tabelas (gap de cobertura). Login.tsx tem 2 URLs hardcoded do storage do Supabase (logo-m7.png, Yasuo1.webp) — item externo de peso. CDN ddragon/communitydragon: não vale cache próprio (volume baixo). tsc api exit 0.",
-      "touched": [
-        "db/schema/matches.ts",
-        "db/migrations/0009_white_wallflower.sql",
-        "db/migrations/0014_matches_status_updated_at_idx.sql",
-        "scripts/verify-swap.js",
-        "web/src/pages/Login.tsx",
-        "web/src/api/riot.ts",
-        "api/src/routes/matches.ts"
-      ]
-    },
-    {
       "at": "2026-08-10T05:30:56.669Z",
       "agent": "deepseek",
       "summary": "Fase 2 do plano de performance concluída e DEPLOYADA (commit 74f58f6). P6: jitter no refetch realtime (250-850ms) e polling fallback (5-7s) desincroniza clientes. P8: GET /api/teams/:id devolve elo por membro do elo_cache; TimePage sem buscarElo por membro (validado: MASTER I/GRANDMASTER I). P9: notificações carregam ao clicar (decisão do usuário, sem WS/polling) + badge de pendentes. P10: index do cron já existia (migration 0009); verify-swap.js corrigido — agora conta supabase.from() sem swap (recrutamentos/transmissoes/votos_jogos/resultados_partidas = 14, Pendente 21). P7 bloqueado por ADR-010 (corte de arquivos só dentro dos app.swap.*). Tweak de 90s (match-flow/useSalaSimples) deixado fora via staging seletivo. tsc api+web exit 0. Deploy VPS: merge limpo, containers recriados, endpoints validados (home 200, hero webp 200, stats 200, time detail com elo). Pendente: validação visual do usuário; Login.tsx tem 2 URLs hardcoded do Supabase (quebram no cutover).",
@@ -2028,6 +1941,70 @@
       "at": "2026-08-15T04:25:27.571Z",
       "agent": "gemini",
       "summary": "Corrigido o tamanho do overlay da contagem/confirmação e demais overlays em SalaMod1.tsx: adicionadas classes md:max-w-none md:max-h-none para não limitar o círculo a 340px no desktop e expandir para os 55vmin exatos do display central. Verificado via tsc e build.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T19:07:52.102Z",
+      "agent": "gemini",
+      "summary": "Implementado o card de título de Partida Finalizada em Salas no estilo Liga RK com a fonte Anton e update-strip. Rebuild e deploy executados na VPS (dev.m7arena.pro).",
+      "touched": [
+        "web/src/index.css",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T19:18:05.007Z",
+      "agent": "gemini",
+      "summary": "Redesenhado o menu/topbar superior das salas (SalaMod1.tsx): removida imagem do Ryze, implementado visual dark glassmorphism com glow sutil, badges de modo/estado com status dot dinâmico, card de modalidade (Casual/MC) e botões refinados. Build e deploy na VPS dev.m7arena.pro concluídos.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T19:23:31.961Z",
+      "agent": "gemini",
+      "summary": "Ajustadas as bordas dos botoes e cards do menu superior da sala em SalaMod1.tsx para o padrao angular e chanfrado (cut-corners) do eSports/M7 Arena. Rebuild e deploy na VPS dev.m7arena.pro concluidos.",
+      "touched": [
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T19:27:33.829Z",
+      "agent": "gemini",
+      "summary": "Modernização visual completa do Painel Admin (Admin.tsx, FinanceiroDashboard, RevisaoPartidas, SaquesPix, AdminCargos, AdminContatos, AdminPunicoes): aplicado dark glassmorphism elevado (substituindo o fundo flat pitch-black), tipografia em alto contraste com tons zinc, badges e acentos em gradiente dourado M7. Build validado localmente (tsc exit 0) e deploy efetuado na VPS dev.m7arena.pro.",
+      "touched": [
+        "web/src/pages/Admin.tsx",
+        "web/src/pages/AdminCargos.tsx",
+        "web/src/pages/AdminContatos.tsx",
+        "web/src/pages/AdminPunicoes.tsx",
+        "web/src/components/admin/FinanceiroDashboard.tsx",
+        "web/src/components/admin/RevisaoPartidas.tsx",
+        "web/src/components/admin/SaquesPix.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-15T23:46:45.984Z",
+      "agent": "deepseek",
+      "summary": "Ícones da sidebar trocados em LayoutWrapper.tsx: Início (/lobby) passou de SiLeagueoflegends para AiOutlineHome (ícone padrão de home), e Jogar (/jogar) recebeu o SiLeagueoflegends. Import AiOutlineAim removido (sem uso). Build local passou (vite build ok), commit 31fca05 na feat/advertencias-ban, push GitHub, merge ff-only na VPS, nginx rebuild (vite build 11.7s), site 200 em dev.m7arena.pro, origin/main sincronizado (42ff5ad..31fca05).",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-16T01:54:25.916Z",
+      "agent": "deepseek",
+      "summary": "(1) Removido todo o aviso/toast de kick por ociosidade do front: useSalaSimples.ts (kickTick, saiuProprioRef, efeito ticker 15s, ociosidadeMin, detecção de remoção no realtime) e SalaMod1.tsx (banner 'Ocioso — removido da vaga em X min', minutosParaKick, import Clock). Comportamento agora bate com o servidor (ADR-033/034): ninguém é kickado. (2) Corrigido src da imagem de tutorial no display de iniciando_partida: apontava para /images/tutorial.png (inexistente, retornava index.html text/html → img quebrada); o arquivo real é tutorial-codigo.webp (commit 6cae1c7 tinha trocado por engano). Builds locais ok (vite build exit 0), commits e06c620 + 55e70e8, push origin feat/advertencias-ban e main, merge ff-only na VPS, nginx rebuild. Verificado no container: SalaMod1-BCdJ7gCB.js contém 'tutorial-codigo.webp' e não contém 'Ocioso'. Site 200.",
+      "touched": [
+        "web/src/hooks/useSalaSimples.ts",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-16T02:18:38.285Z",
+      "agent": "deepseek",
+      "summary": "Removidos os cards Blue-Side e Red-Side (lineup de vagas) da tela de partida finalizada em web/src/pages/SalaMod1.tsx. As seções de lado agora só renderizam quando sala.estado não é 'aguardando_revisao' nem 'encerrada' — a finalizada mostra apenas o header de resultado (vencedor + placar + duração). Pedido direto do usuário. Build verificado: vite build exit 0.",
       "touched": [
         "web/src/pages/SalaMod1.tsx"
       ]

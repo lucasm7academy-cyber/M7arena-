@@ -627,10 +627,10 @@ ${link}`;
                             ? 'md:gap-[74vmin]'
                             : 'md:gap-[70vmin]'
                 }`}>
-                    {/* BLUE SIDE — oculto apenas em aguardando_revisao (o card
-                        central mostra o lineup); na encerrada fica visível com as
-                        vagas mostrando campeão + KDA + CS da Riot. */}
-                    {sala.estado !== 'aguardando_revisao' && (
+                    {/* BLUE SIDE — oculto em aguardando_revisao (o card central
+                        mostra o lineup) e na partida finalizada (só o resultado
+                        do header). O lineup de vagas existe apenas na sala ativa. */}
+                    {sala.estado !== 'aguardando_revisao' && sala.estado !== 'encerrada' && (
                     <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
                         <div
                             className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
@@ -745,10 +745,10 @@ ${link}`;
                     )}
 
 
-                    {/* RED SIDE — oculto apenas em aguardando_revisao (o card
-                        central mostra o lineup); na encerrada fica visível com as
-                        vagas mostrando campeão + KDA + CS da Riot. */}
-                    {sala.estado !== 'aguardando_revisao' && (
+                    {/* RED SIDE — oculto em aguardando_revisao (o card central
+                        mostra o lineup) e na partida finalizada (só o resultado
+                        do header). O lineup de vagas existe apenas na sala ativa. */}
+                    {sala.estado !== 'aguardando_revisao' && sala.estado !== 'encerrada' && (
                     <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
                         <div
                             className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
