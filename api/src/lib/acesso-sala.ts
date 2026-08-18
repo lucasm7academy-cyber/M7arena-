@@ -25,6 +25,20 @@ export function eRevisor(roles: string[]): boolean {
   );
 }
 
+/**
+ * Staff da sala (streamer/organizador/admin/proprietário). Diferente de
+ * `eRevisor` (que decide revisão de prints/disputas), o staff pode ver o código
+ * da partida e disparar a verificação mesmo sem estar na vaga — o usuário quer
+ * que esses cargos consigam auditar/entrar na partida (pedido 2026-08-17).
+ * `organizer`/`organizador` cobrem os dois vocabulários que já aparecem em
+ * user_roles (admin.ts grava `organizer`; dados antigos usam `organizador`).
+ */
+const ROLES_STAFF_SALA = ["proprietario", "admin", "organizer", "organizador", "streamer"];
+
+export function eStaffSala(roles: string[]): boolean {
+  return roles.some((r) => ROLES_STAFF_SALA.includes(r));
+}
+
 /** Roles do usuário em user_roles. */
 export async function getRoles(db: any, userId: string): Promise<string[]> {
   const rows = await db.select().from(userRoles).where(eq(userRoles.userId, userId));

@@ -20,6 +20,7 @@ import {
   validarElegibilidade,
 } from "../lib/match-flow.js";
 import { reservarEntrada, devolverEntrada } from "../lib/escrow.js";
+import { getRoles, eParticipante, eStaffSala } from "../lib/acesso-sala.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -42,7 +43,7 @@ async function resolverSala(param: string, ctx: any = db) {
 }
 
 /** Monta o shape legado de `salas` para uma linha de `matches` (com joins). */
-async function shapeSala(m: any, ctx: any = db) {
+async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   const players = await ctx.select().from(matchPlayers).where(eq(matchPlayers.matchId, m.id));
   const userIds = [...new Set([m.createdBy, ...players.map((p: any) => p.userId)])];
   const usersRows: any[] = userIds.length ? await ctx.select().from(users).where(inArray(users.id, userIds)) : [];
@@ -100,7 +101,12 @@ async function shapeSala(m: any, ctx: any = db) {
     resultadoRiot = mr ? resumoRiot(mr.payload) : null;
   }
 
-  return toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot);
+  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot);
+  // Segurança (pedido 2026-08-17): o código da partida só vai para participante
+  // ou staff (streamer/organizador/admin/proprietário). Quem só está olhando a
+  // sala sem fazer parte não pode copiar o código e invadir o lobby do jogo.
+  if (!podeVerCodigo) legacy.codigo_partida = null;
+  return legacy;
 }
 
 // GET /api/matches - Lista salas em shape legado
@@ -123,7 +129,7 @@ matchesRouter.get("/", async (req, res) => {
         .limit(limit);
     }
 
-    const results = await Promise.all(rows.map((m) => shapeSala(m)));
+    const results = await Promise.all(rows.map((m) => shapeSala(m, db, false)));
     return res.json(results);
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar salas" });
@@ -135,7 +141,19 @@ matchesRouter.get("/:id", async (req, res) => {
   try {
     const match = await resolverSala(req.params.id);
     if (!match) return res.status(404).json({ error: "Partida não encontrada" });
-    return res.json(await shapeSala(match));
+
+    // Código da partida: só participante OU staff (streamer/organizador/admin/
+    // proprietário) enxerga. Visitante anônimo e quem não faz parte da sala
+    // recebem `codigo_partida: null` — a verificação REAL de permissão mora no
+    // servidor; o botão escondido no front é só UX.
+    const user = await getAuthUser(req);
+    let podeVerCodigo = false;
+    if (user) {
+      const roles = await getRoles(db, user.id);
+      podeVerCodigo = eStaffSala(roles) || (await eParticipante(db, user.id, match.id));
+    }
+
+    return res.json(await shapeSala(match, db, podeVerCodigo));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar sala" });
   }

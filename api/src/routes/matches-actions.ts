@@ -10,6 +10,7 @@ import {
   notifyMatchChange,
 } from "../lib/match-flow.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
+import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
 
 export const matchesActionsRouter = Router();
 
@@ -190,19 +191,26 @@ matchesActionsRouter.post("/:id/verificar", async (req, res) => {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
 
+    // Staff (streamer/organizador/admin/proprietário) também pode disparar a
+    // verificação para auditar a partida, mesmo sem estar na vaga (pedido
+    // 2026-08-17). O cargo vem de user_roles; resolve antes do lock para não
+    // segurar a linha durante a query extra.
+    const staff = eStaffSala(await getRoles(db, user.id));
+
     const r = await db.transaction(async (tx: any) => {
       const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
       if (match.status !== "partida_iniciada") return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
       // Participante CONFIRMADO é o único caso permitido: quem confirmou a vaga
       // (ou a preencheu sem etapa de confirmação) pode disparar o acelerador.
-      // Um pendente (unconfirmed) também é negado com nao_participante.
+      // Um pendente (unconfirmed) também é negado com nao_participante — a não
+      // ser que seja staff, que audita mesmo fora da vaga.
       const [player] = await tx
         .select()
         .from(matchPlayers)
         .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id), eq(matchPlayers.confirmed, true)))
         .limit(1);
-      if (!player) return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
+      if (!player && !staff) return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
       return { ok: true, matchId: match.id };
     });
     if (!r.ok) {

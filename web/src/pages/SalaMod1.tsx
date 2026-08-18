@@ -338,6 +338,12 @@ ${link}`;
     // escondemos o botão para quem não tem cargo.
     const ehAdminOuProprietario = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
 
+    // Staff da sala (streamer/organizador/admin/proprietário) — pode ver o
+    // código da partida e disparar a verificação mesmo sem estar na vaga
+    // (auditoria). `perfil.cargo` vem do PerfilContext (rolesToCargo).
+    const CARGO_STAFF_SALA = ['proprietario', 'admin', 'organizador', 'streamer'];
+    const ehStaffSala = CARGO_STAFF_SALA.includes(perfil?.cargo ?? '');
+
     const excluirSala = async () => {
         if (!ehAdminOuProprietario) return;
         const confirmou = window.confirm(
@@ -979,7 +985,7 @@ ${link}`;
 
                     {/* PARTIDA CONFIRMADA — copiar código (mesmo lugar dos botões
                         de confirmar presença / enviar print) */}
-                    {sala.estado === 'iniciando_partida' && codigoPartida && (
+                    {sala.estado === 'iniciando_partida' && codigoPartida && (jogadorAtual || ehStaffSala) && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
                             className="flex flex-col items-center gap-2 md:gap-[1.5vmin]">
                             <p className="text-xs md:text-[1.4vmin] font-black text-white uppercase tracking-[0.4em] md:tracking-[0.5em]">Prepare-se para a batalha</p>
@@ -1005,7 +1011,7 @@ ${link}`;
                     {/* PARTIDA INICIADA — verificação automática via Riot (acelerador
                         do polling) substitui o envio de print nesta etapa; o print
                         existe só na contestação em ResultadoPartida */}
-                    {sala.estado === 'partida_iniciada' && jogadorAtual && (
+                    {sala.estado === 'partida_iniciada' && (jogadorAtual || ehStaffSala) && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
