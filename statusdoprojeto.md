@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 18/08/2026 01:29 — por `gemini`
+**Última atualização:** 18/08/2026 01:32 — por `gemini`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -573,6 +573,7 @@ _17/08/2026 23:29 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 18/08/2026 01:32 | gemini | Ajuste do item selecionado na Sidebar e Menu Mobile para o formato Cut-Edge chanfrado solido em amarelo (#FFB700) com texto e icone em preto e sombra difusa, sem bordas arredondadas. LayoutWrapper.tsx atualizado e deploy realizado na VPS dev.m7arena.pro. <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`_ |
 | 18/08/2026 01:29 | gemini | Aplicacao completa do Design System Cut-Edge oficial em Recrutamento (recrutamento.tsx), Campeonatos (campeonatos.tsx), Jogadores (players.tsx), refinamento de todos os cards da Lobby (Lobby.tsx) e calibracao da iluminacao ambiente global para nivel suave/leve no LayoutWrapper.tsx. Deploy bem-sucedido na VPS dev.m7arena.pro. <br>_tocou: `web/src/pages/recrutamento.tsx`, `web/src/pages/campeonatos.tsx`, `web/src/pages/players.tsx`, `web/src/pages/Lobby.tsx`, `web/src/components/layout/LayoutWrapper.tsx`_ |
 | 18/08/2026 01:28 | gemini | Refinamento dos cards da página Lobby (Lobby.tsx) eliminando cortes visuais e aplicando padrão Cut-Edge contínuo 2-div em todos os tipos de cards, escudos e modais. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 18/08/2026 01:25 | gemini | Aplicado o Design System Cut-Edge oficial na pagina de Campeonatos (web/src/pages/campeonatos.tsx) substituindo bordas arredondadas por poligonos Dual Container CUT_FRAME, CUT_BUTTON e CUT_BADGE. <br>_tocou: `web/src/pages/campeonatos.tsx`_ |
@@ -587,7 +588,6 @@ _17/08/2026 23:29 — deepseek_
 | 18/08/2026 00:53 | gemini | Correção de overflow e eliminação de rolagem horizontal desnecessária nos modais de Criar Sala e VIP (adição de overflow-x-hidden e contenção de layout). Build e deploy na VPS dev.m7arena.pro concluídos com HTTP 200. <br>_tocou: `web/src/components/modals/vip/VipModal.tsx`, `web/src/pages/Jogar.tsx`_ |
 | 18/08/2026 00:52 | gemini | Suavização de brancos e contraste nos modais de elegibilidade e criar sala (remoção de reflexos brancos puros, aplicação de tons zinc e metálicos sólidos). Redesign visual completo do DepositModal (com abas de Depósito e Saque) e VipModal para a identidade oficial cut-edge da M7 Arena (cortes chanfrados CUT_FRAME/CUT_INNER/CUT_BUTTON, tipografia Anton, remoção de grades artificiais). Build e deploy na VPS dev.m7arena.pro concluídos com HTTP 200. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/components/modals/deposit/DepositTab.tsx`, `web/src/components/modals/deposit/SaqueTab.tsx`, `web/src/components/modals/vip/VipModal.tsx`, `web/src/components/partidas/ModaisElegibilidade.tsx`, `web/src/pages/Jogar.tsx`_ |
 | 18/08/2026 00:47 | gemini | Ajuste visual completo dos modais de maioridade 18+, login de vitrine, vinculo Riot e senha para o design oficial cut-edge da M7 Arena (bordas chanfradas angulares com clip-path CUT_FRAME/CUT_INNER/CUT_BUTTON, tipografia Anton de partida finalizada, cores vivas sólidas e sem fundos de grade). Deploy atualizado na VPS (dev.m7arena.pro) com HTTP 200 OK. <br>_tocou: `web/src/components/partidas/ModaisElegibilidade.tsx`, `web/src/pages/Jogar.tsx`, `web/src/pages/SalaMod1.tsx`_ |
-| 18/08/2026 00:37 | gemini | Deploy realizado na VPS (dev.m7arena.pro). Commit 91e8f7f na branch feat/redesign-modais mergeado via ff-only na branch main da VPS. Container m7arena_nginx rebuildado com o build estático do Vite contendo os novos modais (ModaisElegibilidade, ModalLoginVitrine, ModalVincularConta, ModalSenhaSala). Site respondendo 200 OK. <br>_tocou: `web/src/components/partidas/ModaisElegibilidade.tsx`, `web/src/pages/Jogar.tsx`, `web/src/pages/SalaMod1.tsx`_ |
 
 ---
 
