@@ -6,7 +6,7 @@ export default function Politicas() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white py-12 px-6">
+    <div className="min-h-screen bg-transparent text-white py-12 px-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <button

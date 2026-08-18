@@ -486,8 +486,6 @@ export default function Perfil() {
 
   return (
     <div className="relative min-h-screen w-full text-white font-sans overflow-x-hidden">
-      <div className="fixed inset-0 z-0 bg-black/90 backdrop-blur-[2px] pointer-events-none" />
-      
       <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-32">
         
         {/* HEADER */}

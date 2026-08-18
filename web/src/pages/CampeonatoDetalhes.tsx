@@ -3154,7 +3154,7 @@ const CampeonatoDetalhes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden relative">
+    <div className="min-h-screen bg-transparent text-white font-sans overflow-x-hidden relative">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#FFB700]/5 blur-[120px] rounded-full -mr-64 -mt-64" />
