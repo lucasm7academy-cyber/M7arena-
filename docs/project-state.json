@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:23:21.259Z",
+  "updatedAt": "2026-08-18T04:29:59.013Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,37 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-15T19:27:33.829Z",
-      "agent": "gemini",
-      "summary": "Modernização visual completa do Painel Admin (Admin.tsx, FinanceiroDashboard, RevisaoPartidas, SaquesPix, AdminCargos, AdminContatos, AdminPunicoes): aplicado dark glassmorphism elevado (substituindo o fundo flat pitch-black), tipografia em alto contraste com tons zinc, badges e acentos em gradiente dourado M7. Build validado localmente (tsc exit 0) e deploy efetuado na VPS dev.m7arena.pro.",
-      "touched": [
-        "web/src/pages/Admin.tsx",
-        "web/src/pages/AdminCargos.tsx",
-        "web/src/pages/AdminContatos.tsx",
-        "web/src/pages/AdminPunicoes.tsx",
-        "web/src/components/admin/FinanceiroDashboard.tsx",
-        "web/src/components/admin/RevisaoPartidas.tsx",
-        "web/src/components/admin/SaquesPix.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T23:46:45.984Z",
-      "agent": "deepseek",
-      "summary": "Ícones da sidebar trocados em LayoutWrapper.tsx: Início (/lobby) passou de SiLeagueoflegends para AiOutlineHome (ícone padrão de home), e Jogar (/jogar) recebeu o SiLeagueoflegends. Import AiOutlineAim removido (sem uso). Build local passou (vite build ok), commit 31fca05 na feat/advertencias-ban, push GitHub, merge ff-only na VPS, nginx rebuild (vite build 11.7s), site 200 em dev.m7arena.pro, origin/main sincronizado (42ff5ad..31fca05).",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-16T01:54:25.916Z",
-      "agent": "deepseek",
-      "summary": "(1) Removido todo o aviso/toast de kick por ociosidade do front: useSalaSimples.ts (kickTick, saiuProprioRef, efeito ticker 15s, ociosidadeMin, detecção de remoção no realtime) e SalaMod1.tsx (banner 'Ocioso — removido da vaga em X min', minutosParaKick, import Clock). Comportamento agora bate com o servidor (ADR-033/034): ninguém é kickado. (2) Corrigido src da imagem de tutorial no display de iniciando_partida: apontava para /images/tutorial.png (inexistente, retornava index.html text/html → img quebrada); o arquivo real é tutorial-codigo.webp (commit 6cae1c7 tinha trocado por engano). Builds locais ok (vite build exit 0), commits e06c620 + 55e70e8, push origin feat/advertencias-ban e main, merge ff-only na VPS, nginx rebuild. Verificado no container: SalaMod1-BCdJ7gCB.js contém 'tutorial-codigo.webp' e não contém 'Ocioso'. Site 200.",
-      "touched": [
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-16T02:18:38.285Z",
       "agent": "deepseek",
       "summary": "Removidos os cards Blue-Side e Red-Side (lineup de vagas) da tela de partida finalizada em web/src/pages/SalaMod1.tsx. As seções de lado agora só renderizam quando sala.estado não é 'aguardando_revisao' nem 'encerrada' — a finalizada mostra apenas o header de resultado (vencedor + placar + duração). Pedido direto do usuário. Build verificado: vite build exit 0.",
@@ -2091,6 +2060,34 @@
         "web/src/pages/MinhasPartidas.tsx",
         "web/src/pages/Politicas.tsx",
         "web/src/pages/Streamers.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:25:36.312Z",
+      "agent": "gemini",
+      "summary": "Aplicado o Design System Cut-Edge oficial na pagina de Campeonatos (web/src/pages/campeonatos.tsx) substituindo bordas arredondadas por poligonos Dual Container CUT_FRAME, CUT_BUTTON e CUT_BADGE.",
+      "touched": [
+        "web/src/pages/campeonatos.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:28:54.571Z",
+      "agent": "gemini",
+      "summary": "Refinamento dos cards da página Lobby (Lobby.tsx) eliminando cortes visuais e aplicando padrão Cut-Edge contínuo 2-div em todos os tipos de cards, escudos e modais.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:29:59.013Z",
+      "agent": "gemini",
+      "summary": "Aplicacao completa do Design System Cut-Edge oficial em Recrutamento (recrutamento.tsx), Campeonatos (campeonatos.tsx), Jogadores (players.tsx), refinamento de todos os cards da Lobby (Lobby.tsx) e calibracao da iluminacao ambiente global para nivel suave/leve no LayoutWrapper.tsx. Deploy bem-sucedido na VPS dev.m7arena.pro.",
+      "touched": [
+        "web/src/pages/recrutamento.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx"
       ]
     }
   ]
