@@ -12,7 +12,7 @@ import type { ApiSalaChatMensagem } from '../../lib/api';
 // conteúdo interno com clipPath um pouco menor (fill). O p-[2px] do frame
 // expõe a cor do frame como borda — clip-path não corta o `border` nativo.
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
-const CUT_INNER = 'polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px)';
+const CUT_INNER = 'polygon(8.6px 0, 100% 0, 100% calc(100% - 8.6px), calc(100% - 8.6px) 100%, 0 100%, 0 8.6px)';
 
 interface ChatDaSalaProps {
   mensagens: ApiSalaChatMensagem[];
