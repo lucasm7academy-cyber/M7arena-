@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:10:32.431Z",
+  "updatedAt": "2026-08-18T04:18:02.228Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,15 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-15T19:07:52.102Z",
-      "agent": "gemini",
-      "summary": "Implementado o card de título de Partida Finalizada em Salas no estilo Liga RK com a fonte Anton e update-strip. Rebuild e deploy executados na VPS (dev.m7arena.pro).",
-      "touched": [
-        "web/src/index.css",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-15T19:18:05.007Z",
       "agent": "gemini",
       "summary": "Redesenhado o menu/topbar superior das salas (SalaMod1.tsx): removida imagem do Ryze, implementado visual dark glassmorphism com glow sutil, badges de modo/estado com status dot dinâmico, card de modalidade (Casual/MC) e botões refinados. Build e deploy na VPS dev.m7arena.pro concluídos.",
@@ -2083,6 +2074,16 @@
       "touched": [
         "web/src/pages/Lobby.tsx",
         "DESIGNDOPROJETO.MD"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:18:02.228Z",
+      "agent": "gemini",
+      "summary": "Correcao de alinhamento e flex stretch do container duplo chanfrado na Lobby (Lobby.tsx) eliminando preenchimento indevido do gradiente. Adicao da iluminacao ambiente suave global no LayoutWrapper.tsx e index.css para todas as abas do app (Perfil, Jogar, Inicio, Campeonatos, etc.).",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/index.css"
       ]
     }
   ]
