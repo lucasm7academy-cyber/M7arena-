@@ -830,30 +830,46 @@ const Jogar = () => {
             {modosCards.map((card) => {
               const Icon = card.icone;
               return (
-                <button
+                <div
                   key={card.modo}
                   onClick={() => abrirModalCriar(card.modo)}
-                  className="w-full bg-black rounded-xl p-6 flex flex-col items-center text-center border border-white/10 hover:border-[#FFB700]/50 hover:bg-white/5 transition-all shadow-lg group cursor-pointer relative overflow-hidden"
+                  className="w-full relative p-[1.5px] cursor-pointer group transition-all"
+                  style={{
+                    clipPath: CUT_FRAME,
+                    background: `linear-gradient(135deg, ${card.cor}60 0%, ${card.cor}20 50%, rgba(255,255,255,0.08) 100%)`,
+                  }}
                 >
-                  {card.bgImage && (
-                    <div className="absolute inset-0 z-0 bg-cover bg-center opacity-20 group-hover:opacity-40 transition-opacity"
-                      style={{ backgroundImage: `url(${card.bgImage})` }} />
-                  )}
-                  <div className="absolute inset-0 z-0 opacity-50"
-                    style={{ background: `linear-gradient(to bottom, transparent, ${card.cor}20)` }} />
-                  <div className="relative z-10 w-16 h-16 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: `${card.cor}15`, border: `1px solid ${card.cor}30` }}>
-                    <Icon className="w-8 h-8" style={{ color: card.cor }} />
+                  <div
+                    className="w-full bg-[#08080a] group-hover:bg-[#0c0c10] p-6 flex flex-col items-center text-center relative overflow-hidden h-full transition-colors"
+                    style={{ clipPath: CUT_FRAME_INNER }}
+                  >
+                    {card.bgImage && (
+                      <div className="absolute inset-0 z-0 bg-cover bg-center opacity-20 group-hover:opacity-35 transition-opacity"
+                        style={{ backgroundImage: `url(${card.bgImage})` }} />
+                    )}
+                    <div className="absolute inset-0 z-0 opacity-40 pointer-events-none"
+                      style={{ background: `radial-gradient(circle at top, ${card.cor}25 0%, transparent 70%)` }} />
+                    
+                    <div className="relative z-10 w-14 h-14 p-[1px] flex items-center justify-center mb-4"
+                      style={{ clipPath: CUT_BUTTON, background: `${card.cor}60` }}>
+                      <div className="w-full h-full bg-[#121217] flex items-center justify-center"
+                        style={{ clipPath: CUT_BUTTON_INNER }}>
+                        <Icon className="w-7 h-7" style={{ color: card.cor }} />
+                      </div>
+                    </div>
+                    <h3 className="relative z-10 text-white font-black text-lg uppercase tracking-tight mb-1 group-hover:text-[#FFB700] transition-colors">{card.titulo}</h3>
+                    <p className="relative z-10 text-white/40 text-xs uppercase tracking-widest mb-2 font-medium">{card.subtitulo}</p>
+                    
+                    <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 px-3 py-1 bg-white/5 border border-white/10"
+                      style={{ clipPath: CUT_BADGE }}>
+                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: card.cor }}>{card.stats}</span>
+                    </div>
+                    
+                    <div className="relative z-10 mt-4 text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-[#FFB700] transition-colors">
+                      Clique para criar sala →
+                    </div>
                   </div>
-                  <h3 className="relative z-10 text-white font-black text-lg uppercase tracking-tight mb-1 group-hover:text-[#FFB700]">{card.titulo}</h3>
-                  <p className="relative z-10 text-white/40 text-xs uppercase tracking-widest mb-2">{card.subtitulo}</p>
-                  <div className="relative z-10 flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: card.cor }}>{card.stats}</span>
-                  </div>
-                  <div className="relative z-10 mt-4 text-[10px] font-black uppercase tracking-widest text-white/30 group-hover:text-[#FFB700]">
-                    Clique para criar sala →
-                  </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -865,7 +881,8 @@ const Jogar = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 bg-white/5 border border-white/10 flex items-center justify-center"
+                style={{ clipPath: CUT_BADGE }}>
                 <Search className="w-4 h-4 text-[#FFB700]" />
               </div>
               <h2 className="text-xl font-black text-white uppercase tracking-widest">Salas Disponíveis</h2>
@@ -874,7 +891,8 @@ const Jogar = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing || loadingSalas}
-                className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:border-[#FFB700]/50 hover:text-[#FFB700] transition-all disabled:opacity-50"
+                className="p-2 bg-white/5 border border-white/10 text-white hover:border-[#FFB700]/50 hover:text-[#FFB700] transition-all disabled:opacity-50 cursor-pointer"
+                style={{ clipPath: CUT_BADGE }}
                 title="Atualizar salas"
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -882,26 +900,29 @@ const Jogar = () => {
               <select
                 value={filtroModo}
                 onChange={(e) => setFiltroModo(e.target.value as ModoJogo | 'todos')}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-bold uppercase tracking-wider"
+                className="bg-[#09090c] border border-white/10 px-3 py-2 text-white text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#FFB700]/50 cursor-pointer"
+                style={{ clipPath: CUT_BADGE }}
               >
-                <option value="todos" className="bg-black">Todos Modos</option>
-                <option value="5v5" className="bg-black">5v5 Clássico</option>
-                <option value="aram" className="bg-black">ARAM</option>
-                <option value="1v1" className="bg-black">1v1</option>
-                <option value="time_vs_time" className="bg-black">Time vs Time</option>
+                <option value="todos" className="bg-[#09090c]">Todos Modos</option>
+                <option value="5v5" className="bg-[#09090c]">5v5 Clássico</option>
+                <option value="aram" className="bg-[#09090c]">ARAM</option>
+                <option value="1v1" className="bg-[#09090c]">1v1</option>
+                <option value="time_vs_time" className="bg-[#09090c]">Time vs Time</option>
               </select>
             </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
-            <input
-              type="text"
-              placeholder="BUSCAR POR NOME OU CÓDIGO..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#FFB700]/50 uppercase font-bold"
-            />
+          <div className="relative p-[1px]" style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}>
+            <div className="relative flex items-center bg-[#09090c]" style={{ clipPath: CUT_BUTTON_INNER }}>
+              <Search className="absolute left-4 w-5 h-5 text-white/30" />
+              <input
+                type="text"
+                placeholder="BUSCAR POR NOME OU CÓDIGO..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full bg-transparent py-3.5 pl-12 pr-4 text-white text-sm placeholder:text-white/20 focus:outline-none uppercase font-bold"
+              />
+            </div>
           </div>
         </div>
 
@@ -916,7 +937,8 @@ const Jogar = () => {
                 <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Buscando salas ativas...</p>
               </div>
             ) : salasFiltradas.length === 0 ? (
-              <div className="w-full text-center py-20 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
+              <div className="w-full text-center py-20 bg-white/[0.02] border border-dashed border-white/10 p-8"
+                style={{ clipPath: CUT_FRAME }}>
                 <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
                 <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala encontrada</p>
                 <p className="text-white/20 text-xs uppercase mt-2">Seja o primeiro — crie uma sala nos cards acima e defina o valor!</p>
@@ -935,92 +957,108 @@ const Jogar = () => {
                   <div
                     key={sala.id}
                     onClick={() => {
-                      // Sala é pública: visitante assiste sem login (o aviso de
-                      // login aparece ao clicar na vaga dentro da sala).
                       if (user && sala.temSenha && !jaEsta) {
                         setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
                       } else {
                         entrarNaSala(sala);
                       }
                     }}
-                    className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-[#FFB700]/50 transition-all snap-start group/card bg-black"
+                    className="flex-none w-full sm:w-[380px] h-[330px] relative cursor-pointer snap-start group/card transition-all p-[1.5px]"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${modoInfo.cor}80 0%, ${modoInfo.cor}30 50%, rgba(255,255,255,0.1) 100%)`,
+                      boxShadow: `0 10px 30px -10px ${modoInfo.cor}25`
+                    }}
                   >
-                    {modoInfo.bgImage && (
-                      <div className="absolute inset-0 z-0 bg-cover bg-center opacity-30 group-hover/card:opacity-50 transition-opacity"
-                        style={{ backgroundImage: `url(${modoInfo.bgImage})` }} />
-                    )}
-                    <div className="absolute inset-0 opacity-50 z-0"
-                      style={{ background: `linear-gradient(135deg, ${modoInfo.cor}40, transparent)` }} />
-                    
-                    <div className="relative z-10 p-5 h-full flex flex-col">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-black text-white/40 border border-white/10 px-2 py-1 rounded bg-black/50">
-                            {sala.codigo}
-                          </span>
-                          {sala.temSenha && <Lock className="w-3.5 h-3.5 text-yellow-400" />}
-                          <span className={`px-2 py-1 rounded text-[9px] font-black uppercase border ${estadoInfo.cls}`}>
-                            {estadoInfo.label}
-                          </span>
+                    <div
+                      className="w-full h-full bg-[#08080a] group-hover/card:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col p-5"
+                      style={{ clipPath: CUT_FRAME_INNER }}
+                    >
+                      {modoInfo.bgImage && (
+                        <div className="absolute inset-0 z-0 bg-cover bg-center opacity-25 group-hover/card:opacity-40 transition-opacity"
+                          style={{ backgroundImage: `url(${modoInfo.bgImage})` }} />
+                      )}
+                      <div className="absolute inset-0 opacity-40 z-0 pointer-events-none"
+                        style={{ background: `linear-gradient(135deg, ${modoInfo.cor}25, transparent)` }} />
+                      
+                      <div className="relative z-10 h-full flex flex-col">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono font-black text-white/60 border border-white/10 px-2 py-0.5 bg-black/60"
+                              style={{ clipPath: CUT_BADGE }}>
+                              {sala.codigo}
+                            </span>
+                            {sala.temSenha && <Lock className="w-3.5 h-3.5 text-yellow-400" />}
+                            <span className={`px-2 py-0.5 text-[9px] font-black uppercase border ${estadoInfo.cls}`}
+                              style={{ clipPath: CUT_BADGE }}>
+                              {estadoInfo.label}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] font-black px-2.5 py-1 border border-white/10"
+                            style={{ clipPath: CUT_BADGE }}>
+                            <Users className="w-3 h-3 text-[#FFB700]" />
+                            {(sala.jogadores || []).length}/{sala.maxJogadores}
+                          </div>
+                          {ehAdminOuProprietario && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); excluirSala(sala); }}
+                              className="p-1.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all cursor-pointer"
+                              style={{ clipPath: CUT_BADGE }}
+                              title="Excluir sala"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white/60 text-[10px] font-black px-2.5 py-1.5 rounded border border-white/10">
-                          <Users className="w-3 h-3" />
-                          {(sala.jogadores || []).length}/{sala.maxJogadores}
+                        
+                        <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-[#FFB700] transition-colors">{sala.nome}</h3>
+                        <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
+                            style={{ clipPath: CUT_BADGE, background: `${modoInfo.cor}20`, color: modoInfo.cor, border: `1px solid ${modoInfo.cor}40` }}>
+                            {modoInfo.icone} {modoInfo.nome}
+                          </span>
+                          <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
+                            style={{ clipPath: CUT_BADGE, background: `${mpInfo.cor}20`, color: mpInfo.cor, border: `1px solid ${mpInfo.cor}40` }}>
+                            <Coins className="w-3 h-3" />{sala.mpoints} MP
+                          </span>
+                          {sala.eloMinimo && (
+                            <span className="px-2 py-1 text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40"
+                              style={{ clipPath: CUT_BADGE }}>
+                              Mín: {sala.eloMinimo}
+                            </span>
+                          )}
                         </div>
-                        {/* Excluir sala — só admin/proprietário (validação real no servidor) */}
-                        {ehAdminOuProprietario && (
+                        
+                        <div className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-4">
+                          Criador: {sala.criadorNome}
+                          {sala.timeANome && <span className="ml-2 text-blue-400">• {sala.timeANome}</span>}
+                        </div>
+                        
+                        <div className="mt-auto pt-2">
                           <button
-                            onClick={(e) => { e.stopPropagation(); excluirSala(sala); }}
-                            className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all"
-                            title="Excluir sala"
+                            onClick={() => {
+                              if (user && sala.temSenha && !jaEsta) {
+                                setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
+                              } else {
+                                entrarNaSala(sala);
+                              }
+                            }}
+                            className={`w-full py-3 font-black text-sm uppercase transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                              jaEsta
+                                ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30'
+                                : estaCheia
+                                ? 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
+                                : 'bg-[#FFB700] hover:bg-[#e0a000] text-black shadow-[0_0_20px_-5px_rgba(255,183,0,0.4)]'
+                            }`}
+                            style={{ clipPath: CUT_BUTTON }}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <LogIn className="w-4 h-4" />
+                            {jaEsta ? 'REENTRAR' : estaCheia ? 'SALA CHEIA' : 'ENTRAR'}
                           </button>
-                        )}
+                        </div>
                       </div>
-                      
-                      <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1">{sala.nome}</h3>
-                      <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="px-2 py-1 rounded text-[10px] font-black uppercase"
-                          style={{ background: `${modoInfo.cor}20`, color: modoInfo.cor, border: `1px solid ${modoInfo.cor}40` }}>
-                          {modoInfo.icone} {modoInfo.nome}
-                        </span>
-                        <span className="px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"
-                          style={{ background: `${mpInfo.cor}20`, color: mpInfo.cor, border: `1px solid ${mpInfo.cor}40` }}>
-                          <Coins className="w-3 h-3" />{sala.mpoints} MP
-                        </span>
-                        {sala.eloMinimo && (
-                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40">Mín: {sala.eloMinimo}</span>
-                        )}
-                      </div>
-                      
-                      <div className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-4">
-                        Criador: {sala.criadorNome}
-                        {sala.timeANome && <span className="ml-2 text-blue-400">• {sala.timeANome}</span>}
-                      </div>
-                      
-                      <button
-                        onClick={() => {
-                          // Sala pública: visitante navega (aviso de login na vaga).
-                          if (user && sala.temSenha && !jaEsta) {
-                            setShowSenhaModal({ salaId: sala.id, nome: sala.nome });
-                          } else {
-                            entrarNaSala(sala);
-                          }
-                        }}
-                        className={`mt-auto w-full py-3 rounded-lg font-black text-sm uppercase transition-all flex items-center justify-center gap-2 ${
-                          jaEsta
-                            ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30'
-                            : estaCheia
-                            ? 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
-                            : 'bg-[#FFB700] hover:bg-[#e0a000] text-black'
-                        }`}
-                      >
-                        <LogIn className="w-4 h-4" />
-                        {jaEsta ? 'REENTRAR' : estaCheia ? 'SALA CHEIA' : 'ENTRAR'}
-                      </button>
                     </div>
                   </div>
                 );
@@ -1031,11 +1069,13 @@ const Jogar = () => {
           {salasFiltradas.length > 2 && (
             <>
               <button onClick={() => gamesRef.current?.scrollBy({ left: -450, behavior: 'smooth' })}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 rounded-lg bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg">
+                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                style={{ clipPath: CUT_BUTTON }}>
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button onClick={() => gamesRef.current?.scrollBy({ left: 450, behavior: 'smooth' })}
-                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 rounded-lg bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg">
+                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                style={{ clipPath: CUT_BUTTON }}>
                 <ChevronRight className="w-5 h-5" />
               </button>
             </>
@@ -1047,7 +1087,8 @@ const Jogar = () => {
         {/* ============================================ */}
         <div ref={finalizadasRef} className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+            <div className="w-8 h-8 bg-white/5 border border-white/10 flex items-center justify-center"
+              style={{ clipPath: CUT_BADGE }}>
               <Trophy className="w-4 h-4 text-[#FFB700]" />
             </div>
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Partidas Finalizadas</h2>
@@ -1061,7 +1102,8 @@ const Jogar = () => {
                   <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FFB700] border-t-transparent mx-auto mb-4" />
                 </div>
               ) : salasFinalizadasFiltradas.length === 0 ? (
-                <div className="w-full text-center py-10 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
+                <div className="w-full text-center py-10 bg-white/[0.02] border border-dashed border-white/10 p-8"
+                  style={{ clipPath: CUT_FRAME }}>
                   <Trophy className="w-16 h-16 text-white/10 mx-auto mb-4" />
                   <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala finalizada</p>
                 </div>
@@ -1081,66 +1123,78 @@ const Jogar = () => {
                     <div
                       key={sala.id}
                       onClick={() => navigate(`/${sala.modo}/${sala.id}`)}
-                    className="flex-none w-full sm:w-[380px] h-[320px] rounded-xl overflow-hidden relative cursor-pointer border border-white/10 hover:border-[#FFB700]/50 transition-all snap-start group/card bg-black"
+                      className="flex-none w-full sm:w-[380px] h-[330px] relative cursor-pointer snap-start group/card transition-all p-[1.5px]"
+                      style={{
+                        clipPath: CUT_FRAME,
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)',
+                      }}
                     >
-                      {modoInfo.bgImage && (
-                        <div className="absolute inset-0 z-0 bg-cover bg-center opacity-30 group-hover/card:opacity-50 transition-opacity grayscale"
-                          style={{ backgroundImage: `url(${modoInfo.bgImage})` }} />
-                      )}
-                      <div className="absolute inset-0 opacity-40 z-0"
-                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.08), transparent)' }} />
-
-                      <div className="relative z-10 p-5 h-full flex flex-col">
-                        <div className="flex justify-between items-start mb-3">
-                          <span className="text-[10px] font-mono font-black text-white/40 border border-white/10 px-2 py-1 rounded bg-black/50">
-                            {sala.codigo}
-                          </span>
-                          <span className="px-2 py-1 rounded text-[9px] font-black uppercase border"
-                            style={{ background: `${vencedorInfo.cor}20`, color: vencedorInfo.cor, border: `1px solid ${vencedorInfo.cor}40` }}>
-                            {vencedorInfo.label}
-                          </span>
-                        </div>
-
-                        <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1">{sala.nome}</h3>
-                        <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
-
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase"
-                            style={{ background: `${modoInfo.cor}20`, color: modoInfo.cor, border: `1px solid ${modoInfo.cor}40` }}>
-                            {modoInfo.icone} {modoInfo.nome}
-                          </span>
-                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"
-                            style={{ background: `${mpInfo.cor}20`, color: mpInfo.cor, border: `1px solid ${mpInfo.cor}40` }}>
-                            <GiTwoCoins className="w-3 h-3" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
-                          </span>
-                          <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40">
-                            Finalizada
-                          </span>
-                        </div>
-
-                        {sala.resultado_riot && (
-                          <div className="flex items-center justify-center gap-3 mb-4 px-3 py-2 rounded-xl bg-black/60 border border-white/10">
-                            <span className="text-sm font-black text-blue-400 tabular-nums">{sala.resultado_riot.placar.blue.kills}</span>
-                            <span className="text-[9px] font-black uppercase text-white/30 tracking-widest">
-                              {sala.resultado_riot.duracao_s > 0 ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}min` : 'Placar'}
-                            </span>
-                            <span className="text-sm font-black text-red-400 tabular-nums">{sala.resultado_riot.placar.red.kills}</span>
-                          </div>
+                      <div
+                        className="w-full h-full bg-[#08080a] group-hover/card:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col p-5"
+                        style={{ clipPath: CUT_FRAME_INNER }}
+                      >
+                        {modoInfo.bgImage && (
+                          <div className="absolute inset-0 z-0 bg-cover bg-center opacity-20 group-hover/card:opacity-35 transition-opacity grayscale"
+                            style={{ backgroundImage: `url(${modoInfo.bgImage})` }} />
                         )}
+                        <div className="absolute inset-0 opacity-40 z-0 pointer-events-none"
+                          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06), transparent)' }} />
 
-                        <div className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-4">
-                          Criador: {sala.criadorNome}
-                          {sala.timeANome && <span className="ml-2 text-blue-400">• {sala.timeANome}</span>}
-                          {sala.timeBNome && <span className="ml-2 text-red-400">• {sala.timeBNome}</span>}
-                        </div>
+                        <div className="relative z-10 h-full flex flex-col">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="text-[10px] font-mono font-black text-white/50 border border-white/10 px-2 py-0.5 bg-black/60"
+                              style={{ clipPath: CUT_BADGE }}>
+                              {sala.codigo}
+                            </span>
+                            <span className="px-2 py-0.5 text-[9px] font-black uppercase border"
+                              style={{ clipPath: CUT_BADGE, background: `${vencedorInfo.cor}20`, color: vencedorInfo.cor, border: `1px solid ${vencedorInfo.cor}40` }}>
+                              {vencedorInfo.label}
+                            </span>
+                          </div>
 
-                        <div className="mt-auto flex items-center justify-between">
-                          <span className="text-white/30 text-[10px] font-bold uppercase tracking-wider">
-                            {new Date((sala as any).createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </span>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover/card:text-white transition-colors">
-                            Ver resultado →
-                          </span>
+                          <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-zinc-200 transition-colors">{sala.nome}</h3>
+                          <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
+
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
+                              style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.06)', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.1)' }}>
+                              {modoInfo.icone} {modoInfo.nome}
+                            </span>
+                            <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
+                              style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.06)', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.1)' }}>
+                              <GiTwoCoins className="w-3 h-3 text-zinc-400" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
+                            </span>
+                            <span className="px-2 py-1 text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40"
+                              style={{ clipPath: CUT_BADGE }}>
+                              Finalizada
+                            </span>
+                          </div>
+
+                          {sala.resultado_riot && (
+                            <div className="flex items-center justify-center gap-3 mb-3 px-3 py-1.5 bg-black/60 border border-white/10"
+                              style={{ clipPath: CUT_BADGE }}>
+                              <span className="text-sm font-black text-blue-400 tabular-nums">{sala.resultado_riot.placar.blue.kills}</span>
+                              <span className="text-[9px] font-black uppercase text-white/30 tracking-widest">
+                                {sala.resultado_riot.duracao_s > 0 ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}min` : 'Placar'}
+                              </span>
+                              <span className="text-sm font-black text-red-400 tabular-nums">{sala.resultado_riot.placar.red.kills}</span>
+                            </div>
+                          )}
+
+                          <div className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-3">
+                            Criador: {sala.criadorNome}
+                            {sala.timeANome && <span className="ml-2 text-blue-400">• {sala.timeANome}</span>}
+                            {sala.timeBNome && <span className="ml-2 text-red-400">• {sala.timeBNome}</span>}
+                          </div>
+
+                          <div className="mt-auto pt-2 flex items-center justify-between border-t border-white/5">
+                            <span className="text-white/30 text-[10px] font-bold uppercase tracking-wider">
+                              {new Date((sala as any).createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover/card:text-white transition-colors">
+                              Ver resultado →
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1152,18 +1206,21 @@ const Jogar = () => {
               {salasFinalizadasFiltradas.length > 2 && (
                 <>
                   <button onClick={() => finalizadasScrollRef.current?.scrollBy({ left: -450, behavior: 'smooth' })}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 rounded-lg bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg">
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}>
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button onClick={() => finalizadasScrollRef.current?.scrollBy({ left: 450, behavior: 'smooth' })}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 rounded-lg bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg">
+                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}>
                     <ChevronRight className="w-5 h-5" />
                   </button>
                 </>
               )}
             </div>
           ) : (
-            <div className="text-center py-10 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
+            <div className="text-center py-10 bg-white/[0.02] border border-dashed border-white/10 p-8"
+              style={{ clipPath: CUT_FRAME }}>
               <p className="text-white/20 text-xs uppercase">Continue descendo para ver as partidas já disputadas</p>
             </div>
           )}
