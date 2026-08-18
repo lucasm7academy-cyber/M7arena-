@@ -15,226 +15,133 @@ import { useTransmissoesAtivas } from '../hooks/useTransmissoesAtivas';
 import { api } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
+// Constantes de polígonos chanfrados oficiais (M7 Arena Cut-Edge)
+const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
+const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 12.5px)';
 
+const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 7.8px)';
 
-const FeatureCard = ({ icon: Icon, title, description, delay }: any) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay }}
-    className="group relative p-8 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-[#FFB700]/30 transition-all duration-500 overflow-hidden"
-  >
-    <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
-      <Icon size={120} />
-    </div>
-    <div className="relative z-10">
-      <div className="w-12 h-12 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-        <Icon className="w-6 h-6 text-[#FFB700]" />
-      </div>
-      <h3 className="text-xl font-black uppercase tracking-tight mb-3">{title}</h3>
-      <p className="text-white/40 text-sm leading-relaxed">{description}</p>
-    </div>
-  </motion.div>
-);
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 5px)';
 
-const TournamentPreview = ({ title, prize, date, image, category }: any) => (
-  <div className="relative group rounded-xl overflow-hidden border border-white/10 aspect-video">
-    <div
-      className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-      style={{ backgroundImage: `url(${image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'})` }}
-    />
-    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-    <div className="absolute bottom-0 left-0 right-0 p-6">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="px-2 py-0.5 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest rounded-sm">{category}</span>
-        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{date}</span>
-      </div>
-      <h4 className="text-lg font-black uppercase mb-1">{title}</h4>
-      <p className="text-[#00FF41] text-xs font-black uppercase tracking-widest flex items-center gap-1">
-        <Trophy className="w-3 h-3" /> {prize}
-      </p>
-    </div>
-  </div>
-);
-
-const StreamerCard = ({ name, viewers, category, image }: any) => (
-  <div className="group relative flex-none w-64 rounded-xl overflow-hidden border border-white/10 bg-black cursor-pointer">
-    <div className="aspect-video relative overflow-hidden">
-      <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
-      <div className="absolute top-3 left-3 px-2 py-1 bg-red-600 rounded flex items-center gap-1.5 shadow-lg">
-        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-        <span className="text-[9px] font-black uppercase tracking-widest text-white">Live</span>
-      </div>
-      <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 backdrop-blur-md rounded border border-white/10">
-        <span className="text-[9px] font-bold text-white/80 uppercase">{viewers} viewers</span>
-      </div>
-    </div>
-    <div className="p-4 bg-white/[0.02] border-t border-white/5">
-      <h4 className="text-sm font-black uppercase text-white group-hover:text-[#FFB700] transition-colors">{name}</h4>
-      <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">{category}</p>
-    </div>
-  </div>
-);
-
-const TeamRankItem = ({ rank, name, logo, color, points }: any) => (
-  <div className="flex items-center justify-between p-4 bg-transparent border border-white/5 rounded-xl hover:border-[#FFB700]/50 hover:bg-[#FFB700]/5 transition-all group">
-    <div className="flex items-center gap-4">
-      <div className="flex flex-col items-center">
-        <span className="text-[10px] font-black text-white/20 uppercase leading-none mb-1">Rank</span>
-        <span className="text-xl font-black w-8 text-center text-[#FFB700] leading-none">
-          #{rank}
-        </span>
-      </div>
-      <div className="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-[#FFB700]/30 transition-colors">
-        <img src={logo} alt={name} loading="lazy" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-      </div>
-      <div>
-        <h4 className="text-base font-black uppercase tracking-tight transition-colors" style={{ color: color }}>{name}</h4>
-      </div>
-    </div>
-    <div className="text-right">
-      <div className="text-[#FFB700] font-black text-sm">{points}</div>
-      <div className="text-[8px] text-[#FFB700]/40 uppercase font-black tracking-widest">PDL</div>
-    </div>
-  </div>
-);
-
-
-const MatchHistoryItem = ({ tagA, tagB, logoA, logoB, scoreA, scoreB, date, colorA, colorB }: any) => (
-  <div className="group flex flex-col md:flex-row items-center justify-center p-6 bg-[#0a0a0a] border border-white/5 rounded-xl hover:border-white/20 transition-all gap-8">
-    <div className="flex items-center gap-6 md:gap-16 flex-1 justify-center">
-      {/* Team A */}
-      <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-        <div className="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-white/20 transition-colors">
-          <img src={logoA} alt={tagA} loading="lazy" className="w-full h-full object-cover opacity-80" />
-        </div>
-        <span className="text-[11px] font-black uppercase tracking-widest text-center" style={{ color: colorA }}>{tagA}</span>
-      </div>
-
-      {/* Score & Time */}
-      <div className="flex flex-col items-center gap-2 min-w-[140px]">
-        <div className="flex items-center gap-4">
-          <span className={`text-3xl font-black ${scoreA > scoreB ? 'text-[#00FF41]' : scoreA < scoreB ? 'text-red-500' : 'text-white'}`}>{scoreA}</span>
-          <span className="text-white/10 font-bold text-2xl">:</span>
-          <span className={`text-3xl font-black ${scoreB > scoreA ? 'text-[#00FF41]' : scoreB < scoreA ? 'text-red-500' : 'text-white'}`}>{scoreB}</span>
-        </div>
-        <span className="text-[10px] text-white/20 uppercase font-black tracking-widest whitespace-nowrap">{date}</span>
-      </div>
-
-      {/* Team B */}
-      <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-        <div className="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-white/20 transition-colors">
-          <img src={logoB} alt={tagB} loading="lazy" className="w-full h-full object-cover opacity-80" />
-        </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: colorB }}>{tagB}</span>
-      </div>
-    </div>
-  </div>
-);
-
-
-const SocialCard = ({ icon: Icon, title, platform, color, link }: any) => (
-  <a
-    href={link}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group relative p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.04] transition-all flex items-center gap-4"
-  >
-    <div
-      className="w-10 h-10 rounded-lg flex items-center justify-center transition-all group-hover:scale-110"
-      style={{ backgroundColor: `${color}10`, border: `1px solid ${color}20` }}
-    >
-      <Icon className="w-5 h-5" style={{ color: color }} />
-    </div>
-    <div className="flex flex-col">
-      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">{platform}</span>
-      <h4 className="text-xs font-black uppercase text-white group-hover:text-[#FFB700] transition-colors">{title}</h4>
-    </div>
-    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0">
-      <ChevronRight className="w-4 h-4 text-white/20" />
-    </div>
-  </a>
-);
+// Card de Live Padrão (Chanfrado)
 const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
   <a
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[400px] snap-center bg-[#0a0a0a] border-2 border-[#9146FF]/20 rounded-2xl hover:border-[#9146FF] transition-all duration-500 overflow-hidden shadow-2xl flex flex-col"
+    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+    style={{
+      clipPath: CUT_FRAME,
+      background: 'linear-gradient(135deg, rgba(145,70,255,0.7) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
+      boxShadow: '0 10px 30px -10px rgba(145,70,255,0.25)'
+    }}
   >
-    {/* Badge "Ao Vivo" */}
-    <div className="w-full px-4 pt-4 pb-2 absolute top-0 left-0 z-20">
-      <div className="flex items-center gap-2 px-3 py-2 bg-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest text-white ring-1 ring-white/20 w-fit">
-        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-        Ao Vivo
+    <div
+      className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+      style={{ clipPath: CUT_FRAME_INNER }}
+    >
+      {/* Badge "Ao Vivo" */}
+      <div className="w-full px-4 pt-4 pb-2 absolute top-0 left-0 z-20">
+        <div
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/90 text-[9px] font-black uppercase tracking-widest text-white border border-red-400/40 w-fit"
+          style={{ clipPath: CUT_BADGE }}
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Ao Vivo
+        </div>
       </div>
-    </div>
 
-    {/* Thumbnail */}
-    <div className="relative w-full aspect-video overflow-hidden">
-      <img
-        src={thumbnail}
-        alt={titulo}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-    </div>
+      {/* Thumbnail */}
+      <div className="relative w-full aspect-video overflow-hidden bg-black">
+        <img
+          src={thumbnail}
+          alt={titulo}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-transparent" />
+      </div>
 
-    {/* Título + streamer */}
-    <div className="w-full px-4 py-3 flex-1">
-      <p className="text-sm font-bold text-white line-clamp-2 leading-tight">{titulo}</p>
-      <span className="text-[12px] font-black text-[#9146FF] uppercase tracking-[0.15em] mt-1 block">@{streamer}</span>
-    </div>
+      {/* Título + streamer */}
+      <div className="w-full px-4 py-3 flex-1">
+        <p className="text-sm font-black uppercase tracking-tight text-white line-clamp-2 leading-tight group-hover:text-[#9146FF] transition-colors">{titulo}</p>
+        <span className="text-[11px] font-bold text-[#9146FF] uppercase tracking-[0.15em] mt-1 block">@{streamer}</span>
+      </div>
 
-    {/* Bottom Button - colado */}
-    <div className="w-full bg-white py-5 flex items-center justify-center border-t border-black/5">
-      <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#9146FF]">
-        ASSISTIR AGORA!
-      </span>
+      {/* Bottom Button */}
+      <div className="w-full p-2.5 pt-0">
+        <div
+          className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] border border-[#9146FF]/30 text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+          style={{ clipPath: CUT_BUTTON }}
+        >
+          <span className="text-[11px] font-black uppercase tracking-[0.25em]">
+            ASSISTIR AGORA!
+          </span>
+        </div>
+      </div>
     </div>
   </a>
 );
 
+// Card de Highlight / Destaque (Chanfrado)
 const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
   <a
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[400px] snap-center bg-[#0a0a0a] border-2 border-[#9146FF]/20 rounded-2xl hover:border-[#9146FF] transition-all duration-500 overflow-hidden shadow-2xl flex flex-col"
+    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+    style={{
+      clipPath: CUT_FRAME,
+      background: 'linear-gradient(135deg, rgba(145,70,255,0.6) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+    }}
   >
-    <div className="relative w-full aspect-video overflow-hidden bg-black">
-      {thumbnail ? (
-        <img
-          src={thumbnail}
-          alt={titulo}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <Tv2 className="w-12 h-12 text-white/10" />
+    <div
+      className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+      style={{ clipPath: CUT_FRAME_INNER }}
+    >
+      <div className="relative w-full aspect-video overflow-hidden bg-black">
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={titulo}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Tv2 className="w-12 h-12 text-white/10" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-transparent" />
+        {/* Badge roxo */}
+        <div className="absolute top-3 left-3 z-10">
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-[#9146FF]/90 text-[8px] font-black uppercase tracking-widest text-white border border-[#9146FF]"
+            style={{ clipPath: CUT_BADGE }}
+          >
+            ★ {categoria === 'clutch' ? 'Clutch' : categoria === 'jogada' ? 'Jogada' : categoria === 'engracado' ? 'Engraçado' : categoria === 'top5' ? 'Top 5' : categoria === 'compilacao' ? 'Compilação' : categoria === 'semana' ? 'Destaques' : 'Highlight'}
+          </div>
         </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-      {/* Badge roxo com estrela branca */}
-      <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-2 bg-[#9146FF] rounded text-[8px] font-black uppercase tracking-widest text-white">
-        ★ {categoria === 'clutch' ? 'Clutch' : categoria === 'jogada' ? 'Jogada' : categoria === 'engracado' ? 'Engraçado' : categoria === 'top5' ? 'Top 5' : categoria === 'compilacao' ? 'Compilação' : categoria === 'semana' ? 'Destaques' : 'Highlight'}
       </div>
-    </div>
-    <div className="w-full px-4 py-3 flex-1">
-      <p className="text-sm font-bold text-white line-clamp-2 leading-tight">{titulo}</p>
-    </div>
-    {/* Botão roxo embaixo */}
-    <div className="w-full bg-[#9146FF] py-5 flex items-center justify-center border-t border-black/5">
-      <span className="text-[14px] font-black uppercase tracking-[0.4em] text-white">ASSISTIR AGORA!</span>
+      <div className="w-full px-4 py-3 flex-1">
+        <p className="text-sm font-black uppercase tracking-tight text-white line-clamp-2 leading-tight group-hover:text-[#9146FF] transition-colors">{titulo}</p>
+      </div>
+      <div className="w-full p-2.5 pt-0">
+        <div
+          className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] border border-[#9146FF]/30 text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+          style={{ clipPath: CUT_BUTTON }}
+        >
+          <span className="text-[11px] font-black uppercase tracking-[0.25em]">ASSISTIR AGORA!</span>
+        </div>
+      </div>
     </div>
   </a>
 );
 
+// Card de Partida ao Vivo (Chanfrado)
 const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, link, colorA, colorB, titulo, modo, nomecamp }: any) => {
-  // Gerar título automático baseado no modo
   const tituloFinal = modo === 'campeonato'
     ? nomecamp
     : modo === 'amistoso'
@@ -242,59 +149,82 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
     : titulo || 'Transmissão ao vivo';
 
   return (
-  <a
-    href={link}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[400px] snap-center bg-[#0a0a0a] border-2 border-[#9146FF]/20 rounded-2xl hover:border-[#9146FF] transition-all duration-500 overflow-hidden shadow-2xl flex flex-col"
-  >
-    {/* Badge "Ao Vivo" */}
-    <div className="w-full px-4 pt-4 pb-2 absolute top-0 left-0 z-20">
-      <div className="flex items-center gap-2 px-3 py-2 bg-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest text-white ring-1 ring-white/20 w-fit">
-        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-        Ao Vivo
-      </div>
-    </div>
-
-    {/* Teams matchup (instead of thumbnail) */}
-    <div className="relative w-full aspect-video overflow-hidden bg-black bg-gradient-to-br from-black/80 to-black/60 flex flex-col items-center">
-      <div className="flex-1" />
-      <div className="relative z-10 flex items-center justify-between w-full gap-4 px-4 pb-6">
-        {/* Team A */}
-        <div className="flex flex-col items-center flex-1 min-w-0">
-          <div className="w-20 h-20 md:w-28 md:h-28 flex items-center justify-center group-hover:scale-110 transition-transform duration-700 rounded-lg border border-white/10">
-            <img src={logoA} alt={teamA} className="w-full h-full object-contain rounded-md" />
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+      style={{
+        clipPath: CUT_FRAME,
+        background: 'linear-gradient(135deg, rgba(145,70,255,0.7) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
+        boxShadow: '0 10px 30px -10px rgba(145,70,255,0.25)'
+      }}
+    >
+      <div
+        className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+        style={{ clipPath: CUT_FRAME_INNER }}
+      >
+        {/* Badge "Ao Vivo" */}
+        <div className="w-full px-4 pt-4 pb-2 absolute top-0 left-0 z-20">
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/90 text-[9px] font-black uppercase tracking-widest text-white border border-red-400/40 w-fit"
+            style={{ clipPath: CUT_BADGE }}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            Ao Vivo
           </div>
-          <span className="text-[14px] font-black uppercase tracking-widest block truncate mt-2" style={{ color: colorA || '#ffffff' }}>{tagA}</span>
         </div>
 
-        {/* VS */}
-        <div className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none group-hover:scale-110 transition-transform">VS</div>
+        {/* Teams matchup */}
+        <div className="relative w-full aspect-video overflow-hidden bg-black flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-[#08080a]" />
+          <div className="relative z-10 flex items-center justify-between w-full gap-3 pt-6">
+            {/* Team A */}
+            <div className="flex flex-col items-center flex-1 min-w-0">
+              <div
+                className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 bg-black/60 border border-white/10"
+                style={{ clipPath: CUT_BUTTON }}
+              >
+                <img src={logoA} alt={teamA} className="w-full h-full object-contain p-2" />
+              </div>
+              <span className="text-[12px] font-black uppercase tracking-widest block truncate mt-1.5" style={{ color: colorA || '#ffffff' }}>{tagA}</span>
+            </div>
 
-        {/* Team B */}
-        <div className="flex flex-col items-center flex-1 min-w-0">
-          <div className="w-20 h-20 md:w-28 md:h-28 flex items-center justify-center group-hover:scale-110 transition-transform duration-700 rounded-lg border border-white/10">
-            <img src={logoB} alt={teamB} className="w-full h-full object-contain rounded-md" />
+            {/* VS */}
+            <div className="text-xl md:text-2xl font-black text-white/80 tracking-tighter uppercase leading-none">VS</div>
+
+            {/* Team B */}
+            <div className="flex flex-col items-center flex-1 min-w-0">
+              <div
+                className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 bg-black/60 border border-white/10"
+                style={{ clipPath: CUT_BUTTON }}
+              >
+                <img src={logoB} alt={teamB} className="w-full h-full object-contain p-2" />
+              </div>
+              <span className="text-[12px] font-black uppercase tracking-widest block truncate mt-1.5" style={{ color: colorB || '#ffffff' }}>{tagB}</span>
+            </div>
           </div>
-          <span className="text-[14px] font-black uppercase tracking-widest block truncate mt-2" style={{ color: colorB || '#ffffff' }}>{tagB}</span>
+        </div>
+
+        {/* Título automático + Streamer name */}
+        <div className="w-full px-4 py-3 flex-1 flex flex-col justify-between">
+          <p className="text-sm font-black uppercase tracking-tight text-white line-clamp-1 leading-tight">{tituloFinal}</p>
+          <span className="text-[11px] font-bold text-[#9146FF] uppercase tracking-[0.15em] mt-1 block">@{streamer}</span>
+        </div>
+
+        {/* Bottom Button */}
+        <div className="w-full p-2.5 pt-0">
+          <div
+            className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] border border-[#9146FF]/30 text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+            style={{ clipPath: CUT_BUTTON }}
+          >
+            <span className="text-[11px] font-black uppercase tracking-[0.25em]">
+              ASSISTIR AGORA!
+            </span>
+          </div>
         </div>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent pointer-events-none" />
-    </div>
-
-    {/* Título automático + Streamer name */}
-    <div className="w-full px-4 py-3 flex-1 flex flex-col justify-between">
-      <p className="text-sm font-bold text-white line-clamp-1 leading-tight">{tituloFinal}</p>
-      <span className="text-[12px] font-black text-[#9146FF] uppercase tracking-[0.15em] mt-1 block">@{streamer}</span>
-    </div>
-
-    {/* Bottom Button - colado */}
-    <div className="w-full bg-white py-5 flex items-center justify-center border-t border-black/5">
-      <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#9146FF]">
-        ASSISTIR AGORA!
-      </span>
-    </div>
-  </a>
+    </a>
   );
 };
 
@@ -311,15 +241,12 @@ interface UpcomingMatch {
 }
 
 const _UPCOMING_CACHE_TTL = 5 * 60 * 1000;
-const _UPCOMING_CACHE_VER = 3; // bump ao mudar estrutura
+const _UPCOMING_CACHE_VER = 3;
 let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = null;
 
-// ⚡ OTIMIZAÇÃO: cache em memória de 5min para highlights e votos.
-// Evita refetch ao navegar Lobby ↔ outras páginas ↔ Lobby de novo.
 const _HIGHLIGHTS_CACHE_TTL = 5 * 60 * 1000;
 let _highlightsCache: { data: Array<{ id: string; titulo: string; link: string; thumbnail_url: string | null; categoria: string }>; ts: number } | null = null;
 
-// ⚡ Cache para notícias do blog (mesmo padrão)
 const _NOTICIAS_CACHE_TTL = 5 * 60 * 1000;
 let _noticiasCache: { data: Noticia[]; ts: number } | null = null;
 
@@ -376,7 +303,6 @@ const Home = () => {
           const times: any[] = camp.times_inscritos || [];
 
           for (const match of cron) {
-            // Pula finalizados e partidas sem os dois times definidos
             if (match.status === 'finalizado') continue;
             if (!match.timeA || !match.timeB) continue;
             if (!match.data || match.data === 'A COMBINAR') continue;
@@ -452,7 +378,7 @@ const Home = () => {
       });
   }, []);
 
-  // Busca notícias do blog (cache 5min) — usado na seção "Notícias & Atualizações"
+  // Busca notícias do blog (cache 5min)
   React.useEffect(() => {
     if (_noticiasCache && Date.now() - _noticiasCache.ts < _NOTICIAS_CACHE_TTL) {
       setNoticias(_noticiasCache.data);
@@ -481,7 +407,7 @@ const Home = () => {
     setUserVotes(stored);
   }, []);
 
-  // Busca contagem de votos quando os jogos carregam (cache 5min por conjunto de matches)
+  // Busca contagem de votos quando os jogos carregam
   React.useEffect(() => {
     if (!upcomingMatches.length) return;
     const ids = upcomingMatches.map((m) => m.id);
@@ -523,7 +449,6 @@ const Home = () => {
     const match = upcomingMatches.find((m) => m.id === matchId);
     if (!match) return;
     const teamTag = side === 'a' ? match.tagA.replace('#', '') : match.tagB.replace('#', '');
-    // Optimistic update
     setVotes((prev) => ({
       ...prev,
       [matchId]: {
@@ -533,7 +458,6 @@ const Home = () => {
     }));
     setUserVotes((prev) => ({ ...prev, [matchId]: side }));
     localStorage.setItem(`vote_${matchId}`, side);
-    // Invalida cache de votos para próxima visita refrescar contagem
     _votesCache = null;
     await api.matches.vote(matchId, teamTag).catch((e: any) => console.error('Erro ao votar:', e.message));
   };
@@ -564,10 +488,9 @@ const Home = () => {
   const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
       const { current } = ref;
-      // Scroll by one card width (responsive) + gap (24px)
-      let cardWidth = 424; // Default md (400 + 24)
-      if (window.innerWidth < 640) cardWidth = window.innerWidth - 8; // Small mobile (calc(100vw - 32px) + gap 24px)
-      else if (window.innerWidth < 768) cardWidth = 364; // sm (340 + 24)
+      let cardWidth = 404;
+      if (window.innerWidth < 640) cardWidth = window.innerWidth - 8;
+      else if (window.innerWidth < 768) cardWidth = 364;
 
       current.scrollBy({
         left: direction === 'left' ? -cardWidth : cardWidth,
@@ -576,588 +499,592 @@ const Home = () => {
     }
   };
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 150 : -150,
-      opacity: 0,
-      scale: 0.95
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      transition: {
-        x: { type: "spring" as const, stiffness: 300, damping: 30 },
-        opacity: { duration: 0.2 },
-        scale: { duration: 0.3 }
-      }
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 150 : -150,
-      opacity: 0,
-      scale: 0.95,
-      transition: {
-        x: { duration: 0.2 },
-        opacity: { duration: 0.2 },
-        scale: { duration: 0.2 }
-      }
-    })
-  };
-
   return (
-    <div className="relative">
-      {/* Scanline Effect */}
-      <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,118,0.03))] bg-[length:100%_2px,3px_100%] z-[100] opacity-20" />
+    <div className="relative min-h-screen bg-[#060608] text-white selection:bg-[#FFB700] selection:text-black">
+      {/* Luz ambiente de fundo elegante */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-[10%] left-[20%] w-[600px] h-[600px] bg-[#FFB700]/5 rounded-full blur-[140px]" />
+        <div className="absolute top-[35%] right-[10%] w-[500px] h-[500px] bg-[#9146FF]/5 rounded-full blur-[140px]" />
+        <div className="absolute top-[65%] left-[15%] w-[550px] h-[550px] bg-[#00F0FF]/4 rounded-full blur-[150px]" />
+      </div>
 
-      {/* HERO SECTION - BANNER PRINCIPAL STYLE */}
-      <section className="pt-10 pb-4 px-4 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full group bg-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
-          style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
-        >
+      <div className="relative z-10 space-y-12 pb-24">
+        {/* HERO SECTION - BANNER PRINCIPAL STYLE */}
+        <section className="pt-8 pb-2 px-4 max-w-7xl mx-auto">
           <div
-            className="relative w-full h-full bg-black overflow-hidden"
-            style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}
+            className="relative p-[1.5px] aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full group transition-all"
+            style={{
+              clipPath: CUT_FRAME,
+              background: 'linear-gradient(135deg, rgba(255,183,0,0.65) 0%, rgba(255,183,0,0.2) 50%, rgba(255,255,255,0.08) 100%)',
+              boxShadow: '0 0 50px -10px rgba(255,183,0,0.25)'
+            }}
           >
-          {/* Background Image/Art Placeholder */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover object-[center_15%] opacity-80 transition-transform duration-700 group-hover:scale-105"
+            <div
+              className="relative w-full h-full bg-[#08080a] overflow-hidden"
+              style={{ clipPath: CUT_FRAME_INNER }}
             >
-              <source src="/images/animated-highnoon-lucian.webm" type="video/webm" />
-            </video>
-          </div>
-
-          {/* Content Wrapper */}
-          <div className="relative z-20 flex flex-col justify-end sm:justify-center px-5 sm:px-12 md:px-20 pb-8 pt-20 sm:py-10 max-w-4xl w-full h-full">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="space-y-4 md:space-y-6"
-            >
-              <div className="flex items-center gap-2">
-
-                <span className="text-[#FFB700] text-[10px] md:text-sm font-black uppercase tracking-[0.3em]">
-                  M7 ARENA • Campeonatos 2026
-                </span>
+              {/* Background Video */}
+              <div className="absolute inset-0 z-0 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#08080a] via-[#08080a]/70 to-transparent z-10" />
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover object-[center_15%] opacity-75 transition-transform duration-700 group-hover:scale-105"
+                >
+                  <source src="/images/animated-highnoon-lucian.webm" type="video/webm" />
+                </video>
               </div>
 
-              <h1 className="text-2xl sm:text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
-                Seu Time está <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40">
-                  pronto para vencer?
-                </span>
-              </h1>
+              {/* Content Wrapper */}
+              <div className="relative z-20 flex flex-col justify-end sm:justify-center px-5 sm:px-12 md:px-20 pb-8 pt-20 sm:py-10 max-w-4xl w-full h-full">
+                <div className="space-y-4 md:space-y-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#FFB700] text-[10px] md:text-sm font-black uppercase tracking-[0.3em]">
+                      M7 ARENA • Campeonatos 2026
+                    </span>
+                  </div>
 
-              <p className="text-white/40 text-[10px] sm:text-sm md:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
-                Campeonatos de LoL com premiação em Pix, ranking por PDL e
-                transmissão ao vivo — a vitrine para o seu time brilhar.
-              </p>
+                  <h1 className="text-3xl sm:text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
+                    Seu Time está <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/60">
+                      pronto para vencer?
+                    </span>
+                  </h1>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 pt-4">
-                <button
-                  onClick={() => navigate('/campeonatos')}
-                  className="group relative px-6 md:px-10 py-3.5 md:py-4 bg-[#FFB700] text-black font-black text-[10px] md:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,183,0,0.3)]"
-                  style={{
-                    clipPath: 'polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%)'
-                  }}
+                  <p className="text-white/60 text-xs sm:text-sm md:text-base font-medium max-w-xs sm:max-w-xl leading-relaxed">
+                    Campeonatos de LoL com premiação em Pix, ranking por PDL e
+                    transmissão ao vivo — a vitrine para o seu time brilhar.
+                  </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 pt-4">
+                    <button
+                      onClick={() => navigate('/campeonatos')}
+                      className="px-6 md:px-10 py-3.5 md:py-4 bg-[#FFB700] hover:bg-[#e0a000] text-black font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all cursor-pointer shadow-[0_0_30px_-5px_rgba(255,183,0,0.5)] flex items-center justify-center gap-2"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      <span>Explorar Torneios</span>
+                      <ChevronRight size={14} />
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/times')}
+                      className="px-6 md:px-10 py-3.5 md:py-4 bg-white/5 hover:bg-white/10 text-white border border-white/20 hover:border-white/40 font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all cursor-pointer flex items-center justify-center gap-2"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      <span>Crie seu Time</span>
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Destaque Tag Floating */}
+              <div className="hidden sm:block absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-black/70 backdrop-blur-md border border-white/10"
+                  style={{ clipPath: CUT_BADGE }}
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">Explorar Torneios <ChevronRight size={14} /></span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#FFB700] animate-pulse" />
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Temporada 2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AO VIVO AGORA - LIVE STREAMS */}
+        <section className="py-6 px-4 max-w-7xl mx-auto">
+          <div className="space-y-6">
+            <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-4">
+              <div className="space-y-1 text-center sm:text-left">
+                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter flex items-center justify-center sm:justify-start gap-3">
+                  <FaTwitch className="text-[#9146FF] w-7 h-7 md:w-9 md:h-9" />
+                  Assista <span className="text-[#9146FF]">Agora</span>
+                </h2>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  onClick={() => scroll(liveScrollRef, 'left')}
+                  className="w-9 h-9 bg-black border border-white/15 hover:border-[#9146FF] hover:bg-[#9146FF]/20 text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                  style={{ clipPath: CUT_BUTTON }}
+                  title="Anterior"
+                >
+                  <ChevronRight size={16} className="rotate-180" />
                 </button>
-
                 <button
-                  onClick={() => navigate('/times')}
-                  className="group relative px-6 md:px-10 py-3.5 md:py-4 border border-white/20 text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:bg-white/5 hover:border-white/40 active:scale-95 rounded-sm"
+                  onClick={() => scroll(liveScrollRef, 'right')}
+                  className="w-9 h-9 bg-black border border-white/15 hover:border-[#9146FF] hover:bg-[#9146FF]/20 text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                  style={{ clipPath: CUT_BUTTON }}
+                  title="Próximo"
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">Crie seu Time <ChevronRight size={14} /></span>
+                  <ChevronRight size={16} />
                 </button>
               </div>
-            </motion.div>
-          </div>
-
-          {/* Destaque Tag Floating */}
-          <div className="hidden sm:block absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-            <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#FFB700] animate-pulse" />
-              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Temporada 2026</span>
-            </div>
-          </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* AO VIVO AGORA - LIVE STREAMS */}
-      <section className="py-6 px-4 max-w-7xl mx-auto">
-        <div className="space-y-8">
-          <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
-            <div className="space-y-2 text-center sm:text-left">
-              <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter flex items-center justify-center sm:justify-start gap-4">
-                <FaTwitch className="text-[#9146FF] w-8 h-8 md:w-12 md:h-12" />
-                Assista <span className="text-[#9146FF]">Agora</span>
-              </h2>
             </div>
 
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="relative group/live-slider">
               <button
                 onClick={() => scroll(liveScrollRef, 'left')}
-                className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center hover:bg-[#9146FF] hover:border-[#9146FF] transition-all text-white/40 hover:text-white"
+                className="flex sm:hidden absolute left-0 top-1/2 -translate-y-[60%] -translate-x-2 z-30 w-9 h-9 bg-black/80 border border-white/15 items-center justify-center text-[#9146FF] font-bold"
+                style={{ clipPath: CUT_BUTTON }}
               >
-                <ChevronRight size={18} className="rotate-180" />
+                <ChevronRight className="rotate-180" size={18} />
               </button>
+
+              <div
+                ref={liveScrollRef}
+                className="flex gap-5 overflow-x-auto hide-scrollbar pb-6 px-1 scroll-smooth snap-x snap-mandatory sm:snap-none"
+              >
+                {!loadingLives && transmissoes.length === 0 && highlights.length === 0 && (
+                  <div
+                    className="flex-none w-full py-12 text-center bg-white/[0.02] border border-dashed border-white/10 p-8"
+                    style={{ clipPath: CUT_FRAME }}
+                  >
+                    <FaTwitch size={32} className="mx-auto text-purple-500/40 mb-3" />
+                    <p className="text-white/40 text-sm font-black uppercase tracking-widest">Nenhuma live no momento — veja os destaques abaixo</p>
+                  </div>
+                )}
+
+                {/* Lives ativas */}
+                {transmissoes.map((tx) => {
+                  if (tx.modo === 'padrao' || (!tx.time1 && !tx.time2)) {
+                    return (
+                      <PadraoLiveCard
+                        key={tx.id}
+                        titulo={tx.titulo}
+                        streamer={tx.twitch_channel}
+                        thumbnail={tx.thumbnail_url}
+                        link={`https://twitch.tv/${tx.twitch_channel}`}
+                      />
+                    );
+                  }
+                  return (
+                    <LiveBroadcastCard
+                      key={tx.id}
+                      teamA={tx.time1?.nome || 'Time 1'}
+                      tagA={tx.time1?.tag ? `#${tx.time1.tag}` : '#T1'}
+                      logoA={tx.time1?.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e'}
+                      colorA={tx.time1?.gradient_from || '#FFB700'}
+                      teamB={tx.time2?.nome || 'Time 2'}
+                      tagB={tx.time2?.tag ? `#${tx.time2.tag}` : '#T2'}
+                      logoB={tx.time2?.logo_url || 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f'}
+                      colorB={tx.time2?.gradient_from || '#FFB700'}
+                      titulo={tx.titulo}
+                      modo={tx.modo}
+                      nomecamp={tx.nomecamp || 'Campeonato'}
+                      streamer={tx.twitch_channel}
+                      link={`https://twitch.tv/${tx.twitch_channel}`}
+                    />
+                  );
+                })}
+
+                {/* Aviso "não ao vivo" com Howling Abyss quando só há highlights */}
+                {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
+                  <div
+                    className="hidden sm:flex group relative flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center overflow-hidden flex-col items-center justify-center p-6 text-center min-h-[220px] shadow-2xl p-[1.5px]"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: 'linear-gradient(135deg, rgba(145,70,255,0.4) 0%, rgba(255,255,255,0.06) 100%)'
+                    }}
+                  >
+                    <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col items-center justify-center p-6" style={{ clipPath: CUT_FRAME_INNER }}>
+                      <img
+                        src="/images/howling_abyss_night.webp"
+                        alt="Howling Abyss Night"
+                        className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-[#08080a]/80 to-transparent pointer-events-none" />
+
+                      <div className="relative z-10">
+                        <FaTwitch size={32} className="mx-auto text-[#9146FF] mb-2 drop-shadow-lg" />
+                        <p className="text-white font-black text-sm uppercase tracking-wider leading-snug drop-shadow">
+                          Não estamos<br />ao vivo no momento
+                        </p>
+                        <p className="text-white/50 text-xs font-semibold mt-2 leading-relaxed drop-shadow">
+                          Assista aos highlights<br />da nossa comunidade →
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Highlights */}
+                {highlights.map((h) => (
+                  <HighlightCard
+                    key={h.id}
+                    titulo={h.titulo}
+                    thumbnail={h.thumbnail_url}
+                    link={h.link}
+                    categoria={h.categoria}
+                  />
+                ))}
+              </div>
+
               <button
                 onClick={() => scroll(liveScrollRef, 'right')}
-                className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center hover:bg-[#9146FF] hover:border-[#9146FF] transition-all text-white/40 hover:text-white"
+                className="flex sm:hidden absolute right-0 top-1/2 -translate-y-[60%] translate-x-2 z-30 w-9 h-9 bg-black/80 border border-white/15 items-center justify-center text-[#9146FF] font-bold"
+                style={{ clipPath: CUT_BUTTON }}
               >
                 <ChevronRight size={18} />
               </button>
             </div>
           </div>
+        </section>
 
-          <div className="relative group/live-slider">
-            <button
-              onClick={() => scroll(liveScrollRef, 'left')}
-              className="flex sm:hidden absolute left-0 top-1/2 -translate-y-[60%] -translate-x-2 z-30 w-10 h-10 items-center justify-center text-[#9146FF] active:scale-90 transition-all font-bold"
-            >
-              <ChevronRight className="rotate-180" size={20} />
-            </button>
-
-            <div
-              ref={liveScrollRef}
-              className="flex gap-6 overflow-x-auto hide-scrollbar pb-8 px-4 -mx-4 scroll-smooth snap-x snap-mandatory sm:snap-none"
-            >
-              {/* Vazio só quando não há lives NEM highlights */}
-              {!loadingLives && transmissoes.length === 0 && highlights.length === 0 && (
-                <div className="flex-none w-full py-12 text-center">
-                  <FaTwitch size={32} className="mx-auto text-purple-500/40 mb-3" />
-                  <p className="text-white/30 text-sm font-bold uppercase tracking-widest">Nenhuma live no momento — veja os destaques abaixo</p>
-                </div>
-              )}
-
-              {/* Lives ativas — sempre primeiro */}
-              {transmissoes.map((tx) => {
-                if (tx.modo === 'padrao' || (!tx.time1 && !tx.time2)) {
-                  return (
-                    <PadraoLiveCard
-                      key={tx.id}
-                      titulo={tx.titulo}
-                      streamer={tx.twitch_channel}
-                      thumbnail={tx.thumbnail_url}
-                      link={`https://twitch.tv/${tx.twitch_channel}`}
-                    />
-                  );
-                }
-                return (
-                  <LiveBroadcastCard
-                    key={tx.id}
-                    teamA={tx.time1?.nome || 'Time 1'}
-                    tagA={tx.time1?.tag ? `#${tx.time1.tag}` : '#T1'}
-                    logoA={tx.time1?.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e'}
-                    colorA={tx.time1?.gradient_from || '#FFB700'}
-                    teamB={tx.time2?.nome || 'Time 2'}
-                    tagB={tx.time2?.tag ? `#${tx.time2.tag}` : '#T2'}
-                    logoB={tx.time2?.logo_url || 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f'}
-                    colorB={tx.time2?.gradient_from || '#FFB700'}
-                    titulo={tx.titulo}
-                    modo={tx.modo}
-                    nomecamp={tx.nomecamp || 'Campeonato'}
-                    streamer={tx.twitch_channel}
-                    link={`https://twitch.tv/${tx.twitch_channel}`}
-                  />
-                );
-              })}
-
-              {/* Aviso "não ao vivo" com Howling Abyss quando só há highlights — escondido no mobile */}
-              {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
-                <div className="hidden sm:flex group relative flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center rounded-2xl border border-[#9146FF]/30 overflow-hidden flex-col items-center justify-center p-6 text-center min-h-[220px] shadow-2xl bg-black">
-                  <img
-                    src="/images/howling_abyss_night.webp"
-                    alt="Howling Abyss Night"
-                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/30 pointer-events-none" />
-
-                  <div className="relative z-10">
-                    <FaTwitch size={32} className="mx-auto text-[#9146FF] mb-2 drop-shadow-lg" />
-                    <p className="text-white font-black text-sm uppercase tracking-wider leading-snug drop-shadow">
-                      Não estamos<br />ao vivo no momento
-                    </p>
-                    <p className="text-white/50 text-xs font-semibold mt-2.5 leading-relaxed drop-shadow">
-                      Assista aos highlights<br />da nossa comunidade →
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Highlights — aparecem sempre após as lives */}
-              {highlights.map((h) => (
-                <HighlightCard
-                  key={h.id}
-                  titulo={h.titulo}
-                  thumbnail={h.thumbnail_url}
-                  link={h.link}
-                  categoria={h.categoria}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={() => scroll(liveScrollRef, 'right')}
-              className="flex sm:hidden absolute right-0 top-1/2 -translate-y-[60%] translate-x-2 z-30 w-10 h-10 items-center justify-center text-[#9146FF] active:scale-90 transition-all font-bold"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (oculto quando não há jogos) */}
-      {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-10 pb-4 px-4 max-w-7xl mx-auto overflow-hidden relative">
-        <div className="space-y-8 relative">
-          <div className="flex flex-col items-center text-center">
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
-              Próximos <span className="text-[#FFB700]">Jogos</span>
-            </h2>
-          </div>
-
-          <div
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="relative flex items-center justify-between min-h-[380px] md:min-h-[420px] w-full px-4 md:px-16 py-8"
-            >
-              {/* Ambient Background Glows */}
-              <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
-                <div
-                  className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[80px] md:blur-[130px] opacity-10 absolute left-[5%] md:left-[15%] transition-all duration-700"
-                  style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
-                />
-                <div
-                  className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[80px] md:blur-[130px] opacity-10 absolute right-[5%] md:right-[15%] transition-all duration-700"
-                  style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
-                />
+        {/* UPCOMING MATCHES - PRÓXIMOS JOGOS */}
+        {upcomingLoaded && upcomingMatches.length > 0 && (
+          <section className="py-6 px-4 max-w-7xl mx-auto overflow-hidden relative">
+            <div className="space-y-6 relative">
+              <div className="flex flex-col items-center text-center">
+                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">
+                  Próximos <span className="text-[#FFB700]">Jogos</span>
+                </h2>
               </div>
 
-              {/* Left Navigation Arrow */}
-              <button
-                onClick={handlePrev}
-                className="absolute left-0 sm:left-2 md:left-4 z-30 text-white/20 hover:text-[#FFB700] hover:scale-110 active:scale-90 transition-all flex items-center justify-center py-4"
+              <div
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="relative flex items-center justify-between min-h-[380px] md:min-h-[420px] w-full px-2 md:px-14 py-8 bg-[#08080a]/80 border border-white/10 p-[1.5px]"
+                style={{
+                  clipPath: CUT_FRAME,
+                  background: 'linear-gradient(135deg, rgba(255,183,0,0.3) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)'
+                }}
               >
-                <ChevronRight className="rotate-180 w-6 h-6 md:w-8 md:h-8" />
-              </button>
+                {/* Ambient Background Glows */}
+                <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
+                  <div
+                    className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute left-[5%] md:left-[15%] transition-all duration-700"
+                    style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
+                  />
+                  <div
+                    className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute right-[5%] md:right-[15%] transition-all duration-700"
+                    style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
+                  />
+                </div>
 
-              {/* Center Animating Area */}
-              <div className="w-full flex justify-center items-center z-10 overflow-visible">
-                <AnimatePresence initial={false} custom={direction} mode="wait">
-                  {upcomingMatches[currentMatchIndex] && (
-                    <motion.div
-                      key={upcomingMatches[currentMatchIndex].id}
-                      custom={direction}
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-10"
+                {/* Left Navigation Arrow */}
+                <button
+                  onClick={handlePrev}
+                  className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
+                  style={{ clipPath: CUT_BUTTON }}
+                  title="Jogo Anterior"
+                >
+                  <ChevronRight className="rotate-180 w-5 h-5" />
+                </button>
+
+                {/* Center Animating Area */}
+                <div className="w-full flex justify-center items-center z-10 overflow-visible px-2">
+                  <AnimatePresence initial={false} custom={direction} mode="wait">
+                    {upcomingMatches[currentMatchIndex] && (
+                      <div
+                        key={upcomingMatches[currentMatchIndex].id}
+                        className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
+                      >
+                        {/* Main Matchup Arena */}
+                        <div className="flex flex-wrap md:flex-nowrap md:flex-row items-center justify-center md:justify-between w-full gap-y-6 gap-x-2 md:gap-12 py-2">
+                          {/* Team A */}
+                          <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
+                            <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
+                              <div
+                                className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
+                                style={{
+                                  clipPath: CUT_FRAME,
+                                  borderColor: `${upcomingMatches[currentMatchIndex].colorA}60`,
+                                  boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorA}20`
+                                }}
+                              >
+                                {upcomingMatches[currentMatchIndex].logoA ? (
+                                  <img
+                                    src={upcomingMatches[currentMatchIndex].logoA}
+                                    alt={upcomingMatches[currentMatchIndex].tagA}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span
+                                    className="text-4xl md:text-6xl font-black opacity-30 select-none"
+                                    style={{ color: upcomingMatches[currentMatchIndex].colorA }}
+                                  >
+                                    {upcomingMatches[currentMatchIndex].tagA[1] ?? upcomingMatches[currentMatchIndex].tagA[0]}
+                                  </span>
+                                )}
+                              </div>
+                              <span
+                                className="text-xl sm:text-2xl md:text-4xl font-black uppercase tracking-tight leading-none"
+                                style={{ color: upcomingMatches[currentMatchIndex].colorA }}
+                              >
+                                {upcomingMatches[currentMatchIndex].tagA}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* VS & Timing Area */}
+                          <div className="flex flex-col items-center gap-2 md:gap-3 order-3 w-full md:w-auto md:order-none min-w-[160px] relative select-none">
+                            <span className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/20 tracking-widest uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+                              VS
+                            </span>
+                            <div className="flex flex-col items-center">
+                              <span className="text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.25em]">{upcomingMatches[currentMatchIndex].date}</span>
+                              <span className="text-lg md:text-xl font-black text-[#FFB700] tracking-widest mt-0.5 drop-shadow-[0_0_15px_rgba(255,183,0,0.45)]">{upcomingMatches[currentMatchIndex].time}</span>
+                            </div>
+                          </div>
+
+                          {/* Team B */}
+                          <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
+                            <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
+                              <div
+                                className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
+                                style={{
+                                  clipPath: CUT_FRAME,
+                                  borderColor: `${upcomingMatches[currentMatchIndex].colorB}60`,
+                                  boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorB}20`
+                                }}
+                              >
+                                {upcomingMatches[currentMatchIndex].logoB ? (
+                                  <img
+                                    src={upcomingMatches[currentMatchIndex].logoB}
+                                    alt={upcomingMatches[currentMatchIndex].tagB}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span
+                                    className="text-4xl md:text-6xl font-black opacity-30 select-none"
+                                    style={{ color: upcomingMatches[currentMatchIndex].colorB }}
+                                  >
+                                    {upcomingMatches[currentMatchIndex].tagB[1] ?? upcomingMatches[currentMatchIndex].tagB[0]}
+                                  </span>
+                                )}
+                              </div>
+                              <span
+                                className="text-xl sm:text-2xl md:text-4xl font-black uppercase tracking-tight leading-none"
+                                style={{ color: upcomingMatches[currentMatchIndex].colorB }}
+                              >
+                                {upcomingMatches[currentMatchIndex].tagB}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Votação da torcida */}
+                        {(() => {
+                          const m = upcomingMatches[currentMatchIndex];
+                          if (!m) return null;
+                          const v = votes[m.id] || { a: 0, b: 0 };
+                          const total = v.a + v.b;
+                          const pctA = total > 0 ? Math.round((v.a / total) * 100) : 50;
+                          const pctB = 100 - pctA;
+                          const voted = userVotes[m.id];
+                          return (
+                            <div className="w-full max-w-sm mx-auto flex flex-col gap-2.5">
+                              {/* Barra de votos chanfrada */}
+                              <div
+                                className="relative flex h-2.5 overflow-hidden bg-white/10 p-[1px]"
+                                style={{ clipPath: CUT_BADGE }}
+                              >
+                                <div
+                                  className="h-full transition-all duration-500 ease-out"
+                                  style={{ width: `${pctA}%`, backgroundColor: m.colorA, opacity: 0.9 }}
+                                />
+                                <div
+                                  className="h-full transition-all duration-500 ease-out"
+                                  style={{ width: `${pctB}%`, backgroundColor: m.colorB, opacity: 0.9 }}
+                                />
+                              </div>
+                              {/* Botões GO */}
+                              <div className="flex items-center justify-between gap-2">
+                                <button
+                                  onClick={() => handleVote(m.id, 'a')}
+                                  disabled={!!voted}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
+                                    ${voted === 'a' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
+                                  style={{ clipPath: CUT_BADGE }}
+                                >
+                                  {voted === 'a' && '✓ '}GO {m.tagA}
+                                  <span className="opacity-60 font-mono">{pctA}%</span>
+                                </button>
+
+                                <span className="text-[9px] text-white/30 font-black uppercase tracking-widest whitespace-nowrap">
+                                  {total > 0 ? `${total} voto${total !== 1 ? 's' : ''}` : 'Vote!'}
+                                </span>
+
+                                <button
+                                  onClick={() => handleVote(m.id, 'b')}
+                                  disabled={!!voted}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
+                                    ${voted === 'b' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
+                                  style={{ clipPath: CUT_BADGE }}
+                                >
+                                  GO {m.tagB}
+                                  <span className="opacity-60 font-mono">{pctB}%</span>
+                                  {voted === 'b' && ' ✓'}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Right Navigation Arrow */}
+                <button
+                  onClick={handleNext}
+                  className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
+                  style={{ clipPath: CUT_BUTTON }}
+                  title="Próximo Jogo"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* COMO FUNCIONA — 4 Passos (Chanfrados) */}
+        <section className="py-12 px-4 max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">
+              Do Cadastro ao <span className="text-[#FFB700]">Campeonato</span>
+            </h2>
+            <p className="text-white/40 text-xs md:text-sm mt-2 max-w-xl mx-auto">
+              Do cadastro à disputa por prêmios em Pix: 4 passos para colocar seu time na briga pela elite do eSports.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 relative">
+            {[
+              {
+                n: '01',
+                icon: UserPlus,
+                title: 'Crie sua Conta',
+                desc: 'Cadastro rápido e seguro. Vincule sua conta Riot Games para checagem de elo oficial.',
+                color: '#FFB700',
+                bgImage: '/images/poro_step1.webp',
+              },
+              {
+                n: '02',
+                icon: Users,
+                title: 'Monte seu Time',
+                desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento.',
+                color: '#00F0FF',
+                bgImage: '/images/poro_step2.webp',
+              },
+              {
+                n: '03',
+                icon: Trophy,
+                title: 'Inscreva-se',
+                desc: 'Escolha o campeonato ideal para o nível da sua equipe — do Bronze ao Desafiante.',
+                color: '#00FF41',
+                bgImage: '/images/poro_step3.webp',
+              },
+              {
+                n: '04',
+                icon: SwordsIcon,
+                title: 'Compita e Suba',
+                desc: 'Jogue partidas competitivas, acumule PDL no ranking global e dispute premiações em Pix.',
+                color: '#D500FF',
+                bgImage: '/images/poro_step4.webp',
+              },
+            ].map((step) => (
+              <div
+                key={step.n}
+                className="group relative p-[1.5px] transition-all"
+                style={{
+                  clipPath: CUT_FRAME,
+                  background: `linear-gradient(135deg, ${step.color}60 0%, ${step.color}20 50%, rgba(255,255,255,0.06) 100%)`,
+                }}
+              >
+                <div
+                  className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+                  style={{ clipPath: CUT_FRAME_INNER }}
+                >
+                  {/* Banner de Imagem */}
+                  <div className="relative h-44 w-full overflow-hidden bg-[#101014]">
+                    <img
+                      src={step.bgImage}
+                      alt={step.title}
+                      className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-black/30 pointer-events-none" />
+
+                    {/* Badge do Passo */}
+                    <div className="absolute top-3 left-3 z-10">
+                      <span
+                        className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border"
+                        style={{
+                          clipPath: CUT_BADGE,
+                          backgroundColor: `${step.color}20`,
+                          borderColor: `${step.color}60`,
+                          color: step.color,
+                        }}
+                      >
+                        Passo {step.n}
+                      </span>
+                    </div>
+
+                    {/* Número no Canto da Imagem */}
+                    <div
+                      className="absolute bottom-2 right-3 text-5xl font-black opacity-25 select-none z-10 font-headline"
+                      style={{ color: step.color }}
                     >
-                      {/* Main Matchup Arena */}
-                      <div className="flex flex-wrap md:flex-nowrap md:flex-row items-center justify-center md:justify-between w-full gap-y-6 gap-x-2 md:gap-12 py-4">
+                      {step.n}
+                    </div>
+                  </div>
 
-                        {/* Team A Showcase */}
-                        <div className="flex flex-col items-center gap-4 md:gap-6 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
-                          <div className="flex flex-col items-center md:items-end gap-2 md:gap-4">
-                            <div
-                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-white/5 to-transparent border flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform duration-700"
-                              style={{ borderColor: `${upcomingMatches[currentMatchIndex].colorA}30`, boxShadow: `0 0 30px ${upcomingMatches[currentMatchIndex].colorA}05` }}
-                            >
-                              {upcomingMatches[currentMatchIndex].logoA ? (
-                                <img
-                                  src={upcomingMatches[currentMatchIndex].logoA}
-                                  alt={upcomingMatches[currentMatchIndex].tagA}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                              ) : (
-                                <span
-                                  className="text-6xl md:text-8xl font-black opacity-10 select-none transition-all duration-500 group-hover:scale-110"
-                                  style={{ color: upcomingMatches[currentMatchIndex].colorA, textShadow: `0 0 20px ${upcomingMatches[currentMatchIndex].colorA}30` }}
-                                >
-                                  {upcomingMatches[currentMatchIndex].tagA[1] ?? upcomingMatches[currentMatchIndex].tagA[0]}
-                                </span>
-                              )}
-                            </div>
-                            <span
-                              className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter font-display leading-none transition-colors duration-500"
-                              style={{ color: upcomingMatches[currentMatchIndex].colorA }}
-                            >
-                              {upcomingMatches[currentMatchIndex].tagA}
-                            </span>
-                          </div>
+                  {/* Conteúdo do Card */}
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div
+                          className="w-8 h-8 flex items-center justify-center flex-none border"
+                          style={{
+                            clipPath: CUT_BUTTON,
+                            backgroundColor: `${step.color}15`,
+                            borderColor: `${step.color}40`,
+                            color: step.color,
+                          }}
+                        >
+                          <step.icon className="w-4 h-4" />
                         </div>
-
-                        {/* VS & Timing Area */}
-                        <div className="flex flex-col items-center gap-3 md:gap-4 order-3 w-full md:w-auto md:order-none min-w-[160px] relative select-none">
-                          <span className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/10 tracking-widest uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                            VS
-                          </span>
-                          <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.25em]">{upcomingMatches[currentMatchIndex].date}</span>
-                            <span className="text-xl md:text-2xl font-black text-[#FFB700] tracking-widest mt-0.5 drop-shadow-[0_0_15px_rgba(255,183,0,0.45)]">{upcomingMatches[currentMatchIndex].time}</span>
-                          </div>
-                        </div>
-
-                        {/* Team B Showcase */}
-                        <div className="flex flex-col items-center gap-4 md:gap-6 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
-                          <div className="flex flex-col items-center md:items-start gap-2 md:gap-4">
-                            <div
-                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-white/5 to-transparent border flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform duration-700"
-                              style={{ borderColor: `${upcomingMatches[currentMatchIndex].colorB}30`, boxShadow: `0 0 30px ${upcomingMatches[currentMatchIndex].colorB}05` }}
-                            >
-                              {upcomingMatches[currentMatchIndex].logoB ? (
-                                <img
-                                  src={upcomingMatches[currentMatchIndex].logoB}
-                                  alt={upcomingMatches[currentMatchIndex].tagB}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                              ) : (
-                                <span
-                                  className="text-6xl md:text-8xl font-black opacity-10 select-none transition-all duration-500 group-hover:scale-110"
-                                  style={{ color: upcomingMatches[currentMatchIndex].colorB, textShadow: `0 0 20px ${upcomingMatches[currentMatchIndex].colorB}30` }}
-                                >
-                                  {upcomingMatches[currentMatchIndex].tagB[1] ?? upcomingMatches[currentMatchIndex].tagB[0]}
-                                </span>
-                              )}
-                            </div>
-                            <span
-                              className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter font-display leading-none transition-colors duration-500"
-                              style={{ color: upcomingMatches[currentMatchIndex].colorB }}
-                            >
-                              {upcomingMatches[currentMatchIndex].tagB}
-                            </span>
-                          </div>
-                        </div>
-
+                        <h3 className="text-sm font-black uppercase tracking-tight text-white group-hover:text-[#FFB700] transition-colors">
+                          {step.title}
+                        </h3>
                       </div>
 
-                      {/* Votação da torcida */}
-                      {(() => {
-                        const m = upcomingMatches[currentMatchIndex];
-                        if (!m) return null;
-                        const v = votes[m.id] || { a: 0, b: 0 };
-                        const total = v.a + v.b;
-                        const pctA = total > 0 ? Math.round((v.a / total) * 100) : 50;
-                        const pctB = 100 - pctA;
-                        const voted = userVotes[m.id];
-                        return (
-                          <div className="w-full max-w-sm mx-auto flex flex-col gap-3">
-                            {/* Barra de votos */}
-                            <div className="relative flex h-2 rounded-full overflow-hidden bg-white/5">
-                              <div
-                                className="h-full transition-all duration-700 ease-out"
-                                style={{ width: `${pctA}%`, backgroundColor: m.colorA, opacity: 0.85 }}
-                              />
-                              <div
-                                className="h-full transition-all duration-700 ease-out"
-                                style={{ width: `${pctB}%`, backgroundColor: m.colorB, opacity: 0.85 }}
-                              />
-                            </div>
-                            {/* Botões GO */}
-                            <div className="flex items-center justify-between gap-2">
-                              <button
-                                onClick={() => handleVote(m.id, 'a')}
-                                disabled={!!voted}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all
-                                  ${voted === 'a' ? 'cursor-default' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 text-white/50 hover:scale-105 active:scale-95 hover:text-white hover:border-white/30'}`}
-                                style={voted === 'a' ? { borderColor: m.colorA, color: m.colorA } : undefined}
-                              >
-                                {voted === 'a' && '✓ '}GO {m.tagA}
-                                <span className="opacity-60">{pctA}%</span>
-                              </button>
-
-                              <span className="text-[9px] text-white/20 font-bold uppercase tracking-widest whitespace-nowrap">
-                                {total > 0 ? `${total} voto${total !== 1 ? 's' : ''}` : 'Vote!'}
-                              </span>
-
-                              <button
-                                onClick={() => handleVote(m.id, 'b')}
-                                disabled={!!voted}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all
-                                  ${voted === 'b' ? 'cursor-default' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 text-white/50 hover:scale-105 active:scale-95 hover:text-white hover:border-white/30'}`}
-                                style={voted === 'b' ? { borderColor: m.colorB, color: m.colorB } : undefined}
-                              >
-                                GO {m.tagB}
-                                <span className="opacity-60">{pctB}%</span>
-                                {voted === 'b' && ' ✓'}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Right Navigation Arrow */}
-              <button
-                onClick={handleNext}
-                className="absolute right-0 sm:right-2 md:right-4 z-30 text-white/20 hover:text-[#FFB700] hover:scale-110 active:scale-90 transition-all flex items-center justify-center py-4"
-              >
-                <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
-              </button>
-            </div>
-        </div>
-      </section>
-      )}
-
-
-      {/* ════════════════════════════════════════════════════════════════
-          COMO FUNCIONA — Linha do Tempo da Jornada com Banners de Imagem
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
-            Do Cadastro ao <span className="text-[#FFB700]">Campeonato</span>
-          </h2>
-          <p className="text-white/40 text-sm md:text-base mt-3 max-w-xl mx-auto">
-            Do cadastro à disputa por prêmios em Pix: 4 passos para colocar seu time na briga pela elite do eSports.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-          {[
-            {
-              n: '01',
-              icon: UserPlus,
-              title: 'Crie sua Conta',
-              desc: 'Cadastro rápido e seguro. Vincule sua conta Riot Games para checagem de elo oficial.',
-              color: '#FFB700',
-              bgImage: '/images/poro_step1.webp',
-            },
-            {
-              n: '02',
-              icon: Users,
-              title: 'Monte seu Time',
-              desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento — sem time, a gente ajuda a montar.',
-              color: '#00F0FF',
-              bgImage: '/images/poro_step2.webp',
-            },
-            {
-              n: '03',
-              icon: Trophy,
-              title: 'Inscreva-se',
-              desc: 'Escolha o campeonato ideal para o nível da sua equipe — do Bronze ao Desafiante — e garanta sua vaga nas chaves.',
-              color: '#00FF41',
-              bgImage: '/images/poro_step3.webp',
-            },
-            {
-              n: '04',
-              icon: SwordsIcon,
-              title: 'Compita e Suba',
-              desc: 'Jogue partidas competitivas, acumule PDL no ranking global e dispute premiações em Pix.',
-              color: '#D500FF',
-              bgImage: '/images/poro_step4.webp',
-            },
-          ].map((step, idx) => (
-            <motion.div
-              key={step.n}
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="group relative bg-[#0d0d0d] border border-white/10 hover:border-[#FFB700]/60 rounded-2xl overflow-hidden transition-all duration-500 flex flex-col justify-between shadow-2xl hover:scale-[1.02]"
-            >
-              {/* Banner de Imagem em Destaque no Topo do Card com Altura Fixa */}
-              <div className="relative h-48 w-full overflow-hidden bg-[#151515]">
-                <img
-                  src={step.bgImage}
-                  alt={step.title}
-                  className="w-full h-full object-cover block group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-black/30 pointer-events-none" />
-
-                {/* Badge do Passo */}
-                <div className="absolute top-3 left-3 z-10">
-                  <span
-                    className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded shadow-md border backdrop-blur-md"
-                    style={{
-                      backgroundColor: `${step.color}25`,
-                      borderColor: `${step.color}50`,
-                      color: step.color,
-                    }}
-                  >
-                    Passo {step.n}
-                  </span>
-                </div>
-
-                {/* Número no Canto da Imagem */}
-                <div
-                  className="absolute bottom-2 right-3 text-5xl font-black opacity-30 select-none z-10"
-                  style={{ color: step.color }}
-                >
-                  {step.n}
-                </div>
-              </div>
-
-              {/* Conteúdo do Card */}
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="w-9 h-9 rounded-xl border flex items-center justify-center flex-none"
-                      style={{
-                        backgroundColor: `${step.color}15`,
-                        borderColor: `${step.color}30`,
-                        color: step.color,
-                      }}
-                    >
-                      <step.icon className="w-4.5 h-4.5" />
+                      <p className="text-white/45 text-xs leading-relaxed">
+                        {step.desc}
+                      </p>
                     </div>
-                    <h3 className="text-base font-black uppercase tracking-tight text-white group-hover:text-[#FFB700] transition-colors">
-                      {step.title}
-                    </h3>
                   </div>
-
-                  <p className="text-white/50 text-xs leading-relaxed">
-                    {step.desc}
-                  </p>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          NOTÍCIAS & ATUALIZAÇÕES — Clicáveis com Leitura Completa
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
-        <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 mb-12">
-          <div className="text-center sm:text-left">
-            <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              Informa e Esportes
-            </span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-3">
-              Fique por <span className="text-[#FFB700]">Dentro</span>
-            </h2>
+            ))}
           </div>
-          <span className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40">
-            Clique em qualquer matéria para ler na íntegra
-          </span>
-        </div>
+        </section>
 
-        {noticias.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
+        {/* NOTÍCIAS & ATUALIZAÇÕES */}
+        <section className="py-12 px-4 max-w-7xl mx-auto border-t border-white/5">
+          <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div className="text-center sm:text-left">
+              <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Informa e Esportes
+              </span>
+              <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mt-2">
+                Fique por <span className="text-[#FFB700]">Dentro</span>
+              </h2>
+            </div>
+            <span className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40">
+              Clique em qualquer matéria para ler na íntegra
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {(noticias.length > 0 ? noticias.slice(0, 6) : [
               {
                 id: 'demo-1',
                 titulo: 'Nova Temporada de Torneios M7 ARENA Anunciada',
@@ -1185,531 +1112,570 @@ const Home = () => {
                 date: 'Há 5 dias',
                 image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=800',
               },
-            ].map((n, idx) => (
-              <motion.article
+            ]).map((n: any) => (
+              <div
                 key={n.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08 }}
                 onClick={() => setSelectedNoticia(n)}
-                className="group relative bg-white/[0.02] border border-white/5 hover:border-[#FFB700]/50 rounded-2xl overflow-hidden transition-all duration-500 cursor-pointer flex flex-col justify-between hover:scale-[1.02]"
+                className="group relative p-[1.5px] cursor-pointer transition-all flex flex-col justify-between"
+                style={{
+                  clipPath: CUT_FRAME,
+                  background: 'linear-gradient(135deg, rgba(255,183,0,0.3) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)',
+                }}
               >
-                <div className="relative aspect-[16/9] overflow-hidden bg-black">
-                  <img
-                    src={n.image}
-                    alt={n.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest rounded shadow-md">
-                      {n.categoria}
+                <div
+                  className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+                  style={{ clipPath: CUT_FRAME_INNER }}
+                >
+                  <div className="relative aspect-[16/9] overflow-hidden bg-black">
+                    <img
+                      src={n.image || n.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
+                      alt={n.titulo}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      <span
+                        className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest shadow-md"
+                        style={{ clipPath: CUT_BADGE }}
+                      >
+                        {n.categoria}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
+                        {n.titulo}
+                      </h3>
+                      <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">
+                        {n.resumo}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                      <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                        {n.date || (n.publicado_em ? new Date(n.publicado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Recente')}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
+                        Ler Matéria <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* DEPOIMENTOS / HALL DA FAMA */}
+        <section className="py-12 px-4 max-w-7xl mx-auto border-t border-white/5">
+          <div className="text-center mb-10">
+            <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
+              Hall da Fama & Depoimentos
+            </span>
+            <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mt-2">
+              O que Dizem os <span className="text-[#FFB700]">Jogadores</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                quote:
+                  'A M7 ARENA mudou a rotina da BLACK SAILS. A organização das chaves 5v5, o suporte no Discord e a transparência do ranking por PDL são sensacionais!',
+                name: 'Portugal',
+                role: 'Capitão • BLACK SAILS (BKS)',
+                elo: 'CHALLENGER',
+                eloColor: '#FFB700',
+                avatar: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=200',
+              },
+              {
+                quote:
+                  'Montamos a CONFIDENT e entramos na liga oficial. As salas de enfrentamento 1v1 dão aquela adrenalina diária e a premiação em Pix cai na hora!',
+                name: 'Xoxotone',
+                role: 'Mid Laner • CONFIDENT (CNF)',
+                elo: 'MESTRE',
+                eloColor: '#00F0FF',
+                avatar: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&q=80&w=200',
+              },
+              {
+                quote:
+                  'Encontrei meus parceiros de rotas pelo recrutamento da plataforma. Hoje jogamos torneios semanais da ACE e-Sports e lutamos pelo topo do Hall da Fama!',
+                name: 'Blefy',
+                role: 'Capitão • ACE e-Sports (ACE)',
+                elo: 'DIAMANTE I',
+                eloColor: '#D500FF',
+                avatar: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=200',
+              },
+            ].map((t) => (
+              <div
+                key={t.name}
+                className="relative p-[1.5px] flex flex-col justify-between group"
+                style={{
+                  clipPath: CUT_FRAME,
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+                }}
+              >
+                <div
+                  className="w-full h-full p-6 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+                  style={{ clipPath: CUT_FRAME_INNER }}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-1 text-[#FFB700]">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-[#FFB700]" />
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-white/70 text-xs md:text-sm leading-relaxed italic relative z-10 mb-6">
+                      "{t.quote}"
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3.5 pt-4 border-t border-white/5 relative z-10">
+                    <div
+                      className="w-11 h-11 border border-white/20 group-hover:border-[#FFB700] transition-colors overflow-hidden"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      <img
+                        src={t.avatar}
+                        alt={t.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <div className="font-black text-white text-sm uppercase tracking-tight group-hover:text-[#FFB700] transition-colors">
+                        {t.name}
+                      </div>
+                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                        {t.role}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CENTRAL DE COMUNIDADE & REDES SOCIAIS */}
+        <section className="py-12 px-4 max-w-7xl mx-auto border-t border-white/5">
+          <div className="text-center mb-10">
+            <span
+              className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20"
+              style={{ clipPath: CUT_BADGE }}
+            >
+              <Globe className="w-3.5 h-3.5 text-[#FFB700]" />
+              Nossa Comunidade
+            </span>
+            <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mt-3">
+              Conecte-se com a <span className="text-[#FFB700]">M7 ARENA</span>
+            </h2>
+            <p className="text-white/40 text-xs md:text-sm mt-2 max-w-xl mx-auto">
+              Faça parte dos nossos canais oficiais para interagir com outros jogadores, receber suporte e acompanhar torneios.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Card Discord */}
+            <div
+              className="group relative p-[1.5px] flex flex-col justify-between transition-all"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, rgba(88,101,242,0.6) 0%, rgba(88,101,242,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+                boxShadow: '0 10px 30px -10px rgba(88,101,242,0.2)'
+              }}
+            >
+              <div
+                className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div
+                      className="w-12 h-12 bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center text-[#5865F2] shadow-lg"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      <FaDiscord className="w-6 h-6" />
+                    </div>
+                    <span
+                      className="px-2.5 py-1 bg-[#5865F2]/20 text-[#5865F2] border border-[#5865F2]/40 text-[9px] font-black uppercase tracking-widest"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      ● 5.000+ Membros
                     </span>
+                  </div>
+
+                  <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#5865F2] transition-colors">
+                    Servidor Oficial Discord
+                  </h3>
+                  <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
+                    Ache parceiros de duplas, agende treinos (scrims), tire dúvidas em tempo real com a staff e participe dos canais de voz.
+                  </p>
+                </div>
+
+                <a
+                  href="https://discord.gg/hH9MHKMK9D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-6 bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(88,101,242,0.4)]"
+                  style={{ clipPath: CUT_BUTTON }}
+                >
+                  <span>Entrar no Discord</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Card WhatsApp */}
+            <div
+              className="group relative p-[1.5px] flex flex-col justify-between transition-all"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, rgba(37,211,102,0.6) 0%, rgba(37,211,102,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+                boxShadow: '0 10px 30px -10px rgba(37,211,102,0.2)'
+              }}
+            >
+              <div
+                className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div
+                      className="w-12 h-12 bg-[#25D366]/20 border border-[#25D366]/40 flex items-center justify-center text-[#25D366] shadow-lg"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      <ImWhatsapp className="w-6 h-6" />
+                    </div>
+                    <span
+                      className="px-2.5 py-1 bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/40 text-[9px] font-black uppercase tracking-widest"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      ● Avisos Instantâneos
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#25D366] transition-colors">
+                    Grupo VIP no WhatsApp
+                  </h3>
+                  <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
+                    Receba alertas em primeira mão sobre inscrições abertas, sorteios de premiações, novidades de patch e avisos diretos.
+                  </p>
+                </div>
+
+                <a
+                  href="https://chat.whatsapp.com/FldhhxNSCp6AP4G4wQWxad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-6 bg-[#25D366] hover:bg-[#1EBE56] text-black font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(37,211,102,0.4)]"
+                  style={{ clipPath: CUT_BUTTON }}
+                >
+                  <span>Entrar no Grupo</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Card Instagram */}
+            <div
+              className="group relative p-[1.5px] flex flex-col justify-between transition-all"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, rgba(225,48,108,0.6) 0%, rgba(225,48,108,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+                boxShadow: '0 10px 30px -10px rgba(225,48,108,0.2)'
+              }}
+            >
+              <div
+                className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div
+                      className="w-12 h-12 bg-[#E1306C]/20 border border-[#E1306C]/40 flex items-center justify-center text-[#E1306C] shadow-lg"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      <Instagram className="w-6 h-6" />
+                    </div>
+                    <span
+                      className="px-2.5 py-1 bg-[#E1306C]/20 text-[#E1306C] border border-[#E1306C]/40 text-[9px] font-black uppercase tracking-widest"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      ● Clips & Conteúdo
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#E1306C] transition-colors">
+                    Instagram @m7academy_
+                  </h3>
+                  <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
+                    Assista aos melhores momentos dos campeonatos, jogadas destacadas da semana, bastidores das finais e memes da comunidade.
+                  </p>
+                </div>
+
+                <a
+                  href="https://www.instagram.com/m7academy_/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-6 bg-gradient-to-r from-[#E1306C] via-[#FD1D1D] to-[#F56040] hover:opacity-90 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(225,48,108,0.4)]"
+                  style={{ clipPath: CUT_BUTTON }}
+                >
+                  <span>Seguir no Instagram</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ INTERATIVO */}
+        <section className="py-12 px-4 max-w-4xl mx-auto border-t border-white/5">
+          <div className="text-center mb-10">
+            <span
+              className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20"
+              style={{ clipPath: CUT_BADGE }}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-[#FFB700]" />
+              Dúvidas Frequentes
+            </span>
+            <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mt-3">
+              Tudo o que você <span className="text-[#FFB700]">Precisa Saber</span>
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              {
+                id: 1,
+                q: 'Como funcionam as premiações e saques dos torneios?',
+                a: 'Todas as premiações são pagas via Pix para a conta cadastrada do capitão ou integrante do time em até 24 horas úteis após o encerramento do evento. Transparência total: você vê o valor da premiação antes de se inscrever.',
+              },
+              {
+                id: 2,
+                q: 'Preciso ter um time fechado de 5 jogadores para competir?',
+                a: 'Não! Você pode entrar sozinho nas salas rápidas 1v1 ou publicar seu perfil no nosso painel de Recrutamento — capitães procuram reforços lá todos os dias. Sem time? A M7 ajuda a montar o seu.',
+              },
+              {
+                id: 3,
+                q: 'Como é feita a verificação do Elo oficial da Riot Games?',
+                a: 'Ao vincular seu Nick + Tag no perfil, o sistema M7 busca sua liga atual na API oficial da Riot Games. Assim, os campeonatos são divididos por tier e você compete contra quem está no mesmo nível — equilíbrio justo, do Bronze ao Desafiante.',
+              },
+              {
+                id: 4,
+                q: 'Posso fazer co-stream ou transmitir minhas partidas ao vivo?',
+                a: 'Com certeza! Encorajamos todos os jogadores e times a realizarem suas próprias lives. Além disso, as fases finais dos campeonatos contam com transmissão oficial e narração nos canais da M7 ARENA.',
+              },
+            ].map((item) => {
+              const isOpen = openFaqId === item.id;
+              return (
+                <div
+                  key={item.id}
+                  className="relative p-[1px] transition-all"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: isOpen ? 'rgba(255,183,0,0.4)' : 'rgba(255,255,255,0.08)'
+                  }}
+                >
+                  <div
+                    className="w-full bg-[#08080a] overflow-hidden"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    <button
+                      onClick={() => setOpenFaqId(isOpen ? null : item.id)}
+                      className="w-full p-5 text-left flex items-center justify-between gap-4 font-black uppercase tracking-tight text-sm md:text-base text-white hover:text-[#FFB700] transition-colors cursor-pointer"
+                    >
+                      <span className="flex items-center gap-3">
+                        <span className="w-2 h-2 bg-[#FFB700]" style={{ clipPath: CUT_BADGE }} />
+                        {item.q}
+                      </span>
+                      <ChevronDown
+                        className={`w-5 h-5 text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#FFB700]' : ''}`}
+                      />
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-5 pb-5 pt-1 text-white/50 text-xs md:text-sm leading-relaxed border-t border-white/5">
+                        {item.a}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* BANNER CTA FINAL */}
+        <section className="py-8 px-4 max-w-7xl mx-auto">
+          <div
+            className="relative p-[1.5px] shadow-2xl"
+            style={{
+              clipPath: CUT_FRAME,
+              background: 'linear-gradient(135deg, rgba(255,183,0,0.65) 0%, rgba(255,183,0,0.2) 50%, rgba(255,255,255,0.08) 100%)',
+              boxShadow: '0 0 50px -10px rgba(255,183,0,0.25)'
+            }}
+          >
+            <div
+              className="w-full bg-[#08080a] p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8"
+              style={{ clipPath: CUT_FRAME_INNER }}
+            >
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#FFB700]/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 max-w-2xl text-center md:text-left">
+                <span
+                  className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest mb-3 inline-block"
+                  style={{ clipPath: CUT_BADGE }}
+                >
+                  Arena Aberta
+                </span>
+                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">
+                  Pronto para Dominar o <span className="text-[#FFB700]">Summoner's Rift?</span>
+                </h2>
+                <p className="text-white/60 text-xs md:text-sm mt-2 leading-relaxed">
+                  Crie sua conta em menos de 1 minuto e entre na disputa por prêmios em Pix — sua vaga está esperando.
+                </p>
+              </div>
+
+              <div className="relative z-10 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <button
+                  onClick={() => navigate('/campeonatos')}
+                  className="px-8 py-4 bg-[#FFB700] hover:bg-[#e0a000] text-black font-black uppercase tracking-wider text-xs transition-all shadow-[0_0_25px_-5px_rgba(255,183,0,0.5)] cursor-pointer flex items-center justify-center gap-2"
+                  style={{ clipPath: CUT_BUTTON }}
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Ver Campeonatos</span>
+                </button>
+                <button
+                  onClick={() => navigate('/vincular')}
+                  className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/20 hover:border-white/40 font-black uppercase tracking-wider text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                  style={{ clipPath: CUT_BUTTON }}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Criar / Vincular Conta</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* MODAL DE NOTÍCIAS — LEITURA COMPLETA */}
+      <AnimatePresence>
+        {selectedNoticia && (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-sm"
+            onClick={() => setSelectedNoticia(null)}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              className="relative p-[1.5px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl transition-all"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, #FFB700 0%, #FFB70088 60%, rgba(255,255,255,0.1) 100%)',
+                boxShadow: '0 0 50px -10px rgba(255,183,0,0.45)'
+              }}
+            >
+              <div
+                className="w-full bg-[#08080a] relative overflow-hidden flex flex-col max-h-[88vh]"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                {/* Image Header */}
+                <div className="relative aspect-[16/9] bg-black overflow-hidden flex-none">
+                  <img
+                    src={selectedNoticia.image || selectedNoticia.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
+                    alt={selectedNoticia.titulo}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-black/40" />
+
+                  <button
+                    onClick={() => setSelectedNoticia(null)}
+                    className="absolute top-4 right-4 w-9 h-9 bg-black/80 border border-white/20 text-white flex items-center justify-center hover:bg-red-600 transition-colors cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+
+                  <div className="absolute bottom-4 left-6 flex items-center gap-2">
+                    <span
+                      className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest shadow-md"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      {selectedNoticia.categoria || 'Notícia'}
+                    </span>
+                    {selectedNoticia.date && (
+                      <span
+                        className="px-3 py-1 bg-black/70 border border-white/15 text-white/80 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm flex items-center gap-1"
+                        style={{ clipPath: CUT_BADGE }}
+                      >
+                        <Calendar className="w-3 h-3 text-[#FFB700]" /> {selectedNoticia.date}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
-                      {n.titulo}
-                    </h3>
-                    <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">
-                      {n.resumo}
+                {/* Body Content */}
+                <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                  <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white leading-tight">
+                    {selectedNoticia.titulo}
+                  </h2>
+
+                  <p className="text-[#FFB700] text-xs sm:text-sm font-bold leading-relaxed border-l-2 border-[#FFB700] pl-3 py-1 bg-[#FFB700]/5">
+                    {selectedNoticia.resumo}
+                  </p>
+
+                  <div className="text-white/70 text-sm leading-relaxed space-y-3 pt-2 border-t border-white/5 whitespace-pre-line">
+                    <p>
+                      {selectedNoticia.conteudo || selectedNoticia.resumo || 'Conteúdo completo da matéria em breve. Fique atento às nossas redes sociais para mais informações.'}
                     </p>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
-                      {n.date}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
-                      Ler Matéria <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {noticias.slice(0, 6).map((n, idx) => (
-              <motion.article
-                key={n.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
-                onClick={() => setSelectedNoticia(n)}
-                className="group relative bg-white/[0.02] border border-white/5 hover:border-[#FFB700]/50 rounded-2xl overflow-hidden transition-all duration-500 cursor-pointer hover:scale-[1.02]"
-              >
-                <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[#FFB700]/20 via-black to-black">
-                  <img
-                    src={n.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
-                    alt={n.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest rounded shadow-md">
-                      {n.categoria}
-                    </span>
-                  </div>
-                  {n.destaque && (
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2.5 py-1 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest rounded shadow-md">
-                        Destaque
-                      </span>
+
+                  {selectedNoticia.link_url && (
+                    <div className="pt-2">
+                      <a
+                        href={selectedNoticia.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00F0FF] hover:bg-[#00D8E6] text-black font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        <span>{selectedNoticia.link_texto || 'Acessar Link'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </a>
                     </div>
                   )}
                 </div>
 
-                <div className="p-5">
-                  <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
-                    {n.titulo}
-                  </h3>
-                  <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">
-                    {n.resumo}
-                  </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
-                      {new Date(n.publicado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
-                      Ler mais <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        )}
-      </section>
+                {/* Footer */}
+                <div className="p-4 sm:p-6 bg-[#0c0c10] border-t border-white/5 flex items-center justify-between gap-4">
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({ title: selectedNoticia.titulo, url: window.location.href });
+                      } else {
+                        navigator.clipboard.writeText(window.location.href);
+                      }
+                    }}
+                    className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/80 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Compartilhar</span>
+                  </button>
 
-      {/* ════════════════════════════════════════════════════════════════
-          DEPOIMENTOS — Avatares Estilo Anime / Gamer Real
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
-        <div className="text-center mb-14">
-          <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
-            Hall da Fama & Depoimentos
-          </span>
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-3">
-            O que Dizem os <span className="text-[#FFB700]">Jogadores</span>
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              quote:
-                'A M7 ARENA mudou a rotina da BLACK SAILS. A organização das chaves 5v5, o suporte no Discord e a transparência do ranking por PDL são sensacionais!',
-              name: 'Portugal',
-              role: 'Capitão • BLACK SAILS (BKS)',
-              elo: 'CHALLENGER',
-              eloColor: '#FFB700',
-              avatar: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=200',
-            },
-            {
-              quote:
-                'Montamos a CONFIDENT e entramos na liga oficial. As salas de enfrentamento 1v1 dão aquela adrenalina diária e a premiação em Pix cai na hora!',
-              name: 'Xoxotone',
-              role: 'Mid Laner • CONFIDENT (CNF)',
-              elo: 'MESTRE',
-              eloColor: '#00F0FF',
-              avatar: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&q=80&w=200',
-            },
-            {
-              quote:
-                'Encontrei meus parceiros de rotas pelo recrutamento da plataforma. Hoje jogamos torneios semanais da ACE e-Sports e lutamos pelo topo do Hall da Fama!',
-              name: 'Blefy',
-              role: 'Capitão • ACE e-Sports (ACE)',
-              elo: 'DIAMANTE I',
-              eloColor: '#D500FF',
-              avatar: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=200',
-            },
-          ].map((t, idx) => (
-            <motion.div
-              key={t.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="relative p-7 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-[#FFB700]/30 transition-all duration-500 flex flex-col justify-between overflow-hidden group"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-1 text-[#FFB700]">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-[#FFB700]" />
-                    ))}
-                  </div>
-                </div>
-
-                <p className="text-white/70 text-xs md:text-sm leading-relaxed italic relative z-10 mb-6">
-                  {t.quote}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3.5 pt-5 border-t border-white/5 relative z-10">
-                <img
-                  src={t.avatar}
-                  alt={t.name}
-                  className="w-11 h-11 rounded-full object-cover border-2 border-white/20 group-hover:border-[#FFB700] transition-colors"
-                />
-                <div>
-                  <div className="font-black text-white text-sm uppercase tracking-tight group-hover:text-[#FFB700] transition-colors">
-                    {t.name}
-                  </div>
-                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                    {t.role}
-                  </div>
+                  <button
+                    onClick={() => setSelectedNoticia(null)}
+                    className="px-6 py-2.5 bg-[#FFB700] hover:bg-[#e0a000] text-black font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
+                  >
+                    Fechar Leitura
+                  </button>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          CENTRAL DE COMUNIDADE & REDES SOCIAIS — Clean sem marca d'água gigante
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
-        <div className="text-center mb-14">
-          <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-full">
-            <Globe className="w-3.5 h-3.5 text-[#FFB700]" />
-            Nossa Comunidade
-          </span>
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4">
-            Conecte-se com a <span className="text-[#FFB700]">M7 ARENA</span>
-          </h2>
-          <p className="text-white/40 text-sm md:text-base mt-3 max-w-xl mx-auto">
-            Faça parte dos nossos canais oficiais para interagir com outros jogadores, receber suporte e acompanhar torneios.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card Discord */}
-          <motion.div
-            whileHover={{ y: -5 }}
-            className="group relative p-8 rounded-3xl bg-gradient-to-b from-[#5865F2]/10 via-black to-black border border-[#5865F2]/20 hover:border-[#5865F2] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center text-[#5865F2] shadow-lg group-hover:scale-110 transition-transform">
-                  <FaDiscord className="w-8 h-8" />
-                </div>
-                <span className="px-3 py-1 bg-[#5865F2]/20 text-[#5865F2] border border-[#5865F2]/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                  ● 5.000+ Membros
-                </span>
-              </div>
-
-              <h3 className="text-xl font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#5865F2] transition-colors">
-                Servidor Oficial Discord
-              </h3>
-              <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
-                Ache parceiros de duplas, agende treinos (scrims), tire dúvidas em tempo real com a staff e participe dos canais de voz durante as rodadas.
-              </p>
             </div>
-
-            <a
-              href="https://discord.gg/hH9MHKMK9D"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3.5 px-6 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#5865F2]/40"
-            >
-              <span>Entrar no Discord</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </a>
-          </motion.div>
-
-          {/* Card WhatsApp */}
-          <motion.div
-            whileHover={{ y: -5 }}
-            className="group relative p-8 rounded-3xl bg-gradient-to-b from-[#25D366]/10 via-black to-black border border-[#25D366]/20 hover:border-[#25D366] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-[#25D366]/20 border border-[#25D366]/40 flex items-center justify-center text-[#25D366] shadow-lg group-hover:scale-110 transition-transform">
-                  <ImWhatsapp className="w-7 h-7" />
-                </div>
-                <span className="px-3 py-1 bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                  ● Avisos Instantâneos
-                </span>
-              </div>
-
-              <h3 className="text-xl font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#25D366] transition-colors">
-                Grupo VIP no WhatsApp
-              </h3>
-              <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
-                Receba alertas em primeira mão sobre inscrições abertas, sorteios de premiações, novidades de patch e avisos diretos no celular.
-              </p>
-            </div>
-
-            <a
-              href="https://chat.whatsapp.com/FldhhxNSCp6AP4G4wQWxad"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3.5 px-6 rounded-xl bg-[#25D366] hover:bg-[#1EBE56] text-black font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#25D366]/40"
-            >
-              <span>Entrar no Grupo</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </a>
-          </motion.div>
-
-          {/* Card Instagram */}
-          <motion.div
-            whileHover={{ y: -5 }}
-            className="group relative p-8 rounded-3xl bg-gradient-to-b from-[#E1306C]/10 via-black to-black border border-[#E1306C]/20 hover:border-[#E1306C] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-[#E1306C]/20 border border-[#E1306C]/40 flex items-center justify-center text-[#E1306C] shadow-lg group-hover:scale-110 transition-transform">
-                  <Instagram className="w-7 h-7" />
-                </div>
-                <span className="px-3 py-1 bg-[#E1306C]/20 text-[#E1306C] border border-[#E1306C]/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                  ● Clips & Conteúdo
-                </span>
-              </div>
-
-              <h3 className="text-xl font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#E1306C] transition-colors">
-                Instagram @m7academy_
-              </h3>
-              <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6">
-                Assista aos melhores momentos dos campeonatos, jogadas destacadas da semana, bastidores das finais e memes da nossa comunidade.
-              </p>
-            </div>
-
-            <a
-              href="https://www.instagram.com/m7academy_/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#E1306C] via-[#FD1D1D] to-[#F56040] hover:opacity-90 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#E1306C]/40"
-            >
-              <span>Seguir no Instagram</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </a>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          FAQ INTERATIVO — Dúvidas Frequentes
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-4xl mx-auto border-t border-white/5">
-        <div className="text-center mb-14">
-          <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-full">
-            <HelpCircle className="w-3.5 h-3.5 text-[#FFB700]" />
-            Dúvidas Frequentes
-          </span>
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4">
-            Tudo o que você <span className="text-[#FFB700]">Precisa Saber</span>
-          </h2>
-        </div>
-
-        <div className="space-y-4">
-          {[
-            {
-              id: 1,
-              q: 'Como funcionam as premiações e saques dos torneios?',
-              a: 'Todas as premiações são pagas via Pix para a conta cadastrada do capitão ou integrante do time em até 24 horas úteis após o encerramento do evento. Transparência total: você vê o valor da premiação antes de se inscrever.',
-            },
-            {
-              id: 2,
-              q: 'Preciso ter um time fechado de 5 jogadores para competir?',
-              a: 'Não! Você pode entrar sozinho nas salas rápidas 1v1 ou publicar seu perfil no nosso painel de Recrutamento — capitães procuram reforços lá todos os dias. Sem time? A M7 ajuda a montar o seu.',
-            },
-            {
-              id: 3,
-              q: 'Como é feita a verificação do Elo oficial da Riot Games?',
-              a: 'Ao vincular seu Nick + Tag no perfil, o sistema M7 busca sua liga atual na API oficial da Riot Games. Assim, os campeonatos são divididos por tier e você compete contra quem está no mesmo nível — equilíbrio justo, do Bronze ao Desafiante.',
-            },
-            {
-              id: 4,
-              q: 'Posso fazer co-stream ou transmitir minhas partidas ao vivo?',
-              a: 'Com certeza! Encorajamos todos os jogadores e times a realizarem suas próprias lives. Além disso, as fases finais dos campeonatos contam com transmissão oficial e narração nos canais da M7 ARENA.',
-            },
-          ].map((item) => {
-            const isOpen = openFaqId === item.id;
-            return (
-              <div
-                key={item.id}
-                className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden transition-all duration-300 hover:border-white/15"
-              >
-                <button
-                  onClick={() => setOpenFaqId(isOpen ? null : item.id)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-black uppercase tracking-tight text-sm md:text-base text-white hover:text-[#FFB700] transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-[#FFB700]" />
-                    {item.q}
-                  </span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-white/40 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#FFB700]' : ''}`}
-                  />
-                </button>
-
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-6 pt-2 text-white/50 text-xs md:text-sm leading-relaxed border-t border-white/5">
-                        {item.a}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          BANNER CTA FINAL — Call-to-Action Épico
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <div className="relative rounded-3xl p-8 md:p-14 bg-gradient-to-r from-black via-[#FFB700]/10 to-black border border-[#FFB700]/30 overflow-hidden shadow-2xl text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#FFB700]/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 max-w-2xl">
-            <span className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest rounded-full mb-4 inline-block">
-              Arena Aberta
-            </span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white">
-              Pronto para Dominar o <span className="text-[#FFB700]">Summoner's Rift?</span>
-            </h2>
-            <p className="text-white/60 text-sm md:text-base mt-3 leading-relaxed">
-              Crie sua conta em menos de 1 minuto e entre na disputa por prêmios em Pix — sua vaga está esperando.
-            </p>
-          </div>
-
-          <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <button
-              onClick={() => navigate('/campeonatos')}
-              className="px-8 py-4 bg-[#FFB700] hover:bg-[#FFA800] text-black font-black uppercase tracking-wider text-xs md:text-sm rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-            >
-              <Trophy className="w-4 h-4" />
-              <span>Ver Campeonatos</span>
-            </button>
-            <button
-              onClick={() => navigate('/vincular')}
-              className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/15 font-black uppercase tracking-wider text-xs md:text-sm rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Criar / Vincular Conta</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          MODAL DE NOTÍCIAS — Leitura Completa ao Clicar
-         ════════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {selectedNoticia && (
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
-            onClick={() => setSelectedNoticia(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.25 }}
-              onClick={e => e.stopPropagation()}
-              className="relative w-full max-w-2xl bg-[#0d0d0d] border border-white/15 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
-            >
-              {/* Image Header */}
-              <div className="relative aspect-[16/9] bg-black overflow-hidden flex-none">
-                <img
-                  src={selectedNoticia.image || selectedNoticia.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
-                  alt={selectedNoticia.titulo}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-black/40" />
-
-                <button
-                  onClick={() => setSelectedNoticia(null)}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                <div className="absolute bottom-4 left-6 flex items-center gap-2">
-                  <span className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest rounded-md shadow-md">
-                    {selectedNoticia.categoria || 'Notícia'}
-                  </span>
-                  {selectedNoticia.date && (
-                    <span className="px-3 py-1 bg-black/60 border border-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest rounded-md backdrop-blur-sm flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> {selectedNoticia.date}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Body Content */}
-              <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-4">
-                <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white leading-tight">
-                  {selectedNoticia.titulo}
-                </h2>
-
-                <p className="text-[#FFB700] text-xs sm:text-sm font-bold leading-relaxed border-l-2 border-[#FFB700] pl-3 py-1 bg-[#FFB700]/5">
-                  {selectedNoticia.resumo}
-                </p>
-
-                <div className="text-white/70 text-sm leading-relaxed space-y-3 pt-2 border-t border-white/5 whitespace-pre-line">
-                  <p>
-                    {selectedNoticia.conteudo || selectedNoticia.resumo || 'Conteúdo completo da matéria em breve. Fique atento às nossas redes sociais para mais informações.'}
-                  </p>
-                </div>
-
-                {selectedNoticia.link_url && (
-                  <div className="pt-2">
-                    <a
-                      href={selectedNoticia.link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D8E6] text-black font-black text-xs uppercase tracking-wider transition-all shadow-md hover:scale-[1.02]"
-                    >
-                      <span>{selectedNoticia.link_texto || 'Acessar Link'}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="p-4 sm:p-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between gap-4">
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: selectedNoticia.titulo, url: window.location.href });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                    }
-                  }}
-                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-colors"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>Compartilhar</span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedNoticia(null)}
-                  className="px-6 py-2.5 rounded-xl bg-[#FFB700] hover:bg-[#FFA800] text-black font-black text-xs uppercase tracking-wider transition-all"
-                >
-                  Fechar Leitura
-                </button>
-              </div>
-            </motion.div>
           </div>
         )}
       </AnimatePresence>
