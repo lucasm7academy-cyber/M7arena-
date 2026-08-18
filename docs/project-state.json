@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:35:43.512Z",
+  "updatedAt": "2026-08-18T04:40:33.274Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,15 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-16T02:43:09.092Z",
-      "agent": "deepseek",
-      "summary": "Discutido e planejado o chat de sala (ADR-040): análise de performance concluiu que chat pelo WebSocket próprio custa ~zero (socket já assinado; fan-out em memória; INSERT ~0,1ms), descartando polling/piggyback. Decisões do usuário: conversa geral, mensagens autoexcluídas em 5min, widget canto inferior direito, sem chat em partidas finalizadas, permissão = participante (qualquer vaga/cargo) ou staff com Riot vinculado. Escrito spec (docs/superpowers/specs/2026-08-16-chat-sala-design.md) e plano (docs/superpowers/plans/2026-08-16-chat-sala.md, 8 tasks). Componentes db.chat.mensagens e app.chat.mensagens criados. Implementação ainda não iniciada.",
-      "touched": [
-        "docs/superpowers/specs/2026-08-16-chat-sala-design.md",
-        "docs/superpowers/plans/2026-08-16-chat-sala.md"
-      ]
-    },
-    {
       "at": "2026-08-16T05:06:49.268Z",
       "agent": "deepseek",
       "summary": "Task 3 do Chat de Sala (ADR-040) em api/src/realtime/index.ts: chat constants + maps socketMatchId/chatTimestamps, removerDaSala limpa socketMatchId, tratarMensagem virou dispatcher, assinarSala registra matchId, permitidoNoRateLimit (1s/40 por 5min) e enviarChat (valida assinado/body/autenticado/ban/Riot → INSERT sala_mensagens → fan-out chat_message incluindo o remetente). npm run build (tsc) exit 0. Desvio: brief usava `const [u] = await authPool.query(...)` que não compila com @types/pg (TS2488, QueryResult sem iterator); usei `const { rows: [u] } = ...` (idioma do resto do código). SEM COMMIT (modo da task). app.chat.mensagens marcado doing; faltam Tasks 4-8.",
@@ -2092,6 +2083,27 @@
         "web/src/pages/campeonatos.tsx",
         "web/src/pages/players.tsx",
         "web/src/pages/recrutamento.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:40:33.274Z",
+      "agent": "gemini",
+      "summary": "Calibracao trigonometrica da formula dos poligonos _INNER (C_inner = C_outer - 3.414 * t) para 10.6px nos cards, 5.6px nos botoes e 2.6px nos badges, garantindo espessura de borda 100% uniforme (exatos 1px no chanfro diagonal e nas laterais retas). Deploy bem-sucedido na VPS dev.m7arena.pro.",
+      "touched": [
+        "DESIGNDOPROJETO.MD",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/pages/recrutamento.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/components/partidas/ChatDaSala.tsx",
+        "web/src/components/ui/CutCard.tsx",
+        "web/src/components/partidas/CardJogador.tsx",
+        "web/src/components/partidas/VagaSlot.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx"
       ]
     }
   ]
