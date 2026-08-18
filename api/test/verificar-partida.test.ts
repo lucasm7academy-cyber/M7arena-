@@ -269,6 +269,47 @@ describe("verificarPartida", () => {
     assert.ok(res, "deve gravar match_results");
   });
 
+  test("abortada com first blood (1v1) LADOS INVERTIDOS → encerra com o jogador do first blood, não pelo teamId", async () => {
+    const db = ctx.db;
+    const a = "aaaaaaa4-0000-0000-0000-0000000000a1"; // blue, first blood (teamId 200 na Riot)
+    const c = "aaaaaaa4-0000-0000-0000-0000000000a2"; // red (teamId 100 na Riot)
+    await criaJogador(db, a, "PUUID_FBINV_A", 70, 30);
+    await criaJogador(db, c, "PUUID_FBINV_C", 70, 30);
+    const sala = await criaSala(db, { mode: "1v1" });
+    await db.insert(matchPlayers).values([
+      { matchId: sala.id, userId: a, side: "blue", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+      { matchId: sala.id, userId: c, side: "red", slot: 0, roleSlot: "MID", confirmed: true, linked: true },
+    ]);
+    await db.insert(matchCodes).values({ code: "BR-TEST-ABORT-INV-0001", used: true, matchId: sala.id });
+
+    const r = await verificarPartida(db, sala.id, {
+      buscarIds: async () => ["BR1_9999999999"],
+      buscarMatch: async () =>
+        partidaRiot({
+          endOfGameResult: "Abort_TooFewPlayers",
+          participants: [
+            // inversão real do custom ARAM: quem criou o lobby é o team 200,
+            // independente do "blue"/"red" da vaga.
+            { puuid: "PUUID_FBINV_A", teamId: 200, firstBloodKill: true, totalMinionsKilled: 5 },
+            { puuid: "PUUID_FBINV_C", teamId: 100, firstBloodKill: false, totalMinionsKilled: 2 },
+          ],
+          teams: [
+            { teamId: 100, win: false },
+            { teamId: 200, win: false },
+          ],
+        }),
+    });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.estado, "encerrada");
+    assert.equal(r.winnerSide, "blue", "primeiro abate é do PUUID_FBINV_A (vaga blue), mesmo no teamId 200");
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(m.winnerSide, "blue");
+    assert.equal(m.vitoriaMotivo, "first_blood");
+    const [res] = await db.select().from(matchResults).where(eq(matchResults.matchId, sala.id));
+    assert.equal(res.winnerSide, "blue");
+  });
+
   test("abortada com 100 CS (1v1) → encerrada com quem chegou a 100 de farm", async () => {
     const db = ctx.db;
     const a = "aaaaaaa4-0000-0000-0000-000000000071"; // blue, 100 CS
