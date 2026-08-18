@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:32:40.240Z",
+  "updatedAt": "2026-08-18T04:35:43.512Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,15 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-16T02:25:54.690Z",
-      "agent": "deepseek",
-      "summary": "Deploy na VPS da remoção dos cards Blue-Side/Red-Side da partida finalizada (web/src/pages/SalaMod1.tsx). Commit 1231292 na feat/advertencias-ban, push, merge ff-only na main da VPS (179.198.120.11, /root/m7arena), rebuild nginx via docker compose --env-file. Site 200, bundle SalaMod1-Bs7cJrVy.js com a condição 'encerrada' nos blocos de lado confirmada.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx",
-        "infra/docker-compose.yml"
-      ]
-    },
-    {
       "at": "2026-08-16T02:43:09.092Z",
       "agent": "deepseek",
       "summary": "Discutido e planejado o chat de sala (ADR-040): análise de performance concluiu que chat pelo WebSocket próprio custa ~zero (socket já assinado; fan-out em memória; INSERT ~0,1ms), descartando polling/piggyback. Decisões do usuário: conversa geral, mensagens autoexcluídas em 5min, widget canto inferior direito, sem chat em partidas finalizadas, permissão = participante (qualquer vaga/cargo) ou staff com Riot vinculado. Escrito spec (docs/superpowers/specs/2026-08-16-chat-sala-design.md) e plano (docs/superpowers/plans/2026-08-16-chat-sala.md, 8 tasks). Componentes db.chat.mensagens e app.chat.mensagens criados. Implementação ainda não iniciada.",
@@ -2088,6 +2079,19 @@
       "summary": "Ajuste do item selecionado na Sidebar e Menu Mobile para o formato Cut-Edge chanfrado solido em amarelo (#FFB700) com texto e icone em preto e sombra difusa, sem bordas arredondadas. LayoutWrapper.tsx atualizado e deploy realizado na VPS dev.m7arena.pro.",
       "touched": [
         "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:35:43.512Z",
+      "agent": "gemini",
+      "summary": "Correcao da formula dos poligonos _INNER (CUT_FRAME_INNER, CUT_BUTTON_INNER, CUT_BADGE_INNER) em todos os arquivos (DESIGNDOPROJETO.MD, LayoutWrapper.tsx, Lobby.tsx, campeonatos.tsx, players.tsx, recrutamento.tsx). O ponto 0 100% estava omitido, o que fazia o CSS tracar uma diagonal do canto inferior direito para o superior esquerdo criando o triangulo pintado indesejado. Build e deploy bem-sucedidos em dev.m7arena.pro.",
+      "touched": [
+        "DESIGNDOPROJETO.MD",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/pages/recrutamento.tsx"
       ]
     }
   ]
