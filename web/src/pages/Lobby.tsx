@@ -31,11 +31,11 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+    className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1px]"
     style={{
       clipPath: CUT_FRAME,
-      background: 'linear-gradient(135deg, rgba(145,70,255,0.8) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
-      boxShadow: '0 10px 30px -10px rgba(145,70,255,0.25)'
+      background: 'linear-gradient(135deg, rgba(145,70,255,0.5) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+      boxShadow: '0 8px 25px -8px rgba(145,70,255,0.2)'
     }}
   >
     <div
@@ -54,7 +54,7 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
       </div>
 
       {/* Thumbnail */}
-      <div className="relative w-full aspect-video overflow-hidden bg-black flex-none">
+      <div className="relative w-full aspect-video overflow-hidden bg-[#060608] flex-none">
         <img
           src={thumbnail}
           alt={titulo}
@@ -91,17 +91,17 @@ const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+    className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1px]"
     style={{
       clipPath: CUT_FRAME,
-      background: 'linear-gradient(135deg, rgba(145,70,255,0.7) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+      background: 'linear-gradient(135deg, rgba(145,70,255,0.5) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.05) 100%)',
     }}
   >
     <div
       className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
       style={{ clipPath: CUT_FRAME_INNER }}
     >
-      <div className="relative w-full aspect-video overflow-hidden bg-black flex-none">
+      <div className="relative w-full aspect-video overflow-hidden bg-[#060608] flex-none">
         {thumbnail ? (
           <img
             src={thumbnail}
@@ -153,11 +153,11 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
       href={link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+      className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1px]"
       style={{
         clipPath: CUT_FRAME,
-        background: 'linear-gradient(135deg, rgba(145,70,255,0.8) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
-        boxShadow: '0 10px 30px -10px rgba(145,70,255,0.25)'
+        background: 'linear-gradient(135deg, rgba(145,70,255,0.5) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+        boxShadow: '0 8px 25px -8px rgba(145,70,255,0.2)'
       }}
     >
       <div
@@ -176,7 +176,7 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
         </div>
 
         {/* Teams matchup */}
-        <div className="relative w-full aspect-video overflow-hidden bg-black flex flex-col items-center justify-center p-4 flex-none">
+        <div className="relative w-full aspect-video overflow-hidden bg-[#060608] flex flex-col items-center justify-center p-4 flex-none">
           <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-[#08080a]" />
           <div className="relative z-10 flex items-center justify-between w-full gap-3 pt-6">
             {/* Team A */}
@@ -505,11 +505,11 @@ const Home = () => {
         {/* HERO SECTION - BANNER PRINCIPAL STYLE */}
         <section className="pt-8 pb-2 px-4 max-w-7xl mx-auto">
           <div
-            className="relative p-[1.5px] aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full group transition-all"
+            className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full group transition-all"
             style={{
               clipPath: CUT_FRAME,
-              background: 'linear-gradient(135deg, rgba(255,183,0,0.65) 0%, rgba(255,183,0,0.2) 50%, rgba(255,255,255,0.08) 100%)',
-              boxShadow: '0 0 50px -10px rgba(255,183,0,0.25)'
+              background: 'linear-gradient(135deg, rgba(255,183,0,0.5) 0%, rgba(255,183,0,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+              boxShadow: '0 0 40px -10px rgba(255,183,0,0.2)'
             }}
           >
             <div
@@ -678,10 +678,10 @@ const Home = () => {
                 {/* Aviso "não ao vivo" com Howling Abyss quando só há highlights */}
                 {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
                   <div
-                    className="hidden sm:flex group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center overflow-hidden min-h-[220px] shadow-2xl p-[1.5px]"
+                    className="hidden sm:flex group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center overflow-hidden min-h-[220px] shadow-2xl p-[1px]"
                     style={{
                       clipPath: CUT_FRAME,
-                      background: 'linear-gradient(135deg, rgba(145,70,255,0.4) 0%, rgba(255,255,255,0.06) 100%)'
+                      background: 'linear-gradient(135deg, rgba(145,70,255,0.4) 0%, rgba(255,255,255,0.05) 100%)'
                     }}
                   >
                     <div className="w-full flex-1 bg-[#08080a] relative overflow-hidden flex flex-col items-center justify-center p-6 text-center" style={{ clipPath: CUT_FRAME_INNER }}>
@@ -741,11 +741,11 @@ const Home = () => {
               <div
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="relative p-[1.5px] w-full transition-all"
+                className="relative p-[1px] w-full transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,183,0,0.45) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
-                  boxShadow: '0 0 35px -10px rgba(255,183,0,0.2)'
+                  background: 'linear-gradient(135deg, rgba(255,183,0,0.35) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
+                  boxShadow: '0 0 35px -10px rgba(255,183,0,0.15)'
                 }}
               >
                 <div
@@ -788,7 +788,7 @@ const Home = () => {
                             <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
                               <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
                                 <div
-                                  className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
+                                  className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1px]"
                                   style={{
                                     clipPath: CUT_FRAME,
                                     borderColor: `${upcomingMatches[currentMatchIndex].colorA}60`,
@@ -834,7 +834,7 @@ const Home = () => {
                             <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
                               <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
                                 <div
-                                  className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
+                                  className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1px]"
                                   style={{
                                     clipPath: CUT_FRAME,
                                     borderColor: `${upcomingMatches[currentMatchIndex].colorB}60`,
@@ -991,10 +991,10 @@ const Home = () => {
             ].map((step) => (
               <div
                 key={step.n}
-                className="group relative p-[1.5px] flex flex-col h-full transition-all"
+                className="group relative p-[1px] flex flex-col h-full transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: `linear-gradient(135deg, ${step.color}80 0%, ${step.color}25 50%, rgba(255,255,255,0.06) 100%)`,
+                  background: `linear-gradient(135deg, ${step.color}50 0%, ${step.color}15 50%, rgba(255,255,255,0.05) 100%)`,
                 }}
               >
                 <div
@@ -1002,7 +1002,7 @@ const Home = () => {
                   style={{ clipPath: CUT_FRAME_INNER }}
                 >
                   {/* Banner de Imagem */}
-                  <div className="relative h-44 w-full overflow-hidden bg-[#101014] flex-none">
+                  <div className="relative h-44 w-full overflow-hidden bg-[#060608] flex-none">
                     <img
                       src={step.bgImage}
                       alt={step.title}
@@ -1115,17 +1115,17 @@ const Home = () => {
               <div
                 key={n.id}
                 onClick={() => setSelectedNoticia(n)}
-                className="group relative p-[1.5px] flex flex-col h-full cursor-pointer transition-all"
+                className="group relative p-[1px] flex flex-col h-full cursor-pointer transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,183,0,0.45) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
+                  background: 'linear-gradient(135deg, rgba(255,183,0,0.35) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
                 }}
               >
                 <div
                   className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
                   style={{ clipPath: CUT_FRAME_INNER }}
                 >
-                  <div className="relative aspect-[16/9] overflow-hidden bg-black flex-none">
+                  <div className="relative aspect-[16/9] overflow-hidden bg-[#060608] flex-none">
                     <img
                       src={n.image || n.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
                       alt={n.titulo}
@@ -1209,10 +1209,10 @@ const Home = () => {
             ].map((t) => (
               <div
                 key={t.name}
-                className="group relative p-[1.5px] flex flex-col h-full transition-all"
+                className="group relative p-[1px] flex flex-col h-full transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)',
                 }}
               >
                 <div
@@ -1280,11 +1280,11 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Card Discord */}
             <div
-              className="group relative p-[1.5px] flex flex-col h-full transition-all"
+              className="group relative p-[1px] flex flex-col h-full transition-all"
               style={{
                 clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(88,101,242,0.7) 0%, rgba(88,101,242,0.2) 50%, rgba(255,255,255,0.06) 100%)',
-                boxShadow: '0 10px 30px -10px rgba(88,101,242,0.2)'
+                background: 'linear-gradient(135deg, rgba(88,101,242,0.5) 0%, rgba(88,101,242,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+                boxShadow: '0 8px 25px -8px rgba(88,101,242,0.2)'
               }}
             >
               <div
@@ -1330,11 +1330,11 @@ const Home = () => {
 
             {/* Card WhatsApp */}
             <div
-              className="group relative p-[1.5px] flex flex-col h-full transition-all"
+              className="group relative p-[1px] flex flex-col h-full transition-all"
               style={{
                 clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(37,211,102,0.7) 0%, rgba(37,211,102,0.2) 50%, rgba(255,255,255,0.06) 100%)',
-                boxShadow: '0 10px 30px -10px rgba(37,211,102,0.2)'
+                background: 'linear-gradient(135deg, rgba(37,211,102,0.5) 0%, rgba(37,211,102,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+                boxShadow: '0 8px 25px -8px rgba(37,211,102,0.2)'
               }}
             >
               <div
@@ -1380,11 +1380,11 @@ const Home = () => {
 
             {/* Card Instagram */}
             <div
-              className="group relative p-[1.5px] flex flex-col h-full transition-all"
+              className="group relative p-[1px] flex flex-col h-full transition-all"
               style={{
                 clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(225,48,108,0.7) 0%, rgba(225,48,108,0.2) 50%, rgba(255,255,255,0.06) 100%)',
-                boxShadow: '0 10px 30px -10px rgba(225,48,108,0.2)'
+                background: 'linear-gradient(135deg, rgba(225,48,108,0.5) 0%, rgba(225,48,108,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+                boxShadow: '0 8px 25px -8px rgba(225,48,108,0.2)'
               }}
             >
               <div
@@ -1510,11 +1510,11 @@ const Home = () => {
         {/* BANNER CTA FINAL */}
         <section className="py-8 px-4 max-w-7xl mx-auto">
           <div
-            className="relative p-[1.5px] w-full shadow-2xl transition-all"
+            className="relative p-[1px] w-full shadow-2xl transition-all"
             style={{
               clipPath: CUT_FRAME,
-              background: 'linear-gradient(135deg, rgba(255,183,0,0.65) 0%, rgba(255,183,0,0.2) 50%, rgba(255,255,255,0.08) 100%)',
-              boxShadow: '0 0 50px -10px rgba(255,183,0,0.25)'
+              background: 'linear-gradient(135deg, rgba(255,183,0,0.5) 0%, rgba(255,183,0,0.15) 50%, rgba(255,255,255,0.05) 100%)',
+              boxShadow: '0 0 40px -10px rgba(255,183,0,0.2)'
             }}
           >
             <div
@@ -1582,7 +1582,7 @@ const Home = () => {
                 style={{ clipPath: CUT_FRAME_INNER }}
               >
                 {/* Image Header */}
-                <div className="relative aspect-[16/9] bg-black overflow-hidden flex-none">
+                <div className="relative aspect-[16/9] bg-[#060608] overflow-hidden flex-none">
                   <img
                     src={selectedNoticia.image || selectedNoticia.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
                     alt={selectedNoticia.titulo}
