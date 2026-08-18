@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Zap, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import DepositTab from './DepositTab';
 import SaqueTab from './SaqueTab';
-import { CUT_FRAME, CUT_INNER, CUT_BUTTON, CUT_BADGE } from '../../partidas/ModaisElegibilidade';
+import { CUT_FRAME, CUT_FRAME_INNER, CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from '../../partidas/ModaisElegibilidade';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -68,7 +68,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           >
             <div
               className="w-full bg-[#09090c] p-6 md:p-8 relative overflow-hidden"
-              style={{ clipPath: CUT_INNER }}
+              style={{ clipPath: CUT_FRAME_INNER }}
             >
               {/* Personagem Twisted Fate na Lateral Direita */}
               <motion.img
@@ -82,7 +82,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               />
 
               <div className="relative z-10">
-                {/* Botão fechar estilo botão cortado */}
+                {/* Botão fechar estilo botão cortado com borda completa */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.94 }}
@@ -94,7 +94,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 >
                   <div
                     className="w-8 h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors"
-                    style={{ clipPath: CUT_BUTTON }}
+                    style={{ clipPath: CUT_BUTTON_INNER }}
                   >
                     <X size={16} />
                   </div>
@@ -144,7 +144,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                             ? 'bg-[#FFB700] text-black'
                             : 'bg-[#121216] text-zinc-400 hover:text-zinc-200'
                         }`}
-                        style={{ clipPath: CUT_BUTTON }}
+                        style={{ clipPath: CUT_BUTTON_INNER }}
                       >
                         {a === 'deposito' ? <ArrowDownCircle size={14} /> : <ArrowUpCircle size={14} />}
                         <span>{a === 'deposito' ? 'Depósito' : 'Saque'}</span>

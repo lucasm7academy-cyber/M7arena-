@@ -169,9 +169,11 @@ const ESTADO_LABEL: Record<string, { label: string; cls: string }> = {
 // ============================================
 
 const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
-const CUT_INNER = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
-const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 100%, 0 12.5px)';
+const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)';
 const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)';
 
 const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial }: any) => {
   const [modo, setModo] = useState<ModoJogo>(modoInicial || '5v5');
@@ -230,7 +232,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
       >
         <div
           className="w-full bg-[#09090c] p-5 sm:p-6 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex-1"
-          style={{ clipPath: CUT_INNER }}
+          style={{ clipPath: CUT_FRAME_INNER }}
         >
           {/* Luz ambiente no topo */}
           <div
@@ -238,7 +240,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             style={{ background: modoInfo.cor }}
           />
 
-          {/* Botão fechar estilo botão cortado */}
+          {/* Botão fechar estilo botão cortado com borda completa */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.94 }}
@@ -249,7 +251,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
           >
             <div
               className="w-7 h-7 sm:w-8 sm:h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors"
-              style={{ clipPath: CUT_BUTTON }}
+              style={{ clipPath: CUT_BUTTON_INNER }}
             >
               <X className="w-4 h-4" />
             </div>
@@ -266,7 +268,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             >
               <div
                 className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center bg-[#121217]"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 <Plus className="w-6 h-6" style={{ color: modoInfo.cor }} />
               </div>
@@ -295,12 +297,14 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Nome da Sala</label>
-              <input
-                type="text" value={nome} onChange={(e) => setNome(e.target.value)}
-                placeholder={`Ex: 5x5 Personalizada`}
-                className="w-full bg-[#111116] border border-white/10 p-3 text-zinc-100 text-sm focus:outline-none focus:border-[#FFB700] transition-all font-bold"
-                style={{ clipPath: CUT_BADGE }}
-              />
+              <div className="relative p-[1px] w-full" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}>
+                <input
+                  type="text" value={nome} onChange={(e) => setNome(e.target.value)}
+                  placeholder={`Ex: 5x5 Personalizada`}
+                  className="w-full bg-[#111116] p-3 text-zinc-100 text-sm focus:outline-none font-bold"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -313,13 +317,13 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                     className="p-2.5 text-center transition-all relative p-[1px] cursor-pointer"
                     style={{
                       clipPath: CUT_BUTTON,
-                      background: mpoints === op.valor ? `linear-gradient(135deg, ${op.cor}, #FFE082)` : 'rgba(255,255,255,0.08)'
+                      background: mpoints === op.valor ? `linear-gradient(135deg, ${op.cor}, #FFE082)` : 'rgba(255,255,255,0.1)'
                     }}
                   >
                     <div
                       className="w-full h-full py-1.5 px-2 flex items-center justify-center"
                       style={{
-                        clipPath: CUT_BUTTON,
+                        clipPath: CUT_BUTTON_INNER,
                         background: mpoints === op.valor ? `${op.cor}25` : '#121217',
                         color: mpoints === op.valor ? op.cor : 'rgba(255,255,255,0.6)'
                       }}
@@ -343,13 +347,13 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                     className="p-[1px] text-left transition-all relative cursor-pointer"
                     style={{
                       clipPath: CUT_BUTTON,
-                      background: modo === key ? `linear-gradient(135deg, ${value.cor}, #FFE082)` : 'rgba(255,255,255,0.08)'
+                      background: modo === key ? `linear-gradient(135deg, ${value.cor}, #FFE082)` : 'rgba(255,255,255,0.1)'
                     }}
                   >
                     <div
                       className="w-full h-full p-2.5 relative overflow-hidden"
                       style={{
-                        clipPath: CUT_BUTTON,
+                        clipPath: CUT_BUTTON_INNER,
                         background: modo === key ? `${value.cor}25` : '#121217',
                       }}
                     >
@@ -372,47 +376,55 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
 
             <div className="space-y-1.5">
               <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Descrição</label>
-              <textarea
-                value={descricao} onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Ex: Duo mid, jogamos todos os dias às 20h"
-                className="w-full bg-[#111116] border border-white/10 p-3 text-zinc-200 text-xs resize-none h-16 focus:outline-none focus:border-[#FFB700] transition-all font-bold"
-                style={{ clipPath: CUT_BADGE }}
-              />
+              <div className="relative p-[1px] w-full" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}>
+                <textarea
+                  value={descricao} onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Ex: Duo mid, jogamos todos os dias às 20h"
+                  className="w-full bg-[#111116] p-3 text-zinc-200 text-xs resize-none h-16 focus:outline-none font-bold"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">ELO Mínimo</label>
-                <select
-                  value={eloMinimo} onChange={(e) => setEloMinimo(e.target.value)}
-                  disabled={modo === 'time_vs_time'}
-                  className="w-full bg-[#111116] border border-white/10 p-2.5 text-zinc-200 text-xs font-bold focus:outline-none"
-                  style={{ clipPath: CUT_BADGE }}
-                >
-                  {OPCOES_ELO.map(elo => (
-                    <option key={elo.valor} value={elo.valor} className="bg-[#09090c]">{elo.label}</option>
-                  ))}
-                </select>
+                <div className="relative p-[1px] w-full" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}>
+                  <select
+                    value={eloMinimo} onChange={(e) => setEloMinimo(e.target.value)}
+                    disabled={modo === 'time_vs_time'}
+                    className="w-full bg-[#111116] p-2.5 text-zinc-200 text-xs font-bold focus:outline-none"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    {OPCOES_ELO.map(elo => (
+                      <option key={elo.valor} value={elo.valor} className="bg-[#09090c]">{elo.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Privacidade</label>
-                <button
-                  onClick={() => setTemSenha(!temSenha)}
-                  className={`w-full p-2.5 text-xs font-black uppercase tracking-wider transition-all border ${temSenha ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400' : 'bg-[#111116] border-white/10 text-zinc-400'}`}
-                  style={{ clipPath: CUT_BADGE }}
-                >
-                  {temSenha ? '🔒 Privada' : '🔓 Pública'}
-                </button>
+                <div className="relative p-[1px] w-full" style={{ clipPath: CUT_BADGE, background: temSenha ? '#EAB308' : 'rgba(255,255,255,0.15)' }}>
+                  <button
+                    onClick={() => setTemSenha(!temSenha)}
+                    className={`w-full p-2.5 text-xs font-black uppercase tracking-wider transition-all ${temSenha ? 'bg-yellow-500/20 text-yellow-400' : 'bg-[#111116] text-zinc-400'}`}
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    {temSenha ? '🔒 Privada' : '🔓 Pública'}
+                  </button>
+                </div>
               </div>
             </div>
 
             {temSenha && (
-              <input
-                type="text" value={senha} onChange={(e) => setSenha(e.target.value)}
-                placeholder="Digite a senha"
-                className="w-full bg-[#111116] border border-white/10 p-3 text-zinc-200 text-xs font-mono focus:outline-none"
-                style={{ clipPath: CUT_BADGE }}
-              />
+              <div className="relative p-[1px] w-full" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}>
+                <input
+                  type="text" value={senha} onChange={(e) => setSenha(e.target.value)}
+                  placeholder="Digite a senha"
+                  className="w-full bg-[#111116] p-3 text-zinc-200 text-xs font-mono focus:outline-none"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                />
+              </div>
             )}
 
             <div className="pt-2">
@@ -430,7 +442,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                 <div
                   className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black transition-all"
                   style={{
-                    clipPath: CUT_BUTTON,
+                    clipPath: CUT_BUTTON_INNER,
                     background: modoInfo.cor
                   }}
                 >

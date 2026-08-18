@@ -10,7 +10,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { usePerfil } from '../../../contexts/PerfilContext';
 import toast from 'react-hot-toast';
 import GoldEssenceIcon from '../../icons/GoldEssenceIcon';
-import { CUT_BUTTON, CUT_BADGE } from '../../partidas/ModaisElegibilidade';
+import { CutCard, CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from '../../partidas/ModaisElegibilidade';
 
 const MC_POR_REAL = 100;
 const VALOR_MINIMO_MC = 2000;
@@ -104,10 +104,7 @@ export default function SaqueTab() {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] gap-6 items-start">
       {/* Coluna esquerda: formulário de saque */}
       <div className="space-y-4">
-        <div
-          className="p-5 bg-[#0d0d12] border border-[#FFB700]/20 space-y-4"
-          style={{ clipPath: CUT_BUTTON }}
-        >
+        <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.3} className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-zinc-400 text-xs uppercase tracking-wider font-bold">Seu saldo disponível</p>
             <div className="flex items-center gap-2">
@@ -123,25 +120,35 @@ export default function SaqueTab() {
             <p className="text-zinc-400 text-xs uppercase tracking-wider font-bold">Chave PIX de destino</p>
             {chavePix ? (
               <div
-                className="flex items-center justify-between gap-2 bg-[#14141a] px-4 py-3"
-                style={{ clipPath: CUT_BADGE }}
+                className="relative p-[1px]"
+                style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}
               >
-                <div>
-                  <p className="text-zinc-100 font-black text-sm">{nomePix || 'Sem nome'}</p>
-                  <p className="text-zinc-400 text-xs mt-0.5">
-                    {tipoPix && <span className="uppercase mr-1 text-[#FFB700]">[{tipoPix}]</span>}
-                    {mascararPix(chavePix)}
-                  </p>
+                <div
+                  className="flex items-center justify-between gap-2 bg-[#14141a] px-4 py-3"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                >
+                  <div>
+                    <p className="text-zinc-100 font-black text-sm">{nomePix || 'Sem nome'}</p>
+                    <p className="text-zinc-400 text-xs mt-0.5">
+                      {tipoPix && <span className="uppercase mr-1 text-[#FFB700]">[{tipoPix}]</span>}
+                      {mascararPix(chavePix)}
+                    </p>
+                  </div>
+                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
                 </div>
-                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
               </div>
             ) : (
               <div
-                className="flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/20 px-4 py-3 text-yellow-300 text-xs font-bold"
-                style={{ clipPath: CUT_BADGE }}
+                className="relative p-[1px]"
+                style={{ clipPath: CUT_BADGE, background: 'rgba(234, 179, 8, 0.3)' }}
               >
-                <PiggyBank size={16} className="shrink-0 text-yellow-400" />
-                Cadastre sua chave PIX na página de perfil antes de solicitar o saque.
+                <div
+                  className="flex items-center gap-3 bg-[#171408] px-4 py-3 text-yellow-300 text-xs font-bold"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                >
+                  <PiggyBank size={16} className="shrink-0 text-yellow-400" />
+                  Cadastre sua chave PIX na página de perfil antes de solicitar o saque.
+                </div>
               </div>
             )}
           </div>
@@ -150,17 +157,22 @@ export default function SaqueTab() {
             <p className="text-zinc-400 text-xs uppercase tracking-wider font-bold">Valor do saque</p>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[180px]">
-                <GoldEssenceIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-80" />
-                <input
-                  type="number"
-                  min={VALOR_MINIMO_MC}
-                  step={MC_POR_REAL}
-                  value={mcInput}
-                  onChange={(e) => setMcInput(e.target.value)}
-                  placeholder={`Mínimo ${VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC`}
-                  className="w-full bg-black/60 border border-white/10 pl-12 pr-4 py-3 text-zinc-100 text-sm font-bold focus:outline-none focus:border-[#FFB700] placeholder:text-zinc-600 transition-all font-mono"
-                  style={{ clipPath: CUT_BADGE }}
-                />
+                <GoldEssenceIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-80 z-10" />
+                <div
+                  className="relative p-[1px] w-full"
+                  style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}
+                >
+                  <input
+                    type="number"
+                    min={VALOR_MINIMO_MC}
+                    step={MC_POR_REAL}
+                    value={mcInput}
+                    onChange={(e) => setMcInput(e.target.value)}
+                    placeholder={`Mínimo ${VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC`}
+                    className="w-full bg-[#050508] pl-12 pr-4 py-3 text-zinc-100 text-sm font-bold focus:outline-none placeholder:text-zinc-600 transition-all font-mono"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-1.5 text-[#FFB700] font-black">
                 <span className="text-xs uppercase tracking-widest text-zinc-500">=</span>
@@ -187,7 +199,7 @@ export default function SaqueTab() {
               className={`w-full py-3.5 px-4 flex items-center justify-center gap-2 font-black text-xs md:text-sm uppercase tracking-wider transition-all ${
                 podeSolicitar ? 'bg-[#FFB700] text-black hover:brightness-105' : 'bg-[#121216] text-zinc-500 cursor-not-allowed'
               }`}
-              style={{ clipPath: CUT_BUTTON }}
+              style={{ clipPath: CUT_BUTTON_INNER }}
             >
               {solicitando ? (
                 <>
@@ -202,7 +214,7 @@ export default function SaqueTab() {
               )}
             </div>
           </motion.button>
-        </div>
+        </CutCard>
 
         {/* Histórico */}
         <div>
@@ -210,22 +222,15 @@ export default function SaqueTab() {
           {carregando ? (
             <div className="text-zinc-500 text-sm py-4 text-center">Carregando...</div>
           ) : pedidos.length === 0 ? (
-            <div
-              className="text-zinc-500 text-sm py-4 text-center bg-[#0d0d12] border border-white/5"
-              style={{ clipPath: CUT_BUTTON }}
-            >
+            <CutCard corBorda="#ffffff" corBg="#0d0d12" bordaOpacity={0.08} className="text-zinc-500 text-sm py-4 text-center">
               Nenhum saque solicitado ainda.
-            </div>
+            </CutCard>
           ) : (
             <div className="space-y-2">
               {pedidos.map((p) => {
                 const st = STATUS[p.status] || STATUS.pending;
                 return (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between gap-3 bg-[#0d0d12] border border-white/5 px-4 py-3"
-                    style={{ clipPath: CUT_BUTTON }}
-                  >
+                  <CutCard key={p.id} corBorda="#ffffff" corBg="#0d0d12" bordaOpacity={0.08} className="flex items-center justify-between gap-3 p-3">
                     <div>
                       <p className="text-zinc-200 font-black text-sm">
                         {p.mcAmount.toLocaleString('pt-BR')} MC{' '}
@@ -242,7 +247,7 @@ export default function SaqueTab() {
                       <st.Icon size={12} />
                       {st.label}
                     </span>
-                  </div>
+                  </CutCard>
                 );
               })}
             </div>
@@ -260,7 +265,7 @@ export default function SaqueTab() {
       >
         <div
           className="bg-[#0c0c10] p-5 space-y-4 shadow-2xl"
-          style={{ clipPath: CUT_BUTTON }}
+          style={{ clipPath: CUT_BUTTON_INNER }}
         >
           <p className="text-[#FFB700] text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5">
             <ArrowUpCircle size={13} className="text-[#FFB700]" />

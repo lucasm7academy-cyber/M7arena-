@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
-import { CUT_FRAME, CUT_INNER, CUT_BUTTON, CUT_BADGE } from '../../partidas/ModaisElegibilidade';
+import { CutCard, CUT_FRAME, CUT_FRAME_INNER, CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from '../../partidas/ModaisElegibilidade';
 
 interface VipModalProps {
   isOpen: boolean;
@@ -237,7 +237,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
           >
             <div
               className="w-full bg-[#09090c] p-6 md:p-8 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex-1"
-              style={{ clipPath: CUT_INNER }}
+              style={{ clipPath: CUT_FRAME_INNER }}
             >
               {/* Luz ambiente suave */}
               <div
@@ -245,7 +245,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                 style={{ background: '#FFB700' }}
               />
 
-              {/* Botão de fechar com corte */}
+              {/* Botão de fechar com corte e borda completa */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.94 }}
@@ -257,7 +257,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
               >
                 <div
                   className="w-8 h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors"
-                  style={{ clipPath: CUT_BUTTON }}
+                  style={{ clipPath: CUT_BUTTON_INNER }}
                 >
                   <X size={16} />
                 </div>
@@ -274,7 +274,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                       >
                         <div
                           className="w-14 h-14 bg-[#FFB700] flex items-center justify-center shadow-[0_0_25px_rgba(255,183,0,0.5)]"
-                          style={{ clipPath: CUT_BUTTON }}
+                          style={{ clipPath: CUT_BUTTON_INNER }}
                         >
                           <Crown className="w-8 h-8 text-black fill-black" strokeWidth={2.5} />
                         </div>
@@ -312,10 +312,12 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                       {VIP_BENEFITS.map((benefit, idx) => {
                         const Icon = benefit.icon;
                         return (
-                          <div
+                          <CutCard
                             key={idx}
-                            className="p-3.5 bg-[#0d0d12] border border-[#FFB700]/20 flex items-start gap-3 transition-colors hover:border-[#FFB700]/50"
-                            style={{ clipPath: CUT_BUTTON }}
+                            corBorda="#FFB700"
+                            corBg="#0d0d12"
+                            bordaOpacity={0.25}
+                            className="p-3.5 flex items-start gap-3"
                           >
                             <div
                               className="w-9 h-9 bg-[#16161f] border border-[#FFB700]/30 flex items-center justify-center shrink-0 text-[#FFB700]"
@@ -331,7 +333,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                                 {benefit.description}
                               </p>
                             </div>
-                          </div>
+                          </CutCard>
                         );
                       })}
                     </div>
@@ -339,10 +341,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
 
                   {/* PRICE + CTA */}
                   <div className="pb-2">
-                    <div
-                      className="p-5 bg-[#0d0d12] border border-[#FFB700]/30 relative mb-4"
-                      style={{ clipPath: CUT_BUTTON }}
-                    >
+                    <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="p-5 mb-4">
                       <div className="flex items-end justify-between gap-4 flex-wrap">
                         <div>
                           <span
@@ -375,7 +374,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </CutCard>
 
                     <motion.button
                       whileHover={{ scale: loading ? 1 : 1.01 }}
@@ -391,7 +390,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                     >
                       <div
                         className="w-full py-4 px-5 flex items-center justify-center gap-2.5 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                        style={{ clipPath: CUT_BUTTON }}
+                        style={{ clipPath: CUT_BUTTON_INNER }}
                       >
                         {loading ? (
                           <>
@@ -454,18 +453,23 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                     <>
                       <div className="flex justify-center mb-5">
                         <div
-                          className="p-3 bg-white border-2 border-[#FFB700] shadow-xl"
-                          style={{ clipPath: CUT_BUTTON }}
+                          className="p-[2px]"
+                          style={{ clipPath: CUT_BUTTON, background: '#FFB700' }}
                         >
-                          <img
-                            src={
-                              paymentData.qrCode.startsWith('http') || paymentData.qrCode.startsWith('data:')
-                                ? paymentData.qrCode
-                                : `data:image/png;base64,${paymentData.qrCode}`
-                            }
-                            alt="QR Code PIX"
-                            className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
-                          />
+                          <div
+                            className="p-3 bg-white shadow-xl"
+                            style={{ clipPath: CUT_BUTTON_INNER }}
+                          >
+                            <img
+                              src={
+                                paymentData.qrCode.startsWith('http') || paymentData.qrCode.startsWith('data:')
+                                  ? paymentData.qrCode
+                                  : `data:image/png;base64,${paymentData.qrCode}`
+                              }
+                              alt="QR Code PIX"
+                              className="w-48 h-48 sm:w-56 sm:h-56 object-contain bg-white"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -473,12 +477,17 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                         <div className="mb-5 max-w-lg mx-auto">
                           <div className="flex items-stretch gap-2">
                             <div
-                              className="flex-1 p-3 bg-black/60 border border-white/10 text-left min-w-0"
-                              style={{ clipPath: CUT_BADGE }}
+                              className="flex-1 p-[1px]"
+                              style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}
                             >
-                              <code className="text-zinc-300 text-xs font-mono break-all line-clamp-1 block">
-                                {paymentData.brCode}
-                              </code>
+                              <div
+                                className="p-3 bg-black/70 text-left min-w-0 h-full flex items-center"
+                                style={{ clipPath: CUT_BADGE_INNER }}
+                              >
+                                <code className="text-zinc-300 text-xs font-mono break-all line-clamp-1 block">
+                                  {paymentData.brCode}
+                                </code>
+                              </div>
                             </div>
                             <motion.button
                               whileHover={{ scale: 1.02 }}
@@ -492,7 +501,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                             >
                               <div
                                 className="h-full px-3 flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-black bg-[#FFB700]"
-                                style={{ clipPath: CUT_BUTTON }}
+                                style={{ clipPath: CUT_BUTTON_INNER }}
                               >
                                 {copied ? (
                                   <>
@@ -518,7 +527,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-5 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                        style={{ clipPath: CUT_BUTTON }}
+                        style={{ clipPath: CUT_BUTTON_INNER }}
                       >
                         <Crown className="w-4 h-4" />
                         <span>Abrir Página de Pagamento</span>
@@ -526,10 +535,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                     </div>
                   )}
 
-                  <div
-                    className="p-3.5 bg-[#0d0d12] border border-[#FFB700]/20 max-w-lg mx-auto mb-4 flex items-center gap-3 text-left"
-                    style={{ clipPath: CUT_BUTTON }}
-                  >
+                  <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.25} className="p-3.5 max-w-lg mx-auto mb-4 flex items-center gap-3 text-left">
                     <div
                       className="w-8 h-8 bg-[#16161f] border border-[#FFB700]/30 flex items-center justify-center shrink-0 text-[#FFB700]"
                       style={{ clipPath: CUT_BADGE }}
@@ -540,7 +546,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                       <p className="text-zinc-200 font-bold text-xs">Aguardando confirmação do PIX</p>
                       <p className="text-zinc-400 text-[11px]">Após o pagamento, o VIP é ativado automaticamente</p>
                     </div>
-                  </div>
+                  </CutCard>
 
                   <div className="max-w-lg mx-auto flex flex-col gap-2">
                     <motion.button
@@ -556,7 +562,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                     >
                       <div
                         className="w-full py-3 px-4 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                        style={{ clipPath: CUT_BUTTON }}
+                        style={{ clipPath: CUT_BUTTON_INNER }}
                       >
                         {checkingPayment ? (
                           <>

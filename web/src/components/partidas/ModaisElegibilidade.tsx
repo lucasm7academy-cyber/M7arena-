@@ -1,6 +1,6 @@
 // src/components/partidas/ModaisElegibilidade.tsx
 // Modais da M7 Arena com o estilo cortado (cut-edge) das salas e partidas finalizadas:
-// bordas angulares (clip-path chamfered), cores vivas sólidas (#FFB700, #3B82F6, #EF4444),
+// bordas angulares 100% contínuas (incluindo cantos diagonais cortados), cores vivas sólidas (#FFB700, #3B82F6, #EF4444),
 // tipografia Anton/impact nos títulos, tons suaves sem branco estourado e 100% integrados à arena.
 
 import React, { useState } from 'react';
@@ -23,11 +23,51 @@ import type { ErroElegibilidade } from '../../hooks/useSalaSimples';
 
 const DEPOSIT_EVENT = 'm7:open-deposit';
 
-// ── Polígonos de corte angular oficiais da M7 Arena ──
+// ── Polígonos de corte angular oficiais da M7 Arena (com pares Frame + Inner para bordas 100% contínuas) ──
 export const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
-export const CUT_INNER = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
-export const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+export const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 100%, 0 12.5px)';
+
+export const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+export const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)';
+
 export const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+export const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)';
+
+export interface CutCardProps {
+  children: React.ReactNode;
+  corBorda?: string;
+  corBg?: string;
+  bordaOpacity?: number;
+  className?: string;
+}
+
+export function CutCard({
+  children,
+  corBorda = '#FFB700',
+  corBg = '#0d0d12',
+  bordaOpacity = 0.35,
+  className = '',
+}: CutCardProps) {
+  return (
+    <div
+      className="relative p-[1px] w-full"
+      style={{
+        clipPath: CUT_BUTTON,
+        background: `color-mix(in srgb, ${corBorda} ${Math.round(bordaOpacity * 100)}%, transparent)`,
+      }}
+    >
+      <div
+        className={`w-full p-4 ${className}`}
+        style={{
+          clipPath: CUT_BUTTON_INNER,
+          background: corBg,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export interface ModalShellProps {
   titulo: string;
@@ -75,7 +115,7 @@ export function ModalShell({
         {/* Container interno escuro com corte angular */}
         <div
           className="w-full bg-[#08080a] p-5 sm:p-6 relative overflow-hidden"
-          style={{ clipPath: CUT_INNER }}
+          style={{ clipPath: CUT_FRAME_INNER }}
         >
           {/* Luz ambiente suave no topo */}
           <div
@@ -83,7 +123,7 @@ export function ModalShell({
             style={{ background: corBorda }}
           />
 
-          {/* Botão de fechar estilo botão cortado */}
+          {/* Botão de fechar estilo botão cortado com borda completa */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.94 }}
@@ -95,7 +135,7 @@ export function ModalShell({
           >
             <div
               className="w-7 h-7 sm:w-8 sm:h-8 bg-[#121216] hover:bg-[#1c1c22] flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors"
-              style={{ clipPath: CUT_BUTTON }}
+              style={{ clipPath: CUT_BUTTON_INNER }}
             >
               <X className="w-4 h-4" />
             </div>
@@ -113,7 +153,7 @@ export function ModalShell({
               >
                 <div
                   className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center bg-[#101014]"
-                  style={{ clipPath: CUT_BUTTON }}
+                  style={{ clipPath: CUT_BUTTON_INNER }}
                 >
                   {icone}
                 </div>
@@ -188,10 +228,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
           icone={<ShieldCheck className="w-6 h-6 text-[#FFB700]" />}
           onClose={onClose}
         >
-          <div
-            className="p-4 bg-[#0d0d12] border border-[#FFB700]/25 space-y-3 relative"
-            style={{ clipPath: CUT_BUTTON }}
-          >
+          <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
             <p className="text-zinc-300 text-xs font-bold leading-relaxed">
               As salas valendo <span className="text-[#FFB700] font-black">M7 Coins (MC)</span> envolvem premiação real e são restritas a maiores de 18 anos.
             </p>
@@ -225,7 +262,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
                 <span>Ciente das regras de <strong className="text-zinc-100">resultado oficial e premiação</strong></span>
               </div>
             </div>
-          </div>
+          </CutCard>
 
           <div className="flex flex-col gap-2.5 pt-1">
             <motion.button
@@ -241,7 +278,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
             >
               <div
                 className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Confirmar Maior de 18 Anos</span>
@@ -257,7 +294,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
             >
               <div
                 className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-zinc-400 hover:text-zinc-100 bg-[#121216] transition-colors"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 Cancelar
               </div>
@@ -276,10 +313,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
           icone={<GiTwoCoins className="w-7 h-7 text-[#FFB700]" />}
           onClose={onClose}
         >
-          <div
-            className="p-4 bg-[#0d0d12] border border-[#FFB700]/25 space-y-3 relative"
-            style={{ clipPath: CUT_BUTTON }}
-          >
+          <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-zinc-400 text-[10px] uppercase font-black tracking-widest block">Entrada da Sala</span>
@@ -292,16 +326,20 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
                 </span>
               </div>
             </div>
-            <div className="h-2 bg-black/60 border border-white/5 overflow-hidden" style={{ clipPath: CUT_BADGE }}>
-              <div
-                className="h-full bg-[#FFB700] shadow-[0_0_10px_rgba(255,183,0,0.5)]"
-                style={{ width: `${Math.max(15, Math.min(100, (erro.faltam / 1000) * 100))}%` }}
-              />
+
+            <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}>
+              <div className="h-2 bg-black/60 overflow-hidden" style={{ clipPath: CUT_BADGE_INNER }}>
+                <div
+                  className="h-full bg-[#FFB700] shadow-[0_0_10px_rgba(255,183,0,0.5)]"
+                  style={{ width: `${Math.max(15, Math.min(100, (erro.faltam / 1000) * 100))}%` }}
+                />
+              </div>
             </div>
+
             <p className="text-zinc-400 text-[10px] uppercase font-black tracking-wider text-center pt-0.5">
               ⚡ Recarga instantânea via PIX • Crédito na hora
             </p>
-          </div>
+          </CutCard>
 
           <div className="flex flex-col gap-2.5 pt-1">
             <motion.button
@@ -317,7 +355,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
             >
               <div
                 className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 <Wallet className="w-4 h-4" />
                 <span>Recarregar MC via PIX</span>
@@ -333,7 +371,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
             >
               <div
                 className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-zinc-400 hover:text-zinc-100 bg-[#121216] transition-colors"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 Depois
               </div>
@@ -352,18 +390,24 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
           icone={<Swords className="w-6 h-6 text-blue-400" />}
           onClose={onClose}
         >
-          <div
-            className="p-4 bg-[#080d16] border border-blue-500/30 space-y-3 relative"
-            style={{ clipPath: CUT_BUTTON }}
-          >
+          <CutCard corBorda="#3b82f6" corBg="#080d16" bordaOpacity={0.35} className="space-y-3">
             <p className="text-zinc-300 text-xs font-bold leading-relaxed">
               Você só pode participar de <strong className="text-zinc-100">uma sala apostada ativa por vez</strong>. Sua vaga e seu MC estão protegidos na sala:
             </p>
-            <div className="p-3 bg-black/60 border border-blue-500/30 flex items-center justify-between" style={{ clipPath: CUT_BADGE }}>
-              <span className="text-zinc-400 text-xs uppercase font-black tracking-wider">Sala Ativa</span>
-              <span className="text-blue-400 font-black text-sm font-mono">#{String(erro.salaNum).padStart(6, '0')}</span>
+
+            <div
+              className="relative p-[1px] w-full"
+              style={{ clipPath: CUT_BADGE, background: 'rgba(59,130,246,0.3)' }}
+            >
+              <div
+                className="p-3 bg-[#040810] flex items-center justify-between"
+                style={{ clipPath: CUT_BADGE_INNER }}
+              >
+                <span className="text-zinc-400 text-xs uppercase font-black tracking-wider">Sala Ativa</span>
+                <span className="text-blue-400 font-black text-sm font-mono">#{String(erro.salaNum).padStart(6, '0')}</span>
+              </div>
             </div>
-          </div>
+          </CutCard>
 
           <div className="flex flex-col gap-2.5 pt-1">
             <motion.button
@@ -382,7 +426,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
             >
               <div
                 className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-500 transition-all"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 <Swords className="w-4 h-4" />
                 <span>Ir Para Minha Sala #{String(erro.salaNum).padStart(6, '0')}</span>
@@ -398,7 +442,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
             >
               <div
                 className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-zinc-400 hover:text-zinc-100 bg-[#121216] transition-colors"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 Fechar
               </div>
@@ -425,26 +469,26 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
           icone={<Ban className="w-6 h-6 text-red-500" />}
           onClose={onClose}
         >
-          <div
-            className="p-4 bg-[#140608] border border-red-500/30 space-y-3 relative"
-            style={{ clipPath: CUT_BUTTON }}
-          >
+          <CutCard corBorda="#ef4444" corBg="#140608" bordaOpacity={0.35} className="space-y-3">
             <p className="text-zinc-300 text-xs font-bold leading-relaxed">
               Sua conta está impossibilitada de entrar em partidas. Se você acredita que isso foi um equívoco, consulte as regras ou solicite suporte.
             </p>
-          </div>
+          </CutCard>
 
           <div className="flex flex-col gap-2.5 pt-1">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={onClose}
-              className="w-full relative p-[1px] cursor-pointer bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 transition-all"
-              style={{ clipPath: CUT_BUTTON }}
+              className="w-full relative p-[1px] cursor-pointer"
+              style={{
+                clipPath: CUT_BUTTON,
+                background: 'rgba(239, 68, 68, 0.4)',
+              }}
             >
               <div
-                className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-red-300 bg-[#140608] transition-colors"
-                style={{ clipPath: CUT_BUTTON }}
+                className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-red-300 bg-[#140608] hover:bg-[#20080a] transition-colors"
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 Entendido
               </div>
@@ -472,29 +516,37 @@ export function ModalLoginVitrine({ onClose }: { onClose: () => void }) {
       icone={<Trophy className="w-6 h-6 text-[#FFB700]" />}
       onClose={onClose}
     >
-      <div
-        className="p-4 bg-[#0d0d12] border border-[#FFB700]/25 space-y-3 relative"
-        style={{ clipPath: CUT_BUTTON }}
-      >
+      <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
         <p className="text-zinc-300 text-xs font-bold leading-relaxed">
           As salas valendo <span className="text-[#FFB700] font-black">MC</span> são a vitrine da arena. Crie sua conta grátis e ocupe uma vaga antes que a sala encha.
         </p>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
           <div
-            className="px-3 py-2 bg-black/60 border border-white/10 flex items-center gap-2 text-xs font-black text-zinc-200 uppercase tracking-wider"
-            style={{ clipPath: CUT_BADGE }}
+            className="relative p-[1px]"
+            style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}
           >
-            <span className="text-[#FFB700]">⚡</span> 100% Grátis
+            <div
+              className="px-3 py-2 bg-black/70 flex items-center gap-2 text-xs font-black text-zinc-200 uppercase tracking-wider"
+              style={{ clipPath: CUT_BADGE_INNER }}
+            >
+              <span className="text-[#FFB700]">⚡</span> 100% Grátis
+            </div>
           </div>
+
           <div
-            className="px-3 py-2 bg-black/60 border border-white/10 flex items-center gap-2 text-xs font-black text-zinc-200 uppercase tracking-wider"
-            style={{ clipPath: CUT_BADGE }}
+            className="relative p-[1px]"
+            style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}
           >
-            <GiTwoCoins className="text-[#FFB700] w-3.5 h-3.5 shrink-0" /> Prêmios MC
+            <div
+              className="px-3 py-2 bg-black/70 flex items-center gap-2 text-xs font-black text-zinc-200 uppercase tracking-wider"
+              style={{ clipPath: CUT_BADGE_INNER }}
+            >
+              <GiTwoCoins className="text-[#FFB700] w-3.5 h-3.5 shrink-0" /> Prêmios MC
+            </div>
           </div>
         </div>
-      </div>
+      </CutCard>
 
       <div className="flex flex-col gap-2.5 pt-1">
         <motion.button
@@ -513,7 +565,7 @@ export function ModalLoginVitrine({ onClose }: { onClose: () => void }) {
         >
           <div
             className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-            style={{ clipPath: CUT_BUTTON }}
+            style={{ clipPath: CUT_BUTTON_INNER }}
           >
             <Plus className="w-4 h-4" />
             <span>Criar Conta Gratuita</span>
@@ -532,7 +584,7 @@ export function ModalLoginVitrine({ onClose }: { onClose: () => void }) {
         >
           <div
             className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-zinc-300 hover:text-zinc-100 bg-[#16161c] transition-colors"
-            style={{ clipPath: CUT_BUTTON }}
+            style={{ clipPath: CUT_BUTTON_INNER }}
           >
             <LogIn className="w-4 h-4" />
             <span>Já Tenho Conta — Entrar</span>
@@ -565,10 +617,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
       icone={<Gamepad2 className="w-6 h-6 text-blue-400" />}
       onClose={onClose}
     >
-      <div
-        className="p-4 bg-[#080d16] border border-blue-500/30 space-y-3 relative"
-        style={{ clipPath: CUT_BUTTON }}
-      >
+      <CutCard corBorda="#3b82f6" corBg="#080d16" bordaOpacity={0.35} className="space-y-3">
         <p className="text-zinc-300 text-xs font-bold leading-relaxed">
           {motivo || 'Para criar sala e participar das partidas valendo MC, você precisa vincular sua conta Riot.'}
         </p>
@@ -602,7 +651,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
             <span>Validação de prints e <strong className="text-zinc-100">recebimento de MC</strong></span>
           </div>
         </div>
-      </div>
+      </CutCard>
 
       <div className="flex flex-col gap-2.5 pt-1">
         <motion.button
@@ -621,7 +670,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
         >
           <div
             className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-500 transition-all"
-            style={{ clipPath: CUT_BUTTON }}
+            style={{ clipPath: CUT_BUTTON_INNER }}
           >
             <Gamepad2 className="w-4 h-4" />
             <span>Vincular Conta Riot</span>
@@ -637,7 +686,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
         >
           <div
             className="w-full py-3 px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest text-zinc-400 hover:text-zinc-100 bg-[#121216] transition-colors"
-            style={{ clipPath: CUT_BUTTON }}
+            style={{ clipPath: CUT_BUTTON_INNER }}
           >
             Agora não
           </div>
@@ -672,31 +721,33 @@ export function ModalSenhaSala({
       icone={<Lock className="w-6 h-6 text-[#FFB700]" />}
       onClose={onClose}
     >
-      <div
-        className="p-4 bg-[#0d0d12] border border-[#FFB700]/25 space-y-3 relative"
-        style={{ clipPath: CUT_BUTTON }}
-      >
+      <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
         <div className="space-y-1.5">
           <label className="text-zinc-400 text-[10px] uppercase font-black tracking-widest block">
             Senha da Sala
           </label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            placeholder="Digite a senha da partida"
-            className="w-full bg-black/60 border border-white/10 p-3 text-zinc-200 text-sm focus:outline-none focus:border-[#FFB700] transition-all placeholder:text-zinc-600 font-mono"
-            style={{ clipPath: CUT_BADGE }}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && senha) {
-                onConfirm(senha);
-              }
-            }}
-          />
+          <div
+            className="relative p-[1px] w-full"
+            style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}
+          >
+            <input
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Digite a senha da partida"
+              className="w-full bg-[#050508] p-3 text-zinc-200 text-sm focus:outline-none placeholder:text-zinc-600 font-mono"
+              style={{ clipPath: CUT_BADGE_INNER }}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && senha) {
+                  onConfirm(senha);
+                }
+              }}
+            />
+          </div>
         </div>
         {erro && <p className="text-red-400 text-xs font-black uppercase tracking-wider">{erro}</p>}
-      </div>
+      </CutCard>
 
       <div className="flex gap-3 pt-1">
         <motion.button
@@ -708,7 +759,7 @@ export function ModalSenhaSala({
         >
           <div
             className="w-full py-3 px-4 flex items-center justify-center font-black text-xs uppercase tracking-widest text-zinc-400 hover:text-zinc-100 bg-[#121216] transition-colors"
-            style={{ clipPath: CUT_BUTTON }}
+            style={{ clipPath: CUT_BUTTON_INNER }}
           >
             Cancelar
           </div>
@@ -727,7 +778,7 @@ export function ModalSenhaSala({
         >
           <div
             className="w-full py-3 px-4 flex items-center justify-center font-black text-xs uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-            style={{ clipPath: CUT_BUTTON }}
+            style={{ clipPath: CUT_BUTTON_INNER }}
           >
             Entrar na Sala
           </div>

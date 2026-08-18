@@ -7,7 +7,7 @@ import { api } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import GoldEssenceIcon from '../../icons/GoldEssenceIcon';
-import { CUT_BUTTON, CUT_BADGE } from '../../partidas/ModaisElegibilidade';
+import { CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from '../../partidas/ModaisElegibilidade';
 
 interface PackageOption {
   id: string;
@@ -178,7 +178,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                             ? 'bg-[#141208]'
                             : 'bg-[#0d0d12] hover:bg-[#14141c]'
                         }`}
-                        style={{ clipPath: CUT_BUTTON }}
+                        style={{ clipPath: CUT_BUTTON_INNER }}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <span className={`text-base font-black tracking-tight ${isSelected ? 'text-[#FFB700]' : 'text-zinc-200'}`}>
@@ -231,7 +231,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
           >
             <div
               className="bg-[#0c0c10] p-5 space-y-4 shadow-2xl"
-              style={{ clipPath: CUT_BUTTON }}
+              style={{ clipPath: CUT_BUTTON_INNER }}
             >
               <p className="text-[#FFB700] text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5">
                 <Zap size={12} className="text-[#FFB700]" fill="currentColor" />
@@ -258,7 +258,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
 
                     <div
                       className="bg-[#14141a] px-3 py-2 flex items-center justify-between"
-                      style={{ clipPath: CUT_BADGE }}
+                      style={{ clipPath: CUT_BADGE_INNER }}
                     >
                       <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Custo por MC</span>
                       <span className="text-zinc-200 text-xs font-black">
@@ -285,7 +285,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                   >
                     <div
                       className="w-full py-3.5 px-4 flex items-center justify-center gap-2 font-black text-xs md:text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                      style={{ clipPath: CUT_BUTTON }}
+                      style={{ clipPath: CUT_BUTTON_INNER }}
                     >
                       {loading ? (
                         <>
@@ -319,7 +319,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
               <div className="flex flex-col items-center">
                 <div
                   className="mb-4 bg-[#141208] border border-[#FFB700]/30 px-5 py-2 inline-flex items-baseline gap-1.5"
-                  style={{ clipPath: CUT_BADGE }}
+                  style={{ clipPath: CUT_BADGE_INNER }}
                 >
                   <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Pagando</span>
                   <span className="text-2xl font-black text-[#FFB700]">
@@ -328,7 +328,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                 </div>
                 <div
                   className="p-3 bg-white border-2 border-[#FFB700] shadow-xl"
-                  style={{ clipPath: CUT_BUTTON }}
+                  style={{ clipPath: CUT_BUTTON_INNER }}
                 >
                   <img
                     src={`data:image/png;base64,${paymentData.qrCode}`}
@@ -351,21 +351,26 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
 
               {paymentData.brCode && (
                 <div
-                  className="bg-[#0d0d12] border border-white/10 p-3.5"
-                  style={{ clipPath: CUT_BUTTON }}
+                  className="p-[1px]"
+                  style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.15)' }}
                 >
-                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-black mb-2">Código PIX (Copia e Cola)</p>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(paymentData.brCode);
-                      toast.success('Código PIX copiado!');
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-200 text-xs font-bold transition-all border border-white/10"
-                    style={{ clipPath: CUT_BADGE }}
+                  <div
+                    className="bg-[#0d0d12] p-3.5"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
                   >
-                    <Copy size={14} />
-                    Copiar Código PIX
-                  </button>
+                    <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-black mb-2">Código PIX (Copia e Cola)</p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(paymentData.brCode);
+                        toast.success('Código PIX copiado!');
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-200 text-xs font-bold transition-all border border-white/10"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      <Copy size={14} />
+                      Copiar Código PIX
+                    </button>
+                  </div>
                 </div>
               )}
             </>
@@ -376,7 +381,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 w-full py-3.5 font-black text-xs uppercase text-black bg-[#FFB700] transition-all hover:brightness-105"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 <Zap size={16} fill="currentColor" />
                 Abrir Página de Pagamento
@@ -398,7 +403,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
             >
               <div
                 className="w-full py-3 px-4 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
-                style={{ clipPath: CUT_BUTTON }}
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 {verifying ? (
                   <>
