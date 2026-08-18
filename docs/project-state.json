@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:20:59.550Z",
+  "updatedAt": "2026-08-18T04:23:21.259Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,14 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-15T19:23:31.961Z",
-      "agent": "gemini",
-      "summary": "Ajustadas as bordas dos botoes e cards do menu superior da sala em SalaMod1.tsx para o padrao angular e chanfrado (cut-corners) do eSports/M7 Arena. Rebuild e deploy na VPS dev.m7arena.pro concluidos.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-15T19:27:33.829Z",
       "agent": "gemini",
       "summary": "Modernização visual completa do Painel Admin (Admin.tsx, FinanceiroDashboard, RevisaoPartidas, SaquesPix, AdminCargos, AdminContatos, AdminPunicoes): aplicado dark glassmorphism elevado (substituindo o fundo flat pitch-black), tipografia em alto contraste com tons zinc, badges e acentos em gradiente dourado M7. Build validado localmente (tsc exit 0) e deploy efetuado na VPS dev.m7arena.pro.",
@@ -2084,6 +2076,21 @@
       "summary": "Refinamento das bordas dos cards da pagina Lobby (Lobby.tsx) de 1.5px/gradiente forte para 1px com gradiente de baixa opacidade, eliminando qualquer vazamento/aparencia de triangulo diagonal sobre a imagem. Rebuild e deploy na VPS dev.m7arena.pro.",
       "touched": [
         "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:23:21.259Z",
+      "agent": "gemini",
+      "summary": "Remocao de fundos e overlays opacos (bg-black/90, bg-[#050505], bg-background) de Perfil, Jogar, Campeonatos, Minhas Partidas, Politicas e Streamers, e aumento da intensidade/espalhamento das luzes de fundo ambiente global no LayoutWrapper.tsx. Deploy na VPS dev.m7arena.pro.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/perfil.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/pages/MinhasPartidas.tsx",
+        "web/src/pages/Politicas.tsx",
+        "web/src/pages/Streamers.tsx"
       ]
     }
   ]
