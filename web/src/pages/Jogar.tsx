@@ -220,11 +220,11 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
     >
       <motion.div
         initial={{ scale: 0.94, y: 16, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 12, opacity: 0 }}
-        className="relative p-[2px] w-full max-w-md shadow-2xl transition-all max-h-[90vh] flex flex-col"
+        className="relative p-[1.5px] w-full max-w-md shadow-2xl transition-all max-h-[90vh] flex flex-col"
         style={{
           clipPath: CUT_FRAME,
-          background: `linear-gradient(135deg, ${modoInfo.cor} 0%, rgba(255,255,255,0.4) 40%, ${modoInfo.cor} 70%, color-mix(in srgb, ${modoInfo.cor} 30%, #000000) 100%)`,
-          boxShadow: `0 0 50px -10px ${modoInfo.cor}60, 0 25px 50px -12px rgba(0,0,0,0.9)`
+          background: `linear-gradient(135deg, ${modoInfo.cor} 0%, ${modoInfo.cor}88 60%, color-mix(in srgb, ${modoInfo.cor} 30%, #000000) 100%)`,
+          boxShadow: `0 0 45px -10px ${modoInfo.cor}45, 0 25px 50px -12px rgba(0,0,0,0.9)`
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -234,7 +234,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
         >
           {/* Luz ambiente no topo */}
           <div
-            className="absolute -top-12 -right-12 w-48 h-48 pointer-events-none opacity-25 blur-3xl"
+            className="absolute -top-12 -right-12 w-48 h-48 pointer-events-none opacity-20 blur-3xl"
             style={{ background: modoInfo.cor }}
           />
 
@@ -243,12 +243,12 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.94 }}
             onClick={onClose}
-            className="absolute top-4 right-4 p-[1px] bg-white/20 hover:bg-white/40 transition-colors z-20 cursor-pointer"
+            className="absolute top-4 right-4 p-[1px] bg-white/10 hover:bg-white/20 transition-colors z-20 cursor-pointer"
             style={{ clipPath: CUT_BUTTON }}
             title="Fechar"
           >
             <div
-              className="w-7 h-7 sm:w-8 sm:h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-white/60 hover:text-white transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors"
               style={{ clipPath: CUT_BUTTON }}
             >
               <X className="w-4 h-4" />
@@ -280,7 +280,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                 {modoInfo.nome}
               </span>
               <h2
-                className="text-white uppercase tracking-tight text-xl sm:text-2xl leading-none truncate select-none"
+                className="text-[#EDEDEE] uppercase tracking-tight text-xl sm:text-2xl leading-none truncate select-none"
                 style={{
                   fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                   textShadow: '0 2px 10px rgba(0,0,0,0.8)',
@@ -294,17 +294,17 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Nome da Sala</label>
+              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Nome da Sala</label>
               <input
                 type="text" value={nome} onChange={(e) => setNome(e.target.value)}
                 placeholder={`Ex: 5x5 Personalizada`}
-                className="w-full bg-[#111116] border border-white/15 p-3 text-white text-sm focus:outline-none focus:border-[#FFB700] transition-all font-bold"
+                className="w-full bg-[#111116] border border-white/10 p-3 text-zinc-100 text-sm focus:outline-none focus:border-[#FFB700] transition-all font-bold"
                 style={{ clipPath: CUT_BADGE }}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Valor da Partida (M7 Coins)</label>
+              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Valor da Partida (M7 Coins)</label>
               <div className="grid grid-cols-3 gap-2">
                 {OPCOES_MPOINTS.map((op) => (
                   <button
@@ -313,7 +313,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                     className="p-2.5 text-center transition-all relative p-[1px] cursor-pointer"
                     style={{
                       clipPath: CUT_BUTTON,
-                      background: mpoints === op.valor ? `linear-gradient(135deg, ${op.cor}, #FFFFFF)` : 'rgba(255,255,255,0.1)'
+                      background: mpoints === op.valor ? `linear-gradient(135deg, ${op.cor}, #FFE082)` : 'rgba(255,255,255,0.08)'
                     }}
                   >
                     <div
@@ -334,7 +334,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             </div>
 
             <div className="space-y-2">
-              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Modo de Jogo</label>
+              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Modo de Jogo</label>
               <div className="grid grid-cols-2 gap-2">
                 {(Object.entries(MODOS_JOGO) as [ModoJogo, typeof MODOS_JOGO[ModoJogo]][]).map(([key, value]) => (
                   <button
@@ -343,7 +343,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                     className="p-[1px] text-left transition-all relative cursor-pointer"
                     style={{
                       clipPath: CUT_BUTTON,
-                      background: modo === key ? `linear-gradient(135deg, ${value.cor}, #FFFFFF)` : 'rgba(255,255,255,0.1)'
+                      background: modo === key ? `linear-gradient(135deg, ${value.cor}, #FFE082)` : 'rgba(255,255,255,0.08)'
                     }}
                   >
                     <div
@@ -361,9 +361,9 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                       )}
                       <div className="relative z-10 flex items-center gap-2 mb-1">
                         <span className="text-base">{value.icone}</span>
-                        <span className="text-xs font-black uppercase tracking-tight text-white">{value.nome}</span>
+                        <span className="text-xs font-black uppercase tracking-tight text-zinc-100">{value.nome}</span>
                       </div>
-                      <p className="relative z-10 text-[9px] font-bold text-white/50 leading-tight uppercase tracking-wider">{value.descricao}</p>
+                      <p className="relative z-10 text-[9px] font-bold text-zinc-400 leading-tight uppercase tracking-wider">{value.descricao}</p>
                     </div>
                   </button>
                 ))}
@@ -371,22 +371,22 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Descrição</label>
+              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Descrição</label>
               <textarea
                 value={descricao} onChange={(e) => setDescricao(e.target.value)}
                 placeholder="Ex: Duo mid, jogamos todos os dias às 20h"
-                className="w-full bg-[#111116] border border-white/15 p-3 text-white text-xs resize-none h-16 focus:outline-none focus:border-[#FFB700] transition-all font-bold"
+                className="w-full bg-[#111116] border border-white/10 p-3 text-zinc-200 text-xs resize-none h-16 focus:outline-none focus:border-[#FFB700] transition-all font-bold"
                 style={{ clipPath: CUT_BADGE }}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">ELO Mínimo</label>
+                <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">ELO Mínimo</label>
                 <select
                   value={eloMinimo} onChange={(e) => setEloMinimo(e.target.value)}
                   disabled={modo === 'time_vs_time'}
-                  className="w-full bg-[#111116] border border-white/15 p-2.5 text-white text-xs font-bold focus:outline-none"
+                  className="w-full bg-[#111116] border border-white/10 p-2.5 text-zinc-200 text-xs font-bold focus:outline-none"
                   style={{ clipPath: CUT_BADGE }}
                 >
                   {OPCOES_ELO.map(elo => (
@@ -395,10 +395,10 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Privacidade</label>
+                <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Privacidade</label>
                 <button
                   onClick={() => setTemSenha(!temSenha)}
-                  className={`w-full p-2.5 text-xs font-black uppercase tracking-wider transition-all border ${temSenha ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400' : 'bg-[#111116] border-white/15 text-white/50'}`}
+                  className={`w-full p-2.5 text-xs font-black uppercase tracking-wider transition-all border ${temSenha ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400' : 'bg-[#111116] border-white/10 text-zinc-400'}`}
                   style={{ clipPath: CUT_BADGE }}
                 >
                   {temSenha ? '🔒 Privada' : '🔓 Pública'}
@@ -410,7 +410,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
               <input
                 type="text" value={senha} onChange={(e) => setSenha(e.target.value)}
                 placeholder="Digite a senha"
-                className="w-full bg-[#111116] border border-white/15 p-3 text-white text-xs font-mono focus:outline-none"
+                className="w-full bg-[#111116] border border-white/10 p-3 text-zinc-200 text-xs font-mono focus:outline-none"
                 style={{ clipPath: CUT_BADGE }}
               />
             )}
@@ -423,7 +423,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                 className="w-full relative p-[1px] cursor-pointer shadow-lg disabled:opacity-50"
                 style={{
                   clipPath: CUT_BUTTON,
-                  background: `linear-gradient(135deg, ${modoInfo.cor}, #FFFFFF, ${modoInfo.cor})`,
+                  background: `linear-gradient(135deg, ${modoInfo.cor}, #FFE082, ${modoInfo.cor})`,
                   boxShadow: `0 0 25px -5px ${modoInfo.cor}60`
                 }}
               >

@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T03:37:00.579Z",
+  "updatedAt": "2026-08-18T03:47:26.588Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,18 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-15T03:02:32.250Z",
-      "agent": "deepseek",
-      "summary": "Sala finalizada com dados reais da Riot: criei a sala 37 (5v5, match BR1_3271569603, time azul venceu 36x18, 25:47) com match_results + payload completo; corrigi role_slot (TOP/JG/MID/ADC/SUP). Redesenhei a tela de partida finalizada: removi o quadrado ResultadoPartida, resultado direto na tela com header no topo (vencedor+placar+duração, borda cortada), sem o círculo central, e vagas mostrando nick+tag do jogador + ícone do campeão + KDA + CS (adicionei champion_id ao resultado_riot). Correção do motor verificar-partida: partida abortada (desistência) no 1v1 decide vencedor por win condition (first blood > 100 CS) e encerra na hora em vez de travar 3h em partida_iniciada — +3 testes (10/10 pass). Deploy na VPS: a sala 39 (1v1 One Lucks x CDC Kuri, Abort_TooFewPlayers) já foi encerrada automaticamente com One Lucks (red) vencedor via first blood.",
-      "touched": [
-        "api/src/lib/verificar-partida.ts",
-        "api/test/verificar-partida.test.ts",
-        "api/src/lib/match-shape.ts",
-        "web/src/components/partidas/VagaSlot.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-15T03:16:13.105Z",
       "agent": "gemini",
       "summary": "Implementado suporte visual completo para partidas valendo MC (apostadas) tanto no lobby/sala ativa quanto na sala finalizada: (1) Top bar e Central Hub exibem Pote Total e Prêmio por vencedor; (2) Header de resultado exibe Pote Total e Prêmio por jogador; (3) Cards de jogadores no VagaSlot exibem badge dourada/verde de +MC para vencedores, -MC para derrotados e Desistente (-MC) para abandonos; (4) Action footer mostra resumo de ganho/perda pessoal com botão de Minha Carteira. Verificado via tsc e build.",
@@ -2068,6 +2056,16 @@
       "at": "2026-08-18T03:37:00.578Z",
       "agent": "gemini",
       "summary": "Deploy realizado na VPS (dev.m7arena.pro). Commit 91e8f7f na branch feat/redesign-modais mergeado via ff-only na branch main da VPS. Container m7arena_nginx rebuildado com o build estático do Vite contendo os novos modais (ModaisElegibilidade, ModalLoginVitrine, ModalVincularConta, ModalSenhaSala). Site respondendo 200 OK.",
+      "touched": [
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:47:26.588Z",
+      "agent": "gemini",
+      "summary": "Ajuste visual completo dos modais de maioridade 18+, login de vitrine, vinculo Riot e senha para o design oficial cut-edge da M7 Arena (bordas chanfradas angulares com clip-path CUT_FRAME/CUT_INNER/CUT_BUTTON, tipografia Anton de partida finalizada, cores vivas sólidas e sem fundos de grade). Deploy atualizado na VPS (dev.m7arena.pro) com HTTP 200 OK.",
       "touched": [
         "web/src/components/partidas/ModaisElegibilidade.tsx",
         "web/src/pages/Jogar.tsx",

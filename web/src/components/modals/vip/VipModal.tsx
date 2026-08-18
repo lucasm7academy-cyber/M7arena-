@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  X, Loader, Crown, Sparkles, Gem, Zap, Shield, 
+  X, Loader, Crown, Sparkles, Gem, Zap, 
   Trophy, TrendingUp, CheckCircle, Copy, QrCode,
   Clock, CreditCard, Lock, Star, ChevronRight
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
+import { CUT_FRAME, CUT_INNER, CUT_BUTTON, CUT_BADGE } from '../../partidas/ModaisElegibilidade';
 
 interface VipModalProps {
   isOpen: boolean;
@@ -217,196 +218,208 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
           onClick={handleClose}
         >
           <motion.div
-            initial={{ scale: 0.92, y: 30, opacity: 0 }}
+            initial={{ scale: 0.94, y: 16, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.95, y: 20, opacity: 0 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-            className="relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl bg-[#0a0a0c] border border-[#FFB700]/30 shadow-[0_0_80px_-10px_rgba(255,183,0,0.35)]"
+            exit={{ scale: 0.95, y: 12, opacity: 0 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 300 }}
+            className="relative p-[1.5px] w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl transition-all"
+            style={{
+              clipPath: CUT_FRAME,
+              background: 'linear-gradient(135deg, #FFB700 0%, #FFB70088 60%, color-mix(in srgb, #FFB700 30%, #000000) 100%)',
+              boxShadow: '0 0 50px -10px rgba(255,183,0,0.45), 0 25px 70px rgba(0,0,0,0.95)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Decorative Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute -top-32 -right-32 w-80 h-80 bg-[#FFB700]/15 rounded-full blur-[100px]" />
-              <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-[#FFB700]/8 rounded-full blur-[100px]" />
-              <div 
-                className="absolute inset-0 opacity-[0.03]"
-                style={{
-                  backgroundImage: `linear-gradient(#FFB700 1px, transparent 1px), linear-gradient(90deg, #FFB700 1px, transparent 1px)`,
-                  backgroundSize: '40px 40px'
-                }}
-              />
-            </div>
-
-            {/* Top Accent Line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFB700] to-transparent" />
-
-            {/* Close Button */}
-            <button
-              onClick={handleClose}
-              className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/40 border border-white/10 text-white/60 hover:text-white hover:bg-black/60 hover:border-white/20 transition-all flex items-center justify-center backdrop-blur-sm"
-              aria-label="Fechar"
+            <div
+              className="w-full bg-[#09090c] p-6 md:p-8 relative overflow-y-auto custom-scrollbar flex-1"
+              style={{ clipPath: CUT_INNER }}
             >
-              <X size={18} />
-            </button>
+              {/* Luz ambiente suave */}
+              <div
+                className="absolute -top-16 -right-16 w-52 h-52 pointer-events-none opacity-20 blur-3xl"
+                style={{ background: '#FFB700' }}
+              />
 
-            <div className="relative z-10 max-h-[92vh] overflow-y-auto custom-scrollbar">
+              {/* Botão de fechar com corte */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                onClick={handleClose}
+                className="absolute top-4 right-4 p-[1px] bg-white/10 hover:bg-white/20 transition-colors z-20 cursor-pointer"
+                style={{ clipPath: CUT_BUTTON }}
+                title="Fechar"
+                aria-label="Fechar"
+              >
+                <div
+                  className="w-8 h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors"
+                  style={{ clipPath: CUT_BUTTON }}
+                >
+                  <X size={16} />
+                </div>
+              </motion.button>
+
               {!paymentData ? (
                 <>
                   {/* HERO */}
-                  <div className="relative pt-10 pb-8 px-6 md:px-10 text-center">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: 'spring', damping: 12, stiffness: 200, delay: 0.1 }}
-                      className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-5 relative"
-                    >
-                      <div className="absolute inset-0 bg-[#FFB700]/20 rounded-full blur-xl animate-pulse" />
-                      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#FFB700] via-[#FFD700] to-[#FF9500] flex items-center justify-center shadow-[0_0_30px_rgba(255,183,0,0.5)]">
-                        <Crown className="w-10 h-10 text-black fill-black" strokeWidth={2.5} />
+                  <div className="relative pt-2 pb-6 px-2 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 relative mb-3">
+                      <div
+                        className="relative p-[1px]"
+                        style={{ clipPath: CUT_BUTTON, background: 'linear-gradient(135deg, #FFB700, #FF9500)' }}
+                      >
+                        <div
+                          className="w-14 h-14 bg-[#FFB700] flex items-center justify-center shadow-[0_0_25px_rgba(255,183,0,0.5)]"
+                          style={{ clipPath: CUT_BUTTON }}
+                        >
+                          <Crown className="w-8 h-8 text-black fill-black" strokeWidth={2.5} />
+                        </div>
                       </div>
-                    </motion.div>
+                    </div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFB700]/10 border border-[#FFB700]/30 mb-4"
-                    >
-                      <Sparkles className="w-3 h-3 text-[#FFB700]" />
-                      <span className="text-[#FFB700] font-black text-[10px] uppercase tracking-[0.2em]">Acesso Premium</span>
-                    </motion.div>
+                    <div className="mb-2">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-black"
+                        style={{ clipPath: CUT_BADGE, background: '#FFB700' }}
+                      >
+                        <Sparkles className="w-3 h-3 text-black" />
+                        Acesso Premium M7
+                      </span>
+                    </div>
 
-                    <motion.h2
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.25 }}
-                      className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.9] mb-3"
+                    <h2
+                      className="text-3xl md:text-5xl uppercase tracking-tight text-[#EDEDEE] leading-none mb-2 select-none"
+                      style={{
+                        fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                        textShadow: '0 2px 10px rgba(0,0,0,0.8)',
+                      }}
                     >
-                      Torne-se <span className="text-[#FFB700]">VIP</span>
-                    </motion.h2>
+                      TORNE-SE <span className="text-[#FFB700]">VIP</span>
+                    </h2>
 
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="text-white/50 text-sm md:text-base max-w-md mx-auto leading-relaxed"
-                    >
-                       Desbloqueie todos os benefícios premium e domine a M7 Arena com estilo.
-                    </motion.p>
+                    <p className="text-zinc-400 text-xs md:text-sm max-w-md mx-auto leading-relaxed">
+                      Desbloqueie todos os benefícios premium e domine a M7 Arena com estilo e vantagens exclusivas.
+                    </p>
                   </div>
 
                   {/* BENEFITS */}
-                  <div className="px-6 md:px-10 pb-6">
+                  <div className="pb-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {VIP_BENEFITS.map((benefit, idx) => {
                         const Icon = benefit.icon;
                         return (
-                          <motion.div
+                          <div
                             key={idx}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.35 + idx * 0.04 }}
-                            className="group relative p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#FFB700]/40 hover:bg-[#FFB700]/[0.03] transition-all duration-300"
+                            className="p-3.5 bg-[#0d0d12] border border-[#FFB700]/20 flex items-start gap-3 transition-colors hover:border-[#FFB700]/50"
+                            style={{ clipPath: CUT_BUTTON }}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFB700]/20 to-[#FFB700]/5 border border-[#FFB700]/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(255,183,0,0.3)] transition-all duration-300">
-                                <Icon className="w-5 h-5 text-[#FFB700]" strokeWidth={2.5} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-white font-black text-sm mb-0.5">
-                                  {benefit.title}
-                                </h4>
-                                <p className="text-white/50 text-xs leading-snug">
-                                  {benefit.description}
-                                </p>
-                              </div>
+                            <div
+                              className="w-9 h-9 bg-[#16161f] border border-[#FFB700]/30 flex items-center justify-center shrink-0 text-[#FFB700]"
+                              style={{ clipPath: CUT_BADGE }}
+                            >
+                              <Icon className="w-4 h-4 text-[#FFB700]" strokeWidth={2.5} />
                             </div>
-                          </motion.div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-zinc-100 font-black text-xs uppercase tracking-wide mb-0.5">
+                                {benefit.title}
+                              </h4>
+                              <p className="text-zinc-400 text-[11px] leading-snug">
+                                {benefit.description}
+                              </p>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
 
                   {/* PRICE + CTA */}
-                  <div className="px-6 md:px-10 pb-8">
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 }}
-                      className="relative rounded-2xl overflow-hidden border border-[#FFB700]/40 bg-gradient-to-br from-[#FFB700]/10 via-[#FFB700]/[0.03] to-transparent p-6 mb-5"
+                  <div className="pb-2">
+                    <div
+                      className="p-5 bg-[#0d0d12] border border-[#FFB700]/30 relative mb-4"
+                      style={{ clipPath: CUT_BUTTON }}
                     >
-                      <div className="absolute top-0 right-0 bg-[#FFB700] text-black px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-bl-xl">
-                        Melhor Oferta
-                      </div>
                       <div className="flex items-end justify-between gap-4 flex-wrap">
                         <div>
-                          <p className="text-white/50 text-[10px] uppercase tracking-[0.2em] mb-2 font-bold">Plano Mensal</p>
+                          <span
+                            className="inline-block px-2 py-0.5 text-[8.5px] font-black uppercase tracking-widest text-black mb-1.5"
+                            style={{ clipPath: CUT_BADGE, background: '#FFB700' }}
+                          >
+                            Melhor Oferta
+                          </span>
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-xs text-white/50 font-bold">R$</span>
-                            <span className="text-5xl md:text-6xl font-black text-white tracking-tighter leading-none">9,90</span>
-                            <span className="text-white/50 text-sm font-bold mb-1">/mês</span>
+                            <span className="text-xs text-zinc-400 font-bold">R$</span>
+                            <span
+                              className="text-4xl md:text-5xl font-black text-[#EDEDEE] tracking-tight leading-none"
+                              style={{ fontFamily: '"Anton", "Arial Narrow", Impact, sans-serif' }}
+                            >
+                              9,90
+                            </span>
+                            <span className="text-zinc-400 text-xs font-bold mb-1">/mês</span>
                           </div>
-                          <p className="text-white/40 text-[11px] mt-2">Cancele quando quiser • Sem fidelidade</p>
+                          <p className="text-zinc-400 text-[11px] mt-1 font-bold">Cancele quando quiser • Sem fidelidade</p>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <div className="flex items-center gap-1.5 text-green-400 text-xs font-bold">
+
+                        <div className="flex flex-col items-end gap-1.5 text-xs font-bold">
+                          <div className="flex items-center gap-1.5 text-emerald-400">
                             <CheckCircle className="w-3.5 h-3.5" />
                             <span>Acesso Imediato</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-white/50 text-xs font-bold">
-                            <Lock className="w-3 h-3" />
+                          <div className="flex items-center gap-1.5 text-zinc-400">
+                            <Lock className="w-3.5 h-3.5" />
                             <span>Pagamento Seguro</span>
                           </div>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
 
                     <motion.button
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.65 }}
-                      onClick={handleBuyVip}
-                      disabled={loading}
                       whileHover={{ scale: loading ? 1 : 1.01 }}
                       whileTap={{ scale: loading ? 1 : 0.98 }}
-                      className="relative w-full py-4 rounded-xl font-black text-sm md:text-base uppercase tracking-wider text-black transition-all disabled:opacity-60 disabled:cursor-wait flex items-center justify-center gap-2.5 overflow-hidden group"
+                      onClick={handleBuyVip}
+                      disabled={loading}
+                      className="w-full relative p-[1px] cursor-pointer shadow-lg disabled:opacity-50"
                       style={{
-                        background: 'linear-gradient(135deg, #FFB700 0%, #FFD700 50%, #FFB700 100%)',
-                        boxShadow: '0 10px 40px -10px rgba(255, 183, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.3)',
+                        clipPath: CUT_BUTTON,
+                        background: 'linear-gradient(135deg, #FFB700, #FFE082, #FF9500)',
+                        boxShadow: '0 0 30px -5px rgba(255,183,0,0.5)',
                       }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                      {loading ? (
-                        <>
-                          <Loader size={18} className="animate-spin" />
-                          <span>Processando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Crown className="w-5 h-5 fill-black" strokeWidth={2.5} />
-                          <span>Assinar VIP Agora</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      )}
+                      <div
+                        className="w-full py-4 px-5 flex items-center justify-center gap-2.5 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader size={18} className="animate-spin" />
+                            <span>Processando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Crown className="w-5 h-5 fill-black" strokeWidth={2.5} />
+                            <span>Assinar VIP Agora</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </div>
                     </motion.button>
 
-                    <div className="flex items-center justify-center gap-3 mt-4">
-                      <div className="flex items-center gap-1.5 text-white/30 text-[10px] font-bold uppercase tracking-wider">
+                    <div className="flex items-center justify-center gap-3 mt-3.5">
+                      <div className="flex items-center gap-1 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
                         <CreditCard className="w-3 h-3" />
                         <span>PIX</span>
                       </div>
                       <div className="w-1 h-1 rounded-full bg-white/20" />
-                      <div className="flex items-center gap-1.5 text-white/30 text-[10px] font-bold uppercase tracking-wider">
+                      <div className="flex items-center gap-1 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
                         <Lock className="w-3 h-3" />
                         <span>100% Seguro</span>
                       </div>
                       <div className="w-1 h-1 rounded-full bg-white/20" />
-                      <div className="flex items-center gap-1.5 text-white/30 text-[10px] font-bold uppercase tracking-wider">
+                      <div className="flex items-center gap-1 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
                         <Zap className="w-3 h-3" />
                         <span>Ativação Imediata</span>
                       </div>
@@ -415,149 +428,158 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                 </>
               ) : (
                 /* PAYMENT SCREEN */
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="p-6 md:p-10"
-                >
-                  {/* Header */}
-                  <div className="text-center mb-6">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', damping: 12 }}
-                      className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/15 border border-green-500/30 mb-4"
+                <div className="py-4 text-center">
+                  <div className="mb-4">
+                    <span
+                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-black mb-2"
+                      style={{ clipPath: CUT_BADGE, background: '#FFB700' }}
                     >
-                      <QrCode className="w-8 h-8 text-green-400" strokeWidth={2.5} />
-                    </motion.div>
-                    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-2">
-                      {paymentData.method === 'pix' && paymentData.qrCode ? (
-                        <>Escaneie o <span className="text-[#FFB700]">QR Code</span></>
-                      ) : (
-                        <>Pagamento via <span className="text-[#FFB700]">Checkout</span></>
-                      )}
+                      <QrCode className="w-3 h-3" />
+                      Pagamento Seguro
+                    </span>
+                    <h3
+                      className="text-2xl md:text-3xl uppercase tracking-tight text-[#EDEDEE]"
+                      style={{ fontFamily: '"Anton", "Arial Narrow", Impact, sans-serif' }}
+                    >
+                      {paymentData.method === 'pix' && paymentData.qrCode ? 'ESCANEIE O QR CODE PIX' : 'CHECKOUT SEGURO'}
                     </h3>
-                    <p className="text-white/50 text-sm">
+                    <p className="text-zinc-400 text-xs mt-1">
                       {paymentData.method === 'pix' && paymentData.qrCode
-                        ? 'Use o app do seu banco para escanear o código'
-                        : 'Clique no botão para abrir a página segura de pagamento'}
+                        ? 'Use o aplicativo do seu banco para ler o QR Code ou copie o código abaixo'
+                        : 'Abra a página segura de pagamento para finalizar a assinatura'}
                     </p>
                   </div>
 
                   {paymentData.method === 'pix' && paymentData.qrCode ? (
                     <>
-                      {/* QR Code */}
-                      <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className="flex justify-center mb-6"
-                      >
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-[#FFB700]/30 blur-2xl rounded-3xl animate-pulse" />
-                          <div className="relative p-5 bg-white rounded-2xl border-4 border-[#FFB700]/40 shadow-2xl">
-                            <img
-                              src={
-                                paymentData.qrCode.startsWith('http') || paymentData.qrCode.startsWith('data:')
-                                  ? paymentData.qrCode
-                                  : `data:image/png;base64,${paymentData.qrCode}`
-                              }
-                              alt="QR Code PIX"
-                              className="w-56 h-56 md:w-64 md:h-64 object-contain"
-                            />
-                          </div>
+                      <div className="flex justify-center mb-5">
+                        <div
+                          className="p-3 bg-white border-2 border-[#FFB700] shadow-xl"
+                          style={{ clipPath: CUT_BUTTON }}
+                        >
+                          <img
+                            src={
+                              paymentData.qrCode.startsWith('http') || paymentData.qrCode.startsWith('data:')
+                                ? paymentData.qrCode
+                                : `data:image/png;base64,${paymentData.qrCode}`
+                            }
+                            alt="QR Code PIX"
+                            className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
+                          />
                         </div>
-                      </motion.div>
+                      </div>
 
                       {paymentData.brCode && (
-                        <div className="mb-6">
-                          <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2.5 text-center font-bold">
-                            Ou copie o código PIX
-                          </p>
+                        <div className="mb-5 max-w-lg mx-auto">
                           <div className="flex items-stretch gap-2">
-                            <div className="flex-1 p-3 rounded-xl border border-white/10 bg-black/40 text-left min-w-0">
-                              <code className="text-white/60 text-xs font-mono break-all line-clamp-2 block">
-                                {paymentData.brCode.substring(0, 60)}...
+                            <div
+                              className="flex-1 p-3 bg-black/60 border border-white/10 text-left min-w-0"
+                              style={{ clipPath: CUT_BADGE }}
+                            >
+                              <code className="text-zinc-300 text-xs font-mono break-all line-clamp-1 block">
+                                {paymentData.brCode}
                               </code>
                             </div>
-                            <button
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.97 }}
                               onClick={handleCopyCode}
-                              className="px-4 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2 flex-shrink-0"
+                              className="px-4 py-2 relative p-[1px] cursor-pointer"
+                              style={{
+                                clipPath: CUT_BUTTON,
+                                background: 'linear-gradient(135deg, #FFB700, #FFE082)',
+                              }}
                             >
-                              {copied ? (
-                                <>
-                                  <CheckCircle className="w-4 h-4 text-green-400" />
-                                  <span className="text-green-400 font-bold text-xs">Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-4 h-4" />
-                                  <span className="font-bold text-xs hidden sm:inline">Copiar</span>
-                                </>
-                              )}
-                            </button>
+                              <div
+                                className="h-full px-3 flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-black bg-[#FFB700]"
+                                style={{ clipPath: CUT_BUTTON }}
+                              >
+                                {copied ? (
+                                  <>
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>Copiado!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5" />
+                                    <span>Copiar</span>
+                                  </>
+                                )}
+                              </div>
+                            </motion.button>
                           </div>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="mb-6">
-                      <p className="text-white/50 text-sm mb-4 text-center">
-                        Clique abaixo para abrir a página segura. Lá você escolhe PIX, cartão ou outro método.
-                      </p>
+                    <div className="mb-5 max-w-md mx-auto">
                       <a
                         href={paymentData.paymentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2.5 w-full py-4 rounded-xl font-black text-sm uppercase tracking-wider text-black transition-all hover:scale-[1.01] active:scale-[0.98]"
-                        style={{
-                          background: 'linear-gradient(135deg, #FFB700 0%, #FFD700 50%, #FFB700 100%)',
-                          boxShadow: '0 10px 40px -10px rgba(255, 183, 0, 0.5)',
-                        }}
+                        className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-5 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
+                        style={{ clipPath: CUT_BUTTON }}
                       >
-                        <Crown className="w-5 h-5 fill-black" strokeWidth={2.5} />
-                        Abrir Página de Pagamento
+                        <Crown className="w-4 h-4" />
+                        <span>Abrir Página de Pagamento</span>
                       </a>
                     </div>
                   )}
 
-                  {/* Status */}
-                  <div className="p-4 rounded-xl border border-[#FFB700]/20 bg-[#FFB700]/[0.04] mb-5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#FFB700]/10 border border-[#FFB700]/30 flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-5 h-5 text-[#FFB700] animate-pulse" />
+                  <div
+                    className="p-3.5 bg-[#0d0d12] border border-[#FFB700]/20 max-w-lg mx-auto mb-4 flex items-center gap-3 text-left"
+                    style={{ clipPath: CUT_BUTTON }}
+                  >
+                    <div
+                      className="w-8 h-8 bg-[#16161f] border border-[#FFB700]/30 flex items-center justify-center shrink-0 text-[#FFB700]"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      <Clock className="w-4 h-4 animate-pulse" />
                     </div>
-                    <div className="text-left flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm">Aguardando pagamento</p>
-                      <p className="text-white/50 text-xs">Após pagar, clique abaixo para ativar seu VIP</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-zinc-200 font-bold text-xs">Aguardando confirmação do PIX</p>
+                      <p className="text-zinc-400 text-[11px]">Após o pagamento, o VIP é ativado automaticamente</p>
                     </div>
                   </div>
 
-                  {/* Verify Button */}
-                  <button
-                    onClick={() => checkPayment(false)}
-                    disabled={checkingPayment}
-                    className="w-full py-3.5 mb-2 rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/30 text-[#FFB700] hover:bg-[#FFB700]/20 hover:border-[#FFB700]/50 font-black text-sm uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
-                  >
-                    {checkingPayment ? (
-                      <>
-                        <Loader size={16} className="animate-spin" />
-                        Verificando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Já paguei — verificar agora
-                      </>
-                    )}
-                  </button>
+                  <div className="max-w-lg mx-auto flex flex-col gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => checkPayment(false)}
+                      disabled={checkingPayment}
+                      className="w-full relative p-[1px] cursor-pointer disabled:opacity-50"
+                      style={{
+                        clipPath: CUT_BUTTON,
+                        background: 'linear-gradient(135deg, #FFB700, #FFE082)',
+                      }}
+                    >
+                      <div
+                        className="w-full py-3 px-4 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider text-black bg-[#FFB700] hover:brightness-105 transition-all"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        {checkingPayment ? (
+                          <>
+                            <Loader size={14} className="animate-spin" />
+                            <span>Verificando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Já paguei — verificar agora</span>
+                          </>
+                        )}
+                      </div>
+                    </motion.button>
 
-                  <button
-                    onClick={handleClose}
-                    className="w-full py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white/50 hover:text-white hover:bg-white/5 font-bold text-xs uppercase tracking-wider transition-all"
-                  >
-                    Fechar
-                  </button>
-                </motion.div>
+                    <button
+                      onClick={handleClose}
+                      className="w-full py-2.5 text-zinc-400 hover:text-zinc-200 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </motion.div>
