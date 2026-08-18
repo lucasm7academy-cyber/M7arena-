@@ -18,6 +18,11 @@ import { guardarSenhaSala } from '../lib/salaSenhaStore';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
+import {
+  ModalLoginVitrine,
+  ModalVincularConta,
+  ModalSenhaSala,
+} from '../components/partidas/ModaisElegibilidade';
 
 // ⚡ OTIMIZAÇÃO: Cache em memória de 30s para lista de salas.
 // Evita refetch quando usuário navega Lobby ↔ Jogar rapidamente.
@@ -144,58 +149,6 @@ const modosCards = [
 ];
 
 // ============================================
-// MODAL SENHA
-// ============================================
-
-const ModalSenha = ({ nome, onClose, onConfirm, erro }: any) => {
-  const [senha, setSenha] = useState('');
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-        className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-        style={{
-          background: 'rgba(13, 13, 13, 0.8)',
-          border: '2px solid #FFB700',
-          boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
-          backdropFilter: 'blur(16px)'
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Lock className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-white font-black text-lg uppercase tracking-tight">Sala Privada</h2>
-          </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <p className="text-white/60 text-sm">Esta sala é privada. Digite a senha que o criador definiu para <span className="text-white font-bold">{nome}</span>:</p>
-          <input
-            type="password" value={senha} onChange={(e) => setSenha(e.target.value)}
-            placeholder="Digite a senha"
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-yellow-500/50"
-            autoFocus
-          />
-          {erro && <p className="text-red-400 text-xs">{erro}</p>}
-          <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10">Cancelar</button>
-            <button onClick={() => onConfirm(senha)} className="flex-1 py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400">Entrar</button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// ============================================
 // VITRINE PÚBLICA (design v3 §2.1/§11)
 // ============================================
 
@@ -209,114 +162,6 @@ const ESTADO_LABEL: Record<string, { label: string; cls: string }> = {
   aguardando_revisao: { label: 'Em análise', cls: 'text-cyan-400 border-cyan-400/30 bg-cyan-400/10' },
   encerrada: { label: 'Encerrada', cls: 'text-white/40 border-white/10 bg-white/5' },
   cancelada: { label: 'Cancelada', cls: 'text-red-400 border-red-400/30 bg-red-400/10' },
-};
-
-// Modal de cadastro/login com a sala ao fundo — visita vê a vitrine, clicar em
-// qualquer ação cai aqui (o /jogar é rota pública; /login tem aba de cadastro).
-const ModalLoginVitrine = ({ onClose }: any) => {
-  const navigate = useNavigate();
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-        className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-        style={{
-          background: 'rgba(13, 13, 13, 0.9)',
-          border: '2px solid #FFB700',
-          boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
-          backdropFilter: 'blur(16px)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <LogIn className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-white font-black text-lg uppercase tracking-tight">Crie sua conta para jogar</h2>
-          </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <p className="text-white/60 text-sm leading-relaxed">
-            As salas valendo <span className="text-yellow-400 font-black">MC</span> são a vitrine da arena. Crie sua conta grátis e ocupe uma vaga antes que a sala encha.
-          </p>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Criar conta gratuita
-            </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10 flex items-center justify-center gap-2"
-            >
-              <LogIn className="w-4 h-4" /> Já tenho conta — entrar
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// Modal de aviso: tentou criar sala sem conta Riot vinculada → oferece o
-// botão de vincular (a elegibilidade do servidor exige users.riot_id).
-const ModalVincularConta = ({ onClose, motivo }: any) => {
-  const navigate = useNavigate();
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-        className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-        style={{
-          background: 'rgba(13, 13, 13, 0.9)',
-          border: '2px solid #FFB700',
-          boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
-          backdropFilter: 'blur(16px)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Gamepad2 className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-white font-black text-lg uppercase tracking-tight">Vincule sua conta Riot</h2>
-          </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <p className="text-white/60 text-sm leading-relaxed">
-            {motivo || 'Para criar sala e participar das partidas, você precisa vincular sua conta Riot.'}
-          </p>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => navigate('/vincular')}
-              className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2"
-            >
-              <Gamepad2 className="w-4 h-4" /> Vincular Conta
-            </button>
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10"
-            >
-              Agora não
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
 };
 
 // ============================================
@@ -1255,7 +1100,7 @@ const Jogar = () => {
 
       <AnimatePresence>
         {showSenhaModal && (
-          <ModalSenha
+          <ModalSenhaSala
             nome={showSenhaModal.nome}
             onClose={() => { setShowSenhaModal(null); setErroSenha(''); }}
             onConfirm={(senha: string) => {

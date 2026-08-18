@@ -8,7 +8,11 @@ import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { useSalaChat } from '../hooks/useSalaChat';
 import { VagaSlot } from '../components/partidas/VagaSlot';
-import { ModaisElegibilidade } from '../components/partidas/ModaisElegibilidade';
+import {
+    ModaisElegibilidade,
+    ModalLoginVitrine,
+    ModalVincularConta,
+} from '../components/partidas/ModaisElegibilidade';
 import ChatDaSala from '../components/partidas/ChatDaSala';
 import { ROLE_CONFIG, type Role, traduzirErroSala } from '../api/salamod1';
 import { api } from '../lib/api';
@@ -1099,92 +1103,17 @@ ${link}`;
             {/* AVISO ANTECIPADO DE RIOT ID AO CLICAR NA VAGA */}
             <AnimatePresence>
                 {showAvisoRiotId && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-                        onClick={() => setShowAvisoRiotId(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-                            style={{
-                                background: 'rgba(13, 13, 13, 0.9)',
-                                border: '2px solid #FFB700',
-                                boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
-                                backdropFilter: 'blur(16px)',
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <LinkIcon className="w-5 h-5 text-blue-400" />
-                                    <h2 className="text-white font-black text-base uppercase tracking-tight">Riot ID obrigatório</h2>
-                                </div>
-                                <button onClick={() => setShowAvisoRiotId(false)} className="text-white/30 hover:text-white">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <p className="text-white/70 text-sm leading-relaxed">
-                                    Esta sala vale <b className="text-white">MC</b>. Vincule seu <b className="text-white">Riot ID</b> para jogar — é ele que garante sua elegibilidade e amarra o print de resultado ao seu perfil.
-                                </p>
-                                <button onClick={() => { setShowAvisoRiotId(false); navigate('/vincular'); }}
-                                    className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2">
-                                    <LinkIcon className="w-4 h-4" /> Vincular Riot ID
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
+                    <ModalVincularConta
+                        onClose={() => setShowAvisoRiotId(false)}
+                        motivo="Esta sala vale MC. Vincule seu Riot ID (Nick #TAG) para jogar — é ele que valida sua elegibilidade e amarra o resultado oficial ao seu perfil."
+                    />
                 )}
             </AnimatePresence>
 
             {/* AVISO DE LOGIN AO CLICAR NA VAGA SEM ESTAR LOGADO */}
             <AnimatePresence>
                 {showAvisoLogin && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-                        onClick={() => setShowAvisoLogin(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-                            style={{
-                                background: 'rgba(13, 13, 13, 0.9)',
-                                border: '2px solid #FFB700',
-                                boxShadow: '0 0 45px -10px rgba(255, 183, 0, 0.4)',
-                                backdropFilter: 'blur(16px)',
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <AlertTriangle className="w-5 h-5 text-yellow-400" />
-                                    <h2 className="text-white font-black text-base uppercase tracking-tight">Faça login para entrar na vaga</h2>
-                                </div>
-                                <button onClick={() => setShowAvisoLogin(false)} className="text-white/30 hover:text-white">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <p className="text-white/70 text-sm leading-relaxed">
-                                    Você pode assistir a sala, mas para ocupar uma vaga e jogar precisa estar logado.
-                                </p>
-                                <button
-                                    onClick={() => { setShowAvisoLogin(false); navigate('/login'); }}
-                                    className="w-full py-3 rounded-xl bg-yellow-500 text-black text-sm font-black hover:bg-yellow-400 flex items-center justify-center gap-2"
-                                >
-                                    <AlertTriangle className="w-4 h-4" /> Entrar / Criar conta
-                                </button>
-                                <button
-                                    onClick={() => setShowAvisoLogin(false)}
-                                    className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-bold hover:bg-white/10"
-                                >
-                                    Continuar assistindo
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
+                    <ModalLoginVitrine onClose={() => setShowAvisoLogin(false)} />
                 )}
             </AnimatePresence>
 

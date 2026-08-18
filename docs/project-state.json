@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-16T07:35:26.814Z",
+  "updatedAt": "2026-08-18T03:34:59.754Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1713,6 +1713,15 @@
       "decision": "match_codes ganha coluna mode (migration 0020): os 2 códigos BR050c8-* são marcados mode='1v1' (exclusivos do x1/ARAM 1v1) e os 6 códigos BR04fa2-* ficam mode NULL (genéricos, servem 5v5/aram/time_vs_time). atribuirCodigoPartida filtra por modo: 1v1 só pega mode='1v1'; demais modos só pegam mode IS NULL. Nenhum modo cruza para a fila do outro.",
       "rationale": "Os códigos BR04fa2-* que o usuário forneceu antes são Summoner's Rift 5v5 Tournament Draft (não funcionam num 1v1 ARAM). O x1 joga em Howling Abyss com códigos próprios (BR050c8-*). Antes o pool era único e uma sala 1v1 podia pegar um código 5v5 (quebra o jogo). Separação por mode com rodízio LRU preservado (ADR-040) dentro de cada fila. Decisão direta do usuário em conversa.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-043",
+      "date": "2026-08-18T02:29:02.515Z",
+      "author": "deepseek",
+      "title": "Código de partida e verificação: só participante ou staff (streamer/organizador/admin/proprietário)",
+      "decision": "O código da partida (codigo_partida) e o botão/disparo de verificação ficam restritos a quem está na sala (participante) OU staff (streamer, organizador, admin, proprietário). O código é redigido (null) no shape para anônimos e não-participantes — tanto no detail quanto na listagem — e o POST /matches/:id/verificar aceita staff além do participante confirmado.",
+      "rationale": "Pessoas comuns mal-intencionadas entravam na sala sem fazer parte e copiavam o código para ocupar vaga no lobby do jogo. Staff precisa ver o código e auditar a partida (entrar no jogo), por isso streamer/organizador/admin/proprietário continuam com acesso mesmo fora da vaga. A regra mora no servidor; o botão escondido no front é só UX.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1772,88 +1781,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-14T22:55:42.992Z",
-      "agent": "deepseek",
-      "summary": "Troquei a borda dos 3 heroes para o estilo \"cortado\" (clip-path 12px) usado nos cards de campeonato/vagas sala: Lobby.tsx (hero), campeonatos.tsx (BANNER PRINCIPAL) e Jogar.tsx (HERO BANNER). Padrão: frame externo p-[1px] bg-white/10 com clipPath polygon(12px...) + div interna bg-black com clipPath 11.4px (borda 0,6px), substituindo rounded-*/border-white/10. npx tsc --noEmit exit 0 e npx vite build ✓ built in 14.59s. Pendente validação visual do usuário no dev.m7arena.pro.",
-      "touched": [
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/campeonatos.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-14T23:15:34.707Z",
-      "agent": "deepseek",
-      "summary": "Sidebar: ícone do item 'Jogar' trocado de Gamepad2 (lucide-react) para AiOutlineAim (react-icons/ai) em web/src/components/layout/LayoutWrapper.tsx. Import de Gamepad2 removido (ficou sem uso). npx tsc --noEmit (web) → exit 0.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-14T23:20:01.902Z",
-      "agent": "deepseek",
-      "summary": "Ícone AiOutlineAim no Jogar: commitado (42ff5ad), push na branch feat/advertencias-ban, merge na main do VPS (fast-forward), rebuild do nginx (vite build ✓ 11.49s) e site responde 200 em dev.m7arena.pro. GitHub main sincronizado: origin/main atualizado de 45dc8cd para 42ff5ad (push vps/main:main) — o VPS não tem credencial de push (fatal could not read Username), então o sync foi feito da máquina local.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-14T23:34:52.953Z",
-      "agent": "deepseek",
-      "summary": "Borda cortada (clip-path 12px, padrão dos cards de campeonato/vagas sala) aplicada em TODOS os cards da tela de perfil: header, Carteira, Punições (CarteiraEStrikes), Minha Equipe, E-mail de Acesso, EloBlocks (solo/flex), Performance e Conexões Sociais. Criei componente reutilizável web/src/components/ui/CutCard.tsx (fundo absoluto clipado + conteúdo fluindo sem clip, preservando dropdowns de lane do header e overflow-hidden onde havia blur decorativo). tsc --noEmit exit 0, vite build ✓ 6.93s, deploy na VPS feito (nginx rebuild, index-CHueIp44.js servido, site 200). Pendente validação visual do usuário.",
-      "touched": [
-        "web/src/pages/perfil.tsx",
-        "web/src/components/perfil/CarteiraEStrikes.tsx",
-        "web/src/components/ui/CutCard.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T01:41:45.934Z",
-      "agent": "deepseek",
-      "summary": "BUG CORRIGIDO (400 estado_invalido eterno na contestação): disputa e52e6eb1 da sala #28 ficou aberta quando a sala foi cancelada via /revisao/:id/decidir — essa rota não fechava disputas órfãs, e a rota /revisao/disputas/:id/decidir exigia sala 'encerrada' (revisao.ts:215), devolvendo 400 para sempre. Correção em api/src/routes/revisao.ts: (1) decisão de disputa trata sala 'cancelada' como já revertida — fecha a disputa sem reverter de novo; (2) winnerSide='cancel' fecha disputas abertas da sala na mesma transação. npx tsc --noEmit exit 0; 22/22 testes (disputas+revisao+escrow) passam. Commit a3f452a, push, deploy VPS (rebuild app só), site 200.",
-      "touched": [
-        "api/src/routes/revisao.ts"
-      ]
-    },
-    {
-      "at": "2026-08-15T02:02:26.180Z",
-      "agent": "deepseek",
-      "summary": "(1) Cargos corrigido: 'Erro ao carregar usuários' era 414 — byIds montava URL com 232 UUIDs (~8.5KB) e o nginx estoura o request line. byIds agora usa POST body (players.ts aceita POST /by-ids). (2) Cargo streamer confirmado: One Lucks (d6a76e2c, 78787878one@gmail.com). (3) 'Erro ao iniciar transmissão' corrigido: Streamers.tsx/useTransmissoesAtivas falavam com supabase.from('transmissoes') e a tabela não existia. Swap completo: tabela transmissoes (migration 0016 manual, padrão 0014/0015), rota /api/streams, SDK api.streams, front trocado. verify-swap: transmissoes sai (restam 9 = recrutamentos/votos_jogos/resultados_partidas). Deploy VPS: migration aplicada, app+nginx rebuild, site 200. Commit b880e53.",
-      "touched": [
-        "web/src/lib/api.ts",
-        "web/src/pages/AdminCargos.tsx",
-        "web/src/pages/Streamers.tsx",
-        "web/src/hooks/useTransmissoesAtivas.ts",
-        "api/src/routes/players.ts",
-        "api/src/routes/streams.ts",
-        "api/src/index.ts",
-        "db/schema/conteudo.ts",
-        "db/migrations/0016_transmissoes.sql"
-      ]
-    },
-    {
-      "at": "2026-08-15T02:05:58.637Z",
-      "agent": "deepseek",
-      "summary": "Partidas finalizadas com dados reais da Riot. Descoberto: match_results estava vazio (verificação automática nunca salvou payload) e o front só mostrava badge A/B/empate. Puxei da Riot o match real BR1_3271585963 (tournamentCode BR04fa2-dd6e4394, sala 30 5v5, 32min) via script na VPS, corrigi winner_side da sala 30 para 'blue' (o real — banco tinha 'red' de outro caminho) e inseri match_results com payload completo. API: match-shape ganhou resumoRiot() e o shape de salas encerradas agora devolve resultado_riot (vencedor, duração, placar kills/ouro, participantes com KDA/campeão/cs); jogadores do shape ganharam puuid. Front: ResultadoPartida mostra placar + duração + KDA por jogador (CardJogador ganhou kda), card de finalizadas do Jogar mostra placar real. tsc+build ok, deploy na VPS (app+nginx). Pendente validação visual do usuário em /5v5/30 e Jogar→Partidas Finalizadas.",
-      "touched": [
-        "api/src/lib/match-shape.ts",
-        "api/src/routes/matches.ts",
-        "web/src/components/partidas/ResultadoPartida.tsx",
-        "web/src/components/partidas/CardJogador.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/api/salamod1.ts"
-      ]
-    },
-    {
-      "at": "2026-08-15T02:33:30.013Z",
-      "agent": "gemini",
-      "summary": "Tela de partidas finalizadas ajustada: layout direto na tela (sem hub circular claro, gap proporcional e header de resultado centralizado), cards de vagas mantidos com dimensões e estilos idênticos, exibindo o ícone do campeão escolhido no lugar do avatar e KDA + CS (farm) com fallback resiliente por PUUID/nome. TypeScript e build passando com sucesso.",
-      "touched": [
-        "web/src/components/partidas/VagaSlot.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
     {
       "at": "2026-08-15T02:57:35.586Z",
       "agent": "gemini",
@@ -2062,6 +1989,88 @@
       "summary": "Commitado (cd40a84 + fix 3121834) e deployado o chat de sala (ADR-040) na VPS dev.m7arena.pro. Fluxo: commit em feat/chat-sala, push origin+vps, merge ff na VPS main, migration 0018 aplicada via psql (CREATE TABLE + FKs + índices, ON_ERROR_STOP=1 sem erro), rebuild app+nginx, up -d. Site 200, realtime ouvindo. Corrigi bug de deploy: purge do cron usava const [purgadas] (destructuring) -> TypeError 'reading length' quando vazio; troquei para const purgadas e redeployei. __drizzle_migrations NAO existe na VPS (migrations sempre via psql), entao o item de reconciliacao da revisao final e moot. PENDENTE: usuario testar manualmente com 2 contas (envio/recebimento, autoexclusao 5min, ban/Riot, sala encerrada sem chat).",
       "touched": [
         "api/src/cron.ts"
+      ]
+    },
+    {
+      "at": "2026-08-16T07:37:51.440Z",
+      "agent": "deepseek",
+      "summary": "Fila de tournament codes por modo (ADR-042): match_codes ganhou coluna mode (migration 0020). Os 2 códigos BR050c8-* (ARAM 1v1/x1) marcados mode='1v1'; os 6 BR04fa2-* (Summoner's Rift 5v5 Tournament Draft) ficam mode NULL (genéricos para 5v5/aram/time_vs_time). atribuirCodigoPartida em match-flow.ts filtra por modo (isNull para genérico). Testes: suíte completa 106/106 pass, incluindo novo teste de isolamento por modo em estados.test.ts; migration validada em Postgres limpo (PGlite) e aplicada na VPS (8 códigos, 2 com mode 1v1). App rebuildado na VPS, health 200, filtro confirmado no container. Validação do win condition 1v1 (first blood / 100 CS) já existia e está coberta por testes (verificar-partida.test.ts). Push e23941b, merge ff na VPS.",
+      "touched": [
+        "db/schema/matches.ts",
+        "db/migrations/0020_separar_fila_codigos_x1.sql",
+        "api/src/lib/match-flow.ts",
+        "api/test/estados.test.ts",
+        "api/package.json"
+      ]
+    },
+    {
+      "at": "2026-08-16T19:21:37.482Z",
+      "agent": "deepseek",
+      "summary": "Bug: todos os membros de time apareciam como TOP na TimePage. Causa raiz dupla: (1) transform-times.js copiava m.lane do Supabase (TOP/JG/MID/...) direto para role_slot, que espera vocabulário novo (top/jungle/mid/...); (2) slotToLegacy em api/src/routes/teams.ts não reconhecia o formato legado e caía no fallback 'TOP'. Correção: transform traduz lane→role_slot; API aceita os dois formatos. Dados normalizados na VPS via UPDATE (112 linhas), nenhum time com duplicidade nas vagas principais. Commit fb582bf, deploy na VPS (build app + recreate nginx pq ficou apontando pro IP antigo do app). Site 200, API devolve lanes corretas.",
+      "touched": [
+        "api/src/routes/teams.ts",
+        "scripts/migrate/transform-times.js"
+      ]
+    },
+    {
+      "at": "2026-08-17T04:44:23.983Z",
+      "agent": "deepseek",
+      "summary": "Task 1 do recurso \"reconciliar handle Riot\" concluída: criado api/src/lib/reconciliar-handles.ts (transcrição verbatim do brief) + api/test/reconciliar-handles.test.ts. TDD: RED (ERR_MODULE_NOT_FOUND) → GREEN (4/4). Typecheck exit 0. Suíte completa 110/110. Único desvio: brief usava before/after com PGlite compartilhado, mas o módulo varre todas as contas de lol e os counts vazavam entre testes; troquei para beforeEach/afterEach no teste (módulo e asserts permanecem 100% verbatim). Nada commitado (regra do projeto). Relatório em .superpowers/sdd/task-1-report.md.",
+      "touched": [
+        "api/src/lib/reconciliar-handles.ts",
+        "api/test/reconciliar-handles.test.ts"
+      ]
+    },
+    {
+      "at": "2026-08-17T05:17:12.346Z",
+      "agent": "deepseek",
+      "summary": "Feature reconciliar handle Riot (cron 3 dias) em andamento via SDD na branch feat/reconciliar-handle-riot. Spec+plano em docs/superpowers/. Motivo: jogador renomeou no LoL, PUUID valida mas nome (game_accounts.handle) fica velho. Task1 DONE+review aprovado: api/src/lib/reconciliar-handles.ts (runReconciliacaoHandles DI, lote 3, atualiza handle+users.riot_id, falha preserva) + teste 4/4. Task2 IMPLEMENTADA: timer 3 dias no api/src/index.ts. Evidencia: tsc exit 0, suite 110/110, smoke tsx (docker local desligado). PROXIMO: review Task2 (diff .superpowers/sdd/review-task2-handles.diff; reviewer cancelado), depois COMMIT+VPS conforme pedido do usuario (commit branch, push origin+VPS, merge ff, rebuild app; sem migration). Ledger: .superpowers/sdd/progress.md.",
+      "touched": [
+        "api/src/lib/reconciliar-handles.ts",
+        "api/test/reconciliar-handles.test.ts",
+        "api/src/index.ts"
+      ]
+    },
+    {
+      "at": "2026-08-18T02:29:11.464Z",
+      "agent": "deepseek",
+      "summary": "Feature: código de partida + verificar restritos a participante ou staff. Server: shapeSala redige codigo_partida=null para anônimos/não-participantes (detail + listagem); POST /matches/:id/verificar aceita staff (streamer/organizador/admin/proprietario) além do participante confirmado, via novo helper eStaffSala em lib/acesso-sala.ts. Front SalaMod1: botões Copiar Código e Verificar Partida só para jogadorAtual ou staff. Verificação: api tsc exit 0, web tsc exit 0, vite build ok, suíte 110/110. Commit 22b1191 (feat/sala-permissoes), push origin+vps, merge ff na VPS main, rebuild app+nginx+realtime. Live: health/home/lista 200; sala 57 (partida_iniciada, tem código real) → anônimo recebe codigo_partida null, participante (sessão temporária) recebe o código BR04fa2-*. ADR-043 registrada. ATENÇÃO: trabalho do outro agente (reconciliar-handle-riot: index.ts timer, lib/reconciliar-handles.ts, teste, specs) ficou NÃO commitado no working tree — não é meu, deixei intacto.",
+      "touched": [
+        "api/src/lib/acesso-sala.ts",
+        "api/src/routes/matches.ts",
+        "api/src/routes/matches-actions.ts",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T02:56:44.670Z",
+      "agent": "deepseek",
+      "summary": "Continuou e finalizou a feature \"reconciliar handle Riot (cron 3 dias)\". Review da Task 2 (timer no index.ts) aprovado — verbatim vs spec. Verificação: npx tsc --noEmit -p api/tsconfig.json → exit 0; npx tsx --test \"api/test/*.test.ts\" → 110/110. Commit 3d98fab na branch feat/reconciliar-handle-riot (rebaseada em 22b1191 = VPS main da época, para permitir ff-only), com 5 arquivos: index.ts (timer), lib/reconciliar-handles.ts, test/reconciliar-handles.test.ts, docs/superpowers plan+spec. Push origin+vps, merge --ff-only na VPS main, docker compose build app + up -d app. Live: /api/health 200; logs do app mostram runReconciliacaoHandles executando no boot (429 da dev key Riot — esperado, BLK-006; preserva handle velho sem crash). Sem migration. Nenhum filtro external_id no SELECT é ok: coluna é NOT NULL no schema. Ficou dirty no working tree: docs/project-state.json, docs/status-log.jsonl, statusdoprojeto.md (gerados pelo MCP, não fazem parte do feature).",
+      "touched": [
+        "api/src/index.ts",
+        "api/src/lib/reconciliar-handles.ts",
+        "api/test/reconciliar-handles.test.ts",
+        "docs/superpowers/plans/2026-08-17-reconciliar-handle-riot.md",
+        "docs/superpowers/specs/2026-08-17-reconciliar-handle-riot-design.md"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:31:05.100Z",
+      "agent": "gemini",
+      "summary": "Redesign completo e elevação visual dos modais e popups da plataforma (ModaisElegibilidade, ModalLoginVitrine, ModalVincularConta, ModalSenhaSala) para o padrão visual supremo da M7 Arena (vidro escuro #0a0a0c, iluminação radial âmbar/azul, neon top accent, bordas douradas #FFB700, ícones 3D com halo e CTAs de alta conversão). Evidência: npx tsc --noEmit (exit 0) e npm run build (exit 0).",
+      "touched": [
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:34:59.754Z",
+      "agent": "deepseek",
+      "summary": "Corrigiu verificação 1v1 ARAM. Bug 1: buscaIdsRiot filtrava só queue=3130 (SR); partida ARAM (queue 3200) nunca achada. Agora queue pelo mapa: 1v1→3200, demais→3130. Bug 2: vencedor era por teamId (100/200), que não mapeia blue/red da vaga em custom (quem cria lobby vira 100); na sala 59 Zeu King (blue) estava teamId 200. Agora vencedor por puuid com fallback teamId. Teste novo \"lados invertidos\", suíte 111/111, tsc exit 0. Commit 6340d43, deploy VPS. Cron já resolveu sala 59 certo: blue (Zeu King) por first_blood. ATENÇÃO: trabalho não commitado de outro agente no working tree (ModaisElegibilidade.tsx, Jogar.tsx, SalaMod1.tsx — refactor de modais) deixado intacto.",
+      "touched": [
+        "api/src/lib/verificar-partida.ts",
+        "api/test/verificar-partida.test.ts"
       ]
     }
   ]
