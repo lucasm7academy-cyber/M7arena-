@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T03:47:26.588Z",
+  "updatedAt": "2026-08-18T04:10:32.431Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,67 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-15T03:16:13.105Z",
-      "agent": "gemini",
-      "summary": "Implementado suporte visual completo para partidas valendo MC (apostadas) tanto no lobby/sala ativa quanto na sala finalizada: (1) Top bar e Central Hub exibem Pote Total e Prêmio por vencedor; (2) Header de resultado exibe Pote Total e Prêmio por jogador; (3) Cards de jogadores no VagaSlot exibem badge dourada/verde de +MC para vencedores, -MC para derrotados e Desistente (-MC) para abandonos; (4) Action footer mostra resumo de ganho/perda pessoal com botão de Minha Carteira. Verificado via tsc e build.",
-      "touched": [
-        "web/src/components/partidas/VagaSlot.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T03:59:01.669Z",
-      "agent": "gemini",
-      "summary": "Ajustada a responsividade mobile das salas (SalaMod1 e VagaSlot): (1) Cards de jogadores com altura confortável (60px no mobile em vez de ficarem espremidos), com avatares/ícones de campeão 40x40px nítidos e fontes legíveis; (2) Largura padronizada e centralizada (max-w-[440px] centralizado); (3) Display central no fluxo vertical responsivo do mobile entre os times com proporção circular perfeita (84vw max 340px); (4) Header de resultado da partida finalizada centralizado e adaptado a telas pequenas. Verificado via tsc e build.",
-      "touched": [
-        "web/src/components/partidas/VagaSlot.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T04:03:32.178Z",
-      "agent": "gemini",
-      "summary": "Ajustado layout sequencial no eixo Y para telas mobile em SalaMod1.tsx: (1) O conteúdo agora flui de cima para baixo com espaçamento sequencial natural (sem centralização vertical no Y) e centralização perfeita no eixo X; (2) Botão de 'Voltar ao Lobby' e demais botões do rodapé (Minha Carteira, Confirmar, Copiar Código, Verificar) aumentados para touch-target mobile confortável com preenchimento generoso e tipografia nítida. Verificado via tsc e build.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T04:09:55.987Z",
-      "agent": "gemini",
-      "summary": "Restaurado o tamanho original e proporções do display central (hub circular) no desktop (55vmin, tela cheia com overflow-hidden e ticks arcanos alinhados), mantendo a responsividade aperfeiçoada no mobile. Verificado via tsc e build.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T04:14:26.525Z",
-      "agent": "gemini",
-      "summary": "Restaurada com precisão 1:1 toda a estrutura e proporções do display central (hub de 55vmin e anel arcano de 70vmin com ticks em -35vmin), Side Grid com gap de 70vmin/74vmin e cards de vagas em 44vmin com escala vmin pura no desktop. Verificado via tsc e build.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/components/partidas/VagaSlot.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T04:20:05.895Z",
-      "agent": "gemini",
-      "summary": "Ajuste visual no DepositModal: corrigido corte do badge 'Mais Escolhido' no DepositTab, posicionado TF de forma suave no fundo com gradiente escuro sem poluir o SaqueTab, e refinada a estética dark gold M7Arena nos botões e cards de depósito e saque.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/deposit/DepositTab.tsx",
-        "web/src/components/modals/deposit/SaqueTab.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-15T04:25:27.571Z",
-      "agent": "gemini",
-      "summary": "Corrigido o tamanho do overlay da contagem/confirmação e demais overlays em SalaMod1.tsx: adicionadas classes md:max-w-none md:max-h-none para não limitar o círculo a 340px no desktop e expandir para os 55vmin exatos do display central. Verificado via tsc e build.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-15T19:07:52.102Z",
       "agent": "gemini",
       "summary": "Implementado o card de título de Partida Finalizada em Salas no estilo Liga RK com a fonte Anton e update-strip. Rebuild e deploy executados na VPS (dev.m7arena.pro).",
@@ -2070,6 +2009,80 @@
         "web/src/components/partidas/ModaisElegibilidade.tsx",
         "web/src/pages/Jogar.tsx",
         "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:52:05.218Z",
+      "agent": "gemini",
+      "summary": "Suavização de brancos e contraste nos modais de elegibilidade e criar sala (remoção de reflexos brancos puros, aplicação de tons zinc e metálicos sólidos). Redesign visual completo do DepositModal (com abas de Depósito e Saque) e VipModal para a identidade oficial cut-edge da M7 Arena (cortes chanfrados CUT_FRAME/CUT_INNER/CUT_BUTTON, tipografia Anton, remoção de grades artificiais). Build e deploy na VPS dev.m7arena.pro concluídos com HTTP 200.",
+      "touched": [
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/modals/deposit/DepositTab.tsx",
+        "web/src/components/modals/deposit/SaqueTab.tsx",
+        "web/src/components/modals/vip/VipModal.tsx",
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/pages/Jogar.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:53:31.596Z",
+      "agent": "gemini",
+      "summary": "Correção de overflow e eliminação de rolagem horizontal desnecessária nos modais de Criar Sala e VIP (adição de overflow-x-hidden e contenção de layout). Build e deploy na VPS dev.m7arena.pro concluídos com HTTP 200.",
+      "touched": [
+        "web/src/components/modals/vip/VipModal.tsx",
+        "web/src/pages/Jogar.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:56:54.659Z",
+      "agent": "gemini",
+      "summary": "Refinamento completo de bordas contínuas em todos os cantos cortados (clip-path chamfered) dos modais (ModaisElegibilidade, ModalCriarSala, DepositModal, DepositTab, SaqueTab, VipModal), usando CutCard e pares harmonizados de polígonos (FRAME/INNER, BUTTON/INNER, BADGE/INNER) para contorno 100% nítido e ininterrupto em todas as diagonais. Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
+      "touched": [
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/modals/deposit/DepositTab.tsx",
+        "web/src/components/modals/deposit/SaqueTab.tsx",
+        "web/src/components/modals/vip/VipModal.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T03:59:13.822Z",
+      "agent": "gemini",
+      "summary": "Refinamento completo da página de Perfil / Minha Conta (perfil.tsx e CarteiraEStrikes.tsx) removendo todos os cantos arredondados (rounded-2xl, rounded-xl, rounded-lg) dos subcards e elementos internos (estatísticas de elo, top campeões, carteira, advertências, modal PIX, equipe, email e redes sociais) e aplicando o padrão angular cut-edge oficial da arena. Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
+      "touched": [
+        "web/src/pages/perfil.tsx",
+        "web/src/components/perfil/CarteiraEStrikes.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:03:49.729Z",
+      "agent": "gemini",
+      "summary": "Remoção completa de animações pesadas e lentas de escala (grow-up, scale, spring bounce e delays) nos modais de elegibilidade (ModalShell), criação de sala (ModalCriarSala), depósito (DepositModal), VIP (VipModal), perfil (perfil.tsx) e sala de partida (SalaMod1.tsx), tornando a abertura e exibição de popups instantânea, ultrarresponsiva e leve. Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
+      "touched": [
+        "web/src/components/partidas/ModaisElegibilidade.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/components/modals/deposit/DepositModal.tsx",
+        "web/src/components/modals/vip/VipModal.tsx",
+        "web/src/pages/perfil.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:06:44.256Z",
+      "agent": "gemini",
+      "summary": "Aplicação do estilo cut-edge (bordas chanfradas e contínuas) nos cards de modos de jogo, filtros de busca, cards de salas ativas/disponíveis e cards de partidas finalizadas (preservando o tom preto e branco/grayscale nas finalizadas, mas com o formato chanfrado). Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
+      "touched": [
+        "web/src/pages/Jogar.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:10:32.431Z",
+      "agent": "gemini",
+      "summary": "Redesign completo da pagina Lobby (Lobby.tsx) aplicando o padrao Cut-Edge, iluminacao de fundo e atmosfera escura. Criacao do arquivo de documentacao oficial DESIGNDOPROJETO.MD detalhando o design system, formulas de poligonos, gradientes e regras visuais.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "DESIGNDOPROJETO.MD"
       ]
     }
   ]
