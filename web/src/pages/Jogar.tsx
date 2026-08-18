@@ -165,8 +165,13 @@ const ESTADO_LABEL: Record<string, { label: string; cls: string }> = {
 };
 
 // ============================================
-// MODAL CRIAR SALA
+// MODAL CRIAR SALA (Design Cut-Edge M7 Arena)
 // ============================================
+
+const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
+const CUT_INNER = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
+const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
 
 const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial }: any) => {
   const [modo, setModo] = useState<ModoJogo>(modoInicial || '5v5');
@@ -210,161 +215,231 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-        className="relative w-full max-w-md rounded-2xl overflow-hidden max-h-[85vh] overflow-y-auto"
+        initial={{ scale: 0.94, y: 16, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 12, opacity: 0 }}
+        className="relative p-[2px] w-full max-w-md shadow-2xl transition-all max-h-[90vh] flex flex-col"
         style={{
-          background: 'rgba(13, 13, 13, 0.9)',
-          border: `2px solid ${modoInfo.cor}`,
-          boxShadow: `0 0 45px -10px ${modoInfo.cor}60`,
-          backdropFilter: 'blur(16px)'
+          clipPath: CUT_FRAME,
+          background: `linear-gradient(135deg, ${modoInfo.cor} 0%, rgba(255,255,255,0.4) 40%, ${modoInfo.cor} 70%, color-mix(in srgb, ${modoInfo.cor} 30%, #000000) 100%)`,
+          boxShadow: `0 0 50px -10px ${modoInfo.cor}60, 0 25px 50px -12px rgba(0,0,0,0.9)`
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {modoInfo.bgImage && (
-          <div 
-            className="absolute inset-0 z-0 bg-cover bg-center opacity-10 pointer-events-none transition-all duration-500"
-            style={{ backgroundImage: `url(${modoInfo.bgImage})` }}
+        <div
+          className="w-full bg-[#09090c] p-5 sm:p-6 relative overflow-y-auto custom-scrollbar flex-1"
+          style={{ clipPath: CUT_INNER }}
+        >
+          {/* Luz ambiente no topo */}
+          <div
+            className="absolute -top-12 -right-12 w-48 h-48 pointer-events-none opacity-25 blur-3xl"
+            style={{ background: modoInfo.cor }}
           />
-        )}
-        <div className="absolute inset-0 z-0 opacity-50 pointer-events-none transition-all duration-500"
-          style={{ background: `linear-gradient(to bottom, transparent, ${modoInfo.cor}20)` }}
-        />
 
-        <div className="relative z-10 px-6 py-4 border-b border-white/8 flex items-center justify-between sticky top-0 bg-black/50 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <Plus className="w-5 h-5" style={{ color: modoInfo.cor }} />
-            <h2 className="text-white font-black text-lg uppercase">Criar Sala • {modoInfo.nome}</h2>
+          {/* Botão fechar estilo botão cortado */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={onClose}
+            className="absolute top-4 right-4 p-[1px] bg-white/20 hover:bg-white/40 transition-colors z-20 cursor-pointer"
+            style={{ clipPath: CUT_BUTTON }}
+            title="Fechar"
+          >
+            <div
+              className="w-7 h-7 sm:w-8 sm:h-8 bg-[#141418] hover:bg-[#202028] flex items-center justify-center text-white/60 hover:text-white transition-colors"
+              style={{ clipPath: CUT_BUTTON }}
+            >
+              <X className="w-4 h-4" />
+            </div>
+          </motion.button>
+
+          {/* Header */}
+          <div className="flex items-center gap-3.5 mb-5 pr-8">
+            <div
+              className="relative p-[1px] shrink-0"
+              style={{
+                clipPath: CUT_BUTTON,
+                background: `linear-gradient(135deg, ${modoInfo.cor}, transparent)`
+              }}
+            >
+              <div
+                className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center bg-[#121217]"
+                style={{ clipPath: CUT_BUTTON }}
+              >
+                <Plus className="w-6 h-6" style={{ color: modoInfo.cor }} />
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <span
+                className="inline-block px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-black mb-1"
+                style={{ clipPath: CUT_BADGE, background: modoInfo.cor }}
+              >
+                {modoInfo.nome}
+              </span>
+              <h2
+                className="text-white uppercase tracking-tight text-xl sm:text-2xl leading-none truncate select-none"
+                style={{
+                  fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                  textShadow: '0 2px 10px rgba(0,0,0,0.8)',
+                  letterSpacing: '0.02em'
+                }}
+              >
+                Criar Sala
+              </h2>
+            </div>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
-        <div className="relative z-10 p-6 space-y-5">
-          <div className="space-y-2">
-            <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Nome da Sala</label>
-            <input
-              type="text" value={nome} onChange={(e) => setNome(e.target.value)}
-              placeholder={`Ex: 5x5 Personalizada`}
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-white/30"
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Nome da Sala</label>
+              <input
+                type="text" value={nome} onChange={(e) => setNome(e.target.value)}
+                placeholder={`Ex: 5x5 Personalizada`}
+                className="w-full bg-[#111116] border border-white/15 p-3 text-white text-sm focus:outline-none focus:border-[#FFB700] transition-all font-bold"
+                style={{ clipPath: CUT_BADGE }}
+              />
+            </div>
 
-          <div className="space-y-3">
-            <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Valor da Partida</label>
-            <div className="grid grid-cols-3 gap-2">
-              {OPCOES_MPOINTS.map((op) => {
-                // Backend das salas apostadas completo (P1-P4): todas as faixas
-                // ficam liberadas. A elegibilidade real roda no servidor.
-                const isLocked = false;
-                return (
+            <div className="space-y-2">
+              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Valor da Partida (M7 Coins)</label>
+              <div className="grid grid-cols-3 gap-2">
+                {OPCOES_MPOINTS.map((op) => (
                   <button
                     key={op.valor}
-                    onClick={() => !isLocked && setMpoints(op.valor)}
-                    disabled={isLocked}
-                    className={`p-2.5 rounded-xl text-center transition-all border ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                    style={
-                      mpoints === op.valor && !isLocked
-                        ? { borderColor: op.cor, background: `${op.cor}18`, color: op.cor }
-                        : { borderColor: isLocked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.05)',
-                            background: isLocked ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)',
-                            color: isLocked ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)' }
-                    }
+                    onClick={() => setMpoints(op.valor)}
+                    className="p-2.5 text-center transition-all relative p-[1px] cursor-pointer"
+                    style={{
+                      clipPath: CUT_BUTTON,
+                      background: mpoints === op.valor ? `linear-gradient(135deg, ${op.cor}, #FFFFFF)` : 'rgba(255,255,255,0.1)'
+                    }}
                   >
-                    <p className="text-xs font-black uppercase">
-                      {isLocked ? `🔒 Em breve` : `💰 ${op.valor} MC`}
-                    </p>
+                    <div
+                      className="w-full h-full py-1.5 px-2 flex items-center justify-center"
+                      style={{
+                        clipPath: CUT_BUTTON,
+                        background: mpoints === op.valor ? `${op.cor}25` : '#121217',
+                        color: mpoints === op.valor ? op.cor : 'rgba(255,255,255,0.6)'
+                      }}
+                    >
+                      <p className="text-xs font-black uppercase tracking-wider">
+                        {op.valor === 0 ? 'Casual' : `💰 ${op.valor} MC`}
+                      </p>
+                    </div>
                   </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Modo de Jogo</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.entries(MODOS_JOGO) as [ModoJogo, typeof MODOS_JOGO[ModoJogo]][]).map(([key, value]) => (
-                <button
-                  key={key}
-                  onClick={() => setModo(key)}
-                  className="p-3 rounded-xl text-left transition-all border relative overflow-hidden group"
-                  style={
-                    modo === key
-                      ? { borderColor: value.cor, background: `${value.cor}15`, color: 'white' }
-                      : { borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)' }
-                  }
-                >
-                  {value.bgImage && (
-                    <div 
-                      className={`absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-300 ${modo === key ? 'opacity-30' : 'opacity-5 group-hover:opacity-15'}`}
-                      style={{ backgroundImage: `url(${value.bgImage})` }}
-                    />
-                  )}
-                  <div className="relative z-10 flex items-center gap-2 mb-1">
-                    <span className="text-lg">{value.icone}</span>
-                    <span className="text-xs font-black uppercase tracking-tighter">{value.nome}</span>
-                  </div>
-                  <p className="relative z-10 text-[9px] font-medium opacity-60 leading-tight uppercase tracking-widest">{value.descricao}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Descrição</label>
-            <textarea
-              value={descricao} onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Ex: Duo mid, jogamos todos os dias às 20h — só entra quem leva a sério"
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm resize-none h-20"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">ELO Mínimo</label>
-              <select
-                value={eloMinimo} onChange={(e) => setEloMinimo(e.target.value)}
-                disabled={modo === 'time_vs_time'}
-                className={`w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm ${modo === 'time_vs_time' ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {OPCOES_ELO.map(elo => (
-                  <option key={elo.valor} value={elo.valor} className="bg-[#0d0d0d]">{elo.label}</option>
                 ))}
-              </select>
-              {modo === 'time_vs_time' && <p className="text-[9px] text-white/30 italic">Desativado para times</p>}
+              </div>
             </div>
+
             <div className="space-y-2">
-              <label className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Senha</label>
-              <button
-                onClick={() => setTemSenha(!temSenha)}
-                className={`w-full p-3 rounded-xl border transition-all ${temSenha ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400' : 'bg-white/5 border-white/10 text-white/40'}`}
+              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Modo de Jogo</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.entries(MODOS_JOGO) as [ModoJogo, typeof MODOS_JOGO[ModoJogo]][]).map(([key, value]) => (
+                  <button
+                    key={key}
+                    onClick={() => setModo(key)}
+                    className="p-[1px] text-left transition-all relative cursor-pointer"
+                    style={{
+                      clipPath: CUT_BUTTON,
+                      background: modo === key ? `linear-gradient(135deg, ${value.cor}, #FFFFFF)` : 'rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    <div
+                      className="w-full h-full p-2.5 relative overflow-hidden"
+                      style={{
+                        clipPath: CUT_BUTTON,
+                        background: modo === key ? `${value.cor}25` : '#121217',
+                      }}
+                    >
+                      {value.bgImage && (
+                        <div
+                          className={`absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-300 ${modo === key ? 'opacity-30' : 'opacity-10'}`}
+                          style={{ backgroundImage: `url(${value.bgImage})` }}
+                        />
+                      )}
+                      <div className="relative z-10 flex items-center gap-2 mb-1">
+                        <span className="text-base">{value.icone}</span>
+                        <span className="text-xs font-black uppercase tracking-tight text-white">{value.nome}</span>
+                      </div>
+                      <p className="relative z-10 text-[9px] font-bold text-white/50 leading-tight uppercase tracking-wider">{value.descricao}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Descrição</label>
+              <textarea
+                value={descricao} onChange={(e) => setDescricao(e.target.value)}
+                placeholder="Ex: Duo mid, jogamos todos os dias às 20h"
+                className="w-full bg-[#111116] border border-white/15 p-3 text-white text-xs resize-none h-16 focus:outline-none focus:border-[#FFB700] transition-all font-bold"
+                style={{ clipPath: CUT_BADGE }}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">ELO Mínimo</label>
+                <select
+                  value={eloMinimo} onChange={(e) => setEloMinimo(e.target.value)}
+                  disabled={modo === 'time_vs_time'}
+                  className="w-full bg-[#111116] border border-white/15 p-2.5 text-white text-xs font-bold focus:outline-none"
+                  style={{ clipPath: CUT_BADGE }}
+                >
+                  {OPCOES_ELO.map(elo => (
+                    <option key={elo.valor} value={elo.valor} className="bg-[#09090c]">{elo.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-white/40 text-[10px] uppercase tracking-widest font-black">Privacidade</label>
+                <button
+                  onClick={() => setTemSenha(!temSenha)}
+                  className={`w-full p-2.5 text-xs font-black uppercase tracking-wider transition-all border ${temSenha ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400' : 'bg-[#111116] border-white/15 text-white/50'}`}
+                  style={{ clipPath: CUT_BADGE }}
+                >
+                  {temSenha ? '🔒 Privada' : '🔓 Pública'}
+                </button>
+              </div>
+            </div>
+
+            {temSenha && (
+              <input
+                type="text" value={senha} onChange={(e) => setSenha(e.target.value)}
+                placeholder="Digite a senha"
+                className="w-full bg-[#111116] border border-white/15 p-3 text-white text-xs font-mono focus:outline-none"
+                style={{ clipPath: CUT_BADGE }}
+              />
+            )}
+
+            <div className="pt-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSubmit} disabled={loading}
+                className="w-full relative p-[1px] cursor-pointer shadow-lg disabled:opacity-50"
+                style={{
+                  clipPath: CUT_BUTTON,
+                  background: `linear-gradient(135deg, ${modoInfo.cor}, #FFFFFF, ${modoInfo.cor})`,
+                  boxShadow: `0 0 25px -5px ${modoInfo.cor}60`
+                }}
               >
-                {temSenha ? '🔒 Privada' : '🔓 Pública'}
-              </button>
+                <div
+                  className="w-full py-3.5 px-5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black transition-all"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: modoInfo.cor
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{loading ? 'Criando...' : 'Criar Sala'}</span>
+                </div>
+              </motion.button>
             </div>
           </div>
-
-          {temSenha && (
-            <input
-              type="text" value={senha} onChange={(e) => setSenha(e.target.value)}
-              placeholder="Digite a senha"
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm"
-            />
-          )}
-        </div>
-
-        <div className="relative z-10 p-6 border-t border-white/8 sticky bottom-0 bg-black/50 backdrop-blur-sm">
-          <button
-            onClick={handleSubmit} disabled={loading}
-            className="w-full py-4 rounded-xl font-black text-sm uppercase text-white transition-all hover:scale-[1.02] disabled:opacity-50"
-            style={{ background: `linear-gradient(135deg, ${modoInfo.cor}, ${modoInfo.cor}dd)` }}
-          >
-            {loading ? 'Criando...' : 'Criar Sala'}
-          </button>
         </div>
       </motion.div>
     </motion.div>
