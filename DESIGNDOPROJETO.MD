@@ -51,17 +51,17 @@ Para criar profundidade sem pesar no navegador, insere-se no topo da página:
 Exportadas e centralizadas no projeto:
 
 ```tsx
-// 1. CARDS GRANDES, MODAIS E BANNERS (Corte de 14px com borda uniforme de 1px)
+// 1. CARDS GRANDES, MODAIS E BANNERS (Corte de 14px com borda uniforme visível)
 export const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
-export const CUT_FRAME_INNER = 'polygon(10.6px 0, 100% 0, 100% calc(100% - 10.6px), calc(100% - 10.6px) 100%, 0 100%, 0 10.6px)';
+export const CUT_FRAME_INNER = 'polygon(13.8px 0, 100% 0, 100% calc(100% - 13.8px), calc(100% - 13.8px) 100%, 0 100%, 0 13.8px)';
 
-// 2. BOTÕES, SUBCARDS E HEADERS (Corte de 9px com borda uniforme de 1px)
+// 2. BOTÕES, SUBCARDS E HEADERS (Corte de 9px com borda uniforme visível)
 export const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
-export const CUT_BUTTON_INNER = 'polygon(5.6px 0, 100% 0, 100% calc(100% - 5.6px), calc(100% - 5.6px) 100%, 0 100%, 0 5.6px)';
+export const CUT_BUTTON_INNER = 'polygon(8.8px 0, 100% 0, 100% calc(100% - 8.8px), calc(100% - 8.8px) 100%, 0 100%, 0 8.8px)';
 
-// 3. BADGES, TAGS E INDICADORES (Corte de 6px com borda uniforme de 1px)
+// 3. BADGES, TAGS E INDICADORES (Corte de 6px com borda uniforme visível)
 export const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
-export const CUT_BADGE_INNER = 'polygon(2.6px 0, 100% 0, 100% calc(100% - 2.6px), calc(100% - 2.6px) 100%, 0 100%, 0 2.6px)';
+export const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
 ```
 
 ---

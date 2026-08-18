@@ -134,7 +134,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             ${isTimeA ? 'flex-row' : 'flex-row-reverse'}
                         `}
                         style={{
-                            clipPath: 'polygon(8.6px 0, 100% 0, 100% calc(100% - 8.6px), calc(100% - 8.6px) 100%, 0 100%, 0 8.6px)',
+                            clipPath: 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)',
                         }}
                     >
                         {/* Efeito extra Premium - anel pulsante */}
@@ -298,7 +298,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                 <div
                     className={`w-full h-full bg-[#050505] flex items-center justify-center gap-3 md:gap-[2.5vmin] transition-all duration-300 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}
                     style={{
-                        clipPath: 'polygon(8.6px 0, 100% 0, 100% calc(100% - 8.6px), calc(100% - 8.6px) 100%, 0 100%, 0 8.6px)',
+                        clipPath: 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)',
                     }}
                 >
                     <div className="w-10 h-10 md:w-[6vmin] md:h-[6vmin] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center group-hover:scale-103 group-hover:border-white/30 transition-all duration-300 shrink-0">

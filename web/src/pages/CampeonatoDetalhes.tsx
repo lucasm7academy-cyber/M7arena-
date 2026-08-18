@@ -113,7 +113,7 @@ const BracketMatch = ({
           className="w-full h-full bg-[#0A0A0A] flex flex-col overflow-hidden relative"
           style={{
             clipPath:
-              "polygon(8.6px 0, 100% 0, 100% calc(100% - 8.6px), calc(100% - 8.6px) 100%, 0 100%, 0 8.6px)",
+              "polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)",
           }}
         >
           {/* Time A */}
