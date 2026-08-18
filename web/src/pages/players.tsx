@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  * 
  * ✅ VERSÃO OTIMIZADA - players.tsx
+ * - Design System Cut-Edge Oficial M7 Arena
+ * - Dual Container Cut-Edge nos Cards (VIP e não-VIP)
  * - Elo via cache do banco (sem Riot API)
  * - Contagem de partidas otimizada com mapa
  * - Logs removidos em produção
@@ -34,6 +36,14 @@ import { VipCrown } from '../components/ui/VipBadge';
 const IS_DEV = import.meta.env.DEV;
 const PLAYERS_PAGE = 40;
 const PRIMARY_COLOR = '#FFB700';
+
+// ── Polígonos Cut-Edge Oficiais ──────────────────────────────────────────────
+const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
+const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 12.5px)';
+const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 7.8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 5px)';
 
 // Mapa de roles
 const LANE_MAP: Record<string, Role> = {
@@ -221,7 +231,7 @@ async function carregarJogadores(
   return { jogadores, totalCount };
 }
 
-// ── Componente Paginação ────────────────────────────────────────────────────
+// ── Componente Paginação Cut-Edge ───────────────────────────────────────────
 function Paginacao({
   currentPage,
   totalPages,
@@ -258,13 +268,19 @@ function Paginacao({
       </p>
       <div className="flex items-center justify-center gap-2">
         <motion.button
-          whileHover={{ scale: !loading && currentPage > 0 ? 1.1 : 1 }}
+          whileHover={{ scale: !loading && currentPage > 0 ? 1.05 : 1 }}
           whileTap={{ scale: !loading && currentPage > 0 ? 0.95 : 1 }}
           onClick={() => onChangePage(currentPage - 1)}
           disabled={currentPage === 0 || loading}
-          className="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center text-white/60 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/5 transition-all"
+          className="relative p-[1px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
         >
-          ←
+          <div
+            className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white bg-[#0d0d12] hover:bg-white/5 transition-all font-bold"
+            style={{ clipPath: CUT_BUTTON_INNER }}
+          >
+            ←
+          </div>
         </motion.button>
 
         {loading ? (
@@ -272,7 +288,7 @@ function Paginacao({
             <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: PRIMARY_COLOR, borderTopColor: 'transparent' }} />
           </div>
         ) : (
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1.5">
             {pages.map((page, i) =>
               page === '...' ? (
                 <span key={`ellipsis-${i}`} className="px-2 text-white/40 font-bold">
@@ -281,16 +297,25 @@ function Paginacao({
               ) : (
                 <motion.button
                   key={page}
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onChangePage(page as number)}
-                  className={`w-10 h-10 rounded-lg border font-bold text-sm transition-all ${
-                    page === currentPage
-                      ? 'bg-[#FFB700] text-black border-[#FFB700]'
-                      : 'border-white/10 text-white/60 hover:bg-white/5'
-                  }`}
+                  className="relative p-[1px] cursor-pointer"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: page === currentPage ? PRIMARY_COLOR : 'rgba(255,255,255,0.1)',
+                  }}
                 >
-                  {(page as number) + 1}
+                  <div
+                    className={`w-10 h-10 flex items-center justify-center font-bold text-sm transition-all ${
+                      page === currentPage
+                        ? 'bg-[#FFB700] text-black font-black'
+                        : 'bg-[#0d0d12] text-white/60 hover:bg-white/5 hover:text-white'
+                    }`}
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    {(page as number) + 1}
+                  </div>
                 </motion.button>
               )
             )}
@@ -298,13 +323,19 @@ function Paginacao({
         )}
 
         <motion.button
-          whileHover={{ scale: !loading && currentPage < totalPages - 1 ? 1.1 : 1 }}
+          whileHover={{ scale: !loading && currentPage < totalPages - 1 ? 1.05 : 1 }}
           whileTap={{ scale: !loading && currentPage < totalPages - 1 ? 0.95 : 1 }}
           onClick={() => onChangePage(currentPage + 1)}
           disabled={currentPage === totalPages - 1 || loading}
-          className="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center text-white/60 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/5 transition-all"
+          className="relative p-[1px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
         >
-          →
+          <div
+            className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white bg-[#0d0d12] hover:bg-white/5 transition-all font-bold"
+            style={{ clipPath: CUT_BUTTON_INNER }}
+          >
+            →
+          </div>
         </motion.button>
       </div>
     </div>
@@ -325,9 +356,8 @@ export default function App() {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedJogador, setSelectedJogador] = useState<Jogador | null>(null);
   const [popup, setPopup] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null);
-  const [selectedPuuid, setSelectedPuuid] = useState<string | undefined>(undefined);
+  const [_selectedPuuid, setSelectedPuuid] = useState<string | undefined>(undefined);
 
-  const [refreshing, setRefreshing] = useState(false);
   const listTopRef = useRef<HTMLDivElement>(null);
   const filterTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -362,28 +392,6 @@ export default function App() {
     else setLoading(false);
   };
 
-  // Força atualização da Riot API agora (ignora TTL) e recarrega a página.
-  const forcarAtualizacao = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    playSound('click');
-    setPopup({ type: 'info', message: 'Atualizando dados da Riot... isso pode levar alguns segundos.' });
-    try {
-      // Dispara o refresh em background...
-      await irParaPagina(currentPage, searchTerm, filtroElo, filtroRole, filtroSemTime, false, true);
-      // ...espera 4s pra dar tempo das requisições paralelas voltarem,
-      // depois recarrega pra mostrar os novos dados.
-      setTimeout(async () => {
-        await irParaPagina(currentPage, searchTerm, filtroElo, filtroRole, filtroSemTime);
-        setRefreshing(false);
-        setPopup({ type: 'success', message: 'Dados atualizados!' });
-      }, 4000);
-    } catch {
-      setRefreshing(false);
-      setPopup({ type: 'error', message: 'Falha ao atualizar. Tente novamente.' });
-    }
-  };
-
   // Popup auto-dismiss
   useEffect(() => {
     if (popup) {
@@ -415,13 +423,23 @@ export default function App() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className={`fixed top-20 left-1/2 -translate-x-1/2 z-[70] px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 ${
-              popup.type === 'error' ? 'bg-red-500/90' : popup.type === 'success' ? 'bg-green-500/90' : 'bg-blue-500/90'
-            } text-white`}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-[70] p-[1px] shadow-2xl"
+            style={{
+              clipPath: CUT_BUTTON,
+              background: popup.type === 'error' ? '#ef4444' : popup.type === 'success' ? '#22c55e' : PRIMARY_COLOR,
+            }}
           >
-            {popup.type === 'error' && <X className="w-5 h-5" />}
-            {popup.type === 'success' && <Check className="w-5 h-5" />}
-            <span className="font-medium">{popup.message}</span>
+            <div
+              className={`px-6 py-3 flex items-center gap-3 text-white font-medium text-sm ${
+                popup.type === 'error' ? 'bg-[#180505]' : popup.type === 'success' ? 'bg-[#05180a]' : 'bg-[#181405]'
+              }`}
+              style={{ clipPath: CUT_BUTTON_INNER }}
+            >
+              {popup.type === 'error' && <X className="w-5 h-5 text-red-400" />}
+              {popup.type === 'success' && <Check className="w-5 h-5 text-green-400" />}
+              {popup.type === 'info' && <Users className="w-5 h-5 text-[#FFB700]" />}
+              <span>{popup.message}</span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -433,265 +451,373 @@ export default function App() {
       </AnimatePresence>
 
       {/* Banner */}
-      <div className="space-y-0 rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0a]/20 backdrop-blur-md mb-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden p-6">
-          <div className="absolute inset-0 z-0">
-            <img src="/images/fundoryzecortado.webp" alt="Arena" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/10 to-white/0" />
-          </div>
-          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-5 h-5 text-white/60" />
-                <span className="text-xs font-bold uppercase tracking-wider text-white/60">Arena de Jogadores</span>
+      <div
+        className="relative p-[1px] mb-8 w-full"
+        style={{
+          clipPath: CUT_FRAME,
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.03))',
+        }}
+      >
+        <div
+          className="relative overflow-hidden bg-[#08080a]"
+          style={{ clipPath: CUT_FRAME_INNER }}
+        >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden p-6 md:p-8">
+            <div className="absolute inset-0 z-0">
+              <img src="/images/fundoryzecortado.webp" alt="Arena" className="w-full h-full object-cover opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#08080a] via-[#08080a]/80 to-transparent" />
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center relative p-[1px] mb-2" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}>
+                  <div className="flex items-center gap-2 px-2.5 py-1 bg-[#0f0f14]" style={{ clipPath: CUT_BADGE_INNER }}>
+                    <Users className="w-4 h-4 text-[#FFB700]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Arena de Jogadores</span>
+                  </div>
+                </div>
+                <h1 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tighter">
+                  Jogadores <span style={{ color: PRIMARY_COLOR }}>M7 </span>
+                </h1>
+                <p className="text-white/50 text-sm max-w-lg">Conheça os melhores invocadores da comunidade, suas estatísticas e conquistas.</p>
               </div>
-              <h1 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tighter">
-                Jogadores <span style={{ color: PRIMARY_COLOR }}>M7 </span>
-              </h1>
-              <p className="text-white/50 text-sm max-w-lg">Conheça os melhores invocadores da comunidade, suas estatísticas e conquistas.</p>
+              <div className="flex items-center gap-3">
+                <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.12)' }}>
+                  <div className="px-3 py-1.5 bg-[#0f0f14] flex items-center gap-1.5" style={{ clipPath: CUT_BADGE_INNER }}>
+                    <span className="text-white font-black text-sm">{totalCount}</span>
+                    <span className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Jogadores</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-white/40 font-bold text-[10px] uppercase">
-                <span className="text-white font-black">{totalCount}</span> Jogadores
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Filtros */}
-      <div className="w-full rounded-2xl border border-white/10 p-5 md:p-6 mb-12 bg-white/[0.02] backdrop-blur-md relative overflow-hidden group">
-        {/* Glow de fundo sutil */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 relative z-10">
-          {/* Busca por Riot ID */}
-          <div className="relative md:col-span-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-5 h-5 group-focus-within:text-primary transition-colors" />
-            <input
-              type="text"
-              placeholder="Buscar por Riot ID..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary rounded-xl pl-12 pr-4 py-3 text-white placeholder:text-white/20 focus:outline-none transition-all"
-            />
-          </div>
-
-          {/* Filtro Elo */}
-          <div className="relative md:col-span-3">
-            <Trophy className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4" />
-            <select
-              value={filtroElo}
-              onChange={e => setFiltroElo(e.target.value as EloType | 'todos')}
-              className="w-full bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary rounded-xl pl-10 pr-10 py-3 text-white/80 focus:outline-none appearance-none cursor-pointer transition-all"
-            >
-              <option value="todos" className="bg-[#0f0f12]">Todos os Elos</option>
-              {ELOS_ORDER.map(elo => (
-                <option key={elo} value={elo} className="bg-[#0f0f12]">{elo}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4 pointer-events-none" />
-          </div>
-
-          {/* Filtro Role */}
-          <div className="relative md:col-span-3">
-            <Gamepad2 className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4" />
-            <select
-              value={filtroRole}
-              onChange={e => setFiltroRole(e.target.value as Role | 'todos')}
-              className="w-full bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary rounded-xl pl-10 pr-10 py-3 text-white/80 focus:outline-none appearance-none cursor-pointer transition-all"
-            >
-              <option value="todos" className="bg-[#0f0f12]">Todas as Roles</option>
-              {ROLES_ORDER.map(role => (
-                <option key={role} value={role} className="bg-[#0f0f12]">{ROLE_CONFIG[role].label}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4 pointer-events-none" />
-          </div>
-
-          {/* Sem Time */}
-          <button
-            onClick={() => setFiltroSemTime(v => !v)}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-bold text-sm transition-all md:col-span-2 ${
-              filtroSemTime
-                ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(255,183,0,0.15)]'
-                : 'bg-black/40 border-white/10 text-white/40 hover:text-white/60 hover:border-white/20'
-            }`}
-          >
-            <Users className="w-4 h-4" /> Sem Time
-          </button>
+          </motion.div>
         </div>
       </div>
 
-      {/* Lista de Jogadores — aparece quando pronto, sem skeleton */}
-      {!loading && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-        <AnimatePresence>
-          {jogadores.map((jogador, index) => {
-            const roleConfig = ROLE_CONFIG[jogador.rolePrincipal];
-            const roleSecConfig = ROLE_CONFIG[jogador.roleSecundaria];
-            const eloStyle = ELO_STYLES[jogador.elo];
-            const winRateColor = jogador.winRate >= 50 ? '#4ade80' : '#ef4444';
+      {/* Filtros */}
+      <div
+        className="relative p-[1px] mb-12 w-full"
+        style={{
+          clipPath: CUT_FRAME,
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))',
+        }}
+      >
+        <div
+          className="w-full p-5 md:p-6 bg-[#08080a] relative overflow-hidden"
+          style={{ clipPath: CUT_FRAME_INNER }}
+        >
+          {/* Glow de fundo sutil */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 relative z-10">
+            {/* Busca por Riot ID */}
+            <div className="relative p-[1px] md:col-span-4" style={{ clipPath: CUT_BUTTON, background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))' }}>
+              <div className="relative flex items-center bg-[#0d0d12] w-full h-full" style={{ clipPath: CUT_BUTTON_INNER }}>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-5 h-5 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Buscar por Riot ID..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full bg-transparent pl-12 pr-4 py-3 text-white placeholder:text-white/20 focus:outline-none text-sm transition-all"
+                />
+              </div>
+            </div>
 
-            const cardInner = (
+            {/* Filtro Elo */}
+            <div className="relative p-[1px] md:col-span-3" style={{ clipPath: CUT_BUTTON, background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))' }}>
+              <div className="relative flex items-center bg-[#0d0d12] w-full h-full" style={{ clipPath: CUT_BUTTON_INNER }}>
+                <Trophy className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4 pointer-events-none" />
+                <select
+                  value={filtroElo}
+                  onChange={e => setFiltroElo(e.target.value as EloType | 'todos')}
+                  className="w-full bg-transparent pl-10 pr-10 py-3 text-white/80 focus:outline-none appearance-none cursor-pointer text-sm transition-all"
+                >
+                  <option value="todos" className="bg-[#0f0f12] text-white">Todos os Elos</option>
+                  {ELOS_ORDER.map(elo => (
+                    <option key={elo} value={elo} className="bg-[#0f0f12] text-white">{elo}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Filtro Role */}
+            <div className="relative p-[1px] md:col-span-3" style={{ clipPath: CUT_BUTTON, background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))' }}>
+              <div className="relative flex items-center bg-[#0d0d12] w-full h-full" style={{ clipPath: CUT_BUTTON_INNER }}>
+                <Gamepad2 className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4 pointer-events-none" />
+                <select
+                  value={filtroRole}
+                  onChange={e => setFiltroRole(e.target.value as Role | 'todos')}
+                  className="w-full bg-transparent pl-10 pr-10 py-3 text-white/80 focus:outline-none appearance-none cursor-pointer text-sm transition-all"
+                >
+                  <option value="todos" className="bg-[#0f0f12] text-white">Todas as Roles</option>
+                  {ROLES_ORDER.map(role => (
+                    <option key={role} value={role} className="bg-[#0f0f12] text-white">{ROLE_CONFIG[role].label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Sem Time */}
+            <button
+              type="button"
+              onClick={() => setFiltroSemTime(v => !v)}
+              className="relative p-[1px] md:col-span-2 group/btn cursor-pointer transition-all"
+              style={{
+                clipPath: CUT_BUTTON,
+                background: filtroSemTime ? PRIMARY_COLOR : 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))',
+              }}
+            >
               <div
-                className={`relative rounded-[24px] p-5 overflow-hidden transition-all cursor-pointer w-full h-full ${
-                  jogador.isVIP ? 'shadow-2xl' : ''
+                className={`w-full h-full flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold transition-all ${
+                  filtroSemTime
+                    ? 'bg-primary/20 text-primary shadow-[0_0_15px_rgba(255,183,0,0.15)]'
+                    : 'bg-[#0d0d12] text-white/40 group-hover/btn:text-white/70'
                 }`}
-                style={{ background: '#0d0d0d' }}
-                onClick={() => handleVerPerfil(jogador)}>
-                {jogador.isVIP && (
-                  <>
-                    {/* VIP Crown */}
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-30" style={{
-                      color: PRIMARY_COLOR,
-                      filter: `drop-shadow(0 0 8px rgba(255, 183, 0, 0.6))`,
-                      animation: 'vip-crown-pulse 2s ease-in-out infinite'
-                    }}>
-                      <VipCrown />
-                    </div>
-
-                    {/* VIP Badge - Top right corner */}
-                    <div className="absolute top-1 z-40" style={{ right: '12px' }}>
-                      <div
-                        className="px-2.5 py-1 font-black text-[10px] tracking-wider rounded"
-                        style={{
-                          background: `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f)`,
-                          color: '#000',
-                          whiteSpace: 'nowrap',
-                          boxShadow: `0 4px 12px rgba(255, 183, 0, 0.5), 0 0 8px rgba(255, 183, 0, 0.3)`,
-                          textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                        }}
-                      >
-                        VIP
-                      </div>
-                    </div>
-
-                    {/* Shine Sweep Effect - Classic elegant shine */}
-                    <div className="absolute inset-0 rounded-[24px] overflow-hidden pointer-events-none z-20">
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '-50%',
-                          left: '-50%',
-                          width: '200%',
-                          height: '200%',
-                          background: 'linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.6) 50%, transparent 55%)',
-                          animation: 'shine-sweep 5s infinite',
-                          pointerEvents: 'none',
-                          transform: 'rotate(45deg)',
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 rounded-full blur-[3px] opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border }} />
-                      <img
-                        src={getIconeUrl(jogador.iconeId)} loading="lazy"
-                        className="w-16 h-16 rounded-full border-2 relative z-10 shadow-xl"
-                        style={{
-                          borderColor: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border,
-                          borderRadius: '9999px',
-                          filter: jogador.isVIP
-                            ? `drop-shadow(0 0 12px rgba(255, 183, 0, 0.4)) drop-shadow(0 0 6px rgba(255, 183, 0, 0.2))`
-                            : `drop-shadow(0 0 10px ${eloStyle.border}40) drop-shadow(0 0 4px ${eloStyle.border}20)`,
-                        }}
-                        alt={jogador.nome}
-                      />
-                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-black border-2 border-[#0a0a0a] z-20" style={{ background: PRIMARY_COLOR }}>{jogador.nivel}</div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p
-                          className="font-black text-lg tracking-tight truncate max-w-[150px]"
-                          style={{
-                            background: jogador.isVIP ? `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f, ${PRIMARY_COLOR})` : undefined,
-                            backgroundClip: jogador.isVIP ? 'text' : undefined,
-                            WebkitBackgroundClip: jogador.isVIP ? 'text' : undefined,
-                            WebkitTextFillColor: jogador.isVIP ? 'transparent' : '#fff',
-                            color: jogador.isVIP ? undefined : '#fff',
-                            filter: jogador.isVIP
-                              ? `drop-shadow(0 0 8px rgba(255, 183, 0, 0.4)) drop-shadow(0 0 12px rgba(255, 183, 0, 0.2))`
-                              : 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.15))',
-                          }}
-                        >
-                          {jogador.riotId}
-                        </p>
-                        {jogador.isVerified && <ShieldCheck className="w-3 h-3" style={{ color: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border }} />}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${eloStyle.bg} ${eloStyle.text}`}>{jogador.elo}</span>
-                        <span className="text-[9px] text-white/40 font-bold">Ranking #{index + 1}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    <div className="text-center p-2 bg-white/[0.02] rounded-xl">
-                      <p className="text-white font-black text-sm">{jogador.partidas.toLocaleString()}</p>
-                      <p className="text-[8px] text-white/40 uppercase tracking-wider">Partidas</p>
-                    </div>
-                    <div className="text-center p-2 bg-white/[0.02] rounded-xl">
-                      <p className="font-black text-sm" style={{ color: winRateColor }}>{jogador.winRate}%</p>
-                      <p className="text-[8px] text-white/40 uppercase tracking-wider">Win Rate</p>
-                    </div>
-                    <div className="text-center p-2 bg-white/[0.02] rounded-xl">
-                      <p className="text-white font-black text-sm">{(jogador.mp ?? 0).toLocaleString()}</p>
-                      <p className="text-[8px] text-white/40 uppercase tracking-wider">M7 Points</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <img src={roleConfig.img} alt={roleConfig.label} className="w-4 h-4 object-contain" />
-                        <span className={`text-xs font-bold ${roleConfig.color}`}>{roleConfig.label}</span>
-                      </div>
-                      <span className="text-white/30 text-[10px]">/</span>
-                      <div className="flex items-center gap-1">
-                        <img src={roleSecConfig.img} alt={roleSecConfig.label} className="w-3 h-3 object-contain opacity-60" />
-                        <span className="text-[10px] text-white/40">{roleSecConfig.label}</span>
-                      </div>
-                    </div>
-                    {jogador.timeTag && (
-                      <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter"
-                        style={{ background: `${jogador.timeColor}20`, color: jogador.timeColor, border: `1px solid ${jogador.timeColor}40` }}>
-                        #{jogador.timeTag.substring(0, 3)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-            );
-
-            return (
-              <motion.div
-                key={jogador.id}
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: (index % 8) * 0.05 }}
-                className="group cursor-pointer"
+                style={{ clipPath: CUT_BUTTON_INNER }}
               >
-                {jogador.isVIP ? (
-                    <div className="h-full p-1 rounded-[28px] cursor-pointer transition-all hover:-translate-y-1" style={{ background: PRIMARY_COLOR, filter: `drop-shadow(0 0 12px rgba(255, 183, 0, 0.3))` }}>
-                      {cardInner}
-                    </div>
-                ) : (
-                  <div
-                    className="relative h-full p-1 rounded-[28px] cursor-pointer transition-all hover:-translate-y-1"
-                    style={{ background: eloStyle.border, filter: `drop-shadow(0 0 8px rgba(${parseInt(eloStyle.border.slice(1,3), 16)}, ${parseInt(eloStyle.border.slice(3,5), 16)}, ${parseInt(eloStyle.border.slice(5,7), 16)}, 0.3))` }}
-                  >
-                    {cardInner}
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+                <Users className="w-4 h-4" /> Sem Time
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Lista de Jogadores */}
+      {!loading && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+          <AnimatePresence>
+            {jogadores.map((jogador, index) => {
+              const roleConfig = ROLE_CONFIG[jogador.rolePrincipal];
+              const roleSecConfig = ROLE_CONFIG[jogador.roleSecundaria];
+              const eloStyle = ELO_STYLES[jogador.elo];
+              const winRateColor = jogador.winRate >= 50 ? '#4ade80' : '#ef4444';
+
+              const outerGradient = jogador.isVIP
+                ? `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f 50%, rgba(255, 183, 0, 0.3) 100%)`
+                : `linear-gradient(135deg, ${eloStyle.border}, ${eloStyle.border}80 50%, rgba(255, 255, 255, 0.05) 100%)`;
+
+              const outerShadow = jogador.isVIP
+                ? 'drop-shadow(0 0 12px rgba(255, 183, 0, 0.35))'
+                : `drop-shadow(0 0 8px ${eloStyle.border}30)`;
+
+              return (
+                <motion.div
+                  key={jogador.id}
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: (index % 8) * 0.05 }}
+                  className="group cursor-pointer h-full"
+                  onClick={() => handleVerPerfil(jogador)}
+                >
+                  <div
+                    className="relative p-[1px] h-full w-full transition-all duration-300 group-hover:-translate-y-1"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: outerGradient,
+                      filter: outerShadow,
+                    }}
+                  >
+                    <div
+                      className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] p-5 relative overflow-hidden flex flex-col justify-between transition-colors"
+                      style={{ clipPath: CUT_FRAME_INNER }}
+                    >
+                      {jogador.isVIP && (
+                        <>
+                          {/* VIP Crown */}
+                          <div
+                            className="absolute -top-2 left-1/2 -translate-x-1/2 z-30"
+                            style={{
+                              color: PRIMARY_COLOR,
+                              filter: 'drop-shadow(0 0 8px rgba(255, 183, 0, 0.6))',
+                              animation: 'vip-crown-pulse 2s ease-in-out infinite',
+                            }}
+                          >
+                            <VipCrown />
+                          </div>
+
+                          {/* VIP Badge - Top right corner */}
+                          <div className="absolute top-3 right-3 z-40">
+                            <div
+                              className="relative p-[1px]"
+                              style={{
+                                clipPath: CUT_BADGE,
+                                background: `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f)`,
+                              }}
+                            >
+                              <div
+                                className="px-2.5 py-0.5 font-black text-[10px] tracking-wider text-black flex items-center justify-center"
+                                style={{
+                                  clipPath: CUT_BADGE_INNER,
+                                  background: `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f)`,
+                                  boxShadow: '0 4px 12px rgba(255, 183, 0, 0.5)',
+                                  textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                                }}
+                              >
+                                VIP
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Shine Sweep Effect */}
+                          <div className="absolute inset-0 pointer-events-none z-20" style={{ clipPath: CUT_FRAME_INNER }}>
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '-50%',
+                                left: '-50%',
+                                width: '200%',
+                                height: '200%',
+                                background: 'linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.6) 50%, transparent 55%)',
+                                animation: 'shine-sweep 5s infinite',
+                                pointerEvents: 'none',
+                                transform: 'rotate(45deg)',
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Header Info (Avatar, Name, Badges) */}
+                      <div>
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="relative">
+                            <div
+                              className="absolute inset-0 rounded-full blur-[3px] opacity-40 group-hover:opacity-100 transition-opacity"
+                              style={{ background: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border }}
+                            />
+                            <img
+                              src={getIconeUrl(jogador.iconeId)}
+                              loading="lazy"
+                              className="w-16 h-16 rounded-full border-2 relative z-10 shadow-xl"
+                              style={{
+                                borderColor: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border,
+                                filter: jogador.isVIP
+                                  ? 'drop-shadow(0 0 12px rgba(255, 183, 0, 0.4)) drop-shadow(0 0 6px rgba(255, 183, 0, 0.2))'
+                                  : `drop-shadow(0 0 10px ${eloStyle.border}40) drop-shadow(0 0 4px ${eloStyle.border}20)`,
+                              }}
+                              alt={jogador.nome}
+                            />
+                            {/* Level Badge */}
+                            <div className="absolute -bottom-1 -right-1 z-20" style={{ clipPath: CUT_BADGE, background: '#0a0a0a' }}>
+                              <div
+                                className="px-1.5 py-0.5 text-[10px] font-bold text-black flex items-center justify-center"
+                                style={{
+                                  clipPath: CUT_BADGE_INNER,
+                                  background: PRIMARY_COLOR,
+                                }}
+                              >
+                                {jogador.nivel}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p
+                                className="font-black text-lg tracking-tight truncate max-w-[150px]"
+                                style={{
+                                  background: jogador.isVIP ? `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f, ${PRIMARY_COLOR})` : undefined,
+                                  backgroundClip: jogador.isVIP ? 'text' : undefined,
+                                  WebkitBackgroundClip: jogador.isVIP ? 'text' : undefined,
+                                  WebkitTextFillColor: jogador.isVIP ? 'transparent' : '#fff',
+                                  color: jogador.isVIP ? undefined : '#fff',
+                                  filter: jogador.isVIP
+                                    ? 'drop-shadow(0 0 8px rgba(255, 183, 0, 0.4)) drop-shadow(0 0 12px rgba(255, 183, 0, 0.2))'
+                                    : 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.15))',
+                                }}
+                              >
+                                {jogador.riotId}
+                              </p>
+                              {jogador.isVerified && (
+                                <ShieldCheck className="w-3.5 h-3.5 shrink-0" style={{ color: jogador.isVIP ? PRIMARY_COLOR : eloStyle.border }} />
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              {/* Elo Badge */}
+                              <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: eloStyle.border }}>
+                                <span
+                                  className={`block px-2 py-0.5 text-[10px] font-bold ${eloStyle.bg} ${eloStyle.text}`}
+                                  style={{ clipPath: CUT_BADGE_INNER }}
+                                >
+                                  {jogador.elo}
+                                </span>
+                              </div>
+
+                              {/* Ranking Badge */}
+                              <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}>
+                                <span
+                                  className="block px-2 py-0.5 text-[9px] text-white/50 font-bold bg-[#141419]"
+                                  style={{ clipPath: CUT_BADGE_INNER }}
+                                >
+                                  Ranking #{index + 1}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
+                            <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
+                              <p className="text-white font-black text-sm">{jogador.partidas.toLocaleString()}</p>
+                              <p className="text-[8px] text-white/40 uppercase tracking-wider">Partidas</p>
+                            </div>
+                          </div>
+                          <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
+                            <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
+                              <p className="font-black text-sm" style={{ color: winRateColor }}>{jogador.winRate}%</p>
+                              <p className="text-[8px] text-white/40 uppercase tracking-wider">Win Rate</p>
+                            </div>
+                          </div>
+                          <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
+                            <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
+                              <p className="text-white font-black text-sm">{(jogador.mp ?? 0).toLocaleString()}</p>
+                              <p className="text-[8px] text-white/40 uppercase tracking-wider">M7 Points</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer (Roles & Team) */}
+                      <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <img src={roleConfig.img} alt={roleConfig.label} className="w-4 h-4 object-contain" />
+                            <span className={`text-xs font-bold ${roleConfig.color}`}>{roleConfig.label}</span>
+                          </div>
+                          <span className="text-white/30 text-[10px]">/</span>
+                          <div className="flex items-center gap-1">
+                            <img src={roleSecConfig.img} alt={roleSecConfig.label} className="w-3 h-3 object-contain opacity-60" />
+                            <span className="text-[10px] text-white/40">{roleSecConfig.label}</span>
+                          </div>
+                        </div>
+                        {jogador.timeTag && (
+                          <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: jogador.timeColor || PRIMARY_COLOR }}>
+                            <span
+                              className="block px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter"
+                              style={{
+                                clipPath: CUT_BADGE_INNER,
+                                background: `${jogador.timeColor || PRIMARY_COLOR}20`,
+                                color: jogador.timeColor || PRIMARY_COLOR,
+                              }}
+                            >
+                              #{jogador.timeTag.substring(0, 3)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
       )}
 
       {/* Paginação */}
@@ -704,13 +830,32 @@ export default function App() {
 
       {/* Empty state */}
       {!loading && jogadores.length === 0 && (
-        <div className="rounded-3xl border border-white/10 p-12 text-center bg-[#0d0d0d]">
-          <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />
-          <p className="text-white/40 text-lg">Nenhum jogador encontrado com os filtros selecionados.</p>
-          <button onClick={() => { setSearchTerm(''); setFiltroElo('todos'); setFiltroRole('todos'); setFiltroSemTime(false); playSound('click'); }}
-            className="mt-4 px-6 py-2 rounded-xl font-bold transition-all" style={{ background: `${PRIMARY_COLOR}20`, color: PRIMARY_COLOR, border: `1px solid ${PRIMARY_COLOR}40` }}>
-            Limpar Filtros
-          </button>
+        <div
+          className="relative p-[1px] w-full my-8"
+          style={{ clipPath: CUT_FRAME, background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))' }}
+        >
+          <div
+            className="p-12 text-center bg-[#08080a] flex flex-col items-center justify-center"
+            style={{ clipPath: CUT_FRAME_INNER }}
+          >
+            <Users className="w-16 h-16 text-white/20 mb-4" />
+            <p className="text-white/40 text-lg font-medium">Nenhum jogador encontrado com os filtros selecionados.</p>
+            <button
+              onClick={() => { setSearchTerm(''); setFiltroElo('todos'); setFiltroRole('todos'); setFiltroSemTime(false); playSound('click'); }}
+              className="mt-6 relative p-[1px] cursor-pointer group"
+              style={{ clipPath: CUT_BUTTON, background: PRIMARY_COLOR }}
+            >
+              <div
+                className="px-6 py-2.5 font-bold text-black uppercase tracking-wider text-sm transition-all"
+                style={{
+                  clipPath: CUT_BUTTON_INNER,
+                  background: PRIMARY_COLOR,
+                }}
+              >
+                Limpar Filtros
+              </div>
+            </button>
+          </div>
         </div>
       )}
 

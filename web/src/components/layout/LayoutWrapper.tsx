@@ -149,16 +149,16 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-[#060608] text-white relative">
-      {/* Luzes de Fundo Ambiente Global para todas as páginas (Perfil, Jogar, Início, Campeonatos, etc.) */}
+      {/* Luzes de Fundo Ambiente Global Suaves (Nível Leve) */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Glow Superior Dourado (Warm Aura) */}
-        <div className="absolute -top-[15%] left-[20%] w-[700px] h-[700px] bg-[#FFB700]/12 rounded-full blur-[140px]" />
-        {/* Glow Médio Direito Roxo Twitch (Cyber/Esports Aura) */}
-        <div className="absolute top-[30%] -right-[10%] w-[650px] h-[650px] bg-[#9146FF]/12 rounded-full blur-[150px]" />
-        {/* Glow Médio Esquerdo Ciano LoL (Hextech Aura) */}
-        <div className="absolute top-[55%] -left-[10%] w-[650px] h-[650px] bg-[#00F0FF]/10 rounded-full blur-[150px]" />
-        {/* Glow Inferior Dourado M7 */}
-        <div className="absolute -bottom-[15%] right-[20%] w-[600px] h-[600px] bg-[#FFB700]/10 rounded-full blur-[140px]" />
+        {/* Glow Superior Dourado Suave */}
+        <div className="absolute -top-[10%] left-[20%] w-[650px] h-[650px] bg-[#FFB700]/[0.05] rounded-full blur-[160px]" />
+        {/* Glow Médio Direito Roxo Twitch Suave */}
+        <div className="absolute top-[35%] -right-[5%] w-[600px] h-[600px] bg-[#9146FF]/[0.045] rounded-full blur-[160px]" />
+        {/* Glow Médio Esquerdo Ciano LoL Suave */}
+        <div className="absolute top-[60%] -left-[5%] w-[600px] h-[600px] bg-[#00F0FF]/[0.035] rounded-full blur-[170px]" />
+        {/* Glow Inferior Dourado Suave */}
+        <div className="absolute -bottom-[10%] right-[20%] w-[550px] h-[550px] bg-[#FFB700]/[0.04] rounded-full blur-[150px]" />
       </div>
 
       {/* Header */}
