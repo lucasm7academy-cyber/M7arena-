@@ -49,6 +49,14 @@ const getImageUrl = (fileName: string) => `/uploads/public-images/${fileName}`;
 
 const LOGO_URL = getImageUrl('logo-m7.png');
 
+// Polígonos Cut-Edge Oficiais
+const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
+const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 12.5px)';
+const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 7.8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 5px)';
+
 export default function Layout() {
   const { user, isLoading: authLoading, logout } = useAuth(); // ✅ Única fonte do usuário
   const { perfil } = usePerfil(); // ✅ Dados da conta Riot
@@ -239,15 +247,16 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 lg:gap-5">
+          <div className="flex items-center gap-2 md:gap-3 lg:gap-4">
             <a
               href={DISCORD_URL}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => playSound('click')}
-              className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-primary to-[#E6A600] text-black font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-lg shadow-primary/20 md:px-3 md:py-1.5 md:rounded-full md:gap-1.5"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-primary to-[#E6A600] text-black font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-lg shadow-primary/20 cursor-pointer"
+              style={{ clipPath: CUT_BUTTON }}
             >
-              <FaDiscord className="w-3.5 h-3.5 md:w-3.5 md:h-3.5" />
+              <FaDiscord className="w-3.5 h-3.5" />
               <span>Discord</span>
             </a>
 
@@ -256,9 +265,10 @@ export default function Layout() {
                 playSound('click');
                 setIsDepositModalOpen(true);
               }}
-              className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00C35A] to-[#008F39] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,195,90,0.4)] md:px-3 md:py-1.5 md:rounded-full md:gap-1.5"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#00C35A] to-[#008F39] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,195,90,0.4)] cursor-pointer"
+              style={{ clipPath: CUT_BUTTON }}
             >
-              <CreditCard className="w-3.5 h-3.5 md:w-3.5 md:h-3.5" />
+              <CreditCard className="w-3.5 h-3.5" />
               <span>Depositar</span>
             </button>
 
@@ -266,7 +276,8 @@ export default function Layout() {
               <Link
                 to="/perfil"
                 onClick={() => playSound('click')}
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#0a0b0f] border border-white/10 text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:border-primary/40 hover:text-primary transition-all active:scale-95 md:px-3 md:py-1.5 md:rounded-full"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#08080a] border border-white/10 text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:border-primary/40 hover:text-primary transition-all active:scale-95 cursor-pointer"
+                style={{ clipPath: CUT_BADGE }}
                 title="Saldo em M7 Coins"
               >
                 <GiTwoCoins size={16} className="shrink-0 text-primary" />
@@ -278,9 +289,10 @@ export default function Layout() {
               <Link
                 to="/login"
                 onClick={() => playSound('click')}
-                className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00C35A] to-[#008F39] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,195,90,0.4)] md:px-3 md:py-1.5 md:rounded-full md:gap-1.5"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-[#00C35A] to-[#008F39] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:brightness-110 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,195,90,0.4)] cursor-pointer"
+                style={{ clipPath: CUT_BUTTON }}
               >
-                <LogIn className="w-3.5 h-3.5 md:w-3.5 md:h-3.5" />
+                <LogIn className="w-3.5 h-3.5" />
                 <span>Entrar</span>
               </Link>
             )}
@@ -455,7 +467,10 @@ export default function Layout() {
             onClick={() => playSound('click')}
             className="block w-full"
           >
-            <div className="bg-primary hover:bg-yellow-500 text-black text-[10px] font-black uppercase tracking-[0.15em] py-5 px-3 rounded-xl text-center transition-all flex flex-col items-center justify-center gap-2 border-b-4 border-black/20">
+            <div
+              className="bg-[#FFB700] hover:bg-[#e0a000] text-black text-[10px] font-black uppercase tracking-[0.15em] py-4 px-3 text-center transition-all flex flex-col items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(255,183,0,0.2)]"
+              style={{ clipPath: CUT_BUTTON }}
+            >
               <div className="flex items-center gap-2">
                 <LinkIcon className="w-4 h-4" />
                 <span className="leading-tight">Vincular Conta</span>
@@ -468,27 +483,21 @@ export default function Layout() {
 
     {/* ✅ NAVEGAÇÃO - Menu da Sidebar */}
     <div className="flex-1 overflow-y-auto px-2 custom-scrollbar">
-      <nav className="space-y-1">
+      <nav className="space-y-1.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <button 
               key={item.label}
               onClick={() => navigateWithSound(item.path)}
-              className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-r-sm font-headline font-bold text-sm uppercase tracking-wider transition-all duration-100 w-full ${
+              className={`group relative flex items-center gap-3 px-3.5 py-2.5 font-headline text-xs uppercase tracking-wider transition-all duration-100 w-full cursor-pointer ${
                 isActive 
-                  ? 'text-primary bg-primary/20 shadow-lg shadow-primary/5' 
-                  : 'text-white/50 hover:text-white hover:bg-white/5'
+                  ? 'bg-[#FFB700] text-black font-black shadow-[0_0_20px_rgba(255,183,0,0.35)]' 
+                  : 'text-white/60 hover:text-white hover:bg-white/5 font-bold'
               }`}
+              style={{ clipPath: CUT_BUTTON }}
             >
-              {isActive && (
-                <motion.div 
-                  layoutId="activeTab"
-                  className="absolute left-0 w-1 h-8 bg-primary rounded"
-                  transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
-                />
-              )}
-              <item.icon className={`w-4 h-4 transition-all ${isActive ? 'text-primary' : 'group-hover:text-primary'}`} />
+              <item.icon className={`w-4 h-4 transition-all ${isActive ? 'text-black' : 'text-white/60 group-hover:text-[#FFB700]'}`} />
               <span>{item.label}</span>
             </button>
           );
@@ -503,13 +512,15 @@ export default function Layout() {
           playSound('click');
           setIsVipModalOpen(true);
         }}
-        className="w-full py-2.5 bg-gradient-to-r from-primary to-[#E6A600] text-black rounded-xl font-headline text-[10px] uppercase tracking-[0.2em] font-black hover:brightness-110 transition-all shadow-lg shadow-primary/20"
+        className="w-full py-2.5 bg-gradient-to-r from-primary to-[#E6A600] text-black font-headline text-[10px] uppercase tracking-[0.2em] font-black hover:brightness-110 transition-all shadow-lg shadow-primary/20 cursor-pointer"
+        style={{ clipPath: CUT_BUTTON }}
       >
         TORNE-SE VIP
       </button>
       <button
         onClick={() => { playSound('click'); window.open(SUPORTE_URL, '_blank', 'noopener,noreferrer'); }}
-        className="flex items-center justify-center gap-2 text-white/40 hover:text-primary py-2 text-[10px] uppercase tracking-widest font-headline transition-colors w-full"
+        className="flex items-center justify-center gap-2 text-white/40 hover:text-primary py-2 text-[10px] uppercase tracking-widest font-headline transition-colors w-full cursor-pointer"
+        style={{ clipPath: CUT_BUTTON }}
       >
         <Headset className="w-3.5 h-3.5" />
         <span>Suporte</span>
@@ -589,7 +600,8 @@ export default function Layout() {
                           repeat: Infinity,
                           ease: "easeInOut"
                         }}
-                        className="bg-primary text-black text-xs font-bold py-3.5 rounded-xl text-center relative z-10 border-b-4 border-black/20"
+                        className="bg-[#FFB700] text-black text-xs font-black uppercase tracking-wider py-3.5 text-center relative z-10 shadow-[0_0_15px_rgba(255,183,0,0.3)]"
+                        style={{ clipPath: CUT_BUTTON }}
                       >
                         Vincular Conta Riot
                       </motion.div>
@@ -606,13 +618,14 @@ export default function Layout() {
                         navigateWithSound(item.path);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl font-headline text-[15px] uppercase tracking-wider transition-all text-left ${
+                      className={`w-full flex items-center gap-4 px-4 py-3 font-headline text-xs uppercase tracking-wider transition-all text-left cursor-pointer ${
                         location.pathname === item.path 
-                          ? 'text-primary bg-primary/10 font-black shadow-[0_0_15px_rgba(255,183,0,0.05)]' 
+                          ? 'bg-[#FFB700] text-black font-black shadow-[0_0_20px_rgba(255,183,0,0.35)]' 
                           : 'text-white/70 hover:text-white hover:bg-white/5 font-bold'
                       }`}
+                      style={{ clipPath: CUT_BUTTON }}
                     >
-                      <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${location.pathname === item.path ? 'text-primary' : 'text-white/60'}`} />
+                      <item.icon className={`w-5 h-5 transition-transform ${location.pathname === item.path ? 'text-black' : 'text-white/60 group-hover:text-[#FFB700]'}`} />
                       <span>{item.label}</span>
                     </button>
                   ))}
@@ -625,7 +638,8 @@ export default function Layout() {
                       setIsVipModalOpen(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full py-3.5 bg-gradient-to-r from-primary to-[#E6A600] text-black rounded-xl font-headline text-xs uppercase tracking-widest font-black hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/10"
+                    className="w-full py-3.5 bg-gradient-to-r from-primary to-[#E6A600] text-black font-headline text-xs uppercase tracking-widest font-black hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/10 cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
                   >
                     TORNE-SE VIP
                   </button>
@@ -635,7 +649,8 @@ export default function Layout() {
                       window.open(SUPORTE_URL, '_blank', 'noopener,noreferrer');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-center gap-2.5 text-white/40 hover:text-primary py-3.5 mt-2 text-xs uppercase tracking-widest font-headline font-bold transition-colors"
+                    className="w-full flex items-center justify-center gap-2.5 text-white/40 hover:text-primary py-3.5 mt-2 text-xs uppercase tracking-widest font-headline font-bold transition-colors cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
                   >
                     <Headset className="w-5 h-5" />
                     <span>Suporte</span>
