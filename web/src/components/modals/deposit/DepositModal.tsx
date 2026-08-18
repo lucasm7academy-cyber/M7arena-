@@ -43,7 +43,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={{ duration: 0.08 }}
           className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm overflow-hidden"
           onClick={handleClose}
         >
@@ -54,10 +54,10 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
           <motion.div
             key="deposit-modal-content"
-            initial={{ scale: 0.94, opacity: 0, y: 16 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 12 }}
-            transition={{ type: 'spring', damping: 24, stiffness: 320 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.08 }}
             className="relative p-[1.5px] w-full max-w-4xl mx-auto shadow-2xl transition-all"
             style={{
               clipPath: CUT_FRAME,

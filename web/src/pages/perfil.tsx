@@ -55,13 +55,13 @@ const getEloUrl = (tier: string) => `/ranks/${tier.toLowerCase()}.png`;
 const LABEL_CLASS = 'text-xs text-zinc-400 font-normal uppercase tracking-widest';
 
 // Componente EloBlock (direto no arquivo com estilo angular)
-function EloBlock({ elo, label, delay = 0 }: any) {
+function EloBlock({ elo, label }: any) {
   if (!elo) return null;
   const wr = Math.round((elo.wins / (elo.wins + elo.losses)) * 100) || 0;
   const total = elo.wins + elo.losses;
 
   return (
-    <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+    <CutCard
       className="overflow-hidden group" contentClassName="p-5 sm:p-8">
       <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-primary/10 transition-colors" />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
@@ -138,11 +138,11 @@ function EloBlock({ elo, label, delay = 0 }: any) {
 }
 
 // Componente PerformanceSection com estilo cut-edge
-function PerformanceSection({ stats, ddrVer, delay = 0 }: any) {
+function PerformanceSection({ stats, ddrVer }: any) {
   if (!stats || stats.topChampions?.length === 0) return null;
   
   return (
-    <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+    <CutCard
       className="overflow-hidden" contentClassName="p-5 sm:p-8 space-y-8">
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
       <div className="flex items-center justify-between relative z-10"><span className={LABEL_CLASS}>Análise de Performance</span></div>
@@ -491,7 +491,7 @@ export default function Perfil() {
       <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-32">
         
         {/* HEADER */}
-        <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        <CutCard
           className="z-10" contentClassName="p-5 sm:p-10">
           <div className="relative flex flex-col gap-8 overflow-visible">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
@@ -572,7 +572,7 @@ export default function Perfil() {
                     {laneAtual ? <img src={getLaneUrl(laneAtual.file)} className="w-16 h-16 object-contain" style={{ filter: `drop-shadow(0 0 12px rgba(255,184,0,0.3))` }} /> 
                       : <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center" style={{ clipPath: CUT_BUTTON }}><ChevronDown className="w-6 h-6 text-zinc-500" /></div>}
                   </button>
-                  <AnimatePresence>{laneOpen && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} 
+                  <AnimatePresence>{laneOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.08 }} 
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-48 bg-[#0a0a0c]/98 backdrop-blur-2xl border border-[#FFB700]/30 shadow-2xl overflow-hidden z-[9999]"
                     style={{ clipPath: CUT_FRAME }}>
                     <div className="p-2 space-y-1">{LANES.map(l => <button key={l.id} onClick={() => handleLane(l.id)} 
@@ -589,7 +589,7 @@ export default function Perfil() {
                     {lane2Atual ? <img src={getLaneUrl(lane2Atual.file)} className="w-16 h-16 object-contain" style={{ filter: `drop-shadow(0 0 12px rgba(255,184,0,0.3))` }} /> 
                       : <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center" style={{ clipPath: CUT_BUTTON }}><ChevronDown className="w-6 h-6 text-zinc-500" /></div>}
                   </button>
-                  <AnimatePresence>{lane2Open && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} 
+                  <AnimatePresence>{lane2Open && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.08 }} 
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-48 bg-[#0a0a0c]/98 backdrop-blur-2xl border border-[#FFB700]/30 shadow-2xl overflow-hidden z-[9999]"
                     style={{ clipPath: CUT_FRAME }}>
                     <div className="p-2 space-y-1">{LANES.map(l => <button key={l.id} onClick={() => handleLane(l.id, true)} 
@@ -615,7 +615,7 @@ export default function Perfil() {
         />
 
         {/* EQUIPE */}
-        <CutCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+        <CutCard
           contentClassName="p-5 sm:p-8">
           <div className="flex items-center justify-between mb-6"><span className={LABEL_CLASS}>Minha Equipe</span><Users className="w-5 h-5 text-primary/40" /></div>
           {equipe ? (
@@ -743,7 +743,7 @@ export default function Perfil() {
 
         {/* E-mail de Acesso */}
         <div className="grid md:grid-cols-1 gap-8">
-          <CutCard initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
+          <CutCard
             contentClassName="p-5 sm:p-8">
             <div className="flex items-center justify-between mb-8"><span className={LABEL_CLASS}>E-mail de Acesso</span><ShieldCheck className="w-5 h-5 text-primary/40" /></div>
             <div className="space-y-6">
@@ -779,8 +779,8 @@ export default function Perfil() {
             </div>
           ) : (
             <>
-              {eloSolo && <EloBlock elo={eloSolo} label="Ranqueada Solo/Duo" delay={0.1} />}
-              {eloFlex && <EloBlock elo={eloFlex} label="Ranqueada Flexível" delay={0.2} />}
+              {eloSolo && <EloBlock elo={eloSolo} label="Ranqueada Solo/Duo" />}
+              {eloFlex && <EloBlock elo={eloFlex} label="Ranqueada Flexível" />}
             </>
           )}
         </div>

@@ -727,7 +727,7 @@ ${link}`;
                             {sala.estado === 'partida_iniciada' && (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                     className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none">
-                                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.15 }}
+                                    <div
                                         className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
                                         <span className="text-xl md:text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
                                             Finalizou a partida?
@@ -735,7 +735,7 @@ ${link}`;
                                         <span className="text-xs md:text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
                                             Envie os resultados no botão abaixo
                                         </span>
-                                    </motion.div>
+                                    </div>
                                 </motion.div>
                             )}
 
@@ -890,28 +890,19 @@ ${link}`;
                     {mostrarMensagem && (
                         <motion.div
                             key="overlay-mensagem"
-                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.08 }}
                             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center"
                         >
                             <div className="w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-red-600 border-2 border-red-400 flex flex-col items-center justify-center p-4 md:p-[5vmin] shadow-[0_0_60px_rgba(239,68,68,0.4)]">
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="text-6xl md:text-[12vmin] font-black text-white mb-2 md:mb-[2vmin]"
-                                >
+                                <div className="text-6xl md:text-[12vmin] font-black text-white mb-2 md:mb-[2vmin]">
                                     ✕
-                                </motion.div>
-                                <motion.p
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="text-xs md:text-[2vmin] font-black text-white uppercase tracking-[0.2em] text-center max-w-[260px] md:max-w-[40vmin]"
-                                >
+                                </div>
+                                <p className="text-xs md:text-[2vmin] font-black text-white uppercase tracking-[0.2em] text-center max-w-[260px] md:max-w-[40vmin]">
                                     {mostrarMensagem.texto}
-                                </motion.p>
+                                </p>
                             </div>
                         </motion.div>
                     )}
@@ -1038,7 +1029,7 @@ ${link}`;
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
                             className="flex flex-col items-center gap-3 md:gap-[1.5vmin] z-30 w-full px-3 md:px-0">
                             {ehApostada && usuarioParticipou && (
-                                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                     className={`px-4 py-2 md:px-[3.5vmin] md:py-[1vmin] rounded-full border backdrop-blur-md flex items-center gap-2 md:gap-[1vmin] text-center ${
                                         usuarioVenceu 
                                             ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
