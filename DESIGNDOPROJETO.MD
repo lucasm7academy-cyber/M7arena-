@@ -53,15 +53,15 @@ Exportadas e centralizadas no projeto:
 ```tsx
 // 1. CARDS GRANDES, MODAIS E BANNERS (Corte de 14px)
 export const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
-export const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 12.5px)';
+export const CUT_FRAME_INNER = 'polygon(12.5px 0, 100% 0, 100% calc(100% - 12.5px), calc(100% - 12.5px) 100%, 0 100%, 0 12.5px)';
 
 // 2. BOTÕES, SUBCARDS E HEADERS (Corte de 9px)
 export const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
-export const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 7.8px)';
+export const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)';
 
 // 3. BADGES, TAGS E INDICADORES (Corte de 6px)
 export const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
-export const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 5px)';
+export const CUT_BADGE_INNER = 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)';
 ```
 
 ---
