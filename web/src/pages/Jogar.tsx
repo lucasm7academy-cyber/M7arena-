@@ -229,7 +229,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="w-full bg-[#09090c] p-5 sm:p-6 relative overflow-y-auto custom-scrollbar flex-1"
+          className="w-full bg-[#09090c] p-5 sm:p-6 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex-1"
           style={{ clipPath: CUT_INNER }}
         >
           {/* Luz ambiente no topo */}

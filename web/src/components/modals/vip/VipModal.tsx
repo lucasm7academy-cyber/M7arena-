@@ -236,7 +236,7 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="w-full bg-[#09090c] p-6 md:p-8 relative overflow-y-auto custom-scrollbar flex-1"
+              className="w-full bg-[#09090c] p-6 md:p-8 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex-1"
               style={{ clipPath: CUT_INNER }}
             >
               {/* Luz ambiente suave */}
