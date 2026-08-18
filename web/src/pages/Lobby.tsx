@@ -31,15 +31,15 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+    className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
     style={{
       clipPath: CUT_FRAME,
-      background: 'linear-gradient(135deg, rgba(145,70,255,0.7) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
+      background: 'linear-gradient(135deg, rgba(145,70,255,0.8) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
       boxShadow: '0 10px 30px -10px rgba(145,70,255,0.25)'
     }}
   >
     <div
-      className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+      className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
       style={{ clipPath: CUT_FRAME_INNER }}
     >
       {/* Badge "Ao Vivo" */}
@@ -54,7 +54,7 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
       </div>
 
       {/* Thumbnail */}
-      <div className="relative w-full aspect-video overflow-hidden bg-black">
+      <div className="relative w-full aspect-video overflow-hidden bg-black flex-none">
         <img
           src={thumbnail}
           alt={titulo}
@@ -91,17 +91,17 @@ const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+    className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
     style={{
       clipPath: CUT_FRAME,
-      background: 'linear-gradient(135deg, rgba(145,70,255,0.6) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+      background: 'linear-gradient(135deg, rgba(145,70,255,0.7) 0%, rgba(145,70,255,0.15) 50%, rgba(255,255,255,0.06) 100%)',
     }}
   >
     <div
-      className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+      className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
       style={{ clipPath: CUT_FRAME_INNER }}
     >
-      <div className="relative w-full aspect-video overflow-hidden bg-black">
+      <div className="relative w-full aspect-video overflow-hidden bg-black flex-none">
         {thumbnail ? (
           <img
             src={thumbnail}
@@ -153,15 +153,15 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
       href={link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
+      className="group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[340px] md:w-[380px] snap-center cursor-pointer transition-all p-[1.5px]"
       style={{
         clipPath: CUT_FRAME,
-        background: 'linear-gradient(135deg, rgba(145,70,255,0.7) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
+        background: 'linear-gradient(135deg, rgba(145,70,255,0.8) 0%, rgba(145,70,255,0.2) 50%, rgba(255,255,255,0.08) 100%)',
         boxShadow: '0 10px 30px -10px rgba(145,70,255,0.25)'
       }}
     >
       <div
-        className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+        className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
         style={{ clipPath: CUT_FRAME_INNER }}
       >
         {/* Badge "Ao Vivo" */}
@@ -176,7 +176,7 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
         </div>
 
         {/* Teams matchup */}
-        <div className="relative w-full aspect-video overflow-hidden bg-black flex flex-col items-center justify-center p-4">
+        <div className="relative w-full aspect-video overflow-hidden bg-black flex flex-col items-center justify-center p-4 flex-none">
           <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-[#08080a]" />
           <div className="relative z-10 flex items-center justify-between w-full gap-3 pt-6">
             {/* Team A */}
@@ -500,14 +500,7 @@ const Home = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#060608] text-white selection:bg-[#FFB700] selection:text-black">
-      {/* Luz ambiente de fundo elegante */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-[10%] left-[20%] w-[600px] h-[600px] bg-[#FFB700]/5 rounded-full blur-[140px]" />
-        <div className="absolute top-[35%] right-[10%] w-[500px] h-[500px] bg-[#9146FF]/5 rounded-full blur-[140px]" />
-        <div className="absolute top-[65%] left-[15%] w-[550px] h-[550px] bg-[#00F0FF]/4 rounded-full blur-[150px]" />
-      </div>
-
+    <div className="relative min-h-screen text-white selection:bg-[#FFB700] selection:text-black">
       <div className="relative z-10 space-y-12 pb-24">
         {/* HERO SECTION - BANNER PRINCIPAL STYLE */}
         <section className="pt-8 pb-2 px-4 max-w-7xl mx-auto">
@@ -520,7 +513,7 @@ const Home = () => {
             }}
           >
             <div
-              className="relative w-full h-full bg-[#08080a] overflow-hidden"
+              className="w-full h-full bg-[#08080a] overflow-hidden relative"
               style={{ clipPath: CUT_FRAME_INNER }}
             >
               {/* Background Video */}
@@ -685,13 +678,13 @@ const Home = () => {
                 {/* Aviso "não ao vivo" com Howling Abyss quando só há highlights */}
                 {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
                   <div
-                    className="hidden sm:flex group relative flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center overflow-hidden flex-col items-center justify-center p-6 text-center min-h-[220px] shadow-2xl p-[1.5px]"
+                    className="hidden sm:flex group relative flex flex-col flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center overflow-hidden min-h-[220px] shadow-2xl p-[1.5px]"
                     style={{
                       clipPath: CUT_FRAME,
                       background: 'linear-gradient(135deg, rgba(145,70,255,0.4) 0%, rgba(255,255,255,0.06) 100%)'
                     }}
                   >
-                    <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col items-center justify-center p-6" style={{ clipPath: CUT_FRAME_INNER }}>
+                    <div className="w-full flex-1 bg-[#08080a] relative overflow-hidden flex flex-col items-center justify-center p-6 text-center" style={{ clipPath: CUT_FRAME_INNER }}>
                       <img
                         src="/images/howling_abyss_night.webp"
                         alt="Howling Abyss Night"
@@ -748,197 +741,203 @@ const Home = () => {
               <div
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="relative flex items-center justify-between min-h-[380px] md:min-h-[420px] w-full px-2 md:px-14 py-8 bg-[#08080a]/80 border border-white/10 p-[1.5px]"
+                className="relative p-[1.5px] w-full transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,183,0,0.3) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)'
+                  background: 'linear-gradient(135deg, rgba(255,183,0,0.45) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
+                  boxShadow: '0 0 35px -10px rgba(255,183,0,0.2)'
                 }}
               >
-                {/* Ambient Background Glows */}
-                <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
-                  <div
-                    className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute left-[5%] md:left-[15%] transition-all duration-700"
-                    style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
-                  />
-                  <div
-                    className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute right-[5%] md:right-[15%] transition-all duration-700"
-                    style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
-                  />
-                </div>
-
-                {/* Left Navigation Arrow */}
-                <button
-                  onClick={handlePrev}
-                  className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                  title="Jogo Anterior"
+                <div
+                  className="w-full bg-[#08080a] relative flex items-center justify-between min-h-[380px] md:min-h-[420px] px-2 md:px-14 py-8 overflow-hidden"
+                  style={{ clipPath: CUT_FRAME_INNER }}
                 >
-                  <ChevronRight className="rotate-180 w-5 h-5" />
-                </button>
+                  {/* Ambient Background Glows */}
+                  <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
+                    <div
+                      className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute left-[5%] md:left-[15%] transition-all duration-700"
+                      style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
+                    />
+                    <div
+                      className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute right-[5%] md:right-[15%] transition-all duration-700"
+                      style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
+                    />
+                  </div>
 
-                {/* Center Animating Area */}
-                <div className="w-full flex justify-center items-center z-10 overflow-visible px-2">
-                  <AnimatePresence initial={false} custom={direction} mode="wait">
-                    {upcomingMatches[currentMatchIndex] && (
-                      <div
-                        key={upcomingMatches[currentMatchIndex].id}
-                        className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
-                      >
-                        {/* Main Matchup Arena */}
-                        <div className="flex flex-wrap md:flex-nowrap md:flex-row items-center justify-center md:justify-between w-full gap-y-6 gap-x-2 md:gap-12 py-2">
-                          {/* Team A */}
-                          <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
-                            <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
-                              <div
-                                className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
-                                style={{
-                                  clipPath: CUT_FRAME,
-                                  borderColor: `${upcomingMatches[currentMatchIndex].colorA}60`,
-                                  boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorA}20`
-                                }}
-                              >
-                                {upcomingMatches[currentMatchIndex].logoA ? (
-                                  <img
-                                    src={upcomingMatches[currentMatchIndex].logoA}
-                                    alt={upcomingMatches[currentMatchIndex].tagA}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <span
-                                    className="text-4xl md:text-6xl font-black opacity-30 select-none"
-                                    style={{ color: upcomingMatches[currentMatchIndex].colorA }}
-                                  >
-                                    {upcomingMatches[currentMatchIndex].tagA[1] ?? upcomingMatches[currentMatchIndex].tagA[0]}
-                                  </span>
-                                )}
-                              </div>
-                              <span
-                                className="text-xl sm:text-2xl md:text-4xl font-black uppercase tracking-tight leading-none"
-                                style={{ color: upcomingMatches[currentMatchIndex].colorA }}
-                              >
-                                {upcomingMatches[currentMatchIndex].tagA}
-                              </span>
-                            </div>
-                          </div>
+                  {/* Left Navigation Arrow */}
+                  <button
+                    onClick={handlePrev}
+                    className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
+                    title="Jogo Anterior"
+                  >
+                    <ChevronRight className="rotate-180 w-5 h-5" />
+                  </button>
 
-                          {/* VS & Timing Area */}
-                          <div className="flex flex-col items-center gap-2 md:gap-3 order-3 w-full md:w-auto md:order-none min-w-[160px] relative select-none">
-                            <span className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/20 tracking-widest uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
-                              VS
-                            </span>
-                            <div className="flex flex-col items-center">
-                              <span className="text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.25em]">{upcomingMatches[currentMatchIndex].date}</span>
-                              <span className="text-lg md:text-xl font-black text-[#FFB700] tracking-widest mt-0.5 drop-shadow-[0_0_15px_rgba(255,183,0,0.45)]">{upcomingMatches[currentMatchIndex].time}</span>
-                            </div>
-                          </div>
-
-                          {/* Team B */}
-                          <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
-                            <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
-                              <div
-                                className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
-                                style={{
-                                  clipPath: CUT_FRAME,
-                                  borderColor: `${upcomingMatches[currentMatchIndex].colorB}60`,
-                                  boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorB}20`
-                                }}
-                              >
-                                {upcomingMatches[currentMatchIndex].logoB ? (
-                                  <img
-                                    src={upcomingMatches[currentMatchIndex].logoB}
-                                    alt={upcomingMatches[currentMatchIndex].tagB}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <span
-                                    className="text-4xl md:text-6xl font-black opacity-30 select-none"
-                                    style={{ color: upcomingMatches[currentMatchIndex].colorB }}
-                                  >
-                                    {upcomingMatches[currentMatchIndex].tagB[1] ?? upcomingMatches[currentMatchIndex].tagB[0]}
-                                  </span>
-                                )}
-                              </div>
-                              <span
-                                className="text-xl sm:text-2xl md:text-4xl font-black uppercase tracking-tight leading-none"
-                                style={{ color: upcomingMatches[currentMatchIndex].colorB }}
-                              >
-                                {upcomingMatches[currentMatchIndex].tagB}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Votação da torcida */}
-                        {(() => {
-                          const m = upcomingMatches[currentMatchIndex];
-                          if (!m) return null;
-                          const v = votes[m.id] || { a: 0, b: 0 };
-                          const total = v.a + v.b;
-                          const pctA = total > 0 ? Math.round((v.a / total) * 100) : 50;
-                          const pctB = 100 - pctA;
-                          const voted = userVotes[m.id];
-                          return (
-                            <div className="w-full max-w-sm mx-auto flex flex-col gap-2.5">
-                              {/* Barra de votos chanfrada */}
-                              <div
-                                className="relative flex h-2.5 overflow-hidden bg-white/10 p-[1px]"
-                                style={{ clipPath: CUT_BADGE }}
-                              >
+                  {/* Center Animating Area */}
+                  <div className="w-full flex justify-center items-center z-10 overflow-visible px-2">
+                    <AnimatePresence initial={false} custom={direction} mode="wait">
+                      {upcomingMatches[currentMatchIndex] && (
+                        <div
+                          key={upcomingMatches[currentMatchIndex].id}
+                          className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
+                        >
+                          {/* Main Matchup Arena */}
+                          <div className="flex flex-wrap md:flex-nowrap md:flex-row items-center justify-center md:justify-between w-full gap-y-6 gap-x-2 md:gap-12 py-2">
+                            {/* Team A */}
+                            <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
+                              <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
                                 <div
-                                  className="h-full transition-all duration-500 ease-out"
-                                  style={{ width: `${pctA}%`, backgroundColor: m.colorA, opacity: 0.9 }}
-                                />
-                                <div
-                                  className="h-full transition-all duration-500 ease-out"
-                                  style={{ width: `${pctB}%`, backgroundColor: m.colorB, opacity: 0.9 }}
-                                />
-                              </div>
-                              {/* Botões GO */}
-                              <div className="flex items-center justify-between gap-2">
-                                <button
-                                  onClick={() => handleVote(m.id, 'a')}
-                                  disabled={!!voted}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
-                                    ${voted === 'a' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
-                                  style={{ clipPath: CUT_BADGE }}
+                                  className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
+                                  style={{
+                                    clipPath: CUT_FRAME,
+                                    borderColor: `${upcomingMatches[currentMatchIndex].colorA}60`,
+                                    boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorA}20`
+                                  }}
                                 >
-                                  {voted === 'a' && '✓ '}GO {m.tagA}
-                                  <span className="opacity-60 font-mono">{pctA}%</span>
-                                </button>
-
-                                <span className="text-[9px] text-white/30 font-black uppercase tracking-widest whitespace-nowrap">
-                                  {total > 0 ? `${total} voto${total !== 1 ? 's' : ''}` : 'Vote!'}
+                                  {upcomingMatches[currentMatchIndex].logoA ? (
+                                    <img
+                                      src={upcomingMatches[currentMatchIndex].logoA}
+                                      alt={upcomingMatches[currentMatchIndex].tagA}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span
+                                      className="text-4xl md:text-6xl font-black opacity-30 select-none"
+                                      style={{ color: upcomingMatches[currentMatchIndex].colorA }}
+                                    >
+                                      {upcomingMatches[currentMatchIndex].tagA[1] ?? upcomingMatches[currentMatchIndex].tagA[0]}
+                                    </span>
+                                  )}
+                                </div>
+                                <span
+                                  className="text-xl sm:text-2xl md:text-4xl font-black uppercase tracking-tight leading-none"
+                                  style={{ color: upcomingMatches[currentMatchIndex].colorA }}
+                                >
+                                  {upcomingMatches[currentMatchIndex].tagA}
                                 </span>
-
-                                <button
-                                  onClick={() => handleVote(m.id, 'b')}
-                                  disabled={!!voted}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
-                                    ${voted === 'b' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
-                                  style={{ clipPath: CUT_BADGE }}
-                                >
-                                  GO {m.tagB}
-                                  <span className="opacity-60 font-mono">{pctB}%</span>
-                                  {voted === 'b' && ' ✓'}
-                                </button>
                               </div>
                             </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </AnimatePresence>
-                </div>
 
-                {/* Right Navigation Arrow */}
-                <button
-                  onClick={handleNext}
-                  className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                  title="Próximo Jogo"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+                            {/* VS & Timing Area */}
+                            <div className="flex flex-col items-center gap-2 md:gap-3 order-3 w-full md:w-auto md:order-none min-w-[160px] relative select-none">
+                              <span className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/20 tracking-widest uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+                                VS
+                              </span>
+                              <div className="flex flex-col items-center">
+                                <span className="text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.25em]">{upcomingMatches[currentMatchIndex].date}</span>
+                                <span className="text-lg md:text-xl font-black text-[#FFB700] tracking-widest mt-0.5 drop-shadow-[0_0_15px_rgba(255,183,0,0.45)]">{upcomingMatches[currentMatchIndex].time}</span>
+                              </div>
+                            </div>
+
+                            {/* Team B */}
+                            <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
+                              <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
+                                <div
+                                  className="w-24 h-24 md:w-32 md:h-32 bg-[#0c0c10] border flex items-center justify-center shadow-2xl relative overflow-hidden group p-[1.5px]"
+                                  style={{
+                                    clipPath: CUT_FRAME,
+                                    borderColor: `${upcomingMatches[currentMatchIndex].colorB}60`,
+                                    boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorB}20`
+                                  }}
+                                >
+                                  {upcomingMatches[currentMatchIndex].logoB ? (
+                                    <img
+                                      src={upcomingMatches[currentMatchIndex].logoB}
+                                      alt={upcomingMatches[currentMatchIndex].tagB}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span
+                                      className="text-4xl md:text-6xl font-black opacity-30 select-none"
+                                      style={{ color: upcomingMatches[currentMatchIndex].colorB }}
+                                    >
+                                      {upcomingMatches[currentMatchIndex].tagB[1] ?? upcomingMatches[currentMatchIndex].tagB[0]}
+                                    </span>
+                                  )}
+                                </div>
+                                <span
+                                  className="text-xl sm:text-2xl md:text-4xl font-black uppercase tracking-tight leading-none"
+                                  style={{ color: upcomingMatches[currentMatchIndex].colorB }}
+                                >
+                                  {upcomingMatches[currentMatchIndex].tagB}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Votação da torcida */}
+                          {(() => {
+                            const m = upcomingMatches[currentMatchIndex];
+                            if (!m) return null;
+                            const v = votes[m.id] || { a: 0, b: 0 };
+                            const total = v.a + v.b;
+                            const pctA = total > 0 ? Math.round((v.a / total) * 100) : 50;
+                            const pctB = 100 - pctA;
+                            const voted = userVotes[m.id];
+                            return (
+                              <div className="w-full max-w-sm mx-auto flex flex-col gap-2.5">
+                                {/* Barra de votos chanfrada */}
+                                <div
+                                  className="relative flex h-2.5 overflow-hidden bg-white/10 p-[1px]"
+                                  style={{ clipPath: CUT_BADGE }}
+                                >
+                                  <div
+                                    className="h-full transition-all duration-500 ease-out"
+                                    style={{ width: `${pctA}%`, backgroundColor: m.colorA, opacity: 0.9 }}
+                                  />
+                                  <div
+                                    className="h-full transition-all duration-500 ease-out"
+                                    style={{ width: `${pctB}%`, backgroundColor: m.colorB, opacity: 0.9 }}
+                                  />
+                                </div>
+                                {/* Botões GO */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <button
+                                    onClick={() => handleVote(m.id, 'a')}
+                                    disabled={!!voted}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
+                                      ${voted === 'a' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
+                                    style={{ clipPath: CUT_BADGE }}
+                                  >
+                                    {voted === 'a' && '✓ '}GO {m.tagA}
+                                    <span className="opacity-60 font-mono">{pctA}%</span>
+                                  </button>
+
+                                  <span className="text-[9px] text-white/30 font-black uppercase tracking-widest whitespace-nowrap">
+                                    {total > 0 ? `${total} voto${total !== 1 ? 's' : ''}` : 'Vote!'}
+                                  </span>
+
+                                  <button
+                                    onClick={() => handleVote(m.id, 'b')}
+                                    disabled={!!voted}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
+                                      ${voted === 'b' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
+                                    style={{ clipPath: CUT_BADGE }}
+                                  >
+                                    GO {m.tagB}
+                                    <span className="opacity-60 font-mono">{pctB}%</span>
+                                    {voted === 'b' && ' ✓'}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Right Navigation Arrow */}
+                  <button
+                    onClick={handleNext}
+                    className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON }}
+                    title="Próximo Jogo"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </section>
@@ -992,18 +991,18 @@ const Home = () => {
             ].map((step) => (
               <div
                 key={step.n}
-                className="group relative p-[1.5px] transition-all"
+                className="group relative p-[1.5px] flex flex-col h-full transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: `linear-gradient(135deg, ${step.color}60 0%, ${step.color}20 50%, rgba(255,255,255,0.06) 100%)`,
+                  background: `linear-gradient(135deg, ${step.color}80 0%, ${step.color}25 50%, rgba(255,255,255,0.06) 100%)`,
                 }}
               >
                 <div
-                  className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+                  className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
                   style={{ clipPath: CUT_FRAME_INNER }}
                 >
                   {/* Banner de Imagem */}
-                  <div className="relative h-44 w-full overflow-hidden bg-[#101014]">
+                  <div className="relative h-44 w-full overflow-hidden bg-[#101014] flex-none">
                     <img
                       src={step.bgImage}
                       alt={step.title}
@@ -1116,17 +1115,17 @@ const Home = () => {
               <div
                 key={n.id}
                 onClick={() => setSelectedNoticia(n)}
-                className="group relative p-[1.5px] cursor-pointer transition-all flex flex-col justify-between"
+                className="group relative p-[1.5px] flex flex-col h-full cursor-pointer transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,183,0,0.3) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)',
+                  background: 'linear-gradient(135deg, rgba(255,183,0,0.45) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
                 }}
               >
                 <div
-                  className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+                  className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
                   style={{ clipPath: CUT_FRAME_INNER }}
                 >
-                  <div className="relative aspect-[16/9] overflow-hidden bg-black">
+                  <div className="relative aspect-[16/9] overflow-hidden bg-black flex-none">
                     <img
                       src={n.image || n.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
                       alt={n.titulo}
@@ -1210,14 +1209,14 @@ const Home = () => {
             ].map((t) => (
               <div
                 key={t.name}
-                className="relative p-[1.5px] flex flex-col justify-between group"
+                className="group relative p-[1.5px] flex flex-col h-full transition-all"
                 style={{
                   clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
                 }}
               >
                 <div
-                  className="w-full h-full p-6 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
+                  className="w-full flex-1 p-6 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors relative overflow-hidden flex flex-col justify-between"
                   style={{ clipPath: CUT_FRAME_INNER }}
                 >
                   <div>
@@ -1236,7 +1235,7 @@ const Home = () => {
 
                   <div className="flex items-center gap-3.5 pt-4 border-t border-white/5 relative z-10">
                     <div
-                      className="w-11 h-11 border border-white/20 group-hover:border-[#FFB700] transition-colors overflow-hidden"
+                      className="w-11 h-11 border border-white/20 group-hover:border-[#FFB700] transition-colors overflow-hidden flex-none"
                       style={{ clipPath: CUT_BUTTON }}
                     >
                       <img
@@ -1281,15 +1280,15 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Card Discord */}
             <div
-              className="group relative p-[1.5px] flex flex-col justify-between transition-all"
+              className="group relative p-[1.5px] flex flex-col h-full transition-all"
               style={{
                 clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(88,101,242,0.6) 0%, rgba(88,101,242,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+                background: 'linear-gradient(135deg, rgba(88,101,242,0.7) 0%, rgba(88,101,242,0.2) 50%, rgba(255,255,255,0.06) 100%)',
                 boxShadow: '0 10px 30px -10px rgba(88,101,242,0.2)'
               }}
             >
               <div
-                className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between"
+                className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between overflow-hidden"
                 style={{ clipPath: CUT_FRAME_INNER }}
               >
                 <div>
@@ -1331,15 +1330,15 @@ const Home = () => {
 
             {/* Card WhatsApp */}
             <div
-              className="group relative p-[1.5px] flex flex-col justify-between transition-all"
+              className="group relative p-[1.5px] flex flex-col h-full transition-all"
               style={{
                 clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(37,211,102,0.6) 0%, rgba(37,211,102,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+                background: 'linear-gradient(135deg, rgba(37,211,102,0.7) 0%, rgba(37,211,102,0.2) 50%, rgba(255,255,255,0.06) 100%)',
                 boxShadow: '0 10px 30px -10px rgba(37,211,102,0.2)'
               }}
             >
               <div
-                className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between"
+                className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between overflow-hidden"
                 style={{ clipPath: CUT_FRAME_INNER }}
               >
                 <div>
@@ -1381,15 +1380,15 @@ const Home = () => {
 
             {/* Card Instagram */}
             <div
-              className="group relative p-[1.5px] flex flex-col justify-between transition-all"
+              className="group relative p-[1.5px] flex flex-col h-full transition-all"
               style={{
                 clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(225,48,108,0.6) 0%, rgba(225,48,108,0.15) 50%, rgba(255,255,255,0.06) 100%)',
+                background: 'linear-gradient(135deg, rgba(225,48,108,0.7) 0%, rgba(225,48,108,0.2) 50%, rgba(255,255,255,0.06) 100%)',
                 boxShadow: '0 10px 30px -10px rgba(225,48,108,0.2)'
               }}
             >
               <div
-                className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between"
+                className="w-full flex-1 bg-[#08080a] group-hover:bg-[#0c0c10] transition-colors p-6 md:p-8 flex flex-col justify-between overflow-hidden"
                 style={{ clipPath: CUT_FRAME_INNER }}
               >
                 <div>
@@ -1511,7 +1510,7 @@ const Home = () => {
         {/* BANNER CTA FINAL */}
         <section className="py-8 px-4 max-w-7xl mx-auto">
           <div
-            className="relative p-[1.5px] shadow-2xl"
+            className="relative p-[1.5px] w-full shadow-2xl transition-all"
             style={{
               clipPath: CUT_FRAME,
               background: 'linear-gradient(135deg, rgba(255,183,0,0.65) 0%, rgba(255,183,0,0.2) 50%, rgba(255,255,255,0.08) 100%)',

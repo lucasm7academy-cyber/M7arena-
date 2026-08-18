@@ -148,7 +148,15 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050506]">
+    <div className="min-h-screen bg-[#060608] text-white relative">
+      {/* Luzes de Fundo Ambiente Global para todas as páginas (Perfil, Jogar, Início, Campeonatos, etc.) */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-[10%] left-[15%] w-[650px] h-[650px] bg-[#FFB700]/[0.05] rounded-full blur-[150px]" />
+        <div className="absolute top-[35%] right-[10%] w-[550px] h-[550px] bg-[#9146FF]/[0.045] rounded-full blur-[150px]" />
+        <div className="absolute top-[65%] left-[10%] w-[600px] h-[600px] bg-[#00F0FF]/[0.035] rounded-full blur-[160px]" />
+        <div className="absolute -bottom-[10%] right-[25%] w-[500px] h-[500px] bg-[#FFB700]/[0.04] rounded-full blur-[140px]" />
+      </div>
+
       {/* Header */}
       <header className="bg-black/60 backdrop-blur-sm fixed top-0 z-50 w-full h-[68px] md:h-16 border-b border-primary shadow-lg">
         <div className="absolute bottom-0 left-0 w-full h-0 bg-primary shadow-[0_0_10px_rgba(255,255,0,0.5)] z-50"></div>
