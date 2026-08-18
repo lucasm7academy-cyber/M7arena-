@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:18:02.228Z",
+  "updatedAt": "2026-08-18T04:20:59.550Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,14 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-15T19:18:05.007Z",
-      "agent": "gemini",
-      "summary": "Redesenhado o menu/topbar superior das salas (SalaMod1.tsx): removida imagem do Ryze, implementado visual dark glassmorphism com glow sutil, badges de modo/estado com status dot dinâmico, card de modalidade (Casual/MC) e botões refinados. Build e deploy na VPS dev.m7arena.pro concluídos.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-15T19:23:31.961Z",
       "agent": "gemini",
       "summary": "Ajustadas as bordas dos botoes e cards do menu superior da sala em SalaMod1.tsx para o padrao angular e chanfrado (cut-corners) do eSports/M7 Arena. Rebuild e deploy na VPS dev.m7arena.pro concluidos.",
@@ -2084,6 +2076,14 @@
         "web/src/pages/Lobby.tsx",
         "web/src/components/layout/LayoutWrapper.tsx",
         "web/src/index.css"
+      ]
+    },
+    {
+      "at": "2026-08-18T04:20:59.550Z",
+      "agent": "gemini",
+      "summary": "Refinamento das bordas dos cards da pagina Lobby (Lobby.tsx) de 1.5px/gradiente forte para 1px com gradiente de baixa opacidade, eliminando qualquer vazamento/aparencia de triangulo diagonal sobre a imagem. Rebuild e deploy na VPS dev.m7arena.pro.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
       ]
     }
   ]
