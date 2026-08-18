@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { pool } from "./db.js";
 import { runCron } from "./cron.js";
+import { runReconciliacaoHandles } from "./lib/reconciliar-handles.js";
 import { authRouter, termsRouter } from "./routes/auth.js";
 import { googleAuthRouter } from "./routes/auth-google.js";
 import { riotRouter } from "./routes/riot.js";
@@ -101,3 +102,13 @@ setInterval(() => {
   runCron().catch((e) => console.error("[cron] erro:", e?.message));
 }, 10 * 60 * 1000);
 runCron().catch((e) => console.error("[cron] erro inicial:", e?.message));
+
+// Reconciliação do Riot ID (spec 2026-08-17): atualiza game_accounts.handle +
+// users.riot_id com o nome atual do LoL a cada 3 dias. Timer próprio — o
+// intervalo de 3 dias não cabe no runCron de 10min. 1 execução no boot para já
+// resolver os handles stale assim que houver chave Riot válida (BLK-006).
+const DIAS_MS = 3 * 24 * 60 * 60 * 1000;
+setInterval(() => {
+  runReconciliacaoHandles().catch((e) => console.error("[cron-handles] erro:", e?.message));
+}, DIAS_MS);
+runReconciliacaoHandles().catch((e) => console.error("[cron-handles] erro inicial:", e?.message));
