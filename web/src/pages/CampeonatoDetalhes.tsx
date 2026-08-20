@@ -43,6 +43,8 @@ import {
 import { api } from '../lib/api';
 
 import { CUT_FRAME, CUT_FRAME_INNER, CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from "../components/campeonatos/cut-edge";
+import { getIcon } from "../components/campeonatos/icons";
+import { formatDayOfWeek, formatFullDate, formatDate } from "../components/campeonatos/dates";
 import { GroupStage } from "../components/campeonatos/GroupStage";
 import { DoubleSideBracket } from "../components/campeonatos/DoubleSideBracket";
 import { DoubleEliminationBracket } from "../components/campeonatos/DoubleEliminationBracket";
@@ -1188,66 +1190,6 @@ const CampeonatoDetalhes = () => {
   // (Removido) findNewlyFormedMatches: a chave é 100% visual e não cria mais
   // jogos no cronograma.
 
-  const formatDayOfWeek = (dateStr: string) => {
-    if (!dateStr || dateStr === "A COMBINAR" || dateStr === "A definir")
-      return "";
-    try {
-      const parts = dateStr.split("-");
-      if (parts.length === 3) {
-        const date = new Date(
-          parseInt(parts[0]),
-          parseInt(parts[1]) - 1,
-          parseInt(parts[2]),
-        );
-        return date.toLocaleDateString("pt-BR", { weekday: "long" });
-      }
-    } catch {}
-    return "";
-  };
-
-  const formatFullDate = (dateStr: string) => {
-    if (!dateStr || dateStr === "A COMBINAR" || dateStr === "A definir")
-      return dateStr || "A definir";
-    try {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-      
-      const date = new Date(dateStr);
-      if (!isNaN(date.getTime())) {
-        // Use UTC values if the string looks like a simple date YYYY-MM-DD to avoid timezone shifts
-        if (dateStr.length === 10 && dateStr.includes("-")) {
-          const [y, m, d] = dateStr.split("-").map(Number);
-          return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
-        }
-        return date.toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
-      }
-      
-      const parts = dateStr.split("-");
-      if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-    } catch {}
-    return dateStr;
-  };
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === "A COMBINAR" || dateStr === "A definir")
-      return dateStr;
-    if (!dateStr.includes("-")) return dateStr; // Already in DD MMM format
-
-    try {
-      const date = new Date(dateStr + "T00:00:00");
-      return date
-        .toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-        .toUpperCase();
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
   const handleSortearGrupos = () => {
     if (!isAdmin) return;
 
@@ -1775,23 +1717,6 @@ const CampeonatoDetalhes = () => {
       return dA.getTime() - dB.getTime();
     });
   }, [campeonato?.cronograma, selectedGroupFilter]);
-
-  const getIcon = (iconName: any) => {
-    const icons: any = {
-      ShieldCheck,
-      Target,
-      Swords,
-      Sparkles,
-      Trophy,
-    };
-
-    if (typeof iconName === "string" && icons[iconName]) return icons[iconName];
-    if (typeof iconName === "function") return iconName;
-    if (iconName && typeof iconName === "object" && iconName.displayName)
-      return iconName; // Possible forwardRef
-
-    return ShieldCheck;
-  };
 
   // Todos os jogos não finalizados/confirmados
   const pendingAll = (campeonato?.cronograma || []).filter(
