@@ -3203,8 +3203,12 @@ const CampeonatoDetalhes = () => {
     setCampeonato(updated);
     api.tournaments.atualizarCronograma(id, newCronograma)
       .then(() => {
-        // Recalcula PDL/V/D — se o jogo excluído estava finalizado, o time perde
-     if (campeonatoLoading || !campeonato) {
+        toast.success("Jogo excluído com sucesso!");
+      })
+      .catch((err: any) => console.error("Erro ao excluir jogo:", err));
+  };
+
+  if (campeonatoLoading || !campeonato) {
     return (
       <div className="min-h-screen bg-[#060608] flex items-center justify-center">
         <div className="flex items-center gap-3 text-white/40">
