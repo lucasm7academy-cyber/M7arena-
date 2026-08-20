@@ -17,6 +17,14 @@ import { usePerfilSafe, usePerfil } from '../contexts/PerfilContext';
 const IS_DEV = import.meta.env.DEV;
 const TEAMS_PAGE = 20;
 
+// Polígonos Oficiais Cut-Edge
+const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
+const CUT_FRAME_INNER = 'polygon(13.8px 0, 100% 0, 100% calc(100% - 13.8px), calc(100% - 13.8px) 100%, 0 100%, 0 13.8px)';
+const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+const CUT_BUTTON_INNER = 'polygon(8.8px 0, 100% 0, 100% calc(100% - 8.8px), calc(100% - 8.8px) 100%, 0 100%, 0 8.8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
+
 interface TeamBasico {
   id: string | number;
   name: string;
@@ -66,7 +74,7 @@ async function carregarTimesBasico(
   return { teams, total };
 }
 
-// ✅ Componente TimeCard (SEM membros) - Versão Lista Horizontal
+// ✅ Componente TimeCard (SEM membros) - Versão Cut-Edge
 const TimeCard = ({ team, onClick, onLogoClick }: {
   team: TeamBasico;
   onClick: (t: TeamBasico) => void;
@@ -79,24 +87,40 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
 
   return (
     <motion.div
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.99 }}
       onClick={() => { playSound('click'); onClick(team); }}
-      className="rounded-2xl cursor-pointer overflow-hidden group transition-all duration-500 bg-[rgba(13,13,13,1)] border border-white/5 hover:border-white/10"
+      className="relative p-[1px] cursor-pointer transition-all hover:scale-[1.005] group"
+      style={{
+        clipPath: CUT_BUTTON,
+        background: `linear-gradient(135deg, ${team.gradientFrom}40, rgba(255,255,255,0.05) 100%)`,
+      }}
     >
-      <div className="rounded-[13px] overflow-hidden relative p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+      <div
+        className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 group-hover:bg-[#101018] transition-colors"
+        style={{ clipPath: CUT_BUTTON_INNER }}
+      >
         {/* Logo + Nome/Tag no mobile, Apenas Logo no desktop */}
         <div className="flex items-center gap-4 md:block shrink-0">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-            className="w-16 h-16 md:w-24 md:h-24 rounded-xl flex items-center justify-center relative overflow-hidden shrink-0"
-            style={{ border: `2px solid ${team.gradientFrom}`, background: 'black', boxShadow: `0 8px 24px -6px ${team.gradientFrom}60` }}
+            className="w-16 h-16 md:w-20 md:h-20 p-[1px] flex items-center justify-center relative shrink-0 shadow-xl"
+            style={{
+              clipPath: CUT_BADGE,
+              background: `linear-gradient(135deg, ${team.gradientFrom}, rgba(255,255,255,0.1))`,
+              boxShadow: `0 8px 24px -6px ${team.gradientFrom}60`
+            }}
             onClick={team.logoUrl ? (e) => { e.stopPropagation(); onLogoClick?.(team.logoUrl!); } : undefined}
           >
-            {team.logoUrl ? (
-              <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" loading="lazy" width={96} height={96} />
-            ) : (
-              <span className="font-black text-base md:text-xl tracking-widest" style={{ color: team.gradientFrom }}>{team.tag}</span>
-            )}
+            <div
+              className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
+              style={{ clipPath: CUT_BADGE_INNER }}
+            >
+              {team.logoUrl ? (
+                <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" loading="lazy" width={96} height={96} />
+              ) : (
+                <span className="font-black text-base md:text-lg tracking-widest" style={{ color: team.gradientFrom }}>{team.tag}</span>
+              )}
+            </div>
           </motion.div>
 
           {/* Nome e Tag do time do lado do logo APENAS no mobile */}
@@ -108,8 +132,15 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
               <h3 className="text-white font-black text-base tracking-tight truncate uppercase">
                 {team.name}
               </h3>
-              <span className="inline-block text-[8px] font-black px-1.5 py-0.5 rounded-md tracking-wider shrink-0"
-                style={{ color: team.gradientFrom, background: `${team.gradientFrom}18`, border: `1px solid ${team.gradientFrom}40` }}>
+              <span
+                className="text-[8px] font-black px-2 py-0.5 tracking-wider shrink-0"
+                style={{
+                  clipPath: CUT_BADGE,
+                  color: team.gradientFrom,
+                  background: `${team.gradientFrom}18`,
+                  border: `1px solid ${team.gradientFrom}40`
+                }}
+              >
                 #{team.tag}
               </span>
             </div>
@@ -122,45 +153,52 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
         </div>
 
         {/* Informações e Dados no Meio */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between md:h-24 py-1">
+        <div className="flex-1 min-w-0 flex flex-col justify-between md:h-20 py-0.5">
           {/* Nome e Tag - Exibidos APENAS no desktop */}
           <div className="hidden md:flex flex-col gap-1">
             <div className="flex items-center gap-2">
               {isOwner && (
                 <Crown className="w-4 h-4 shrink-0" style={{ color: team.gradientFrom }} />
               )}
-              <h3 className="text-white font-black text-xl tracking-tight leading-tight truncate uppercase">
+              <h3 className="text-white font-black text-lg tracking-tight leading-tight truncate uppercase">
                 {team.name}
               </h3>
-              <span className="inline-block text-[10px] font-black px-2 py-0.5 rounded-md tracking-widest shrink-0"
-                style={{ color: team.gradientFrom, background: `${team.gradientFrom}18`, border: `1px solid ${team.gradientFrom}40` }}>
+              <span
+                className="text-[9px] font-black px-2 py-0.5 tracking-widest shrink-0"
+                style={{
+                  clipPath: CUT_BADGE,
+                  color: team.gradientFrom,
+                  background: `${team.gradientFrom}18`,
+                  border: `1px solid ${team.gradientFrom}40`
+                }}
+              >
                 #{team.tag}
               </span>
             </div>
           </div>
 
           {/* Stats em Linha */}
-          <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border border-white/5 md:border-none">
+          <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-2.5 md:p-0 border border-white/5 md:border-none" style={{ clipPath: CUT_BADGE }}>
             <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
               <div className="flex items-center gap-1 mb-0.5">
                 <Flame className="w-3 h-3" style={{ color: team.gradientFrom }} />
-                <span className="text-[8px] text-white/30 uppercase font-black tracking-tighter">PDL</span>
+                <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">PDL</span>
               </div>
               <span className="font-black text-xs md:text-sm text-white">{team.pdl.toLocaleString('pt-BR')}</span>
             </div>
-            <div className="w-px h-6 bg-white/5" />
+            <div className="w-px h-5 bg-white/10" />
             <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
               <div className="flex items-center gap-1 mb-0.5">
                 <TrendingUp className="w-3 h-3 text-green-400" />
-                <span className="text-[8px] text-white/30 uppercase font-black tracking-tighter">WIN%</span>
+                <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">WIN%</span>
               </div>
               <span className="font-black text-xs md:text-sm text-green-400">{team.winrate}%</span>
             </div>
-            <div className="w-px h-6 bg-white/5" />
+            <div className="w-px h-5 bg-white/10" />
             <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
               <div className="flex items-center gap-1 mb-0.5">
-                <Trophy className="w-3 h-3 text-white/20" />
-                <span className="text-[8px] text-white/30 uppercase font-black tracking-tighter">W/L</span>
+                <Trophy className="w-3 h-3 text-white/30" />
+                <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">W/L</span>
               </div>
               <span className="font-black text-xs md:text-sm text-white">{team.wins}/{team.gamesPlayed - team.wins}</span>
             </div>
@@ -168,8 +206,8 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
         </div>
 
         {/* Ranking e Link à Direita (Desktop) */}
-        <div className="hidden md:flex shrink-0 flex-col items-center justify-center border-l border-white/5 pl-8 pr-4 h-20 gap-1">
-          <span className="text-xl font-black tracking-tighter uppercase" style={{ color: team.gradientFrom }}>
+        <div className="hidden md:flex shrink-0 flex-col items-center justify-center border-l border-white/5 pl-6 pr-2 h-16 gap-1">
+          <span className="text-lg font-black tracking-tighter uppercase" style={{ color: team.gradientFrom }}>
             RANK #{team.ranking}
           </span>
           <div className="flex items-center gap-1 group/card cursor-pointer">
@@ -179,7 +217,7 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
         </div>
 
         {/* Link de ação exclusivo no mobile */}
-        <div className="md:hidden flex items-center justify-between border-t border-white/5 pt-3 mt-1">
+        <div className="md:hidden flex items-center justify-between border-t border-white/5 pt-2.5 mt-1">
           <div className="flex items-center gap-1 group/card cursor-pointer">
             <span className="font-bold text-[10px] uppercase tracking-[0.15em]" style={{ color: team.gradientFrom }}>Ver página do time</span>
             <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/card:translate-x-1" style={{ color: team.gradientFrom }} />
@@ -330,11 +368,12 @@ export default function Equipes() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border backdrop-blur-md text-sm font-bold ${
+            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 shadow-2xl flex items-center gap-3 border backdrop-blur-md text-sm font-bold ${
               popup.type === 'error'
                 ? 'bg-red-500/10 border-red-500/30 text-red-300'
                 : 'bg-green-500/10 border-green-500/30 text-green-300'
             }`}
+            style={{ clipPath: CUT_BADGE }}
           >
             {popup.type === 'error' ? <X className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
             {popup.msg}
@@ -350,21 +389,35 @@ export default function Equipes() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setLightboxUrl(null)}
-            className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center cursor-zoom-out"
+            className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center cursor-zoom-out p-4"
           >
-            <motion.img
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              src={lightboxUrl}
-              alt="Logo do time"
-              className="max-w-[min(480px,90vw)] max-h-[80vh] object-contain rounded-2xl shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div
+              className="p-[1.5px] max-w-[min(480px,90vw)] max-h-[80vh] shadow-2xl"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, rgba(255,183,0,0.8), rgba(255,255,255,0.1))'
+              }}
+            >
+              <div
+                className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                <motion.img
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                  src={lightboxUrl}
+                  alt="Logo do time"
+                  className="max-w-full max-h-[75vh] object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
             <button
               onClick={() => setLightboxUrl(null)}
-              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="absolute top-5 right-5 w-10 h-10 bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+              style={{ clipPath: CUT_BADGE }}
             >
               <X className="w-5 h-5 text-white" />
             </button>
@@ -372,260 +425,388 @@ export default function Equipes() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto space-y-12">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Banner Minha Equipe */}
-        <div className="space-y-0 rounded-3xl overflow-hidden backdrop-blur-xl transition-all duration-500">
-          <div className="relative overflow-hidden p-6 group transition-all duration-500">
-            <div className="absolute inset-0 z-0">
-              <img src="/images/fundo fanaticaaa.webp" alt="Fundo" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/10 to-white/0" />
-            </div>
-            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2"><Users className="w-5 h-5 text-white/60" /><span className="text-xs font-bold uppercase text-white/60">Minha Equipe</span></div>
-                <h1 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase italic">Minha <span className="text-primary">Equipe</span></h1>
-                <p className="text-white/50 text-sm max-w-lg">Gerencie sua equipe e lidere seus companheiros rumo à vitória.</p>
+        <div
+          className="relative p-[1.5px] shadow-2xl overflow-hidden"
+          style={{
+            clipPath: CUT_FRAME,
+            background: 'linear-gradient(135deg, rgba(255,183,0,0.5), rgba(255,255,255,0.06) 100%)'
+          }}
+        >
+          <div
+            className="w-full bg-[#08080a] relative overflow-hidden"
+            style={{ clipPath: CUT_FRAME_INNER }}
+          >
+            {/* Fundo com Imagem e Gradiente */}
+            <div className="relative overflow-hidden p-6 md:p-8">
+              <div className="absolute inset-0 z-0">
+                <img src="/images/fundo fanaticaaa.webp" alt="Fundo" className="w-full h-full object-cover opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#08080a] via-[#08080a]/80 to-transparent" />
               </div>
-            </div>
-          </div>
-          
-          <div className="py-6 px-0 backdrop-blur-md">
-            {loadingMyTeam ? (
-              /* Skeleton do meu time */
-              <div className="rounded-2xl overflow-hidden bg-[rgba(13,13,13,1)] border border-white/5 p-4">
-                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 animate-pulse">
-                  <div className="flex items-center gap-4 md:block shrink-0">
-                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-xl bg-white/5 shrink-0" />
-                    <div className="md:hidden flex-1 space-y-2">
-                      <div className="h-4 bg-white/5 rounded-md w-32" />
-                      <div className="h-3 bg-white/5 rounded w-16" />
-                    </div>
+              <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Minha Equipe</span>
                   </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="hidden md:block h-5 bg-white/5 rounded-lg w-40" />
-                    <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 rounded-xl border border-white/5 md:border-none">
-                      <div className="h-4 bg-white/5 rounded w-12 flex-1 md:flex-initial" />
-                      <div className="h-4 bg-white/5 rounded w-12 flex-1 md:flex-initial" />
-                      <div className="h-4 bg-white/5 rounded w-12 flex-1 md:flex-initial" />
-                    </div>
-                  </div>
-                  <div className="hidden md:block shrink-0 w-12 h-12 bg-white/5" />
-                  <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5 rounded-xl" />
+                  <h1 className="text-2xl md:text-4xl font-black text-white mb-2 uppercase tracking-tight">
+                    Minha <span className="text-primary">Equipe</span>
+                  </h1>
+                  <p className="text-white/50 text-xs md:text-sm max-w-lg leading-relaxed">
+                    Gerencie sua equipe, monte sua estratégia e lidere seus companheiros rumo à vitória.
+                  </p>
                 </div>
               </div>
-            ) : myTeam ? (
-              <motion.div 
-                whileTap={{ scale: 0.98 }}
-                onClick={() => { playSound('click'); navigate(`/times/${myTeam.id}`); }}
-                className="rounded-2xl overflow-hidden bg-[rgba(13,13,13,1)] border border-white/5 cursor-pointer hover:border-white/10 transition-all duration-300"
-              >
-                <div className="p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-                  {/* Logo + Nome/Tag no mobile, Apenas Logo no desktop */}
-                  <div className="flex items-center gap-4 md:block shrink-0">
-                    <div
-                      className="w-16 h-16 md:w-24 md:h-24 rounded-xl flex items-center justify-center relative overflow-hidden"
-                      style={{ border: `2px solid ${myTeam.gradientFrom}`, background: 'black', boxShadow: `0 8px 24px -6px ${myTeam.gradientFrom}60` }}
-                      onClick={myTeam.logo_url ? () => setLightboxUrl(myTeam.logo_url) : undefined}
-                    >
-                      {myTeam.logo_url ? (
-                        <img src={myTeam.logo_url} loading="lazy" alt={myTeam.nome} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" />
-                      ) : (
-                        <span className="font-black text-base md:text-xl tracking-widest" style={{ color: myTeam.gradientFrom }}>{myTeam.tag}</span>
-                      )}
+            </div>
+            
+            {/* Conteúdo do Meu Time / Skeleton / Vazio */}
+            <div className="p-6 md:p-8 pt-0">
+              {loadingMyTeam ? (
+                /* Skeleton do meu time */
+                <div
+                  className="relative p-[1px] animate-pulse"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: 'rgba(255,255,255,0.08)'
+                  }}
+                >
+                  <div
+                    className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    <div className="flex items-center gap-4 md:block shrink-0">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 shrink-0" style={{ clipPath: CUT_BADGE }} />
+                      <div className="md:hidden flex-1 space-y-2">
+                        <div className="h-4 bg-white/5 w-32" />
+                        <div className="h-3 bg-white/5 w-16" />
+                      </div>
                     </div>
-
-                    {/* Nome e Tag do time do lado do logo APENAS no mobile */}
-                    <div className="md:hidden flex-1 min-w-0 flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-white font-black text-base tracking-tight truncate uppercase">{myTeam.nome}</h3>
-                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-md" style={{ color: myTeam.gradientFrom, background: `${myTeam.gradientFrom}18`, border: `1px solid ${myTeam.gradientFrom}40` }}>
-                          #{myTeam.tag}
-                        </span>
-                        
-                        {/* Rota Icon no mobile ao lado do nome/tag */}
-                        {(() => {
-                          const ROLE_TO_LANE: Record<string, string> = {
-                            TOP: 'Top_icon.png', JG: 'Jungle_icon.png', MID: 'Middle_icon.png',
-                            ADC: 'Bottom_icon.png', SUP: 'Support_icon.png',
-                          };
-                          const roleFile = ROLE_TO_LANE[(myTeam.membro_role || '').toUpperCase()];
-                          if (!roleFile) return null;
-                          return (
-                            <img
-                              src={`/lanes/${roleFile}`}
-                              alt={myTeam.membro_role}
-                              className="w-5 h-5 object-contain ml-1 shrink-0"
-                              style={{ filter: 'drop-shadow(0 0 6px rgba(255,184,0,0.3))' }}
-                            />
-                          );
-                        })()}
+                    <div className="flex-1 space-y-3">
+                      <div className="hidden md:block h-5 bg-white/5 w-40" />
+                      <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 border border-white/5 md:border-none">
+                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                      </div>
+                    </div>
+                    <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5" />
+                  </div>
+                </div>
+              ) : myTeam ? (
+                <motion.div 
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => { playSound('click'); navigate(`/times/${myTeam.id}`); }}
+                  className="relative p-[1.5px] cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: `linear-gradient(135deg, ${myTeam.gradientFrom}, rgba(255,255,255,0.1) 100%)`,
+                    boxShadow: `0 0 35px -10px ${myTeam.gradientFrom}4D`
+                  }}
+                >
+                  <div
+                    className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 group-hover:bg-[#101018] transition-colors"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    {/* Logo + Nome/Tag no mobile, Apenas Logo no desktop */}
+                    <div className="flex items-center gap-4 md:block shrink-0">
+                      <div
+                        className="w-16 h-16 md:w-20 md:h-20 p-[1px] flex items-center justify-center relative shrink-0 shadow-xl"
+                        style={{
+                          clipPath: CUT_BADGE,
+                          background: `linear-gradient(135deg, ${myTeam.gradientFrom}, rgba(255,255,255,0.1))`,
+                          boxShadow: `0 8px 24px -6px ${myTeam.gradientFrom}60`
+                        }}
+                        onClick={myTeam.logo_url ? () => setLightboxUrl(myTeam.logo_url) : undefined}
+                      >
+                        <div
+                          className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
+                          style={{ clipPath: CUT_BADGE_INNER }}
+                        >
+                          {myTeam.logo_url ? (
+                            <img src={myTeam.logo_url} loading="lazy" alt={myTeam.nome} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" />
+                          ) : (
+                            <span className="font-black text-base md:text-lg tracking-widest" style={{ color: myTeam.gradientFrom }}>{myTeam.tag}</span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Rank no mobile */}
-                      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: myTeam.gradientFrom }}>
+                      {/* Nome e Tag do time do lado do logo APENAS no mobile */}
+                      <div className="md:hidden flex-1 min-w-0 flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="text-white font-black text-base tracking-tight truncate uppercase">{myTeam.nome}</h3>
+                          <span
+                            className="text-[8px] font-black px-2 py-0.5"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              color: myTeam.gradientFrom,
+                              background: `${myTeam.gradientFrom}18`,
+                              border: `1px solid ${myTeam.gradientFrom}40`
+                            }}
+                          >
+                            #{myTeam.tag}
+                          </span>
+                          
+                          {/* Rota Icon no mobile ao lado do nome/tag */}
+                          {(() => {
+                            const ROLE_TO_LANE: Record<string, string> = {
+                              TOP: 'Top_icon.png', JG: 'Jungle_icon.png', MID: 'Middle_icon.png',
+                              ADC: 'Bottom_icon.png', SUP: 'Support_icon.png',
+                            };
+                            const roleFile = ROLE_TO_LANE[(myTeam.membro_role || '').toUpperCase()];
+                            if (!roleFile) return null;
+                            return (
+                              <img
+                                src={`/lanes/${roleFile}`}
+                                alt={myTeam.membro_role}
+                                className="w-5 h-5 object-contain ml-1 shrink-0"
+                                style={{ filter: 'drop-shadow(0 0 6px rgba(255,184,0,0.3))' }}
+                              />
+                            );
+                          })()}
+                        </div>
+
+                        {/* Rank no mobile */}
+                        <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: myTeam.gradientFrom }}>
+                          RANK #{myTeam.ranking}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between md:h-20 py-0.5">
+                      {/* Nome e Tag - Exibidos APENAS no desktop */}
+                      <div className="hidden md:flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-white font-black text-lg tracking-tight truncate uppercase">{myTeam.nome}</h3>
+                          <span
+                            className="text-[9px] font-black px-2 py-0.5 tracking-widest shrink-0"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              color: myTeam.gradientFrom,
+                              background: `${myTeam.gradientFrom}18`,
+                              border: `1px solid ${myTeam.gradientFrom}40`
+                            }}
+                          >
+                            #{myTeam.tag}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stats em Linha */}
+                      <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-2.5 md:p-0 border border-white/5 md:border-none" style={{ clipPath: CUT_BADGE }}>
+                        <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <Flame className="w-3 h-3" style={{ color: myTeam.gradientFrom }} />
+                            <span className="text-[8px] text-white/40 uppercase font-black">PDL</span>
+                          </div>
+                          <span className="font-black text-xs md:text-sm" style={{ color: myTeam.gradientFrom }}>{myTeam.pdl.toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div className="w-px h-5 bg-white/10" />
+                        <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <TrendingUp className="w-3 h-3 text-green-400" />
+                            <span className="text-[8px] text-white/40 uppercase font-black">WIN%</span>
+                          </div>
+                          <span className="font-black text-xs md:text-sm text-green-400">{myTeam.winrate}%</span>
+                        </div>
+                        <div className="w-px h-5 bg-white/10" />
+                        <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <Trophy className="w-3 h-3 text-white/30" />
+                            <span className="text-[8px] text-white/40 uppercase font-black">W/L</span>
+                          </div>
+                          <span className="font-black text-xs md:text-sm text-white">{myTeam.wins}/{myTeam.gamesPlayed - myTeam.wins}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rota Icon (Antes do traço) - APENAS DESKTOP */}
+                    {(() => {
+                      const ROLE_TO_LANE: Record<string, string> = {
+                        TOP: 'Top_icon.png', JG: 'Jungle_icon.png', MID: 'Middle_icon.png',
+                        ADC: 'Bottom_icon.png', SUP: 'Support_icon.png',
+                      };
+                      const roleFile = ROLE_TO_LANE[(myTeam.membro_role || '').toUpperCase()];
+                      if (!roleFile) return null;
+                      return (
+                        <div className="hidden md:flex shrink-0 items-center justify-center px-6">
+                          <img
+                            src={`/lanes/${roleFile}`}
+                            alt={myTeam.membro_role}
+                            className="w-10 h-10 object-contain"
+                            style={{ filter: 'drop-shadow(0 0 10px rgba(255,184,0,0.3))' }}
+                          />
+                        </div>
+                      );
+                    })()}
+
+                    {/* Rank e Gerenciar (Depois do traço) - APENAS DESKTOP */}
+                    <div className="hidden md:flex shrink-0 flex-col items-center justify-center border-l border-white/5 pl-6 pr-2 h-16 gap-1">
+                      <span className="text-lg font-black tracking-tighter uppercase" style={{ color: myTeam.gradientFrom }}>
                         RANK #{myTeam.ranking}
                       </span>
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between md:h-24 py-1">
-                    {/* Nome e Tag - Exibidos APENAS no desktop */}
-                    <div className="hidden md:flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-white font-black text-xl tracking-tight truncate uppercase">{myTeam.nome}</h3>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md" style={{ color: myTeam.gradientFrom, background: `${myTeam.gradientFrom}18`, border: `1px solid ${myTeam.gradientFrom}40` }}>
-                          #{myTeam.tag}
-                        </span>
+                      <div className="flex items-center gap-1 group/link">
+                        <span className="font-bold text-[9px] uppercase tracking-[0.15em]" style={{ color: myTeam.gradientFrom }}>Gerenciar</span>
+                        <ChevronRight className="w-3 h-3 transition-transform group-hover/link:translate-x-1" style={{ color: myTeam.gradientFrom }} />
                       </div>
                     </div>
 
-                    {/* Stats em Linha */}
-                    <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border border-white/5 md:border-none">
-                      <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
-                        <div className="flex items-center gap-1 mb-0.5"><Flame className="w-3 h-3" style={{ color: myTeam.gradientFrom }} /><span className="text-[8px] text-white/30 uppercase font-black">PDL</span></div>
-                        <span className="font-black text-xs md:text-sm" style={{ color: myTeam.gradientFrom }}>{myTeam.pdl.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="w-px h-6 bg-white/5" />
-                      <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
-                        <div className="flex items-center gap-1 mb-0.5"><TrendingUp className="w-3 h-3 text-green-400" /><span className="text-[8px] text-white/30 uppercase font-black">WIN%</span></div>
-                        <span className="font-black text-xs md:text-sm text-green-400">{myTeam.winrate}%</span>
-                      </div>
-                      <div className="w-px h-6 bg-white/5" />
-                      <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
-                        <div className="flex items-center gap-1 mb-0.5"><Trophy className="w-3 h-3 text-white/20" /><span className="text-[8px] text-white/30 uppercase font-black">W/L</span></div>
-                        <span className="font-black text-xs md:text-sm text-white">{myTeam.wins}/{myTeam.gamesPlayed - myTeam.wins}</span>
+                    {/* Link de ação exclusivo no mobile */}
+                    <div className="md:hidden flex items-center justify-between border-t border-white/5 pt-2.5 mt-1 w-full">
+                      <div className="flex items-center gap-1 group/link cursor-pointer">
+                        <span className="font-bold text-[10px] uppercase tracking-[0.15em]" style={{ color: myTeam.gradientFrom }}>Gerenciar equipe</span>
+                        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-1" style={{ color: myTeam.gradientFrom }} />
                       </div>
                     </div>
                   </div>
-
-                  {/* Rota Icon (Antes do traço) - APENAS DESKTOP */}
-                  {(() => {
-                    const ROLE_TO_LANE: Record<string, string> = {
-                      TOP: 'Top_icon.png', JG: 'Jungle_icon.png', MID: 'Middle_icon.png',
-                      ADC: 'Bottom_icon.png', SUP: 'Support_icon.png',
-                    };
-                    const roleFile = ROLE_TO_LANE[(myTeam.membro_role || '').toUpperCase()];
-                    if (!roleFile) return null;
-                    return (
-                      <div className="hidden md:flex shrink-0 items-center justify-center px-6">
-                        <img
-                          src={`/lanes/${roleFile}`}
-                          alt={myTeam.membro_role}
-                          className="w-12 h-12 object-contain"
-                          style={{ filter: 'drop-shadow(0 0 12px rgba(255,184,0,0.3))' }}
-                        />
-                      </div>
-                    );
-                  })()}
-
-                  {/* Rank e Gerenciar (Depois do traço) - APENAS DESKTOP */}
-                  <div className="hidden md:flex shrink-0 flex-col items-center justify-center border-l border-white/5 pl-8 pr-4 h-20 gap-1">
-                    <span className="text-xl font-black tracking-tighter uppercase" style={{ color: myTeam.gradientFrom }}>
-                      RANK #{myTeam.ranking}
-                    </span>
-                    <div className="flex items-center gap-1 group/link">
-                      <span className="font-bold text-[9px] uppercase tracking-[0.15em]" style={{ color: myTeam.gradientFrom }}>Gerenciar</span>
-                      <ChevronRight className="w-3 h-3 transition-transform group-hover/link:translate-x-1" style={{ color: myTeam.gradientFrom }} />
-                    </div>
-                  </div>
-
-                  {/* Link de ação exclusivo no mobile */}
-                  <div className="md:hidden flex items-center justify-between border-t border-white/5 pt-3 mt-1 w-full">
-                    <div className="flex items-center gap-1 group/link cursor-pointer">
-                      <span className="font-bold text-[10px] uppercase tracking-[0.15em]" style={{ color: myTeam.gradientFrom }}>Gerenciar equipe</span>
-                      <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-1" style={{ color: myTeam.gradientFrom }} />
-                    </div>
+                </motion.div>
+              ) : (
+                <div
+                  className="relative p-[1px]"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: 'rgba(255,255,255,0.06)'
+                  }}
+                >
+                  <div
+                    className="w-full bg-[#0c0c10] text-center py-8 px-4 flex flex-col items-center gap-4"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    <p className="text-white/40 text-xs font-semibold uppercase tracking-wider">
+                      {user ? "Você não está em nenhuma equipe no momento." : "Faça login para criar ou entrar em uma equipe."}
+                    </p>
+                    {!user ? (
+                      <button 
+                        onClick={() => {
+                          playSound('click');
+                          navigate('/login');
+                        }} 
+                        className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all bg-primary text-black hover:scale-105 active:scale-95 shadow-[0_0_25px_-5px_rgba(255,183,0,0.5)] cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Criar Equipe</span>
+                      </button>
+                    ) : hasRiot ? (
+                      <button 
+                        onClick={() => setModalCriar(true)} 
+                        className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all bg-primary text-black hover:scale-105 active:scale-95 shadow-[0_0_25px_-5px_rgba(255,183,0,0.5)] cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Criar Equipe</span>
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          playSound('click');
+                          navigate('/vincular');
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 font-black text-xs uppercase tracking-widest transition-all bg-primary text-black hover:scale-105 active:scale-95 shadow-[0_0_25px_-5px_rgba(255,183,0,0.5)] cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        <span>Vincular Conta Riot para Criar Equipe</span>
+                      </button>
+                    )}
                   </div>
                 </div>
-              </motion.div>
-            ) : (
-              <div className="text-center py-8 bg-black/[0.1] rounded-2xl border border-dashed border-white/5 flex flex-col items-center gap-4">
-                <p className="text-white/40 text-sm font-medium">
-                  {user ? "Você não está em nenhuma equipe no momento." : "Faça login para criar ou entrar em uma equipe."}
-                </p>
-                {!user ? (
-                  <button 
-                    onClick={() => {
-                      playSound('click');
-                      navigate('/login');
-                    }} 
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all bg-primary text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_-5px_rgba(255,183,0,0.4)]"
-                  >
-                    Criar Equipe
-                  </button>
-                ) : hasRiot ? (
-                  <button 
-                    onClick={() => setModalCriar(true)} 
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all bg-primary text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_-5px_rgba(255,183,0,0.4)]"
-                  >
-                    Criar Equipe
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => {
-                      playSound('click');
-                      navigate('/vincular');
-                    }}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all bg-primary text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_-5px_rgba(255,183,0,0.4)]"
-                  >
-                    Vincular Conta Riot para Criar Equipe
-                  </button>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
+        </div>
 
-          <div className="py-6 px-0 border-t border-white/5 space-y-5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6">
+        {/* Seção Arena de Times */}
+        <div
+          className="relative p-[1.5px] shadow-2xl overflow-hidden"
+          style={{
+            clipPath: CUT_FRAME,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03) 100%)'
+          }}
+        >
+          <div
+            className="w-full bg-[#08080a] p-6 md:p-8 space-y-6"
+            style={{ clipPath: CUT_FRAME_INNER }}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-black text-white uppercase italic">Arena de <span className="text-primary">Times</span></h2>
-                <p className="text-white/50 text-sm max-w-lg mt-1">Analise os times da comunidade e veja suas estatísticas.</p>
+                <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">
+                  Arena de <span className="text-primary">Times</span>
+                </h2>
+                <p className="text-white/40 text-xs mt-1">Analise as equipes cadastradas e acompanhe seus rendimentos na liga.</p>
               </div>
-              <div className="w-full md:w-64 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl flex items-center px-4 py-2.5 gap-3 focus-within:border-white/30">
-                <Search className="w-4 h-4 text-white/30" />
-                <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Buscar times..." className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-white/20" />
+
+              {/* Barra de Busca Cut-Edge */}
+              <div
+                className="relative p-[1px] w-full md:w-72"
+                style={{
+                  clipPath: CUT_BUTTON,
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))'
+                }}
+              >
+                <div
+                  className="w-full bg-[#0c0c10] flex items-center px-3.5 py-2.5 gap-2.5 focus-within:bg-[#121218] transition-colors"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <Search className="w-4 h-4 text-white/30" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Buscar times..."
+                    className="bg-transparent border-none outline-none text-xs text-white w-full placeholder:text-white/20 font-medium"
+                  />
+                </div>
               </div>
             </div>
+
             {loading ? (
               /* Skeleton da lista de times */
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="rounded-2xl bg-[rgba(13,13,13,1)] border border-white/5 p-4 animate-pulse">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                  <div
+                    key={i}
+                    className="relative p-[1px] animate-pulse"
+                    style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.06)' }}
+                  >
+                    <div
+                      className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6"
+                      style={{ clipPath: CUT_BUTTON_INNER }}
+                    >
                       <div className="flex items-center gap-4 md:block shrink-0">
-                        <div className="w-16 h-16 md:w-24 md:h-24 rounded-xl bg-white/5 shrink-0" />
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 shrink-0" style={{ clipPath: CUT_BADGE }} />
                         <div className="md:hidden flex-1 space-y-2">
-                          <div className="h-4 bg-white/5 rounded-md w-32" />
-                          <div className="h-3 bg-white/5 rounded w-16" />
+                          <div className="h-4 bg-white/5 w-32" />
+                          <div className="h-3 bg-white/5 w-16" />
                         </div>
                       </div>
                       <div className="flex-1 space-y-3">
-                        <div className="hidden md:block h-5 bg-white/5 rounded-lg w-40" />
-                        <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 rounded-xl border border-white/5 md:border-none">
-                          <div className="h-4 bg-white/5 rounded w-12 flex-1 md:flex-initial" />
-                          <div className="h-4 bg-white/5 rounded w-12 flex-1 md:flex-initial" />
-                          <div className="h-4 bg-white/5 rounded w-12 flex-1 md:flex-initial" />
+                        <div className="hidden md:block h-5 bg-white/5 w-40" />
+                        <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 border border-white/5 md:border-none">
+                          <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                          <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                          <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
                         </div>
                       </div>
-                      <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5 rounded-xl" />
+                      <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : arenaTeams.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                   {arenaTeams.map(team => <TimeCard key={team.id} team={team} onClick={(t) => navigate(`/times/${t.id}`)} onLogoClick={setLightboxUrl} />)}
                 </div>
 
-                {/* Paginação */}
+                {/* Paginação Cut-Edge */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 pt-4">
                     <button
                       onClick={() => setPage(p => Math.max(0, p - 1))}
                       disabled={page === 0}
-                      className="px-4 py-2 rounded-lg border border-white/10 text-white/50 font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      className="px-4 py-2 border border-white/10 text-white/50 font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
                     >
                       Anterior
                     </button>
@@ -633,11 +814,12 @@ export default function Equipes() {
                       <button
                         key={i}
                         onClick={() => setPage(i)}
-                        className={`w-9 h-9 rounded-lg font-black text-xs transition-all ${
+                        className={`w-8 h-8 font-black text-xs transition-all cursor-pointer ${
                           page === i
                             ? 'bg-primary text-black'
                             : 'border border-white/10 text-white/40 hover:bg-white/5'
                         }`}
+                        style={{ clipPath: CUT_BADGE }}
                       >
                         {i + 1}
                       </button>
@@ -645,7 +827,8 @@ export default function Equipes() {
                     <button
                       onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                       disabled={page >= totalPages - 1}
-                      className="px-4 py-2 rounded-lg border border-white/10 text-white/50 font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      className="px-4 py-2 border border-white/10 text-white/50 font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
                     >
                       Próximo
                     </button>
@@ -653,10 +836,18 @@ export default function Equipes() {
                 )}
               </>
             ) : (
-              <div className="bg-white/[0.02] border border-dashed border-white/5 rounded-2xl p-16 text-center mx-6">
-                <Search className="w-14 h-14 text-white/5 mx-auto mb-4" />
-                <p className="text-white/30 font-medium text-lg">Nenhum time encontrado para "{searchQuery}"</p>
-                <button onClick={() => setSearchQuery('')} className="mt-4 text-xs font-bold uppercase tracking-widest text-primary hover:underline">Limpar busca</button>
+              <div
+                className="relative p-[1px]"
+                style={{ clipPath: CUT_FRAME, background: 'rgba(255,255,255,0.05)' }}
+              >
+                <div
+                  className="w-full bg-[#0c0c10] p-12 text-center flex flex-col items-center justify-center"
+                  style={{ clipPath: CUT_FRAME_INNER }}
+                >
+                  <Search className="w-12 h-12 text-white/10 mx-auto mb-3" />
+                  <p className="text-white/40 font-bold text-sm">Nenhum time encontrado para "{searchQuery}"</p>
+                  <button onClick={() => setSearchQuery('')} className="mt-3 text-[10px] font-black uppercase tracking-widest text-primary hover:underline cursor-pointer">Limpar busca</button>
+                </div>
               </div>
             )}
           </div>
@@ -668,7 +859,7 @@ export default function Equipes() {
   );
 }
 
-// ── Modal Criar Time (simplificado) ───────────────────────────────────────
+// ── Modal Criar Time (Cut-Edge) ───────────────────────────────────────────
 const COLOR_THEMES = [
   { from: '#FFB700', to: '#FF6600', label: 'Gold' },
   { from: '#0044FF', to: '#00D4FF', label: 'Neon Blue' },
@@ -781,93 +972,220 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-start justify-center p-4 bg-transparent overflow-y-auto" style={{ paddingTop: '100px' }} onClick={onClose}>
-      <div className="relative w-full max-w-lg" onClick={e => e.stopPropagation()}>
-        <div className="rounded-2xl overflow-hidden relative bg-black border border-white/10 shadow-2xl shadow-black/80">
-          <div className="relative z-10">
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${theme.from}25` }}>
-                  <Plus className="w-4 h-4" style={{ color: theme.from }} />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 10 }}
+        transition={{ duration: 0.15 }}
+        className="relative p-[1.5px] w-full max-w-lg shadow-2xl"
+        style={{
+          clipPath: CUT_FRAME,
+          background: `linear-gradient(135deg, ${theme.from}, rgba(255,255,255,0.08) 100%)`,
+          boxShadow: `0 0 50px -10px ${theme.from}40`
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div
+          className="w-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 sm:p-8"
+          style={{ clipPath: CUT_FRAME_INNER }}
+        >
+          {/* Header */}
+          <div className="border-b border-white/5 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                style={{
+                  clipPath: CUT_BADGE,
+                  background: `linear-gradient(135deg, ${theme.from}, rgba(255,255,255,0.1))`
+                }}
+              >
+                <div
+                  className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                >
+                  <Plus className="w-5 h-5" style={{ color: theme.from }} />
                 </div>
-                <h2 className="text-white font-black text-lg">Monte sua Equipe</h2>
               </div>
-              <button onClick={onClose} className="text-white/30 hover:text-white"><X className="w-5 h-5" /></button>
+              <div>
+                <h2 className="text-lg font-black uppercase tracking-tight text-white">Monte sua Equipe</h2>
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Crie seu time e lidere no ranking</p>
+              </div>
             </div>
-            <div className="p-6 space-y-5">
-              <div><label className="text-white/40 text-xs uppercase tracking-widest">Nome do Time</label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: M7 Esports" maxLength={24}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30" />
+            <button
+              onClick={onClose}
+              className="text-white/30 hover:text-white p-1 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="pt-6 space-y-4">
+            <div>
+              <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Nome do Time</label>
+              <div
+                className="p-[1px]"
+                style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
+              >
+                <input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ex: M7 Esports"
+                  maxLength={24}
+                  className="w-full bg-[#0c0c10] px-4 py-3 text-white text-xs font-semibold focus:outline-none placeholder:text-white/20"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                />
               </div>
-              <div><label className="text-white/40 text-xs uppercase tracking-widest">Tag (3 letras)</label>
-                <input value={tag} onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))} placeholder="Ex: M7E" maxLength={3}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-bold tracking-widest focus:outline-none focus:border-white/30" />
-                <p className="text-white/25 text-[10px] mt-1">Sua tag aparece em rankings, campeonatos e no Hall da Fama.</p>
+            </div>
+
+            <div>
+              <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tag (3 letras)</label>
+              <div
+                className="p-[1px]"
+                style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
+              >
+                <input
+                  value={tag}
+                  onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))}
+                  placeholder="Ex: M7E"
+                  maxLength={3}
+                  className="w-full bg-[#0c0c10] px-4 py-3 text-white text-xs font-black tracking-widest focus:outline-none placeholder:text-white/20"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                />
               </div>
-              <div><label className="text-white/40 text-xs uppercase tracking-widest">Logo do Time</label>
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-xl flex items-center justify-center relative overflow-hidden shrink-0" style={{ border: `2px solid ${theme.from}` }}>
-                    {logoPreview ? <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" /> : <Upload className="w-6 h-6 text-white/30" />}
+              <p className="text-white/30 text-[9px] mt-1 font-bold">Sua tag aparece em rankings, campeonatos e no Hall da Fama.</p>
+            </div>
+
+            <div>
+              <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Logo do Time</label>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-16 h-16 p-[1px] flex items-center justify-center shrink-0"
+                  style={{
+                    clipPath: CUT_BADGE,
+                    background: `linear-gradient(135deg, ${theme.from}, rgba(255,255,255,0.1))`
+                  }}
+                >
+                  <div
+                    className="w-full h-full bg-[#0c0c10] flex items-center justify-center overflow-hidden"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-white/30" />
+                    )}
                   </div>
-                  <label className="flex-1 cursor-pointer">
-                    <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
-                    <div className="flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed transition-all cursor-pointer" style={{ borderColor: `${theme.from}50`, background: `${theme.from}10`, color: theme.from }}>
-                      <Upload className="w-4 h-4" /><span className="text-sm font-medium">Enviar Logo</span>
+                </div>
+
+                <label className="flex-1 cursor-pointer">
+                  <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
+                  <div
+                    className="flex items-center justify-center gap-2 py-3.5 border transition-all cursor-pointer font-black text-xs uppercase tracking-widest"
+                    style={{
+                      clipPath: CUT_BUTTON,
+                      borderColor: `${theme.from}50`,
+                      background: `${theme.from}15`,
+                      color: theme.from
+                    }}
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Enviar Logo</span>
+                  </div>
+                </label>
+              </div>
+              {logoError && <p className="text-red-400 text-[10px] mt-1 font-bold">{logoError}</p>}
+            </div>
+
+            <div>
+              <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tema de Cor</label>
+              <div className="grid grid-cols-5 gap-2">
+                {COLOR_THEMES.map(t => (
+                  <button
+                    key={t.label}
+                    onClick={() => setTheme({ from: t.from, to: t.to })}
+                    className="relative h-9 overflow-hidden transition-all cursor-pointer p-[1px]"
+                    style={{
+                      clipPath: CUT_BADGE,
+                      background: theme.from === t.from ? '#ffffff' : 'rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      style={{
+                        clipPath: CUT_BADGE_INNER,
+                        background: `linear-gradient(135deg, ${t.from}, ${t.to})`
+                      }}
+                    >
+                      {theme.from === t.from && <Check className="w-3.5 h-3.5 text-white" />}
                     </div>
-                  </label>
-                </div>
-                {logoError && <p className="text-red-400 text-[11px] mt-1">{logoError}</p>}
+                  </button>
+                ))}
               </div>
-              <div><label className="text-white/40 text-xs uppercase tracking-widest">Tema de Cor</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {COLOR_THEMES.map(t => (
-                    <button key={t.label} onClick={() => setTheme({ from: t.from, to: t.to })}
-                      className="relative h-10 rounded-xl overflow-hidden border-2 transition-all"
-                      style={{ background: `linear-gradient(135deg, ${t.from}, ${t.to})`, borderColor: theme.from === t.from ? 'white' : 'transparent' }}>
-                      {theme.from === t.from && <div className="absolute inset-0 flex items-center justify-center bg-black/20"><Check className="w-4 h-4 text-white" /></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            </div>
 
-              {/* ── CONTATO ── */}
-              <div className="border-t border-white/10 pt-4">
-                <p className="text-white/40 text-xs uppercase tracking-widest font-bold mb-3">Contato do Responsável</p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-white/40 text-xs uppercase tracking-widest">WhatsApp</label>
-                    <input
-                      value={whatsapp}
-                      onChange={e => setWhatsapp(e.target.value)}
-                      placeholder="Ex: (11) 99999-9999"
-                      type="tel"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-white/40 text-xs uppercase tracking-widest flex items-center gap-1.5">
-                      <FaDiscord className="w-3.5 h-3.5 text-[#5865F2]" /> Discord
-                    </label>
-                    <input
-                      value={discord}
-                      onChange={e => setDiscord(e.target.value)}
-                      placeholder="Ex: usuario#1234"
-                      type="text"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#5865F2]/50"
-                    />
-                  </div>
+            {/* ── CONTATO ── */}
+            <div className="border-t border-white/5 pt-4 space-y-3">
+              <p className="text-white/40 text-[10px] uppercase tracking-widest font-black">Contato do Responsável</p>
+              <div>
+                <label className="text-white/30 text-[9px] uppercase tracking-widest block mb-1">WhatsApp</label>
+                <div
+                  className="p-[1px]"
+                  style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
+                >
+                  <input
+                    value={whatsapp}
+                    onChange={e => setWhatsapp(e.target.value)}
+                    placeholder="Ex: (11) 99999-9999"
+                    type="tel"
+                    className="w-full bg-[#0c0c10] px-4 py-2.5 text-white text-xs font-semibold focus:outline-none placeholder:text-white/20"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  />
                 </div>
               </div>
+              <div>
+                <label className="text-white/30 text-[9px] uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                  <FaDiscord className="w-3 h-3 text-[#5865F2]" /> Discord
+                </label>
+                <div
+                  className="p-[1px]"
+                  style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
+                >
+                  <input
+                    value={discord}
+                    onChange={e => setDiscord(e.target.value)}
+                    placeholder="Ex: usuario#1234"
+                    type="text"
+                    className="w-full bg-[#0c0c10] px-4 py-2.5 text-white text-xs font-semibold focus:outline-none placeholder:text-white/20"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  />
+                </div>
+              </div>
+            </div>
 
-              <button onClick={handleCreate} disabled={!name || tag.length < 3 || !hasRiot || !whatsapp || !discord}
-                className="w-full py-4 rounded-xl font-black text-white uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-                style={{ background: `linear-gradient(135deg, ${theme.from}, ${theme.to})`, boxShadow: `0 10px 20px -5px ${theme.from}50` }}>
+            <div className="pt-2">
+              <button
+                onClick={handleCreate}
+                disabled={!name || tag.length < 3 || !hasRiot || !whatsapp || !discord}
+                className="w-full py-4 text-black font-black text-xs uppercase tracking-widest transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  clipPath: CUT_BUTTON,
+                  background: `linear-gradient(135deg, ${theme.from}, ${theme.to})`,
+                  boxShadow: `0 0 30px -5px ${theme.from}66`
+                }}
+              >
                 Criar Equipe
               </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
