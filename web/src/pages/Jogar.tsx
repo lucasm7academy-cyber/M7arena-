@@ -4,8 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Play, ChevronLeft, ChevronRight, Trophy, Users, Coins,
-  Search, Lock, Zap, Crown, X, LogIn, Plus, SlidersHorizontal,
-  Sword, Shield, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2, Gamepad2
+  Search, Lock, Zap, X, LogIn, Plus, SlidersHorizontal,
+  Sword, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2, Gamepad2
 } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import {
@@ -49,61 +49,20 @@ interface UserTeam {
   logo?: string;
 }
 
-interface HeroSlide {
-  id: number;
-  title: string;
-  subtitle: string;
-  description: string;
-  icon: React.ElementType;
-  color: string;
-  bgGradient: string;
-  bgImage?: string
-  actionText?: string;
-  actionLink?: string;
-}
-
 // ============================================
-// SLIDES DE MARKETING
+// SLIDE DO HERO (único)
 // ============================================
 
-const heroSlides: HeroSlide[] = [
-  {
-    id: 1,
-    title: "CRIE SUA",
-    subtitle: "EQUIPE",
-    description: "Monte seu time dos sonhos, recrute os melhores parceiros e dispute torneios com premiação em Pix",
-    icon: Users,
-    color: '#4ade80',
-    bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
-    bgImage: '/images/heroSlide1.webp',
-    actionText: 'Criar Time',
-    actionLink: '/times'
-  },
-  {
-    id: 2,
-    title: "BENEFÍCIOS",
-    subtitle: "VIP",
-    description: "Acesso a salas exclusivas, torneios premium e recompensas em dobro — o próximo nível do competitivo",
-    icon: Crown,
-    color: '#fbbf24',
-    bgGradient: 'from-yellow-500/20 via-yellow-500/5 to-transparent',
-    bgImage: '/images/heroSlide2.webp',
-    actionText: 'Seja VIP',
-    actionLink: '/sejavip'
-  },
-  {
-    id: 3,
-    title: "JOGUE COM",
-    subtitle: "RESPEITO",
-    description: "Fair play, integridade e competitividade saudável. Jogue para vencer!",
-    icon: Shield,
-    color: '#3b82f6',
-    bgGradient: 'from-blue-500/20 via-blue-500/5 to-transparent',
-    bgImage: '/images/heroSlide3.webp',
-    actionText: 'Código de Conduta',
-    actionLink: '/politicas'
-  }
-];
+const heroSlide = {
+  title: "CRIE SUA",
+  subtitle: "EQUIPE",
+  description: "Monte seu time dos sonhos, recrute os melhores parceiros e dispute torneios com premiação em Pix",
+  color: '#4ade80',
+  bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
+  bgImage: '/images/heroSlide1.webp',
+  actionText: 'Criar Time',
+  actionLink: '/times'
+};
 
 // ============================================
 // CONFIGURAÇÃO DOS MODOS DE JOGO (CARDS)
@@ -466,7 +425,6 @@ const Jogar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const [activeHero, setActiveHero] = useState(0);
   const gamesRef = useRef<HTMLDivElement>(null);
   const finalizadasRef = useRef<HTMLDivElement>(null);
   const finalizadasScrollRef = useRef<HTMLDivElement>(null);
@@ -724,8 +682,7 @@ const Jogar = () => {
   };
 
   // Visitante deslogado: a vitrine renderiza normal (o usuário é opcional).
-  const currentSlide = heroSlides[activeHero];
-  const SlideIcon = currentSlide.icon;
+  const currentSlide = heroSlide;
 
   return (
     <div className="min-h-screen bg-transparent text-white font-sans p-6 md:p-10 overflow-x-hidden relative">
@@ -742,16 +699,14 @@ const Jogar = () => {
           <div className="relative w-full p-8 md:p-14 flex items-center justify-between min-h-[320px]">
             {currentSlide.bgImage && (
               <motion.div
-                key={`bg-${activeHero}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 transition={{ duration: 0.8 }}
-                className="absolute inset-0 z-0 bg-cover bg-center"
+                className="absolute inset-0 z-0 bg-cover bg-center scale-[1.45] md:scale-100"
                 style={{ backgroundImage: `url(${currentSlide.bgImage})` }}
               />
             )}
             <motion.div
-              key={`gradient-${activeHero}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
@@ -759,17 +714,10 @@ const Jogar = () => {
             />
 
             <motion.div
-              key={`content-${activeHero}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="z-10 max-w-2xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${currentSlide.color}20` }}>
-                  <SlideIcon className="w-6 h-6" style={{ color: currentSlide.color }} />
-                </div>
-                <span className="text-white/40 text-xs font-bold uppercase tracking-widest">LOL TEAMS</span>
-              </div>
               <h1 className="text-5xl md:text-7xl font-black text-white uppercase leading-[0.9] tracking-tighter italic mb-4">
                 {currentSlide.title}<br />
                 <span style={{ color: currentSlide.color }}>{currentSlide.subtitle}</span>
@@ -792,25 +740,6 @@ const Jogar = () => {
                 </button>
               )}
             </motion.div>
-          </div>
-
-          <button onClick={() => setActiveHero(prev => prev === 0 ? heroSlides.length - 1 : prev - 1)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button onClick={() => setActiveHero(prev => (prev + 1) % heroSlides.length)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-20">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-            {heroSlides.map((_, idx) => (
-              <button 
-                key={idx}
-                onClick={() => setActiveHero(idx)}
-                className={`h-1.5 rounded-full transition-all ${idx === activeHero ? 'w-8 bg-[#FFB700]' : 'w-1.5 bg-white/20 hover:bg-white/40'}`}
-              />
-            ))}
           </div>
           </div>
         </div>
