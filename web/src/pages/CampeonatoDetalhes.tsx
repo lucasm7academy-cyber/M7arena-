@@ -42,6 +42,16 @@ import {
 } from "lucide-react";
 import { api } from '../lib/api';
 
+// ============================================
+// POLÍGONOS CUT-EDGE OFICIAIS DA M7 ARENA
+// ============================================
+const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
+const CUT_FRAME_INNER = 'polygon(13.8px 0, 100% 0, 100% calc(100% - 13.8px), calc(100% - 13.8px) 100%, 0 100%, 0 13.8px)';
+const CUT_BUTTON = 'polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)';
+const CUT_BUTTON_INNER = 'polygon(8.8px 0, 100% 0, 100% calc(100% - 8.8px), calc(100% - 8.8px) 100%, 0 100%, 0 8.8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
+
 const BracketMatch = ({
   t1,
   t2,
@@ -110,7 +120,7 @@ const BracketMatch = ({
         }}
       >
         <div
-          className="w-full h-full bg-[#0A0A0A] flex flex-col overflow-hidden relative"
+          className="w-full h-full bg-[#08080a] flex flex-col overflow-hidden relative"
           style={{
             clipPath:
               "polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)",
@@ -124,15 +134,24 @@ const BracketMatch = ({
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div
-                className={`w-8 h-8 rounded bg-black border border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${isWinner1 ? "border-white/20" : ""}`}
+                className="w-8 h-8 p-[1px] flex items-center justify-center shrink-0"
+                style={{
+                  clipPath: CUT_BADGE,
+                  background: isWinner1 ? `linear-gradient(135deg, ${themeColor}, rgba(255,255,255,0.2))` : 'rgba(255,255,255,0.1)'
+                }}
               >
-                {logoOf(t1) ? (
-                  <img src={logoOf(t1)} loading="lazy" alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <ShieldCheck
-                    className={`w-4 h-4 ${isWinner1 ? "text-white" : isWinner2 ? "text-white/10" : "text-white/20"}`}
-                  />
-                )}
+                <div
+                  className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                >
+                  {logoOf(t1) ? (
+                    <img src={logoOf(t1)} loading="lazy" alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <ShieldCheck
+                      className={`w-4 h-4 ${isWinner1 ? "text-white" : isWinner2 ? "text-white/10" : "text-white/20"}`}
+                    />
+                  )}
+                </div>
               </div>
               {editingSlot === "t1" ? (
                 <select
@@ -144,7 +163,8 @@ const BracketMatch = ({
                     setEditingSlot(null);
                   }}
                   onBlur={() => setEditingSlot(null)}
-                  className="bg-[#111] text-white text-[11px] font-bold rounded px-1 py-0.5 max-w-[130px] focus:outline-none border border-white/20 cursor-pointer"
+                  className="bg-[#111] text-white text-[11px] font-bold px-1 py-0.5 max-w-[130px] focus:outline-none border border-white/20 cursor-pointer"
+                  style={{ clipPath: CUT_BADGE }}
                 >
                   <option value="">— vazio (TBD) —</option>
                   {(availableTeams || []).map((tm: any) => (
@@ -166,7 +186,8 @@ const BracketMatch = ({
                         e.stopPropagation();
                         setEditingSlot("t1");
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-white/10 shrink-0"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-white/10 shrink-0 cursor-pointer"
+                      style={{ clipPath: CUT_BADGE }}
                       title="Trocar time desta vaga"
                     >
                       <Edit2 className="w-3 h-3 text-white/40" />
@@ -183,7 +204,8 @@ const BracketMatch = ({
                     e.stopPropagation();
                     onScoreChange?.("s1", -1);
                   }}
-                  className={`w-5 h-5 rounded flex items-center justify-center text-[10px] transition-colors ${isWinner1 ? "bg-black/20 hover:bg-black/40 text-black" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  className={`w-5 h-5 flex items-center justify-center text-[10px] transition-colors cursor-pointer ${isWinner1 ? "bg-black/20 hover:bg-black/40 text-black" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  style={{ clipPath: CUT_BADGE }}
                 >
                   -
                 </button>
@@ -199,7 +221,8 @@ const BracketMatch = ({
                     e.stopPropagation();
                     onScoreChange?.("s1", 1);
                   }}
-                  className={`w-5 h-5 rounded flex items-center justify-center text-[10px] transition-colors ${isWinner1 ? "bg-black/20 hover:bg-black/40 text-black" : isWinner2 ? "bg-transparent" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  className={`w-5 h-5 flex items-center justify-center text-[10px] transition-colors cursor-pointer ${isWinner1 ? "bg-black/20 hover:bg-black/40 text-black" : isWinner2 ? "bg-transparent" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  style={{ clipPath: CUT_BADGE }}
                 >
                   +
                 </button>
@@ -215,15 +238,24 @@ const BracketMatch = ({
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div
-                className={`w-8 h-8 rounded bg-black border border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${isWinner2 ? "border-white/20" : ""}`}
+                className="w-8 h-8 p-[1px] flex items-center justify-center shrink-0"
+                style={{
+                  clipPath: CUT_BADGE,
+                  background: isWinner2 ? `linear-gradient(135deg, ${themeColor}, rgba(255,255,255,0.2))` : 'rgba(255,255,255,0.1)'
+                }}
               >
-                {logoOf(t2) ? (
-                  <img src={logoOf(t2)} loading="lazy" alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <ShieldCheck
-                    className={`w-4 h-4 ${isWinner2 ? "text-white" : isWinner1 ? "text-white/10" : "text-white/20"}`}
-                  />
-                )}
+                <div
+                  className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                >
+                  {logoOf(t2) ? (
+                    <img src={logoOf(t2)} loading="lazy" alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <ShieldCheck
+                      className={`w-4 h-4 ${isWinner2 ? "text-white" : isWinner1 ? "text-white/10" : "text-white/20"}`}
+                    />
+                  )}
+                </div>
               </div>
               {editingSlot === "t2" ? (
                 <select
@@ -235,7 +267,8 @@ const BracketMatch = ({
                     setEditingSlot(null);
                   }}
                   onBlur={() => setEditingSlot(null)}
-                  className="bg-[#111] text-white text-[11px] font-bold rounded px-1 py-0.5 max-w-[130px] focus:outline-none border border-white/20 cursor-pointer"
+                  className="bg-[#111] text-white text-[11px] font-bold px-1 py-0.5 max-w-[130px] focus:outline-none border border-white/20 cursor-pointer"
+                  style={{ clipPath: CUT_BADGE }}
                 >
                   <option value="">— vazio (TBD) —</option>
                   {(availableTeams || []).map((tm: any) => (
@@ -257,7 +290,8 @@ const BracketMatch = ({
                         e.stopPropagation();
                         setEditingSlot("t2");
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-white/10 shrink-0"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-white/10 shrink-0 cursor-pointer"
+                      style={{ clipPath: CUT_BADGE }}
                       title="Trocar time desta vaga"
                     >
                       <Edit2 className="w-3 h-3 text-white/40" />
@@ -274,7 +308,8 @@ const BracketMatch = ({
                     e.stopPropagation();
                     onScoreChange?.("s2", -1);
                   }}
-                  className={`w-5 h-5 rounded flex items-center justify-center text-[10px] transition-colors ${isWinner2 ? "bg-black/20 hover:bg-black/40 text-black" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  className={`w-5 h-5 flex items-center justify-center text-[10px] transition-colors cursor-pointer ${isWinner2 ? "bg-black/20 hover:bg-black/40 text-black" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  style={{ clipPath: CUT_BADGE }}
                 >
                   -
                 </button>
@@ -290,7 +325,8 @@ const BracketMatch = ({
                     e.stopPropagation();
                     onScoreChange?.("s2", 1);
                   }}
-                  className={`w-5 h-5 rounded flex items-center justify-center text-[10px] transition-colors ${isWinner2 ? "bg-black/20 hover:bg-black/40 text-black" : isWinner1 ? "bg-transparent" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  className={`w-5 h-5 flex items-center justify-center text-[10px] transition-colors cursor-pointer ${isWinner2 ? "bg-black/20 hover:bg-black/40 text-black" : isWinner1 ? "bg-transparent" : "bg-white/5 hover:bg-white/10 text-white/40"}`}
+                  style={{ clipPath: CUT_BADGE }}
                 >
                   +
                 </button>
@@ -384,83 +420,107 @@ const GroupStage = ({ tournament }: { tournament: any }) => {
       {groups.map((group, idx) => (
         <div
           key={idx}
-          className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-sm"
+          className="relative p-[1.5px] shadow-2xl transition-all"
+          style={{
+            clipPath: CUT_FRAME,
+            background: `linear-gradient(135deg, ${tournament.themeColor || '#FFB700'}60, rgba(255,255,255,0.05) 100%)`,
+          }}
         >
-          <div className="bg-white/5 px-6 py-4 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div
+            className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col"
+            style={{ clipPath: CUT_FRAME_INNER }}
+          >
+            <div className="bg-[#0c0c10] px-6 py-4 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-2 h-2"
+                  style={{
+                    clipPath: CUT_BADGE,
+                    backgroundColor: tournament.themeColor || "#FFB700",
+                    boxShadow: `0 0 10px ${tournament.themeColor || "#FFB700"}80`,
+                  }}
+                />
+                <h3 className="text-sm font-black text-white uppercase tracking-widest">
+                  {group.name}
+                </h3>
+              </div>
               <div
-                className="w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: tournament.themeColor || "#FFB700",
-                  boxShadow: `0 0 10px ${tournament.themeColor || "#FFB700"}80`,
-                }}
-              />
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">
-                {group.name}
-              </h3>
+                className="px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 bg-white/5 border border-white/10"
+                style={{ clipPath: CUT_BADGE }}
+              >
+                Top {classificados} Classificam
+              </div>
             </div>
-            <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-              Top {classificados} Classificam
-            </span>
-          </div>
-          <div className="p-2">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[9px] font-black text-white/20 uppercase tracking-widest">
-                  <th className="px-4 py-3">Equipe</th>
-                  <th className="px-4 py-3 text-center">V</th>
-                  <th className="px-4 py-3 text-center">D</th>
-                  <th className="px-4 py-3 text-center">J</th>
-                </tr>
-              </thead>
-              <tbody className="text-xs font-bold">
-                {group.teams.map((team, tIdx) => (
-                  <tr
-                    key={tIdx}
-                    className={`border-t border-white/[0.02] transition-colors hover:bg-white/[0.02] ${tIdx < classificados ? "bg-[#00FF41]/[0.03]" : ""}`}
-                  >
-                    <td className="px-4 py-4 flex items-center gap-3">
-                      <span className="text-[10px] font-black text-white/10 w-4">
-                        {tIdx + 1}
-                      </span>
-                      <div className="flex items-center gap-3 truncate">
-                        <div className="w-6 h-6 rounded bg-black border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                          {team.logo ? (
-                            <img
-                              src={team.logo} loading="lazy"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ShieldCheck className="w-4 h-4 text-white/20" />
-                          )}
-                        </div>
-                        <span className="text-white uppercase truncate max-w-[120px]">
-                          {team.name}{" "}
-                          <span className="text-[9px] text-white/20 ml-1">
-                            [{team.tag}]
-                          </span>
-                        </span>
-                      </div>
-                    </td>
-                    <td
-                      className="px-4 py-4 text-center font-black"
-                      style={{ color: "#00FF41" }}
-                    >
-                      {team.v}
-                    </td>
-                    <td className="px-4 py-4 text-center text-white/60">
-                      {team.d}
-                    </td>
-                    <td 
-                      className="px-4 py-4 text-center font-black"
-                      style={{ color: tournament.themeColor }}
-                    >
-                      {team.j}
-                    </td>
+            <div className="p-3 sm:p-4">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                    <th className="px-4 py-3">Equipe</th>
+                    <th className="px-4 py-3 text-center">V</th>
+                    <th className="px-4 py-3 text-center">D</th>
+                    <th className="px-4 py-3 text-center">J</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-xs font-bold">
+                  {group.teams.map((team, tIdx) => (
+                    <tr
+                      key={tIdx}
+                      className={`border-t border-white/[0.04] transition-colors hover:bg-white/[0.02] ${tIdx < classificados ? "bg-[#00FF41]/[0.03]" : ""}`}
+                    >
+                      <td className="px-4 py-3.5 flex items-center gap-3">
+                        <span className="text-[10px] font-black text-white/20 w-4">
+                          {tIdx + 1}
+                        </span>
+                        <div className="flex items-center gap-3 truncate">
+                          <div
+                            className="w-7 h-7 p-[1px] flex items-center justify-center shrink-0"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+                            }}
+                          >
+                            <div
+                              className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                              style={{ clipPath: CUT_BADGE_INNER }}
+                            >
+                              {team.logo ? (
+                                <img
+                                  src={team.logo} loading="lazy"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ShieldCheck className="w-3.5 h-3.5 text-white/20" />
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-white uppercase truncate max-w-[120px]">
+                            {team.name}{" "}
+                            <span className="text-[9px] text-white/20 ml-1">
+                              [{team.tag}]
+                            </span>
+                          </span>
+                        </div>
+                      </td>
+                      <td
+                        className="px-4 py-3.5 text-center font-black"
+                        style={{ color: "#00FF41" }}
+                      >
+                        {team.v}
+                      </td>
+                      <td className="px-4 py-3.5 text-center text-white/60">
+                        {team.d}
+                      </td>
+                      <td 
+                        className="px-4 py-3.5 text-center font-black"
+                        style={{ color: tournament.themeColor || "#FFB700" }}
+                      >
+                        {team.j}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ))}
@@ -580,8 +640,9 @@ const DoubleSideBracket = ({
           {tournament.titulo || tournament.nome || tournament.name}
         </h2>
         <div
-          className="h-1 w-32 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.3)]"
+          className="h-1 w-32 shadow-[0_0_25px_rgba(255,183,0,0.3)]"
           style={{
+            clipPath: CUT_BADGE,
             backgroundColor: themeColor,
             boxShadow: `0 0 25px ${themeColor}4D`,
           }}
@@ -679,8 +740,9 @@ const DoubleSideBracket = ({
                     </span>
                   </div>
                   <div
-                    className="w-40 h-1 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.8)] mt-2"
+                    className="w-40 h-1 shadow-[0_0_25px_rgba(255,183,0,0.8)] mt-2"
                     style={{
+                      clipPath: CUT_BADGE,
                       backgroundColor: themeColor,
                       boxShadow: `0 0 25px ${themeColor}CC`,
                     }}
@@ -1060,8 +1122,9 @@ const DoubleEliminationBracket = ({
           {tournament.titulo || tournament.nome || tournament.name}
         </h2>
         <div
-          className="h-1 w-32 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.3)]"
+          className="h-1 w-32 shadow-[0_0_25px_rgba(255,183,0,0.3)]"
           style={{
+            clipPath: CUT_BADGE,
             backgroundColor: themeColor,
             boxShadow: `0 0 25px ${themeColor}4D`,
           }}
@@ -1074,8 +1137,9 @@ const DoubleEliminationBracket = ({
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 px-6">
               <div
-                className="w-1.5 h-1.5 rounded-full shadow-[0_0_10px_rgba(255,183,0,0.5)]"
+                className="w-1.5 h-1.5 shadow-[0_0_10px_rgba(255,183,0,0.5)]"
                 style={{
+                  clipPath: CUT_BADGE,
                   backgroundColor: themeColor,
                   boxShadow: `0 0 10px ${themeColor}80`,
                 }}
@@ -1166,7 +1230,10 @@ const DoubleEliminationBracket = ({
           {/* Lower Section */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 px-6">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.5)]" />
+              <div
+                className="w-1.5 h-1.5 bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.5)]"
+                style={{ clipPath: CUT_BADGE }}
+              />
               <span className="text-[11px] font-black text-white uppercase tracking-[0.5em]">
                 Lower
               </span>
@@ -3137,17 +3204,14 @@ const CampeonatoDetalhes = () => {
     api.tournaments.atualizarCronograma(id, newCronograma)
       .then(() => {
         // Recalcula PDL/V/D — se o jogo excluído estava finalizado, o time perde
-        // os pontos/vitória/derrota correspondentes automaticamente.
-        return api.tournaments.recalcularPdl(id);
-      })
-      .catch((error: any) => console.error('Erro ao excluir jogo:', error.message));
-  };
-
-  if (campeonatoLoading || !campeonato) {
+     if (campeonatoLoading || !campeonato) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="text-white/30 text-sm font-black uppercase tracking-widest animate-pulse">
-          Carregando campeonato...
+      <div className="min-h-screen bg-[#060608] flex items-center justify-center">
+        <div className="flex items-center gap-3 text-white/40">
+          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: '#FFB700' }} />
+          <span className="text-xs font-black uppercase tracking-widest">
+            Carregando campeonato...
+          </span>
         </div>
       </div>
     );
@@ -3155,10 +3219,14 @@ const CampeonatoDetalhes = () => {
 
   return (
     <div className="min-h-screen bg-transparent text-white font-sans overflow-x-hidden relative">
-      {/* Background Decor */}
+      {/* Background Decor & Depth Atmosphere */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#FFB700]/5 blur-[120px] rounded-full -mr-64 -mt-64" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#00D4FF]/5 blur-[100px] rounded-full -ml-48 -mb-48" />
+        <div
+          className="absolute -top-[10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[140px]"
+          style={{ backgroundColor: `${campeonato.themeColor || '#FFB700'}0D` }}
+        />
+        <div className="absolute top-[35%] right-[10%] w-[500px] h-[500px] bg-[#9146FF]/5 rounded-full blur-[140px]" />
+        <div className="absolute top-[65%] left-[15%] w-[550px] h-[550px] bg-[#00F0FF]/4 rounded-full blur-[150px]" />
       </div>
 
       {/* Bracket Modal (Full-Screen Popup) */}
@@ -3182,7 +3250,8 @@ const CampeonatoDetalhes = () => {
             {/* Fixed Exit Button */}
             <button
               onClick={() => setIsBracketModalOpen(false)}
-              className="fixed top-20 right-8 z-[110] w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-[#FF6B6B] hover:bg-[#FF6B6B]/10 transition-all shadow-2xl"
+              className="fixed top-20 right-8 z-[110] w-12 h-12 flex items-center justify-center text-white/40 hover:text-[#FF6B6B] hover:bg-[#FF6B6B]/10 transition-all shadow-2xl bg-white/5 border border-white/10 cursor-pointer"
+              style={{ clipPath: CUT_BADGE }}
             >
               <X className="w-6 h-6" />
             </button>
@@ -3192,7 +3261,7 @@ const CampeonatoDetalhes = () => {
               ref={modalBracketRef}
               {...modalBracketHandlers}
               className="relative w-full h-full overflow-auto p-12 md:p-20 no-scrollbar cursor-grab z-10"
-              style={{ backgroundColor: "#0A0A0A" }}
+              style={{ backgroundColor: "#060608" }}
             >
               <div
                 style={{
@@ -3259,25 +3328,39 @@ const CampeonatoDetalhes = () => {
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#0A0A0A] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative"
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="relative p-[1.5px] w-full max-w-lg shadow-2xl"
+              style={{
+                clipPath: CUT_FRAME,
+                background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, ${campeonato.themeColor || '#FFB700'}40 50%, rgba(255,255,255,0.08) 100%)`,
+                boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
+              }}
             >
-              <div className="p-5 sm:p-8 space-y-6 sm:space-y-8">
+              <div
+                className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-5 sm:p-8 space-y-6 sm:space-y-8"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 border-2"
+                      className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
                       style={{
-                        borderColor: `${campeonato.themeColor}33`,
-                        backgroundColor: `${campeonato.themeColor}1A`,
+                        clipPath: CUT_BADGE,
+                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`,
                       }}
                     >
-                      <Trophy
-                        className="w-6 h-6"
-                        style={{ color: campeonato.themeColor }}
-                      />
+                      <div
+                        className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Trophy
+                          className="w-6 h-6"
+                          style={{ color: campeonato.themeColor }}
+                        />
+                      </div>
                     </div>
                     <div>
                       <h2
@@ -3293,16 +3376,28 @@ const CampeonatoDetalhes = () => {
                   </div>
                   <button
                     onClick={() => setIsRegistrationModalOpen(false)}
-                    className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 cursor-pointer"
+                    style={{ clipPath: CUT_BADGE }}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
                 {!user ? (
                   <div className="text-center py-6 space-y-6">
-                    <div className="w-16 h-16 rounded-2xl bg-[#FFB700]/10 border border-[#FFB700]/20 flex items-center justify-center mx-auto text-[#FFB700]">
-                      <Users className="w-8 h-8" />
+                    <div
+                      className="w-16 h-16 p-[1px] mx-auto flex items-center justify-center text-[#FFB700]"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: 'linear-gradient(135deg, #FFB700, rgba(255,255,255,0.1))'
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Users className="w-8 h-8" />
+                      </div>
                     </div>
                     <div>
                       <h3 className="text-lg font-black uppercase text-white tracking-tight">Login Necessário</h3>
@@ -3316,7 +3411,8 @@ const CampeonatoDetalhes = () => {
                           setIsRegistrationModalOpen(false);
                           navigate("/login");
                         }}
-                        className="flex-1 py-4 px-4 rounded-xl bg-[#FFB700] hover:bg-[#E6A600] text-black font-black text-xs uppercase tracking-wider transition-all shadow-lg"
+                        className="flex-1 py-4 px-4 bg-[#FFB700] hover:bg-[#E6A600] text-black font-black text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
                       >
                         Fazer Login
                       </button>
@@ -3324,8 +3420,19 @@ const CampeonatoDetalhes = () => {
                   </div>
                 ) : myTeams.length === 0 ? (
                   <div className="text-center py-6 space-y-6">
-                    <div className="w-16 h-16 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/20 flex items-center justify-center mx-auto text-[#00F0FF]">
-                      <ShieldCheck className="w-8 h-8" />
+                    <div
+                      className="w-16 h-16 p-[1px] mx-auto flex items-center justify-center text-[#00F0FF]"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: 'linear-gradient(135deg, #00F0FF, rgba(255,255,255,0.1))'
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <ShieldCheck className="w-8 h-8" />
+                      </div>
                     </div>
                     <div>
                       <h3 className="text-lg font-black uppercase text-white tracking-tight">Nenhuma Equipe Encontrada</h3>
@@ -3336,9 +3443,10 @@ const CampeonatoDetalhes = () => {
                     <button
                       onClick={() => {
                         setIsRegistrationModalOpen(false);
-                        navigate("/equipes?criar=true", { state: { openCreateModal: true } });
+                        navigate("/times?criar=true", { state: { openCreateModal: true } });
                       }}
-                      className="w-full py-4 px-6 rounded-xl bg-[#00F0FF] hover:bg-[#00D8E6] text-black font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
+                      className="w-full py-4 px-6 bg-[#00F0FF] hover:bg-[#00D8E6] text-black font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
                     >
                       <Plus className="w-4 h-4" />
                       <span>Criar Equipe Agora</span>
@@ -3364,58 +3472,67 @@ const CampeonatoDetalhes = () => {
                                 teamId: team.id,
                               })
                             }
-                            className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group ${
-                              registrationData.teamId === team.id
-                                ? "bg-white/5"
-                                : "bg-white/5 border-white/5 hover:border-white/10"
-                            }`}
-                            style={
-                              registrationData.teamId === team.id
-                                ? {
-                                    borderColor: campeonato.themeColor,
-                                    boxShadow: `0 0 15px ${campeonato.themeColor}1A`,
-                                  }
-                                : {}
-                            }
+                            className="relative p-[1px] transition-all cursor-pointer"
+                            style={{
+                              clipPath: CUT_BUTTON,
+                              background: registrationData.teamId === team.id
+                                ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                                : 'rgba(255, 255, 255, 0.08)'
+                            }}
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-black border border-white/10 flex items-center justify-center overflow-hidden">
-                                {team.logo ? (
-                                  <img
-                                    src={team.logo} loading="lazy"
-                                    alt="Logo"
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <ShieldCheck className="w-5 h-5 text-white/20" />
+                            <div
+                              className={`w-full p-3.5 flex items-center justify-between transition-colors ${
+                                registrationData.teamId === team.id ? 'bg-[#0e0e14]' : 'bg-[#08080a] hover:bg-[#0c0c10]'
+                              }`}
+                              style={{ clipPath: CUT_BUTTON_INNER }}
+                            >
+                              <div className="flex items-center gap-3.5">
+                                <div
+                                  className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0 overflow-hidden"
+                                  style={{
+                                    clipPath: CUT_BADGE,
+                                    background: 'rgba(255,255,255,0.1)'
+                                  }}
+                                >
+                                  <div
+                                    className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                                    style={{ clipPath: CUT_BADGE_INNER }}
+                                  >
+                                    {team.logo ? (
+                                      <img
+                                        src={team.logo} loading="lazy"
+                                        alt="Logo"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <ShieldCheck className="w-5 h-5 text-white/20" />
+                                    )}
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4
+                                    className={`text-sm font-black uppercase tracking-tight ${registrationData.teamId === team.id ? "text-white" : "text-white/60"}`}
+                                  >
+                                    {team.nome}
+                                  </h4>
+                                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                                    #{team.tag}
+                                  </p>
+                                </div>
+                              </div>
+                              <div
+                                className="w-5 h-5 flex items-center justify-center"
+                                style={{
+                                  clipPath: CUT_BADGE,
+                                  backgroundColor: registrationData.teamId === team.id
+                                    ? (campeonato.themeColor || '#FFB700')
+                                    : 'rgba(255,255,255,0.05)'
+                                }}
+                              >
+                                {registrationData.teamId === team.id && (
+                                  <ShieldCheck className="w-3 h-3 text-black font-black" />
                                 )}
                               </div>
-                              <div>
-                                <h4
-                                  className={`text-sm font-black uppercase tracking-tight ${registrationData.teamId === team.id ? "text-white" : "text-white/60"}`}
-                                >
-                                  {team.nome}
-                                </h4>
-                                <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
-                                  #{team.tag}
-                                </p>
-                              </div>
-                            </div>
-                            <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                registrationData.teamId === team.id
-                                  ? "border-transparent"
-                                  : "border-white/10"
-                              }`}
-                              style={
-                                registrationData.teamId === team.id
-                                  ? { backgroundColor: campeonato.themeColor }
-                                  : {}
-                              }
-                            >
-                              {registrationData.teamId === team.id && (
-                                <ShieldCheck className="w-3 h-3 text-black font-black" />
-                              )}
                             </div>
                           </div>
                         ))}
@@ -3424,70 +3541,85 @@ const CampeonatoDetalhes = () => {
 
                     {/* Contatos */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
                           Discord do Capitão
                         </label>
-                        <div className="relative">
-                          <MessageCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                          <input
-                            required
-                            type="text"
-                            placeholder="Ex: nick#1234"
-                            value={registrationData.discord}
-                            onChange={(e) =>
-                              setRegistrationData({
-                                ...registrationData,
-                                discord: e.target.value,
-                              })
-                            }
-                            onFocus={(e) =>
-                              (e.target.style.borderColor = campeonato.themeColor)
-                            }
-                            onBlur={(e) => (e.target.style.borderColor = "")}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-sm font-bold focus:outline-none transition-colors text-white"
-                          />
+                        <div
+                          className="relative p-[1px]"
+                          style={{
+                            clipPath: CUT_BUTTON,
+                            background: 'rgba(255, 255, 255, 0.1)'
+                          }}
+                        >
+                          <div
+                            className="relative flex items-center bg-[#0c0c10]"
+                            style={{ clipPath: CUT_BUTTON_INNER }}
+                          >
+                            <MessageCircle className="absolute left-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+                            <input
+                              required
+                              type="text"
+                              placeholder="Ex: nick#1234"
+                              value={registrationData.discord}
+                              onChange={(e) =>
+                                setRegistrationData({
+                                  ...registrationData,
+                                  discord: e.target.value,
+                                })
+                              }
+                              className="w-full bg-transparent pl-10 pr-3 py-3 text-white text-xs font-bold focus:outline-none placeholder:text-white/20"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
                           WhatsApp
                         </label>
-                        <div className="relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                          <input
-                            required
-                            type="text"
-                            placeholder="Ex: (11) 99999-9999"
-                            value={registrationData.whatsapp}
-                            onChange={(e) =>
-                              setRegistrationData({
-                                ...registrationData,
-                                whatsapp: e.target.value,
-                              })
-                            }
-                            onFocus={(e) =>
-                              (e.target.style.borderColor = campeonato.themeColor)
-                            }
-                            onBlur={(e) => (e.target.style.borderColor = "")}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-sm font-bold focus:outline-none transition-colors text-white"
-                          />
+                        <div
+                          className="relative p-[1px]"
+                          style={{
+                            clipPath: CUT_BUTTON,
+                            background: 'rgba(255, 255, 255, 0.1)'
+                          }}
+                        >
+                          <div
+                            className="relative flex items-center bg-[#0c0c10]"
+                            style={{ clipPath: CUT_BUTTON_INNER }}
+                          >
+                            <Phone className="absolute left-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+                            <input
+                              required
+                              type="text"
+                              placeholder="Ex: (11) 99999-9999"
+                              value={registrationData.whatsapp}
+                              onChange={(e) =>
+                                setRegistrationData({
+                                  ...registrationData,
+                                  whatsapp: e.target.value,
+                                })
+                              }
+                              className="w-full bg-transparent pl-10 pr-3 py-3 text-white text-xs font-bold focus:outline-none placeholder:text-white/20"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full text-black font-black py-5 rounded-xl flex items-center justify-center gap-3 transition-all text-sm uppercase tracking-widest shadow-xl mt-4 group"
+                      className="w-full py-4 text-black font-black flex items-center justify-center gap-3 transition-all text-xs uppercase tracking-widest shadow-xl mt-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                       style={{
-                        backgroundColor: campeonato.themeColor,
-                        boxShadow: `0 10px 30px ${campeonato.themeColor}4D`,
+                        clipPath: CUT_BUTTON,
+                        backgroundColor: campeonato.themeColor || '#FFB700',
+                        boxShadow: `0 0 30px -5px ${campeonato.themeColor || '#FFB700'}66`,
                       }}
                     >
-                      <Trophy className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                      CONFIRMAR INSCRIÇÃO
+                      <Trophy className="w-4 h-4" />
+                      <span>CONFIRMAR INSCRIÇÃO</span>
                     </button>
-                    <p className="text-[9px] text-center text-white/20 font-bold uppercase tracking-widest px-4 leading-relaxed">
+                    <p className="text-[9px] text-center text-white/30 font-bold uppercase tracking-widest px-4 leading-relaxed">
                       Ao confirmar, sua equipe será pré-inscrita e aguardará a
                       aprovação manual dos administradores da M7 ARENA.
                     </p>
@@ -3509,25 +3641,39 @@ const CampeonatoDetalhes = () => {
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#0A0A0A] border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative"
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="relative p-[1.5px] w-full max-w-2xl shadow-2xl"
+              style={{
+                clipPath: CUT_FRAME,
+                background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.08) 100%)`,
+                boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
+              }}
             >
-              <div className="p-5 sm:p-8 space-y-4 sm:space-y-6">
+              <div
+                className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-5 sm:p-8 space-y-5"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
                       style={{
-                        backgroundColor: `${campeonato.themeColor}1A`,
-                        border: `1px solid ${campeonato.themeColor}33`,
+                        clipPath: CUT_BADGE,
+                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`,
                       }}
                     >
-                      <FileText
-                        className="w-6 h-6"
-                        style={{ color: campeonato.themeColor }}
-                      />
+                      <div
+                        className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <FileText
+                          className="w-6 h-6"
+                          style={{ color: campeonato.themeColor }}
+                        />
+                      </div>
                     </div>
                     <div>
                       <h2
@@ -3543,24 +3689,37 @@ const CampeonatoDetalhes = () => {
                   </div>
                   <button
                     onClick={() => setIsRulesModalOpen(false)}
-                    className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 cursor-pointer"
+                    style={{ clipPath: CUT_BADGE }}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 sm:p-6 md:p-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
-                  <div className="prose prose-invert prose-sm max-w-none">
-                    <p className="text-white/60 leading-relaxed whitespace-pre-wrap font-medium">
-                      {campeonato.regulamento ||
-                        "Nenhum regulamento cadastrado para este campeonato."}
-                    </p>
+                <div
+                  className="relative p-[1px] w-full"
+                  style={{
+                    clipPath: CUT_BUTTON,
+                    background: 'rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  <div
+                    className="bg-[#0c0c10] p-4 sm:p-6 overflow-y-auto max-h-[60vh] custom-scrollbar"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      <p className="text-white/70 leading-relaxed whitespace-pre-wrap font-medium text-xs sm:text-sm">
+                        {campeonato.regulamento ||
+                          "Nenhum regulamento cadastrado para este campeonato."}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsRulesModalOpen(false)}
-                  className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 transition-all text-xs uppercase tracking-widest border border-white/10"
+                  className="w-full bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-black py-3.5 flex items-center justify-center gap-2 transition-all text-xs uppercase tracking-widest border border-white/10 cursor-pointer"
+                  style={{ clipPath: CUT_BUTTON }}
                 >
                   FECHAR REGULAMENTO
                 </button>
@@ -3574,51 +3733,87 @@ const CampeonatoDetalhes = () => {
         {/* Top Navigation */}
         <button
           onClick={() => navigate("/campeonatos")}
-          className="group flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-6"
+          className="group relative p-[1px] transition-all hover:scale-105 active:scale-95 cursor-pointer inline-block"
+          style={{
+            clipPath: CUT_BUTTON,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+          }}
         >
-          <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-xs font-black uppercase tracking-widest">
-            Voltar para Campeonatos
-          </span>
+          <div
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#08080a] text-white/60 group-hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
+            style={{ clipPath: CUT_BUTTON_INNER }}
+          >
+            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span>Voltar para Campeonatos</span>
+          </div>
         </button>
 
         {/* HERO SECTION */}
-        <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black shadow-2xl">
-          {/* Hero Image / Map Placeholder - UPDATED: Removed grayscale and updated image */}
+        <div
+          className="relative p-[1.5px] w-full shadow-2xl transition-all"
+          style={{
+            clipPath: CUT_FRAME,
+            background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, ${campeonato.themeColor || '#FFB700'}40 50%, rgba(255,255,255,0.08) 100%)`,
+            boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
+          }}
+        >
           <div
-            className="absolute inset-0 z-0 bg-cover bg-center opacity-40"
-            style={{
-              backgroundImage: `url(${campeonato.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
-            }}
-          />
-          <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+            className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col justify-end min-h-[250px]"
+            style={{ clipPath: CUT_FRAME_INNER }}
+          >
+            {/* Hero Image */}
+            <div
+              className="absolute inset-0 z-0 bg-cover bg-center opacity-40"
+              style={{
+                backgroundImage: `url(${campeonato.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
+              }}
+            />
+            <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#08080a] via-[#08080a]/60 to-transparent" />
 
-          <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-end md:justify-between gap-8 min-h-[250px] pt-24 pb-6 md:py-10">
-            <div className="space-y-6 max-w-3xl">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white">
-                {campeonato.titulo || campeonato.nome || campeonato.name}
-              </h1>
+            <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-end md:justify-between gap-8 pt-24 pb-6 md:py-10">
+              <div className="space-y-4 max-w-3xl">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-px" style={{ backgroundColor: campeonato.themeColor || '#FFB700' }} />
+                  <span className="text-[10px] md:text-sm font-black uppercase tracking-[0.3em]" style={{ color: campeonato.themeColor || '#FFB700' }}>
+                    CAMPEONATO OFICIAL • M7 ARENA
+                  </span>
+                </div>
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white">
+                  {campeonato.titulo || campeonato.nome || campeonato.name}
+                </h1>
 
-              <p className="text-white/60 text-xs sm:text-sm md:text-base font-medium leading-relaxed max-w-2xl">
-                {campeonato.descricao}
-              </p>
-            </div>
+                {campeonato.descricao && (
+                  <p className="text-white/60 text-xs sm:text-sm md:text-base font-medium leading-relaxed max-w-2xl">
+                    {campeonato.descricao}
+                  </p>
+                )}
+              </div>
 
-            <div className="hidden md:flex flex-col gap-4 w-full md:w-auto shrink-0 items-center">
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={() => setIsRulesModalOpen(true)}
-                  className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center border border-white/10 transition-all group"
-                  title="Regulamento"
-                >
-                  <FileText
-                    className="w-6 h-6 group-hover:scale-110 transition-transform"
-                    style={{ color: campeonato.themeColor }}
-                  />
-                </button>
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                  Regulamento
-                </span>
+              <div className="hidden md:flex flex-col gap-4 w-full md:w-auto shrink-0 items-center">
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    onClick={() => setIsRulesModalOpen(true)}
+                    className="relative p-[1px] group transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,183,0,0.15)]"
+                    style={{
+                      clipPath: CUT_BUTTON,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                    }}
+                    title="Regulamento"
+                  >
+                    <div
+                      className="w-14 h-14 bg-[#0c0c10] flex items-center justify-center"
+                      style={{ clipPath: CUT_BUTTON_INNER }}
+                    >
+                      <FileText
+                        className="w-6 h-6 group-hover:scale-110 transition-transform"
+                        style={{ color: campeonato.themeColor }}
+                      />
+                    </div>
+                  </button>
+                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                    Regulamento
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -3628,32 +3823,51 @@ const CampeonatoDetalhes = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Dynamic Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* CONTENT TABS - Moved inside the column for perfect alignment with content cards */}
-            <div className="flex gap-1 md:gap-2 p-1 bg-white/5 rounded-xl border border-white/10 w-full overflow-x-auto no-scrollbar">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabClick(tab.id)}
-                    className={`flex-none sm:flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all ${
-                      activeTab === tab.id
-                        ? ""
-                        : "text-white/40 hover:text-white/60"
-                    }`}
-                    style={
-                      activeTab === tab.id
-                        ? {
-                            color: campeonato.themeColor,
-                          }
-                        : {}
-                    }
-                  >
-                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                    <span className="tracking-wider whitespace-nowrap">{tab.label}</span>
-                  </button>
-                );
-              })}
+            {/* CONTENT TABS */}
+            <div
+              className="relative p-[1px] w-full"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))'
+              }}
+            >
+              <div
+                className="w-full p-1.5 bg-[#08080a] flex items-center gap-1.5 overflow-x-auto no-scrollbar"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabClick(tab.id)}
+                      className="relative p-[1px] flex-none sm:flex-1 transition-all cursor-pointer"
+                      style={{
+                        clipPath: CUT_BUTTON,
+                        background: isActive
+                          ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, ${campeonato.themeColor || '#FFB700'}80)`
+                          : 'transparent'
+                      }}
+                    >
+                      <div
+                        className={`flex items-center justify-center gap-2 px-4 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-colors ${
+                          isActive
+                            ? 'bg-[#08080a]'
+                            : 'bg-transparent text-white/40 hover:text-white/80 hover:bg-white/5'
+                        }`}
+                        style={{
+                          clipPath: CUT_BUTTON_INNER,
+                          color: isActive ? (campeonato.themeColor || '#FFB700') : undefined
+                        }}
+                      >
+                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                        <span className="tracking-wider whitespace-nowrap">{tab.label}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <AnimatePresence mode="wait">
@@ -3668,149 +3882,164 @@ const CampeonatoDetalhes = () => {
                   {/* O START TOURNAMENT BANNER FOI REMOVIDO PARA PRODUÇÃO */}
 
                   <div
-                    className="rounded-xl border-2 relative overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6"
+                    className="relative p-[1.5px] shadow-2xl transition-all"
                     style={{
-                      backgroundImage: `linear-gradient(to bottom right, ${campeonato.themeColor}22, black, black)`,
-                      borderColor: `${campeonato.themeColor}4D`,
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
+                      boxShadow: `0 0 40px -10px ${campeonato.themeColor || '#FFB700'}26`
                     }}
                   >
                     <div
-                      className="absolute inset-0 blur-3xl opacity-20 -z-10"
-                      style={{ backgroundColor: `${campeonato.themeColor}1A` }}
-                    />
-                    <div className="flex items-center gap-4 mb-2">
-                      <div
-                        className="w-12 h-12 rounded-xl bg-black border-2 flex items-center justify-center shrink-0"
-                        style={{
-                          borderColor: campeonato.themeColor,
-                          boxShadow: `0 0 20px ${campeonato.themeColor}33`,
-                        }}
-                      >
-                        <Trophy className="w-6 h-6" style={{ color: campeonato.themeColor }} />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
-                          Classificação
-                        </h2>
-                        <p
-                          className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
-                          style={{ color: campeonato.themeColor }}
+                      className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6 space-y-4 sm:space-y-6"
+                      style={{ clipPath: CUT_FRAME_INNER }}
+                    >
+                      <div className="flex items-center gap-4 mb-2">
+                        <div
+                          className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                          style={{
+                            clipPath: CUT_BADGE,
+                            background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                          }}
                         >
-                          Ranking geral do campeonato
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {getDynamicStandings().map((time, i) => {
-                        const Icon = getIcon((time as any).icone);
-                        return (
                           <div
-                            key={i}
-                            className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-white/5 hover:border-white/20 transition-all bg-white/[0.01] relative overflow-hidden ${i < 4 ? "pl-6" : ""}`}
+                            className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                            style={{ clipPath: CUT_BADGE_INNER }}
                           >
-                            {i < 4 && (
+                            <Trophy className="w-6 h-6" style={{ color: campeonato.themeColor }} />
+                          </div>
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
+                            Classificação
+                          </h2>
+                          <p
+                            className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
+                            style={{ color: campeonato.themeColor }}
+                          >
+                            Ranking geral do campeonato
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {getDynamicStandings().map((time, i) => {
+                          const Icon = getIcon((time as any).icone);
+                          return (
+                            <div
+                              key={i}
+                              className="relative p-[1px] transition-all hover:scale-[1.005]"
+                              style={{
+                                clipPath: CUT_BUTTON,
+                                background: i < 4
+                                  ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}80, rgba(255,255,255,0.05))`
+                                  : 'rgba(255, 255, 255, 0.05)',
+                              }}
+                            >
                               <div
-                                className="absolute left-0 top-0 bottom-0 w-1.5 shadow-[4px_0_15px_rgba(255,183,0,0.3)]"
-                                style={{
-                                  backgroundColor: campeonato.themeColor,
-                                  boxShadow: `4px 0 15px ${campeonato.themeColor}4D`,
-                                }}
-                              />
-                            )}
-                            <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
-                              {/* No background block for rank, just the color/text */}
-                              <div
-                                className="w-8 text-center font-black text-2xl shrink-0"
-                                style={{
-                                  color:
-                                    i < 4
-                                      ? campeonato.themeColor
-                                      : "rgba(255,255,255,0.4)",
-                                }}
+                                className={`w-full p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
+                                  i < 4 ? 'bg-[#0b0b10]' : 'bg-[#08080a] hover:bg-[#0c0c10]'
+                                }`}
+                                style={{ clipPath: CUT_BUTTON_INNER }}
                               >
-                                {time.rank}º
-                              </div>
-                              {/* Square team logo with border in team color */}
-                              <div
-                                className="w-14 h-14 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0 border-2 bg-black shadow-lg"
-                                style={{
-                                  borderColor: (time as any).cor || "#FFB700",
-                                  boxShadow: `0 8px 24px -6px ${(time as any).cor || "#FFB700"}60`,
-                                }}
-                              >
-                                {(time as any).logo ? (
-                                  <img
-                                    src={(time as any).logo} loading="lazy"
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <Icon
-                                    className="w-7 h-7"
+                                <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                                  <div
+                                    className="w-8 text-center font-black text-2xl shrink-0"
                                     style={{
-                                      color: (time as any).cor || "#FFB700",
-                                    }}
-                                  />
-                                )}
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <h3 className="text-white font-black text-lg sm:text-xl tracking-tight leading-tight truncate uppercase">
-                                    {time.nome}
-                                  </h3>
-                                  <span
-                                    className="inline-block text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md tracking-widest shrink-0"
-                                    style={{
-                                      color: (time as any).cor || "#FFB700",
-                                      background: `${(time as any).cor}18`,
-                                      border: `1px solid ${(time as any).cor}40`,
+                                      color:
+                                        i < 4
+                                          ? campeonato.themeColor
+                                          : "rgba(255,255,255,0.4)",
                                     }}
                                   >
-                                    #{time.tag}
-                                  </span>
+                                    {time.rank}º
+                                  </div>
+                                  <div
+                                    className="w-14 h-14 p-[1.5px] flex items-center justify-center shrink-0"
+                                    style={{
+                                      clipPath: CUT_BADGE,
+                                      background: (time as any).cor || "#FFB700",
+                                      boxShadow: `0 8px 24px -6px ${(time as any).cor || "#FFB700"}60`,
+                                    }}
+                                  >
+                                    <div
+                                      className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                                      style={{ clipPath: CUT_BADGE_INNER }}
+                                    >
+                                      {(time as any).logo ? (
+                                        <img
+                                          src={(time as any).logo} loading="lazy"
+                                          alt=""
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <Icon
+                                          className="w-7 h-7"
+                                          style={{
+                                            color: (time as any).cor || "#FFB700",
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <h3 className="text-white font-black text-lg sm:text-xl tracking-tight leading-tight truncate uppercase">
+                                        {time.nome}
+                                      </h3>
+                                      <span
+                                        className="inline-block text-[9px] sm:text-[10px] font-black px-2 py-0.5 tracking-widest shrink-0"
+                                        style={{
+                                          clipPath: CUT_BADGE,
+                                          color: (time as any).cor || "#FFB700",
+                                          background: `${(time as any).cor}18`,
+                                          border: `1px solid ${(time as any).cor}40`,
+                                        }}
+                                      >
+                                        #{time.tag}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4 md:gap-6 min-w-[220px]">
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">
+                                      V
+                                    </span>
+                                    <span
+                                      className="text-2xl font-black"
+                                      style={{ color: "#00FF41" }}
+                                    >
+                                      {(time as any).v}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">
+                                      D
+                                    </span>
+                                    <span
+                                      className="text-2xl font-black"
+                                      style={{ color: "#FF3131" }}
+                                    >
+                                      {(time as any).d}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">
+                                      J
+                                    </span>
+                                    <span
+                                      className="text-2xl font-black"
+                                      style={{ color: campeonato.themeColor }}
+                                    >
+                                      {(time as any).j}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-
-                            {/* Stats without the black background block - Reduced gap slightly further */}
-                            <div className="grid grid-cols-3 gap-4 md:gap-6 min-w-[220px]">
-                              <div className="flex flex-col items-center">
-                                <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">
-                                  V
-                                </span>
-                                <span
-                                  className="text-2xl font-black"
-                                  style={{ color: "#00FF41" }}
-                                >
-                                  {(time as any).v}
-                                </span>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">
-                                  D
-                                </span>
-                                <span
-                                  className="text-2xl font-black"
-                                  style={{ color: "#FF3131" }}
-                                >
-                                  {(time as any).d}
-                                </span>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">
-                                  J
-                                </span>
-                                <span
-                                  className="text-2xl font-black"
-                                  style={{ color: campeonato.themeColor }}
-                                >
-                                  {(time as any).j}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -3825,208 +4054,239 @@ const CampeonatoDetalhes = () => {
                   className="w-full"
                 >
                   <div
-                    className="rounded-2xl border-2 relative overflow-hidden p-4 sm:p-6"
+                    className="relative p-[1.5px] shadow-2xl transition-all"
                     style={{
-                      backgroundImage: `linear-gradient(to bottom right, ${campeonato.themeColor}22, black, black)`,
-                      borderColor: `${campeonato.themeColor}4D`,
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
+                      boxShadow: `0 0 40px -10px ${campeonato.themeColor || '#FFB700'}26`
                     }}
                   >
                     <div
-                      className="absolute inset-0 blur-3xl opacity-20 -z-10"
-                      style={{ backgroundColor: `${campeonato.themeColor}1A` }}
-                    />
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="w-12 h-12 rounded-xl bg-black border-2 flex items-center justify-center shrink-0"
-                        style={{
-                          borderColor: campeonato.themeColor,
-                          boxShadow: `0 0 20px ${campeonato.themeColor}33`,
-                        }}
-                      >
-                        <History className="w-6 h-6" style={{ color: campeonato.themeColor }} />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
-                          Histórico de Partidas
-                        </h2>
-                        <p
-                          className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
-                          style={{ color: campeonato.themeColor }}
-                        >
-                          Acompanhe o desempenho detalhado de cada equipe
-                        </p>
-                      </div>
-                    </div>
-
-                  <div className="space-y-3 mt-6">
-                  {(getDynamicStandings() || []).map((time, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white/[0.03] rounded-xl border border-white/10 overflow-hidden transition-all"
+                      className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6"
+                      style={{ clipPath: CUT_FRAME_INNER }}
                     >
-                      <button
-                        onClick={() =>
-                          setExpandedTeam(
-                            expandedTeam === time.nome ? null : time.nome,
-                          )
-                        }
-                        className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-white/5 transition-colors"
-                      >
-                        <div className="flex items-center gap-6">
-                          <span className="text-2xl font-black text-white/10 w-8">
-                            0{idx + 1}
-                          </span>
-                          <div className="flex items-center gap-4">
-                            <div className="text-left">
-                              <h3 className="text-lg font-black text-white uppercase tracking-tight">
-                                {time.nome}{" "}
-                                <span className="text-[10px] text-white/20 ml-2">
-                                  [{time.tag}]
-                                </span>
-                              </h3>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-8">
-                          <div className="hidden md:flex items-center gap-6">
-                            <div className="text-center">
-                              <p className="text-[10px] font-black text-white/20 uppercase mb-1">
-                                V / D
-                              </p>
-                              <p className="text-sm font-black text-white">
-                                {time.v}V - {time.d}D
-                              </p>
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                          style={{
+                            clipPath: CUT_BADGE,
+                            background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                          }}
+                        >
                           <div
-                            className={`transition-transform duration-300 ${expandedTeam === time.nome ? "rotate-180" : ""}`}
+                            className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                            style={{ clipPath: CUT_BADGE_INNER }}
                           >
-                            <ChevronLeft className="w-5 h-5 text-white/20 -rotate-90" />
+                            <History className="w-6 h-6" style={{ color: campeonato.themeColor }} />
                           </div>
                         </div>
-                      </button>
-
-                      <AnimatePresence>
-                        {expandedTeam === time.nome && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="bg-black/40 border-t border-white/5"
+                        <div>
+                          <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
+                            Histórico de Partidas
+                          </h2>
+                          <p
+                            className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
+                            style={{ color: campeonato.themeColor }}
                           >
-                            <div className="p-4 sm:p-6 space-y-3">
-                              {/* Histórico Real de Partidas */}
-                              {(() => {
-                                // Histórico vem APENAS do cronograma (a chave é só visual).
-                                const teamMatches = (campeonato.cronograma || [])
-                                  .filter(
-                                    (m: any) =>
-                                      (m.timeA === time.tag ||
-                                       m.timeA === time.nome ||
-                                       m.timeB === time.tag ||
-                                       m.timeB === time.nome) &&
-                                      m.status === "finalizado",
-                                  )
-                                  .sort((a: any, b: any) => {
-                                    // sort by date/time descending if available
-                                    const dA = new Date(
-                                      `${a.data || "2000-01-01"}T${a.hora || "00:00"}`,
-                                    ).getTime();
-                                    const dB = new Date(
-                                      `${b.data || "2000-01-01"}T${b.hora || "00:00"}`,
-                                    ).getTime();
-                                    return dB - dA;
-                                  });
+                            Acompanhe o desempenho detalhado de cada equipe
+                          </p>
+                        </div>
+                      </div>
 
-                                if (teamMatches.length === 0) {
-                                  return (
-                                    <div className="py-10 text-center">
-                                      <p className="text-[10px] font-black text-white/10 uppercase tracking-widest">
-                                        Nenhuma partida registrada para este
-                                        campeonato
+                      <div className="space-y-3 mt-6">
+                        {(getDynamicStandings() || []).map((time, idx) => (
+                          <div
+                            key={idx}
+                            className="relative p-[1px] transition-all"
+                            style={{
+                              clipPath: CUT_BUTTON,
+                              background: expandedTeam === time.nome
+                                ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}80, rgba(255,255,255,0.05))`
+                                : 'rgba(255, 255, 255, 0.08)'
+                            }}
+                          >
+                            <div
+                              className="w-full bg-[#0c0c10] overflow-hidden"
+                              style={{ clipPath: CUT_BUTTON_INNER }}
+                            >
+                              <button
+                                onClick={() =>
+                                  setExpandedTeam(
+                                    expandedTeam === time.nome ? null : time.nome,
+                                  )
+                                }
+                                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-white/5 transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center gap-4 sm:gap-6">
+                                  <span className="text-xl sm:text-2xl font-black text-white/20 w-8">
+                                    0{idx + 1}
+                                  </span>
+                                  <div className="flex items-center gap-4">
+                                    <div className="text-left">
+                                      <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">
+                                        {time.nome}{" "}
+                                        <span className="text-[10px] text-white/40 ml-2">
+                                          [{time.tag}]
+                                        </span>
+                                      </h3>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                  <div className="hidden md:flex items-center gap-6">
+                                    <div className="text-center">
+                                      <p className="text-[9px] font-black text-white/30 uppercase mb-0.5">
+                                        V / D
+                                      </p>
+                                      <p className="text-xs sm:text-sm font-black text-white">
+                                        {time.v}V - {time.d}D
                                       </p>
                                     </div>
-                                  );
-                                }
+                                  </div>
+                                  <div
+                                    className={`transition-transform duration-300 ${expandedTeam === time.nome ? "rotate-180" : ""}`}
+                                  >
+                                    <ChevronLeft className="w-5 h-5 text-white/30 -rotate-90" />
+                                  </div>
+                                </div>
+                              </button>
 
-                                return teamMatches.map(
-                                  (match: any, mIdx: number) => {
-                                    const isT1 = match.timeA === time.tag || match.timeA === time.nome;
-                                    const opponentTag = isT1
-                                      ? match.timeB
-                                      : match.timeA;
-                                    const opponentName =
-                                      (
-                                        campeonato.timesInscritos ||
-                                        campeonato.classificacao ||
-                                        []
-                                      ).find((t: any) => t.tag === opponentTag)
-                                        ?.name || opponentTag;
+                              <AnimatePresence>
+                                {expandedTeam === time.nome && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="bg-black/60 border-t border-white/5"
+                                  >
+                                    <div className="p-4 sm:p-6 space-y-3">
+                                      {/* Histórico Real de Partidas */}
+                                      {(() => {
+                                        const teamMatches = (campeonato.cronograma || [])
+                                          .filter(
+                                            (m: any) =>
+                                              (m.timeA === time.tag ||
+                                               m.timeA === time.nome ||
+                                               m.timeB === time.tag ||
+                                               m.timeB === time.nome) &&
+                                              m.status === "finalizado",
+                                          )
+                                          .sort((a: any, b: any) => {
+                                            const dA = new Date(
+                                              `${a.data || "2000-01-01"}T${a.hora || "00:00"}`,
+                                            ).getTime();
+                                            const dB = new Date(
+                                              `${b.data || "2000-01-01"}T${b.hora || "00:00"}`,
+                                            ).getTime();
+                                            return dB - dA;
+                                          });
 
-                                    const scores = (
-                                      match.placar || "0 - 0"
-                                    ).split(" - ");
-                                    const score1 = parseInt(scores[0]) || 0;
-                                    const score2 = parseInt(scores[1]) || 0;
-                                    const myScore = isT1 ? score1 : score2;
-                                    const oppScore = isT1 ? score2 : score1;
+                                        if (teamMatches.length === 0) {
+                                          return (
+                                            <div className="py-8 text-center">
+                                              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">
+                                                Nenhuma partida registrada para este campeonato
+                                              </p>
+                                            </div>
+                                          );
+                                        }
 
-                                    const result =
-                                      myScore > oppScore
-                                        ? "V"
-                                        : myScore < oppScore
-                                          ? "D"
-                                          : "E";
+                                        return teamMatches.map(
+                                          (match: any, mIdx: number) => {
+                                            const isT1 = match.timeA === time.tag || match.timeA === time.nome;
+                                            const opponentTag = isT1
+                                              ? match.timeB
+                                              : match.timeA;
+                                            const opponentName =
+                                              (
+                                                campeonato.timesInscritos ||
+                                                campeonato.classificacao ||
+                                                []
+                                              ).find((t: any) => t.tag === opponentTag)
+                                                ?.name || opponentTag;
 
-                                    return (
-                                      <div
-                                        key={mIdx}
-                                        className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5"
-                                      >
-                                        <div className="flex items-center gap-4">
-                                          <span
-                                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black ${
-                                              result === "V"
-                                                ? "bg-[#00FF41]/20 text-[#00FF41]"
-                                                : result === "D"
-                                                  ? "bg-[#FF3131]/20 text-[#FF3131]"
-                                                  : "bg-[#00D4FF]/20 text-[#00D4FF]"
-                                            }`}
-                                          >
-                                            {result}
-                                          </span>
-                                          <div>
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                              {match.fase} •{" "}
-                                              {(() => {
-                                                const raw = match.data || match.timestamp;
-                                                if (!raw || raw === "A COMBINAR") return "—";
-                                                const d = new Date(typeof raw === "string" && raw.length === 10 ? raw + "T00:00:00" : raw);
-                                                return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-                                              })()}
-                                            </p>
-                                            <p className="text-sm font-black text-white uppercase">
-                                              vs {opponentName}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <p className="text-lg font-black text-white tracking-tighter">
-                                            {myScore} - {oppScore}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    );
-                                  },
-                                );
-                              })()}
+                                            const scores = (
+                                              match.placar || "0 - 0"
+                                            ).split(" - ");
+                                            const score1 = parseInt(scores[0]) || 0;
+                                            const score2 = parseInt(scores[1]) || 0;
+                                            const myScore = isT1 ? score1 : score2;
+                                            const oppScore = isT1 ? score2 : score1;
+
+                                            const result =
+                                              myScore > oppScore
+                                                ? "V"
+                                                : myScore < oppScore
+                                                  ? "D"
+                                                  : "E";
+
+                                            return (
+                                              <div
+                                                key={mIdx}
+                                                className="relative p-[1px]"
+                                                style={{
+                                                  clipPath: CUT_BUTTON,
+                                                  background: 'rgba(255, 255, 255, 0.05)',
+                                                }}
+                                              >
+                                                <div
+                                                  className="flex items-center justify-between p-3 sm:p-4 bg-[#08080a]"
+                                                  style={{ clipPath: CUT_BUTTON_INNER }}
+                                                >
+                                                  <div className="flex items-center gap-3.5">
+                                                    <div
+                                                      className="w-8 h-8 flex items-center justify-center text-xs font-black"
+                                                      style={{
+                                                        clipPath: CUT_BADGE,
+                                                        backgroundColor: result === "V"
+                                                          ? "rgba(0, 255, 65, 0.15)"
+                                                          : result === "D"
+                                                            ? "rgba(255, 49, 49, 0.15)"
+                                                            : "rgba(0, 212, 255, 0.15)",
+                                                        color: result === "V"
+                                                          ? "#00FF41"
+                                                          : result === "D"
+                                                            ? "#FF3131"
+                                                            : "#00D4FF",
+                                                      }}
+                                                    >
+                                                      {result}
+                                                    </div>
+                                                    <div>
+                                                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                                                        {match.fase} •{" "}
+                                                        {(() => {
+                                                          const raw = match.data || match.timestamp;
+                                                          if (!raw || raw === "A COMBINAR") return "—";
+                                                          const d = new Date(typeof raw === "string" && raw.length === 10 ? raw + "T00:00:00" : raw);
+                                                          return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+                                                        })()}
+                                                      </p>
+                                                      <p className="text-sm font-black text-white uppercase">
+                                                        vs {opponentName}
+                                                      </p>
+                                                    </div>
+                                                  </div>
+                                                  <div className="text-right">
+                                                    <p className="text-base sm:text-lg font-black text-white tracking-tighter">
+                                                      {myScore} - {oppScore}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          },
+                                        );
+                                      })()}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                  </div>
                   </div>
                 </motion.div>
               )}
@@ -4038,39 +4298,41 @@ const CampeonatoDetalhes = () => {
                   {/* ADMIN ACTION: CREATE GAME (Only admins create matchups, players just propose dates) */}
                   {isAdmin && (
                     <div
-                      className="p-4 sm:p-6 rounded-2xl border-2 relative overflow-hidden shadow-2xl group transition-all"
+                      className="relative p-[1.5px] shadow-2xl transition-all group"
                       style={{
-                        backgroundImage: `linear-gradient(to bottom right, ${campeonato.themeColor}22, black, black)`,
-                        borderColor: `${campeonato.themeColor}4D`,
+                        clipPath: CUT_FRAME,
+                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
+                        boxShadow: `0 0 40px -10px ${campeonato.themeColor || '#FFB700'}26`
                       }}
                     >
                       <div
-                        className="absolute inset-0 blur-3xl opacity-20 -z-10 group-hover:opacity-30 transition-opacity"
-                        style={{
-                          backgroundColor: `${campeonato.themeColor}1A`,
-                        }}
-                      />
-
-                      <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                        className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 p-4 sm:p-6"
+                        style={{ clipPath: CUT_FRAME_INNER }}
+                      >
                         <div className="flex items-center gap-4">
                           <div
-                            className="w-12 h-12 rounded-xl bg-black border-2 flex items-center justify-center group-hover:scale-110 transition-transform"
+                            className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
                             style={{
-                              borderColor: `${campeonato.themeColor}`,
-                              boxShadow: `0 0 20px ${campeonato.themeColor}33`,
+                              clipPath: CUT_BADGE,
+                              background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
                             }}
                           >
-                            <Swords
-                              className="w-6 h-6"
-                              style={{ color: campeonato.themeColor }}
-                            />
+                            <div
+                              className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                              style={{ clipPath: CUT_BADGE_INNER }}
+                            >
+                              <Swords
+                                className="w-6 h-6"
+                                style={{ color: campeonato.themeColor }}
+                              />
+                            </div>
                           </div>
                           <div>
                             <h4 className="text-xl font-black text-white uppercase tracking-widest leading-none">
                               Painel de Arbitragem
                             </h4>
                             <p
-                              className="text-[10px] font-black uppercase tracking-[0.3em] mt-3"
+                              className="text-[10px] font-black uppercase tracking-[0.3em] mt-2"
                               style={{ color: campeonato.themeColor }}
                             >
                               Capitão, insira confrontos manuais no campeonato
@@ -4086,7 +4348,8 @@ const CampeonatoDetalhes = () => {
                             });
                             setIsAdminMatchModalOpen(true);
                           }}
-                          className="px-8 py-3 bg-white text-black font-black uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all text-[11px] shadow-xl"
+                          className="px-8 py-3.5 bg-white text-black font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
+                          style={{ clipPath: CUT_BUTTON }}
                         >
                           Criar Novo Jogo
                         </button>
@@ -4097,186 +4360,176 @@ const CampeonatoDetalhes = () => {
                   {/* MEUS JOGOS PENDENTES — somente jogos onde o time do usuário participa */}
                   {myPendingMatches.length > 0 && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="p-4 rounded-2xl bg-gradient-to-br via-black to-black border-2 relative overflow-hidden group shadow-2xl"
+                      className="relative p-[1.5px] shadow-2xl transition-all"
                       style={{
-                        backgroundImage: `linear-gradient(to bottom right, ${campeonato.themeColor}22, black, black)`,
-                        borderColor: `${campeonato.themeColor}4D`,
+                        clipPath: CUT_FRAME,
+                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
+                        boxShadow: `0 0 40px -10px ${campeonato.themeColor || '#FFB700'}26`
                       }}
                     >
                       <div
-                        className="absolute inset-0 blur-3xl opacity-20 -z-10 group-hover:opacity-30 transition-opacity"
-                        style={{
-                          backgroundColor: `${campeonato.themeColor}1A`,
-                        }}
-                      />
-
-                      <div
-                        className="flex items-center justify-between mb-4 pl-2 cursor-pointer select-none"
-                        onClick={() =>
-                          setIsPendingMatchesOpen(!isPendingMatchesOpen)
-                        }
+                        className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6"
+                        style={{ clipPath: CUT_FRAME_INNER }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className="w-12 h-12 rounded-xl bg-black border-2 flex items-center justify-center group-hover:scale-110 transition-transform"
-                            style={{
-                              borderColor: `${campeonato.themeColor}`,
-                              boxShadow: `0 0 20px ${campeonato.themeColor}33`,
-                            }}
-                          >
-                            <Swords
-                              className="w-6 h-6"
-                              style={{ color: campeonato.themeColor }}
-                            />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <h3 className="text-xl font-black uppercase tracking-widest text-white leading-none">
-                                Meus Jogos Pendentes
-                              </h3>
-                              <ChevronDown
-                                className={`w-6 h-6 text-white/30 transition-transform duration-300 ${isPendingMatchesOpen ? "" : "-rotate-90"}`}
-                              />
-                            </div>
-                            <p
-                              className="text-[10px] font-black uppercase tracking-[0.3em] mt-3"
-                              style={{ color: campeonato.themeColor }}
+                        <div
+                          className="flex items-center justify-between mb-4 cursor-pointer select-none"
+                          onClick={() =>
+                            setIsPendingMatchesOpen(!isPendingMatchesOpen)
+                          }
+                        >
+                          <div className="flex items-center gap-4">
+                            <div
+                              className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                              style={{
+                                clipPath: CUT_BADGE,
+                                background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                              }}
                             >
-                              Capitão, selecione um rival para propor data
-                            </p>
+                              <div
+                                className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                                style={{ clipPath: CUT_BADGE_INNER }}
+                              >
+                                <Swords
+                                  className="w-6 h-6"
+                                  style={{ color: campeonato.themeColor }}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-black uppercase tracking-widest text-white leading-none">
+                                  Meus Jogos Pendentes
+                                </h3>
+                                <ChevronDown
+                                  className={`w-6 h-6 text-white/30 transition-transform duration-300 ${isPendingMatchesOpen ? "" : "-rotate-90"}`}
+                                />
+                              </div>
+                              <p
+                                className="text-[10px] font-black uppercase tracking-[0.3em] mt-2"
+                                style={{ color: campeonato.themeColor }}
+                              >
+                                Capitão, selecione um rival para propor data
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <AnimatePresence>
-                        {isPendingMatchesOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{
-                              duration: 0.4,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                            className="overflow-hidden"
-                          >
-                            <div className="grid grid-cols-1 gap-4 pl-2 pb-2">
-                              {myPendingMatches.map((jogo: any, i: number) => {
-                                const myTeamInMatch = getMyTeamInMatch(jogo);
+                        <AnimatePresence>
+                          {isPendingMatchesOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{
+                                duration: 0.3,
+                                ease: [0.22, 1, 0.36, 1],
+                              }}
+                              className="overflow-hidden"
+                            >
+                              <div className="grid grid-cols-1 gap-3 pt-2">
+                                {myPendingMatches.map((jogo: any, i: number) => {
+                                  const myTeamInMatch = getMyTeamInMatch(jogo);
+                                  const teamATag = jogo.timeA;
+                                  const teamBTag = jogo.timeB;
 
-                                // Determinação dos dados dos times para exibição
-                                const teamATag = jogo.timeA;
-                                const teamBTag = jogo.timeB;
+                                  const allTeamsPend = campeonato.timesInscritos || campeonato.classificacao || [];
+                                  const teamAData = allTeamsPend.find((t: any) =>
+                                    t.tag === teamATag || t.name === teamATag || t.nome === teamATag
+                                  ) || { name: teamATag, tag: teamATag, cor: (jogo as any).corA || "#FFB700", icone: "ShieldCheck" };
+                                  const teamBData = allTeamsPend.find((t: any) =>
+                                    t.tag === teamBTag || t.name === teamBTag || t.nome === teamBTag
+                                  ) || { name: teamBTag, tag: teamBTag, cor: (jogo as any).corB || "#FFB700", icone: "ShieldCheck" };
 
-                                const allTeamsPend = campeonato.timesInscritos || campeonato.classificacao || [];
-                                const teamAData = allTeamsPend.find((t: any) =>
-                                  t.tag === teamATag || t.name === teamATag || t.nome === teamATag
-                                ) || { name: teamATag, tag: teamATag, cor: (jogo as any).corA || "#FFB700", icone: "ShieldCheck" };
-                                const teamBData = allTeamsPend.find((t: any) =>
-                                  t.tag === teamBTag || t.name === teamBTag || t.nome === teamBTag
-                                ) || { name: teamBTag, tag: teamBTag, cor: (jogo as any).corB || "#FFB700", icone: "ShieldCheck" };
+                                  const isWaitingForMyResponse =
+                                    jogo.status === "proposto" &&
+                                    myTeamInMatch &&
+                                    jogo.proposedBy !== myTeamInMatch.tag;
+                                  const amITheProposer =
+                                    jogo.status === "proposto" &&
+                                    myTeamInMatch &&
+                                    jogo.proposedBy === myTeamInMatch.tag;
 
-                                const IconA = getIcon(
-                                  teamAData.icone || "ShieldCheck",
-                                );
-                                const IconB = getIcon(
-                                  teamBData.icone || "ShieldCheck",
-                                );
-                                const corA =
-                                  teamAData.cor ||
-                                  (jogo as any).corA ||
-                                  "#FFB700";
-                                const corB =
-                                  teamBData.cor ||
-                                  (jogo as any).corB ||
-                                  "#FFB700";
-
-                                const isWaitingForMyResponse =
-                                  jogo.status === "proposto" &&
-                                  myTeamInMatch &&
-                                  jogo.proposedBy !== myTeamInMatch.tag;
-                                const amITheProposer =
-                                  jogo.status === "proposto" &&
-                                  myTeamInMatch &&
-                                  jogo.proposedBy === myTeamInMatch.tag;
-
-                                return (
-                                  <div
-                                    key={i}
-                                    className="group/match p-4 rounded-2xl bg-white/[0.05] border border-white/10 transition-all hover:bg-white/[0.08] hover:border-white/20 shadow-xl"
-                                  >
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                                      <div className="flex-1 flex items-center gap-4 w-full">
-                                        {myTeamInMatch ? (
-                                          // Visão do Jogador: Foco no adversário
-                                          <div className="flex items-center gap-2">
-                                            <div className="text-white text-[10px] font-black select-none">
-                                              VS
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="relative p-[1px] transition-all"
+                                      style={{
+                                        clipPath: CUT_BUTTON,
+                                        background: 'rgba(255, 255, 255, 0.08)'
+                                      }}
+                                    >
+                                      <div
+                                        className="p-4 bg-[#0c0c10] flex flex-col md:flex-row items-center justify-between gap-4"
+                                        style={{ clipPath: CUT_BUTTON_INNER }}
+                                      >
+                                        <div className="flex-1 flex items-center gap-4 w-full">
+                                          {myTeamInMatch ? (
+                                            <div className="flex items-center gap-2">
+                                              <div className="text-white text-[10px] font-black select-none">
+                                                VS
+                                              </div>
+                                              <div className="flex items-center gap-1.5">
+                                                <p className="text-base sm:text-lg font-black text-white uppercase truncate max-w-[150px]">
+                                                  {myTeamInMatch.tag === teamATag
+                                                    ? teamBData.name ||
+                                                      teamBData.nome
+                                                    : teamAData.name ||
+                                                      teamAData.nome}
+                                                </p>
+                                                <span
+                                                  className="text-base sm:text-lg font-black"
+                                                  style={{
+                                                    color: campeonato.themeColor,
+                                                  }}
+                                                >
+                                                  #
+                                                  {myTeamInMatch.tag === teamATag
+                                                    ? teamBData.tag
+                                                    : teamAData.tag}
+                                                </span>
+                                              </div>
                                             </div>
-                                            <div className="flex items-center gap-1.5">
-                                              <p className="text-lg font-black text-white uppercase truncate max-w-[150px]">
-                                                {myTeamInMatch.tag === teamATag
-                                                  ? teamBData.name ||
-                                                    teamBData.nome
-                                                  : teamAData.name ||
+                                          ) : (
+                                            <div className="flex items-center gap-2">
+                                              <div className="flex items-center gap-1.5">
+                                                <p className="text-sm font-black text-white uppercase truncate max-w-[100px]">
+                                                  {teamAData.name ||
                                                     teamAData.nome}
-                                              </p>
-                                              <span
-                                                className="text-lg font-black"
-                                                style={{
-                                                  color: campeonato.themeColor,
-                                                }}
-                                              >
-                                                #
-                                                {myTeamInMatch.tag === teamATag
-                                                  ? teamBData.tag
-                                                  : teamAData.tag}
-                                              </span>
+                                                </p>
+                                                <span
+                                                  className="text-sm font-black"
+                                                  style={{
+                                                    color: campeonato.themeColor,
+                                                  }}
+                                                >
+                                                  #{teamAData.tag}
+                                                </span>
+                                              </div>
+                                              <div className="text-white text-[10px] font-black">
+                                                VS
+                                              </div>
+                                              <div className="flex items-center gap-1.5">
+                                                <p className="text-sm font-black text-white uppercase truncate max-w-[100px]">
+                                                  {teamBData.name ||
+                                                    teamBData.nome}
+                                                </p>
+                                                <span
+                                                  className="text-sm font-black"
+                                                  style={{
+                                                    color: campeonato.themeColor,
+                                                  }}
+                                                >
+                                                  #{teamBData.tag}
+                                                </span>
+                                              </div>
                                             </div>
-                                          </div>
-                                        ) : (
-                                          // Generic Admin View
-                                          <div className="flex items-center gap-2">
-                                            <div className="flex items-center gap-1.5">
-                                              <p className="text-sm font-black text-white uppercase truncate max-w-[100px]">
-                                                {teamAData.name ||
-                                                  teamAData.nome}
-                                              </p>
-                                              <span
-                                                className="text-sm font-black"
-                                                style={{
-                                                  color: campeonato.themeColor,
-                                                }}
-                                              >
-                                                #{teamAData.tag}
-                                              </span>
-                                            </div>
-                                            <div className="text-white text-[10px] font-black">
-                                              VS
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                              <p className="text-sm font-black text-white uppercase truncate max-w-[100px]">
-                                                {teamBData.name ||
-                                                  teamBData.nome}
-                                              </p>
-                                              <span
-                                                className="text-sm font-black"
-                                                style={{
-                                                  color: campeonato.themeColor,
-                                                }}
-                                              >
-                                                #{teamBData.tag}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
+                                          )}
+                                        </div>
 
-                                      {/* Botões de ação — sempre "Propor Data" nesta seção */}
-                                      <div className="flex flex-col gap-3 w-full md:w-[180px] shrink-0">
-                                        <>
+                                        {/* Botões de ação */}
+                                        <div className="flex flex-col gap-2 w-full md:w-[180px] shrink-0">
                                           <button
                                             onClick={() => {
                                               if (amITheProposer) return;
@@ -4308,32 +4561,31 @@ const CampeonatoDetalhes = () => {
                                               setIsScheduleEditModalOpen(true);
                                             }}
                                             disabled={amITheProposer}
-                                            className={`w-full px-4 py-4 text-black font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl flex items-center justify-center gap-2 ${
+                                            className={`w-full px-4 py-3 text-black font-black uppercase tracking-widest text-[10px] transition-all shadow-xl flex items-center justify-center gap-2 ${
                                               amITheProposer
                                                 ? "bg-white/10 text-white/40 cursor-not-allowed"
-                                                : "hover:scale-105 active:scale-95"
+                                                : "hover:scale-105 active:scale-95 cursor-pointer"
                                             }`}
-                                            style={
-                                              amITheProposer
-                                                ? {}
-                                                : {
-                                                    backgroundColor:
-                                                      isWaitingForMyResponse
-                                                        ? "#00FF41"
-                                                        : campeonato.themeColor,
-                                                    boxShadow:
-                                                      isWaitingForMyResponse
-                                                        ? "0 10px 40px rgba(0, 255, 65, 0.3)"
-                                                        : `0 10px 40px ${campeonato.themeColor}33`,
-                                                  }
-                                            }
+                                            style={{
+                                              clipPath: CUT_BUTTON,
+                                              backgroundColor: amITheProposer
+                                                ? undefined
+                                                : isWaitingForMyResponse
+                                                  ? "#00FF41"
+                                                  : (campeonato.themeColor || '#FFB700'),
+                                              boxShadow: amITheProposer
+                                                ? undefined
+                                                : isWaitingForMyResponse
+                                                  ? "0 10px 40px rgba(0, 255, 65, 0.3)"
+                                                  : `0 10px 40px ${campeonato.themeColor || '#FFB700'}33`,
+                                            }}
                                           >
                                             {amITheProposer ? (
-                                              <Clock className="w-4 h-4" />
+                                              <Clock className="w-3.5 h-3.5" />
                                             ) : isWaitingForMyResponse ? (
-                                              <Zap className="w-4 h-4" />
+                                              <Zap className="w-3.5 h-3.5" />
                                             ) : (
-                                              <Calendar className="w-4 h-4" />
+                                              <Calendar className="w-3.5 h-3.5" />
                                             )}
                                             {jogo.status === "proposto"
                                               ? amITheProposer
@@ -4346,147 +4598,174 @@ const CampeonatoDetalhes = () => {
                                               Aguardando resposta
                                             </p>
                                           )}
-                                        </>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </motion.div>
                   )}
 
                   {/* TODOS OS JOGOS PENDENTES — somente admin, botão Arbitrar */}
                   {isAdmin && allPendingMatches.length > 0 && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="p-4 rounded-xl bg-gradient-to-br via-black to-black border-2 relative overflow-hidden group shadow-2xl"
+                      className="relative p-[1.5px] shadow-2xl transition-all"
                       style={{
-                        backgroundImage: `linear-gradient(to bottom right, #ffffff11, black, black)`,
-                        borderColor: `#ffffff22`,
+                        clipPath: CUT_FRAME,
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.03))',
                       }}
                     >
                       <div
-                        className="flex items-center justify-between mb-4 pl-2 cursor-pointer select-none"
-                        onClick={() => setIsAllPendingOpen(!isAllPendingOpen)}
+                        className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6"
+                        style={{ clipPath: CUT_FRAME_INNER }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-black border-2 border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
-                            <ShieldCheck className="w-6 h-6 text-white/60" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <h3 className="text-xl font-black uppercase tracking-widest text-white leading-none">
-                                Todos os Jogos Pendentes
-                              </h3>
-                              <ChevronDown
-                                className={`w-6 h-6 text-white/30 transition-transform duration-300 ${isAllPendingOpen ? "" : "-rotate-90"}`}
-                              />
+                        <div
+                          className="flex items-center justify-between mb-4 cursor-pointer select-none"
+                          onClick={() => setIsAllPendingOpen(!isAllPendingOpen)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div
+                              className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                              style={{
+                                clipPath: CUT_BADGE,
+                                background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+                              }}
+                            >
+                              <div
+                                className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                                style={{ clipPath: CUT_BADGE_INNER }}
+                              >
+                                <ShieldCheck className="w-6 h-6 text-white/60" />
+                              </div>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-3 text-white/40">
-                              Painel de arbitragem — gerencie todos os jogos
-                            </p>
+                            <div>
+                              <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-black uppercase tracking-widest text-white leading-none">
+                                  Todos os Jogos Pendentes
+                                </h3>
+                                <ChevronDown
+                                  className={`w-6 h-6 text-white/30 transition-transform duration-300 ${isAllPendingOpen ? "" : "-rotate-90"}`}
+                                />
+                              </div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-2 text-white/40">
+                                Painel de arbitragem — gerencie todos os jogos
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-                          {allPendingMatches.length} jogos
-                        </span>
-                      </div>
-
-                      <AnimatePresence>
-                        {isAllPendingOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="overflow-hidden"
+                          <span
+                            className="text-[9px] font-black text-white/40 uppercase tracking-widest px-2.5 py-1 bg-white/5 border border-white/10"
+                            style={{ clipPath: CUT_BADGE }}
                           >
-                            <div className="grid grid-cols-1 gap-4 pl-2 pb-2">
-                              {allPendingMatches.map((jogo: any, i: number) => {
-                                const teamATag = jogo.timeA;
-                                const teamBTag = jogo.timeB;
-                                const teamAData = (campeonato.timesInscritos || campeonato.classificacao || []).find(
-                                  (t: any) => t.tag === teamATag || t.nome === teamATag || t.name === teamATag
-                                ) || { name: teamATag, tag: teamATag, cor: "#FFB700" };
-                                const teamBData = (campeonato.timesInscritos || campeonato.classificacao || []).find(
-                                  (t: any) => t.tag === teamBTag || t.nome === teamBTag || t.name === teamBTag
-                                ) || { name: teamBTag, tag: teamBTag, cor: "#FFB700" };
+                            {allPendingMatches.length} jogos
+                          </span>
+                        </div>
 
-                                const statusLabel =
-                                  jogo.status === "proposto" ? "Proposta enviada" :
-                                  jogo.status === "confirmado" ? "Confirmado" :
-                                  jogo.status === "combinando" ? "A combinar" : jogo.status;
+                        <AnimatePresence>
+                          {isAllPendingOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                              className="overflow-hidden"
+                            >
+                              <div className="grid grid-cols-1 gap-3 pt-2">
+                                {allPendingMatches.map((jogo: any, i: number) => {
+                                  const teamATag = jogo.timeA;
+                                  const teamBTag = jogo.timeB;
+                                  const teamAData = (campeonato.timesInscritos || campeonato.classificacao || []).find(
+                                    (t: any) => t.tag === teamATag || t.nome === teamATag || t.name === teamATag
+                                  ) || { name: teamATag, tag: teamATag, cor: "#FFB700" };
+                                  const teamBData = (campeonato.timesInscritos || campeonato.classificacao || []).find(
+                                    (t: any) => t.tag === teamBTag || t.nome === teamBTag || t.name === teamBTag
+                                  ) || { name: teamBTag, tag: teamBTag, cor: "#FFB700" };
 
-                                return (
-                                  <div
-                                    key={i}
-                                    className="group/match p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all"
-                                  >
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                                      <div className="flex-1 flex items-center gap-3 w-full">
-                                        {/* Fase */}
-                                        <span className="text-[9px] font-black text-white/30 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-lg shrink-0">
-                                          {jogo.fase || "Grupo"}
-                                        </span>
-                                        {/* Times */}
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                          <p className="text-sm font-black text-white uppercase truncate max-w-[110px]">
-                                            {teamAData.name || teamAData.nome || teamATag}
-                                          </p>
-                                          <span className="text-[10px] font-black text-white/20">VS</span>
-                                          <p className="text-sm font-black text-white uppercase truncate max-w-[110px]">
-                                            {teamBData.name || teamBData.nome || teamBTag}
-                                          </p>
+                                  const statusLabel =
+                                    jogo.status === "proposto" ? "Proposta enviada" :
+                                    jogo.status === "confirmado" ? "Confirmado" :
+                                    jogo.status === "combinando" ? "A combinar" : jogo.status;
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="relative p-[1px] transition-all"
+                                      style={{
+                                        clipPath: CUT_BUTTON,
+                                        background: 'rgba(255, 255, 255, 0.08)'
+                                      }}
+                                    >
+                                      <div
+                                        className="p-4 bg-[#0c0c10] flex flex-col md:flex-row items-center justify-between gap-4"
+                                        style={{ clipPath: CUT_BUTTON_INNER }}
+                                      >
+                                        <div className="flex-1 flex items-center gap-3 w-full">
+                                          <span
+                                            className="text-[9px] font-black text-white/40 uppercase tracking-widest bg-white/5 px-2 py-1 shrink-0"
+                                            style={{ clipPath: CUT_BADGE }}
+                                          >
+                                            {jogo.fase || "Grupo"}
+                                          </span>
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <p className="text-sm font-black text-white uppercase truncate max-w-[110px]">
+                                              {teamAData.name || teamAData.nome || teamATag}
+                                            </p>
+                                            <span className="text-[10px] font-black text-white/20">VS</span>
+                                            <p className="text-sm font-black text-white uppercase truncate max-w-[110px]">
+                                              {teamBData.name || teamBData.nome || teamBTag}
+                                            </p>
+                                          </div>
+                                          <span className="text-[8px] font-black text-white/30 uppercase tracking-widest shrink-0">
+                                            {statusLabel}
+                                          </span>
                                         </div>
-                                        {/* Status badge */}
-                                        <span className="text-[8px] font-black text-white/30 uppercase tracking-widest shrink-0">
-                                          {statusLabel}
-                                        </span>
-                                      </div>
 
-                                      {/* Botão Arbitrar + Excluir */}
-                                      <div className="w-full md:w-[180px] shrink-0 flex items-center gap-2">
-                                        <button
-                                          onClick={() => {
-                                            const realIdx = campeonato.cronograma.findIndex((c: any) => c === jogo);
-                                            setEditingMatchIndex(realIdx);
-                                            setJogoStatusAtStart(jogo.status);
-                                            setEditFormData({
-                                              data: jogo.data && jogo.data !== "A COMBINAR"
-                                                ? jogo.data
-                                                : new Date().toISOString().split("T")[0],
-                                              hora: jogo.hora && jogo.hora !== "--:--" ? jogo.hora : "20:00",
-                                              action: "accept",
-                                              placar: "",
-                                            });
-                                            setIsScheduleEditModalOpen(true);
-                                          }}
-                                          className="flex-1 px-4 py-3 bg-white text-black font-black uppercase tracking-widest text-[9px] rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2"
-                                        >
-                                          <ShieldCheck className="w-3.5 h-3.5" />
-                                          Arbitrar
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteMatch(jogo)}
-                                          title="Excluir jogo"
-                                          className="px-3 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center shrink-0"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </button>
+                                        <div className="w-full md:w-[180px] shrink-0 flex items-center gap-2">
+                                          <button
+                                            onClick={() => {
+                                              const realIdx = campeonato.cronograma.findIndex((c: any) => c === jogo);
+                                              setEditingMatchIndex(realIdx);
+                                              setJogoStatusAtStart(jogo.status);
+                                              setEditFormData({
+                                                data: jogo.data && jogo.data !== "A COMBINAR"
+                                                  ? jogo.data
+                                                  : new Date().toISOString().split("T")[0],
+                                                hora: jogo.hora && jogo.hora !== "--:--" ? jogo.hora : "20:00",
+                                                action: "accept",
+                                                placar: "",
+                                              });
+                                              setIsScheduleEditModalOpen(true);
+                                            }}
+                                            className="flex-1 px-4 py-2.5 bg-white text-black font-black uppercase tracking-widest text-[9px] hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                                            style={{ clipPath: CUT_BUTTON }}
+                                          >
+                                            <ShieldCheck className="w-3.5 h-3.5" />
+                                            Arbitrar
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteMatch(jogo)}
+                                            title="Excluir jogo"
+                                            className="px-3 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                                            style={{ clipPath: CUT_BADGE }}
+                                          >
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </motion.div>
                   )}
 
@@ -4495,363 +4774,369 @@ const CampeonatoDetalhes = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="rounded-xl border-2 relative overflow-hidden p-6 space-y-6 w-full"
+                    className="relative p-[1.5px] shadow-2xl transition-all w-full"
                     style={{
-                      backgroundImage: `linear-gradient(to bottom right, ${campeonato.themeColor}22, black, black)`,
-                      borderColor: `${campeonato.themeColor}4D`,
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
+                      boxShadow: `0 0 40px -10px ${campeonato.themeColor || '#FFB700'}26`
                     }}
                   >
                     <div
-                      className="absolute inset-0 blur-3xl opacity-20 -z-10"
-                      style={{ backgroundColor: `${campeonato.themeColor}1A` }}
-                    />
-                    <div className="flex items-center justify-between border-b border-white/5 pb-6">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="w-12 h-12 rounded-xl bg-black border-2 flex items-center justify-center shrink-0"
-                          style={{
-                            borderColor: campeonato.themeColor,
-                            boxShadow: `0 0 20px ${campeonato.themeColor}33`,
-                          }}
-                        >
-                          <Calendar className="w-6 h-6" style={{ color: campeonato.themeColor }} />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
-                            Cronograma de Jogos
-                          </h2>
-                          <p
-                            className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
-                            style={{ color: campeonato.themeColor }}
+                      className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6 space-y-6"
+                      style={{ clipPath: CUT_FRAME_INNER }}
+                    >
+                      <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                            }}
                           >
-                            Horário de Brasília (BRT)
-                          </p>
+                            <div
+                              className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                              style={{ clipPath: CUT_BADGE_INNER }}
+                            >
+                              <Calendar className="w-6 h-6" style={{ color: campeonato.themeColor }} />
+                            </div>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
+                              Cronograma de Jogos
+                            </h2>
+                            <p
+                              className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
+                              style={{ color: campeonato.themeColor }}
+                            >
+                              Horário de Brasília (BRT)
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
-                      {filteredCronograma.length === 0 ? (
-                        <div className="py-20 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
-                          <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
-                            Nenhum jogo confirmado ou finalizado no momento
-                          </p>
-                        </div>
-                      ) : (
-                        filteredCronograma.map((jogo, i) => {
-                          const allTeams = campeonato.timesInscritos || campeonato.classificacao || [];
-                          const timeA = allTeams.find((t: any) =>
-                            t.tag === jogo.timeA || t.name === jogo.timeA || t.nome === jogo.timeA
-                          ) || { name: jogo.timeA, tag: jogo.timeA, cor: (jogo as any).corA || "#FFB700", icone: "ShieldCheck" };
-                          const timeB = allTeams.find((t: any) =>
-                            t.tag === jogo.timeB || t.name === jogo.timeB || t.nome === jogo.timeB
-                          ) || { name: jogo.timeB, tag: jogo.timeB, cor: (jogo as any).corB || "#FFB700", icone: "ShieldCheck" };
+                      <div className="space-y-3">
+                        {filteredCronograma.length === 0 ? (
+                          <div
+                            className="py-16 text-center bg-white/[0.01] border border-dashed border-white/10"
+                            style={{ clipPath: CUT_BUTTON }}
+                          >
+                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
+                              Nenhum jogo confirmado ou finalizado no momento
+                            </p>
+                          </div>
+                        ) : (
+                          filteredCronograma.map((jogo, i) => {
+                            const allTeams = campeonato.timesInscritos || campeonato.classificacao || [];
+                            const timeA = allTeams.find((t: any) =>
+                              t.tag === jogo.timeA || t.name === jogo.timeA || t.nome === jogo.timeA
+                            ) || { name: jogo.timeA, tag: jogo.timeA, cor: (jogo as any).corA || "#FFB700", icone: "ShieldCheck" };
+                            const timeB = allTeams.find((t: any) =>
+                              t.tag === jogo.timeB || t.name === jogo.timeB || t.nome === jogo.timeB
+                            ) || { name: jogo.timeB, tag: jogo.timeB, cor: (jogo as any).corB || "#FFB700", icone: "ShieldCheck" };
 
-                          const IconA = getIcon(timeA.icone || "ShieldCheck");
-                          const IconB = getIcon(timeB.icone || "ShieldCheck");
-                          const corA =
-                            timeA.cor || (jogo as any).corA || "#FFB700";
-                          const corB =
-                            timeB.cor || (jogo as any).corB || "#FFB700";
-                          const myTeam = getMyTeamInMatch(jogo);
-                          const matchDateObj =
-                            jogo.data && jogo.hora && jogo.hora !== "--:--"
-                              ? new Date(`${jogo.data}T${jogo.hora}:00`)
-                              : null;
-                          const isWithin24Hours = matchDateObj
-                            ? matchDateObj.getTime() - new Date().getTime() <=
-                              24 * 60 * 60 * 1000
-                            : false;
-                          const isLockedForPlayer =
-                            jogo.status === "confirmado" &&
-                            !isAdmin &&
-                            isWithin24Hours;
-                          const canUserEdit =
-                            (myTeam || isAdmin) && !isLockedForPlayer;
-                          const isMyTurn =
-                            jogo.status === "proposto" &&
-                            jogo.proposedBy !== myTeam?.tag;
+                            const IconA = getIcon(timeA.icone || "ShieldCheck");
+                            const IconB = getIcon(timeB.icone || "ShieldCheck");
+                            const corA =
+                              timeA.cor || (jogo as any).corA || "#FFB700";
+                            const corB =
+                              timeB.cor || (jogo as any).corB || "#FFB700";
+                            const myTeam = getMyTeamInMatch(jogo);
+                            const matchDateObj =
+                              jogo.data && jogo.hora && jogo.hora !== "--:--"
+                                ? new Date(`${jogo.data}T${jogo.hora}:00`)
+                                : null;
+                            const isWithin24Hours = matchDateObj
+                              ? matchDateObj.getTime() - new Date().getTime() <=
+                                24 * 60 * 60 * 1000
+                              : false;
+                            const isLockedForPlayer =
+                              jogo.status === "confirmado" &&
+                              !isAdmin &&
+                              isWithin24Hours;
+                            const canUserEdit =
+                              (myTeam || isAdmin) && !isLockedForPlayer;
+                            const isMyTurn =
+                              jogo.status === "proposto" &&
+                              jogo.proposedBy !== myTeam?.tag;
 
-                          return (
-                            <div
-                              key={i}
-                              onClick={() => {
-                                const canClick =
-                                  canUserEdit &&
-                                  (jogo.status !== "finalizado" || isAdmin);
-                                if (canClick) {
-                                  const realIdx =
-                                    campeonato.cronograma.findIndex(
-                                      (c: any) => c === jogo,
-                                    );
-                                  setEditingMatchIndex(realIdx);
-                                  setJogoStatusAtStart(jogo.status);
-                                  if (isAdmin && jogo.status === "finalizado") {
-                                    // Admin re-edita resultado já finalizado
-                                    setEditFormData({
-                                      data: jogo.data,
-                                      hora: jogo.hora,
-                                      action: "finish",
-                                      placar: jogo.placar || "0 - 0",
-                                    });
-                                  } else if (isAdmin && jogo.status === "confirmado") {
-                                    setEditFormData({
-                                      data: jogo.data,
-                                      hora: jogo.hora,
-                                      action: "finish",
-                                      placar: "0 - 0",
-                                    });
-                                  } else if (
-                                    jogo.status === "proposto" &&
-                                    isMyTurn
-                                  ) {
-                                    setEditFormData({
-                                      data: jogo.data,
-                                      hora: jogo.hora,
-                                      action: "accept",
-                                      placar: "",
-                                    });
-                                  } else {
-                                    setEditFormData({
-                                      data: jogo.data,
-                                      hora: jogo.hora,
-                                      action: "propose",
-                                      placar: "",
-                                    });
-                                  }
-                                  setIsScheduleEditModalOpen(true);
-                                }
-                              }}
-                              className={`group/match ${isAdmin && jogo.status === "finalizado" ? "cursor-pointer hover:border-white/20" : canUserEdit && jogo.status !== "finalizado" ? "cursor-pointer hover:border-white/30" : ""} ${jogo.status === "finalizado" || jogo.status === "confirmado" ? "p-3 lg:p-4" : "p-4 lg:p-6"} rounded-xl border transition-all relative overflow-hidden ${
-                                jogo.status === "finalizado"
-                                  ? "bg-white/[0.02] border-white/5"
-                                  : jogo.status === "confirmado"
-                                    ? "bg-[#050505]"
-                                    : isAdmin || myTeam
-                                      ? "bg-white/[0.04] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
-                                      : "bg-white/[0.02] border-white/5"
-                              } ${!jogo.status || jogo.status === "aguardando" || jogo.status === "combinando" ? "border-dashed" : ""}`}
-                              style={
-                                jogo.status === "confirmado"
-                                  ? {
-                                      borderColor: `${campeonato.themeColor}33`,
-                                      boxShadow: `0 0 50px ${campeonato.themeColor}10`,
+                            return (
+                              <div
+                                key={i}
+                                onClick={() => {
+                                  const canClick =
+                                    canUserEdit &&
+                                    (jogo.status !== "finalizado" || isAdmin);
+                                  if (canClick) {
+                                    const realIdx =
+                                      campeonato.cronograma.findIndex(
+                                        (c: any) => c === jogo,
+                                      );
+                                    setEditingMatchIndex(realIdx);
+                                    setJogoStatusAtStart(jogo.status);
+                                    if (isAdmin && jogo.status === "finalizado") {
+                                      setEditFormData({
+                                        data: jogo.data,
+                                        hora: jogo.hora,
+                                        action: "finish",
+                                        placar: jogo.placar || "0 - 0",
+                                      });
+                                    } else if (isAdmin && jogo.status === "confirmado") {
+                                      setEditFormData({
+                                        data: jogo.data,
+                                        hora: jogo.hora,
+                                        action: "finish",
+                                        placar: "0 - 0",
+                                      });
+                                    } else if (
+                                      jogo.status === "proposto" &&
+                                      isMyTurn
+                                    ) {
+                                      setEditFormData({
+                                        data: jogo.data,
+                                        hora: jogo.hora,
+                                        action: "accept",
+                                        placar: "",
+                                      });
+                                    } else {
+                                      setEditFormData({
+                                        data: jogo.data,
+                                        hora: jogo.hora,
+                                        action: "propose",
+                                        placar: "",
+                                      });
                                     }
-                                  : {}
-                              }
-                            >
-                              {/* Glowing edge on confirmed match */}
-                              {jogo.status === "confirmado" && (
+                                    setIsScheduleEditModalOpen(true);
+                                  }
+                                }}
+                                className="relative p-[1px] transition-all hover:scale-[1.003]"
+                                style={{
+                                  clipPath: CUT_BUTTON,
+                                  background: jogo.status === "confirmado"
+                                    ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05))`
+                                    : 'rgba(255, 255, 255, 0.08)',
+                                  boxShadow: jogo.status === "confirmado"
+                                    ? `0 0 30px -5px ${campeonato.themeColor || '#FFB700'}22`
+                                    : undefined
+                                }}
+                              >
                                 <div
-                                  className="absolute top-0 left-0 w-1 h-full"
-                                  style={{
-                                    backgroundColor: campeonato.themeColor,
-                                  }}
-                                />
-                              )}
-
-                              <div className="grid grid-cols-1 lg:grid-cols-[130px_1fr_130px] items-center gap-3 lg:gap-6 relative z-10">
-                                {/* Left: Info (Date) */}
-                                <div className="flex flex-col items-center justify-center shrink-0">
-                                  {jogo.status !== "finalizado" && (
-                                    <div className="text-center flex flex-col items-center gap-0.5">
-                                      {jogo.data &&
-                                        jogo.data !== "A COMBINAR" && (
-                                          <p className="text-[9px] font-black text-white uppercase tracking-[0.2em]">
-                                            {formatDayOfWeek(jogo.data)}
+                                  className={`w-full p-3.5 lg:p-4 bg-[#0c0c10] flex flex-col lg:flex-row items-center justify-between gap-4 ${
+                                    isAdmin && jogo.status === "finalizado" ? "cursor-pointer hover:bg-[#101018]" : canUserEdit && jogo.status !== "finalizado" ? "cursor-pointer hover:bg-[#101018]" : ""
+                                  }`}
+                                  style={{ clipPath: CUT_BUTTON_INNER }}
+                                >
+                                  {/* Left: Info (Date) */}
+                                  <div className="flex flex-col items-center justify-center shrink-0 min-w-[120px]">
+                                    {jogo.status !== "finalizado" && (
+                                      <div className="text-center flex flex-col items-center gap-0.5">
+                                        {jogo.data &&
+                                          jogo.data !== "A COMBINAR" && (
+                                            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">
+                                              {formatDayOfWeek(jogo.data)}
+                                            </p>
+                                          )}
+                                        <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+                                          {formatFullDate(jogo.data) ||
+                                            "A definir"}
+                                        </p>
+                                        {/* Hora no Mobile */}
+                                        {jogo.hora && jogo.hora !== "--:--" && (
+                                          <p 
+                                            className="text-xs sm:text-sm font-black tracking-wider lg:hidden mt-0.5"
+                                            style={{ color: campeonato.themeColor }}
+                                          >
+                                            {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
                                           </p>
                                         )}
-                                      <p className="text-base font-black text-white uppercase tracking-tight">
-                                        {formatFullDate(jogo.data) ||
-                                          "A definir"}
-                                      </p>
-                                      {/* Hora no Mobile */}
-                                      {jogo.hora && jogo.hora !== "--:--" && (
-                                        <p 
-                                          className="text-sm font-black tracking-wider lg:hidden mt-0.5"
-                                          style={{ color: campeonato.themeColor }}
-                                        >
-                                          {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
-                                        </p>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Center: Matchup */}
-                                <div className="flex items-center justify-center gap-2 lg:gap-4 relative w-full px-1 lg:px-2">
-                                  {/* VS Background */}
-                                  { jogo.status !== "finalizado" && (
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                      <span className="text-xs lg:text-sm font-black tracking-widest select-none text-white/40">
-                                        VS
-                                      </span>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Team A */}
-                                  <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1 min-w-0 z-10 shrink-0">
-                                    <div
-                                      className={`${jogo.status === "finalizado" || jogo.status === "confirmado" ? "w-10 h-10 lg:w-12 lg:h-12" : "w-14 h-14 lg:w-16 lg:h-16"} rounded-lg bg-black border flex items-center justify-center shrink-0 shadow-xl transition-all duration-300`}
-                                      style={{
-                                        borderColor: `${corA}30`,
-                                        boxShadow: `0 8px 25px ${corA}15`,
-                                      }}
-                                    >
-                                      {timeA.logo ? (
-                                        <img
-                                          src={timeA.logo} loading="lazy"
-                                          className="w-full h-full object-cover rounded-md"
-                                        />
-                                      ) : (
-                                        <IconA
-                                          className="w-7 h-7 lg:w-8 lg:h-8"
-                                          style={{ color: corA }}
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="text-center w-full">
-                                      <p className="text-sm lg:text-base font-black text-white uppercase truncate tracking-tight">
-                                        {timeA.tag
-                                          ? `#${timeA.tag}`
-                                          : timeA.name || timeA.nome}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {/* Score Indicator */}
-                                  <div className="shrink-0 z-20 flex flex-col items-center justify-center min-w-[60px]">
-                                    {jogo.status === "finalizado" ? (
-                                      <div className="flex flex-col items-center">
-                                        <div className="flex items-center gap-3">
-                                          {(() => {
-                                            const scores = (
-                                              jogo as any
-                                            ).placar.split(" - ");
-                                            const scoreA = parseInt(scores[0]);
-                                            const scoreB = parseInt(scores[1]);
-                                            return (
-                                              <>
-                                                <span
-                                                  className="text-2xl lg:text-3xl font-black tabular-nums"
-                                                  style={{
-                                                    color:
-                                                      scoreA > scoreB
-                                                        ? "#00FF41"
-                                                        : scoreA < scoreB
-                                                          ? "#FF3131"
-                                                          : "#FFFFFF",
-                                                  }}
-                                                >
-                                                  {scoreA}
-                                                </span>
-                                                <span className="text-white/20 text-xl font-black">
-                                                  -
-                                                </span>
-                                                <span
-                                                  className="text-2xl lg:text-3xl font-black tabular-nums"
-                                                  style={{
-                                                    color:
-                                                      scoreB > scoreA
-                                                        ? "#00FF41"
-                                                        : scoreB < scoreA
-                                                          ? "#FF3131"
-                                                          : "#FFFFFF",
-                                                  }}
-                                                >
-                                                  {scoreB}
-                                                </span>
-                                              </>
-                                            );
-                                          })()}
-                                        </div>
-                                        <span className="text-[10px] font-medium uppercase text-white/50 tracking-widest mt-2">
-                                          Finalizado
-                                        </span>
                                       </div>
-                                    ) : (
-                                      <div className="w-8 h-[1px] bg-white/5 rounded-full hidden lg:block" />
                                     )}
                                   </div>
 
-                                  {/* Team B */}
-                                  <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1 min-w-0 z-10 shrink-0">
-                                    <div
-                                      className={`${jogo.status === "finalizado" || jogo.status === "confirmado" ? "w-10 h-10 lg:w-12 lg:h-12" : "w-14 h-14 lg:w-16 lg:h-16"} rounded-lg bg-black border flex items-center justify-center shrink-0 shadow-xl transition-all duration-300`}
-                                      style={{
-                                        borderColor: `${corB}30`,
-                                        boxShadow: `0 8px 25px ${corB}15`,
-                                      }}
-                                    >
-                                      {timeB.logo ? (
-                                        <img
-                                          src={timeB.logo} loading="lazy"
-                                          className="w-full h-full object-cover rounded-md"
-                                        />
-                                      ) : (
-                                        <IconB
-                                          className="w-7 h-7 lg:w-8 lg:h-8"
-                                          style={{ color: corB }}
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="text-center w-full">
-                                      <p className="text-sm lg:text-base font-black text-white uppercase truncate tracking-tight">
-                                        {timeB.tag
-                                          ? `#${timeB.tag}`
-                                          : timeB.name || timeB.nome}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Right: Info & Actions */}
-                                <div className="flex flex-col items-center justify-center lg:justify-end gap-3 shrink-0">
-                                  {jogo.status !== "finalizado" && (
-                                    <div className="text-center flex flex-col items-center hidden lg:block">
-                                      <p
-                                        className="text-2xl lg:text-3xl font-black tracking-tighter tabular-nums"
+                                  {/* Center: Matchup */}
+                                  <div className="flex items-center justify-center gap-3 lg:gap-6 relative flex-1 w-full px-2">
+                                    {/* Team A */}
+                                    <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
+                                      <div
+                                        className="w-10 h-10 lg:w-12 lg:h-12 p-[1px] flex items-center justify-center shrink-0 shadow-xl"
                                         style={{
-                                          color: campeonato.themeColor,
+                                          clipPath: CUT_BADGE,
+                                          background: `${corA}80`,
                                         }}
                                       >
-                                        {jogo.hora && jogo.hora !== "--:--" && /^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
-                                      </p>
+                                        <div
+                                          className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                                          style={{ clipPath: CUT_BADGE_INNER }}
+                                        >
+                                          {timeA.logo ? (
+                                            <img
+                                              src={timeA.logo} loading="lazy"
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <IconA
+                                              className="w-6 h-6"
+                                              style={{ color: corA }}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="text-center w-full">
+                                        <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                                          {timeA.tag
+                                            ? `#${timeA.tag}`
+                                            : timeA.name || timeA.nome}
+                                        </p>
+                                      </div>
                                     </div>
-                                  )}
 
-                                  {canUserEdit &&
-                                  jogo.status !== "finalizado" &&
-                                  !(
-                                    jogo.status === "confirmado" && !isAdmin
-                                  ) ? (
-                                    <div className="text-[10px] font-black uppercase text-white/50 tracking-widest flex items-center gap-2">
-                                      {jogo.status === "proposto" && isMyTurn ? (
-                                        <>
-                                          <CheckCircle2 className="w-3 h-3" />
-                                          <span>Responder</span>
-                                        </>
-                                      ) : jogo.status === "confirmado" && isAdmin ? (
-                                        <>
-                                          <ShieldCheck className="w-3 h-3" />
-                                          <span>Finalizar</span>
-                                        </>
-                                      ) : jogo.status === "confirmado" ? (
-                                        null
+                                    {/* Score Indicator */}
+                                    <div className="shrink-0 z-20 flex flex-col items-center justify-center min-w-[70px]">
+                                      {jogo.status === "finalizado" ? (
+                                        <div className="flex flex-col items-center">
+                                          <div className="flex items-center gap-2.5">
+                                            {(() => {
+                                              const scores = (
+                                                jogo as any
+                                              ).placar.split(" - ");
+                                              const scoreA = parseInt(scores[0]);
+                                              const scoreB = parseInt(scores[1]);
+                                              return (
+                                                <>
+                                                  <span
+                                                    className="text-2xl lg:text-3xl font-black tabular-nums"
+                                                    style={{
+                                                      color:
+                                                        scoreA > scoreB
+                                                          ? "#00FF41"
+                                                          : scoreA < scoreB
+                                                            ? "#FF3131"
+                                                            : "#FFFFFF",
+                                                    }}
+                                                  >
+                                                    {scoreA}
+                                                  </span>
+                                                  <span className="text-white/20 text-xl font-black">
+                                                    -
+                                                  </span>
+                                                  <span
+                                                    className="text-2xl lg:text-3xl font-black tabular-nums"
+                                                    style={{
+                                                      color:
+                                                        scoreB > scoreA
+                                                          ? "#00FF41"
+                                                          : scoreB < scoreA
+                                                            ? "#FF3131"
+                                                            : "#FFFFFF",
+                                                    }}
+                                                  >
+                                                    {scoreB}
+                                                  </span>
+                                                </>
+                                              );
+                                            })()}
+                                          </div>
+                                          <span
+                                            className="text-[9px] font-black uppercase text-white/50 tracking-widest mt-1.5 px-2 py-0.5 bg-white/5"
+                                            style={{ clipPath: CUT_BADGE }}
+                                          >
+                                            Finalizado
+                                          </span>
+                                        </div>
                                       ) : (
-                                        <>
-                                          <Calendar className="w-3 h-3" />
-                                          <span>Agendar</span>
-                                        </>
+                                        <span className="text-xs font-black tracking-widest select-none text-white/30">
+                                          VS
+                                        </span>
                                       )}
                                     </div>
-                                  ) : null}
+
+                                    {/* Team B */}
+                                    <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
+                                      <div
+                                        className="w-10 h-10 lg:w-12 lg:h-12 p-[1px] flex items-center justify-center shrink-0 shadow-xl"
+                                        style={{
+                                          clipPath: CUT_BADGE,
+                                          background: `${corB}80`,
+                                        }}
+                                      >
+                                        <div
+                                          className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                                          style={{ clipPath: CUT_BADGE_INNER }}
+                                        >
+                                          {timeB.logo ? (
+                                            <img
+                                              src={timeB.logo} loading="lazy"
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <IconB
+                                              className="w-6 h-6"
+                                              style={{ color: corB }}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="text-center w-full">
+                                        <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                                          {timeB.tag
+                                            ? `#${timeB.tag}`
+                                            : timeB.name || timeB.nome}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Right: Info & Actions */}
+                                  <div className="flex flex-col items-center justify-center lg:justify-end gap-2 shrink-0 min-w-[120px]">
+                                    {jogo.status !== "finalizado" && (
+                                      <div className="text-center flex flex-col items-center hidden lg:block">
+                                        <p
+                                          className="text-xl sm:text-2xl font-black tracking-tighter tabular-nums"
+                                          style={{
+                                            color: campeonato.themeColor,
+                                          }}
+                                        >
+                                          {jogo.hora && jogo.hora !== "--:--" && /^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {canUserEdit &&
+                                    jogo.status !== "finalizado" &&
+                                    !(
+                                      jogo.status === "confirmado" && !isAdmin
+                                    ) ? (
+                                      <div
+                                        className="text-[9px] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10"
+                                        style={{ clipPath: CUT_BADGE }}
+                                      >
+                                        {jogo.status === "proposto" && isMyTurn ? (
+                                          <>
+                                            <CheckCircle2 className="w-3 h-3 text-[#00FF41]" />
+                                            <span>Responder</span>
+                                          </>
+                                        ) : jogo.status === "confirmado" && isAdmin ? (
+                                          <>
+                                            <ShieldCheck className="w-3 h-3 text-[#00F0FF]" />
+                                            <span>Finalizar</span>
+                                          </>
+                                        ) : jogo.status === "confirmado" ? (
+                                          null
+                                        ) : (
+                                          <>
+                                            <Calendar className="w-3 h-3 text-[#FFB700]" />
+                                            <span>Agendar</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    ) : null}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })
-                      )}
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 </div>
@@ -4865,95 +5150,113 @@ const CampeonatoDetalhes = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="w-full"
                 >
-                  <div className="bg-white/[0.03] rounded-2xl border border-white/10 overflow-hidden h-[70vh] min-h-[500px] flex flex-col">
-                    <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                      <div>
-                        <h2
-                          className="text-xl font-black uppercase tracking-[0.2em]"
-                          style={{ color: campeonato.themeColor }}
-                        >
-                          Chaveamento Oficial
-                        </h2>
-                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
-                          Confrontos eliminatórios em tempo real
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setIsBracketModalOpen(true)}
-                        className="p-3 rounded-xl bg-white/5 border border-white/10 text-white/40 transition-all group"
-                        style={{
-                          color: isBracketModalOpen
-                            ? campeonato.themeColor
-                            : undefined,
-                        }}
-                        title="Ver em Tela Cheia"
-                      >
-                        <Eye
-                          className="w-5 h-5 group-hover:scale-110 transition-transform"
-                          style={{ color: "inherit" }}
-                        />
-                      </button>
-                    </div>
-
+                  <div
+                    className="relative p-[1.5px] shadow-2xl transition-all h-[70vh] min-h-[500px] flex flex-col"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}60, rgba(255,255,255,0.05) 100%)`,
+                      boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}26`
+                    }}
+                  >
                     <div
-                      ref={bracketRef}
-                      {...bracketHandlers}
-                      className="flex-1 p-4 md:p-8 overflow-auto no-scrollbar bg-[#0A0A0A] cursor-grab"
+                      className="w-full h-full bg-[#060608] relative overflow-hidden flex flex-col"
+                      style={{ clipPath: CUT_FRAME_INNER }}
                     >
-                      <div
-                        style={{
-                          transform: `scale(${bracketScale})`,
-                          transformOrigin: "0 0",
-                          transition: "transform 0.1s ease-out",
-                          padding: "100px 480px",
-                          width: "max-content",
-                          minWidth: "100%",
-                        }}
-                      >
-                        {(() => {
-                          const parseVagas = (vStr: any) => {
-                            if (typeof vStr === "number") return vStr;
-                            const s = String(vStr || "16");
-                            if (s.includes("/"))
-                              return parseInt(s.split("/")[1]) || 16;
-                            return parseInt(s) || 16;
-                          };
-                          const totalParticipants = parseVagas(
-                            campeonato.vagas,
-                          );
-                          const timesPorGrupo = campeonato.timesPorGrupo || 8;
-                          const classificados =
-                            campeonato.classificadosPorGrupo || 4;
-                          const numGrupos = Math.ceil(
-                            totalParticipants / timesPorGrupo,
-                          );
-                          const totalClassificados = numGrupos * classificados;
-                          const useDoubleElim =
-                            campeonato.formato === "liga" &&
-                            totalClassificados > 4;
+                      <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between bg-[#0c0c10]">
+                        <div>
+                          <h2
+                            className="text-xl font-black uppercase tracking-[0.2em]"
+                            style={{ color: campeonato.themeColor }}
+                          >
+                            Chaveamento Oficial
+                          </h2>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
+                            Confrontos eliminatórios em tempo real
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setIsBracketModalOpen(true)}
+                          className="w-10 h-10 p-[1px] flex items-center justify-center transition-all cursor-pointer group"
+                          style={{
+                            clipPath: CUT_BADGE,
+                            background: isBracketModalOpen
+                              ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                              : 'rgba(255, 255, 255, 0.1)',
+                          }}
+                          title="Ver em Tela Cheia"
+                        >
+                          <div
+                            className="w-full h-full bg-[#08080a] flex items-center justify-center text-white/40 group-hover:text-white"
+                            style={{ clipPath: CUT_BADGE_INNER }}
+                          >
+                            <Eye
+                              className="w-4 h-4 group-hover:scale-110 transition-transform"
+                              style={{ color: "inherit" }}
+                            />
+                          </div>
+                        </button>
+                      </div>
 
-                          if (useDoubleElim) {
-                            return (
-                              <DoubleEliminationBracket
-                                tournament={campeonato}
-                                bracketData={bracketData}
-                                onScoreChange={handleBracketScoreChange}
-                                isAdmin={isAdmin}
-                                availableTeams={bracketAvailableTeams}
-                              />
+                      <div
+                        ref={bracketRef}
+                        {...bracketHandlers}
+                        className="flex-1 p-4 md:p-8 overflow-auto no-scrollbar bg-[#060608] cursor-grab"
+                      >
+                        <div
+                          style={{
+                            transform: `scale(${bracketScale})`,
+                            transformOrigin: "0 0",
+                            transition: "transform 0.1s ease-out",
+                            padding: "100px 480px",
+                            width: "max-content",
+                            minWidth: "100%",
+                          }}
+                        >
+                          {(() => {
+                            const parseVagas = (vStr: any) => {
+                              if (typeof vStr === "number") return vStr;
+                              const s = String(vStr || "16");
+                              if (s.includes("/"))
+                                return parseInt(s.split("/")[1]) || 16;
+                              return parseInt(s) || 16;
+                            };
+                            const totalParticipants = parseVagas(
+                              campeonato.vagas,
                             );
-                          } else {
-                            return (
-                              <DoubleSideBracket
-                                tournament={campeonato}
-                                bracketData={bracketData}
-                                onScoreChange={handleBracketScoreChange}
-                                isAdmin={isAdmin}
-                                availableTeams={bracketAvailableTeams}
-                              />
+                            const timesPorGrupo = campeonato.timesPorGrupo || 8;
+                            const classificados =
+                              campeonato.classificadosPorGrupo || 4;
+                            const numGrupos = Math.ceil(
+                              totalParticipants / timesPorGrupo,
                             );
-                          }
-                        })()}
+                            const totalClassificados = numGrupos * classificados;
+                            const useDoubleElim =
+                              campeonato.formato === "liga" &&
+                              totalClassificados > 4;
+
+                            if (useDoubleElim) {
+                              return (
+                                <DoubleEliminationBracket
+                                  tournament={campeonato}
+                                  bracketData={bracketData}
+                                  onScoreChange={handleBracketScoreChange}
+                                  isAdmin={isAdmin}
+                                  availableTeams={bracketAvailableTeams}
+                                />
+                              );
+                            } else {
+                              return (
+                                <DoubleSideBracket
+                                  tournament={campeonato}
+                                  bracketData={bracketData}
+                                  onScoreChange={handleBracketScoreChange}
+                                  isAdmin={isAdmin}
+                                  availableTeams={bracketAvailableTeams}
+                                />
+                              );
+                            }
+                          })()}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -4979,129 +5282,187 @@ const CampeonatoDetalhes = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Identidade Visual */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
-                          <Sparkles
-                            className="w-6 h-6"
-                            style={{ color: "#00FFD4" }}
-                          />
-                        </div>
-                        <div>
-                          <h3 className="font-black text-lg uppercase tracking-wider text-white">
-                            Identidade Visual
-                          </h3>
-                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                            Defina a cor tema que será aplicada em todo o
-                            campeonato
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                          Cor Tema
-                        </label>
-                        <div className="flex flex-wrap gap-4">
-                          {[
-                            { name: "Amarelo", hex: "#FFB700" },
-                            { name: "Roxo", hex: "#D500FF" },
-                            { name: "Verde", hex: "#00FF41" },
-                            { name: "Vermelho", hex: "#FF003C" },
-                            { name: "Laranja", hex: "#FF4D00" },
-                            { name: "Azul", hex: "#00FFFF" },
-                          ].map((color) => (
-                            <button
-                              key={color.hex}
-                              onClick={() => handleUpdateThemeColor(color.hex)}
-                              className={`group flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all ${
-                                campeonato.themeColor === color.hex
-                                  ? "bg-white/10"
-                                  : "border-white/5 bg-transparent hover:border-white/20"
-                              }`}
-                              style={{
-                                borderColor:
-                                  campeonato.themeColor === color.hex
-                                    ? color.hex
-                                    : undefined,
-                              }}
+                    <div
+                      className="relative p-[1.5px] shadow-2xl transition-all"
+                      style={{
+                        clipPath: CUT_FRAME,
+                        background: 'linear-gradient(135deg, rgba(0, 255, 212, 0.3), rgba(255,255,255,0.05) 100%)',
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 sm:p-8 space-y-6"
+                        style={{ clipPath: CUT_FRAME_INNER }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              background: 'linear-gradient(135deg, #00FFD4, rgba(255,255,255,0.1))'
+                            }}
+                          >
+                            <div
+                              className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                              style={{ clipPath: CUT_BADGE_INNER }}
                             >
-                              <div
-                                className="w-3 h-3 rounded-full shadow-sm"
-                                style={{ backgroundColor: color.hex }}
+                              <Sparkles
+                                className="w-6 h-6"
+                                style={{ color: "#00FFD4" }}
                               />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                                {color.name}
-                              </span>
-                              {campeonato.themeColor === color.hex && (
-                                <Check
-                                  className="w-3 h-3"
-                                  style={{ color: color.hex }}
-                                />
-                              )}
-                            </button>
-                          ))}
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="font-black text-lg uppercase tracking-wider text-white">
+                              Identidade Visual
+                            </h3>
+                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
+                              Defina a cor tema que será aplicada em todo o
+                              campeonato
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                            Cor Tema
+                          </label>
+                          <div className="flex flex-wrap gap-3">
+                            {[
+                              { name: "Amarelo", hex: "#FFB700" },
+                              { name: "Roxo", hex: "#D500FF" },
+                              { name: "Verde", hex: "#00FF41" },
+                              { name: "Vermelho", hex: "#FF003C" },
+                              { name: "Laranja", hex: "#FF4D00" },
+                              { name: "Azul", hex: "#00FFFF" },
+                            ].map((color) => (
+                              <button
+                                key={color.hex}
+                                onClick={() => handleUpdateThemeColor(color.hex)}
+                                className="relative p-[1px] transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                style={{
+                                  clipPath: CUT_BADGE,
+                                  background: campeonato.themeColor === color.hex
+                                    ? `linear-gradient(135deg, ${color.hex}, rgba(255,255,255,0.2))`
+                                    : 'rgba(255, 255, 255, 0.08)'
+                                }}
+                              >
+                                <div
+                                  className={`flex items-center gap-2 px-3.5 py-2 ${
+                                    campeonato.themeColor === color.hex ? 'bg-[#0c0c10]' : 'bg-[#08080a]'
+                                  }`}
+                                  style={{ clipPath: CUT_BADGE_INNER }}
+                                >
+                                  <div
+                                    className="w-2.5 h-2.5 shadow-sm"
+                                    style={{
+                                      clipPath: CUT_BADGE,
+                                      backgroundColor: color.hex,
+                                    }}
+                                  />
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-white/70">
+                                    {color.name}
+                                  </span>
+                                  {campeonato.themeColor === color.hex && (
+                                    <Check
+                                      className="w-3 h-3"
+                                      style={{ color: color.hex }}
+                                    />
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Card: Gestão do Chaveamento */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6 md:col-span-2">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
-                          <GitBranch className="w-6 h-6" style={{ color: campeonato.themeColor }} />
-                        </div>
-                        <div>
-                          <h3 className="font-black text-lg uppercase tracking-wider text-white">
-                            Chaveamento Eliminatório
-                          </h3>
-                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                            {campeonato.chavesSorteados
-                              ? "Chaveamento manual — preencha os times e avance pela edição (lápis) de cada vaga"
-                              : "Abra o chaveamento e preencha os times manualmente quando quiser"}
-                          </p>
-                        </div>
-                        {campeonato.chavesSorteados && (
-                          <span className="ml-auto text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
-                            ✓ Gerado
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-4">
-                        {!campeonato.chavesSorteados ? (
-                          <button
-                            onClick={handleAbrirChaveamento}
-                            className="px-6 py-4 rounded-xl font-black uppercase tracking-widest text-sm text-black flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl"
-                            style={{ backgroundColor: campeonato.themeColor, boxShadow: `0 8px 30px ${campeonato.themeColor}44` }}
-                          >
-                            <GitBranch className="w-5 h-5" />
-                            Abrir Chaveamento (Manual)
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              if (window.confirm("Resetar o chaveamento? Isso limpa todos os times preenchidos na chave.")) {
-                                const reset = { ...campeonato, chavesSorteados: false };
-                                setCampeonato(reset);
-                                saveToSupabase(reset);
-                                setBracketData(INITIAL_BRACKET_DATA);
-                                saveBracketToSupabase(INITIAL_BRACKET_DATA);
-                              }
+                    <div
+                      className="relative p-[1.5px] shadow-2xl transition-all md:col-span-2"
+                      style={{
+                        clipPath: CUT_FRAME,
+                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 sm:p-8 space-y-6"
+                        style={{ clipPath: CUT_FRAME_INNER }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
                             }}
-                            className="px-5 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
                           >
-                            <X className="w-4 h-4" />
-                            Resetar Chave
-                          </button>
+                            <div
+                              className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                              style={{ clipPath: CUT_BADGE_INNER }}
+                            >
+                              <GitBranch className="w-6 h-6" style={{ color: campeonato.themeColor }} />
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="font-black text-lg uppercase tracking-wider text-white">
+                              Chaveamento Eliminatório
+                            </h3>
+                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
+                              {campeonato.chavesSorteados
+                                ? "Chaveamento manual — preencha os times e avance pela edição (lápis) de cada vaga"
+                                : "Abra o chaveamento e preencha os times manualmente quando quiser"}
+                            </p>
+                          </div>
+                          {campeonato.chavesSorteados && (
+                            <span
+                              className="ml-auto text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20"
+                              style={{ clipPath: CUT_BADGE }}
+                            >
+                              ✓ Gerado
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-4">
+                          {!campeonato.chavesSorteados ? (
+                            <button
+                              onClick={handleAbrirChaveamento}
+                              className="px-6 py-4 font-black uppercase tracking-widest text-xs text-black flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
+                              style={{
+                                clipPath: CUT_BUTTON,
+                                backgroundColor: campeonato.themeColor || '#FFB700',
+                                boxShadow: `0 8px 30px ${campeonato.themeColor || '#FFB700'}44`
+                              }}
+                            >
+                              <GitBranch className="w-4 h-4" />
+                              <span>Abrir Chaveamento (Manual)</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                if (window.confirm("Resetar o chaveamento? Isso limpa todos os times preenchidos na chave.")) {
+                                  const reset = { ...campeonato, chavesSorteados: false };
+                                  setCampeonato(reset);
+                                  saveToSupabase(reset);
+                                  setBracketData(INITIAL_BRACKET_DATA);
+                                  saveBracketToSupabase(INITIAL_BRACKET_DATA);
+                                }
+                              }}
+                              className="px-5 py-3 font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 cursor-pointer"
+                              style={{ clipPath: CUT_BUTTON }}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Resetar Chave</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {campeonato.chavesSorteados && (
+                          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">
+                            Preencha os times pela edição (lápis) de cada vaga. Defina o placar para finalizar — o vencedor não avança sozinho.
+                          </p>
                         )}
                       </div>
-
-                      {campeonato.chavesSorteados && (
-                        <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">
-                          Preencha os times pela edição (lápis) de cada vaga. Defina o placar para finalizar — o vencedor não avança sozinho.
-                        </p>
-                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -5115,351 +5476,408 @@ const CampeonatoDetalhes = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                  className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
                 >
                   <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="w-full max-w-md bg-[#0A0A0A] border border-white/10 rounded-xl overflow-hidden shadow-2xl"
+                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="relative p-[1.5px] w-full max-w-md shadow-2xl"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.08) 100%)`,
+                      boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
+                    }}
                   >
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Clock
-                          className="w-5 h-5"
-                          style={{ color: campeonato.themeColor }}
-                        />
-                        <h3
-                          className="text-lg font-black uppercase tracking-widest"
-                          style={{ color: campeonato.themeColor }}
-                        >
-                          {editFormData.action === "accept"
-                            ? "Responder Proposta"
-                            : editFormData.action === "finish"
-                              ? jogoStatusAtStart === "finalizado"
-                                ? "Editar Resultado"
-                                : "Finalizar Jogo"
-                              : "Propor Horário"}
-                        </h3>
-                      </div>
-                      <button
-                        onClick={() => setIsScheduleEditModalOpen(false)}
-                        className="p-2 text-white/40 hover:text-white"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    <form
-                      onSubmit={handleUpdateSchedule}
-                      className="p-6 space-y-4"
+                    <div
+                      className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-5 sm:p-6"
+                      style={{ clipPath: CUT_FRAME_INNER }}
                     >
-                      {editFormData.action !== "finish" && (
-                        <div
-                          className="p-4 rounded-xl mb-4 min-h-[60px] flex items-center justify-center transition-all"
-                          style={{
-                            backgroundColor:
-                              editFormData.action === "accept"
-                                ? "rgba(0, 255, 65, 0.1)"
-                                : `${campeonato.themeColor}1A`,
-                            border: `1px solid ${editFormData.action === "accept" ? "rgba(0, 255, 65, 0.2)" : `${campeonato.themeColor}33`}`,
-                          }}
-                        >
-                          <p
-                            className="text-[10px] font-black leading-relaxed uppercase tracking-widest text-center"
+                      <div className="border-b border-white/5 pb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
                             style={{
-                              color:
-                                editFormData.action === "accept"
-                                  ? "#00FF41"
-                                  : campeonato.themeColor,
+                              clipPath: CUT_BADGE,
+                              background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
                             }}
                           >
-                            {editFormData.action === "accept"
-                              ? "Aceite ou altere para enviar uma contra-proposta."
-                              : "Selecione a data e o horário para o confronto."}
-                          </p>
-                        </div>
-                      )}
-
-                      {editFormData.action !== "finish" && (
-                        <>
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
-                              Data do Confronto
-                            </label>
-                            <input
-                              type="date"
-                              value={editFormData.data}
-                              onChange={(e) =>
-                                setEditFormData({
-                                  ...editFormData,
-                                  data: e.target.value,
-                                  action:
-                                    editFormData.action === "accept"
-                                      ? "propose"
-                                      : editFormData.action,
-                                })
-                              }
-                              onFocus={(e) =>
-                                !e.target.disabled &&
-                                (e.target.style.borderColor =
-                                  campeonato.themeColor)
-                              }
-                              onBlur={(e) => (e.target.style.borderColor = "")}
-                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none transition-all font-bold appearance-none [color-scheme:dark]"
-                              required
-                            />
+                            <div
+                              className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                              style={{ clipPath: CUT_BADGE_INNER }}
+                            >
+                              <Clock
+                                className="w-5 h-5"
+                                style={{ color: campeonato.themeColor }}
+                              />
+                            </div>
                           </div>
-
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
-                              Horário Previsto
-                            </label>
-                            <input
-                              type="time"
-                              value={editFormData.hora}
-                              onChange={(e) =>
-                                setEditFormData({
-                                  ...editFormData,
-                                  hora: e.target.value,
-                                  action:
-                                    editFormData.action === "accept"
-                                      ? "propose"
-                                      : editFormData.action,
-                                })
-                              }
-                              onFocus={(e) =>
-                                !e.target.disabled &&
-                                (e.target.style.borderColor =
-                                  campeonato.themeColor)
-                              }
-                              onBlur={(e) => (e.target.style.borderColor = "")}
-                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none transition-all font-bold appearance-none [color-scheme:dark]"
-                              required
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {editFormData.action === "finish" && isAdmin && (
-                        <div className="space-y-6 py-4">
-                          <label className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center block">
-                            Resultado da Partida
-                          </label>
-
-                          <div className="flex items-center justify-center gap-8">
-                            {/* Team A Score */}
-                            <div className="flex flex-col items-center gap-3">
-                              <div className="text-[13px] font-black text-white uppercase truncate w-32 text-center bg-white/10 py-1.5 px-3 rounded-lg border border-white/10 shadow-inner">
-                                {
-                                  campeonato.cronograma[editingMatchIndex!]
-                                    ?.timeA
-                                }
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const [sA, sB] = (
-                                      editFormData.placar || "0 - 0"
-                                    )
-                                      .split(" - ")
-                                      .map((s) => parseInt(s) || 0);
-                                    if (sA > 0)
-                                      setEditFormData({
-                                        ...editFormData,
-                                        placar: `${sA - 1} - ${sB}`,
-                                      });
-                                  }}
-                                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="text-4xl font-black text-white w-12 text-center">
-                                  {
-                                    (editFormData.placar || "0 - 0").split(
-                                      " - ",
-                                    )[0]
-                                  }
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const [sA, sB] = (
-                                      editFormData.placar || "0 - 0"
-                                    )
-                                      .split(" - ")
-                                      .map((s) => parseInt(s) || 0);
-                                    setEditFormData({
-                                      ...editFormData,
-                                      placar: `${sA + 1} - ${sB}`,
-                                    });
-                                  }}
-                                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="text-white/10 text-2xl font-black italic">
-                              VS
-                            </div>
-
-                            {/* Team B Score */}
-                            <div className="flex flex-col items-center gap-3">
-                              <div className="text-[13px] font-black text-white uppercase truncate w-32 text-center bg-white/10 py-1.5 px-3 rounded-lg border border-white/10 shadow-inner">
-                                {
-                                  campeonato.cronograma[editingMatchIndex!]
-                                    ?.timeB
-                                }
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const [sA, sB] = (
-                                      editFormData.placar || "0 - 0"
-                                    )
-                                      .split(" - ")
-                                      .map((s) => parseInt(s) || 0);
-                                    if (sB > 0)
-                                      setEditFormData({
-                                        ...editFormData,
-                                        placar: `${sA} - ${sB - 1}`,
-                                      });
-                                  }}
-                                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="text-4xl font-black text-white w-12 text-center">
-                                  {
-                                    (editFormData.placar || "0 - 0").split(
-                                      " - ",
-                                    )[1]
-                                  }
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const [sA, sB] = (
-                                      editFormData.placar || "0 - 0"
-                                    )
-                                      .split(" - ")
-                                      .map((s) => parseInt(s) || 0);
-                                    setEditFormData({
-                                      ...editFormData,
-                                      placar: `${sA} - ${sB + 1}`,
-                                    });
-                                  }}
-                                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
+                          <div>
+                            <h3
+                              className="text-base sm:text-lg font-black uppercase tracking-widest leading-tight"
+                              style={{ color: campeonato.themeColor }}
+                            >
+                              {editFormData.action === "accept"
+                                ? "Responder Proposta"
+                                : editFormData.action === "finish"
+                                  ? jogoStatusAtStart === "finalizado"
+                                    ? "Editar Resultado"
+                                    : "Finalizar Jogo"
+                                  : "Propor Horário"}
+                            </h3>
+                            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">
+                              Defina o status e horário do jogo
+                            </p>
                           </div>
                         </div>
-                      )}
+                        <button
+                          onClick={() => setIsScheduleEditModalOpen(false)}
+                          className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                          style={{ clipPath: CUT_BADGE }}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                      <div className="flex flex-col gap-3 pt-4">
-                        {editFormData.action === "accept" && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const match =
-                                campeonato.cronograma[editingMatchIndex!];
-                              const isChanged =
-                                editFormData.data !== match.data ||
-                                editFormData.hora !== match.hora;
-
-                              // If changed, it becomes a proposal
-                              if (isChanged) {
-                                // Simulate submission of the form
-                                const form = document.querySelector("form");
-                                if (form) form.requestSubmit();
-                                return;
-                              }
-
-                              // Identify acting team tag — usa tag do time mesmo para admin-jogador
-                              let actingTeamTag = "ADMIN";
-                              const myTeamForAccept = myTeams.find(
-                                (t) =>
-                                  t.tag === match.timeA ||
-                                  t.tag === match.timeB ||
-                                  t.nome === match.timeA ||
-                                  t.nome === match.timeB,
-                              );
-                              if (myTeamForAccept) actingTeamTag = myTeamForAccept.tag;
-
-                              match.status = "confirmado";
-                              match.lastActionBy = actingTeamTag;
-                              const updatedCampeonato = {
-                                ...campeonato,
-                                cronograma: [...campeonato.cronograma],
-                              };
-                              setCampeonato(updatedCampeonato);
-                              api.tournaments.atualizarCronograma(id, updatedCampeonato.cronograma)
-                                .catch((error: any) => console.error('Erro ao aceitar:', error.message));
-                              setIsScheduleEditModalOpen(false);
+                      <form
+                        onSubmit={handleUpdateSchedule}
+                        className="pt-5 space-y-4"
+                      >
+                        {editFormData.action !== "finish" && (
+                          <div
+                            className="p-3.5 mb-2 flex items-center justify-center transition-all"
+                            style={{
+                              clipPath: CUT_BUTTON,
+                              backgroundColor:
+                                editFormData.action === "accept"
+                                  ? "rgba(0, 255, 65, 0.1)"
+                                  : `${campeonato.themeColor}1A`,
+                              border: `1px solid ${editFormData.action === "accept" ? "rgba(0, 255, 65, 0.2)" : `${campeonato.themeColor}33`}`,
                             }}
-                            className={`w-full py-4 font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
-                              editFormData.data !==
-                                campeonato.cronograma[editingMatchIndex!]
-                                  ?.data ||
+                          >
+                            <p
+                              className="text-[10px] font-black leading-relaxed uppercase tracking-widest text-center"
+                              style={{
+                                color:
+                                  editFormData.action === "accept"
+                                    ? "#00FF41"
+                                    : campeonato.themeColor,
+                              }}
+                            >
+                              {editFormData.action === "accept"
+                                ? "Aceite ou altere para enviar uma contra-proposta."
+                                : "Selecione a data e o horário para o confronto."}
+                            </p>
+                          </div>
+                        )}
+
+                        {editFormData.action !== "finish" && (
+                          <>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
+                                Data do Confronto
+                              </label>
+                              <div
+                                className="relative p-[1px]"
+                                style={{
+                                  clipPath: CUT_BUTTON,
+                                  background: 'rgba(255, 255, 255, 0.1)'
+                                }}
+                              >
+                                <input
+                                  type="date"
+                                  value={editFormData.data}
+                                  onChange={(e) =>
+                                    setEditFormData({
+                                      ...editFormData,
+                                      data: e.target.value,
+                                      action:
+                                        editFormData.action === "accept"
+                                          ? "propose"
+                                          : editFormData.action,
+                                    })
+                                  }
+                                  className="w-full bg-[#0c0c10] px-4 py-3.5 text-white focus:outline-none transition-all font-bold appearance-none [color-scheme:dark] text-xs"
+                                  style={{ clipPath: CUT_BUTTON_INNER }}
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
+                                Horário Previsto
+                              </label>
+                              <div
+                                className="relative p-[1px]"
+                                style={{
+                                  clipPath: CUT_BUTTON,
+                                  background: 'rgba(255, 255, 255, 0.1)'
+                                }}
+                              >
+                                <input
+                                  type="time"
+                                  value={editFormData.hora}
+                                  onChange={(e) =>
+                                    setEditFormData({
+                                      ...editFormData,
+                                      hora: e.target.value,
+                                      action:
+                                        editFormData.action === "accept"
+                                          ? "propose"
+                                          : editFormData.action,
+                                    })
+                                  }
+                                  className="w-full bg-[#0c0c10] px-4 py-3.5 text-white focus:outline-none transition-all font-bold appearance-none [color-scheme:dark] text-xs"
+                                  style={{ clipPath: CUT_BUTTON_INNER }}
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {editFormData.action === "finish" && isAdmin && (
+                          <div className="space-y-5 py-2">
+                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center block">
+                              Resultado da Partida
+                            </label>
+
+                            <div className="flex items-center justify-center gap-6 sm:gap-8">
+                              {/* Team A Score */}
+                              <div className="flex flex-col items-center gap-3">
+                                <div
+                                  className="text-[11px] font-black text-white uppercase truncate w-28 text-center bg-white/5 py-1.5 px-2.5 border border-white/10"
+                                  style={{ clipPath: CUT_BADGE }}
+                                >
+                                  {
+                                    campeonato.cronograma[editingMatchIndex!]
+                                      ?.timeA
+                                  }
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const [sA, sB] = (
+                                        editFormData.placar || "0 - 0"
+                                      )
+                                        .split(" - ")
+                                        .map((s) => parseInt(s) || 0);
+                                      if (sA > 0)
+                                        setEditFormData({
+                                          ...editFormData,
+                                          placar: `${sA - 1} - ${sB}`,
+                                        });
+                                    }}
+                                    className="w-9 h-9 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer border border-white/10"
+                                    style={{ clipPath: CUT_BADGE }}
+                                  >
+                                    <Minus className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="text-3xl sm:text-4xl font-black text-white w-10 text-center">
+                                    {
+                                      (editFormData.placar || "0 - 0").split(
+                                        " - ",
+                                      )[0]
+                                    }
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const [sA, sB] = (
+                                        editFormData.placar || "0 - 0"
+                                      )
+                                        .split(" - ")
+                                        .map((s) => parseInt(s) || 0);
+                                      setEditFormData({
+                                        ...editFormData,
+                                        placar: `${sA + 1} - ${sB}`,
+                                      });
+                                    }}
+                                    className="w-9 h-9 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer border border-white/10"
+                                    style={{ clipPath: CUT_BADGE }}
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="text-white/20 text-xl font-black italic">
+                                VS
+                              </div>
+
+                              {/* Team B Score */}
+                              <div className="flex flex-col items-center gap-3">
+                                <div
+                                  className="text-[11px] font-black text-white uppercase truncate w-28 text-center bg-white/5 py-1.5 px-2.5 border border-white/10"
+                                  style={{ clipPath: CUT_BADGE }}
+                                >
+                                  {
+                                    campeonato.cronograma[editingMatchIndex!]
+                                      ?.timeB
+                                  }
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const [sA, sB] = (
+                                        editFormData.placar || "0 - 0"
+                                      )
+                                        .split(" - ")
+                                        .map((s) => parseInt(s) || 0);
+                                      if (sB > 0)
+                                        setEditFormData({
+                                          ...editFormData,
+                                          placar: `${sA} - ${sB - 1}`,
+                                        });
+                                    }}
+                                    className="w-9 h-9 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer border border-white/10"
+                                    style={{ clipPath: CUT_BADGE }}
+                                  >
+                                    <Minus className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="text-3xl sm:text-4xl font-black text-white w-10 text-center">
+                                    {
+                                      (editFormData.placar || "0 - 0").split(
+                                        " - ",
+                                      )[1]
+                                    }
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const [sA, sB] = (
+                                        editFormData.placar || "0 - 0"
+                                      )
+                                        .split(" - ")
+                                        .map((s) => parseInt(s) || 0);
+                                      setEditFormData({
+                                        ...editFormData,
+                                        placar: `${sA} - ${sB + 1}`,
+                                      });
+                                    }}
+                                    className="w-9 h-9 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer border border-white/10"
+                                    style={{ clipPath: CUT_BADGE }}
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-2.5 pt-3">
+                          {editFormData.action === "accept" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const match =
+                                  campeonato.cronograma[editingMatchIndex!];
+                                const isChanged =
+                                  editFormData.data !== match.data ||
+                                  editFormData.hora !== match.hora;
+
+                                if (isChanged) {
+                                  const form = document.querySelector("form");
+                                  if (form) form.requestSubmit();
+                                  return;
+                                }
+
+                                let actingTeamTag = "ADMIN";
+                                const myTeamForAccept = myTeams.find(
+                                  (t) =>
+                                    t.tag === match.timeA ||
+                                    t.tag === match.timeB ||
+                                    t.nome === match.timeA ||
+                                    t.nome === match.timeB,
+                                );
+                                if (myTeamForAccept) actingTeamTag = myTeamForAccept.tag;
+
+                                match.status = "confirmado";
+                                match.lastActionBy = actingTeamTag;
+                                const updatedCampeonato = {
+                                  ...campeonato,
+                                  cronograma: [...campeonato.cronograma],
+                                };
+                                setCampeonato(updatedCampeonato);
+                                api.tournaments.atualizarCronograma(id, updatedCampeonato.cronograma)
+                                  .catch((error: any) => console.error('Erro ao aceitar:', error.message));
+                                setIsScheduleEditModalOpen(false);
+                              }}
+                              className="w-full py-3.5 font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                              style={{
+                                clipPath: CUT_BUTTON,
+                                backgroundColor: editFormData.data !==
+                                  campeonato.cronograma[editingMatchIndex!]?.data ||
+                                editFormData.hora !==
+                                  campeonato.cronograma[editingMatchIndex!]?.hora
+                                  ? "#FFB700"
+                                  : "#00FF41",
+                                color: "#000000",
+                                boxShadow: editFormData.data !==
+                                  campeonato.cronograma[editingMatchIndex!]?.data ||
+                                editFormData.hora !==
+                                  campeonato.cronograma[editingMatchIndex!]?.hora
+                                  ? "0 0 25px rgba(255,183,0,0.3)"
+                                  : "0 0 25px rgba(0,255,65,0.3)"
+                              }}
+                            >
+                              {editFormData.data !==
+                                campeonato.cronograma[editingMatchIndex!]?.data ||
                               editFormData.hora !==
                                 campeonato.cronograma[editingMatchIndex!]?.hora
-                                ? "bg-[#FFB700] text-black shadow-[0_0_20px_rgba(255,183,0,0.3)]"
-                                : "bg-[#00FF41] text-black shadow-[0_0_20px_rgba(0,255,65,0.3)]"
-                            }`}
-                          >
-                            {editFormData.data !==
-                              campeonato.cronograma[editingMatchIndex!]?.data ||
-                            editFormData.hora !==
-                              campeonato.cronograma[editingMatchIndex!]?.hora
-                              ? "Propor Novo Horário"
-                              : "Aceitar Horário"}
-                          </button>
-                        )}
+                                ? "Propor Novo Horário"
+                                : "Aceitar Horário"}
+                            </button>
+                          )}
 
-                        {editFormData.action !== "accept" && (
-                          <button
-                            type="submit"
-                            className={`w-full py-4 font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
-                              editFormData.action === "finish"
-                                ? "bg-[#00FF41] text-black shadow-[0_0_20px_rgba(0,255,65,0.3)]"
-                                : "bg-[#FFB700] text-black shadow-[0_0_20px_rgba(255,183,0,0.3)]"
-                            }`}
-                          >
-                            {editFormData.action === "finish"
-                              ? "Confirmar Resultado"
-                              : jogoStatusAtStart === "proposto"
-                                ? "Enviar Contra-Proposta"
-                                : "Enviar Proposta de Horário"}
-                          </button>
-                        )}
+                          {editFormData.action !== "accept" && (
+                            <button
+                              type="submit"
+                              className="w-full py-3.5 font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                              style={{
+                                clipPath: CUT_BUTTON,
+                                backgroundColor: editFormData.action === "finish"
+                                  ? "#00FF41"
+                                  : (campeonato.themeColor || "#FFB700"),
+                                color: "#000000",
+                                boxShadow: editFormData.action === "finish"
+                                  ? "0 0 25px rgba(0,255,65,0.3)"
+                                  : `0 0 25px ${campeonato.themeColor || '#FFB700'}4D`
+                              }}
+                            >
+                              {editFormData.action === "finish"
+                                ? "Confirmar Resultado"
+                                : jogoStatusAtStart === "proposto"
+                                  ? "Enviar Contra-Proposta"
+                                  : "Enviar Proposta de Horário"}
+                            </button>
+                          )}
 
-                        {/* Excluir jogo (somente admin) — funciona para jogos
-                            confirmados/propostos/etc. abertos neste modal */}
-                        {isAdmin && editingMatchIndex !== null && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const jogo = campeonato.cronograma[editingMatchIndex!];
-                              if (jogo) {
-                                handleDeleteMatch(jogo);
-                                setIsScheduleEditModalOpen(false);
-                              }
-                            }}
-                            className="w-full py-3 mt-1 font-black uppercase tracking-widest text-[10px] rounded-xl transition-all flex items-center justify-center gap-2 border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/15"
-                          >
-                            <X className="w-4 h-4" />
-                            Excluir Jogo
-                          </button>
-                        )}
-                      </div>
-                    </form>
+                          {isAdmin && editingMatchIndex !== null && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const jogo = campeonato.cronograma[editingMatchIndex!];
+                                if (jogo) {
+                                  handleDeleteMatch(jogo);
+                                  setIsScheduleEditModalOpen(false);
+                                }
+                              }}
+                              className="w-full py-2.5 mt-1 font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-1.5 border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/15 cursor-pointer"
+                              style={{ clipPath: CUT_BUTTON }}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Excluir Jogo</span>
+                            </button>
+                          )}
+                        </div>
+                      </form>
+                    </div>
                   </motion.div>
                 </motion.div>
               )}
@@ -5472,148 +5890,188 @@ const CampeonatoDetalhes = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                  className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
                 >
                   <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="w-full max-w-sm bg-[#0A0A0A] border border-white/10 rounded-xl overflow-hidden shadow-2xl"
+                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="relative p-[1.5px] w-full max-w-sm shadow-2xl"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.08) 100%)`,
+                      boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
+                    }}
                   >
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Swords
-                          className="w-5 h-5"
-                          style={{ color: campeonato.themeColor }}
-                        />
-                        <h3
-                          className="text-lg font-black uppercase tracking-widest"
-                          style={{ color: campeonato.themeColor }}
-                        >
-                          {isAdmin ? "Criar Confronto" : "Agendar Desafio"}
-                        </h3>
-                      </div>
-                      <button
-                        onClick={() => setIsAdminMatchModalOpen(false)}
-                        className="p-2 text-white/40 hover:text-white"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    <form
-                      onSubmit={handleCreateAdminMatch}
-                      className="p-6 space-y-4"
+                    <div
+                      className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-5 sm:p-6"
+                      style={{ clipPath: CUT_FRAME_INNER }}
                     >
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
-                          {isAdmin ? "Time A" : "Seu Time"}
-                        </label>
-                        <select
-                          value={adminMatchData.timeA}
-                          onChange={(e) =>
-                            setAdminMatchData({
-                              ...adminMatchData,
-                              timeA: e.target.value,
-                            })
-                          }
-                          className={`w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none transition-all font-black ${!isAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
-                          style={
-                            isAdmin
-                              ? { borderColor: `${campeonato.themeColor}80` }
-                              : {}
-                          }
-                          required
-                          disabled={!isAdmin && myTeams.length <= 1}
+                      <div className="border-b border-white/5 pb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                            style={{
+                              clipPath: CUT_BADGE,
+                              background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                            }}
+                          >
+                            <div
+                              className="w-full h-full bg-[#08080a] flex items-center justify-center"
+                              style={{ clipPath: CUT_BADGE_INNER }}
+                            >
+                              <Swords
+                                className="w-5 h-5"
+                                style={{ color: campeonato.themeColor }}
+                              />
+                            </div>
+                          </div>
+                          <h3
+                            className="text-base sm:text-lg font-black uppercase tracking-widest"
+                            style={{ color: campeonato.themeColor }}
+                          >
+                            {isAdmin ? "Criar Confronto" : "Agendar Desafio"}
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => setIsAdminMatchModalOpen(false)}
+                          className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                          style={{ clipPath: CUT_BADGE }}
                         >
-                          {isAdmin ? (
-                            <>
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <form
+                        onSubmit={handleCreateAdminMatch}
+                        className="pt-5 space-y-4"
+                      >
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
+                            {isAdmin ? "Time A" : "Seu Time"}
+                          </label>
+                          <div
+                            className="relative p-[1px]"
+                            style={{
+                              clipPath: CUT_BUTTON,
+                              background: 'rgba(255, 255, 255, 0.1)'
+                            }}
+                          >
+                            <select
+                              value={adminMatchData.timeA}
+                              onChange={(e) =>
+                                setAdminMatchData({
+                                  ...adminMatchData,
+                                  timeA: e.target.value,
+                                })
+                              }
+                              className={`w-full bg-[#0c0c10] px-4 py-3 text-white focus:outline-none transition-all font-black text-xs ${!isAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                              style={{ clipPath: CUT_BUTTON_INNER }}
+                              required
+                              disabled={!isAdmin && myTeams.length <= 1}
+                            >
+                              {isAdmin ? (
+                                <>
+                                  <option value="" className="bg-[#0A0A0A]">
+                                    SELECIONE O TIME A
+                                  </option>
+                                  {(
+                                    campeonato.timesInscritos ||
+                                    campeonato.classificacao ||
+                                    []
+                                  )?.map((t: any) => (
+                                    <option
+                                      key={t.tag}
+                                      value={t.tag}
+                                      className="bg-[#0A0A0A]"
+                                    >
+                                      {t.name || t.nome} [{t.tag}]
+                                    </option>
+                                  ))}
+                                </>
+                              ) : (
+                                myTeams.map((t: any) => (
+                                  <option
+                                    key={t.tag}
+                                    value={t.tag}
+                                    className="bg-[#0A0A0A]"
+                                  >
+                                    {t.nome || t.name} [{t.tag}]
+                                  </option>
+                                ))
+                              )}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="text-center text-[10px] font-black text-white/20 uppercase tracking-[0.5em] py-1">
+                          VS
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
+                            Time Rival
+                          </label>
+                          <div
+                            className="relative p-[1px]"
+                            style={{
+                              clipPath: CUT_BUTTON,
+                              background: 'rgba(255, 255, 255, 0.1)'
+                            }}
+                          >
+                            <select
+                              value={adminMatchData.timeB}
+                              onChange={(e) =>
+                                setAdminMatchData({
+                                  ...adminMatchData,
+                                  timeB: e.target.value,
+                                })
+                              }
+                              className="w-full bg-[#0c0c10] px-4 py-3 text-white focus:outline-none transition-all font-black text-xs cursor-pointer"
+                              style={{ clipPath: CUT_BUTTON_INNER }}
+                              required
+                            >
                               <option value="" className="bg-[#0A0A0A]">
-                                SELECIONE O TIME A
+                                SELECIONE O RIVAL
                               </option>
                               {(
                                 campeonato.timesInscritos ||
                                 campeonato.classificacao ||
                                 []
-                              )?.map((t: any) => (
-                                <option
-                                  key={t.tag}
-                                  value={t.tag}
-                                  className="bg-[#0A0A0A]"
-                                >
-                                  {t.name || t.nome} [{t.tag}]
-                                </option>
-                              ))}
-                            </>
-                          ) : (
-                            myTeams.map((t: any) => (
-                              <option
-                                key={t.tag}
-                                value={t.tag}
-                                className="bg-[#0A0A0A]"
-                              >
-                                {t.nome || t.name} [{t.tag}]
-                              </option>
-                            ))
-                          )}
-                        </select>
-                      </div>
+                              )
+                                ?.filter((t: any) => t.tag !== adminMatchData.timeA)
+                                .map((t: any) => (
+                                  <option
+                                    key={t.tag}
+                                    value={t.tag}
+                                    className="bg-[#0A0A0A]"
+                                  >
+                                    {t.name || t.nome} [{t.tag}]
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                        </div>
 
-                      <div className="text-center text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">
-                        VS
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
-                          Time Rival
-                        </label>
-                        <select
-                          value={adminMatchData.timeB}
-                          onChange={(e) =>
-                            setAdminMatchData({
-                              ...adminMatchData,
-                              timeB: e.target.value,
-                            })
-                          }
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none transition-all font-black"
-                          style={{ borderColor: `${campeonato.themeColor}80` }}
-                          required
+                        <button
+                          type="submit"
+                          className="w-full py-3.5 text-black font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 shadow-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] mt-4"
+                          style={{
+                            clipPath: CUT_BUTTON,
+                            backgroundColor: campeonato.themeColor || '#FFB700',
+                            boxShadow: `0 0 30px -5px ${campeonato.themeColor || '#FFB700'}66`,
+                          }}
                         >
-                          <option value="" className="bg-[#0A0A0A]">
-                            SELECIONE O RIVAL
-                          </option>
-                          {(
-                            campeonato.timesInscritos ||
-                            campeonato.classificacao ||
-                            []
-                          )
-                            ?.filter((t: any) => t.tag !== adminMatchData.timeA)
-                            .map((t: any) => (
-                              <option
-                                key={t.tag}
-                                value={t.tag}
-                                className="bg-[#0A0A0A]"
-                              >
-                                {t.name || t.nome} [{t.tag}]
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full py-4 text-black font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl"
-                        style={{
-                          backgroundColor: campeonato.themeColor,
-                          boxShadow: `0 10px 20px ${campeonato.themeColor}33`,
-                        }}
-                      >
-                        <Check className="w-5 h-5" />
-                        {isAdmin
-                          ? "Criar Jogo Oficial"
-                          : "Confirmar e Propor Horário"}
-                      </button>
-                    </form>
+                          <Check className="w-4 h-4" />
+                          <span>
+                            {isAdmin
+                              ? "Criar Jogo Oficial"
+                              : "Confirmar e Propor Horário"}
+                          </span>
+                        </button>
+                      </form>
+                    </div>
                   </motion.div>
                 </motion.div>
               )}
@@ -5622,194 +6080,294 @@ const CampeonatoDetalhes = () => {
 
           {/* Right Column: Statistics & Info */}
           <div className="space-y-6">
-            <div className="bg-white/[0.03] rounded-xl border border-white/10 p-6 space-y-6 sticky top-10">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
-                Informações
-              </h3>
+            <div
+              className="relative p-[1.5px] shadow-2xl transition-all sticky top-10"
+              style={{
+                clipPath: CUT_FRAME,
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))',
+              }}
+            >
+              <div
+                className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-5"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
+                  Informações
+                </h3>
 
-              <div className="space-y-4">
-                {/* 1. Premiação */}
-                <div className="flex items-center gap-4 py-1">
-                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
-                    <Coins
-                      className="w-5 h-5"
-                      style={{ color: campeonato.themeColor }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Premiação Total
-                    </h4>
-                    <p className="text-sm font-bold text-white/80">
-                      {campeonato.premio}
-                    </p>
-                    {campeonato.temOutrosPremios && (
-                      <p className="text-[9px] font-medium text-white/40 mt-1 leading-tight">
-                        {campeonato.outrosPremios}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. Taxa */}
-                <div className="flex items-center gap-4 py-1">
-                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
-                    <CreditCard
-                      className="w-5 h-5"
-                      style={{ color: "#00D4FF" }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Taxa de Inscrição
-                    </h4>
-                    <p className="text-sm font-bold text-white/80">
-                      {campeonato.taxa}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 3. Data */}
-                <div className="flex items-center gap-4 py-1">
-                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
-                    <Calendar
-                      className="w-5 h-5"
-                      style={{ color: "#FF6600" }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Data
-                    </h4>
-                    <p className="text-sm font-bold text-white/80">
-                      {formatFullDate(campeonato.data)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tier */}
-                <div className="flex items-center gap-4 py-1">
-                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
-                    <Diamond size={20} color="#00FFD4" />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Tier
-                    </h4>
-                    <p className="text-sm font-bold text-white/80">
-                      {(campeonato as any).tier || "Free Elo"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 4. Vagas (Moved to last) */}
-                <div className="flex items-center gap-4 py-1">
-                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
-                    <Users className="w-5 h-5" style={{ color: "#BF00FF" }} />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                      Vagas / Times
-                    </h4>
-                    <p className="text-sm font-bold text-white/80">
-                      {
-                        (campeonato.timesInscritos || []).filter(
-                          (t: any) => t.status === "approved" || !t.status,
-                        ).length
-                      }{" "}
-                      / {campeonato.vagas}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Separated Organization Card - Refined layout with centered text and icon below */}
-            <div className="bg-white/[0.03] rounded-xl border border-white/10 p-6 space-y-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
-                Responsável
-              </h3>
-
-              <div className="flex flex-col items-center justify-center py-4 w-full">
-                {/* Square Organization Logo - Larger and rounded */}
-                <div className="w-48 h-48 rounded-xl flex items-center justify-center mb-6 relative overflow-hidden group p-4 transform hover:scale-105 transition-transform">
-                  {campeonato.orgPhotoUrl ? (
-                    <img
-                      src={campeonato.orgPhotoUrl} loading="lazy"
-                      alt="Logo Org"
-                      className="w-full h-full object-contain relative z-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-xl bg-black border-2 border-white/10 flex items-center justify-center">
-                      <img
-                        src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400" loading="lazy"
-                        alt="Logo Default"
-                        className="w-full h-full object-cover opacity-50"
-                      />
+                <div className="space-y-4">
+                  {/* 1. Premiação */}
+                  <div className="flex items-center gap-4 py-1">
+                    <div
+                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Coins
+                          className="w-5 h-5"
+                          style={{ color: campeonato.themeColor || '#FFB700' }}
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                        Premiação Total
+                      </h4>
+                      <p className="text-sm font-bold text-white/80">
+                        {campeonato.premio}
+                      </p>
+                      {campeonato.temOutrosPremios && (
+                        <p className="text-[9px] font-medium text-white/40 mt-1 leading-tight">
+                          {campeonato.outrosPremios}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="flex flex-col items-center text-center">
-                  <p className="text-xl font-black text-white uppercase tracking-widest leading-tight mb-3">
-                    {campeonato.org}
-                  </p>
-                  <div className="flex items-center gap-2 py-2 px-4 rounded-lg bg-white/5 border border-white/5 opacity-40">
-                    <ShieldCheck
-                      className="w-3.5 h-3.5"
-                      style={{ color: "#00FF41" }}
-                    />
-                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">
-                      Organizador Oficial
-                    </span>
+                  {/* 2. Taxa */}
+                  <div className="flex items-center gap-4 py-1">
+                    <div
+                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: 'linear-gradient(135deg, #00D4FF, rgba(255,255,255,0.1))'
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <CreditCard
+                          className="w-5 h-5"
+                          style={{ color: "#00D4FF" }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                        Taxa de Inscrição
+                      </h4>
+                      <p className="text-sm font-bold text-white/80">
+                        {campeonato.taxa}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3. Data */}
+                  <div className="flex items-center gap-4 py-1">
+                    <div
+                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: 'linear-gradient(135deg, #FF6600, rgba(255,255,255,0.1))'
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Calendar
+                          className="w-5 h-5"
+                          style={{ color: "#FF6600" }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                        Data
+                      </h4>
+                      <p className="text-sm font-bold text-white/80">
+                        {formatFullDate(campeonato.data)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tier */}
+                  <div className="flex items-center gap-4 py-1">
+                    <div
+                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: 'linear-gradient(135deg, #00FFD4, rgba(255,255,255,0.1))'
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Diamond size={18} color="#00FFD4" />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                        Tier
+                      </h4>
+                      <p className="text-sm font-bold text-white/80">
+                        {(campeonato as any).tier || "Free Elo"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 4. Vagas */}
+                  <div className="flex items-center gap-4 py-1">
+                    <div
+                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                      style={{
+                        clipPath: CUT_BADGE,
+                        background: 'linear-gradient(135deg, #BF00FF, rgba(255,255,255,0.1))'
+                      }}
+                    >
+                      <div
+                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Users className="w-5 h-5" style={{ color: "#BF00FF" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                        Vagas / Times
+                      </h4>
+                      <p className="text-sm font-bold text-white/80">
+                        {
+                          (campeonato.timesInscritos || []).filter(
+                            (t: any) => t.status === "approved" || !t.status,
+                          ).length
+                        }{" "}
+                        / {campeonato.vagas}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Regulamento no Mobile - Mesmo tamanho e proporção do botão de inscrição, em cor neutra */}
+            {/* Organization Card */}
+            <div
+              className="relative p-[1.5px] shadow-2xl transition-all"
+              style={{
+                clipPath: CUT_FRAME,
+                background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}40, rgba(255,255,255,0.03) 100%)`,
+              }}
+            >
+              <div
+                className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-4"
+                style={{ clipPath: CUT_FRAME_INNER }}
+              >
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
+                  Responsável
+                </h3>
+
+                <div className="flex flex-col items-center justify-center py-4 w-full">
+                  {/* Organization Logo */}
+                  <div
+                    className="w-44 h-44 p-[1.5px] flex items-center justify-center mb-5 relative overflow-hidden group hover:scale-105 transition-transform"
+                    style={{
+                      clipPath: CUT_FRAME,
+                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
+                    }}
+                  >
+                    <div
+                      className="w-full h-full bg-[#0c0c10] flex items-center justify-center overflow-hidden p-3"
+                      style={{ clipPath: CUT_FRAME_INNER }}
+                    >
+                      {campeonato.orgPhotoUrl ? (
+                        <img
+                          src={campeonato.orgPhotoUrl} loading="lazy"
+                          alt="Logo Org"
+                          className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
+                        />
+                      ) : (
+                        <img
+                          src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400" loading="lazy"
+                          alt="Logo Default"
+                          className="w-full h-full object-cover opacity-50"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center text-center">
+                    <p className="text-lg font-black text-white uppercase tracking-widest leading-tight mb-2">
+                      {campeonato.org}
+                    </p>
+                    <div
+                      className="flex items-center gap-2 py-1.5 px-3 bg-white/5 border border-white/5 opacity-60"
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      <ShieldCheck
+                        className="w-3.5 h-3.5"
+                        style={{ color: "#00FF41" }}
+                      />
+                      <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">
+                        Organizador Oficial
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Regulamento no Mobile */}
             <button
               onClick={() => setIsRulesModalOpen(true)}
-              className="md:hidden w-full py-5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-[0.98] border border-white/10 text-white font-black text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all"
+              className="md:hidden w-full py-4 bg-white/5 hover:bg-white/10 active:scale-[0.98] border border-white/10 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+              style={{ clipPath: CUT_BUTTON }}
             >
-              <FileText className="w-5 h-5 text-white/60" />
-              Regulamento Oficial
+              <FileText className="w-4 h-4 text-white/60" />
+              <span>Regulamento Oficial</span>
             </button>
 
-            {/* Ação de Inscrição ABAIXO do card de status */}
+            {/* Ação de Inscrição */}
             {(role as string) !== "spectator" && (
               <div className="space-y-4">
                 {isRegistered ? (
                   <div
-                    className="w-full py-5 rounded-xl bg-[#00FF41]/10 border border-[#00FF41]/20 font-black text-base uppercase tracking-widest flex items-center justify-center gap-3"
-                    style={{ color: "#00FF41" }}
+                    className="w-full py-4.5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 bg-[#00FF41]/10 border border-[#00FF41]/30"
+                    style={{
+                      clipPath: CUT_BUTTON,
+                      color: "#00FF41",
+                      boxShadow: '0 0 30px -5px rgba(0,255,65,0.2)'
+                    }}
                   >
-                    <UserCheck className="w-5 h-5" />
-                    Time Inscrito
+                    <UserCheck className="w-4 h-4" />
+                    <span>Time Inscrito</span>
                   </div>
                 ) : campeonato.status === "abertas" ||
                   campeonato.status === "inscricoes_abertas" ? (
                   <button
                     onClick={() => setIsRegistrationModalOpen(true)}
-                    className="w-full py-5 rounded-xl text-black font-black text-base uppercase tracking-widest transition-all flex items-center justify-center gap-3"
+                    className="w-full py-4.5 text-black font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                     style={{
-                      backgroundColor: campeonato.themeColor,
-                      boxShadow: `0 0 40px ${campeonato.themeColor}33`,
+                      clipPath: CUT_BUTTON,
+                      backgroundColor: campeonato.themeColor || '#FFB700',
+                      boxShadow: `0 0 40px -5px ${campeonato.themeColor || '#FFB700'}66`,
                     }}
                   >
-                    <Trophy className="w-5 h-5" />
-                    Garantir Vaga Agora
+                    <Trophy className="w-4 h-4" />
+                    <span>Garantir Vaga Agora</span>
                   </button>
                 ) : (
-                  <div className="w-full py-5 rounded-xl bg-white/5 border border-white/10 text-white/20 font-black text-base uppercase tracking-widest flex items-center justify-center gap-3 grayscale cursor-not-allowed">
-                    <AlertCircle className="w-5 h-5" />
-                    {campeonato.status === "breve" ||
-                    campeonato.status === "inscricoes_em_breve"
-                      ? "Inscrições em Breve"
-                      : "Inscrições Encerradas"}
+                  <div
+                    className="w-full py-4.5 bg-white/5 border border-white/10 text-white/30 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 cursor-not-allowed"
+                    style={{ clipPath: CUT_BUTTON }}
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    <span>
+                      {campeonato.status === "breve" ||
+                      campeonato.status === "inscricoes_em_breve"
+                        ? "Inscrições em Breve"
+                        : "Inscrições Encerradas"}
+                    </span>
                   </div>
                 )}
-                <p className="text-[10px] text-white/20 text-center uppercase font-bold px-4 leading-relaxed tracking-wider">
+                <p className="text-[9px] text-white/30 text-center uppercase font-bold px-4 leading-relaxed tracking-wider">
                   {isRegistered
                     ? "Sua inscrição está sendo processada pela organização. Acompanhe pelo seu perfil."
                     : "Vagas confirmadas pela organização. Sem custo surpresa: você vê a taxa antes de confirmar."}

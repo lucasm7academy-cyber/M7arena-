@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-18T04:44:22.080Z",
+  "updatedAt": "2026-08-20T03:23:55.249Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1782,14 +1782,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-16T05:10:34.804Z",
-      "agent": "deepseek",
-      "summary": "Ajuste na tela de partida finalizada: mantém o lineup de vagas (cards Blue/Red de jogadores) e remove APENAS o título 'Blue-Side'/'Red-Side' (barra chanfrada colorida) quando sala.estado === 'encerrada'. Commit 0e49e50 na branch feat/chat-sala (branch local tinha trocado; push criou origin/feat/chat-sala), merge ff-only na main da VPS, rebuild nginx. Site 200, bundle SalaMod1-DPVUr55G.js com condição t.estado!==\"encerrada\" no título confirmada. Atenção: branch local ficou em feat/chat-sala com trabalho não-commitado de outra sessão (chat-sala) que NÃO foi tocado.",
-      "touched": [
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
       "at": "2026-08-16T05:38:21.894Z",
       "agent": "deepseek",
       "summary": "Chat de sala (ADR-040) implementado via subagent-driven, SEM commits, branch feat/chat-sala. 8 tasks + fix final, todas aprovadas (0 Critical). Backend: migration 0018 sala_mensagens (journal 0014-0017 reconstruido, ADR-041), GET /api/matches/:id/mensagens (participante/staff, purge preguiçoso), chat_send no realtime (ban/Riot/rate limit 1s+40/5min, INSERT, fan-out), purge TTL 5min no cron. Front: SDK, useSalaRealtime/useSalaSimples (enviarChat), useSalaChat (historico+autoexclusao 5min+naoLidas), ChatDaSala canto inf. direito, integracao SalaMod1 (gate estados ativos + participante/staff). tsc api+web exit 0, vite build ok. PENDENTE: deploy VPS (aplicar 0018 via psql E reconciliar __drizzle_migrations) + teste manual 2 contas. Minors: chatTimestamps sem eviction; onReconnect de visitante dispara GET 403.",
@@ -2114,6 +2106,14 @@
         "web/src/components/partidas/CardJogador.tsx",
         "web/src/components/partidas/VagaSlot.tsx",
         "web/src/pages/SalaMod1.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-20T03:23:55.248Z",
+      "agent": "gemini",
+      "summary": "Redesign completo Cut-Edge aplicado na página de detalhes do campeonato (CampeonatoDetalhes.tsx) e todos os seus subcomponentes, modais e abas",
+      "touched": [
         "web/src/pages/CampeonatoDetalhes.tsx"
       ]
     }
