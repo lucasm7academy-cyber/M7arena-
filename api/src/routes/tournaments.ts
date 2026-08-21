@@ -5,6 +5,7 @@ import { users, userSessions } from "../../../db/schema/identidade.js";
 import { tournaments, tournamentTeams, tournamentMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket } from "../lib/tournament-store.js";
+import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 
 export const tournamentsRouter = Router();
 
@@ -23,8 +24,7 @@ async function getAuthUser(req: any) {
   return user || null;
 }
 
-/** Gera slug único a partir do título — padrão legado, com sufixo anti-colisão. */
-async function generateSlug(titulo: string) {
+/** Gera slug único a partir do título — padrão legado, com sufixo anti-colisão. */async function generateSlug(titulo: string) {
   const base =
     titulo
       .toLowerCase()
@@ -66,6 +66,36 @@ function legacyScalarsToDb(body: any) {
     ...(body.regulamento !== undefined ? { regulamento: body.regulamento ?? null } : {}),
     ...(body.theme_color !== undefined ? { themeColor: body.theme_color ?? "#FFB700" } : {}),
   };
+}
+
+/**
+ * Desempate automático (ADR-046): ao finalizar jogos de um grupo, anexa jogos
+ * de "DESEMPATE - {grupo}" quando há empate na fronteira de classificação.
+ * Persiste via merge com chave determinística (idempotente).
+ */
+async function applyAutoTiebreakers(id: string, incoming: any[]) {
+  const finalizedFases = new Set<string>();
+  for (const j of incoming || []) {
+    if (j.status === "finalizado" && j.fase) finalizedFases.add(j.fase);
+  }
+  if (!finalizedFases.size) return;
+
+  const legacy = await toLegacyTournament(id);
+  if (!legacy) return;
+
+  let next = legacy as any;
+  for (const fase of finalizedFases) {
+    next = appendTiebreakers(next, fase);
+  }
+
+  const novos = (next.cronograma || []).filter((j: any) => !j.id);
+  if (!novos.length) return;
+
+  const withKeys = novos.map((j: any) => ({
+    ...j,
+    id: `${id}-desempate-${(j.fase || "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${j.timeA}-${j.timeB}`,
+  }));
+  await storeCronograma(id, withKeys, true);
 }
 
 // ── GET /api/tournaments — lista em shape legado ───────────────────────────
@@ -273,6 +303,7 @@ tournamentsRouter.put("/:id/cronograma", async (req, res) => {
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
     await storeCronograma(id, req.body?.cronograma || [], false);
+    await applyAutoTiebreakers(id, req.body?.cronograma || []);
     return res.json(await toLegacyTournament(id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao atualizar cronograma" });
@@ -290,6 +321,7 @@ tournamentsRouter.put("/:id/cronograma/merge", async (req, res) => {
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
     await storeCronograma(id, req.body?.jogos || req.body?.cronograma || [], true);
+    await applyAutoTiebreakers(id, req.body?.jogos || req.body?.cronograma || []);
     return res.json(await toLegacyTournament(id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao mesclar cronograma" });
