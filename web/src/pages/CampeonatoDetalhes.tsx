@@ -391,107 +391,6 @@ const CampeonatoDetalhes = () => {
   // Estado para os jogos das chaves
   const [bracketData, setBracketData] = useState<any>(INITIAL_BRACKET_DATA);
 
-  // --- Global Synchronization Logic ---
-  const syncMatchToHistory = (
-    matchData: any,
-    type: "group" | "bracket" | "schedule",
-  ) => {
-    try {
-      const saved = localStorage.getItem("m7_match_history");
-      const history = (saved && saved !== "undefined") ? JSON.parse(saved) : [];
-      const matchId =
-        matchData.id ||
-        `${id}-${type}-${matchData.t1 || matchData.timeA}-${matchData.t2 || matchData.timeB}-${matchData.timestamp || Date.now()}`;
-
-      const newMatchRecord = {
-        id: matchId,
-        tournamentId: id,
-        tournamentTitle: campeonato.titulo,
-        t1: matchData.t1 || matchData.timeA,
-        t2: matchData.t2 || matchData.timeB,
-        s1:
-          matchData.s1 !== undefined
-            ? matchData.s1
-            : parseInt(matchData.placar?.split(" - ")[0] || "0"),
-        s2:
-          matchData.s2 !== undefined
-            ? matchData.s2
-            : parseInt(matchData.placar?.split(" - ")[1] || "0"),
-        winner:
-          matchData.winner ||
-          (matchData.status === "finalizado"
-            ? parseInt(matchData.placar?.split(" - ")[0]) >
-              parseInt(matchData.placar?.split(" - ")[1])
-              ? matchData.timeA
-              : matchData.timeB
-            : null),
-        type,
-        fase: matchData.fase || matchData.round || "N/A",
-        timestamp: new Date().toISOString(),
-      };
-
-      const existingIndex = history.findIndex((m: any) => m.id === matchId);
-      if (existingIndex >= 0) {
-        history[existingIndex] = newMatchRecord;
-      } else {
-        history.push(newMatchRecord);
-      }
-
-      localStorage.setItem("m7_match_history", JSON.stringify(history));
-      updateGlobalTeamStats();
-    } catch (e) {
-      console.error("Error syncing match:", e);
-    }
-  };
-
-  const updateGlobalTeamStats = () => {
-    try {
-      const saved = localStorage.getItem("m7_match_history");
-      const history = (saved && saved !== "undefined") ? JSON.parse(saved) : [];
-      const stats: any = {};
-
-      history.forEach((match: any) => {
-        [match.t1, match.t2].forEach((t) => {
-          if (t && t !== "TBD" && !stats[t]) {
-            stats[t] = {
-              wins: 0,
-              losses: 0,
-              draws: 0,
-              gp: 0,
-              gc: 0,
-              matches: 0,
-            };
-          }
-        });
-
-        if (!match.t1 || !match.t2 || match.t1 === "TBD" || match.t2 === "TBD")
-          return;
-
-        stats[match.t1].matches++;
-        stats[match.t2].matches++;
-        stats[match.t1].gp += match.s1;
-        stats[match.t1].gc += match.s2;
-        stats[match.t2].gp += match.s2;
-        stats[match.t2].gc += match.s1;
-
-        // Cada ponto no placar conta como vitória/derrota individual
-        stats[match.t1].wins += match.s1;
-        stats[match.t1].losses += match.s2;
-        stats[match.t2].wins += match.s2;
-        stats[match.t2].losses += match.s1;
-
-        if (match.s1 === match.s2 && match.type === "group" && match.s1 === 0) {
-          stats[match.t1].draws++;
-          stats[match.t2].draws++;
-        }
-      });
-
-      localStorage.setItem("m7_team_stats", JSON.stringify(stats));
-    } catch (e) {
-      console.error("Error updating team stats:", e);
-    }
-  };
-
   const sortStandings = (a: any, b: any) => {
     // 1. Saldo de vitórias (V − D) — Mais importante.
     //    Mais justo que vitórias brutas quando os times jogam números
@@ -1468,13 +1367,6 @@ const CampeonatoDetalhes = () => {
     }
     // --------------------------------------
 
-    // Sync to history if finished
-    if (match.status === "finalizado") {
-      if (!match.id) {
-        match.id = `${id}-schedule-${match.timeA}-${match.timeB}-${match.data}`;
-      }
-      syncMatchToHistory(match, "schedule");
-    }
     setCampeonato(updatedCampeonato);
 
     // ⚠️ RACE SAFETY: usa mergeCronograma com APENAS o jogo editado
