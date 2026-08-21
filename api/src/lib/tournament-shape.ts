@@ -113,13 +113,28 @@ export function buildCronograma(data: NonNullable<Awaited<ReturnType<typeof load
   }));
 }
 
+/** Ordenação da classificação: saldo (V−D), menos derrotas, mais jogos, alfabético. */
+function sortStandings(a: any, b: any) {
+  const saldoA = (a.v || 0) - (a.d || 0);
+  const saldoB = (b.v || 0) - (b.d || 0);
+  if (saldoB !== saldoA) return saldoB - saldoA;
+  if (a.d !== b.d) return a.d - b.d;
+  if (b.matches !== a.matches) return b.matches - a.matches;
+  return (a.nome || "").localeCompare(b.nome || "");
+}
+
 /** `classificacao` — derivada do cronograma, com fallback para a tabela manual. */
 export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof loadTournamentData>>>) {
   const { t, matches, teamRows, standings } = data;
   const approved = teamRows.filter((r) => r.tournament_teams.status === "approved");
 
+  // Jogos de chaveamento ("MATA-MATA (CHAVEAMENTO)") são só visuais e não contam.
+  const finished = matches.filter((m) => {
+    const fase = m.phaseLabel || m.phase;
+    return m.status === "finalizado" && fase !== "MATA-MATA (CHAVEAMENTO)";
+  });
+
   // Se não há jogos finalizados e há classificação manual → devolve a manual
-  const finished = matches.filter((m) => m.status === "finalizado");
   if (finished.length === 0 && standings.length > 0) {
     return standings.map((s) => ({
       rank: s.rank,
@@ -131,6 +146,8 @@ export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof l
       j: s.j,
       cor: s.cor,
       logo: s.logo,
+      matches: 0,
+      icone: "ShieldCheck",
     }));
   }
 
@@ -138,7 +155,7 @@ export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof l
   approved.forEach((r) => {
     stats[r.teams.tag] = {
       rank: 0, nome: r.teams.name, tag: r.teams.tag, logo: r.teams.logoUrl,
-      v: 0, d: 0, wo: 0, j: 0, cor: r.teams.logoUrl ? "#FFB700" : "#FFB700",
+      v: 0, d: 0, wo: 0, j: 0, matches: 0, cor: "#FFB700", icone: "ShieldCheck",
     };
   });
 
@@ -150,16 +167,16 @@ export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof l
     const a = m.teamATag, b = m.teamBTag;
     if (!a || !b) return;
     if (isLiga) {
-      if (stats[a]) { stats[a].v += s1; stats[a].d += s2; stats[a].j += s1 + s2; }
-      if (stats[b]) { stats[b].v += s2; stats[b].d += s1; stats[b].j += s1 + s2; }
+      if (stats[a]) { stats[a].matches++; stats[a].v += s1; stats[a].d += s2; stats[a].j += s1 + s2; }
+      if (stats[b]) { stats[b].matches++; stats[b].v += s2; stats[b].d += s1; stats[b].j += s1 + s2; }
     } else {
-      if (stats[a]) { stats[a].j++; if (s1 > s2) stats[a].v++; else if (s1 < s2) stats[a].d++; }
-      if (stats[b]) { stats[b].j++; if (s2 > s1) stats[b].v++; else if (s2 < s1) stats[b].d++; }
+      if (stats[a]) { stats[a].matches++; stats[a].j++; if (s1 > s2) stats[a].v++; else if (s1 < s2) stats[a].d++; }
+      if (stats[b]) { stats[b].matches++; stats[b].j++; if (s2 > s1) stats[b].v++; else if (s2 < s1) stats[b].d++; }
     }
   });
 
   return Object.values(stats)
-    .sort((a: any, b: any) => b.v - a.v || a.d - b.d || a.j - b.j)
+    .sort(sortStandings)
     .map((t: any, i: number) => ({ ...t, rank: i + 1 }));
 }
 
