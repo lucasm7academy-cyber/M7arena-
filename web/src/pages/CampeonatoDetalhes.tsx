@@ -74,14 +74,8 @@ const CampeonatoDetalhesInner = ({
     setIsScheduleEditModalOpen,
     isAdminMatchModalOpen,
     setIsAdminMatchModalOpen,
-    isPendingMatchesOpen,
-    setIsPendingMatchesOpen,
-    isAllPendingOpen,
-    setIsAllPendingOpen,
     editingMatchIndex,
-    setEditingMatchIndex,
     jogoStatusAtStart,
-    setJogoStatusAtStart,
     editFormData,
     setEditFormData,
     adminMatchData,
@@ -102,12 +96,8 @@ const CampeonatoDetalhesInner = ({
     myTeams,
     expandedTeam,
     setExpandedTeam,
-    filteredCronograma,
-    myPendingMatches,
-    allPendingMatches,
     role,
     user,
-    getMyTeamInMatch,
     handleTabClick,
     handleBracketScoreChange,
     handleUpdateSchedule,
@@ -303,7 +293,7 @@ const CampeonatoDetalhesInner = ({
               {activeTab === "groups" && <Grupos campeonato={campeonato} />}
 
               {activeTab === "schedule" && (
-                <Cronograma campeonato={campeonato} isAdmin={isAdmin} myPendingMatches={myPendingMatches} allPendingMatches={allPendingMatches} filteredCronograma={filteredCronograma} getMyTeamInMatch={getMyTeamInMatch} getIcon={getIcon} formatDayOfWeek={formatDayOfWeek} formatFullDate={formatFullDate} handleDeleteMatch={handleDeleteMatch} isPendingMatchesOpen={isPendingMatchesOpen} setIsPendingMatchesOpen={setIsPendingMatchesOpen} isAllPendingOpen={isAllPendingOpen} setIsAllPendingOpen={setIsAllPendingOpen} setEditingMatchIndex={setEditingMatchIndex} setJogoStatusAtStart={setJogoStatusAtStart} setEditFormData={setEditFormData} setIsScheduleEditModalOpen={setIsScheduleEditModalOpen} setAdminMatchData={setAdminMatchData} adminMatchData={adminMatchData} setIsAdminMatchModalOpen={setIsAdminMatchModalOpen} />
+                <Cronograma />
               )}
 
               {activeTab === "bracket" && <Chaves key="bracket" campeonato={campeonato} isAdmin={isAdmin} isBracketModalOpen={isBracketModalOpen} setIsBracketModalOpen={setIsBracketModalOpen} bracketRef={bracketRef} bracketHandlers={bracketHandlers} bracketScale={bracketScale} bracketData={bracketData} handleBracketScoreChange={handleBracketScoreChange} bracketAvailableTeams={bracketAvailableTeams} />}
