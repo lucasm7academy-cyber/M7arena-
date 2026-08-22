@@ -108,7 +108,6 @@ const CampeonatoDetalhesInner = ({
     role,
     user,
     getMyTeamInMatch,
-    getDynamicStandings,
     handleTabClick,
     handleBracketScoreChange,
     handleUpdateSchedule,
@@ -297,9 +296,9 @@ const CampeonatoDetalhesInner = ({
             </div>
 
             <AnimatePresence mode="wait">
-              {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getDynamicStandings={getDynamicStandings} getIcon={getIcon} />}
+              {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getIcon={getIcon} />}
 
-              {activeTab === "history" && <Historico key="history" campeonato={campeonato} getDynamicStandings={getDynamicStandings} expandedTeam={expandedTeam} setExpandedTeam={setExpandedTeam} />}
+              {activeTab === "history" && <Historico key="history" campeonato={campeonato} expandedTeam={expandedTeam} setExpandedTeam={setExpandedTeam} />}
 
               {activeTab === "groups" && <Grupos campeonato={campeonato} />}
 

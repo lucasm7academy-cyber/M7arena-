@@ -67,7 +67,6 @@ export interface CampeonatoContextType {
   role: string | undefined;
   user: any;
   getMyTeamInMatch: (match: any) => any;
-  getDynamicStandings: () => any;
   setActiveTab: (t: string) => void;
   setIsBracketModalOpen: (v: boolean) => void;
   setIsRegistrationModalOpen: (v: boolean) => void;
@@ -216,126 +215,6 @@ export function CampeonatoProvider({
 
   // Estado para os jogos das chaves
   const [bracketData, setBracketData] = useState<any>(INITIAL_BRACKET_DATA);
-
-  const sortStandings = (a: any, b: any) => {
-    // 1. Saldo de vitórias (V − D) — Mais importante.
-    //    Mais justo que vitórias brutas quando os times jogam números
-    //    diferentes de partidas: um time eliminado que jogou mais (mais V e
-    //    mais D) não fura a fila só por acumular vitórias.
-    const saldoA = (a.v || 0) - (a.d || 0);
-    const saldoB = (b.v || 0) - (b.d || 0);
-    if (saldoB !== saldoA) return saldoB - saldoA;
-    // 2. Menos Derrotas (quando o saldo empata, equivale a maior taxa de vitória)
-    if (a.d !== b.d) return a.d - b.d;
-    // 3. Mais Jogos (Participação)
-    if (b.matches !== a.matches) return b.matches - a.matches;
-    // 4. Alfabetico
-    return (a.nome || "").localeCompare(b.nome || "");
-  };
-
-  const getDynamicStandings = () => {
-    let baseClassificacao = campeonato.classificacao || [];
-
-    const stats: any = {};
-    const teams = (campeonato.timesInscritos || []).filter(
-      (t: any) => t.status === "approved",
-    );
-
-    // If there are no approved teams, fallback to baseClassificacao completely
-    if (teams.length === 0 && baseClassificacao.length > 0) {
-      return baseClassificacao;
-    }
-
-    // Initialize all teams at 0 points
-    teams.forEach((t: any) => {
-      stats[t.tag] = {
-        rank: 0,
-        nome: t.name,
-        tag: t.tag,
-        logo: t.logo,
-        v: 0,
-        d: 0,
-        j: 0,
-        matches: 0,
-        cor: t.cor || "#FFB700",
-        icone: t.icone || "ShieldCheck",
-      };
-    });
-
-    // Processar apenas do cronograma do torneio para ter sincronia perfeita
-    let anyMatches = false;
-    (campeonato.cronograma || []).forEach((jogo: any) => {
-      if (jogo.status !== "finalizado") return;
-      // A chave (bracket) é só visual: jogos "MATA-MATA (CHAVEAMENTO)" não
-      // contam na classificação. Só o que é lançado no cronograma conta.
-      if (jogo.fase === "MATA-MATA (CHAVEAMENTO)") return;
-      anyMatches = true;
-
-      const scores = (jogo.placar || "0 - 0").split(" - ");
-      const s1 = parseInt(scores[0]) || 0;
-      const s2 = parseInt(scores[1]) || 0;
-
-      const teamAData = teams.find((t: any) =>
-        t.tag === jogo.timeA || t.name === jogo.timeA || t.nome === jogo.timeA
-      );
-      const teamBData = teams.find((t: any) =>
-        t.tag === jogo.timeB || t.name === jogo.timeB || t.nome === jogo.timeB
-      );
-
-      const tA = teamAData?.tag || jogo.timeA;
-      const tB = teamBData?.tag || jogo.timeB;
-
-      if (stats[tA]) {
-        stats[tA].matches++;
-        if (campeonato.formato === 'liga') {
-          // Liga: conta partidas individuais (mapas) — 2-1 = 2V + 1D para o vencedor
-          stats[tA].v += s1;
-          stats[tA].d += s2;
-          stats[tA].j += s1 + s2; // J = total de partidas/mapas jogados
-        } else {
-          // Mata-mata: conta resultado da série — quem vence a série ganha 1V
-          stats[tA].j++;
-          if (s1 > s2) {
-            stats[tA].v++; // V = série vencida
-          } else if (s1 < s2) {
-            stats[tA].d++; // D = série perdida
-          }
-        }
-      }
-      if (stats[tB]) {
-        stats[tB].matches++;
-        if (campeonato.formato === 'liga') {
-          // Liga: conta partidas individuais (mapas) — 2-1 = 1V + 2D para o perdedor
-          stats[tB].v += s2;
-          stats[tB].d += s1;
-          stats[tB].j += s1 + s2;
-        } else {
-          // Mata-mata: conta resultado da série
-          stats[tB].j++;
-          if (s2 > s1) {
-            stats[tB].v++;
-          } else if (s2 < s1) {
-            stats[tB].d++;
-          }
-        }
-      }
-    });
-
-    const sorted = Object.values(stats)
-      .sort(sortStandings)
-      .map((t: any, i: number) => ({ ...t, rank: i + 1 }));
-
-    // Se for mata_mata e houver classificação manual sem cronograma
-    if (
-      campeonato.formato === "mata_mata" &&
-      !anyMatches &&
-      baseClassificacao.length > 0
-    ) {
-      return baseClassificacao;
-    }
-
-    return sorted;
-  };
 
   const checkAndAddTiebreakers = (
     currentCampeonato: any,
@@ -1436,7 +1315,6 @@ export function CampeonatoProvider({
     role,
     user,
     getMyTeamInMatch,
-    getDynamicStandings,
     setActiveTab,
     setIsBracketModalOpen,
     setIsRegistrationModalOpen,

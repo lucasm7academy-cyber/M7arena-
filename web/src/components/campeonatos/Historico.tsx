@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { History, ChevronLeft } from "lucide-react";
 import { CUT_FRAME, CUT_FRAME_INNER, CUT_BADGE, CUT_BADGE_INNER, CUT_BUTTON, CUT_BUTTON_INNER } from "./cut-edge";
 
-export const Historico = ({ campeonato, getDynamicStandings, expandedTeam, setExpandedTeam }: any) => {
+export const Historico = ({ campeonato, expandedTeam, setExpandedTeam }: any) => {
   return (
                 <motion.div
                   key="history"
@@ -52,7 +52,7 @@ export const Historico = ({ campeonato, getDynamicStandings, expandedTeam, setEx
                       </div>
 
                       <div className="space-y-3 mt-6">
-                        {(getDynamicStandings() || []).map((time, idx) => (
+                        {(campeonato.classificacao || []).map((time, idx) => (
                           <div
                             key={idx}
                             className="relative p-[1px] transition-all"

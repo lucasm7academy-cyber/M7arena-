@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
 import { CUT_FRAME, CUT_FRAME_INNER, CUT_BADGE, CUT_BADGE_INNER, CUT_BUTTON, CUT_BUTTON_INNER } from "./cut-edge";
 
-export const VisaoGeral = ({ campeonato, getDynamicStandings, getIcon }: any) => {
+export const VisaoGeral = ({ campeonato, getIcon }: any) => {
   return (
                 <motion.div
                   key="overview"
@@ -53,7 +53,7 @@ export const VisaoGeral = ({ campeonato, getDynamicStandings, getIcon }: any) =>
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {getDynamicStandings().map((time, i) => {
+                        {(campeonato.classificacao || []).map((time, i) => {
                           const Icon = getIcon((time as any).icone);
                           return (
                             <div
