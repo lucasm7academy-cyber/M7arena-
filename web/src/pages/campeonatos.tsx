@@ -28,14 +28,34 @@ const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(
 // TTL de 5 minutos; uma nova busca só acontece ao recarregar a aba.
 // ============================================
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
-let _campeonatosCache: { data: any[]; ts: number } | null = null;
+
+interface TournamentCard {
+  id: string;
+  titulo: string;
+  descricao: string;
+  frase?: string;
+  status: string;
+  vagas: number;
+  tier: string;
+  data: string;
+  premio: string;
+  taxa: string;
+  org: string;
+  themeColor: string;
+  cor: string;
+  bgImage: string | null;
+  timesInscritos: any[];
+  formato: string;
+}
+
+let _campeonatosCache: { data: TournamentCard[]; ts: number } | null = null;
 let _imagensCache: Record<string, { logo: string; banner: string }> = {};
 
 // ============================================
 // CARDS DE DESTAQUE (EM BREVE)
 // ============================================
 
-const destaquesCards: any[] = [];
+const destaquesCards: TournamentCard[] = [];
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -68,7 +88,7 @@ const Campeonatos = () => {
   // Estados de filtro e busca
   const [busca, setBusca] = useState('');
   const [filtroModo, setFiltroModo] = useState('todos');
-  const [torneiosCustom, setTorneiosCustom] = useState<any[]>([]);
+  const [torneiosCustom, setTorneiosCustom] = useState<TournamentCard[]>([]);
   const [loadingTorneios, setLoadingTorneios] = useState(true);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [torneioImagens, setTorneioImagens] = useState<Record<string, { logo: string; banner: string }>>(_imagensCache);
@@ -122,7 +142,7 @@ const Campeonatos = () => {
 
       if (cancelled) return;
 
-      const mapped = (data || []).map((t: any) => ({
+      const mapped = (data || []).map((t) => ({
         id: t.id,
         titulo: t.titulo,
         descricao: t.frase || 'Vagas limitadas, premiação em Pix e o melhor do competitivo de LoL.',
@@ -172,8 +192,8 @@ const Campeonatos = () => {
       return matchBusca && matchStatus;
     })
     .sort((a, b) => {
-      const priorityA = (statusPriority as any)[a.status] || 99;
-      const priorityB = (statusPriority as any)[b.status] || 99;
+      const priorityA = statusPriority[a.status] || 99;
+      const priorityB = statusPriority[b.status] || 99;
       return priorityA - priorityB;
     });
 
