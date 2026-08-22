@@ -2,6 +2,8 @@ import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
 import { CUT_BADGE } from "./cut-edge";
 import { BracketMatch } from "./BracketMatch";
+import { UpperRound } from "./UpperRound";
+import { LowerRound } from "./LowerRound";
 
 export const DoubleEliminationBracket = ({
   tournament,
@@ -42,173 +44,6 @@ export const DoubleEliminationBracket = ({
   // Dynamic height based on number of matches in the largest round
   const maxMatchesInRange = bracketTeams / 2;
   const BRACKET_HEIGHT = Math.max(600, maxMatchesInRange * 125);
-
-  const UpperRound = ({
-    count,
-    title,
-    roundKey,
-    colorScheme = "upper",
-    roundIndex = 0,
-    showConnectors = true,
-    themeColor,
-  }: any) => {
-    const MATCH_HEIGHT = 104;
-    const BASE_GAP = 32;
-    const step = Math.pow(2, roundIndex);
-    const topPadding = ((step - 1) * (MATCH_HEIGHT + BASE_GAP)) / 2;
-    const matchGap = (MATCH_HEIGHT + BASE_GAP) * step - MATCH_HEIGHT;
-
-    return (
-      <div className="flex flex-col w-64 shrink-0">
-        {title && (
-          <div className="h-12 flex flex-col items-center justify-center shrink-0">
-            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-1">
-              {title}
-            </span>
-            <div className="w-8 h-[1px] bg-white/10" />
-          </div>
-        )}
-        <div
-          className="flex flex-col relative"
-          style={{ paddingTop: `${topPadding}px`, gap: `${matchGap}px` }}
-        >
-          {[...Array(count)].map((_, i) => {
-            const match = bracketData?.upper?.[roundKey]?.[i] || {};
-            return (
-              <div
-                key={i}
-                className="relative z-10 flex items-center justify-center"
-                style={{ height: `${MATCH_HEIGHT}px` }}
-              >
-                <BracketMatch
-                  themeColor={themeColor}
-                  availableTeams={availableTeams}
-                  t1={match.t1}
-                  t2={match.t2}
-                  s1={match.s1}
-                  s2={match.s2}
-                  winner={match.winner}
-                  isAdmin={isAdmin}
-                  colorScheme={colorScheme}
-                  onScoreChange={(team: any, delta: any) =>
-                    onScoreChange("upper", "none", roundKey, i, team, delta)
-                  }
-                />
-
-                {showConnectors && (
-                  <>
-                    {/* Horizontal exit line */}
-                    <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 w-[42px] md:w-[58px] lg:w-[82px] h-[2px] bg-white/10 pointer-events-none" />
-
-                    {/* Vertical and horizontal step connector */}
-                    {i % 2 === 0 && count > 1 && (
-                      <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 pointer-events-none">
-                        <div
-                          className="absolute right-0 w-[2px] bg-white/10"
-                          style={{
-                            height: `${matchGap + MATCH_HEIGHT}px`,
-                            top: "1px",
-                          }}
-                        />
-                        <div
-                          className="absolute right-0 w-[38px] md:w-[50px] lg:w-[68px] h-[2px] translate-x-full bg-white/10"
-                          style={{ top: `${(matchGap + MATCH_HEIGHT) / 2}px` }}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const LowerRound = ({
-    count,
-    title,
-    roundKey,
-    colorScheme = "lower",
-    roundIndex = 0,
-    showConnectors = true,
-    nextRoundCount,
-    themeColor,
-  }: any) => {
-    const MATCH_HEIGHT = 104;
-    const BASE_GAP = 32;
-    const step = Math.pow(2, Math.max(0, roundIndex));
-    const topPadding = ((step - 1) * (MATCH_HEIGHT + BASE_GAP)) / 2;
-    const matchGap = (MATCH_HEIGHT + BASE_GAP) * step - MATCH_HEIGHT;
-
-    return (
-      <div className="flex flex-col w-64 shrink-0">
-        {title && (
-          <div className="h-12 flex flex-col items-center justify-center shrink-0">
-            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-1">
-              {title}
-            </span>
-            <div className="w-8 h-[1px] bg-white/10" />
-          </div>
-        )}
-        <div
-          className="flex flex-col relative"
-          style={{ paddingTop: `${topPadding}px`, gap: `${matchGap}px` }}
-        >
-          {[...Array(count)].map((_, i) => {
-            const match = bracketData?.lower?.[roundKey]?.[i] || {};
-            const isMerging = nextRoundCount && nextRoundCount < count;
-
-            return (
-              <div
-                key={i}
-                className="relative z-10 flex items-center justify-center"
-                style={{ height: `${MATCH_HEIGHT}px` }}
-              >
-                <BracketMatch
-                  themeColor={themeColor}
-                  availableTeams={availableTeams}
-                  t1={match.t1}
-                  t2={match.t2}
-                  s1={match.s1}
-                  s2={match.s2}
-                  winner={match.winner}
-                  isAdmin={isAdmin}
-                  colorScheme={colorScheme}
-                  onScoreChange={(team: any, delta: any) =>
-                    onScoreChange("lower", "none", roundKey, i, team, delta)
-                  }
-                />
-
-                {showConnectors && (
-                  <>
-                    <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 w-[42px] md:w-[58px] lg:w-[82px] h-[2px] bg-white/10 pointer-events-none" />
-
-                    {isMerging && i % 2 === 0 && (
-                      <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 pointer-events-none">
-                        <div
-                          className="absolute right-0 w-[2px] bg-white/10"
-                          style={{
-                            height: `${matchGap + MATCH_HEIGHT}px`,
-                            top: "1px",
-                          }}
-                        />
-                        <div
-                          className="absolute right-0 w-[38px] md:w-[50px] lg:w-[68px] h-[2px] translate-x-full bg-white/10"
-                          style={{ top: `${(matchGap + MATCH_HEIGHT) / 2}px` }}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   const grandFinalMatch = bracketData?.grandFinal || {};
 
@@ -307,6 +142,10 @@ export const DoubleEliminationBracket = ({
                   count={32}
                   roundKey="r64"
                   roundIndex={0}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 32 && (
@@ -316,6 +155,10 @@ export const DoubleEliminationBracket = ({
                   count={16}
                   roundKey="r32"
                   roundIndex={bracketTeams === 32 ? 0 : 1}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 16 && (
@@ -327,6 +170,10 @@ export const DoubleEliminationBracket = ({
                   roundIndex={
                     bracketTeams === 16 ? 0 : bracketTeams === 32 ? 1 : 2
                   }
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 8 && (
@@ -344,6 +191,10 @@ export const DoubleEliminationBracket = ({
                           ? 2
                           : 3
                   }
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 4 && (
@@ -363,6 +214,10 @@ export const DoubleEliminationBracket = ({
                             ? 3
                             : 4
                   }
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams > 2 && (
@@ -373,6 +228,10 @@ export const DoubleEliminationBracket = ({
                   roundKey="final"
                   roundIndex={finalRoundIndex}
                   showConnectors={false}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
             </div>
@@ -399,6 +258,10 @@ export const DoubleEliminationBracket = ({
                   colorScheme="lower"
                   roundIndex={0}
                   nextRoundCount={8}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 32 && (
@@ -410,6 +273,10 @@ export const DoubleEliminationBracket = ({
                   colorScheme="lower"
                   roundIndex={0}
                   nextRoundCount={4}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 16 && (
@@ -421,6 +288,10 @@ export const DoubleEliminationBracket = ({
                   colorScheme="lower"
                   roundIndex={bracketTeams === 16 ? 0 : 1}
                   nextRoundCount={4}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 16 && (
@@ -432,6 +303,10 @@ export const DoubleEliminationBracket = ({
                   colorScheme="lower"
                   roundIndex={bracketTeams === 16 ? 0 : 1}
                   nextRoundCount={2}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 8 && (
@@ -445,6 +320,10 @@ export const DoubleEliminationBracket = ({
                     bracketTeams === 8 ? 0 : bracketTeams === 16 ? 1 : 2
                   }
                   nextRoundCount={2}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 8 && (
@@ -458,6 +337,10 @@ export const DoubleEliminationBracket = ({
                     bracketTeams === 8 ? 0 : bracketTeams === 16 ? 1 : 2
                   }
                   nextRoundCount={1}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               {bracketTeams >= 4 && (
@@ -471,6 +354,10 @@ export const DoubleEliminationBracket = ({
                     bracketTeams === 8 ? 1 : bracketTeams === 16 ? 2 : 3
                   }
                   nextRoundCount={1}
+                  bracketData={bracketData}
+                  availableTeams={availableTeams}
+                  isAdmin={isAdmin}
+                  onScoreChange={onScoreChange}
                 />
               )}
               <LowerRound
@@ -481,6 +368,10 @@ export const DoubleEliminationBracket = ({
                 colorScheme="lower"
                 roundIndex={lowerFinalRoundIndex}
                 showConnectors={false}
+                bracketData={bracketData}
+                availableTeams={availableTeams}
+                isAdmin={isAdmin}
+                onScoreChange={onScoreChange}
               />
             </div>
           </div>
