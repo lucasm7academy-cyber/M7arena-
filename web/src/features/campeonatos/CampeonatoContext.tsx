@@ -674,13 +674,10 @@ export function CampeonatoProvider({
     setIsRegistrationModalOpen(false);
   };
 
-  // Intercept bracket tab click to open modal (comportamento original)
+  // Aba "Chaves" renderiza o bracket inline no body; tela cheia fica no
+  // botão "Ver em Tela Cheia" do próprio Chaves (decisão do usuário).
   const handleTabClick = (tabId: string) => {
-    if (tabId === "bracket") {
-      setIsBracketModalOpen(true);
-    } else {
-      setActiveTab(tabId);
-    }
+    setActiveTab(tabId);
   };
 
   const getStatsForTeamForCalculation = (
