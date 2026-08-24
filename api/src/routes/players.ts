@@ -299,11 +299,10 @@ playersRouter.post("/refresh-elos", async (req, res) => {
 // (tier, soloq_wins/losses, flexq_wins/losses, lane, lane2, is_vip) que as
 // telas do fork (players.tsx) já consomem — mesmo que o dado viva aninhado em
 // game_accounts.metadata.elo_cache no schema novo.
+// PÚBLICO (paridade com a RPC antiga, SECURITY DEFINER): a página /players é
+// um "diretório público de jogadores" — visitante e logado veem a mesma lista.
 playersRouter.get("/filtrados", async (req, res) => {
   try {
-    const user = await getAuthUser(req);
-    if (!user) return res.status(401).json({ error: "Não autenticado" });
-
     const offset = Math.max(0, Number(req.query.p_offset ?? 0) || 0);
     const limit = Math.min(100, Number(req.query.p_limit ?? 20) || 20);
     const search = String(req.query.p_search ?? "").trim();

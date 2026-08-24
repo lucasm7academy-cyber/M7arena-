@@ -568,16 +568,24 @@ export default function Perfil() {
                   <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Primária</p>
                   <button onClick={() => setLaneOpen(v => !v)} className="cursor-pointer">
                     {laneAtual ? <img src={getLaneUrl(laneAtual.file)} className="w-16 h-16 object-contain" style={{ filter: `drop-shadow(0 0 12px rgba(255,184,0,0.3))` }} /> 
-                      : <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center" style={{ clipPath: CUT_BUTTON }}><ChevronDown className="w-6 h-6 text-zinc-500" /></div>}
+                      : (
+                        <div className="w-16 h-16 p-[1px] bg-white/15 hover:bg-white/30 transition-colors" style={{ clipPath: CUT_BUTTON }}>
+                          <div className="w-full h-full bg-[#0c0c10] flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                            <ChevronDown className="w-6 h-6 text-zinc-500" />
+                          </div>
+                        </div>
+                      )}
                   </button>
                   <AnimatePresence>{laneOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.08 }} 
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-48 bg-[#0a0a0c]/98 backdrop-blur-2xl border border-[#FFB700]/30 shadow-2xl overflow-hidden z-[9999]"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-48 p-[1px] bg-[#FFB700]/40 shadow-2xl overflow-hidden z-[9999]"
                     style={{ clipPath: CUT_FRAME }}>
-                    <div className="p-2 space-y-1">{LANES.map(l => <button key={l.id} onClick={() => handleLane(l.id)} 
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer ${lane === l.id ? 'bg-primary/20 text-primary' : 'text-zinc-300 hover:bg-white/5'}`}
-                      style={{ clipPath: CUT_BADGE }}>
-                      <img src={getLaneUrl(l.file)} className="w-5 h-5 object-contain" /><span className="text-xs font-bold uppercase">{l.label}</span>
-                    </button>)}</div>
+                    <div className="w-full bg-[#0a0a0c]/98 backdrop-blur-2xl p-2 space-y-1" style={{ clipPath: CUT_FRAME_INNER }}>
+                      {LANES.map(l => <button key={l.id} onClick={() => handleLane(l.id)} 
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer ${lane === l.id ? 'bg-primary/20 text-primary' : 'text-zinc-300 hover:bg-white/5'}`}
+                        style={{ clipPath: CUT_BADGE }}>
+                        <img src={getLaneUrl(l.file)} className="w-5 h-5 object-contain" /><span className="text-xs font-bold uppercase">{l.label}</span>
+                      </button>)}
+                    </div>
                   </motion.div>}</AnimatePresence>
                 </div>
                 
@@ -585,16 +593,24 @@ export default function Perfil() {
                   <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Secundária</p>
                   <button onClick={() => setLane2Open(v => !v)} className="cursor-pointer">
                     {lane2Atual ? <img src={getLaneUrl(lane2Atual.file)} className="w-16 h-16 object-contain" style={{ filter: `drop-shadow(0 0 12px rgba(255,184,0,0.3))` }} /> 
-                      : <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center" style={{ clipPath: CUT_BUTTON }}><ChevronDown className="w-6 h-6 text-zinc-500" /></div>}
+                      : (
+                        <div className="w-16 h-16 p-[1px] bg-white/15 hover:bg-white/30 transition-colors" style={{ clipPath: CUT_BUTTON }}>
+                          <div className="w-full h-full bg-[#0c0c10] flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                            <ChevronDown className="w-6 h-6 text-zinc-500" />
+                          </div>
+                        </div>
+                      )}
                   </button>
                   <AnimatePresence>{lane2Open && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.08 }} 
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-48 bg-[#0a0a0c]/98 backdrop-blur-2xl border border-[#FFB700]/30 shadow-2xl overflow-hidden z-[9999]"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-48 p-[1px] bg-[#FFB700]/40 shadow-2xl overflow-hidden z-[9999]"
                     style={{ clipPath: CUT_FRAME }}>
-                    <div className="p-2 space-y-1">{LANES.map(l => <button key={l.id} onClick={() => handleLane(l.id, true)} 
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer ${lane2 === l.id ? 'bg-primary/20 text-primary' : 'text-zinc-300 hover:bg-white/5'}`}
-                      style={{ clipPath: CUT_BADGE }}>
-                      <img src={getLaneUrl(l.file)} className="w-5 h-5 object-contain" /><span className="text-xs font-bold uppercase">{l.label}</span>
-                    </button>)}</div>
+                    <div className="w-full bg-[#0a0a0c]/98 backdrop-blur-2xl p-2 space-y-1" style={{ clipPath: CUT_FRAME_INNER }}>
+                      {LANES.map(l => <button key={l.id} onClick={() => handleLane(l.id, true)} 
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer ${lane2 === l.id ? 'bg-primary/20 text-primary' : 'text-zinc-300 hover:bg-white/5'}`}
+                        style={{ clipPath: CUT_BADGE }}>
+                        <img src={getLaneUrl(l.file)} className="w-5 h-5 object-contain" /><span className="text-xs font-bold uppercase">{l.label}</span>
+                      </button>)}
+                    </div>
                   </motion.div>}</AnimatePresence>
                 </div>
               </div>

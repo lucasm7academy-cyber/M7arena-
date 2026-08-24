@@ -1865,23 +1865,35 @@ export default function TimePage() {
                 </button>
               </div>
               <div className="flex items-center gap-2 justify-center sm:justify-start mb-3">
-                <span
-                  className="text-[10px] font-black px-2.5 py-0.5 tracking-widest"
+                <div
+                  className="p-[1px] shrink-0"
                   style={{
                     clipPath: CUT_BADGE,
-                    color: time.gradientFrom,
-                    background: `${time.gradientFrom}18`,
-                    border: `1px solid ${time.gradientFrom}40`
+                    background: `${time.gradientFrom}60`
                   }}
                 >
-                  #{time.tag}
-                </span>
-                <span
-                  className="text-white/40 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-white/10 bg-white/5"
+                  <div
+                    className="text-[10px] font-black px-2.5 py-0.5 tracking-widest"
+                    style={{
+                      clipPath: CUT_BADGE_INNER,
+                      color: time.gradientFrom,
+                      background: `${time.gradientFrom}18`,
+                    }}
+                  >
+                    #{time.tag}
+                  </div>
+                </div>
+                <div
+                  className="p-[1px] bg-white/15"
                   style={{ clipPath: CUT_BADGE }}
                 >
-                  Ranking #{time.ranking}
-                </span>
+                  <div
+                    className="text-white/40 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-[#08080a]"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    Ranking #{time.ranking}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

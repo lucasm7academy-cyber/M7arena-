@@ -810,34 +810,40 @@ const Jogar = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white/5 border border-white/10 flex items-center justify-center"
-                style={{ clipPath: CUT_BADGE }}>
-                <Search className="w-4 h-4 text-[#FFB700]" />
+              <div className="p-[1px] bg-white/15 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                <div className="w-8 h-8 bg-white/5 flex items-center justify-center"
+                  style={{ clipPath: CUT_BADGE_INNER }}>
+                  <Search className="w-4 h-4 text-[#FFB700]" />
+                </div>
               </div>
               <h2 className="text-xl font-black text-white uppercase tracking-widest">Salas Disponíveis</h2>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing || loadingSalas}
-                className="p-2 bg-white/5 border border-white/10 text-white hover:border-[#FFB700]/50 hover:text-[#FFB700] transition-all disabled:opacity-50 cursor-pointer"
-                style={{ clipPath: CUT_BADGE }}
-                title="Atualizar salas"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-              <select
-                value={filtroModo}
-                onChange={(e) => setFiltroModo(e.target.value as ModoJogo | 'todos')}
-                className="bg-[#09090c] border border-white/10 px-3 py-2 text-white text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#FFB700]/50 cursor-pointer"
-                style={{ clipPath: CUT_BADGE }}
-              >
-                <option value="todos" className="bg-[#09090c]">Todos Modos</option>
-                <option value="5v5" className="bg-[#09090c]">5v5 Clássico</option>
-                <option value="aram" className="bg-[#09090c]">ARAM</option>
-                <option value="1v1" className="bg-[#09090c]">1v1</option>
-                <option value="time_vs_time" className="bg-[#09090c]">Time vs Time</option>
-              </select>
+              <div className="p-[1px] bg-white/15 hover:bg-[#FFB700]/50 transition-colors" style={{ clipPath: CUT_BADGE }}>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing || loadingSalas}
+                  className="p-2 bg-black/80 text-white hover:text-[#FFB700] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                  title="Atualizar salas"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+              <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                <select
+                  value={filtroModo}
+                  onChange={(e) => setFiltroModo(e.target.value as ModoJogo | 'todos')}
+                  className="bg-[#09090c] px-3 py-2 text-white text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                >
+                  <option value="todos" className="bg-[#09090c]">Todos Modos</option>
+                  <option value="5v5" className="bg-[#09090c]">5v5 Clássico</option>
+                  <option value="aram" className="bg-[#09090c]">ARAM</option>
+                  <option value="1v1" className="bg-[#09090c]">1v1</option>
+                  <option value="time_vs_time" className="bg-[#09090c]">Time vs Time</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -866,11 +872,13 @@ const Jogar = () => {
                 <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Buscando salas ativas...</p>
               </div>
             ) : salasFiltradas.length === 0 ? (
-              <div className="w-full text-center py-20 bg-white/[0.02] border border-dashed border-white/10 p-8"
-                style={{ clipPath: CUT_FRAME }}>
-                <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala encontrada</p>
-                <p className="text-white/20 text-xs uppercase mt-2">Seja o primeiro — crie uma sala nos cards acima e defina o valor!</p>
+              <div className="w-full p-[1px] bg-white/10" style={{ clipPath: CUT_FRAME }}>
+                <div className="w-full text-center py-20 bg-[#08080a] p-8"
+                  style={{ clipPath: CUT_FRAME_INNER }}>
+                  <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                  <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala encontrada</p>
+                  <p className="text-white/20 text-xs uppercase mt-2">Seja o primeiro — crie uma sala nos cards acima e defina o valor!</p>
+                </div>
               </div>
             ) : (
               salasFiltradas.map((sala) => {
@@ -913,30 +921,38 @@ const Jogar = () => {
                       <div className="relative z-10 h-full flex flex-col">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono font-black text-white/60 border border-white/10 px-2 py-0.5 bg-black/60"
-                              style={{ clipPath: CUT_BADGE }}>
-                              {sala.codigo}
-                            </span>
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className="text-[10px] font-mono font-black text-white/60 px-2 py-0.5 bg-black/60 block"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                {sala.codigo}
+                              </span>
+                            </div>
                             {sala.temSenha && <Lock className="w-3.5 h-3.5 text-yellow-400" />}
-                            <span className={`px-2 py-0.5 text-[9px] font-black uppercase border ${estadoInfo.cls}`}
-                              style={{ clipPath: CUT_BADGE }}>
-                              {estadoInfo.label}
-                            </span>
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className={`px-2 py-0.5 text-[9px] font-black uppercase block ${estadoInfo.cls}`}
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                {estadoInfo.label}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] font-black px-2.5 py-1 border border-white/10"
-                            style={{ clipPath: CUT_BADGE }}>
-                            <Users className="w-3 h-3 text-[#FFB700]" />
-                            {(sala.jogadores || []).length}/{sala.maxJogadores}
+                          <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                            <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] font-black px-2.5 py-1"
+                              style={{ clipPath: CUT_BADGE_INNER }}>
+                              <Users className="w-3 h-3 text-[#FFB700]" />
+                              {(sala.jogadores || []).length}/{sala.maxJogadores}
+                            </div>
                           </div>
                           {ehAdminOuProprietario && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); excluirSala(sala); }}
-                              className="p-1.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all cursor-pointer"
-                              style={{ clipPath: CUT_BADGE }}
-                              title="Excluir sala"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="p-[1px] bg-red-500/40" style={{ clipPath: CUT_BADGE }}>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); excluirSala(sala); }}
+                                className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all cursor-pointer flex items-center justify-center"
+                                style={{ clipPath: CUT_BADGE_INNER }}
+                                title="Excluir sala"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
                         </div>
                         
@@ -944,19 +960,25 @@ const Jogar = () => {
                         <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
                         
                         <div className="flex flex-wrap gap-2 mb-4">
-                          <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
-                            style={{ clipPath: CUT_BADGE, background: `${modoInfo.cor}20`, color: modoInfo.cor, border: `1px solid ${modoInfo.cor}40` }}>
-                            {modoInfo.icone} {modoInfo.nome}
-                          </span>
-                          <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
-                            style={{ clipPath: CUT_BADGE, background: `${mpInfo.cor}20`, color: mpInfo.cor, border: `1px solid ${mpInfo.cor}40` }}>
-                            <Coins className="w-3 h-3" />{sala.mpoints} MP
-                          </span>
-                          {sala.eloMinimo && (
-                            <span className="px-2 py-1 text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40"
-                              style={{ clipPath: CUT_BADGE }}>
-                              Mín: {sala.eloMinimo}
+                          <div className="p-[1px]" style={{ clipPath: CUT_BADGE, background: `${modoInfo.cor}60` }}>
+                            <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
+                              style={{ clipPath: CUT_BADGE_INNER, background: `${modoInfo.cor}20`, color: modoInfo.cor }}>
+                              {modoInfo.icone} {modoInfo.nome}
                             </span>
+                          </div>
+                          <div className="p-[1px]" style={{ clipPath: CUT_BADGE, background: `${mpInfo.cor}60` }}>
+                            <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
+                              style={{ clipPath: CUT_BADGE_INNER, background: `${mpInfo.cor}20`, color: mpInfo.cor }}>
+                              <Coins className="w-3 h-3" />{sala.mpoints} MP
+                            </span>
+                          </div>
+                          {sala.eloMinimo && (
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className="px-2 py-1 text-[10px] font-black uppercase bg-white/5 text-white/40 block"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                Mín: {sala.eloMinimo}
+                              </span>
+                            </div>
                           )}
                         </div>
                         
@@ -1031,10 +1053,12 @@ const Jogar = () => {
                   <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FFB700] border-t-transparent mx-auto mb-4" />
                 </div>
               ) : salasFinalizadasFiltradas.length === 0 ? (
-                <div className="w-full text-center py-10 bg-white/[0.02] border border-dashed border-white/10 p-8"
-                  style={{ clipPath: CUT_FRAME }}>
-                  <Trophy className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                  <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala finalizada</p>
+                <div className="w-full p-[1px] bg-white/10" style={{ clipPath: CUT_FRAME }}>
+                  <div className="w-full text-center py-10 bg-[#08080a] p-8"
+                    style={{ clipPath: CUT_FRAME_INNER }}>
+                    <Trophy className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                    <p className="text-white/30 font-black uppercase tracking-widest">Nenhuma sala finalizada</p>
+                  </div>
                 </div>
               ) : (
                 salasFinalizadasFiltradas.map((sala) => {
@@ -1071,42 +1095,54 @@ const Jogar = () => {
 
                         <div className="relative z-10 h-full flex flex-col">
                           <div className="flex justify-between items-start mb-3">
-                            <span className="text-[10px] font-mono font-black text-white/50 border border-white/10 px-2 py-0.5 bg-black/60"
-                              style={{ clipPath: CUT_BADGE }}>
-                              {sala.codigo}
-                            </span>
-                            <span className="px-2 py-0.5 text-[9px] font-black uppercase border"
-                              style={{ clipPath: CUT_BADGE, background: `${vencedorInfo.cor}20`, color: vencedorInfo.cor, border: `1px solid ${vencedorInfo.cor}40` }}>
-                              {vencedorInfo.label}
-                            </span>
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className="text-[10px] font-mono font-black text-white/60 px-2 py-0.5 bg-black/80 block"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                {sala.codigo}
+                              </span>
+                            </div>
+                            <div className="p-[1px]" style={{ clipPath: CUT_BADGE, background: `${vencedorInfo.cor}80` }}>
+                              <span className="px-2 py-0.5 text-[9px] font-black uppercase block"
+                                style={{ clipPath: CUT_BADGE_INNER, background: `${vencedorInfo.cor}25`, color: vencedorInfo.cor }}>
+                                {vencedorInfo.label}
+                              </span>
+                            </div>
                           </div>
 
                           <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-zinc-200 transition-colors">{sala.nome}</h3>
                           <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
 
                           <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
-                              style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.06)', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.1)' }}>
-                              {modoInfo.icone} {modoInfo.nome}
-                            </span>
-                            <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
-                              style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.06)', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.1)' }}>
-                              <GiTwoCoins className="w-3 h-3 text-zinc-400" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
-                            </span>
-                            <span className="px-2 py-1 text-[10px] font-black uppercase bg-white/5 border border-white/10 text-white/40"
-                              style={{ clipPath: CUT_BADGE }}>
-                              Finalizada
-                            </span>
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1 bg-white/[0.04] text-zinc-300"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                {modoInfo.icone} {modoInfo.nome}
+                              </span>
+                            </div>
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1 bg-white/[0.04] text-zinc-300"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                <GiTwoCoins className="w-3 h-3 text-zinc-400" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
+                              </span>
+                            </div>
+                            <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
+                              <span className="px-2 py-1 text-[10px] font-black uppercase bg-white/5 text-white/40 block"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                Finalizada
+                              </span>
+                            </div>
                           </div>
 
                           {sala.resultado_riot && (
-                            <div className="flex items-center justify-center gap-3 mb-3 px-3 py-1.5 bg-black/60 border border-white/10"
-                              style={{ clipPath: CUT_BADGE }}>
-                              <span className="text-sm font-black text-blue-400 tabular-nums">{sala.resultado_riot.placar.blue.kills}</span>
-                              <span className="text-[9px] font-black uppercase text-white/30 tracking-widest">
-                                {sala.resultado_riot.duracao_s > 0 ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}min` : 'Placar'}
-                              </span>
-                              <span className="text-sm font-black text-red-400 tabular-nums">{sala.resultado_riot.placar.red.kills}</span>
+                            <div className="p-[1px] bg-white/15 mb-3" style={{ clipPath: CUT_BADGE }}>
+                              <div className="flex items-center justify-center gap-3 px-3 py-1.5 bg-black/80"
+                                style={{ clipPath: CUT_BADGE_INNER }}>
+                                <span className="text-sm font-black text-blue-400 tabular-nums">{sala.resultado_riot.placar.blue.kills}</span>
+                                <span className="text-[9px] font-black uppercase text-white/30 tracking-widest">
+                                  {sala.resultado_riot.duracao_s > 0 ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}min` : 'Placar'}
+                                </span>
+                                <span className="text-sm font-black text-red-400 tabular-nums">{sala.resultado_riot.placar.red.kills}</span>
+                              </div>
                             </div>
                           )}
 

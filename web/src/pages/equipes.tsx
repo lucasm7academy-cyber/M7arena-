@@ -132,17 +132,24 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
               <h3 className="text-white font-black text-base tracking-tight truncate uppercase">
                 {team.name}
               </h3>
-              <span
-                className="text-[8px] font-black px-2 py-0.5 tracking-wider shrink-0"
+              <div
+                className="p-[1px] shrink-0"
                 style={{
                   clipPath: CUT_BADGE,
-                  color: team.gradientFrom,
-                  background: `${team.gradientFrom}18`,
-                  border: `1px solid ${team.gradientFrom}40`
+                  background: `${team.gradientFrom}60`
                 }}
               >
-                #{team.tag}
-              </span>
+                <div
+                  className="text-[8px] font-black px-1.5 py-0.5 tracking-wider"
+                  style={{
+                    clipPath: CUT_BADGE_INNER,
+                    color: team.gradientFrom,
+                    background: `${team.gradientFrom}18`,
+                  }}
+                >
+                  #{team.tag}
+                </div>
+              </div>
             </div>
             
             {/* Rank pequeno no topo do mobile */}
@@ -163,17 +170,24 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
               <h3 className="text-white font-black text-lg tracking-tight leading-tight truncate uppercase">
                 {team.name}
               </h3>
-              <span
-                className="text-[9px] font-black px-2 py-0.5 tracking-widest shrink-0"
+              <div
+                className="p-[1px] shrink-0"
                 style={{
                   clipPath: CUT_BADGE,
-                  color: team.gradientFrom,
-                  background: `${team.gradientFrom}18`,
-                  border: `1px solid ${team.gradientFrom}40`
+                  background: `${team.gradientFrom}60`
                 }}
               >
-                #{team.tag}
-              </span>
+                <div
+                  className="text-[9px] font-black px-2 py-0.5 tracking-widest"
+                  style={{
+                    clipPath: CUT_BADGE_INNER,
+                    color: team.gradientFrom,
+                    background: `${team.gradientFrom}18`,
+                  }}
+                >
+                  #{team.tag}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -535,17 +549,24 @@ export default function Equipes() {
                       <div className="md:hidden flex-1 min-w-0 flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="text-white font-black text-base tracking-tight truncate uppercase">{myTeam.nome}</h3>
-                          <span
-                            className="text-[8px] font-black px-2 py-0.5"
+                          <div
+                            className="p-[1px] shrink-0"
                             style={{
                               clipPath: CUT_BADGE,
-                              color: myTeam.gradientFrom,
-                              background: `${myTeam.gradientFrom}18`,
-                              border: `1px solid ${myTeam.gradientFrom}40`
+                              background: `${myTeam.gradientFrom}60`
                             }}
                           >
-                            #{myTeam.tag}
-                          </span>
+                            <div
+                              className="text-[8px] font-black px-1.5 py-0.5"
+                              style={{
+                                clipPath: CUT_BADGE_INNER,
+                                color: myTeam.gradientFrom,
+                                background: `${myTeam.gradientFrom}18`,
+                              }}
+                            >
+                              #{myTeam.tag}
+                            </div>
+                          </div>
                           
                           {/* Rota Icon no mobile ao lado do nome/tag */}
                           {(() => {
@@ -579,17 +600,24 @@ export default function Equipes() {
                       <div className="hidden md:flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-white font-black text-lg tracking-tight truncate uppercase">{myTeam.nome}</h3>
-                          <span
-                            className="text-[9px] font-black px-2 py-0.5 tracking-widest shrink-0"
+                          <div
+                            className="p-[1px] shrink-0"
                             style={{
                               clipPath: CUT_BADGE,
-                              color: myTeam.gradientFrom,
-                              background: `${myTeam.gradientFrom}18`,
-                              border: `1px solid ${myTeam.gradientFrom}40`
+                              background: `${myTeam.gradientFrom}60`
                             }}
                           >
-                            #{myTeam.tag}
-                          </span>
+                            <div
+                              className="text-[9px] font-black px-2 py-0.5 tracking-widest"
+                              style={{
+                                clipPath: CUT_BADGE_INNER,
+                                color: myTeam.gradientFrom,
+                                background: `${myTeam.gradientFrom}18`,
+                              }}
+                            >
+                              #{myTeam.tag}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -802,36 +830,51 @@ export default function Equipes() {
                 {/* Paginação Cut-Edge */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 pt-4">
-                    <button
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
-                      disabled={page === 0}
-                      className="px-4 py-2 border border-white/10 text-white/50 font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                    <div
+                      className={`p-[1px] ${page === 0 ? 'opacity-30 pointer-events-none' : 'bg-white/15 hover:bg-white/30'}`}
                       style={{ clipPath: CUT_BUTTON }}
                     >
-                      Anterior
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => (
                       <button
+                        onClick={() => setPage(p => Math.max(0, p - 1))}
+                        disabled={page === 0}
+                        className="px-4 py-2 bg-[#0c0c10] text-white/50 font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON_INNER }}
+                      >
+                        Anterior
+                      </button>
+                    </div>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <div
                         key={i}
-                        onClick={() => setPage(i)}
-                        className={`w-8 h-8 font-black text-xs transition-all cursor-pointer ${
-                          page === i
-                            ? 'bg-primary text-black'
-                            : 'border border-white/10 text-white/40 hover:bg-white/5'
-                        }`}
+                        className={`p-[1px] ${page === i ? 'bg-primary' : 'bg-white/15 hover:bg-white/30'}`}
                         style={{ clipPath: CUT_BADGE }}
                       >
-                        {i + 1}
-                      </button>
+                        <button
+                          onClick={() => setPage(i)}
+                          className={`w-8 h-8 font-black text-xs transition-all cursor-pointer ${
+                            page === i
+                              ? 'bg-primary text-black'
+                              : 'bg-[#0c0c10] text-white/40 hover:text-white'
+                          }`}
+                          style={{ clipPath: CUT_BADGE_INNER }}
+                        >
+                          {i + 1}
+                        </button>
+                      </div>
                     ))}
-                    <button
-                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                      disabled={page >= totalPages - 1}
-                      className="px-4 py-2 border border-white/10 text-white/50 font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                    <div
+                      className={`p-[1px] ${page >= totalPages - 1 ? 'opacity-30 pointer-events-none' : 'bg-white/15 hover:bg-white/30'}`}
                       style={{ clipPath: CUT_BUTTON }}
                     >
-                      Próximo
-                    </button>
+                      <button
+                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={page >= totalPages - 1}
+                        className="px-4 py-2 bg-[#0c0c10] text-white/50 font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON_INNER }}
+                      >
+                        Próximo
+                      </button>
+                    </div>
                   </div>
                 )}
               </>
@@ -1087,16 +1130,23 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
                 <label className="flex-1 cursor-pointer">
                   <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
                   <div
-                    className="flex items-center justify-center gap-2 py-3.5 border transition-all cursor-pointer font-black text-xs uppercase tracking-widest"
+                    className="p-[1px] transition-all cursor-pointer"
                     style={{
                       clipPath: CUT_BUTTON,
-                      borderColor: `${theme.from}50`,
-                      background: `${theme.from}15`,
-                      color: theme.from
+                      background: `${theme.from}60`,
                     }}
                   >
-                    <Upload className="w-4 h-4" />
-                    <span>Enviar Logo</span>
+                    <div
+                      className="flex items-center justify-center gap-2 py-3.5 font-black text-xs uppercase tracking-widest"
+                      style={{
+                        clipPath: CUT_BUTTON_INNER,
+                        background: `${theme.from}18`,
+                        color: theme.from
+                      }}
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>Enviar Logo</span>
+                    </div>
                   </div>
                 </label>
               </div>

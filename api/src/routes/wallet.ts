@@ -99,14 +99,12 @@ walletRouter.post("/deposit", async (req, res) => {
 });
 
 // GET /api/wallet/admin/balances?userIds=a,b,c — leitura em lote.
-// Com userIds: qualquer usuário autenticado (ranking/time exibem saldo de
-// terceiros, como o RLS antigo permitia). Sem userIds: só admin (agregação).
+// Com userIds: PÚBLICO — a página /players (diretório público) exibe saldo de
+// terceiros, paridade com a RPC antiga (SECURITY DEFINER retornava mp/mc).
+// Sem userIds: só admin (agregação de todos os saldos).
 walletRouter.get("/admin/balances", async (req, res) => {
   try {
     const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
 
     const userIds = String(req.query.userIds || "")
       .split(",")
@@ -114,6 +112,9 @@ walletRouter.get("/admin/balances", async (req, res) => {
       .filter(Boolean);
 
     if (userIds.length === 0) {
+      if (!user) {
+        return res.status(401).json({ error: "Não autenticado" });
+      }
       if (!(await ehAdmin(user.id))) {
         return res.status(403).json({ error: "Apenas admin pode listar todos os saldos" });
       }

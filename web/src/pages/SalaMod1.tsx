@@ -26,7 +26,9 @@ import { usePerfil } from '../contexts/PerfilContext';
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
 const CUT_INNER = 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)';
 const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)';
 const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
 
 function ArcaneIndicators() {
     return (
@@ -387,28 +389,25 @@ ${link}`;
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* TOP BAR BANNER - DESIGN ESPORTS MODERNO E CLEAN */}
+            {/* ── TOP BAR / HEADER DE CONTROLE (v3 §11) ───────────────── */}
             <motion.div 
-                initial={{ y: -100 }} animate={{ y: 0 }}
-                className="w-full min-h-[64px] h-auto py-2.5 md:py-0 md:h-[9.5vh] bg-[#07060a]/90 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-50 relative flex items-center px-4 md:px-[4vmin] justify-between shrink-0 flex-wrap md:flex-nowrap gap-3 md:gap-0 overflow-hidden"
+                initial={{ opacity: 0, y: -15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-20 flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
+                style={{ clipPath: CUT_FRAME }}
             >
-                {/* Ambient Top Glow Highlight */}
-                <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(255,183,0,0.08),transparent_70%)]" />
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#FFB700]/30 to-transparent pointer-events-none" />
-
                 {/* Left Side: Exit Button, Mode Icon & Title */}
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
                     <motion.button 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.94 }}
                         onClick={() => navigate('/jogar')} 
-                        className="group relative p-[1px] bg-white/15 hover:bg-red-500/50 transition-colors shrink-0 shadow-lg"
+                        className="group relative p-[1px] bg-white/15 hover:bg-red-500/50 transition-colors shrink-0 shadow-lg cursor-pointer"
                         style={{ clipPath: CUT_BUTTON }}
                         title="Sair da sala"
                     >
                         <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0A0A0A] hover:bg-red-950/40 flex items-center justify-center text-white/70 hover:text-red-400 transition-colors"
-                            style={{ clipPath: CUT_BUTTON }}>
+                            style={{ clipPath: CUT_BUTTON_INNER }}>
                             <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin] transition-transform group-hover:-translate-x-0.5" />
                         </div>
                     </motion.button>
@@ -416,7 +415,7 @@ ${link}`;
                     <div className="flex items-center gap-2.5 sm:gap-3">
                         <div className="relative p-[1px] bg-white/15 shrink-0" style={{ clipPath: CUT_BUTTON }}>
                             <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0d0d10] flex items-center justify-center text-[#FFB700] shadow-inner"
-                                style={{ clipPath: CUT_BUTTON }}>
+                                style={{ clipPath: CUT_BUTTON_INNER }}>
                                 {sala.modo === '1v1' ? (
                                     <Swords className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
                                 ) : sala.modo === '5v5' ? (
@@ -434,10 +433,12 @@ ${link}`;
                                 {sala.nome}
                             </h1>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 border border-[#FFB700]/30 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono"
-                                    style={{ clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)' }}>
-                                    #{String(sala.id).padStart(6, '0')}
-                                </span>
+                                <div className="p-[1px] bg-[#FFB700]/30" style={{ clipPath: CUT_BADGE }}>
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono block"
+                                        style={{ clipPath: CUT_BADGE_INNER }}>
+                                        #{String(sala.id).padStart(6, '0')}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -447,7 +448,7 @@ ${link}`;
                 <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.5vmin] z-10 flex-wrap sm:flex-nowrap">
                     {/* Card Estado */}
                     <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
-                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
                             <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
                                 Estado
                             </span>
@@ -469,7 +470,7 @@ ${link}`;
 
                     {/* Card Modo */}
                     <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
-                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
                             <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
                                 Modo
                             </span>
@@ -481,7 +482,7 @@ ${link}`;
 
                     {/* Card Aposta / Pote */}
                     <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
-                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
                             <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
                                 {ehApostada ? 'Aposta / Pote' : 'Modalidade'}
                             </span>
@@ -507,12 +508,12 @@ ${link}`;
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.94 }}
                             onClick={compartilharSala}
-                            className="relative p-[1px] bg-[#FFB700]/30 hover:bg-[#FFB700]/60 transition-colors shrink-0 shadow-[0_0_15px_rgba(255,183,0,0.15)]"
+                            className="relative p-[1px] bg-[#FFB700]/30 hover:bg-[#FFB700]/60 transition-colors shrink-0 shadow-[0_0_15px_rgba(255,183,0,0.15)] cursor-pointer"
                             style={{ clipPath: CUT_BUTTON }}
                             title="Compartilhar sala"
                         >
                             <div className="h-8 sm:h-9 md:h-[4.4vmin] px-3 sm:px-3.5 md:px-[1.6vmin] bg-[#120e03] hover:bg-[#1a1405] flex items-center justify-center gap-1.5 text-[#FFB700] transition-colors"
-                                style={{ clipPath: CUT_BUTTON }}>
+                                style={{ clipPath: CUT_BUTTON_INNER }}>
                                 {compartilhado ? (
                                     <>
                                         <Check className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-emerald-400" />
@@ -532,12 +533,12 @@ ${link}`;
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.94 }}
                                 onClick={excluirSala}
-                                className="relative p-[1px] bg-red-500/30 hover:bg-red-500/60 transition-colors shrink-0"
+                                className="relative p-[1px] bg-red-500/30 hover:bg-red-500/60 transition-colors shrink-0 cursor-pointer"
                                 style={{ clipPath: CUT_BUTTON }}
                                 title="Excluir sala permanentemente"
                             >
                                 <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#140507] hover:bg-[#20080a] flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
-                                    style={{ clipPath: CUT_BUTTON }}>
+                                    style={{ clipPath: CUT_BUTTON_INNER }}>
                                     <Trash2 className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
                                 </div>
                             </motion.button>

@@ -273,16 +273,21 @@ export default function Layout() {
             </button>
 
             {user && (
-              <Link
-                to="/perfil"
-                onClick={() => playSound('click')}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#08080a] border border-white/10 text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider hover:border-primary/40 hover:text-primary transition-all active:scale-95 cursor-pointer"
+              <div
+                className="hidden sm:flex p-[1px] bg-white/15 hover:bg-primary/40 transition-colors group cursor-pointer"
                 style={{ clipPath: CUT_BADGE }}
-                title="Saldo em M7 Coins"
               >
-                <GiTwoCoins size={16} className="shrink-0 text-primary" />
-                <span className="tabular-nums">{(perfil?.saldo ?? 0).toLocaleString('pt-BR')}</span>
-              </Link>
+                <Link
+                  to="/perfil"
+                  onClick={() => playSound('click')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#08080a] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider group-hover:text-primary transition-all active:scale-95 cursor-pointer"
+                  style={{ clipPath: CUT_BADGE_INNER }}
+                  title="Saldo em M7 Coins"
+                >
+                  <GiTwoCoins size={16} className="shrink-0 text-primary" />
+                  <span className="tabular-nums">{(perfil?.saldo ?? 0).toLocaleString('pt-BR')}</span>
+                </Link>
+              </div>
             )}
 
             {!user && (

@@ -45,11 +45,16 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
       {/* Badge "Ao Vivo" */}
       <div className="w-full px-4 pt-4 pb-2 absolute top-0 left-0 z-20">
         <div
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/90 text-[9px] font-black uppercase tracking-widest text-white border border-red-400/40 w-fit"
+          className="p-[1px] bg-red-400/50 w-fit shadow-md"
           style={{ clipPath: CUT_BADGE }}
         >
-          <div className="w-1.5 h-1.5 bg-white animate-pulse" style={{ clipPath: CUT_BADGE }} />
-          Ao Vivo
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/90 text-[9px] font-black uppercase tracking-widest text-white"
+            style={{ clipPath: CUT_BADGE_INNER }}
+          >
+            <div className="w-1.5 h-1.5 bg-white animate-pulse" style={{ clipPath: CUT_BADGE }} />
+            Ao Vivo
+          </div>
         </div>
       </div>
 
@@ -73,12 +78,17 @@ const PadraoLiveCard = ({ titulo, streamer, thumbnail, link }: any) => (
       {/* Bottom Button */}
       <div className="w-full p-2.5 pt-0">
         <div
-          className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] border border-[#9146FF]/30 text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+          className="w-full p-[1px] bg-[#9146FF]/40 group-hover:bg-[#9146FF] transition-all"
           style={{ clipPath: CUT_BUTTON }}
         >
-          <span className="text-[11px] font-black uppercase tracking-[0.25em]">
-            ASSISTIR AGORA!
-          </span>
+          <div
+            className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+            style={{ clipPath: CUT_BUTTON_INNER }}
+          >
+            <span className="text-[11px] font-black uppercase tracking-[0.25em]">
+              ASSISTIR AGORA!
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -119,10 +129,15 @@ const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
         {/* Badge roxo */}
         <div className="absolute top-3 left-3 z-10">
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-[#9146FF]/90 text-[8px] font-black uppercase tracking-widest text-white border border-[#9146FF]"
+            className="p-[1px] bg-[#9146FF]/70"
             style={{ clipPath: CUT_BADGE }}
           >
-            ★ {categoria === 'clutch' ? 'Clutch' : categoria === 'jogada' ? 'Jogada' : categoria === 'engracado' ? 'Engraçado' : categoria === 'top5' ? 'Top 5' : categoria === 'compilacao' ? 'Compilação' : categoria === 'semana' ? 'Destaques' : 'Highlight'}
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-[#9146FF]/90 text-[8px] font-black uppercase tracking-widest text-white"
+              style={{ clipPath: CUT_BADGE_INNER }}
+            >
+              ★ {categoria === 'clutch' ? 'Clutch' : categoria === 'jogada' ? 'Jogada' : categoria === 'engracado' ? 'Engraçado' : categoria === 'top5' ? 'Top 5' : categoria === 'compilacao' ? 'Compilação' : categoria === 'semana' ? 'Destaques' : 'Highlight'}
+            </div>
           </div>
         </div>
       </div>
@@ -131,10 +146,15 @@ const HighlightCard = ({ titulo, thumbnail, link, categoria }: any) => (
       </div>
       <div className="w-full p-2.5 pt-0">
         <div
-          className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] border border-[#9146FF]/30 text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+          className="w-full p-[1px] bg-[#9146FF]/40 group-hover:bg-[#9146FF] transition-all"
           style={{ clipPath: CUT_BUTTON }}
         >
-          <span className="text-[11px] font-black uppercase tracking-[0.25em]">ASSISTIR AGORA!</span>
+          <div
+            className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+            style={{ clipPath: CUT_BUTTON_INNER }}
+          >
+            <span className="text-[11px] font-black uppercase tracking-[0.25em]">ASSISTIR AGORA!</span>
+          </div>
         </div>
       </div>
     </div>
@@ -168,11 +188,16 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
         {/* Badge "Ao Vivo" */}
         <div className="w-full px-4 pt-4 pb-2 absolute top-0 left-0 z-20">
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/90 text-[9px] font-black uppercase tracking-widest text-white border border-red-400/40 w-fit"
+            className="p-[1px] bg-red-400/50 w-fit shadow-md"
             style={{ clipPath: CUT_BADGE }}
           >
-            <div className="w-1.5 h-1.5 bg-white animate-pulse" style={{ clipPath: CUT_BADGE }} />
-            Ao Vivo
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/90 text-[9px] font-black uppercase tracking-widest text-white"
+              style={{ clipPath: CUT_BADGE_INNER }}
+            >
+              <div className="w-1.5 h-1.5 bg-white animate-pulse" style={{ clipPath: CUT_BADGE }} />
+              Ao Vivo
+            </div>
           </div>
         </div>
 
@@ -232,12 +257,17 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
         {/* Bottom Button */}
         <div className="w-full p-2.5 pt-0">
           <div
-            className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] border border-[#9146FF]/30 text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+            className="w-full p-[1px] bg-[#9146FF]/40 group-hover:bg-[#9146FF] transition-all"
             style={{ clipPath: CUT_BUTTON }}
           >
-            <span className="text-[11px] font-black uppercase tracking-[0.25em]">
-              ASSISTIR AGORA!
-            </span>
+            <div
+              className="w-full py-3 bg-[#9146FF]/15 group-hover:bg-[#9146FF] text-purple-300 group-hover:text-white flex items-center justify-center transition-all"
+              style={{ clipPath: CUT_BUTTON_INNER }}
+            >
+              <span className="text-[11px] font-black uppercase tracking-[0.25em]">
+                ASSISTIR AGORA!
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -579,14 +609,19 @@ const Home = () => {
                       <ChevronRight size={14} />
                     </button>
 
-                    <button
-                      onClick={() => navigate('/times')}
-                      className="px-6 md:px-10 py-3.5 md:py-4 bg-white/5 hover:bg-white/10 text-white border border-white/20 hover:border-white/40 font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    <div
+                      className="p-[1px] bg-white/20 hover:bg-white/40 transition-colors"
                       style={{ clipPath: CUT_BUTTON }}
                     >
-                      <span>Crie seu Time</span>
-                      <ChevronRight size={14} />
-                    </button>
+                      <button
+                        onClick={() => navigate('/times')}
+                        className="w-full h-full px-6 md:px-10 py-3.5 md:py-4 bg-[#08080a] hover:bg-white/10 text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all cursor-pointer flex items-center justify-center gap-2"
+                        style={{ clipPath: CUT_BUTTON_INNER }}
+                      >
+                        <span>Crie seu Time</span>
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -594,11 +629,16 @@ const Home = () => {
               {/* Destaque Tag Floating */}
               <div className="hidden sm:block absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
                 <div
-                  className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-black/70 backdrop-blur-md border border-white/10"
+                  className="p-[1px] bg-white/15 backdrop-blur-md"
                   style={{ clipPath: CUT_BADGE }}
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#FFB700] animate-pulse" />
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Temporada 2026</span>
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-black/80"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#FFB700] animate-pulse" />
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Temporada 2026</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -617,33 +657,48 @@ const Home = () => {
               </div>
 
               <div className="hidden sm:flex items-center gap-2">
-                <button
-                  onClick={() => scroll(liveScrollRef, 'left')}
-                  className="w-9 h-9 bg-black border border-white/15 hover:border-[#9146FF] hover:bg-[#9146FF]/20 text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                <div
+                  className="p-[1px] bg-white/15 hover:bg-[#9146FF] transition-colors"
                   style={{ clipPath: CUT_BUTTON }}
-                  title="Anterior"
                 >
-                  <ChevronRight size={16} className="rotate-180" />
-                </button>
-                <button
-                  onClick={() => scroll(liveScrollRef, 'right')}
-                  className="w-9 h-9 bg-black border border-white/15 hover:border-[#9146FF] hover:bg-[#9146FF]/20 text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                  <button
+                    onClick={() => scroll(liveScrollRef, 'left')}
+                    className="w-9 h-9 bg-black hover:bg-[#9146FF]/20 text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                    title="Anterior"
+                  >
+                    <ChevronRight size={16} className="rotate-180" />
+                  </button>
+                </div>
+                <div
+                  className="p-[1px] bg-white/15 hover:bg-[#9146FF] transition-colors"
                   style={{ clipPath: CUT_BUTTON }}
-                  title="Próximo"
                 >
-                  <ChevronRight size={16} />
-                </button>
+                  <button
+                    onClick={() => scroll(liveScrollRef, 'right')}
+                    className="w-9 h-9 bg-black hover:bg-[#9146FF]/20 text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                    title="Próximo"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
             </div>
 
             <div className="relative group/live-slider">
-              <button
-                onClick={() => scroll(liveScrollRef, 'left')}
-                className="flex sm:hidden absolute left-0 top-1/2 -translate-y-[60%] -translate-x-2 z-30 w-9 h-9 bg-black/80 border border-white/15 items-center justify-center text-[#9146FF] font-bold"
+              <div
+                className="flex sm:hidden absolute left-0 top-1/2 -translate-y-[60%] -translate-x-2 z-30 p-[1px] bg-white/15"
                 style={{ clipPath: CUT_BUTTON }}
               >
-                <ChevronRight className="rotate-180" size={18} />
-              </button>
+                <button
+                  onClick={() => scroll(liveScrollRef, 'left')}
+                  className="w-9 h-9 bg-black/90 flex items-center justify-center text-[#9146FF] font-bold"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <ChevronRight className="rotate-180" size={18} />
+                </button>
+              </div>
 
               <div
                 ref={liveScrollRef}
@@ -651,11 +706,16 @@ const Home = () => {
               >
                 {!loadingLives && transmissoes.length === 0 && highlights.length === 0 && (
                   <div
-                    className="flex-none w-full py-12 text-center bg-white/[0.02] border border-dashed border-white/10 p-8"
+                    className="flex-none w-full p-[1px] bg-white/10"
                     style={{ clipPath: CUT_FRAME }}
                   >
-                    <FaTwitch size={32} className="mx-auto text-purple-500/40 mb-3" />
-                    <p className="text-white/40 text-sm font-black uppercase tracking-widest">Nenhuma live no momento — veja os destaques abaixo</p>
+                    <div
+                      className="w-full py-12 text-center bg-[#08080a] p-8"
+                      style={{ clipPath: CUT_FRAME_INNER }}
+                    >
+                      <FaTwitch size={32} className="mx-auto text-purple-500/40 mb-3" />
+                      <p className="text-white/40 text-sm font-black uppercase tracking-widest">Nenhuma live no momento — veja os destaques abaixo</p>
+                    </div>
                   </div>
                 )}
 
@@ -734,13 +794,18 @@ const Home = () => {
                 ))}
               </div>
 
-              <button
-                onClick={() => scroll(liveScrollRef, 'right')}
-                className="flex sm:hidden absolute right-0 top-1/2 -translate-y-[60%] translate-x-2 z-30 w-9 h-9 bg-black/80 border border-white/15 items-center justify-center text-[#9146FF] font-bold"
+              <div
+                className="flex sm:hidden absolute right-0 top-1/2 -translate-y-[60%] translate-x-2 z-30 p-[1px] bg-white/15"
                 style={{ clipPath: CUT_BUTTON }}
               >
-                <ChevronRight size={18} />
-              </button>
+                <button
+                  onClick={() => scroll(liveScrollRef, 'right')}
+                  className="w-9 h-9 bg-black/90 flex items-center justify-center text-[#9146FF] font-bold"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -782,14 +847,19 @@ const Home = () => {
                   </div>
 
                   {/* Left Navigation Arrow */}
-                  <button
-                    onClick={handlePrev}
-                    className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
+                  <div
+                    className="p-[1px] bg-white/20 hover:bg-[#FFB700] transition-colors z-30 shrink-0"
                     style={{ clipPath: CUT_BUTTON }}
-                    title="Jogo Anterior"
                   >
-                    <ChevronRight className="rotate-180 w-5 h-5" />
-                  </button>
+                    <button
+                      onClick={handlePrev}
+                      className="w-10 h-10 bg-black text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON_INNER }}
+                      title="Jogo Anterior"
+                    >
+                      <ChevronRight className="rotate-180 w-5 h-5" />
+                    </button>
+                  </div>
 
                   {/* Center Animating Area */}
                   <div className="w-full flex justify-center items-center z-10 overflow-visible px-2">
@@ -920,32 +990,42 @@ const Home = () => {
                                 </div>
                                 {/* Botões GO */}
                                 <div className="flex items-center justify-between gap-2">
-                                  <button
-                                    onClick={() => handleVote(m.id, 'a')}
-                                    disabled={!!voted}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
-                                      ${voted === 'a' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
+                                  <div
+                                    className={`p-[1px] transition-all ${voted === 'a' ? 'bg-[#FFB700]' : voted ? 'opacity-30' : 'bg-white/15 hover:bg-white/40'}`}
                                     style={{ clipPath: CUT_BADGE }}
                                   >
-                                    {voted === 'a' && '✓ '}GO {m.tagA}
-                                    <span className="opacity-60 font-mono">{pctA}%</span>
-                                  </button>
+                                    <button
+                                      onClick={() => handleVote(m.id, 'a')}
+                                      disabled={!!voted}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer
+                                        ${voted === 'a' ? 'bg-[#FFB700]/20 text-[#FFB700]' : voted ? 'cursor-not-allowed bg-black/40 text-white/30' : 'bg-[#0a0a0c] text-white/70 hover:text-white'}`}
+                                      style={{ clipPath: CUT_BADGE_INNER }}
+                                    >
+                                      {voted === 'a' && '✓ '}GO {m.tagA}
+                                      <span className="opacity-60 font-mono">{pctA}%</span>
+                                    </button>
+                                  </div>
 
                                   <span className="text-[9px] text-white/30 font-black uppercase tracking-widest whitespace-nowrap">
                                     {total > 0 ? `${total} voto${total !== 1 ? 's' : ''}` : 'Vote!'}
                                   </span>
 
-                                  <button
-                                    onClick={() => handleVote(m.id, 'b')}
-                                    disabled={!!voted}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer
-                                      ${voted === 'b' ? 'bg-[#FFB700]/20 text-[#FFB700] border-[#FFB700]' : voted ? 'opacity-30 cursor-not-allowed border-white/10 text-white/30' : 'border-white/15 bg-white/5 text-white/70 hover:border-white/40 hover:text-white'}`}
+                                  <div
+                                    className={`p-[1px] transition-all ${voted === 'b' ? 'bg-[#FFB700]' : voted ? 'opacity-30' : 'bg-white/15 hover:bg-white/40'}`}
                                     style={{ clipPath: CUT_BADGE }}
                                   >
-                                    GO {m.tagB}
-                                    <span className="opacity-60 font-mono">{pctB}%</span>
-                                    {voted === 'b' && ' ✓'}
-                                  </button>
+                                    <button
+                                      onClick={() => handleVote(m.id, 'b')}
+                                      disabled={!!voted}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer
+                                        ${voted === 'b' ? 'bg-[#FFB700]/20 text-[#FFB700]' : voted ? 'cursor-not-allowed bg-black/40 text-white/30' : 'bg-[#0a0a0c] text-white/70 hover:text-white'}`}
+                                      style={{ clipPath: CUT_BADGE_INNER }}
+                                    >
+                                      GO {m.tagB}
+                                      <span className="opacity-60 font-mono">{pctB}%</span>
+                                      {voted === 'b' && ' ✓'}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             );
@@ -956,14 +1036,19 @@ const Home = () => {
                   </div>
 
                   {/* Right Navigation Arrow */}
-                  <button
-                    onClick={handleNext}
-                    className="w-10 h-10 bg-black/80 border border-white/20 hover:border-[#FFB700] text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center z-30 cursor-pointer"
+                  <div
+                    className="p-[1px] bg-white/20 hover:bg-[#FFB700] transition-colors z-30 shrink-0"
                     style={{ clipPath: CUT_BUTTON }}
-                    title="Próximo Jogo"
                   >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                    <button
+                      onClick={handleNext}
+                      className="w-10 h-10 bg-black text-white/50 hover:text-[#FFB700] transition-all flex items-center justify-center cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON_INNER }}
+                      title="Próximo Jogo"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1039,17 +1124,24 @@ const Home = () => {
 
                     {/* Badge do Passo */}
                     <div className="absolute top-3 left-3 z-10">
-                      <span
-                        className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border"
+                      <div
+                        className="p-[1px]"
                         style={{
                           clipPath: CUT_BADGE,
-                          backgroundColor: `${step.color}20`,
-                          borderColor: `${step.color}60`,
-                          color: step.color,
+                          background: `${step.color}80`
                         }}
                       >
-                        Passo {step.n}
-                      </span>
+                        <div
+                          className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest"
+                          style={{
+                            clipPath: CUT_BADGE_INNER,
+                            backgroundColor: `${step.color}20`,
+                            color: step.color,
+                          }}
+                        >
+                          Passo {step.n}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Número no Canto da Imagem */}
@@ -1066,15 +1158,22 @@ const Home = () => {
                     <div>
                       <div className="flex items-center gap-2.5 mb-2">
                         <div
-                          className="w-8 h-8 flex items-center justify-center flex-none border"
+                          className="w-8 h-8 p-[1px] flex-none"
                           style={{
                             clipPath: CUT_BUTTON,
-                            backgroundColor: `${step.color}15`,
-                            borderColor: `${step.color}40`,
-                            color: step.color,
+                            background: `${step.color}60`
                           }}
                         >
-                          <step.icon className="w-4 h-4" />
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{
+                              clipPath: CUT_BUTTON_INNER,
+                              backgroundColor: `${step.color}15`,
+                              color: step.color,
+                            }}
+                          >
+                            <step.icon className="w-4 h-4" />
+                          </div>
                         </div>
                         <h3 className="text-sm font-black uppercase tracking-tight text-white group-hover:text-[#FFB700] transition-colors">
                           {step.title}
@@ -1161,12 +1260,14 @@ const Home = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-transparent pointer-events-none" />
                     <div className="absolute top-3 left-3">
-                      <span
-                        className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest shadow-md"
-                        style={{ clipPath: CUT_BADGE }}
-                      >
-                        {n.categoria}
-                      </span>
+                      <div className="p-[1px] bg-[#FFB700] shadow-md" style={{ clipPath: CUT_BADGE }}>
+                        <span
+                          className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest block"
+                          style={{ clipPath: CUT_BADGE_INNER }}
+                        >
+                          {n.categoria}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -1299,13 +1400,18 @@ const Home = () => {
         {/* CENTRAL DE COMUNIDADE & REDES SOCIAIS */}
         <section className="py-12 px-4 max-w-7xl mx-auto border-t border-white/5">
           <div className="text-center mb-10">
-            <span
-              className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20"
+            <div
+              className="inline-flex p-[1px] bg-[#FFB700]/30"
               style={{ clipPath: CUT_BADGE }}
             >
-              <Globe className="w-3.5 h-3.5 text-[#FFB700]" />
-              Nossa Comunidade
-            </span>
+              <span
+                className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10"
+                style={{ clipPath: CUT_BADGE_INNER }}
+              >
+                <Globe className="w-3.5 h-3.5 text-[#FFB700]" />
+                Nossa Comunidade
+              </span>
+            </div>
             <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mt-3">
               Conecte-se com a <span className="text-[#FFB700]">M7 ARENA</span>
             </h2>
@@ -1344,12 +1450,14 @@ const Home = () => {
                         <FaDiscord className="w-6 h-6" />
                       </div>
                     </div>
-                    <span
-                      className="px-2.5 py-1 bg-[#5865F2]/20 text-[#5865F2] border border-[#5865F2]/40 text-[9px] font-black uppercase tracking-widest"
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      ● 5.000+ Membros
-                    </span>
+                    <div className="p-[1px] bg-[#5865F2]/50" style={{ clipPath: CUT_BADGE }}>
+                      <span
+                        className="px-2.5 py-1 bg-[#5865F2]/20 text-[#5865F2] text-[9px] font-black uppercase tracking-widest block"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        ● 5.000+ Membros
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#5865F2] transition-colors">
@@ -1402,12 +1510,14 @@ const Home = () => {
                         <ImWhatsapp className="w-6 h-6" />
                       </div>
                     </div>
-                    <span
-                      className="px-2.5 py-1 bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/40 text-[9px] font-black uppercase tracking-widest"
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      ● Avisos Instantâneos
-                    </span>
+                    <div className="p-[1px] bg-[#25D366]/50" style={{ clipPath: CUT_BADGE }}>
+                      <span
+                        className="px-2.5 py-1 bg-[#25D366]/20 text-[#25D366] text-[9px] font-black uppercase tracking-widest block"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        ● Avisos Instantâneos
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#25D366] transition-colors">
@@ -1460,12 +1570,14 @@ const Home = () => {
                         <Instagram className="w-6 h-6" />
                       </div>
                     </div>
-                    <span
-                      className="px-2.5 py-1 bg-[#E1306C]/20 text-[#E1306C] border border-[#E1306C]/40 text-[9px] font-black uppercase tracking-widest"
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      ● Clips & Conteúdo
-                    </span>
+                    <div className="p-[1px] bg-[#E1306C]/50" style={{ clipPath: CUT_BADGE }}>
+                      <span
+                        className="px-2.5 py-1 bg-[#E1306C]/20 text-[#E1306C] text-[9px] font-black uppercase tracking-widest block"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        ● Clips & Conteúdo
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#E1306C] transition-colors">
@@ -1494,16 +1606,24 @@ const Home = () => {
         {/* FAQ INTERATIVO */}
         <section className="py-12 px-4 max-w-4xl mx-auto border-t border-white/5">
           <div className="text-center mb-10">
-            <span
-              className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20"
+            <div
+              className="inline-flex p-[1px] bg-[#FFB700]/30"
               style={{ clipPath: CUT_BADGE }}
             >
-              <HelpCircle className="w-3.5 h-3.5 text-[#FFB700]" />
-              Dúvidas Frequentes
-            </span>
+              <span
+                className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10"
+                style={{ clipPath: CUT_BADGE_INNER }}
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-[#FFB700]" />
+                Dúvidas Frequentes
+              </span>
+            </div>
             <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mt-3">
               Tudo o que você <span className="text-[#FFB700]">Precisa Saber</span>
             </h2>
+            <p className="text-white/40 text-xs md:text-sm mt-2 max-w-xl mx-auto">
+              Faça parte dos nossos canais oficiais para interagir com outros jogadores, receber suporte e acompanhar torneios.
+            </p>
           </div>
 
           <div className="space-y-3">
@@ -1585,12 +1705,14 @@ const Home = () => {
               <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#FFB700]/10 rounded-full blur-3xl pointer-events-none" />
 
               <div className="relative z-10 max-w-2xl text-center md:text-left">
-                <span
-                  className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest mb-3 inline-block"
-                  style={{ clipPath: CUT_BADGE }}
-                >
-                  Arena Aberta
-                </span>
+                <div className="inline-block p-[1px] bg-[#FFB700] mb-3" style={{ clipPath: CUT_BADGE }}>
+                  <span
+                    className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest block"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    Arena Aberta
+                  </span>
+                </div>
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">
                   Pronto para Dominar o <span className="text-[#FFB700]">Summoner's Rift?</span>
                 </h2>
@@ -1608,14 +1730,19 @@ const Home = () => {
                   <Trophy className="w-4 h-4" />
                   <span>Ver Campeonatos</span>
                 </button>
-                <button
-                  onClick={() => navigate('/vincular')}
-                  className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/20 hover:border-white/40 font-black uppercase tracking-wider text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                <div
+                  className="p-[1px] bg-white/20 hover:bg-white/40 transition-colors"
                   style={{ clipPath: CUT_BUTTON }}
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Criar / Vincular Conta</span>
-                </button>
+                  <button
+                    onClick={() => navigate('/vincular')}
+                    className="px-8 py-4 bg-[#08080a] hover:bg-white/10 text-white font-black uppercase tracking-wider text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Criar / Vincular Conta</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1651,28 +1778,37 @@ const Home = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-black/40 pointer-events-none" />
 
-                  <button
-                    onClick={() => setSelectedNoticia(null)}
-                    className="absolute top-4 right-4 w-9 h-9 bg-black/80 border border-white/20 text-white flex items-center justify-center hover:bg-red-600 transition-colors cursor-pointer"
+                  <div
+                    className="absolute top-4 right-4 p-[1px] bg-white/20 hover:bg-red-600 transition-colors z-20"
                     style={{ clipPath: CUT_BUTTON }}
                   >
-                    <X className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => setSelectedNoticia(null)}
+                      className="w-9 h-9 bg-black/80 text-white flex items-center justify-center cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON_INNER }}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
 
                   <div className="absolute bottom-4 left-6 flex items-center gap-2">
-                    <span
-                      className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest shadow-md"
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      {selectedNoticia.categoria || 'Notícia'}
-                    </span>
-                    {selectedNoticia.date && (
+                    <div className="p-[1px] bg-[#FFB700] shadow-md" style={{ clipPath: CUT_BADGE }}>
                       <span
-                        className="px-3 py-1 bg-black/70 border border-white/15 text-white/80 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm flex items-center gap-1"
-                        style={{ clipPath: CUT_BADGE }}
+                        className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest block"
+                        style={{ clipPath: CUT_BADGE_INNER }}
                       >
-                        <Calendar className="w-3 h-3 text-[#FFB700]" /> {selectedNoticia.date}
+                        {selectedNoticia.categoria || 'Notícia'}
                       </span>
+                    </div>
+                    {selectedNoticia.date && (
+                      <div className="p-[1px] bg-white/20 backdrop-blur-sm" style={{ clipPath: CUT_BADGE }}>
+                        <span
+                          className="px-3 py-1 bg-black/80 text-white/80 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
+                          style={{ clipPath: CUT_BADGE_INNER }}
+                        >
+                          <Calendar className="w-3 h-3 text-[#FFB700]" /> {selectedNoticia.date}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
