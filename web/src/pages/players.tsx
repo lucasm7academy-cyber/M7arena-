@@ -740,7 +740,7 @@ export default function App() {
                               {/* Elo Badge */}
                               <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: eloStyle.border }}>
                                 <span
-                                  className={`block px-2 py-0.5 text-[10px] font-bold ${eloStyle.bg} ${eloStyle.text}`}
+                                  className={`block px-2 py-0.5 text-[10px] font-bold bg-[#0a0a0a] ${eloStyle.text}`}
                                   style={{ clipPath: CUT_BADGE_INNER }}
                                 >
                                   {jogador.elo}

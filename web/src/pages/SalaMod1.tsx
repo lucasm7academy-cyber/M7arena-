@@ -393,7 +393,7 @@ ${link}`;
             <motion.div 
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative z-20 flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
+                className="relative z-20 w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
                 style={{ clipPath: CUT_FRAME }}
             >
                 {/* Left Side: Exit Button, Mode Icon & Title */}

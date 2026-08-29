@@ -313,18 +313,18 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                       className="w-full h-full p-2.5 relative overflow-hidden"
                       style={{
                         clipPath: CUT_BUTTON_INNER,
-                        background: modo === key ? `${value.cor}25` : '#121217',
+                        background: modo === key ? `color-mix(in srgb, ${value.cor} 18%, #0d0d10)` : '#121217',
                       }}
                     >
                       {value.bgImage && (
                         <div
-                          className={`absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-300 ${modo === key ? 'opacity-30' : 'opacity-10'}`}
+                          className={`absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-300 ${modo === key ? 'opacity-20' : 'opacity-10'}`}
                           style={{ backgroundImage: `url(${value.bgImage})` }}
                         />
                       )}
                       <div className="relative z-10 flex items-center gap-2 mb-1">
                         <span className="text-base">{value.icone}</span>
-                        <span className="text-xs font-black uppercase tracking-tight text-zinc-100">{value.nome}</span>
+                        <span className="text-xs font-black uppercase tracking-tight text-white">{value.nome}</span>
                       </div>
                       <p className="relative z-10 text-[9px] font-bold text-zinc-400 leading-tight uppercase tracking-wider">{value.descricao}</p>
                     </div>
@@ -1103,7 +1103,7 @@ const Jogar = () => {
                             </div>
                             <div className="p-[1px]" style={{ clipPath: CUT_BADGE, background: `${vencedorInfo.cor}80` }}>
                               <span className="px-2 py-0.5 text-[9px] font-black uppercase block"
-                                style={{ clipPath: CUT_BADGE_INNER, background: `${vencedorInfo.cor}25`, color: vencedorInfo.cor }}>
+                                style={{ clipPath: CUT_BADGE_INNER, background: `color-mix(in srgb, ${vencedorInfo.cor} 22%, #0d0d10)`, color: '#fff' }}>
                                 {vencedorInfo.label}
                               </span>
                             </div>
