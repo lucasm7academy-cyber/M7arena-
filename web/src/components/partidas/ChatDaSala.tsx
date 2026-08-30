@@ -64,23 +64,25 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
     };
 
     const minimizado = (
-        <button
-            onClick={() => setAberto(true)}
-            className="relative p-[1px] bg-[#FFB700] transition-colors"
-            style={{ clipPath: CUT_FRAME }}
-            aria-label="Abrir chat da sala"
-        >
-            <span className="flex items-center gap-2 bg-[#0A0A0A] px-4 py-3 text-[#FFB700]"
-                style={{ clipPath: CUT_INNER }}>
-                <MessageSquare className="w-5 h-5" />
-                <span className="text-xs font-black uppercase tracking-widest">Chat</span>
-            </span>
+        <div className="relative inline-block">
+            <button
+                onClick={() => setAberto(true)}
+                className="relative p-[1px] bg-[#FFB700] transition-colors"
+                style={{ clipPath: CUT_FRAME }}
+                aria-label="Abrir chat da sala"
+            >
+                <span className="flex items-center gap-2 bg-[#0A0A0A] px-4 py-3 text-[#FFB700]"
+                    style={{ clipPath: CUT_INNER }}>
+                    <MessageSquare className="w-5 h-5" />
+                    <span className="text-xs font-black uppercase tracking-widest">Chat</span>
+                </span>
+            </button>
             {naoLidas > 0 && (
                 <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-black flex items-center justify-center">
                     {naoLidas > 99 ? '99+' : naoLidas}
                 </span>
             )}
-        </button>
+        </div>
     );
 
     const expandido = (
