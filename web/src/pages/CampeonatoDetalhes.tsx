@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -9,15 +9,6 @@ import {
   Check,
   GitBranch,
   X,
-  Coins,
-  CreditCard,
-  Calendar,
-  Diamond,
-  Users,
-  ShieldCheck,
-  UserCheck,
-  Trophy,
-  AlertCircle,
 } from "lucide-react";
 
 import { CUT_FRAME, CUT_FRAME_INNER, CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from "../components/campeonatos/cut-edge";
@@ -190,7 +181,7 @@ const CampeonatoDetalhesInner = ({
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-px" style={{ backgroundColor: campeonato.themeColor || '#FFB700' }} />
                   <span className="text-[10px] md:text-sm font-black uppercase tracking-[0.3em]" style={{ color: campeonato.themeColor || '#FFB700' }}>
-                    CAMPEONATO OFICIAL • M7 ARENA
+                    CAMPEONATO OFICIAL â€¢ M7 ARENA
                   </span>
                 </div>
                 <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white">
@@ -234,10 +225,9 @@ const CampeonatoDetalhesInner = ({
           </div>
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Dynamic Content */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* MAIN GRID â€” bloco Ãºnico full-width (abas, conteÃºdo, Info/Resp e
+            inscriÃ§Ã£o moram juntos na VisÃ£o Geral â€” refactor de layout T2) */}
+        <div className="w-full space-y-8">
             {/* CONTENT TABS */}
             <div
               className="relative p-[1px] w-full"
@@ -286,7 +276,7 @@ const CampeonatoDetalhesInner = ({
             </div>
 
             <AnimatePresence mode="wait">
-              {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getIcon={getIcon} />}
+              {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getIcon={getIcon} isRegistrado={isRegistered} setAbrirInscricao={() => setIsRegistrationModalOpen(true)} setAbrirRegulamento={() => setIsRulesModalOpen(true)} ehEspectador={role === "spectator"} />}
 
               {activeTab === "history" && <Historico key="history" campeonato={campeonato} expandedTeam={expandedTeam} setExpandedTeam={setExpandedTeam} />}
 
@@ -308,7 +298,7 @@ const CampeonatoDetalhesInner = ({
                 >
                   <div>
                     <h2 className="text-3xl font-black uppercase tracking-tighter text-white">
-                      Configurações da Arena
+                      ConfiguraÃ§Ãµes da Arena
                     </h2>
                     <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mt-1">
                       Ajuste os detalhes e a identidade do seu campeonato
@@ -351,7 +341,7 @@ const CampeonatoDetalhesInner = ({
                               Identidade Visual
                             </h3>
                             <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                              Defina a cor tema que será aplicada em todo o
+                              Defina a cor tema que serÃ¡ aplicada em todo o
                               campeonato
                             </p>
                           </div>
@@ -411,7 +401,7 @@ const CampeonatoDetalhesInner = ({
                       </div>
                     </div>
 
-                    {/* Card: Gestão do Chaveamento */}
+                    {/* Card: GestÃ£o do Chaveamento */}
                     <div
                       className="relative p-[1.5px] shadow-2xl transition-all md:col-span-2"
                       style={{
@@ -440,11 +430,11 @@ const CampeonatoDetalhesInner = ({
                           </div>
                           <div>
                             <h3 className="font-black text-lg uppercase tracking-wider text-white">
-                              Chaveamento Eliminatório
+                              Chaveamento EliminatÃ³rio
                             </h3>
                             <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
                               {campeonato.chavesSorteados
-                                ? "Chaveamento manual — preencha os times e avance pela edição (lápis) de cada vaga"
+                                ? "Chaveamento manual â€” preencha os times e avance pela ediÃ§Ã£o (lÃ¡pis) de cada vaga"
                                 : "Abra o chaveamento e preencha os times manualmente quando quiser"}
                             </p>
                           </div>
@@ -453,7 +443,7 @@ const CampeonatoDetalhesInner = ({
                               className="ml-auto text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20"
                               style={{ clipPath: CUT_BADGE }}
                             >
-                              ✓ Gerado
+                              âœ“ Gerado
                             </span>
                           )}
                         </div>
@@ -494,7 +484,7 @@ const CampeonatoDetalhesInner = ({
 
                         {campeonato.chavesSorteados && (
                           <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">
-                            Preencha os times pela edição (lápis) de cada vaga. Defina o placar para finalizar — o vencedor não avança sozinho.
+                            Preencha os times pela ediÃ§Ã£o (lÃ¡pis) de cada vaga. Defina o placar para finalizar â€” o vencedor nÃ£o avanÃ§a sozinho.
                           </p>
                         )}
                       </div>
@@ -508,305 +498,6 @@ const CampeonatoDetalhesInner = ({
 
             <AdminMatchModal isOpen={isAdminMatchModalOpen} onClose={() => setIsAdminMatchModalOpen(false)} campeonato={campeonato} isAdmin={isAdmin} adminMatchData={adminMatchData} setAdminMatchData={setAdminMatchData} onSubmit={handleCreateAdminMatch} myTeams={myTeams} />
           </div>
-
-          {/* Right Column: Statistics & Info */}
-          <div className="space-y-6">
-            <div
-              className="relative p-[1.5px] shadow-2xl transition-all sticky top-10"
-              style={{
-                clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))',
-              }}
-            >
-              <div
-                className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-5"
-                style={{ clipPath: CUT_FRAME_INNER }}
-              >
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
-                  Informações
-                </h3>
-
-                <div className="space-y-4">
-                  {/* 1. Premiação */}
-                  <div className="flex items-center gap-4 py-1">
-                    <div
-                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
-                      style={{
-                        clipPath: CUT_BADGE,
-                        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
-                      }}
-                    >
-                      <div
-                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
-                        style={{ clipPath: CUT_BADGE_INNER }}
-                      >
-                        <Coins
-                          className="w-5 h-5"
-                          style={{ color: campeonato.themeColor || '#FFB700' }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                        Premiação Total
-                      </h4>
-                      <p className="text-sm font-bold text-white/80">
-                        {campeonato.premio}
-                      </p>
-                      {campeonato.temOutrosPremios && (
-                        <p className="text-[9px] font-medium text-white/40 mt-1 leading-tight">
-                          {campeonato.outrosPremios}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2. Taxa */}
-                  <div className="flex items-center gap-4 py-1">
-                    <div
-                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
-                      style={{
-                        clipPath: CUT_BADGE,
-                        background: 'linear-gradient(135deg, #00D4FF, rgba(255,255,255,0.1))'
-                      }}
-                    >
-                      <div
-                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
-                        style={{ clipPath: CUT_BADGE_INNER }}
-                      >
-                        <CreditCard
-                          className="w-5 h-5"
-                          style={{ color: "#00D4FF" }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                        Taxa de Inscrição
-                      </h4>
-                      <p className="text-sm font-bold text-white/80">
-                        {campeonato.taxa}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 3. Data */}
-                  <div className="flex items-center gap-4 py-1">
-                    <div
-                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
-                      style={{
-                        clipPath: CUT_BADGE,
-                        background: 'linear-gradient(135deg, #FF6600, rgba(255,255,255,0.1))'
-                      }}
-                    >
-                      <div
-                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
-                        style={{ clipPath: CUT_BADGE_INNER }}
-                      >
-                        <Calendar
-                          className="w-5 h-5"
-                          style={{ color: "#FF6600" }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                        Data
-                      </h4>
-                      <p className="text-sm font-bold text-white/80">
-                        {formatFullDate(campeonato.data)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Tier */}
-                  <div className="flex items-center gap-4 py-1">
-                    <div
-                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
-                      style={{
-                        clipPath: CUT_BADGE,
-                        background: 'linear-gradient(135deg, #00FFD4, rgba(255,255,255,0.1))'
-                      }}
-                    >
-                      <div
-                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
-                        style={{ clipPath: CUT_BADGE_INNER }}
-                      >
-                        <Diamond size={18} color="#00FFD4" />
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                        Tier
-                      </h4>
-                      <p className="text-sm font-bold text-white/80">
-                        {(campeonato as any).tier || "Free Elo"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 4. Vagas */}
-                  <div className="flex items-center gap-4 py-1">
-                    <div
-                      className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
-                      style={{
-                        clipPath: CUT_BADGE,
-                        background: 'linear-gradient(135deg, #BF00FF, rgba(255,255,255,0.1))'
-                      }}
-                    >
-                      <div
-                        className="w-full h-full bg-[#0c0c10] flex items-center justify-center"
-                        style={{ clipPath: CUT_BADGE_INNER }}
-                      >
-                        <Users className="w-5 h-5" style={{ color: "#BF00FF" }} />
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                        Vagas / Times
-                      </h4>
-                      <p className="text-sm font-bold text-white/80">
-                        {
-                          (campeonato.timesInscritos || []).filter(
-                            (t: any) => t.status === "approved" || !t.status,
-                          ).length
-                        }{" "}
-                        / {campeonato.vagas}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Organization Card */}
-            <div
-              className="relative p-[1.5px] shadow-2xl transition-all"
-              style={{
-                clipPath: CUT_FRAME,
-                background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}40, rgba(255,255,255,0.03) 100%)`,
-              }}
-            >
-              <div
-                className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-4"
-                style={{ clipPath: CUT_FRAME_INNER }}
-              >
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">
-                  Responsável
-                </h3>
-
-                <div className="flex flex-col items-center justify-center py-4 w-full">
-                  {/* Organization Logo */}
-                  <div
-                    className="w-44 h-44 p-[1.5px] flex items-center justify-center mb-5 relative overflow-hidden group hover:scale-105 transition-transform"
-                    style={{
-                      clipPath: CUT_FRAME,
-                      background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
-                    }}
-                  >
-                    <div
-                      className="w-full h-full bg-[#0c0c10] flex items-center justify-center overflow-hidden p-3"
-                      style={{ clipPath: CUT_FRAME_INNER }}
-                    >
-                      {campeonato.orgPhotoUrl ? (
-                        <img
-                          src={campeonato.orgPhotoUrl} loading="lazy"
-                          alt="Logo Org"
-                          className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
-                        />
-                      ) : (
-                        <img
-                          src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400" loading="lazy"
-                          alt="Logo Default"
-                          className="w-full h-full object-cover opacity-50"
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center text-center">
-                    <p className="text-lg font-black text-white uppercase tracking-widest leading-tight mb-2">
-                      {campeonato.org}
-                    </p>
-                    <div
-                      className="flex items-center gap-2 py-1.5 px-3 bg-white/5 border border-white/5 opacity-60"
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      <ShieldCheck
-                        className="w-3.5 h-3.5"
-                        style={{ color: "#00FF41" }}
-                      />
-                      <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">
-                        Organizador Oficial
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Regulamento no Mobile */}
-            <button
-              onClick={() => setIsRulesModalOpen(true)}
-              className="md:hidden w-full py-4 bg-white/5 hover:bg-white/10 active:scale-[0.98] border border-white/10 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all cursor-pointer"
-              style={{ clipPath: CUT_BUTTON }}
-            >
-              <FileText className="w-4 h-4 text-white/60" />
-              <span>Regulamento Oficial</span>
-            </button>
-
-            {/* Ação de Inscrição */}
-            {(role as string) !== "spectator" && (
-              <div className="space-y-4">
-                {isRegistered ? (
-                  <div
-                    className="w-full py-4.5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 bg-[#00FF41]/10 border border-[#00FF41]/30"
-                    style={{
-                      clipPath: CUT_BUTTON,
-                      color: "#00FF41",
-                      boxShadow: '0 0 30px -5px rgba(0,255,65,0.2)'
-                    }}
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    <span>Time Inscrito</span>
-                  </div>
-                ) : campeonato.status === "abertas" ||
-                  campeonato.status === "inscricoes_abertas" ? (
-                  <button
-                    onClick={() => setIsRegistrationModalOpen(true)}
-                    className="w-full py-4.5 text-black font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      clipPath: CUT_BUTTON,
-                      backgroundColor: campeonato.themeColor || '#FFB700',
-                      boxShadow: `0 0 40px -5px ${campeonato.themeColor || '#FFB700'}66`,
-                    }}
-                  >
-                    <Trophy className="w-4 h-4" />
-                    <span>Garantir Vaga Agora</span>
-                  </button>
-                ) : (
-                  <div
-                    className="w-full py-4.5 bg-white/5 border border-white/10 text-white/30 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 cursor-not-allowed"
-                    style={{ clipPath: CUT_BUTTON }}
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                    <span>
-                      {campeonato.status === "breve" ||
-                      campeonato.status === "inscricoes_em_breve"
-                        ? "Inscrições em Breve"
-                        : "Inscrições Encerradas"}
-                    </span>
-                  </div>
-                )}
-                <p className="text-[9px] text-white/30 text-center uppercase font-bold px-4 leading-relaxed tracking-wider">
-                  {isRegistered
-                    ? "Sua inscrição está sendo processada pela organização. Acompanhe pelo seu perfil."
-                    : "Vagas confirmadas pela organização. Sem custo surpresa: você vê a taxa antes de confirmar."}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
