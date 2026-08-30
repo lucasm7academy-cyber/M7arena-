@@ -127,164 +127,167 @@ export const VisaoGeral = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="space-y-12 w-full"
+      className="w-full"
     >
       {/* O START TOURNAMENT BANNER FOI REMOVIDO PARA PRODUÇÃO */}
 
-      {/* CLASSIFICAÇÃO */}
-      <div
-        className="relative p-[1.5px] shadow-2xl transition-all"
-        style={{
-          clipPath: CUT_FRAME,
-          background: `linear-gradient(135deg, ${theme}, rgba(255,255,255,0.05) 100%)`,
-          boxShadow: `0 0 40px -10px ${theme}26`,
-        }}
-      >
-        <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6 space-y-4 sm:space-y-6" style={{ clipPath: CUT_FRAME_INNER }}>
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0" style={{ clipPath: CUT_BADGE, background: `linear-gradient(135deg, ${theme}, rgba(255,255,255,0.1))` }}>
-              <div className="w-full h-full bg-[#08080a] flex items-center justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
-                <Trophy className="w-6 h-6" style={{ color: theme }} />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">Classificação</h2>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: theme }}>
-                Ranking geral do campeonato
-              </p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {(campeonato.classificacao || []).map((time: any, i: number) => {
-              const Icon = getIcon(time.icone);
-              return (
-                <div
-                  key={i}
-                  className="relative p-[1px] transition-all hover:scale-[1.005]"
-                  style={{
-                    clipPath: CUT_BUTTON,
-                    background: i < 4 ? `linear-gradient(135deg, ${theme}80, rgba(255,255,255,0.05))` : "rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  <div
-                    className={`w-full p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
-                      i < 4 ? "bg-[#0b0b10]" : "bg-[#08080a] hover:bg-[#0c0c10]"
-                    }`}
-                    style={{ clipPath: CUT_BUTTON_INNER }}
-                  >
-                    <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
-                      <div className="w-8 text-center font-black text-2xl shrink-0" style={{ color: i < 4 ? theme : "rgba(255,255,255,0.4)" }}>
-                        {time.rank}º
-                      </div>
-                      <div className="w-14 h-14 p-[1.5px] flex items-center justify-center shrink-0" style={{ clipPath: CUT_BADGE, background: time.cor || "#FFB700", boxShadow: `0 8px 24px -6px ${time.cor || "#FFB700"}60` }}>
-                        <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden" style={{ clipPath: CUT_BADGE_INNER }}>
-                          {time.logo ? (
-                            <img src={time.logo} loading="lazy" alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <Icon className="w-7 h-7" style={{ color: time.cor || "#FFB700" }} />
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <h3 className="text-white font-black text-lg sm:text-xl tracking-tight leading-tight truncate uppercase">{time.nome}</h3>
-                          <span
-                            className="inline-block text-[9px] sm:text-[10px] font-black px-2 py-0.5 tracking-widest shrink-0"
-                            style={{ clipPath: CUT_BADGE, color: time.cor || "#FFB700", background: `${time.cor}18`, border: `1px solid ${time.cor}40` }}
-                          >
-                            #{time.tag}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 md:gap-6 min-w-[220px]">
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">V</span>
-                        <span className="text-2xl font-black" style={{ color: "#00FF41" }}>{time.v}</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">D</span>
-                        <span className="text-2xl font-black" style={{ color: "#FF3131" }}>{time.d}</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">J</span>
-                        <span className="text-2xl font-black" style={{ color: theme }}>{time.j}</span>
-                      </div>
-                    </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* COLUNA PRINCIPAL — CLASSIFICAÇÃO */}
+        <div className="lg:col-span-2">
+          <div
+            className="relative p-[1.5px] shadow-2xl transition-all"
+            style={{
+              clipPath: CUT_FRAME,
+              background: `linear-gradient(135deg, ${theme}, rgba(255,255,255,0.05) 100%)`,
+              boxShadow: `0 0 40px -10px ${theme}26`,
+            }}
+          >
+            <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6 space-y-4 sm:space-y-6" style={{ clipPath: CUT_FRAME_INNER }}>
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0" style={{ clipPath: CUT_BADGE, background: `linear-gradient(135deg, ${theme}, rgba(255,255,255,0.1))` }}>
+                  <div className="w-full h-full bg-[#08080a] flex items-center justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                    <Trophy className="w-6 h-6" style={{ color: theme }} />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* INFORMAÇÕES + RESPONSÁVEL + INSCRIÇÃO — bloco único que agora mora na Visão Geral */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Informações */}
-        <div className="relative p-[1.5px] shadow-2xl transition-all" style={{ clipPath: CUT_FRAME, background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))" }}>
-          <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-5" style={{ clipPath: CUT_FRAME_INNER }}>
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">Informações</h3>
-            <div className="space-y-4">{blocoInfo}</div>
-          </div>
-        </div>
-
-        {/* Responsável */}
-        <div className="relative p-[1.5px] shadow-2xl transition-all" style={{ clipPath: CUT_FRAME, background: `linear-gradient(135deg, ${theme}40, rgba(255,255,255,0.03) 100%)` }}>
-          <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-4" style={{ clipPath: CUT_FRAME_INNER }}>
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">Responsável</h3>
-            {blocoResponsavel}
-          </div>
-        </div>
-      </div>
-
-      {/* Regulamento + Inscrição */}
-      <div className="space-y-4">
-        <button
-          onClick={setAbrirRegulamento}
-          className="md:hidden w-full py-4 bg-white/5 hover:bg-white/10 active:scale-[0.98] border border-white/10 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all cursor-pointer"
-          style={{ clipPath: CUT_BUTTON }}
-        >
-          <FileText className="w-4 h-4 text-white/60" />
-          <span>Regulamento Oficial</span>
-        </button>
-
-        {!ehEspectador && (
-          <div className="space-y-4">
-            {isRegistrado ? (
-              <div
-                className="w-full py-4.5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 bg-[#00FF41]/10 border border-[#00FF41]/30"
-                style={{ clipPath: CUT_BUTTON, color: "#00FF41", boxShadow: "0 0 30px -5px rgba(0,255,65,0.2)" }}
-              >
-                <UserCheck className="w-4 h-4" />
-                <span>Time Inscrito</span>
+                <div>
+                  <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">Classificação</h2>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: theme }}>
+                    Ranking geral do campeonato
+                  </p>
+                </div>
               </div>
-            ) : campeonato.status === "abertas" || campeonato.status === "inscricoes_abertas" ? (
-              <button
-                onClick={setAbrirInscricao}
-                className="w-full py-4.5 text-black font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                style={{ clipPath: CUT_BUTTON, backgroundColor: theme, boxShadow: `0 0 40px -5px ${theme}66` }}
-              >
-                <Trophy className="w-4 h-4" />
-                <span>Garantir Vaga Agora</span>
-              </button>
-            ) : (
-              <div className="w-full py-4.5 bg-white/5 border border-white/10 text-white/30 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 cursor-not-allowed" style={{ clipPath: CUT_BUTTON }}>
-                <AlertCircle className="w-4 h-4" />
-                <span>
-                  {campeonato.status === "breve" || campeonato.status === "inscricoes_em_breve"
-                    ? "Inscrições em Breve"
-                    : "Inscrições Encerradas"}
-                </span>
+              <div className="space-y-3">
+                {(campeonato.classificacao || []).map((time: any, i: number) => {
+                  const Icon = getIcon(time.icone);
+                  return (
+                    <div
+                      key={i}
+                      className="relative p-[1px] transition-all hover:scale-[1.005]"
+                      style={{
+                        clipPath: CUT_BUTTON,
+                        background: i < 4 ? `linear-gradient(135deg, ${theme}80, rgba(255,255,255,0.05))` : "rgba(255, 255, 255, 0.05)",
+                      }}
+                    >
+                      <div
+                        className={`w-full p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
+                          i < 4 ? "bg-[#0b0b10]" : "bg-[#08080a] hover:bg-[#0c0c10]"
+                        }`}
+                        style={{ clipPath: CUT_BUTTON_INNER }}
+                      >
+                        <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                          <div className="w-8 text-center font-black text-2xl shrink-0" style={{ color: i < 4 ? theme : "rgba(255,255,255,0.4)" }}>
+                            {time.rank}º
+                          </div>
+                          <div className="w-14 h-14 p-[1.5px] flex items-center justify-center shrink-0" style={{ clipPath: CUT_BADGE, background: time.cor || "#FFB700", boxShadow: `0 8px 24px -6px ${time.cor || "#FFB700"}60` }}>
+                            <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden" style={{ clipPath: CUT_BADGE_INNER }}>
+                              {time.logo ? (
+                                <img src={time.logo} loading="lazy" alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <Icon className="w-7 h-7" style={{ color: time.cor || "#FFB700" }} />
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h3 className="text-white font-black text-lg sm:text-xl tracking-tight leading-tight truncate uppercase">{time.nome}</h3>
+                              <span
+                                className="inline-block text-[9px] sm:text-[10px] font-black px-2 py-0.5 tracking-widest shrink-0"
+                                style={{ clipPath: CUT_BADGE, color: time.cor || "#FFB700", background: `${time.cor}18`, border: `1px solid ${time.cor}40` }}
+                              >
+                                #{time.tag}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 md:gap-6 min-w-[220px]">
+                          <div className="flex flex-col items-center">
+                            <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">V</span>
+                            <span className="text-2xl font-black" style={{ color: "#00FF41" }}>{time.v}</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">D</span>
+                            <span className="text-2xl font-black" style={{ color: "#FF3131" }}>{time.d}</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-[9px] font-black text-white/20 uppercase tracking-wider">J</span>
+                            <span className="text-2xl font-black" style={{ color: theme }}>{time.j}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-            <p className="text-[9px] text-white/30 text-center uppercase font-bold px-4 leading-relaxed tracking-wider">
-              {isRegistrado
-                ? "Sua inscrição está sendo processada pela organização. Acompanhe pelo seu perfil."
-                : "Vagas confirmadas pela organização. Sem custo surpresa: você vê a taxa antes de confirmar."}
-            </p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* COLUNA LATERAL — INFORMAÇÕES → RESPONSÁVEL → INSCRIÇÃO */}
+        <div className="space-y-6">
+          {/* Informações */}
+          <div className="relative p-[1.5px] shadow-2xl transition-all" style={{ clipPath: CUT_FRAME, background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))" }}>
+            <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-5" style={{ clipPath: CUT_FRAME_INNER }}>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">Informações</h3>
+              <div className="space-y-4">{blocoInfo}</div>
+            </div>
+          </div>
+
+          {/* Responsável */}
+          <div className="relative p-[1.5px] shadow-2xl transition-all" style={{ clipPath: CUT_FRAME, background: `linear-gradient(135deg, ${theme}40, rgba(255,255,255,0.03) 100%)` }}>
+            <div className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-6 space-y-4" style={{ clipPath: CUT_FRAME_INNER }}>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 border-b border-white/5 pb-4 text-center">Responsável</h3>
+              {blocoResponsavel}
+            </div>
+          </div>
+
+          {/* Regulamento (mobile) */}
+          <button
+            onClick={setAbrirRegulamento}
+            className="md:hidden w-full py-4 bg-white/5 hover:bg-white/10 active:scale-[0.98] border border-white/10 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+            style={{ clipPath: CUT_BUTTON }}
+          >
+            <FileText className="w-4 h-4 text-white/60" />
+            <span>Regulamento Oficial</span>
+          </button>
+
+          {/* Inscrição */}
+          {!ehEspectador && (
+            <div className="space-y-4">
+              {isRegistrado ? (
+                <div
+                  className="w-full py-4.5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 bg-[#00FF41]/10 border border-[#00FF41]/30"
+                  style={{ clipPath: CUT_BUTTON, color: "#00FF41", boxShadow: "0 0 30px -5px rgba(0,255,65,0.2)" }}
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Time Inscrito</span>
+                </div>
+              ) : campeonato.status === "abertas" || campeonato.status === "inscricoes_abertas" ? (
+                <button
+                  onClick={setAbrirInscricao}
+                  className="w-full py-4.5 text-black font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ clipPath: CUT_BUTTON, backgroundColor: theme, boxShadow: `0 0 40px -5px ${theme}66` }}
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Garantir Vaga Agora</span>
+                </button>
+              ) : (
+                <div className="w-full py-4.5 bg-white/5 border border-white/10 text-white/30 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 cursor-not-allowed" style={{ clipPath: CUT_BUTTON }}>
+                  <AlertCircle className="w-4 h-4" />
+                  <span>
+                    {campeonato.status === "breve" || campeonato.status === "inscricoes_em_breve"
+                      ? "Inscrições em Breve"
+                      : "Inscrições Encerradas"}
+                  </span>
+                </div>
+              )}
+              <p className="text-[9px] text-white/30 text-center uppercase font-bold px-4 leading-relaxed tracking-wider">
+                {isRegistrado
+                  ? "Sua inscrição está sendo processada pela organização. Acompanhe pelo seu perfil."
+                  : "Vagas confirmadas pela organização. Sem custo surpresa: você vê a taxa antes de confirmar."}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
