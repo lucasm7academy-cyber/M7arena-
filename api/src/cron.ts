@@ -2,8 +2,10 @@ import { and, eq, lt, inArray, isNull, not } from "drizzle-orm";
 import { db } from "./db.js";
 import { matches, matchPlayers, matchCodes, salaMensagens } from "../../db/schema/matches.js";
 import { users } from "../../db/schema/identidade.js";
+import { tournamentMatches, bracketMatches } from "../../db/schema/tournaments.js";
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
 import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
+import { verificarSerieCampeonato } from "./lib/serie-campeonato.js";
 
 /**
  * Job único a cada 10 min (design v3 §8): verificação automática de partidas +
@@ -34,7 +36,30 @@ export async function runCron(d: any = db) {
     }
   }
 
-  // 2. Saneamento (ajustarsala bug D): salas presas em estados mortos (ex.:
+  // 2. Verificação de SÉRIES de campeonato (ADR-047): jogos de campeonato em
+  //    'em_andamento' com código de partida são verificados pela Riot. O motor
+  //    de série decide o vencedor por jogada (roster dos times) e, ao fechar em
+  //    bestOf (MD3/MD5), marca o jogo como finalizada e libera o código.
+  let seriesFinalizadas = 0;
+  const emAndamentoSeries = await d
+    .select({ id: tournamentMatches.id })
+    .from(tournamentMatches)
+    .where(and(eq(tournamentMatches.status, "em_andamento"), not(isNull(tournamentMatches.codigoPartida))));
+  for (const s of emAndamentoSeries) {
+    const r = await verificarSerieCampeonato(d, { matchId: s.id });
+    if (r.estado === "finalizada") seriesFinalizadas++;
+  }
+  const emAndamentoBrackets = await d
+    .select({ id: bracketMatches.id })
+    .from(bracketMatches)
+    .where(and(isNull(bracketMatches.winnerSide), not(isNull(bracketMatches.codigoPartida))));
+  for (const s of emAndamentoBrackets) {
+    const r = await verificarSerieCampeonato(d, { bracketMatchId: s.id });
+    if (r.estado === "finalizada") seriesFinalizadas++;
+  }
+  if (seriesFinalizadas > 0) console.log(`[cron] campeonato: ${seriesFinalizadas} série(s) finalizada(s)`);
+
+  // 3. Saneamento (ajustarsala bug D): salas presas em estados mortos (ex.:
   //    'finalizacao', estado da votação removida pelo ADR-027) viram
   //    'encerrada', e o `linked` residual de salas não ativas é liberado.
   //    Sem isso, um jogador fica bloqueado para sempre com `ja_em_outra_sala`.
@@ -74,7 +99,7 @@ export async function runCron(d: any = db) {
     console.log(`[cron] saneamento: ${linkedOrfao.length} vinculo(s) orfao(s) liberado(s) em ${idsOrfaos.length} sala(s)`);
   }
 
-  // 3. Chat (ADR-040): mensagens de sala expiram em 5 min. O purge preguiçoso
+  // 4. Chat (ADR-040): mensagens de sala expiram em 5 min. O purge preguiçoso
   //    (no GET de histórico) já limpa na leitura; aqui é a rede de segurança
   //    para a tabela nunca acumular mesmo sem leituras.
   const corteChat = new Date(Date.now() - 5 * 60 * 1000);

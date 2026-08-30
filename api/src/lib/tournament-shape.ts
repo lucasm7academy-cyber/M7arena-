@@ -110,6 +110,13 @@ export function buildCronograma(data: NonNullable<Awaited<ReturnType<typeof load
     proposedBy: m.proposedBy || "",
     iconeA: "ShieldCheck",
     iconeB: "Swords",
+    // ── Verificação de série (ADR-047) ──
+    codigo_partida: m.codigoPartida ?? null,
+    irregular: !!m.irregular,
+    resultado_riot: m.resultadoRiot ?? null,
+    // Identificadores internos para o motor (a série vive em tournament_matches).
+    match_id: m.id,
+    best_of: m.bestOf ?? 3,
   }));
 }
 
@@ -225,26 +232,34 @@ export function buildBracket(data: NonNullable<Awaited<ReturnType<typeof loadTou
     },
   };
 
-  const fillCell = (target: any, tagA: string | null, tagB: string | null, s1: number, s2: number, winner: string | null) => {
+  const fillCell = (target: any, tagA: string | null, tagB: string | null, s1: number, s2: number, winner: string | null, extra?: any) => {
     target.t1 = tagA || "";
     target.t2 = tagB || "";
     target.s1 = s1;
     target.s2 = s2;
     target.winner = winner;
+    if (extra) {
+      target.codigo_partida = extra.codigoPartida ?? null;
+      target.irregular = !!extra.irregular;
+      target.resultado_riot = extra.resultadoRiot ?? null;
+      target.bracket_match_id = extra.id;
+      target.best_of = extra.bestOf ?? 3;
+    }
   };
 
   brackets.forEach((b) => {
     const br: any = bracket;
     const sectionKey = b.section as keyof typeof br;
+    const extra = { codigoPartida: b.codigoPartida, irregular: b.irregular, resultadoRiot: b.resultadoRiot, id: b.id, bestOf: b.bestOf };
     if (b.section === "upper" || b.section === "lower") {
       const roundArr = br[sectionKey]?.[b.round];
-      if (Array.isArray(roundArr) && roundArr[b.slot]) fillCell(roundArr[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide);
+      if (Array.isArray(roundArr) && roundArr[b.slot]) fillCell(roundArr[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
     } else if (b.section === "side") {
       const sideVal = br.side?.[b.round];
-      if (Array.isArray(sideVal) && sideVal[b.slot]) fillCell(sideVal[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide);
-      else if (sideVal && !Array.isArray(sideVal)) fillCell(sideVal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide);
-    } else if (b.section === "preFinal") fillCell(br.preFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide);
-    else if (b.section === "grandFinal") fillCell(br.grandFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide);
+      if (Array.isArray(sideVal) && sideVal[b.slot]) fillCell(sideVal[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
+      else if (sideVal && !Array.isArray(sideVal)) fillCell(sideVal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
+    } else if (b.section === "preFinal") fillCell(br.preFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
+    else if (b.section === "grandFinal") fillCell(br.grandFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
   });
 
   return bracket;

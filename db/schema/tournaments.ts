@@ -129,6 +129,16 @@ export const tournamentMatches = pgTable(
     status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending' | 'in_progress' | 'finished' | valores legados do cronograma
     bracketSlot: varchar("bracket_slot", { length: 50 }),
     nextMatchId: uuid("next_match_id").references((): any => tournamentMatches.id, { onDelete: "set null" }),
+    // ── Verificação de série via código Riot (ADR-047) ──────────────────────
+    // A série (MD3/MD5) usa 1 tournament code. O código é gerado ao entrar em
+    // 'em_andamento'. `bestOf` = vitórias necessárias para fechar (3=md3, 5=md5).
+    // `irregular` = jogou alguém fora do roster (titulares+reservas) — a série
+    // conta normal, mas fica sinalizada para o ADM decidir punição depois.
+    codigoPartida: text("codigo_partida"),
+    bestOf: integer("best_of").default(3).notNull(),
+    serieIniciadaAt: timestamp("serie_iniciada_at", { mode: "date" }),
+    irregular: boolean("irregular").default(false).notNull(),
+    resultadoRiot: jsonb("resultado_riot").$type<Record<string, unknown>>() ,
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   },
@@ -164,6 +174,12 @@ export const bracketMatches = pgTable(
     scoreA: integer("score_a").default(0).notNull(),
     scoreB: integer("score_b").default(0).notNull(),
     winnerSide: varchar("winner_side", { length: 10 }), // 'a' | 'b'
+    // ── Verificação de série via código Riot (ADR-047) ──────────────────────
+    codigoPartida: text("codigo_partida"),
+    bestOf: integer("best_of").default(3).notNull(),
+    serieIniciadaAt: timestamp("serie_iniciada_at", { mode: "date" }),
+    irregular: boolean("irregular").default(false).notNull(),
+    resultadoRiot: jsonb("resultado_riot").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   },
@@ -182,6 +198,7 @@ export const bracketMatches = pgTable(
 export const tournamentStandings = pgTable(
   "tournament_standings",
   {
+
     id: uuid("id").primaryKey().defaultRandom(),
     tournamentId: uuid("tournament_id")
       .notNull()
@@ -201,5 +218,41 @@ export const tournamentStandings = pgTable(
   (table) => [
     uniqueIndex("tournament_standings_team_idx").on(table.tournamentId, table.teamId),
     index("tournament_standings_rank_idx").on(table.tournamentId, table.rank),
+  ]
+);
+
+/**
+ * Partida individual de uma série de campeonato (ADR-047). Uma série MD3 tem
+ * até 3 linhas; MD5 até 5. Guarda o resultado de CADA jogo da Riot (winnerSide
+ * 'a'|'b', payload completo) para o histórico exibir stats por partida e para
+ * o motor saber quantas vitórias cada time acumulou. `irregular` marca jogo
+ * que teve jogador fora do roster.
+ */
+export const tournamentSeriesGames = pgTable(
+  "tournament_series_games",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Linha da série (ou bracket). Apenas UM dos dois preenchido conforme o
+    // formato do jogo: cronograma/grupos → matchId; mata-mata → bracketMatchId.
+    matchId: uuid("match_id").references(() => tournamentMatches.id, { onDelete: "cascade" }),
+    bracketMatchId: uuid("bracket_match_id").references(() => bracketMatches.id, { onDelete: "cascade" }),
+    tournamentId: uuid("tournament_id")
+      .notNull()
+      .references(() => tournaments.id, { onDelete: "cascade" }),
+    gameNumber: integer("game_number").notNull(), // 1..n dentro da série
+    winnerSide: varchar("winner_side", { length: 10 }).notNull(), // 'a' | 'b'
+    matchIdRiot: text("match_id_riot"),
+    killA: integer("kill_a").default(0).notNull(),
+    killB: integer("kill_b").default(0).notNull(),
+    duracaoS: integer("duracao_s").default(0).notNull(),
+    irregular: boolean("irregular").default(false).notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>(), // stats completos da partida (Riot)
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("tournament_series_games_match_idx").on(table.matchId),
+    index("tournament_series_games_bracket_idx").on(table.bracketMatchId),
+    index("tournament_series_games_tournament_idx").on(table.tournamentId),
   ]
 );

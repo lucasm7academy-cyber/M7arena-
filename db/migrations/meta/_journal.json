@@ -148,6 +148,13 @@
       "when": 1786865385442,
       "tag": "0020_separar_fila_codigos_x1",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788110625329,
+      "tag": "0021_campeonato_verificacao_serie",
+      "breakpoints": true
     }
   ]
 }

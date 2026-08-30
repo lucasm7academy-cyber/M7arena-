@@ -12,12 +12,14 @@ export interface RiotMatch {
   info: {
     tournamentCode?: string;
     gameCreation: number;
+    gameDuration?: number;
     endOfGameResult?: string;
     participants: {
       puuid: string;
       teamId: number;
-      firstBloodKill?: boolean;
+      win?: boolean;
       kills?: number;
+      firstBloodKill?: boolean;
       totalMinionsKilled?: number;
       neutralMinionsKilled?: number;
     }[];

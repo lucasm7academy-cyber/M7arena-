@@ -2,10 +2,11 @@ import { Router } from "express";
 import { eq, and, gt, asc, desc, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions } from "../../../db/schema/identidade.js";
-import { tournaments, tournamentTeams, tournamentMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
+import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
+import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
 
 export const tournamentsRouter = Router();
 
@@ -343,5 +344,70 @@ tournamentsRouter.post("/:id/recalcular-pdl", async (req, res) => {
     return res.json({ ok: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao recalcular PDL" });
+  }
+});
+
+// ── Verificação de série via código Riot (ADR-047) ─────────────────────────
+
+/**
+ * POST /api/tournaments/:id/jogo/:matchId/gerar-codigo
+ * Atribui um tournament code do pool à SERIE (tournament_matches), marca o
+ * jogo como 'em_andamento' e devolve o código. O criador do torneio (organizer)
+ * chama ao agendar. O código vale a série inteira (MD3/MD5).
+ */
+tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const { id, matchId } = req.params;
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+    if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+    if (t.organizerId !== user.id) return res.status(403).json({ error: "Sem permissão" });
+    const [serie] = await db.select().from(tournamentMatches).where(and(eq(tournamentMatches.id, matchId), eq(tournamentMatches.tournamentId, id))).limit(1);
+    if (!serie) return res.status(404).json({ error: "Jogo não encontrado" });
+
+    let codigo = serie.codigoPartida;
+    if (!codigo) {
+      // Códigos de sala: 1v1 tem fila própria; demais usam os genéricos 5v5.
+      const modo = t.gameId === "lol" ? "5v5" : "5v5";
+      codigo = await atribuirCodigoSerie(db, modo);
+      if (codigo === "SEM-CODIGO-AGUARDE") return res.status(409).json({ error: "Sem código disponível no momento" });
+      // Final (phase='finals') é MD5 (best_of 5); as demais fases são MD3.
+      const bestOf = serie.phase === "finals" ? 5 : (serie.bestOf ?? 3);
+      await db.update(tournamentMatches).set({
+        codigoPartida: codigo,
+        status: "em_andamento",
+        bestOf,
+        serieIniciadaAt: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(tournamentMatches.id, serie.id));
+    } else {
+      // Já tem código: garante o status 'em_andamento'.
+      await db.update(tournamentMatches).set({ status: "em_andamento", updatedAt: new Date() }).where(eq(tournamentMatches.id, serie.id));
+    }
+
+    return res.json(await toLegacyTournament(id));
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao gerar código" });
+  }
+});
+
+/**
+ * POST /api/tournaments/:id/jogo/:matchId/verificar
+ * Dispara a verificação da série agora (além do cron). Se fechou, marca o jogo
+ * finalizada e devolve o resultado. Paridade com /matches/:id/verificar.
+ */
+tournamentsRouter.post("/:id/jogo/:matchId/verificar", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const { id, matchId } = req.params;
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+    if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    const r = await verificarSerieCampeonato(db, { matchId });
+    return res.json({ ...r, tournament: await toLegacyTournament(id) });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao verificar série" });
   }
 });
