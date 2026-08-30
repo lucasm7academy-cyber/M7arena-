@@ -1,8 +1,9 @@
 // src/components/partidas/ChatDaSala.tsx
 // Chat da sala (ADR-040): widget flutuante no canto inferior esquerdo, quase
-// encostado na borda, aberto por padrão. Fundo preto sólido + borda dourada
-// cortada (frame). Só o nome do jogador muda de cor (blue/red/dourado conforme
-// o time do envio); o resto do accent é o dourado padrão.
+// encostado na borda, fechado por padrão (abre com um clique). Fundo preto
+// sólido + borda dourada cortada (frame). Só o nome do jogador muda de cor
+// (blue/red/dourado conforme o time do envio); o resto do accent é o dourado
+// padrão. Fechado, mostra a bolinha vermelha de não lidas.
 
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
@@ -23,7 +24,7 @@ interface ChatDaSalaProps {
 }
 
 export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarChat, carregarHistorico }: ChatDaSalaProps) {
-    const [aberto, setAberto] = useState(true);
+    const [aberto, setAberto] = useState(false);
     const [texto, setTexto] = useState('');
     const [roladoPraCima, setRoladoPraCima] = useState(false);
     const listaRef = useRef<HTMLDivElement | null>(null);
