@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { UserPlus, Check, X } from 'lucide-react';
 
@@ -47,6 +47,24 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     premioMC = 0,
     timeVencedor = null,
 }) => {
+
+    const [mostrarSair, setMostrarSair] = useState(false);
+    const [isTouch, setIsTouch] = useState(false);
+
+    // Detecta touch (celular) para o botão Sair da Vaga funcionar por toque —
+    // no desktop o "Sair da Vaga" aparece no hover, mas touch não tem hover.
+    useEffect(() => {
+        const mq = window.matchMedia('(hover: none)');
+        const ativar = () => setIsTouch(mq.matches);
+        ativar();
+        mq.addEventListener('change', ativar);
+        return () => mq.removeEventListener('change', ativar);
+    }, []);
+
+    // Ao trocar de slot/vaga ou liberar a vaga, esconde o overlay de sair.
+    useEffect(() => {
+        setMostrarSair(false);
+    }, [ocupada]);
 
     const teamColor = isTimeA ? '#3B82F6' : '#ef4444';
     const isDesistente = isFinalizada && ocupada && !stats;
@@ -122,7 +140,10 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     whileHover={{ scale: 1.015 }}
-                    className={`relative ${cardWidth} h-[60px] md:h-[8.2vmin] p-[1px] group overflow-hidden`}
+                    onClick={aoSair && !isFinalizada && isTouch ? () => setMostrarSair(v => !v) : undefined}
+                    className={`relative ${cardWidth} h-[60px] md:h-[8.2vmin] p-[1px] group overflow-hidden ${
+                        aoSair && !isFinalizada && isTouch ? 'cursor-pointer' : ''
+                    }`}
                     style={{
                         backgroundColor: isDesistente ? '#374151' : teamColor,
                         clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
@@ -158,19 +179,52 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             </motion.div>
                         )}
 
-                        {/* Overlay Hover Centrado para Sair */}
+                        {/* Overlay para Sair da Vaga. Desktop: aparece no hover.
+                            Touch (celular): o toque na vaga revela FICAR/SAIR. */}
                         {aoSair && !isFinalizada && (
-                            <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-30 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        aoSair();
-                                    }}
-                                    className="px-3 py-1.5 md:px-[2.5vmin] md:py-[0.8vmin] bg-red-600/30 hover:bg-red-600 border border-red-500/60 hover:border-red-400 rounded-xl text-red-100 hover:text-white text-xs md:text-[1.3vmin] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-[1vmin] shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95"
-                                >
-                                    <X className="w-4 h-4 md:w-[1.6vmin] md:h-[1.6vmin] text-red-400 group-hover:text-white" />
-                                    <span>Sair da Vaga</span>
-                                </button>
+                            <div
+                                className={`absolute inset-0 bg-black/85 backdrop-blur-sm z-30 flex items-center justify-center transition-all duration-300 ${
+                                    isTouch
+                                        ? mostrarSair
+                                            ? 'opacity-100 pointer-events-auto'
+                                            : 'opacity-0 pointer-events-none'
+                                        : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
+                                }`}
+                            >
+                                {isTouch ? (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMostrarSair(false);
+                                            }}
+                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white text-xs font-black uppercase tracking-widest transition-all"
+                                        >
+                                            FICAR
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                aoSair();
+                                            }}
+                                            className="px-3 py-1.5 bg-red-600/30 hover:bg-red-600 border border-red-500/60 rounded-xl text-red-100 hover:text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all"
+                                        >
+                                            <X className="w-4 h-4 text-red-400" />
+                                            <span>SAIR</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            aoSair();
+                                        }}
+                                        className="px-3 py-1.5 md:px-[2.5vmin] md:py-[0.8vmin] bg-red-600/30 hover:bg-red-600 border border-red-500/60 hover:border-red-400 rounded-xl text-red-100 hover:text-white text-xs md:text-[1.3vmin] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-[1vmin] shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95"
+                                    >
+                                        <X className="w-4 h-4 md:w-[1.6vmin] md:h-[1.6vmin] text-red-400 group-hover:text-white" />
+                                        <span>Sair da Vaga</span>
+                                    </button>
+                                )}
                             </div>
                         )}
 
