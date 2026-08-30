@@ -98,7 +98,17 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   let resultadoRiot: any = null;
   if (m.status === "encerrada") {
     const [mr] = await ctx.select().from(matchResults).where(eq(matchResults.matchId, m.id)).limit(1);
-    resultadoRiot = mr ? resumoRiot(mr.payload) : null;
+    if (mr) {
+      // Mapa puuid → lado da NOSSA vaga (blue/red). Em custom games o teamId
+      // da Riot (100/200) não casa com o nosso lado de forma confiável, então
+      // o placar precisa ser clusterizado pelo lado real dos participantes.
+      const puuidToSide = new Map<string, "blue" | "red">();
+      for (const p of playersEnriched) {
+        const puuid = p.__user?.__riotPuuid;
+        if (puuid) puuidToSide.set(puuid, p.side as "blue" | "red");
+      }
+      resultadoRiot = resumoRiot(mr.payload, puuidToSide);
+    }
   }
 
   const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot);

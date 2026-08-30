@@ -89,31 +89,44 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
  * Resumo estruturado do match_results (payload da Riot) para as telas de
  * partida finalizada: vencedor real, duração e stats por time/jogador.
  * `payload` é o JSON v5 da Riot (matchResults.payload).
+ *
+ * `puuidToSide` (opcional) resolve o lado NUBA (blue/red) por puuid. Sem ele,
+ * cai no teamId da Riot (100→blue, 200→red) — mas em custom games o teamId
+ * não corresponde de forma confiável ao nosso lado, então o placar por teamId
+ * sai invertido. Passar o mapa corrige a cluster de kills/ouro/vencedor.
  */
-export function resumoRiot(payload: any) {
+export function resumoRiot(payload: any, puuidToSide?: Map<string, "blue" | "red">) {
   if (!payload?.info?.teams || !payload?.info?.participants) return null;
   const info = payload.info;
   const times = new Map<number, any>(info.teams.map((t: any) => [t.teamId, t]));
-  const porTime = (teamId: number) => info.participants.filter((p: any) => p.teamId === teamId);
-  const kills = (teamId: number) => porTime(teamId).reduce((s: number, p: any) => s + (p.kills || 0), 0);
-  const gold = (teamId: number) => porTime(teamId).reduce((s: number, p: any) => s + (p.goldEarned || 0), 0);
-  const teamWin = (teamId: number) => !!times.get(teamId)?.win;
+  const ladoDe = (p: any): "blue" | "red" =>
+    puuidToSide?.get(p.puuid) ?? (p.teamId === 100 ? "blue" : "red");
+  const porLado = (lado: "blue" | "red") => info.participants.filter((p: any) => ladoDe(p) === lado);
+  const kills = (lado: "blue" | "red") => porLado(lado).reduce((s: number, p: any) => s + (p.kills || 0), 0);
+  const gold = (lado: "blue" | "red") => porLado(lado).reduce((s: number, p: any) => s + (p.goldEarned || 0), 0);
+  const venceu = (lado: "blue" | "red") => {
+    const parts = porLado(lado);
+    if (parts.some((p: any) => p.win)) return true;
+    if (parts.some((p: any) => p.win === false)) return false;
+    // Sem win nos participants (partida abortada no 1v1), usa o teamId do time.
+    return !!times.get(parts[0]?.teamId)?.win;
+  };
 
   return {
     match_id_riot: payload.metadata?.matchId ?? null,
-    vencedor: teamWin(100) ? "blue" : teamWin(200) ? "red" : null,
+    vencedor: venceu("blue") ? "blue" : venceu("red") ? "red" : null,
     duracao_s: info.gameDuration ?? 0,
     game_version: info.gameVersion ?? null,
     placar: {
-      blue: { kills: kills(100), gold: gold(100), venceu: teamWin(100) },
-      red: { kills: kills(200), gold: gold(200), venceu: teamWin(200) },
+      blue: { kills: kills("blue"), gold: gold("blue"), venceu: venceu("blue") },
+      red: { kills: kills("red"), gold: gold("red"), venceu: venceu("red") },
     },
     participantes: info.participants.map((p: any) => ({
       puuid: p.puuid,
       nome: p.summonerName ?? null,
       campeao: p.championName ?? null,
       champion_id: p.championId ?? null,
-      side: p.teamId === 100 ? "blue" : "red",
+      side: ladoDe(p),
       venceu: !!p.win,
       kills: p.kills ?? 0,
       deaths: p.deaths ?? 0,
