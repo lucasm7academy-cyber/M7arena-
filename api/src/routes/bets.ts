@@ -11,7 +11,6 @@ import {
   getMarketsByGroup,
   validarBilhete,
   reservarStake,
-  devolverStake,
   shapeTicket,
   BET_LOCK_MS,
   BET_MIN_STAKE,
@@ -200,48 +199,29 @@ betsRouter.post("/:id/sync", async (req, res) => {
     const [t] = await db.select().from(betTickets).where(eq(betTickets.id, req.params.id)).limit(1);
     if (!t) return res.status(404).json({ error: "bilhete_nao_encontrado" });
     if (t.userId !== user.id) return res.status(403).json({ error: "nao_autorizado" });
-    if (t.status !== "aguardando") return res.json({ ok: true, status: t.status });
+    // Já finalizada/cancelada/anulada → nada a fazer, só devolve o estado.
+    if (t.status === "finalizada" || t.status === "cancelada" || t.status === "anulada") {
+      const finLegs = await db.select().from(betLegs).where(eq(betLegs.ticketId, t.id));
+      return res.json({ ok: true, status: t.status, ticket: shapeTicket(t, finLegs) });
+    }
 
+    // Executa a detecção (trava em_jogo) e, se a partida já terminou, a
+    // liquidação — é o que valida o ganho/perda. Depois lê o estado novo.
     const r = await detectarPartida(db, t.id);
+    const [tAtual] = await db.select().from(betTickets).where(eq(betTickets.id, t.id)).limit(1);
+    const atual = tAtual ?? t;
     const syncLegs = await db.select().from(betLegs).where(eq(betLegs.ticketId, t.id));
-    return res.json({ ok: true, status: r.estado, ticket: shapeTicket(t, syncLegs) });
+    return res.json({ ok: true, status: atual.status, ticket: shapeTicket(atual, syncLegs) });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao sincronizar bilhete" });
   }
 });
 
-// DELETE /api/bets/:id - Cancela manualmente um bilhete AINDA aguardando
-// (o jogador desiste antes de entrar em jogo). Devolve o MC. Bilhete em
-// `em_jogo` não pode ser cancelado (a partida começou, o MC está comprometido).
-betsRouter.delete("/:id", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) return res.status(401).json({ error: "nao_autenticado" });
-
-    const r = await db.transaction(async (tx: any) => {
-      const [t] = await tx.select().from(betTickets).where(eq(betTickets.id, req.params.id)).limit(1).for("update");
-      if (!t) return { ok: false as const, erro: "bilhete_nao_encontrado", status: 404 };
-      if (t.userId !== user.id) return { ok: false as const, erro: "nao_autorizado", status: 403 };
-      if (t.status !== "aguardando") return { ok: false as const, erro: "nao_pode_cancelar", status: 400 };
-
-      const legs = await tx.select().from(betLegs).where(eq(betLegs.ticketId, t.id));
-      for (const leg of legs) {
-        await tx.update(betLegs).set({ status: "anulada" }).where(eq(betLegs.id, leg.id));
-        await devolverStake(tx, user.id, leg.stake, t.id);
-      }
-      await tx
-        .update(betTickets)
-        .set({ status: "cancelada", resultado: "anulada", endedAt: new Date(), updatedAt: new Date() })
-        .where(eq(betTickets.id, t.id));
-      return { ok: true as const, status: 200 };
-    });
-
-    if (!r.ok) return res.status(r.status).json({ error: r.erro });
-    return res.json({ ok: true });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao cancelar bilhete" });
-  }
-});
+// DELETE /api/bets/:id — REMOVIDO (ADR). O jogador NÃO pode mais cancelar a
+// aposta: como a partida é detectada por histórico (match-v5) e não há mais
+// espectador confiável, deixar cancelar abriria brecha (perdeu e cancela antes
+// da validação). A aposta PERDURA. A única devolução é automática: timeout sem
+// partida (jogador nunca jogou) ou partida anulada — feitos no cron.
 
 // GET /api/bets/history - Histórico unificado de movimentação de MC em apostas
 // do jogador: apostas individuais (self-bet) + salas apostadas/modo desafio.

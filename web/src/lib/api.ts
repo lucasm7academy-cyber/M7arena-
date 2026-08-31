@@ -1009,10 +1009,8 @@ export const api = {
     /** Cria o bilhete. `legs` = [{ marketKey, stake }]. */
     create: (data: { queue: ApiBetQueue; legs: { marketKey: string; stake: number }[] }) =>
       api.post<ApiBetTicket>("/bets", data),
-    /** Força a checagem de detecção (jogador diz "já joguei"). */
+    /** Força a checagem de detecção/validação (jogador termina a partida e verifica). */
     sync: (id: string) =>
       api.post<{ ok: boolean; status: string; ticket?: ApiBetTicket }>(`/bets/${id}/sync`),
-    /** Cancela bilhete ainda aguardando (devolve o MC). */
-    cancel: (id: string) => api.delete<{ ok: boolean }>(`/bets/${id}`),
   },
 };

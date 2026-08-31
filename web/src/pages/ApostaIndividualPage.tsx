@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Zap, Minus, Plus, AlertTriangle, Swords, Gamepad2, RefreshCw, X, Trophy, Medal, Clock, Coins } from 'lucide-react';
+import { ArrowLeft, Zap, Minus, Plus, AlertTriangle, Swords, Gamepad2, RefreshCw, Trophy, Medal, Clock, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, type ApiBetCatalog, type ApiBetQueue, type ApiBetTicket, type ApiBetGroup } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -135,25 +135,11 @@ export default function ApostaIndividualPage() {
     setSubmeter(false);
   };
 
-  const handleCancelarAtivo = async () => {
-    if (!ativo) return;
-    const confirmou = window.confirm('Cancelar esta aposta? O MC reservado será devolvido.');
-    if (!confirmou) return;
-    try {
-      await api.bets.cancel(ativo.id);
-      toast.success('Aposta cancelada. MC devolvido.');
-      setAtivo(null);
-      await carregar();
-    } catch (e: any) {
-      toast.error(e?.message || 'Erro ao cancelar.');
-    }
-  };
-
   const handleSync = async () => {
     if (!ativo) return;
     try {
       const r = await api.bets.sync(ativo.id);
-      if (r.status === 'em_jogo') toast.success('Partida detectada! Aposta em andamento.');
+      if (r.status === 'em_jogo') toast.success('Partida detectada! Validação em andamento.');
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao verificar.');
@@ -285,19 +271,16 @@ export default function ApostaIndividualPage() {
                 <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Status geral</span>
                 <span className="text-xs font-black text-white/80">{ativo.resultado?.toUpperCase() ?? 'Aguardando'}</span>
               </div>
-              <div className={`grid gap-3 pt-3 ${ativo.status === 'em_jogo' ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                <button onClick={handleSync} className="rounded-xl bg-[#121217] border border-white/10 py-2.5 flex items-center justify-center gap-2 text-zinc-200 text-xs font-black uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer">
-                  <RefreshCw className="w-3.5 h-3.5" /> Verificar
+              <div className="grid grid-cols-1 gap-3 pt-3">
+                <button onClick={handleSync} className="rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/40 py-2.5 flex items-center justify-center gap-2 text-[#FFB700] text-xs font-black uppercase tracking-wider hover:bg-[#FFB700]/20 transition-colors cursor-pointer">
+                  <RefreshCw className="w-3.5 h-3.5" /> Verificar Resultado
                 </button>
-                {ativo.status !== 'em_jogo' && (
-                  <button onClick={handleCancelarAtivo} className="rounded-xl bg-[#121217] border border-red-500/30 py-2.5 flex items-center justify-center gap-2 text-red-400 text-xs font-black uppercase tracking-wider hover:bg-red-500/10 transition-colors cursor-pointer">
-                    <X className="w-3.5 h-3.5" /> Cancelar
-                  </button>
-                )}
               </div>
-              {ativo.status === 'em_jogo' && (
-                <p className="text-[10px] text-white/40 text-center pt-1">Partida já começou — a aposta está travada e não pode ser cancelada.</p>
-              )}
+              <p className="text-[10px] text-white/40 text-center pt-1">
+                {ativo.status === 'em_jogo'
+                  ? 'Partida em andamento — a aposta está travada até a validação (automática a cada 10 min).'
+                  : 'A aposta perdura até a partida ser validada. Não é possível cancelar; o MC volta apenas se nenhum jogo acontecer.'}
+              </p>
             </div>
           ) : catalog ? (
             // ── Etapa 1: escolher a fila (Solo Duo / Flex) em cards ──
@@ -463,7 +446,8 @@ export default function ApostaIndividualPage() {
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5 mb-4">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
                   <p className="text-[10px] text-white/40 leading-snug">
-                    Ao confirmar, o MC é reservado. Você pode cancelar apenas enquanto a partida não começar; depois disso a aposta fica travada até o fim do jogo.
+                    Ao confirmar, o MC é reservado e a aposta perdura. O resultado é validado automaticamente ao fim da partida (ou clicando "Verificar"). Sem cancelamento manual — o MC volta apenas se nenhum jogo acontecer (timeout) ou a partida for anulada.
+
                   </p>
                 </div>
 

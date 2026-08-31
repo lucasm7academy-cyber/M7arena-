@@ -18,9 +18,11 @@ import { betTickets, betLegs } from "../../../db/schema/bets.js";
 // ── Limites / constantes de negócio ──────────────────────────────────────────
 export const BET_MIN_STAKE = 100; // mínimo MC por leg
 export const BET_MAX_PAYOUT = 5000; // teto de payout por bilhete (risco da casa)
-// Janela para DETECTAR a próxima partida ranqueada. Passou disso sem entrar em
-// jogo → cancela e devolve o MC.
-export const BET_LOCK_MS = 20 * 60 * 1000;
+// Janela para DETECTAR a partida. O fallback por histórico (match-v5) só lista
+// partidas TERMINADAS, então a janela precisa comportar fila + duração de jogo
+// (~40min) + margem — senão cancela quem está jogando. Passou sem nenhuma
+// partida que começou após a aposta → cancela e devolve o MC.
+export const BET_LOCK_MS = 90 * 60 * 1000;
 // Teto de espera da LIQUIDAÇÃO depois de detectada a partida (partida fantasma:
 // o jogo pode não terminar / não ser encontrada no match-v5).
 export const BET_FANTASMA_MS = 3 * 60 * 60 * 1000;

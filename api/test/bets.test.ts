@@ -250,6 +250,64 @@ describe("bets: fluxo de detecção + liquidação (self-bet)", () => {
     assert.equal(r.estado, "aguardando");
   });
 
+  test("detectarPartida via histórico liquida partida já terminada (sem espectador)", async () => {
+    const db = ctx.db;
+    const uid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0021";
+    const agora = new Date();
+    await criaJogador(db, uid, 500, "puuid-a021");
+    const { ticket } = await criaBilhete(db, uid, "solo", "result_vitoria", 100, new Date(agora.getTime() - 60 * 60 * 1000));
+    // Bilhete criado há 1h; jogador jogou e PERDEU (win=false) — partida já
+    // terminou (gameEndTimestamp presente). Espectador falha (403) → histórico.
+    const matchId = "BR1_777777";
+    const fetchHistorico = async (url: string) => {
+      if (url.includes('/ids?')) return [matchId];
+      return {
+        info: {
+          queueId: QUEUE_SOLO,
+          gameStartTime: agora.getTime() - 40 * 60 * 1000, // começou após a aposta
+          gameEndTimestamp: agora.getTime() - 10 * 60 * 1000, // já terminou
+          participants: [{ puuid: "puuid-a021", win: false, kills: 3, firstBloodKill: false }],
+        },
+      };
+    };
+    const r = await detectarPartida(db, ticket.id, { agora, buscarIdsRiot: async () => ({ status: 403 }), buscarHistorico: fetchHistorico });
+    assert.equal(r.estado, "finalizada", "detectou e liquidou na hora");
+
+    const [t2] = await db.select().from(betTickets).where(eq(betTickets.id, ticket.id));
+    assert.equal(t2.status, "finalizada");
+    assert.equal(t2.resultado, "perdida");
+    const [leg] = await db.select().from(betLegs).where(eq(betLegs.ticketId, ticket.id));
+    assert.equal(leg.status, "perdida");
+    const [w] = await db.select().from(userWallets).where(eq(userWallets.userId, uid));
+    assert.equal(w.mcReservado, 0, "reserva liberada (aposta perdida)");
+  });
+
+  test("detectarPartida via histórico não liquida partida anterior à aposta (anti-fraude)", async () => {
+    const db = ctx.db;
+    const uid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0022";
+    const agora = new Date();
+    await criaJogador(db, uid, 500, "puuid-a022");
+    const { ticket } = await criaBilhete(db, uid, "solo", "result_vitoria", 100, agora);
+    // Partida começou ANTES da aposta (gameStartTime anterior ao createdAt).
+    const matchId = "BR1_888888";
+    const fetchHistorico = async (url: string) => {
+      if (url.includes('/ids?')) return [matchId];
+      return {
+        info: {
+          queueId: QUEUE_SOLO,
+          gameStartTime: agora.getTime() - 60 * 60 * 1000, // começou há 1h (antes da aposta)
+          gameEndTimestamp: agora.getTime() - 5 * 60 * 1000,
+          participants: [{ puuid: "puuid-a022", win: true, kills: 12, firstBloodKill: true }],
+        },
+      };
+    };
+    const r = await detectarPartida(db, ticket.id, { agora, buscarIdsRiot: async () => ({ status: 403 }), buscarHistorico: fetchHistorico });
+    // Partida anterior à aposta → não conta, segue aguardando (não liquida).
+    assert.equal(r.estado, "aguardando");
+    const [t2] = await db.select().from(betTickets).where(eq(betTickets.id, ticket.id));
+    assert.equal(t2.status, "aguardando");
+  });
+
   test("detectarPartida cancela por timeout sem jogo", async () => {
     const db = ctx.db;
     const uid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0013";

@@ -37,7 +37,7 @@ import {
  */
 
 export interface DetectResult {
-  estado: "em_jogo" | "cancelada" | "aguardando";
+  estado: "em_jogo" | "cancelada" | "aguardando" | "finalizada" | "anulada";
   motivo?: string;
 }
 
@@ -102,8 +102,18 @@ export async function jogadorEmJogo(
 /**
  * Fase de detecção. Retorna o estado novo e aplica a mudança em transação com
  * lock (idempotente: se já `em_jogo`, no-op).
+ *
+ * Duas vias (a chave da Riot pode bloquear o espectador com 403 — ADR-050):
+ *  1. ESPECTADOR (`/lol/spectator/v4/active-games/by-summoner/:id`) é tentado
+ *     primeiro. Se a partida ranqueada começou DEPOIS da aposta → `em_jogo`.
+ *  2. FALLBACK HISTÓRICO (match-v5): se o espectador falhou (403/404) ou não
+ *     achou jogo, busca as partidas recentes do jogador na fila certa
+ *     (`by-puuid?queue=N&startTime=...`). Se uma partida começou após a aposta:
+ *     - ainda em andamento (sem gameEndTimestamp) → `em_jogo` (é o jogo atual);
+ *     - já terminou → liquida direto (a partida aconteceu depois da aposta).
+ * Passou da janela sem nenhuma partida → cancela e devolve o MC.
  */
-export async function detectarPartida(d: any, ticketId: string, opts: { agora?: Date; buscarIdsRiot?: (url: string) => Promise<any | null> } = {}): Promise<DetectResult> {
+export async function detectarPartida(d: any, ticketId: string, opts: { agora?: Date; buscarIdsRiot?: (url: string) => Promise<any | null>; buscarHistorico?: (url: string) => Promise<any | null> } = {}): Promise<DetectResult> {
   const agora = opts.agora ?? new Date();
   const riotFetch = opts.buscarIdsRiot ?? ((u: string) => riotRaw(`bet:spec:${ticketId}`, u));
 
@@ -114,61 +124,121 @@ export async function detectarPartida(d: any, ticketId: string, opts: { agora?: 
   const puuid = await puuidDoUsuario(d, t.userId);
   if (!puuid) return { estado: "aguardando", motivo: "sem_puuid" };
 
-  const summonerId = t.summonerId ?? (await buscarSummonerId(puuid));
-  if (!summonerId) return { estado: "aguardando", motivo: "sem_summoner" };
-
-  const game = (await riotFetch(getRiotBySummonerUrl(summonerId))) as any;
-
-  // Se não está em jogo, checa timeout para cancelar.
-  if (!game || game.status === 404) {
-    if (new Date(t.expiresAt).getTime() < agora.getTime()) {
-      return cancelarComDevolucao(d, t, "timeout_sem_partida");
-    }
-    return { estado: "aguardando" };
-  }
-
-  const queueId = Number(game.gameQueueConfigId);
   const queueEsperada = t.queue === "flex" ? QUEUE_FLEX : QUEUE_SOLO;
-  if (queueId !== queueEsperada) {
-    // Em jogo, mas de outra fila (ex.: normal). Espera a ranqueada.
-    if (new Date(t.expiresAt).getTime() < agora.getTime()) {
-      return cancelarComDevolucao(d, t, "timeout_sem_partida");
-    }
-    return { estado: "aguardando" };
-  }
-
-  const gameStartAt = new Date(game.gameStartTime);
-  // Anti-fraude: só aceita partida que começou depois (com ~2min de tolerância
-  // de relógio) da criação da aposta. Apostar numa partida JÁ EM ANDAMENTO
-  // permite ver o estado e apostar sabido — fechado pela tolerância.
   const toleranciaMs = 2 * 60 * 1000;
-  if (gameStartAt.getTime() < new Date(t.createdAt).getTime() - toleranciaMs) {
-    if (new Date(t.expiresAt).getTime() < agora.getTime()) {
-      return cancelarComDevolucao(d, t, "timeout_sem_partida");
+  const createdAtMs = new Date(t.createdAt).getTime();
+
+  // ── Via 1: espectador ──
+  const summonerId = t.summonerId ?? (await buscarSummonerId(puuid));
+  let game: any = null;
+  let spectatorOk = false;
+  if (summonerId) {
+    const g = (await riotFetch(getRiotBySummonerUrl(summonerId))) as any;
+    if (g && g.status === 200) {
+      spectatorOk = true;
+      game = g;
     }
+  }
+
+  if (spectatorOk) {
+    const queueId = Number(game.gameQueueConfigId);
+    if (queueId === queueEsperada) {
+      const gameStartAt = new Date(game.gameStartTime);
+      // Anti-fraude: só aceita partida que começou depois da aposta (tolerância
+      // de relógio de 2min). Jogo que já estava rolando é descartado.
+      if (gameStartAt.getTime() >= createdAtMs - toleranciaMs) {
+        const matchRiotId = `${PLATFORM_PREFIX}_${game.gameId}`;
+        await travarEmJogo(d, ticketId, summonerId, matchRiotId, queueId, gameStartAt);
+        return { estado: "em_jogo" };
+      }
+    }
+    // Em jogo de outra fila / começou antes → segue sem travar (espera).
+  }
+
+  // ── Via 2: fallback por histórico (match-v5) — cobre 403 do espectador ──
+  const historico = await buscarHistoricoDaAposta(d, puuid, queueEsperada, createdAtMs, agora, t.expiresAt, opts.buscarHistorico);
+  if (historico.estado === "em_jogo" || historico.estado === "finalizada") {
+    if (historico.matchRiotId) {
+      await travarEmJogo(d, ticketId, summonerId, historico.matchRiotId, queueEsperada, historico.gameStartAt ?? new Date());
+      // Partida já TERMINOU (fallback histórico só vê partidas encerradas):
+      // liquida no mesmo ciclo, reutilizando o match que já foi lido — sem
+      // outra chamada à Riot. Evita esperar o próximo polling de 10min.
+      if (historico.estado === "finalizada" && historico.match) {
+        const r = await liquidarPartida(d, ticketId, { agora, buscarMatch: async () => historico.match });
+        return r.estado === "em_jogo" ? { estado: "em_jogo" } : r;
+      }
+    }
+    return { estado: "em_jogo" };
+  }
+  if (historico.estado === "cancelada") {
+    return cancelarComDevolucao(d, t, "timeout_sem_partida");
+  }
+
+  return { estado: "aguardando" };
+}
+
+/**
+ * Busca no histórico (match-v5) a partida da fila certa que começou após o
+ * `createdAt` da aposta. Retorna:
+ * - `em_jogo` quando há uma partida em andamento (ou a mais recente sem end) que
+ *   começou após a aposta;
+ * - `finalizada` quando a mais recente que começou após a aposta já terminou;
+ * - `cancelada` quando passou do timeout e NENHUMA partida começou após a aposta;
+ * - `aguardando` quando há uma partida que começou após a aposta mas o jogo
+ *   ainda não aparece (fica no polling).
+ */
+async function buscarHistoricoDaAposta(
+  d: any,
+  puuid: string,
+  queueId: number,
+  createdAtMs: number,
+  agora: Date,
+  expiresAt: any,
+  fetchHistorico?: (url: string) => Promise<any | null>
+): Promise<{ estado: "em_jogo" | "finalizada" | "cancelada" | "aguardando"; matchRiotId?: string; gameStartAt?: Date; match?: any }> {
+  // Janela generosa: do início da aposta (com margem) até "agora". A Riot limita
+  // o startTime; usamos o menor delta possível para não pegar jogo antigo.
+  const startTime = Math.floor((createdAtMs - 5 * 60 * 1000) / 1000);
+  const endTime = Math.floor(agora.getTime() / 1000);
+  const idsUrl = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?queue=${queueId}&startTime=${startTime}&endTime=${endTime}&count=10`;
+  const ids = (await (fetchHistorico ?? ((u: string) => riotRaw(`bet:hist:${puuid}:${queueId}:${startTime}:${endTime}`, u)))(idsUrl)) as string[] | null;
+  if (!ids || ids.length === 0) {
+    const expirou = new Date(expiresAt).getTime() < agora.getTime();
+    if (expirou) return { estado: "cancelada" };
     return { estado: "aguardando" };
   }
 
-  // matchId da Riot = "BR1_<gameId>" para filas ranqueadas.
-  const matchRiotId = `${PLATFORM_PREFIX}_${game.gameId}`;
+  const [firstId] = ids;
+  const match = (await (fetchHistorico ?? ((u: string) => riotRaw(`bet:match:${firstId}`, u)))(
+    `https://americas.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(firstId)}`
+  )) as any;
+  const info = match?.info;
+  if (!info) return { estado: "aguardando" };
+  const gameStartAt = new Date(info.gameStartTime ?? info.gameCreation ?? 0);
+  const comecouAposAposta = gameStartAt.getTime() >= createdAtMs - 2 * 60 * 1000;
+  if (!comecouAposAposta) {
+    // A mais recente começou ANTES da aposta → nenhuma relevante ainda.
+    const expirou = new Date(expiresAt).getTime() < agora.getTime();
+    if (expirou) return { estado: "cancelada" };
+    return { estado: "aguardando" };
+  }
 
+  const matchRiotId = firstId;
+  const terminou = Boolean(info.gameEndTimestamp || info.endOfGameResult);
+  if (terminou) return { estado: "finalizada", matchRiotId, gameStartAt, match };
+  return { estado: "em_jogo", matchRiotId, gameStartAt, match };
+}
+
+/** Trava o bilhete em `em_jogo` (idempotente, transação com lock). */
+async function travarEmJogo(d: any, ticketId: string, summonerId: string | null, matchRiotId: string, queueId: number, gameStartAt: Date) {
   await d.transaction(async (tx: any) => {
     const [t2] = await tx.select().from(betTickets).where(eq(betTickets.id, ticketId)).limit(1).for("update");
     if (!t2 || t2.status !== "aguardando") return;
     await tx
       .update(betTickets)
-      .set({
-        status: "em_jogo",
-        summonerId,
-        matchRiotId,
-        queueId,
-        gameStartAt,
-        updatedAt: agora,
-      })
+      .set({ status: "em_jogo", summonerId, matchRiotId, queueId, gameStartAt, updatedAt: new Date() })
       .where(eq(betTickets.id, ticketId));
   });
-
-  return { estado: "em_jogo" };
 }
 
 /**
