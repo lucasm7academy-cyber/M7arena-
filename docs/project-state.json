@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-31T01:02:44.755Z",
+  "updatedAt": "2026-08-31T01:38:40.964Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1376,11 +1376,11 @@
       "area": "app",
       "name": "Apostas individuais (self-bet) em partidas ranqueadas Solo/Flex",
       "status": "done",
-      "notes": "Anti-fraude + histórico. jogadorEmJogo (espectador) rejeita criar bilhete se jogador já está em ranqueada (ja_em_jogo_ranqueada); detecção já rejeita partida que começou antes da aposta (tol. 2min). GET /api/bets/history agrega apostas individuais + salas apostadas (delta via ledger). Componente HistoricoApostas no perfil (total ganho/perdido MC). Falta deploy.",
-      "evidence": "api tsc exit 0; bet.test 23/23 (novos jogadorEmJogo anti-fraude). web tsc exit 0; vite build '6.70s'.",
+      "notes": "Pagina agora em tela cheia com sidebar (adicionada a isSalaPage no LayoutWrapper -> isGamePage, hamburger ativo), cards arredondados (removidos clipPath), icone do jogador via buildProfileIconUrl (jpg+no-referrer) com fallback, e fluxo em 2 etapas: 1) escolher fila Solo Duo/Flex em cards com fundo LoL, 2) mercados de aposta. Deploy VPS ok.",
+      "evidence": "web tsc exit 0; vite build '7.00s'. Deploy VPS: main ff 44a17eb, compose up --build nginx ok. chunk ApostaIndividualPage-OApo4rWg.js publicado. site / e /aposta-individual 200.",
       "owner": "deepseek",
       "createdAt": "2026-08-30T18:32:49.341Z",
-      "updatedAt": "2026-08-31T01:02:29.955Z"
+      "updatedAt": "2026-08-31T01:38:34.017Z"
     }
   ],
   "decisions": [
@@ -1902,34 +1902,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-18T04:28:54.571Z",
-      "agent": "gemini",
-      "summary": "Refinamento dos cards da página Lobby (Lobby.tsx) eliminando cortes visuais e aplicando padrão Cut-Edge contínuo 2-div em todos os tipos de cards, escudos e modais.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:29:59.013Z",
-      "agent": "gemini",
-      "summary": "Aplicacao completa do Design System Cut-Edge oficial em Recrutamento (recrutamento.tsx), Campeonatos (campeonatos.tsx), Jogadores (players.tsx), refinamento de todos os cards da Lobby (Lobby.tsx) e calibracao da iluminacao ambiente global para nivel suave/leve no LayoutWrapper.tsx. Deploy bem-sucedido na VPS dev.m7arena.pro.",
-      "touched": [
-        "web/src/pages/recrutamento.tsx",
-        "web/src/pages/campeonatos.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:32:40.240Z",
-      "agent": "gemini",
-      "summary": "Ajuste do item selecionado na Sidebar e Menu Mobile para o formato Cut-Edge chanfrado solido em amarelo (#FFB700) com texto e icone em preto e sombra difusa, sem bordas arredondadas. LayoutWrapper.tsx atualizado e deploy realizado na VPS dev.m7arena.pro.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
       "at": "2026-08-18T04:35:43.512Z",
       "agent": "gemini",
       "summary": "Correcao da formula dos poligonos _INNER (CUT_FRAME_INNER, CUT_BUTTON_INNER, CUT_BADGE_INNER) em todos os arquivos (DESIGNDOPROJETO.MD, LayoutWrapper.tsx, Lobby.tsx, campeonatos.tsx, players.tsx, recrutamento.tsx). O ponto 0 100% estava omitido, o que fazia o CSS tracar uma diagonal do canto inferior direito para o superior esquerdo criando o triangulo pintado indesejado. Build e deploy bem-sucedidos em dev.m7arena.pro.",
@@ -2242,6 +2214,40 @@
         "web/src/lib/api.ts",
         "web/src/components/perfil/HistoricoApostas.tsx",
         "web/src/pages/perfil.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-31T01:17:46.171Z",
+      "agent": "deepseek",
+      "summary": "Deploy da aposta individual na VPS (dev.m7arena.pro) concluído. Migration 0022 aplicada via psql no container m7arena_postgres (CREATE TABLE bet_tickets + bet_legs + FKs + indexes). Commit 09643ef pushead no origin/feat/redesign-modais e fast-forward da main da VPS. docker compose --env-file up -d --build → app/realtime/nginx recriados. Validação: /api/health 200, site 200, /api/bets/catalog 200, /api/bets/me e /api/bets/history 401 sem auth (rotas ativas). m7arena_mcp_ops em restart loop pré-existente (roda via stdio por design; fora do escopo). Pronto para o usuário testar: /jogar (card Aposta Individual) e perfil (Histórico de Apostas).",
+      "touched": [
+        "db/migrations/0022_bet_individual.sql",
+        "api/src/lib/bets.ts",
+        "api/src/lib/live-bets.ts",
+        "api/src/routes/bets.ts",
+        "web/src/components/partidas/ApostaIndividual.tsx",
+        "web/src/components/perfil/HistoricoApostas.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-31T01:30:57.883Z",
+      "agent": "deepseek",
+      "summary": "Aposta individual refeita como PAGINA estilo sala (feedback do usuario): antes era modal pop-up e o card no /jogar ficava mais largo. Agora /jogar usa grid com card sm:w-[380px] h-[330px] (igual aos modos) que navega para /aposta-individual (PrivateRoute). Nova pagina ApostaIndividualPage: top bar de sala (voltar + icone + titulo + saldo), coluna esquerda com icone da conta Riot/nick#tag/elo do jogador, coluna direita com a tabela de mercados (fila Solo/Flex, stake, grupos Resultado/Abates/First Blood, total apostado e retorno potencial). Removido modal antigo ApostaIndividual.tsx. Deploy: commit a4828b2 -> origin feat/redesign-modais -> merge ff main VPS -> docker compose up -d --build nginx. Chunk ApostaIndividualPage publicado. Validado: web tsc 0, vite build 9.48s, site 200. Pronto para o usuario validar o layout de sala.",
+      "touched": [
+        "web/src/pages/ApostaIndividualPage.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/App.tsx",
+        "web/src/components/partidas/ApostaIndividual.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-31T01:38:40.964Z",
+      "agent": "deepseek",
+      "summary": "Aposta individual refinada segundo feedback: tela cheia com sidebar (isSalaPage no LayoutWrapper -> isGamePage, hamburger ativo), cards arredondados (removidos clipPath do ItemMercado e da pagina), icone do jogador corrigido (buildProfileIconUrl .jpg + referrerPolicy no-referrer, fallback quando iconId ausente), e fluxo em 2 etapas: escolher fila Solo Duo/Flex em cards com fundo do LoL, depois do clique libera os mercados de aposta. Deploy: commit 44a17eb -> origin feat/redesign-modais -> merge ff main VPS -> compose up --build nginx. chunk novo publicado. Validado: web tsc 0, vite build 7.00s, site 200. Contas Riot verificadas tem profile_icon_id no metadata (191/191). Pronto para validar.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/components/partidas/ItemMercado.tsx",
+        "web/src/pages/ApostaIndividualPage.tsx"
       ]
     }
   ]

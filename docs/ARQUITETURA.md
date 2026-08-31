@@ -205,6 +205,14 @@ referral_events       referrer_id, referred_id, event_type, value, created_at
 > implementado em `api/src/lib/escrow.ts` + `api/src/routes/revisao.ts` (design
 > v3). O `mp` (M7 Points) é moeda de pontos/ranking, sem fluxo de aposta.
 
+> **Apostas individuais (self-bet):** o plano próprio está em
+> [`planos/plano-aposta-individual.md`](./planos/plano-aposta-individual.md). É
+> a aposta do jogador em si mesmo sobre a própria próxima partida ranqueada
+> (Solo=420 / Flex=440), com a **plataforma como casa** (odds fixas). Tabelas
+> `bet_tickets`/`bet_legs` (migration 0022), detecção via espectador da Riot +
+> liquidação via match-v5, anti-fraude (rejeita apostar em jogo já rolando) e
+> escape do escrow MC (`mc_reservado`). ADR-050.
+
 ### 3.7 Conteúdo
 
 `news`, `highlights`, `broadcasts`, `recruitment_posts`, `notifications`.
