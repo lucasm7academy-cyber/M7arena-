@@ -23,7 +23,6 @@ import {
   ModalVincularConta,
   ModalSenhaSala,
 } from '../components/partidas/ModaisElegibilidade';
-import { ApostaIndividual } from '../components/partidas/ApostaIndividual';
 
 // ⚡ OTIMIZAÇÃO: Cache em memória de 30s para lista de salas.
 // Evita refetch quando usuário navega Lobby ↔ Jogar rapidamente.
@@ -453,7 +452,6 @@ const Jogar = () => {
   const [showSenhaModal, setShowSenhaModal] = useState<{ salaId: number; nome: string } | null>(null);
   const [erroSenha, setErroSenha] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showApostaIndividual, setShowApostaIndividual] = useState(false);
 
   // ── CARREGAMENTO LEVE DO USUÁRIO ──────────────────
   const { perfil } = usePerfil();
@@ -1205,39 +1203,38 @@ const Jogar = () => {
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Aposta Individual</h2>
           </div>
 
-          <div
-            onClick={() => {
-              if (!user) { setShowLoginModal(true); return; }
-              if (!perfil?.contaVinculada) { setShowVincularModal(true); return; }
-              setShowApostaIndividual(true);
-            }}
-            className="w-full relative p-[1.5px] cursor-pointer group transition-all"
-            style={{ clipPath: CUT_FRAME, background: 'linear-gradient(135deg, rgba(255,183,0,0.5) 0%, rgba(255,183,0,0.15) 50%, rgba(255,255,255,0.08) 100%)' }}
-          >
-            <div className="w-full bg-[#08080a] group-hover:bg-[#0c0c10] p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden transition-colors" style={{ clipPath: CUT_FRAME_INNER }}>
-              <div className="absolute inset-0 opacity-30 pointer-events-none"
-                style={{ background: 'radial-gradient(circle at 20% 30%, rgba(255,183,0,0.18), transparent 60%)' }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div
+              onClick={() => {
+                if (!user) { setShowLoginModal(true); return; }
+                if (!perfil?.contaVinculada) { setShowVincularModal(true); return; }
+                navigate('/aposta-individual');
+              }}
+              className="w-full sm:w-[380px] h-[330px] relative p-[1.5px] cursor-pointer group transition-all"
+              style={{ clipPath: CUT_FRAME, background: 'linear-gradient(135deg, rgba(255,183,0,0.5) 0%, rgba(255,183,0,0.15) 50%, rgba(255,255,255,0.08) 100%)' }}
+            >
+              <div className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] p-5 flex flex-col items-center text-center relative overflow-hidden transition-colors" style={{ clipPath: CUT_FRAME_INNER }}>
+                <div className="absolute inset-0 opacity-30 pointer-events-none"
+                  style={{ background: 'radial-gradient(circle at 20% 30%, rgba(255,183,0,0.18), transparent 60%)' }} />
 
-              <div className="relative z-10 w-14 h-14 p-[1px] flex items-center justify-center shrink-0" style={{ clipPath: CUT_BUTTON, background: '#FFB70060' }}>
-                <div className="w-full h-full bg-[#121217] flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
-                  <Zap className="w-7 h-7" style={{ color: '#FFB700' }} />
+                <div className="relative z-10 w-14 h-14 p-[1px] flex items-center justify-center mb-4" style={{ clipPath: CUT_BUTTON, background: '#FFB70060' }}>
+                  <div className="w-full h-full bg-[#121217] flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                    <Zap className="w-7 h-7" style={{ color: '#FFB700' }} />
+                  </div>
                 </div>
-              </div>
 
-              <div className="relative z-10 flex-1 text-center sm:text-left">
-                <h3 className="text-white font-black text-lg uppercase tracking-tight mb-1 group-hover:text-[#FFB700] transition-colors">Aposte na sua próxima ranqueada</h3>
-                <p className="text-white/40 text-xs uppercase tracking-widest mb-3 max-w-xl mx-auto sm:mx-0 leading-relaxed">
-                  Solo Duo ou Flex — Vitória, Derrota, abates, First Blood. Escolha os mercados, aposte MC e se acertar a casa paga sua odd. Sem lobby, sem código: a gente detecta seu jogo na Riot.
+                <h3 className="relative z-10 text-white font-black text-lg uppercase tracking-tight mb-1 group-hover:text-[#FFB700] transition-colors">Aposte em Você</h3>
+                <p className="relative z-10 text-white/40 text-[10px] uppercase tracking-widest mb-3 font-medium leading-relaxed">
+                  Solo Duo ou Flex — Vitória, Derrota, abates, First Blood
                 </p>
-                <div className="flex items-center justify-center sm:justify-start gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Apostar agora →</span>
-                </div>
-              </div>
 
-              <div className="relative z-10 shrink-0">
-                <button className="px-5 py-3 font-black text-sm uppercase text-black shadow-[0_0_20px_-5px_rgba(255,183,0,0.5)] transition-all hover:scale-105 cursor-pointer" style={{ clipPath: CUT_BUTTON, background: '#FFB700' }}>
-                  Entrar
-                </button>
+                <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 px-3 py-1 bg-white/5 border border-white/10" style={{ clipPath: CUT_BADGE }}>
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#FFB700' }}>Self-Bet • Odds Fixas</span>
+                </div>
+
+                <div className="relative z-10 mt-4 text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-[#FFB700] transition-colors">
+                  Clique para apostar →
+                </div>
               </div>
             </div>
           </div>
@@ -1281,13 +1278,6 @@ const Jogar = () => {
       <AnimatePresence>
         {showVincularModal && (
           <ModalVincularConta onClose={() => setShowVincularModal(false)} />
-        )}
-      </AnimatePresence>
-
-      {/* Painel de aposta individual (self-bet) */}
-      <AnimatePresence>
-        {showApostaIndividual && (
-          <ApostaIndividual onClose={() => setShowApostaIndividual(false)} />
         )}
       </AnimatePresence>
     </div>

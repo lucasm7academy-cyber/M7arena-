@@ -38,6 +38,8 @@ const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
 const Lobby = lazyWithRetry(() => import("./pages/Lobby"));
 const Jogar = lazyWithRetry(() => import("./pages/Jogar"));
 
+const ApostaIndividualPage = lazyWithRetry(() => import("./pages/ApostaIndividualPage"));
+
 const SalaMod1 = lazyWithRetry(() => import("./pages/SalaMod1"));
 const Vincular = lazyWithRetry(() => import("./pages/Vincular"));
 const DiscordCallback = lazyWithRetry(() => import("./pages/DiscordCallback"));
@@ -221,6 +223,7 @@ export default function App() {
               {/* `/jogar` é vitrine pública (design v3 §2.1): visitante vê salas e
                   estado; ações abrem o modal de cadastro/login dentro de Jogar.tsx. */}
               <Route path="/jogar" element={<RouteWithSuspense element={<Jogar />} />} />
+              <Route path="/aposta-individual" element={<PrivateRoute><RouteWithSuspense element={<ApostaIndividualPage />} /></PrivateRoute>} />
               <Route path="/perfil" element={<PrivateRoute><RouteWithSuspense element={<Perfil />} /></PrivateRoute>} />
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
