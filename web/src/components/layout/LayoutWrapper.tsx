@@ -64,7 +64,8 @@ export default function Layout() {
   const location = useLocation();
   const isSalaPage = location.pathname.startsWith('/sala/') || location.pathname.startsWith('/sala-mod1/') ||
     location.pathname.startsWith('/5v5/') || location.pathname.startsWith('/aram/') ||
-    location.pathname.startsWith('/1v1/') || location.pathname.startsWith('/time_vs_time/');
+    location.pathname.startsWith('/1v1/') || location.pathname.startsWith('/time_vs_time/') ||
+    location.pathname.startsWith('/aposta-individual');
   const isDraftPage = location.pathname.startsWith('/draft/');
   const isGamePage = isSalaPage || isDraftPage;
   const { playSound } = useSound();
