@@ -66,6 +66,39 @@ describe("bets: catálogo e validação", () => {
     if (!r.ok) assert.equal(r.erro, "mercado_invalido");
   });
 
+  test("validação: mercados do mesmo grupo são mutuamente exclusivos", () => {
+    // Vitória + Derrota (mesmo grupo resultado) → conflitante.
+    const r1 = validarBilhete([
+      { marketKey: "result_vitoria", stake: 100 },
+      { marketKey: "result_derrota", stake: 100 },
+    ]);
+    assert.equal(r1.ok, false);
+    if (!r1.ok) assert.equal(r1.erro, "mercados_conflitantes");
+
+    // kills_over_7 + kills_over_9 (mesmo grupo kills) → conflitante.
+    const r2 = validarBilhete([
+      { marketKey: "kills_over_7", stake: 100 },
+      { marketKey: "kills_over_9", stake: 100 },
+    ]);
+    assert.equal(r2.ok, false);
+    if (!r2.ok) assert.equal(r2.erro, "mercados_conflitantes");
+
+    // first_blood_sim + first_blood_nao → conflitante.
+    const r3 = validarBilhete([
+      { marketKey: "first_blood_sim", stake: 100 },
+      { marketKey: "first_blood_nao", stake: 100 },
+    ]);
+    assert.equal(r3.ok, false);
+    if (!r3.ok) assert.equal(r3.erro, "mercados_conflitantes");
+
+    // Grupos diferentes podeme coexistir: resultado + kills → ok.
+    const r4 = validarBilhete([
+      { marketKey: "result_vitoria", stake: 100 },
+      { marketKey: "kills_over_10", stake: 100 },
+    ]);
+    assert.equal(r4.ok, true);
+  });
+
   test("validação: stake abaixo do mínimo", () => {
     const r = validarBilhete([{ marketKey: "result_vitoria", stake: BET_MIN_STAKE - 1 }]);
     assert.equal(r.ok, false);
@@ -79,9 +112,13 @@ describe("bets: catálogo e validação", () => {
   });
 
   test("validação: teto de payout não pode passar de 5000", () => {
-    // 20 legs de 300 MC a 1.35x = 8100 de payout -> teto excedido.
-    const legs = Array.from({ length: 20 }, () => ({ marketKey: "result_vitoria", stake: 300 }));
-    const r = validarBilhete(legs);
+    // 3 grupos (resultado + kills + first_blood) com stake 1600 a 1.35x
+    // = 2160 de payout cada → 6480 > 5000 → teto excedido.
+    const r = validarBilhete([
+      { marketKey: "result_vitoria", stake: 1600 },
+      { marketKey: "kills_over_10", stake: 1600 },
+      { marketKey: "first_blood_sim", stake: 1600 },
+    ]);
     assert.equal(r.ok, false);
     if (!r.ok) assert.equal(r.erro, "payout_teto_excedido");
   });

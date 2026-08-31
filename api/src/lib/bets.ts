@@ -208,10 +208,17 @@ export function validarBilhete(legs: LegInput[]): ValidacaoBilhete {
   const resolvidos: { marketKey: string; odd: number; stake: number; payout: number }[] = [];
   let stakeTotal = 0;
   let payoutTotal = 0;
+  // Mercados do mesmo GRUPO são mutuamente exclusivos (ADR-050): não pode
+  // apostar em Vitória e Derrota ao mesmo tempo, nem em kills_over_7 e
+  // kills_over_9 — são "o mesmo mercado", lados/faixas diferentes de um único
+  // evento. Um grupo por bilhete.
+  const gruposUsados = new Set<MarketGroup>();
 
   for (const leg of legs) {
     const market = getMarket(leg.marketKey);
     if (!market) return { ok: false, erro: "mercado_invalido" };
+    if (gruposUsados.has(market.group)) return { ok: false, erro: "mercados_conflitantes" };
+    gruposUsados.add(market.group);
     const stake = Number(leg.stake);
     if (!Number.isFinite(stake) || stake <= 0 || !Number.isInteger(stake)) {
       return { ok: false, erro: "stake_invalido" };

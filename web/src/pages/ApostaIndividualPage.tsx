@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Zap, Minus, Plus, AlertTriangle, Swords, Gamepad2, RefreshCw, X, Trophy, Medal, Clock, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, type ApiBetCatalog, type ApiBetQueue, type ApiBetTicket, type ApiBetGroup } from '../lib/api';
@@ -41,6 +41,8 @@ export default function ApostaIndividualPage() {
   const [submeter, setSubmeter] = useState(false);
   // Fila ainda NÃO escolhida: mostra a tela de seleção antes dos mercados.
   const [filaEscolhida, setFilaEscolhida] = useState<ApiBetQueue | null>(null);
+  // Modal de confirmação antes de efetivar a aposta (segurança).
+  const [confirmando, setConfirmando] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -62,10 +64,22 @@ export default function ApostaIndividualPage() {
       const has = !!prev[marketKey];
       const next = { ...prev };
       if (has) { delete next[marketKey]; return next; }
+      // Mercados do mesmo grupo são mutuamente exclusivos: ao escolher um,
+      // remove os demais do grupo (ex.: Vitória remove Derrota; kills_over_7
+      // remove kills_over_9, etc.). Única exceção: o já selecionado fica.
+      const mercado = catalog?.markets && Object.values(catalog.markets).flat().find((m) => m.key === marketKey);
+      if (mercado) {
+        for (const [k, v] of Object.entries(next)) {
+          const outro = catalog && (Object.values(catalog.markets).flat().find((m) => m.key === k) as any);
+          if (outro && mercado.group === outro.group && k !== marketKey) {
+            delete next[k];
+          }
+        }
+      }
       next[marketKey] = { marketKey, odd, stake };
       return next;
     });
-  }, [ativo, stake]);
+  }, [ativo, stake, catalog]);
 
   const mudarStake = useCallback((delta: number) => {
     setStake((s) => Math.max(100, Math.min(5000, s + delta)));
@@ -93,7 +107,16 @@ export default function ApostaIndividualPage() {
     if (legs.length === 0) { toast.error('Selecione pelo menos um mercado.'); return; }
     if (stakeTotal < catalog.minStake) { toast.error(`Aposta mínima de ${catalog.minStake} MC por mercado.`); return; }
     if ((perfil?.saldo ?? 0) < stakeTotal) { toast.error('Saldo insuficiente de MC.'); return; }
+    // Segurança: pede confirmação antes de efetivar (o jogador revisa o
+    // desafio — fila, mercados, total e retorno — e só então confirma).
+    setConfirmando(true);
+  };
+
+  // Chamado pelo modal de confirmação — só aqui a aposta é criada de verdade.
+  const confirmarAposta = async () => {
+    if (!catalog) return;
     setSubmeter(true);
+    setConfirmando(false);
     try {
       const legsBody = legs.map((l) => ({ marketKey: l.marketKey, stake: l.stake }));
       await api.bets.create({ queue, legs: legsBody });
@@ -106,6 +129,7 @@ export default function ApostaIndividualPage() {
       else if (cod === 'riot_id_obrigatorio' || cod === 'termos_nao_aceitos') toast.error('Vincule sua conta Riot e aceite os termos para apostar.');
       else if (cod === 'saldo_insuficiente') toast.error('Saldo insuficiente de MC.');
       else if (cod === 'ja_em_jogo_ranqueada') toast.error('Você já está em partida ranqueada — termine antes de apostar.');
+      else if (cod === 'mercados_conflitantes') toast.error('Escolha apenas um mercado por grupo (Vitória OU Derrota, etc.).');
       else toast.error(e?.message || 'Erro ao apostar.');
     }
     setSubmeter(false);
@@ -261,14 +285,19 @@ export default function ApostaIndividualPage() {
                 <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Status geral</span>
                 <span className="text-xs font-black text-white/80">{ativo.resultado?.toUpperCase() ?? 'Aguardando'}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-3">
+              <div className={`grid gap-3 pt-3 ${ativo.status === 'em_jogo' ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <button onClick={handleSync} className="rounded-xl bg-[#121217] border border-white/10 py-2.5 flex items-center justify-center gap-2 text-zinc-200 text-xs font-black uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer">
                   <RefreshCw className="w-3.5 h-3.5" /> Verificar
                 </button>
-                <button onClick={handleCancelarAtivo} className="rounded-xl bg-[#121217] border border-red-500/30 py-2.5 flex items-center justify-center gap-2 text-red-400 text-xs font-black uppercase tracking-wider hover:bg-red-500/10 transition-colors cursor-pointer">
-                  <X className="w-3.5 h-3.5" /> Cancelar
-                </button>
+                {ativo.status !== 'em_jogo' && (
+                  <button onClick={handleCancelarAtivo} className="rounded-xl bg-[#121217] border border-red-500/30 py-2.5 flex items-center justify-center gap-2 text-red-400 text-xs font-black uppercase tracking-wider hover:bg-red-500/10 transition-colors cursor-pointer">
+                    <X className="w-3.5 h-3.5" /> Cancelar
+                  </button>
+                )}
               </div>
+              {ativo.status === 'em_jogo' && (
+                <p className="text-[10px] text-white/40 text-center pt-1">Partida já começou — a aposta está travada e não pode ser cancelada.</p>
+              )}
             </div>
           ) : catalog ? (
             // ── Etapa 1: escolher a fila (Solo Duo / Flex) em cards ──
@@ -382,6 +411,76 @@ export default function ApostaIndividualPage() {
           )}
         </div>
       </div>
+
+      {/* ── MODAL DE CONFIRMAÇÃO (segurança antes de apostar) ── */}
+      <AnimatePresence>
+        {confirmando && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.1 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setConfirmando(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.12 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl bg-[#0c0c10] border border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="p-5 sm:p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#FFB700]/10 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-[#FFB700]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-white font-black uppercase tracking-tight text-lg leading-none" style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif' }}>
+                      Confirmar Desafio
+                    </h2>
+                    <p className="text-white/40 text-[11px] uppercase tracking-widest mt-1">Você realmente deseja realizar ou aceitar o desafio?</p>
+                  </div>
+                </div>
+
+                {/* Resumo do bilhete */}
+                <div className="space-y-2 mb-5">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Fila</span>
+                    <span className="text-xs font-black text-white">{FILAS.find((f) => f.id === filaEscolhida)?.label ?? queue}</span>
+                  </div>
+                  {legs.map((l) => (
+                    <div key={l.marketKey} className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
+                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">{catalog && (Object.values(catalog.markets).flat().find((m) => m.key === l.marketKey)?.label ?? l.marketKey)}</span>
+                      <span className="text-[10px] font-black text-white/50">{l.odd.toFixed(2)}x • {l.stake} MC</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Total apostado</span>
+                    <span className="text-sm font-black text-white">{stakeTotal} MC</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Retorno potencial</span>
+                    <span className="text-lg font-black" style={{ color: ACCENT }}>{payoutTotal} MC</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5 mb-4">
+                  <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-white/40 leading-snug">
+                    Ao confirmar, o MC é reservado. Você pode cancelar apenas enquanto a partida não começar; depois disso a aposta fica travada até o fim do jogo.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setConfirmando(false)} className="rounded-xl py-3 bg-[#121217] border border-white/10 text-white/70 text-xs font-black uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer">
+                    Revisar
+                  </button>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={confirmarAposta} disabled={submeter}
+                    className="rounded-xl py-3 bg-[#FFB700] hover:bg-[#e0a000] text-black text-xs font-black uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50">
+                    {submeter ? 'Apostando...' : 'Confirmar Aposta'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
