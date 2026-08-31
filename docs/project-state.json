@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-08-20T03:23:55.249Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-08-31T01:02:44.755Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -223,7 +223,7 @@
       "phase": "fase-2",
       "area": "infra",
       "name": "VPS contratada e acessível",
-      "status": "done",
+      "status": "blocked",
       "notes": "VPS nova 179.198.120.11 (Ubuntu 24.04, 2vCPU/7.8GB, Docker 29.7.2+Compose 5.4.0). Chave SSH id_rsa registrada em /root/.ssh/authorized_keys. Nginx host + certbot instalados. M7Arena e PandaPost rodando em containers.",
       "evidence": "ssh root@179.198.120.11 funciona sem senha; https://dev.m7arena.pro/api/health → 200 {\"status\":\"ok\"}; docker ps mostra 6 containers m7arena + 3 pandapost up.",
       "owner": "deepseek",
@@ -1333,6 +1333,54 @@
       "owner": "deepseek",
       "createdAt": "2026-08-16T02:43:06.977Z",
       "updatedAt": "2026-08-16T06:02:54.620Z"
+    },
+    {
+      "id": "app.refactor.campeonatodetalhes",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Corte do CampeonatoDetalhes.tsx em componentes por aba",
+      "status": "done",
+      "notes": "Fases 1-4 concluídas e deployadas. 12 componentes + 3 módulos (cut-edge/icons/dates) em components/campeonatos/. 4 componentes órfãos removidos. Imagens: web/public/ já limpo (ADR-018). Pendente: verificação visual do usuário (paridade 1:1).",
+      "evidence": "vite build exit 0 (2216 modules); CampeonatoDetalhes.tsx 6388→3319 linhas; deploy ff-merge 85a93a6→911a58c; / /jogar /campeonatos /players = 200; diff verbatim (--patience: 14 ins/2780 del)",
+      "owner": "deepseek",
+      "createdAt": "2026-08-20T04:08:15.246Z",
+      "updatedAt": "2026-08-20T05:04:54.438Z"
+    },
+    {
+      "id": "app.arquitetura.campeonatos",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Arquitetura do módulo campeonatos (features/ + classificação server-side)",
+      "status": "doing",
+      "notes": "Merge c2b2f20 deployado na VPS (dev.m7arena.pro). Tasks 6-12 concluídas e buildadas (HTTP 200, API health 200). Falta Task 13 (verificação visual 1:1) — aguardando usuário testar /campeonatos/:id e /criar-campeonato.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-08-21T01:43:10.460Z",
+      "updatedAt": "2026-08-22T23:52:23.732Z"
+    },
+    {
+      "id": "app.campeonato.verificacao-serie",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Verificação de série de campeonato via código Riot (MD3/MD5)",
+      "status": "doing",
+      "notes": "COMO FUNCIONA: cada jogo = 1 serie MD3/MD5 com UM code (POST gerar-codigo). Cron varre em_andamento, busca partidas Riot, valida por roster (team_members accepted), vencedor por pertinencia ao roster (nunca teamId), fecha em bestOf. Fora roster = jogada normal + irregular=true (selo). Sem PUUID = nao verifica. Resultado no servidor. FEITO: backend (motor, migration 0021, cron, endpoints, shape) 127 testes health 200. PENDENTE: front (Historico stats, botao gerar-codigo, badge irregular).",
+      "evidence": "npx tsx --test test/*.test.ts → 127 pass/0 fail; npx tsc --noEmit exit 0; migration 0021 via psql na VPS → CREATE TABLE + 13 ALTERs + 3 index OK; GET /api/health 200",
+      "owner": "deepseek",
+      "createdAt": "2026-08-30T17:22:07.610Z",
+      "updatedAt": "2026-08-30T18:28:55.526Z"
+    },
+    {
+      "id": "app.aposta-individual",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Apostas individuais (self-bet) em partidas ranqueadas Solo/Flex",
+      "status": "done",
+      "notes": "Anti-fraude + histórico. jogadorEmJogo (espectador) rejeita criar bilhete se jogador já está em ranqueada (ja_em_jogo_ranqueada); detecção já rejeita partida que começou antes da aposta (tol. 2min). GET /api/bets/history agrega apostas individuais + salas apostadas (delta via ledger). Componente HistoricoApostas no perfil (total ganho/perdido MC). Falta deploy.",
+      "evidence": "api tsc exit 0; bet.test 23/23 (novos jogadorEmJogo anti-fraude). web tsc exit 0; vite build '6.70s'.",
+      "owner": "deepseek",
+      "createdAt": "2026-08-30T18:32:49.341Z",
+      "updatedAt": "2026-08-31T01:02:29.955Z"
     }
   ],
   "decisions": [
@@ -1722,6 +1770,69 @@
       "decision": "O código da partida (codigo_partida) e o botão/disparo de verificação ficam restritos a quem está na sala (participante) OU staff (streamer, organizador, admin, proprietário). O código é redigido (null) no shape para anônimos e não-participantes — tanto no detail quanto na listagem — e o POST /matches/:id/verificar aceita staff além do participante confirmado.",
       "rationale": "Pessoas comuns mal-intencionadas entravam na sala sem fazer parte e copiavam o código para ocupar vaga no lobby do jogo. Staff precisa ver o código e auditar a partida (entrar no jogo), por isso streamer/organizador/admin/proprietário continuam com acesso mesmo fora da vaga. A regra mora no servidor; o botão escondido no front é só UX.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-044",
+      "date": "2026-08-20T04:08:13.462Z",
+      "author": "deepseek",
+      "title": "Corte do CampeonatoDetalhes.tsx: recorte verbatim em 3 fases, componentes em components/campeonatos/",
+      "decision": "O arquivo de ~6388 linhas será cortado agora (antes do swap.campeonatos) como recorte mecânico verbatim, em 3 fases: Fase 1 extrai os 4 sub-componentes de chaveamento (BracketMatch, GroupStage, DoubleSideBracket, DoubleEliminationBracket); Fase 2 quebra o return gigante em 5 abas (VisaoGeral, Grupos, Cronograma, Chaves, Historico); Fase 3 extrai módulos compartilhados (cut-edge.ts, icons.ts, dates.ts).",
+      "rationale": "Usuário quer implementar novas features e precisa do projeto claro/contextualizado. Cortar só no swap.campeonatos atrasaria o objetivo. Paridade 1:1 é garantida por recorte verbatim (nenhum className muda) + build a cada extração + verificação visual final. Escopo: só este arquivo, não os outros grandes (Admin, api.ts).",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-045",
+      "date": "2026-08-20T04:13:52.087Z",
+      "author": "deepseek",
+      "title": "Fix permanente do --env-file: symlink infra/.env na VPS",
+      "decision": "Criado symlink infra/.env -> /root/m7arena/.env na VPS. Com isso o docker compose -f infra/docker-compose.yml passa a ler o .env automaticamente (project-directory = infra/), mesmo quando alguém roda sem --env-file. Verificado: compose config SEM --env-file resolve POSTGRES_PASSWORD corretamente.",
+      "rationale": "O deploy sem --env-file (ADR-015) derrubou o banco 2x no mesmo dia: containers recriados com POSTGRES_PASSWORD default \"postgres\", causando 500 em todos os endpoints de dados. O symlink elimina a dependência de todo agente lembrar do flag.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-046",
+      "date": "2026-08-21T01:43:09.424Z",
+      "author": "deepseek",
+      "title": "Arquitetura do módulo campeonatos: features/ + classificação no servidor",
+      "decision": "O domínio de campeonatos vira módulo isolado em web/src/features/campeonatos/ (types, mappers, Context+useCampeonato, hooks, components por aba/modal/bracket, domain), com páginas reduzidas a orquestradores finos; a classificação e o desempate automático passam a ser calculados no servidor (buildClassificacao consolidada + appendTiebreakers), e o front só exibe. localStorage m7_match_history/m7_team_stats (código morto) é removido.",
+      "rationale": "Cumpre o invariante 3.3 (classificação no servidor) e elimina a duplicação/divergência atual (servidor buildClassificacao simples vs front getDynamicStandings avançada). Context+hooks segue o padrão existente (AuthContext/PerfilContext/RoleContext) sem dependência nova. Divisão por responsabilidade (D5), não por contagem de linhas. Paridade visual preservada por recorte verbatim.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-047",
+      "date": "2026-08-30T17:18:16.549Z",
+      "author": "deepseek",
+      "title": "Campeonatos: verificação de série via código (Riot)",
+      "decision": "Jogos de campeonato (grupos + mata-mata) são verificados pela Riot pelo código de partida, como o /jogar. Código gerado automaticamente ao agendar e visível na página para capitão + membros do roster (titulares + reservas). Cada jogo é 1 série MD3/MD5 (1 código vale a série toda); placar exibido é por vitórias da série, decidido no servidor. Quem jogou é validado por pertinência ao roster; jogador de fora → conta normal + selo 'não cadastrado' visível a todos. Sem PUUID = sem código. ADM pode editar depois; W.O. é manual. Regra toda no servidor.",
+      "rationale": "Reusa o motor verificarPartida já testado. Stats (kills/CS/gold/maior killer) já vêm do payload da Riot. Mantém ADR-005/010 e ADR-016. Um código por série economiza o pool limitado de codes.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-048",
+      "date": "2026-08-30T18:28:10.351Z",
+      "author": "deepseek",
+      "title": "Verificação de série: mecanismo",
+      "decision": "COMO FUNCIONA (mecanismo): cada JOGO do campeonato (grupos/mata-mata) é 1 série MD3 (default) ou MD5 (na final) usando UM tournament code para todas as jogadas. Ao entrar em 'em_andamento', o organizador chama POST /tournaments/:id/jogo/:matchId/gerar-codigo. O codigo fica exposto no shape (codigo_partida). Cron varre jogos em_andamento a cada 10min. O motor busca as partidas da Riot por codigo, decide vencedor de cada jogada, acumula e fecha ao atingir bestOf (MD3=2, MD5=3). Resultado no servidor; front exibe.",
+      "rationale": "Documenta o mecanismo da feature para agentes futuros. Reusa o motor de sala como referência por jogada; agregação MD3/MD5 é própria do campeonato.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-049",
+      "date": "2026-08-30T18:28:17.649Z",
+      "author": "deepseek",
+      "title": "Verificação de série: regras (roster, irregular, WO)",
+      "decision": "REGRAS da verificação de série: o roster valido de um time = team_members accepted (titulares+reservas), resolvido por guest_puuid ou game_accounts.external_id. Vencedor de cada jogada é decidido por pertinência ao roster, NUNCA pelo teamId da Riot (custom game pode inverter). Jogador FORA do roster: a jogada conta normal + série vira irregular=true (selo visivel; ADM decide punição depois). Sem PUUID nos 10 participantes → não verifica. Código é liberado quando a série fecha. W.O. é manual (ADM).",
+      "rationale": "Regras assinadas com o usuário (ADR-047): titular+reserva podem jogar; fora do roster = selo + conta normal; irregular nunca bloqueia andamento. Mantém regra de negócio no servidor.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-050",
+      "date": "2026-08-31T00:46:24.819Z",
+      "author": "deepseek",
+      "title": "Aposta individual (self-bet): casa com odds fixas + detecção via espectador",
+      "decision": "Novo recurso de aposta individual: o jogador aposta MC em si mesmo sobre a própria próxima partida ranqueada (Solo=420 / Flex=440). A plataforma é a CASA (odds fixas): paga stake×odd se acertar e retém o stake se errar — diferente das salas (escrow entre jogadores). Partida detectada via espectador da Riot (fixa 2min de anti-fraude: só aceita jogo que começou após a aposta); liquidação via match-v5. Mínimo 100 MC/mercado, teto 5000 MC de payout. Mercados: vitória/derrota, kills over/under (7-13/6-12), first blood.",
+      "rationale": "O usuário escolheu plataforma como banca (odss 1.2x-2.6x) para simplicidade e sem precisar de 2º jogador. A detecção via espectador é a única forma confiável de saber quando a partida ranqueada começa (não há codigo_partida em matchmaking). Modelo tabela nova bet_tickets+bet_legs com snapshot de odd (config pode mudar sem afetar bilhetes feitos). Reusa user_wallets.mc_reservado (invariante mc+mcReservado=total) e ledger (kinds bet_*).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1778,254 +1889,18 @@
       "openedAt": "2026-08-10T00:25:36.288Z",
       "resolvedAt": null,
       "resolution": null
+    },
+    {
+      "id": "BLK-007",
+      "description": "Deploy concorrente (outro agente) recriou a stack na VPS SEM --env-file, fazendo o app subir com POSTGRES_PASSWORD default \"postgres\" (ADR-015 violada). Resultado: 500 em todos os endpoints de dados (campeonatos/jogadores \"sumiram\" no front). Dados intactos no banco. CORRIGIDO recriando app/realtime/pgbouncer com --env-file. Reforcar a todos os agentes: NUNCA rodar compose na VPS sem --env-file /root/m7arena/.env.",
+      "component": "infra.vps",
+      "openedBy": "deepseek",
+      "openedAt": "2026-08-20T03:39:22.754Z",
+      "resolvedAt": "2026-08-20T04:13:53.369Z",
+      "resolution": "Criado symlink infra/.env -> /root/m7arena/.env na VPS (fix permanente). Agora compose resolve a senha correta mesmo sem --env-file. App recriado com --env-file, health 200, dados intactos."
     }
   ],
   "sessions": [
-    {
-      "at": "2026-08-16T05:38:21.894Z",
-      "agent": "deepseek",
-      "summary": "Chat de sala (ADR-040) implementado via subagent-driven, SEM commits, branch feat/chat-sala. 8 tasks + fix final, todas aprovadas (0 Critical). Backend: migration 0018 sala_mensagens (journal 0014-0017 reconstruido, ADR-041), GET /api/matches/:id/mensagens (participante/staff, purge preguiçoso), chat_send no realtime (ban/Riot/rate limit 1s+40/5min, INSERT, fan-out), purge TTL 5min no cron. Front: SDK, useSalaRealtime/useSalaSimples (enviarChat), useSalaChat (historico+autoexclusao 5min+naoLidas), ChatDaSala canto inf. direito, integracao SalaMod1 (gate estados ativos + participante/staff). tsc api+web exit 0, vite build ok. PENDENTE: deploy VPS (aplicar 0018 via psql E reconciliar __drizzle_migrations) + teste manual 2 contas. Minors: chatTimestamps sem eviction; onReconnect de visitante dispara GET 403.",
-      "touched": [
-        "db/schema/matches.ts",
-        "db/migrations/0018_workable_clea.sql",
-        "db/migrations/meta/_journal.json",
-        "api/src/routes/matches.ts",
-        "api/src/realtime/index.ts",
-        "api/src/cron.ts",
-        "web/src/lib/api.ts",
-        "web/src/hooks/useSalaRealtime.ts",
-        "web/src/hooks/useSalaSimples.ts",
-        "web/src/hooks/useSalaChat.ts",
-        "web/src/api/salamod1.ts",
-        "web/src/components/partidas/ChatDaSala.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-16T06:03:02.556Z",
-      "agent": "deepseek",
-      "summary": "Commitado (cd40a84 + fix 3121834) e deployado o chat de sala (ADR-040) na VPS dev.m7arena.pro. Fluxo: commit em feat/chat-sala, push origin+vps, merge ff na VPS main, migration 0018 aplicada via psql (CREATE TABLE + FKs + índices, ON_ERROR_STOP=1 sem erro), rebuild app+nginx, up -d. Site 200, realtime ouvindo. Corrigi bug de deploy: purge do cron usava const [purgadas] (destructuring) -> TypeError 'reading length' quando vazio; troquei para const purgadas e redeployei. __drizzle_migrations NAO existe na VPS (migrations sempre via psql), entao o item de reconciliacao da revisao final e moot. PENDENTE: usuario testar manualmente com 2 contas (envio/recebimento, autoexclusao 5min, ban/Riot, sala encerrada sem chat).",
-      "touched": [
-        "api/src/cron.ts"
-      ]
-    },
-    {
-      "at": "2026-08-16T07:37:51.440Z",
-      "agent": "deepseek",
-      "summary": "Fila de tournament codes por modo (ADR-042): match_codes ganhou coluna mode (migration 0020). Os 2 códigos BR050c8-* (ARAM 1v1/x1) marcados mode='1v1'; os 6 BR04fa2-* (Summoner's Rift 5v5 Tournament Draft) ficam mode NULL (genéricos para 5v5/aram/time_vs_time). atribuirCodigoPartida em match-flow.ts filtra por modo (isNull para genérico). Testes: suíte completa 106/106 pass, incluindo novo teste de isolamento por modo em estados.test.ts; migration validada em Postgres limpo (PGlite) e aplicada na VPS (8 códigos, 2 com mode 1v1). App rebuildado na VPS, health 200, filtro confirmado no container. Validação do win condition 1v1 (first blood / 100 CS) já existia e está coberta por testes (verificar-partida.test.ts). Push e23941b, merge ff na VPS.",
-      "touched": [
-        "db/schema/matches.ts",
-        "db/migrations/0020_separar_fila_codigos_x1.sql",
-        "api/src/lib/match-flow.ts",
-        "api/test/estados.test.ts",
-        "api/package.json"
-      ]
-    },
-    {
-      "at": "2026-08-16T19:21:37.482Z",
-      "agent": "deepseek",
-      "summary": "Bug: todos os membros de time apareciam como TOP na TimePage. Causa raiz dupla: (1) transform-times.js copiava m.lane do Supabase (TOP/JG/MID/...) direto para role_slot, que espera vocabulário novo (top/jungle/mid/...); (2) slotToLegacy em api/src/routes/teams.ts não reconhecia o formato legado e caía no fallback 'TOP'. Correção: transform traduz lane→role_slot; API aceita os dois formatos. Dados normalizados na VPS via UPDATE (112 linhas), nenhum time com duplicidade nas vagas principais. Commit fb582bf, deploy na VPS (build app + recreate nginx pq ficou apontando pro IP antigo do app). Site 200, API devolve lanes corretas.",
-      "touched": [
-        "api/src/routes/teams.ts",
-        "scripts/migrate/transform-times.js"
-      ]
-    },
-    {
-      "at": "2026-08-17T04:44:23.983Z",
-      "agent": "deepseek",
-      "summary": "Task 1 do recurso \"reconciliar handle Riot\" concluída: criado api/src/lib/reconciliar-handles.ts (transcrição verbatim do brief) + api/test/reconciliar-handles.test.ts. TDD: RED (ERR_MODULE_NOT_FOUND) → GREEN (4/4). Typecheck exit 0. Suíte completa 110/110. Único desvio: brief usava before/after com PGlite compartilhado, mas o módulo varre todas as contas de lol e os counts vazavam entre testes; troquei para beforeEach/afterEach no teste (módulo e asserts permanecem 100% verbatim). Nada commitado (regra do projeto). Relatório em .superpowers/sdd/task-1-report.md.",
-      "touched": [
-        "api/src/lib/reconciliar-handles.ts",
-        "api/test/reconciliar-handles.test.ts"
-      ]
-    },
-    {
-      "at": "2026-08-17T05:17:12.346Z",
-      "agent": "deepseek",
-      "summary": "Feature reconciliar handle Riot (cron 3 dias) em andamento via SDD na branch feat/reconciliar-handle-riot. Spec+plano em docs/superpowers/. Motivo: jogador renomeou no LoL, PUUID valida mas nome (game_accounts.handle) fica velho. Task1 DONE+review aprovado: api/src/lib/reconciliar-handles.ts (runReconciliacaoHandles DI, lote 3, atualiza handle+users.riot_id, falha preserva) + teste 4/4. Task2 IMPLEMENTADA: timer 3 dias no api/src/index.ts. Evidencia: tsc exit 0, suite 110/110, smoke tsx (docker local desligado). PROXIMO: review Task2 (diff .superpowers/sdd/review-task2-handles.diff; reviewer cancelado), depois COMMIT+VPS conforme pedido do usuario (commit branch, push origin+VPS, merge ff, rebuild app; sem migration). Ledger: .superpowers/sdd/progress.md.",
-      "touched": [
-        "api/src/lib/reconciliar-handles.ts",
-        "api/test/reconciliar-handles.test.ts",
-        "api/src/index.ts"
-      ]
-    },
-    {
-      "at": "2026-08-18T02:29:11.464Z",
-      "agent": "deepseek",
-      "summary": "Feature: código de partida + verificar restritos a participante ou staff. Server: shapeSala redige codigo_partida=null para anônimos/não-participantes (detail + listagem); POST /matches/:id/verificar aceita staff (streamer/organizador/admin/proprietario) além do participante confirmado, via novo helper eStaffSala em lib/acesso-sala.ts. Front SalaMod1: botões Copiar Código e Verificar Partida só para jogadorAtual ou staff. Verificação: api tsc exit 0, web tsc exit 0, vite build ok, suíte 110/110. Commit 22b1191 (feat/sala-permissoes), push origin+vps, merge ff na VPS main, rebuild app+nginx+realtime. Live: health/home/lista 200; sala 57 (partida_iniciada, tem código real) → anônimo recebe codigo_partida null, participante (sessão temporária) recebe o código BR04fa2-*. ADR-043 registrada. ATENÇÃO: trabalho do outro agente (reconciliar-handle-riot: index.ts timer, lib/reconciliar-handles.ts, teste, specs) ficou NÃO commitado no working tree — não é meu, deixei intacto.",
-      "touched": [
-        "api/src/lib/acesso-sala.ts",
-        "api/src/routes/matches.ts",
-        "api/src/routes/matches-actions.ts",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T02:56:44.670Z",
-      "agent": "deepseek",
-      "summary": "Continuou e finalizou a feature \"reconciliar handle Riot (cron 3 dias)\". Review da Task 2 (timer no index.ts) aprovado — verbatim vs spec. Verificação: npx tsc --noEmit -p api/tsconfig.json → exit 0; npx tsx --test \"api/test/*.test.ts\" → 110/110. Commit 3d98fab na branch feat/reconciliar-handle-riot (rebaseada em 22b1191 = VPS main da época, para permitir ff-only), com 5 arquivos: index.ts (timer), lib/reconciliar-handles.ts, test/reconciliar-handles.test.ts, docs/superpowers plan+spec. Push origin+vps, merge --ff-only na VPS main, docker compose build app + up -d app. Live: /api/health 200; logs do app mostram runReconciliacaoHandles executando no boot (429 da dev key Riot — esperado, BLK-006; preserva handle velho sem crash). Sem migration. Nenhum filtro external_id no SELECT é ok: coluna é NOT NULL no schema. Ficou dirty no working tree: docs/project-state.json, docs/status-log.jsonl, statusdoprojeto.md (gerados pelo MCP, não fazem parte do feature).",
-      "touched": [
-        "api/src/index.ts",
-        "api/src/lib/reconciliar-handles.ts",
-        "api/test/reconciliar-handles.test.ts",
-        "docs/superpowers/plans/2026-08-17-reconciliar-handle-riot.md",
-        "docs/superpowers/specs/2026-08-17-reconciliar-handle-riot-design.md"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:31:05.100Z",
-      "agent": "gemini",
-      "summary": "Redesign completo e elevação visual dos modais e popups da plataforma (ModaisElegibilidade, ModalLoginVitrine, ModalVincularConta, ModalSenhaSala) para o padrão visual supremo da M7 Arena (vidro escuro #0a0a0c, iluminação radial âmbar/azul, neon top accent, bordas douradas #FFB700, ícones 3D com halo e CTAs de alta conversão). Evidência: npx tsc --noEmit (exit 0) e npm run build (exit 0).",
-      "touched": [
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:34:59.754Z",
-      "agent": "deepseek",
-      "summary": "Corrigiu verificação 1v1 ARAM. Bug 1: buscaIdsRiot filtrava só queue=3130 (SR); partida ARAM (queue 3200) nunca achada. Agora queue pelo mapa: 1v1→3200, demais→3130. Bug 2: vencedor era por teamId (100/200), que não mapeia blue/red da vaga em custom (quem cria lobby vira 100); na sala 59 Zeu King (blue) estava teamId 200. Agora vencedor por puuid com fallback teamId. Teste novo \"lados invertidos\", suíte 111/111, tsc exit 0. Commit 6340d43, deploy VPS. Cron já resolveu sala 59 certo: blue (Zeu King) por first_blood. ATENÇÃO: trabalho não commitado de outro agente no working tree (ModaisElegibilidade.tsx, Jogar.tsx, SalaMod1.tsx — refactor de modais) deixado intacto.",
-      "touched": [
-        "api/src/lib/verificar-partida.ts",
-        "api/test/verificar-partida.test.ts"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:37:00.578Z",
-      "agent": "gemini",
-      "summary": "Deploy realizado na VPS (dev.m7arena.pro). Commit 91e8f7f na branch feat/redesign-modais mergeado via ff-only na branch main da VPS. Container m7arena_nginx rebuildado com o build estático do Vite contendo os novos modais (ModaisElegibilidade, ModalLoginVitrine, ModalVincularConta, ModalSenhaSala). Site respondendo 200 OK.",
-      "touched": [
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:47:26.588Z",
-      "agent": "gemini",
-      "summary": "Ajuste visual completo dos modais de maioridade 18+, login de vitrine, vinculo Riot e senha para o design oficial cut-edge da M7 Arena (bordas chanfradas angulares com clip-path CUT_FRAME/CUT_INNER/CUT_BUTTON, tipografia Anton de partida finalizada, cores vivas sólidas e sem fundos de grade). Deploy atualizado na VPS (dev.m7arena.pro) com HTTP 200 OK.",
-      "touched": [
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:52:05.218Z",
-      "agent": "gemini",
-      "summary": "Suavização de brancos e contraste nos modais de elegibilidade e criar sala (remoção de reflexos brancos puros, aplicação de tons zinc e metálicos sólidos). Redesign visual completo do DepositModal (com abas de Depósito e Saque) e VipModal para a identidade oficial cut-edge da M7 Arena (cortes chanfrados CUT_FRAME/CUT_INNER/CUT_BUTTON, tipografia Anton, remoção de grades artificiais). Build e deploy na VPS dev.m7arena.pro concluídos com HTTP 200.",
-      "touched": [
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/deposit/DepositTab.tsx",
-        "web/src/components/modals/deposit/SaqueTab.tsx",
-        "web/src/components/modals/vip/VipModal.tsx",
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/pages/Jogar.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:53:31.596Z",
-      "agent": "gemini",
-      "summary": "Correção de overflow e eliminação de rolagem horizontal desnecessária nos modais de Criar Sala e VIP (adição de overflow-x-hidden e contenção de layout). Build e deploy na VPS dev.m7arena.pro concluídos com HTTP 200.",
-      "touched": [
-        "web/src/components/modals/vip/VipModal.tsx",
-        "web/src/pages/Jogar.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:56:54.659Z",
-      "agent": "gemini",
-      "summary": "Refinamento completo de bordas contínuas em todos os cantos cortados (clip-path chamfered) dos modais (ModaisElegibilidade, ModalCriarSala, DepositModal, DepositTab, SaqueTab, VipModal), usando CutCard e pares harmonizados de polígonos (FRAME/INNER, BUTTON/INNER, BADGE/INNER) para contorno 100% nítido e ininterrupto em todas as diagonais. Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
-      "touched": [
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/deposit/DepositTab.tsx",
-        "web/src/components/modals/deposit/SaqueTab.tsx",
-        "web/src/components/modals/vip/VipModal.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T03:59:13.822Z",
-      "agent": "gemini",
-      "summary": "Refinamento completo da página de Perfil / Minha Conta (perfil.tsx e CarteiraEStrikes.tsx) removendo todos os cantos arredondados (rounded-2xl, rounded-xl, rounded-lg) dos subcards e elementos internos (estatísticas de elo, top campeões, carteira, advertências, modal PIX, equipe, email e redes sociais) e aplicando o padrão angular cut-edge oficial da arena. Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
-      "touched": [
-        "web/src/pages/perfil.tsx",
-        "web/src/components/perfil/CarteiraEStrikes.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:03:49.729Z",
-      "agent": "gemini",
-      "summary": "Remoção completa de animações pesadas e lentas de escala (grow-up, scale, spring bounce e delays) nos modais de elegibilidade (ModalShell), criação de sala (ModalCriarSala), depósito (DepositModal), VIP (VipModal), perfil (perfil.tsx) e sala de partida (SalaMod1.tsx), tornando a abertura e exibição de popups instantânea, ultrarresponsiva e leve. Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
-      "touched": [
-        "web/src/components/partidas/ModaisElegibilidade.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/components/modals/deposit/DepositModal.tsx",
-        "web/src/components/modals/vip/VipModal.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/pages/SalaMod1.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:06:44.256Z",
-      "agent": "gemini",
-      "summary": "Aplicação do estilo cut-edge (bordas chanfradas e contínuas) nos cards de modos de jogo, filtros de busca, cards de salas ativas/disponíveis e cards de partidas finalizadas (preservando o tom preto e branco/grayscale nas finalizadas, mas com o formato chanfrado). Build e deploy na VPS dev.m7arena.pro concluídos com sucesso (HTTP 200).",
-      "touched": [
-        "web/src/pages/Jogar.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:10:32.431Z",
-      "agent": "gemini",
-      "summary": "Redesign completo da pagina Lobby (Lobby.tsx) aplicando o padrao Cut-Edge, iluminacao de fundo e atmosfera escura. Criacao do arquivo de documentacao oficial DESIGNDOPROJETO.MD detalhando o design system, formulas de poligonos, gradientes e regras visuais.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "DESIGNDOPROJETO.MD"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:18:02.228Z",
-      "agent": "gemini",
-      "summary": "Correcao de alinhamento e flex stretch do container duplo chanfrado na Lobby (Lobby.tsx) eliminando preenchimento indevido do gradiente. Adicao da iluminacao ambiente suave global no LayoutWrapper.tsx e index.css para todas as abas do app (Perfil, Jogar, Inicio, Campeonatos, etc.).",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/index.css"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:20:59.550Z",
-      "agent": "gemini",
-      "summary": "Refinamento das bordas dos cards da pagina Lobby (Lobby.tsx) de 1.5px/gradiente forte para 1px com gradiente de baixa opacidade, eliminando qualquer vazamento/aparencia de triangulo diagonal sobre a imagem. Rebuild e deploy na VPS dev.m7arena.pro.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:23:21.259Z",
-      "agent": "gemini",
-      "summary": "Remocao de fundos e overlays opacos (bg-black/90, bg-[#050505], bg-background) de Perfil, Jogar, Campeonatos, Minhas Partidas, Politicas e Streamers, e aumento da intensidade/espalhamento das luzes de fundo ambiente global no LayoutWrapper.tsx. Deploy na VPS dev.m7arena.pro.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/campeonatos.tsx",
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/pages/MinhasPartidas.tsx",
-        "web/src/pages/Politicas.tsx",
-        "web/src/pages/Streamers.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-18T04:25:36.312Z",
-      "agent": "gemini",
-      "summary": "Aplicado o Design System Cut-Edge oficial na pagina de Campeonatos (web/src/pages/campeonatos.tsx) substituindo bordas arredondadas por poligonos Dual Container CUT_FRAME, CUT_BUTTON e CUT_BADGE.",
-      "touched": [
-        "web/src/pages/campeonatos.tsx"
-      ]
-    },
     {
       "at": "2026-08-18T04:28:54.571Z",
       "agent": "gemini",
@@ -2115,6 +1990,258 @@
       "summary": "Redesign completo Cut-Edge aplicado na página de detalhes do campeonato (CampeonatoDetalhes.tsx) e todos os seus subcomponentes, modais e abas",
       "touched": [
         "web/src/pages/CampeonatoDetalhes.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-20T03:30:36.576Z",
+      "agent": "deepseek",
+      "summary": "Hero do /jogar simplificado: mantido só o slide \"CRIE SUA EQUIPE\" (removidos BENEFÍCIOS VIP e JOGUE COM RESPEITO), removido rótulo \"LOL TEAMS\"+ícone e controles de slider (setas/dots). Zoom mobile na imagem de fundo (scale-[1.45] md:scale-100) para não aparecer cortada. Deletados heroSlide2/3.webp (~209KB). Commit 9baab9f, push e deploy na VPS (nginx rebuild). dev.m7arena.pro e /jogar 200. Obs: CampeonatoDetalhes.tsx estava com edição ativa de outro agente (polígonos cut-edge, arquivo sintaticamente quebrado no momento) — não toquei e não incluí no commit; meu build foi validado em worktree isolado no HEAD. mcp_ops estava restartando na VPS durante deploy concorrente.",
+      "touched": [
+        "web/src/pages/Jogar.tsx",
+        "web/public/images/heroSlide2.webp",
+        "web/public/images/heroSlide3.webp"
+      ]
+    },
+    {
+      "at": "2026-08-20T03:39:29.472Z",
+      "agent": "deepseek",
+      "summary": "Diagnóstico de \"sumiu campeonatos/jogadores\": NÃO houve perda de dados. A stack foi recriada por deploy concorrente SEM --env-file, e o app subiu com POSTGRES_PASSWORD default \"postgres\" (ADR-015), causando 500 em todos os endpoints de dados. Banco intacto (255 users, 24 teams, 112 members, 2 tournaments, 19 matches, 189 game_accounts, 129 wallets). Corrigido recriando app+realtime+pgbouncer com --env-file /root/m7arena/.env. Verificado: /api/health ok, /api/tournaments retorna LEITEIROS CUP, /api/teams retorna M7 ORANGE, matches encerrada ok, páginas / /jogar /campeonatos /players todas 200. Registrei BLK-007 para reforçar a regra do --env-file.",
+      "touched": [
+        "infra/docker-compose.yml",
+        "infra/userlist.txt"
+      ]
+    },
+    {
+      "at": "2026-08-20T03:59:21.971Z",
+      "agent": "gemini",
+      "summary": "Redesign completo Cut-Edge implementado nas páginas /times (equipes.tsx) e /times/:id (TimePage.tsx). Build validado e deploy realizado com sucesso na VPS (nginx).",
+      "touched": [
+        "web.equipes",
+        "web.time-page"
+      ]
+    },
+    {
+      "at": "2026-08-20T05:04:58.996Z",
+      "agent": "deepseek",
+      "summary": "Refactor CampeonatoDetalhes.tsx concluído (Fases 1-4) via 3 subagentes em worktree isolado: (1) extraiu 4 componentes de chaveamento + módulos compartilhados cut-edge/icons/dates; (2) quebrou return em 5 abas (VisaoGeral/Grupos/Cronograma/Chaves/Historico); (3) Fase 4 imagens (0 apagadas — web/public/ já limpo desde ADR-018) + código morto (4 componentes órfãos removidos, 731 linhas). Liguei icons/dates ao orquestrador. Arquivo 6388→3319 linhas. Build exit 0, deploy ff-merge na VPS (85a93a6→911a58c), páginas 200, dados intactos. Também: fix permanente do --env-file (symlink infra/.env) resolvendo o banco que caía 2x (ADR-045, BLK-007 resolvido). Restaurou node_modules root+web que meu worktree anterior apagou. PENDENTE: usuário verificar visualmente a paridade 1:1 do /campeonatos/:id. Worktree refactor-campeonatos ainda existe (branch refactor/campeonatodetalhes).",
+      "touched": [
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/components/campeonatos/",
+        "web/src/components/partidas/",
+        "infra/.env"
+      ]
+    },
+    {
+      "at": "2026-08-21T02:40:29.170Z",
+      "agent": "deepseek",
+      "summary": "Arquitetura campeonatos (ADR-046), branch arquitetura/campeonatos. CONCLUÍDO: Task1 classificacao no servidor (buildClassificacao + sortStandings, 3 testes); Task2 desempate no servidor (tournament-tiebreakers + applyAutoTiebreakers nas rotas, corrige desempate que nao persistia, 4 testes); Task3 types; Task4 mappers; Task5 extracao 5 modais; Task8 remove codigo morto localStorage; Task9 domain/bracket. Fix toast import. Orquestrador 3548->2099 linhas. Verificado: api 118/118 + tsc 0; web tsc 0 + build ok. PENDENTE: Task6 Context, Task7 abas+classificacao, Task10 fatiar Cronograma/DoubleElim, Task11 createCampPage, Task12 tipar listagem, Task13 verificacao visual.",
+      "touched": [
+        "api/src/lib/tournament-shape.ts",
+        "api/src/lib/tournament-tiebreakers.ts",
+        "api/src/routes/tournaments.ts",
+        "api/test/classificacao.test.ts",
+        "api/test/tiebreakers.test.ts",
+        "web/src/features/campeonatos/",
+        "web/src/pages/CampeonatoDetalhes.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-21T02:52:32.769Z",
+      "agent": "deepseek",
+      "summary": "Checkpoint arquitetura campeonatos para retomar amanha. Feito: T1 classificacao servidor, T2 desempate servidor, T3 types, T4 mappers, T5 5 modais, T8 localStorage, T9 bracket domain. Detalhes 3548->2099. Pendente T6 Context, T7 classificacao front, T10-12 splits, T13 visual. Branch arquitetura/campeonatos no worktree temp/opencode/refactor-campeonatos (8 commits apos 911a58c). Pausado a pedido do usuario.",
+      "touched": [
+        "api/src/lib/tournament-shape.ts",
+        "api/src/lib/tournament-tiebreakers.ts",
+        "api/src/routes/tournaments.ts",
+        "web/src/features/campeonatos/",
+        "web/src/pages/CampeonatoDetalhes.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-22T23:19:26.251Z",
+      "agent": "deepseek",
+      "summary": "Retomada da arquitetura do módulo campeonatos (ADR-046) no worktree refactor-campeonatos. Feito: Task 6 (CampeonatoDetalhes 2099→~820 linhas, orquestrador fino consumindo CampeonatoContext + useCampeonato; mapFromDb duplicado no Context trocado por mappers.ts); Task 7 (getDynamicStandings removido — VisaoGeral/Historico leem classificacao do servidor); Task 10 (Cronograma dividido em AdminCriarJogo/MeusJogosPendentes/TodosJogosPendentes/ListaCronograma usando useCampeonato; DoubleElim extraído em UpperRound/LowerRound); Task 11 parcial (imagem.ts em features/campeonatos/domain); Task 12 (listagem tipada TournamentCard). 6 commits a56ada6..6dd2768. tsc+build verdes. PENDENTE: Task 11 restante (fatiar form do createCampPage) e Task 13 (verificação visual 1:1). Branch não mergeada — aguarda verificação.",
+      "touched": [
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "web/src/features/campeonatos/mappers.ts",
+        "web/src/components/campeonatos/Cronograma.tsx",
+        "web/src/components/campeonatos/ListaCronograma.tsx",
+        "web/src/pages/createCampPage.tsx",
+        "web/src/features/campeonatos/domain/imagem.ts",
+        "web/src/pages/campeonatos.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-22T23:24:30.689Z",
+      "agent": "deepseek",
+      "summary": "Task 11 concluída (commit c2b2f20): createCampPage.tsx 1919→1583 linhas. Form de criação (Seção Identidade + Seção Configuração de Arena) extraído verbatim para features/campeonatos/components/FormCriarCampeonato.tsx (recebe formData/setFormData/handleInputChange/handleFileChange/refs de file input como props); imports de ícones não usados removidos. tsc --noEmit exit 0 + vite build verde. Estado do plano arquitetura campeonatos: Tasks 6,7,8,9,10,11,12 DONE; resta apenas Task 13 (verificação visual 1:1 no navegador e merge da branch arquitetura/campeonatos).",
+      "touched": [
+        "web/src/pages/createCampPage.tsx",
+        "web/src/features/campeonatos/components/FormCriarCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-22T23:52:25.345Z",
+      "agent": "deepseek",
+      "summary": "Merge da branch arquitetura/campeonatos (c2b2f20) em feat/redesign-modais + deploy na VPS. Git merge main na VPS (911a58c→c2b2f20 fast-forward), docker compose rebuild app+realtime+nginx. Site: HTTP 200, API health: 200. Testes API: 118/118. Branch local: feat/redesign-modais c2b2f20. Resta Task 13 (verificação visual 1:1).",
+      "touched": [
+        "D:/Aplicativos/M7arenaSite/.git",
+        "dev.m7arena.pro"
+      ]
+    },
+    {
+      "at": "2026-08-23T01:25:36.357Z",
+      "agent": "deepseek",
+      "summary": "Fix deployado: aba \"Chaves\" do campeonato agora renderiza o bracket INLINE no body (handleTabClick deixou de interceptar 'bracket' para abrir o BracketModal em tela cheia; o modal continua acessível pelo botão \"Ver em Tela Cheia\" dentro do Chaves). Commit 51458dd mergeado em feat/redesign-modais e deployado na VPS (c2b2f20→51458dd), nginx recriado, site HTTP 200. Agendar verificação do usuário na aba Chaves.",
+      "touched": [
+        "web/src/features/campeonatos/CampeonatoContext.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-24T02:33:56.038Z",
+      "agent": "deepseek",
+      "summary": "Fix na VPS: página /players voltou a listar jogadores. Causa raiz: GET /api/players/filtrados exigia autenticação (401) enquanto a página é pública — o front engolia o erro com .catch(() => []) e mostrava lista vazia. No site antigo a RPC buscar_jogadores_filtrados era SECURITY DEFINER (diretório público). Tornados públicos: /api/players/filtrados e /api/wallet/admin/balances com userIds (agregação sem userIds continua só admin). Banco tinha 189 contas LoL; API agora devolve 191 sem login (HTTP 200). Build + deploy na VPS (m7arena_app e m7arena_realtime recriados). Verificado: filtrados sem auth 200, com auth 200, home 200.",
+      "touched": [
+        "api/src/routes/players.ts",
+        "api/src/routes/wallet.ts"
+      ]
+    },
+    {
+      "at": "2026-08-24T02:54:53.236Z",
+      "agent": "gemini",
+      "summary": "Corrigidas todas as bordas chanfradas (cut-edge) em cards, botoes, tags de times, banners e modais de navegacao e lobby, equipes, salas e perfil. Build gerada e deployada com sucesso na VPS (https://dev.m7arena.pro).",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/pages/perfil.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-29T01:02:42.021Z",
+      "agent": "deepseek",
+      "summary": "Corrigidos contraste de texto e largura do top bar da sala, deployado em dev.m7arena.pro. 1) players.tsx badge de elo: fundo virou bg-[#0a0a0a] escuro, mantendo borda e texto na cor do elo. 2) Jogar.tsx modal criar sala: card de modo selecionado passou de `cor25` para color-mix(cor 18%, #0d0d10) escuro, nome em white. 3) Jogar.tsx finalizadas: badge Vitoria Azul/Vermelho passou para texto #fff sobre color-mix(cor 22%, #0d0d10), borda cor80 mantida. 4) SalaMod1.tsx: top bar da sala ganhou w-full. Evidencias: tsc exit 0, vite build ok (6.22s), commit 8afb880, push vps main ff, nginx rebuild, site 200 em / /players /jogar, bundle com 0d0d10. Sem componentes do plano alterados (fix de UI).",
+      "touched": [
+        "web/src/pages/players.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/SalaMod1.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-30T15:47:31.764Z",
+      "agent": "deepseek",
+      "summary": "Fix visual no chat da sala (ADR-040): a bolinha vermelha de não lidas aparecia cortada em cima à direita do botão minimizado do ChatDaSala. Causa: o badge ficava DENTRO do <button> que tem clipPath (CUT_FRAME), e o clip cortava a parte que vazava para fora. Correção: movi o badge para fora do button, como irmão, dentro de um wrapper relative inline-block, então ele flutua sem ser cortado. Design/alteração preservados. Build e verificação: npx vite build exit 0, npx tsc --noEmit exit 0. Commit a04c5e7, push origin feat/redesign-modais, fast-forward do main na VPS, docker compose up -d --build nginx recriado, site 200 em https://dev.m7arena.pro. Aguardando usuário validar visualmente no chat minimizado.",
+      "touched": []
+    },
+    {
+      "at": "2026-08-30T15:51:50.682Z",
+      "agent": "deepseek",
+      "summary": "Chat da sala agora abre fechado por padrão (useState(false) em vez de true). Antes ele montava aberto em todo reload/entrada na sala. Agora surge minimizado com a bolinha vermelha de não lidas visível (badge arredondado — fix do clipPath da rodada anterior já cobria o corte). Comentário do topo do arquivo atualizado. Build/verify: npx tsc --noEmit exit 0, npx vite build exit 0. Commit 73b2443, push origin feat/redesign-modais, fast-forward main na VPS, docker compose up -d --build nginx recriado, site 200 em https://dev.m7arena.pro. Aguardando usuário validar: entrar na sala e conferir chat minimizado com bolinha.",
+      "touched": [
+        "web/src/components/partidas/ChatDaSala.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-30T16:06:00.148Z",
+      "agent": "deepseek",
+      "summary": "Sair da vaga no celular não funcionava porque o botão \"Sair da Vaga\" (VagaSlot.tsx) só aparecia no hover (group-hover:opacity-100), e touch não tem hover. Adicionado: detecção de touch via matchMedia('(hover: none)') + estado mostrarSair; no celular, o toque na vaga ocupada (própria) alterna um overlay FICAR/SAIR; no desktop o hover continua igual. Estado reseta ao trocar de vaga. Validação: npx tsc --noEmit exit 0, npx vite build exit 0. Commit b943dcb, push origin feat/redesign-modais, fast-forward main na VPS, docker compose up -d --build nginx recriado, site 200 em https://dev.m7arena.pro. Aguardando usuário testar no celular (toque na vaga → FICAR/SAIR).",
+      "touched": [
+        "web/src/components/partidas/VagaSlot.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-30T16:15:52.307Z",
+      "agent": "deepseek",
+      "summary": "Placar invertido corrigido (sala 72, 1v1 first blood). Causa: resumoRiot clusterizava kills/ouro pelo teamId da Riot (100→blue, 200→red), que em custom game não corresponde ao nosso lado (quem cria o lobby define o 100). Resultado: BLUE 1x0 quando RED venceu. Fix: resumoRiot agora recebe mapa puuid→lado e clusteriza pelo lado real; matches.ts monta esse mapa dos playersEnriched. Verificado no banco: red=teamId100/firstBlood/kills=1, blue=teamId200/kills=0; GET /api/matches/72 → blue.kills=0, red.kills=1, vencedor=B, first_blood. Front só usa placar.<side>.kills e sala.vencedor. 118 testes passam, tsc 0. Commit 037de28, app recriado na VPS, health 200.",
+      "touched": [
+        "api/src/lib/match-shape.ts",
+        "api/src/routes/matches.ts"
+      ]
+    },
+    {
+      "at": "2026-08-30T17:38:37.218Z",
+      "agent": "deepseek",
+      "summary": "Backend da verificação de série de campeonato via código Riot (ADR-047) implementado e deployado. Schema (migration 0021): colunas codigo_partida/best_of/irregular/resultado_riot/serie_iniciada_at + tabela tournament_series_games. Motor serie-campeonato.ts: decide vencedor por jogada pelo roster (titulares+reservas), conta vitórias até bestOf (MD3=2/MD5=3), marca irregular se jogou alguém fora, persiste e libera código. Cron varre jogos em_andamento. API: POST gerar-codigo (MD5 na final) e verificar; campos no shape legado. Validação: migration aplicada em banco limpo e na VPS via psql; 9 testes novos + suite = 127/127; tsc 0; app recriado; health 200. PENDENTE: fatia de FRONT (aba Histórico com stats, badge irregular, botão gerar-código para capitão+membros) e teste visual 1:1.",
+      "touched": [
+        "api/src/lib/serie-campeonato.ts",
+        "api/src/cron.ts",
+        "api/src/lib/tournament-shape.ts",
+        "api/src/lib/verificar-partida.ts",
+        "api/src/routes/tournaments.ts",
+        "api/test/serie-campeonato.test.ts",
+        "db/schema/tournaments.ts",
+        "db/migrations/0021_campeonato_verificacao_serie.sql"
+      ]
+    },
+    {
+      "at": "2026-08-30T17:55:38.947Z",
+      "agent": "deepseek",
+      "summary": "Refactor de layout do CampeonatoDetalhes: a página deixou de ter grid de 2 colunas (abas lg:col-span-2 + lateral sticky) e virou um BLOCO ÚNICO full-width. A barra de abas ocupa a largura total do body, e os cards Informações + Responsável + botão de inscrição + botão Regulamento (mobile) foram movidos para DENTRO da aba Visão Geral, que agora é o bloco que reúne classificação + informações + responsável + inscrição. Banner/hero e botão Regulamento do topo preservados (não mudaram). Limpei imports ociosos do CampeonatoDetalhes (Coins/CreditCard/Calendar/Diamond/Users/ShieldCheck/UserCheck/Trophy/AlertCircle movidos à VisaoGeral). Validação: web tsc exit 0, vite build exit 0. Commit b627642, push origin feat/redesign-modais, fast-forward main na VPS, docker compose up -d --build nginx recriado, https://dev.m7arena.pro/ 200 e /api/health 200. Aguardando usuário validar visualmente o novo layout no /campeonato/:id (criou que o bloco único esteja como esperado e nada quebrou).",
+      "touched": [
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/components/campeonatos/VisaoGeral.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-30T18:00:47.686Z",
+      "agent": "deepseek",
+      "summary": "Ajuste no layout da Visão Geral do campeonato: a Classificação voltou para a COLUNA PRINCIPAL (left, maior largura) e, na LATERAL (direita), empilhados: Informações → Responsável → Regulamento (mobile) → Inscrição. Na viewport pequena (mobile) tudo empilha (grid-cols-1). Tudo dentro da aba Visão Geral. Validação: web tsc exit 0, vite build exit 0. Commit 3226b25, push origin feat/redesign-modais, fast-forward main VPS, docker compose up -d --build nginx recriado, https://dev.m7arena.pro/ 200. Aguardando usuário conferir novo layout em /campeonato/:id.",
+      "touched": [
+        "web/src/components/campeonatos/VisaoGeral.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-30T18:29:13.526Z",
+      "agent": "deepseek",
+      "summary": "Salvo no status: ADR-048 (mecanismo), ADR-049 (regras) e componente app.campeonato.verificacao-serie atualizado com o 'como funciona'. Rodada: (1) Backend de verificação de série via código Riot deployado — motor serie-campeonato.ts (vencedor por jogada pelo roster, conta vitórias MD3/MD5, irregular se jogou fora), migration 0021, cron varre em_andamento, endpoints gerar-codigo/verificar, shape. 127/127 testes, tsc 0, health 200. (2) Refactor layout CampeonatoDetalhes: bloco único full-width (abas largura total); Info/Resp/inscrição/regulamento-mobile dentro da Visão Geral; depois ajustado — Classificação na coluna principal e Info→Resp→Inscrição na lateral (grid lg:grid-cols-3). web tsc 0, build 0. Commits: 840a758 (backend), b627642 (layout), 3226b25 (visão geral). Deploy VPS (app p/ backend, nginx p/ front). PENDENTE: front da verificação (aba Histórico stats, botão gerar-código, badge irregular) e validação visual do usuário.",
+      "touched": [
+        "api/src/lib/serie-campeonato.ts",
+        "api/src/cron.ts",
+        "api/src/lib/tournament-shape.ts",
+        "api/src/lib/verificar-partida.ts",
+        "api/src/routes/tournaments.ts",
+        "api/test/serie-campeonato.test.ts",
+        "db/schema/tournaments.ts",
+        "db/migrations/0021_campeonato_verificacao_serie.sql",
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/components/campeonatos/VisaoGeral.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-31T00:46:55.209Z",
+      "agent": "deepseek",
+      "summary": "Implementei a Aposta Individual (self-bet): o jogador aposta MC em si mesmo na própria próxima partida ranqueada Solo(420)/Flex(440). Plataforma = casa (odds fixas). Fluxo: escolhe fila+mercados+stake, reserva MC (escrow), cron detecta via espectador da Riot e trava em_jogo (matchId), liquida via match-v5 (vitória/derrota, kills, first blood) pagando stake×odd ou retendo. Anti-fraude 2min; timeout 20min cancela/devolve; fantasma 3h anula. Backend: schema bet_tickets/bet_legs (m.0022), lib/bets.ts, lib/live-bets.ts, routes/bets.ts, cron. Testes: bets 21/21. Front: modal ApostaIndividual+ItemMercado em /jogar abaixo de Partidas Finalizadas. PENDENTE: aplicar m.0022 na VPS (psql) e deploy. Sem chave Riot a detecção cai no fallback de timeout.",
+      "touched": [
+        "db/schema/bets.ts",
+        "db/schema/index.ts",
+        "db/migrations/0022_bet_individual.sql",
+        "api/src/lib/bets.ts",
+        "api/src/lib/live-bets.ts",
+        "api/src/routes/bets.ts",
+        "api/src/index.ts",
+        "api/src/cron.ts",
+        "api/test/bets.test.ts",
+        "web/src/lib/api.ts",
+        "web/src/components/partidas/ApostaIndividual.tsx",
+        "web/src/components/partidas/ItemMercado.tsx",
+        "web/src/pages/Jogar.tsx"
+      ]
+    },
+    {
+      "at": "2026-08-31T01:02:44.755Z",
+      "agent": "deepseek",
+      "summary": "Endureci o anti-fraude e criei o histórico unificado. Anti-fraude: função jogadorEmJogo (espectador) na criação do bilhete REJEITA apostar se o jogador já está em ranqueada (ja_em_jogo_ranqueada) — só aposta fora de jogo, antes de entrar na fila. A detecção continua rejeitando partida que começou antes da aposta (tol. 2min): aposta é sempre sobre o PRÓXIMO jogo, nunca sobre um rolando. Histórico: GET /api/bets/history junta apostas individuais (bet_tickets/bet_legs) + salas apostadas (matchPlayers+matches, delta via ledger match_prize/match_loss). Novo componente HistoricoApostas no perfil (total ganho/perdido MC + lista). Validação: api tsc 0, bet.test 23/23, web tsc 0, vite build 6.70s. PENDENTE: aplicar migration 0022 na VPS + deploy.",
+      "touched": [
+        "api/src/lib/live-bets.ts",
+        "api/src/routes/bets.ts",
+        "api/test/bets.test.ts",
+        "web/src/lib/api.ts",
+        "web/src/components/perfil/HistoricoApostas.tsx",
+        "web/src/pages/perfil.tsx"
       ]
     }
   ]

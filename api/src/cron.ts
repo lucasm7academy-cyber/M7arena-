@@ -6,6 +6,7 @@ import { tournamentMatches, bracketMatches } from "../../db/schema/tournaments.j
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
 import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
 import { verificarSerieCampeonato } from "./lib/serie-campeonato.js";
+import { runBetsCron } from "./lib/live-bets.js";
 
 /**
  * Job único a cada 10 min (design v3 §8): verificação automática de partidas +
@@ -108,6 +109,14 @@ export async function runCron(d: any = db) {
     .where(lt(salaMensagens.createdAt, corteChat))
     .returning({ id: salaMensagens.id });
   if (purgadas.length > 0) console.log(`[cron] chat: ${purgadas.length} mensagem(ns) expirada(s) purgada(s)`);
+
+  // 5. Apostas individuais (self-bet): detecta a próxima partida ranqueada do
+  //    jogador (espectador) e liquida quando acaba (match-v5). Timeout cancela
+  //    e devolve o MC. Reusa o mesmo ciclo de 10min das salas.
+  const bets = await runBetsCron(d, agora);
+  if (bets.detectadas > 0 || bets.canceladas > 0 || bets.liquidadas > 0 || bets.anuladas > 0) {
+    console.log(`[cron] bets: ${bets.detectadas} detectada(s), ${bets.canceladas} cancelada(s), ${bets.liquidadas} liquidada(s), ${bets.anuladas} anulada(s)`);
+  }
 
   return { verificadas, canceladas, sanitizadas };
 }

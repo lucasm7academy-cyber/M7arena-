@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { VipLabel } from '../components/ui/VipBadge';
 import { CutCard, CUT_OUTER, CUT_INNER } from '../components/ui/CutCard';
 import { CarteiraEStrikes } from '../components/perfil/CarteiraEStrikes';
+import { HistoricoApostas } from '../components/perfil/HistoricoApostas';
 import {
   ModalShell,
   CutCard as CutEdgeCard,
@@ -627,6 +628,9 @@ export default function Perfil() {
           banMotivo={perfilContext?.banMotivo ?? null}
           suspensaAte={perfilContext?.suspensaAte ?? null}
         />
+
+        {/* HISTÓRICO DE APOSTAS (MC ganho/perdido) */}
+        <HistoricoApostas />
 
         {/* EQUIPE */}
         <CutCard

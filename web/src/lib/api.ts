@@ -510,6 +510,71 @@ export interface ApiFinanceiro {
   serie: ApiFinanceiroPonto[];
 }
 
+// ── Aposta individual (self-bet) — aposta em si mesmo na próxima ranqueada ──
+
+export type ApiBetQueue = "solo" | "flex";
+export type ApiBetGroup = "resultado" | "kills" | "first_blood";
+export type ApiBetStatus = "aguardando" | "em_jogo" | "finalizada" | "cancelada" | "anulada";
+
+export interface ApiBetMarket {
+  key: string;
+  label: string;
+  group: ApiBetGroup;
+  odd: number;
+}
+
+export interface ApiBetCatalog {
+  markets: Record<ApiBetGroup, ApiBetMarket[]>;
+  minStake: number;
+  maxPayout: number;
+  lockMinutes: number;
+  queues: { id: ApiBetQueue; label: string; queueId: number }[];
+}
+
+export interface ApiBetLeg {
+  id: string;
+  marketKey: string;
+  label: string;
+  odd: string;
+  stake: number;
+  payout: number;
+  status: string;
+}
+
+export interface ApiBetTicket {
+  id: string;
+  queue: ApiBetQueue;
+  status: ApiBetStatus;
+  resultado: "ganha" | "perdida" | "anulada" | null;
+  stakeTotal: number;
+  legs: ApiBetLeg[];
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  endedAt: string | null;
+}
+
+/** Item do histórico unificado de apostas (individual ou sala apostada). */
+export interface ApiBetHistoryItem {
+  tipo: "aposta_individual" | "sala_apostada";
+  id: string;
+  // aposta_individual
+  fila?: ApiBetQueue;
+  stakeTotal?: number;
+  legs?: ApiBetLeg[];
+  // sala_apostada
+  salaNum?: number;
+  nome?: string | null;
+  modo?: string;
+  apostaMc?: number;
+  // comuns
+  status: string;
+  resultado: string | null;
+  deltaMc: number;
+  criadoEm: string;
+  encerradoEm: string | null;
+}
+
 function qs(params: Record<string, string | number | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -930,5 +995,24 @@ export const api = {
     /** Decide uma contestação: procedente → estorna e cancela; improcedente → fecha. */
     decidirDisputa: (id: string, data: { procedente: boolean }) =>
       api.post<{ ok: boolean; procedente: boolean }>(`/revisao/disputas/${id}/decidir`, data),
+  },
+
+  bets: {
+    /** Catálogo de mercados agrupados + limites (odd exibida vem daqui). */
+    catalog: () => api.get<ApiBetCatalog>("/bets/catalog"),
+    /** Bilhetes do jogador logado (mais recentes primeiro). */
+    mine: () => api.get<ApiBetTicket[]>("/bets/me"),
+    /** Bilhete ativo (aguardando/em_jogo) do jogador, ou null. */
+    active: () => api.get<ApiBetTicket | null>("/bets/me/active"),
+    /** Histórico unificado: apostas individuais + salas apostadas (delta Mc). */
+    history: () => api.get<ApiBetHistoryItem[]>("/bets/history"),
+    /** Cria o bilhete. `legs` = [{ marketKey, stake }]. */
+    create: (data: { queue: ApiBetQueue; legs: { marketKey: string; stake: number }[] }) =>
+      api.post<ApiBetTicket>("/bets", data),
+    /** Força a checagem de detecção (jogador diz "já joguei"). */
+    sync: (id: string) =>
+      api.post<{ ok: boolean; status: string; ticket?: ApiBetTicket }>(`/bets/${id}/sync`),
+    /** Cancela bilhete ainda aguardando (devolve o MC). */
+    cancel: (id: string) => api.delete<{ ok: boolean }>(`/bets/${id}`),
   },
 };
