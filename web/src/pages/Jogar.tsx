@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Play, ChevronLeft, ChevronRight, Trophy, Users, Coins,
-  Search, Lock, Zap, X, LogIn, Plus, SlidersHorizontal,
+  Search, Lock, X, LogIn, Plus, SlidersHorizontal,
   Sword, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2, Gamepad2
 } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
@@ -60,8 +60,8 @@ const heroSlide = {
   color: '#4ade80',
   bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
   bgImage: '/images/heroSlide1.webp',
-  actionText: 'Criar Time',
-  actionLink: '/times'
+  actionText: 'Ir para o desafio',
+  actionLink: '/aposta-individual'
 };
 
 // ============================================
@@ -731,6 +731,12 @@ const Jogar = () => {
                       window.dispatchEvent(new Event('m7:open-vip'));
                       return;
                     }
+                    if (currentSlide.actionLink === '/aposta-individual') {
+                      // Mesma verificação do card de aposta: precisa logar e ter
+                      // conta Riot vinculada para apostar (regra de negócio no servidor).
+                      if (!user) { setShowLoginModal(true); return; }
+                      if (!perfil?.contaVinculada) { setShowVincularModal(true); return; }
+                    }
                     navigate(currentSlide.actionLink);
                   }}
                   className="px-6 py-3 rounded-xl font-black text-sm uppercase text-black transition-all hover:scale-105"
@@ -1191,54 +1197,6 @@ const Jogar = () => {
           )}
         </div>
       </div>
-
-        {/* ============================================ */}
-        {/* APOSTA INDIVIDUAL (self-bet) */}
-        {/* ============================================ */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white/5 border border-white/10 flex items-center justify-center" style={{ clipPath: CUT_BADGE }}>
-              <Zap className="w-4 h-4 text-[#FFB700]" />
-            </div>
-            <h2 className="text-xl font-black text-white uppercase tracking-widest">Aposta Individual</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div
-              onClick={() => {
-                if (!user) { setShowLoginModal(true); return; }
-                if (!perfil?.contaVinculada) { setShowVincularModal(true); return; }
-                navigate('/aposta-individual');
-              }}
-              className="w-full sm:w-[380px] h-[330px] relative p-[1.5px] cursor-pointer group transition-all"
-              style={{ clipPath: CUT_FRAME, background: 'linear-gradient(135deg, rgba(255,183,0,0.5) 0%, rgba(255,183,0,0.15) 50%, rgba(255,255,255,0.08) 100%)' }}
-            >
-              <div className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] p-5 flex flex-col items-center text-center relative overflow-hidden transition-colors" style={{ clipPath: CUT_FRAME_INNER }}>
-                <div className="absolute inset-0 opacity-30 pointer-events-none"
-                  style={{ background: 'radial-gradient(circle at 20% 30%, rgba(255,183,0,0.18), transparent 60%)' }} />
-
-                <div className="relative z-10 w-14 h-14 p-[1px] flex items-center justify-center mb-4" style={{ clipPath: CUT_BUTTON, background: '#FFB70060' }}>
-                  <div className="w-full h-full bg-[#121217] flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
-                    <Zap className="w-7 h-7" style={{ color: '#FFB700' }} />
-                  </div>
-                </div>
-
-                <h3 className="relative z-10 text-white font-black text-lg uppercase tracking-tight mb-1 group-hover:text-[#FFB700] transition-colors">Aposte em Você</h3>
-                <p className="relative z-10 text-white/40 text-[10px] uppercase tracking-widest mb-3 font-medium leading-relaxed">
-                  Solo Duo ou Flex — Vitória, Derrota, abates, First Blood
-                </p>
-
-                <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 px-3 py-1 bg-white/5 border border-white/10" style={{ clipPath: CUT_BADGE }}>
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#FFB700' }}>Self-Bet • Odds Fixas</span>
-                </div>
-
-                <div className="relative z-10 mt-4 text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-[#FFB700] transition-colors">
-                  Clique para apostar →
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* ============================================ */}
         {/* MODAIS */}
