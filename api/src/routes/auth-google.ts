@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import crypto from "crypto";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
@@ -14,17 +14,27 @@ const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 const STATE_COOKIE = "m7_oauth_state";
 const PROVIDER = "google";
 
-function config() {
+function origemHost(req: Request): string {
+  // Deriva a origem do Host real da requisição (m7arena.pro, www, dev ou
+  // localhost). O Google só aceita a redirect_uri que bater exatamente com o
+  // que o app enviou, então ela precisa acompanhar o domínio de quem acessa —
+  // em vez de fixar uma única no .env (que quebra os outros domínios).
+  const proto = req.protocol === "http" ? "http" : "https";
+  return `${proto}://${req.get("host")}`;
+}
+
+function config(req: Request) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   // Precisa bater EXATAMENTE com o "Authorized redirect URI" no Google Console.
+  // Override explícito (GOOGLE_REDIRECT_URI) tem prioridade; senão usa o host.
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || `${process.env.APP_URL}/api/auth/google/callback`;
+    process.env.GOOGLE_REDIRECT_URI || `${origemHost(req)}/api/auth/google/callback`;
   return { clientId, clientSecret, redirectUri };
 }
 
-function appUrl() {
-  return process.env.APP_URL || "http://localhost:3000";
+function appUrl(req: Request) {
+  return process.env.APP_URL || origemHost(req);
 }
 
 /**
@@ -35,7 +45,7 @@ function appUrl() {
  * completar um login que não foi ela quem começou (CSRF de OAuth).
  */
 googleAuthRouter.get("/google", (req, res) => {
-  const { clientId, redirectUri } = config();
+  const { clientId, redirectUri } = config(req);
   if (!clientId) {
     return res.status(503).json({ error: "Login com Google não está configurado no servidor" });
   }
@@ -69,9 +79,9 @@ googleAuthRouter.get("/google", (req, res) => {
  * vindo do Google, não um fetch do app.
  */
 googleAuthRouter.get("/google/callback", async (req, res) => {
-  const { clientId, clientSecret, redirectUri } = config();
+  const { clientId, clientSecret, redirectUri } = config(req);
   const falhar = (motivo: string) =>
-    res.redirect(`${appUrl()}/login?erro=${encodeURIComponent(motivo)}`);
+    res.redirect(`${appUrl(req)}/login?erro=${encodeURIComponent(motivo)}`);
 
   try {
     if (!clientId || !clientSecret) return falhar("google_nao_configurado");
@@ -120,7 +130,7 @@ googleAuthRouter.get("/google/callback", async (req, res) => {
     const token = await criarSessao(userId);
     setSessionCookie(res, token);
 
-    return res.redirect(`${appUrl()}/lobby`);
+    return res.redirect(`${appUrl(req)}/lobby`);
   } catch {
     return falhar("erro_inesperado");
   }

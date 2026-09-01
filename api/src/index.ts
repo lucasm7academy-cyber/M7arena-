@@ -32,6 +32,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Confiar nos proxies (nginx container + nginx host) para ler o protocolo REAL
+// via X-Forwarded-Proto. Sem isso req.protocol seria "http" (a conexão interna
+// app<-nginx é HTTP), gerando redirect_uri http://m7arena.pro/... que o Google
+// rejeita com redirect_uri_mismatch. Loopback sempre é confiável.
+app.set("trust proxy", 2);
+
 // Segurança (MORPH-003): CORS com allowlist fixa, nunca ecoar `Origin`
 // arbitrária com credenciais. O front roda no mesmo domínio servido pelo
 // nginx, mas o Google OAuth usa redirect no app — manter APP_URL + localhost
