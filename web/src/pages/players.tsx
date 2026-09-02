@@ -594,10 +594,7 @@ export default function App() {
               const eloStyle = ELO_STYLES[jogador.elo];
               const winRateColor = jogador.winRate >= 50 ? '#4ade80' : '#ef4444';
 
-              const outerGradient = jogador.isVIP
-                ? `linear-gradient(135deg, ${PRIMARY_COLOR}, #ffd54f 50%, rgba(255, 183, 0, 0.3) 100%)`
-                : `linear-gradient(135deg, ${eloStyle.border}, ${eloStyle.border}80 50%, rgba(255, 255, 255, 0.05) 100%)`;
-
+              const outerBorder = jogador.isVIP ? PRIMARY_COLOR : eloStyle.border;
               const outerShadow = jogador.isVIP
                 ? 'drop-shadow(0 0 12px rgba(255, 183, 0, 0.35))'
                 : `drop-shadow(0 0 8px ${eloStyle.border}30)`;
@@ -615,14 +612,14 @@ export default function App() {
                   <div
                     className="relative p-[1px] h-full w-full transition-all duration-300 group-hover:-translate-y-1"
                     style={{
-                      clipPath: CUT_FRAME,
-                      background: outerGradient,
+                      borderRadius: '16px',
+                      background: outerBorder,
                       filter: outerShadow,
                     }}
                   >
                     <div
                       className="w-full h-full bg-[#08080a] group-hover:bg-[#0c0c10] p-5 relative overflow-hidden flex flex-col justify-between transition-colors"
-                      style={{ clipPath: CUT_FRAME_INNER }}
+                      style={{ borderRadius: '15px' }}
                     >
                       {jogador.isVIP && (
                         <>
@@ -662,7 +659,7 @@ export default function App() {
                           </div>
 
                           {/* Shine Sweep Effect */}
-                          <div className="absolute inset-0 pointer-events-none z-20" style={{ clipPath: CUT_FRAME_INNER }}>
+                          <div className="absolute inset-0 pointer-events-none z-20" style={{ borderRadius: '15px' }}>
                             <div
                               style={{
                                 position: 'absolute',
