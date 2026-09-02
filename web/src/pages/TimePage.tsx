@@ -2055,21 +2055,21 @@ export default function TimePage() {
                   <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-3">Capitão</p>
                   <div
                     className="p-[1px] cursor-pointer hover:brightness-110 transition-all"
-                    style={{ clipPath: CUT_BUTTON, background: `linear-gradient(135deg, ${time.gradientFrom}, rgba(255,255,255,0.1))` }}
+                    style={{ borderRadius: '10px', background: `linear-gradient(135deg, ${time.gradientFrom}, rgba(255,255,255,0.1))` }}
                     onClick={() => handlePlayerClick(lider)}
                   >
                     <div
                       className="bg-[#0c0c10] p-3 flex items-center gap-3"
-                      style={{ clipPath: CUT_BUTTON_INNER }}
+                      style={{ borderRadius: '8px' }}
                     >
                       {lider.iconeId ? (
                         <div
                           className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
-                          style={{ clipPath: CUT_BADGE, background: `${time.gradientFrom}80` }}
+                          style={{ borderRadius: '8px', background: `${time.gradientFrom}80` }}
                         >
                           <div
                             className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
-                            style={{ clipPath: CUT_BADGE_INNER }}
+                            style={{ borderRadius: '7px' }}
                           >
                             <img
                               src={buildProfileIconUrl(lider.iconeId)}
@@ -2084,7 +2084,7 @@ export default function TimePage() {
                       ) : (
                         <div
                           className="w-10 h-10 flex items-center justify-center bg-white/5 shrink-0"
-                          style={{ clipPath: CUT_BADGE }}
+                          style={{ borderRadius: '8px' }}
                         >
                           <Crown className="w-5 h-5" style={{ color: time.gradientFrom }} />
                         </div>

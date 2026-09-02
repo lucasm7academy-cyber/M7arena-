@@ -105,7 +105,7 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
             className="w-16 h-16 md:w-20 md:h-20 p-[2px] flex items-center justify-center relative shrink-0 shadow-xl"
             style={{
-              borderRadius: '16px',
+              borderRadius: '10px',
               background: team.gradientFrom,
               boxShadow: `0 8px 24px -6px ${team.gradientFrom}60`
             }}
@@ -113,7 +113,7 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
           >
             <div
               className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
-              style={{ borderRadius: '14px' }}
+              style={{ borderRadius: '8px' }}
             >
               {team.logoUrl ? (
                 <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" loading="lazy" width={96} height={96} />
@@ -527,7 +527,7 @@ export default function Equipes() {
                       <div
                         className="w-16 h-16 md:w-20 md:h-20 p-[2px] flex items-center justify-center relative shrink-0 shadow-xl"
                         style={{
-                          borderRadius: '16px',
+                          borderRadius: '10px',
                           background: myTeam.gradientFrom,
                           boxShadow: `0 8px 24px -6px ${myTeam.gradientFrom}60`
                         }}
@@ -535,7 +535,7 @@ export default function Equipes() {
                       >
                         <div
                           className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
-                          style={{ borderRadius: '14px' }}
+                          style={{ borderRadius: '8px' }}
                         >
                           {myTeam.logo_url ? (
                             <img src={myTeam.logo_url} loading="lazy" alt={myTeam.nome} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" />
