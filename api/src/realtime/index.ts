@@ -56,6 +56,10 @@ for (const o of (process.env.APP_URL || "http://localhost:3000").split(",")) {
   const t = o.trim().replace(/\/+$/, "");
   if (t) allowedOrigins.add(t);
 }
+// Domínios de produção (cutover) — APP_URL fica única (Google OAuth/OG).
+for (const o of ["https://m7arena.pro", "https://www.m7arena.pro"]) {
+  allowedOrigins.add(o);
+}
 
 // Pool para auth/autorização (pequeno). O LISTEN fica numa conexão à parte.
 const authPool = new pg.Pool({ connectionString: DATABASE_URL, max: 5 });

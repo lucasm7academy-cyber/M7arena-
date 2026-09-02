@@ -44,6 +44,9 @@ app.set("trust proxy", 2);
 // para o compose local (ADR-017) cobrir o desenvolvimento.
 const CORS_ALLOWLIST = [
   process.env.APP_URL || "",
+  ...(process.env.APP_URL || "").split(",").map((s) => s.trim()).filter(Boolean),
+  "https://m7arena.pro",
+  "https://www.m7arena.pro",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ].filter(Boolean);
