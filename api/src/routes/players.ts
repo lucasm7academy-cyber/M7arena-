@@ -6,6 +6,8 @@ import { gameAccounts } from "../../../db/schema/games.js";
 
 export const playersRouter = Router();
 
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 async function getAuthUser(req: any) {
   const token = req.cookies?.m7_session || req.headers.authorization?.replace("Bearer ", "");
   if (!token) return null;
@@ -113,10 +115,14 @@ async function buscarContasPorIds(idsRaw: string, req: any, res: any) {
     if (!user) {
       return res.status(401).json({ error: "Não autenticado" });
     }
+    // game_accounts.user_id é UUID: qualquer id fora desse formato faria o
+    // inArray lançar `invalid input syntax for type uuid` → 500, derrubando a
+    // página do time inteira. Filtra os inválidos antes de tocar o banco.
     const ids = idsRaw
       .split(",")
       .map((s) => s.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter((s) => UUID_RE.test(s));
 
     if (ids.length === 0) return res.json([]);
     if (ids.length > 500) {
