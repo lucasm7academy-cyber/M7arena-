@@ -89,7 +89,7 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
     <motion.div
       whileTap={{ scale: 0.99 }}
       onClick={() => { playSound('click'); onClick(team); }}
-      className="relative p-[1px] cursor-pointer transition-all hover:scale-[1.005] group"
+      className="relative p-[2px] cursor-pointer transition-all hover:scale-[1.005] group"
       style={{
         clipPath: CUT_BUTTON,
         background: `linear-gradient(135deg, ${team.gradientFrom}40, rgba(255,255,255,0.05) 100%)`,
@@ -103,17 +103,17 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
         <div className="flex items-center gap-4 md:block shrink-0">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-            className="w-16 h-16 md:w-20 md:h-20 p-[1px] flex items-center justify-center relative shrink-0 shadow-xl"
+            className="w-16 h-16 md:w-20 md:h-20 p-[2px] flex items-center justify-center relative shrink-0 shadow-xl"
             style={{
-              clipPath: CUT_BADGE,
-              background: `linear-gradient(135deg, ${team.gradientFrom}, rgba(255,255,255,0.1))`,
+              borderRadius: '16px',
+              background: team.gradientFrom,
               boxShadow: `0 8px 24px -6px ${team.gradientFrom}60`
             }}
             onClick={team.logoUrl ? (e) => { e.stopPropagation(); onLogoClick?.(team.logoUrl!); } : undefined}
           >
             <div
               className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
-              style={{ clipPath: CUT_BADGE_INNER }}
+              style={{ borderRadius: '14px' }}
             >
               {team.logoUrl ? (
                 <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" loading="lazy" width={96} height={96} />
@@ -511,7 +511,7 @@ export default function Equipes() {
                 <motion.div 
                   whileTap={{ scale: 0.99 }}
                   onClick={() => { playSound('click'); navigate(`/times/${myTeam.id}`); }}
-                  className="relative p-[1.5px] cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl"
+                  className="relative p-[2.5px] cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl"
                   style={{
                     clipPath: CUT_BUTTON,
                     background: `linear-gradient(135deg, ${myTeam.gradientFrom}, rgba(255,255,255,0.1) 100%)`,
@@ -525,17 +525,17 @@ export default function Equipes() {
                     {/* Logo + Nome/Tag no mobile, Apenas Logo no desktop */}
                     <div className="flex items-center gap-4 md:block shrink-0">
                       <div
-                        className="w-16 h-16 md:w-20 md:h-20 p-[1px] flex items-center justify-center relative shrink-0 shadow-xl"
+                        className="w-16 h-16 md:w-20 md:h-20 p-[2px] flex items-center justify-center relative shrink-0 shadow-xl"
                         style={{
-                          clipPath: CUT_BADGE,
-                          background: `linear-gradient(135deg, ${myTeam.gradientFrom}, rgba(255,255,255,0.1))`,
+                          borderRadius: '16px',
+                          background: myTeam.gradientFrom,
                           boxShadow: `0 8px 24px -6px ${myTeam.gradientFrom}60`
                         }}
                         onClick={myTeam.logo_url ? () => setLightboxUrl(myTeam.logo_url) : undefined}
                       >
                         <div
                           className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
-                          style={{ clipPath: CUT_BADGE_INNER }}
+                          style={{ borderRadius: '14px' }}
                         >
                           {myTeam.logo_url ? (
                             <img src={myTeam.logo_url} loading="lazy" alt={myTeam.nome} className="w-full h-full object-cover cursor-zoom-in" referrerPolicy="no-referrer" />
