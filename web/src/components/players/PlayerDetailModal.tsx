@@ -6,7 +6,7 @@ import { buildProfileIconUrl, buildChampionIconUrl } from '../../api/riot';
 
 // ── Tipos ──────────────────────────────────────────
 export type Role = 'TOP' | 'JG' | 'MID' | 'ADC' | 'SUP' | 'RES' | 'COACH';
-export type EloType = 'Ferro' | 'Bronze' | 'Prata' | 'Ouro' | 'Platina' | 'Esmeralda' | 'Diamante' | 'Mestre' | 'Grão-Mestre' | 'Desafiante';
+export type EloType = 'Sem Rank' | 'Ferro' | 'Bronze' | 'Prata' | 'Ouro' | 'Platina' | 'Esmeralda' | 'Diamante' | 'Mestre' | 'Grão-Mestre' | 'Desafiante';
 
 export interface Jogador {
   id: string;
@@ -48,6 +48,7 @@ export const ROLE_CONFIG: Record<Role, { label: string; img: string; color: stri
 };
 
 export const ELO_STYLES: Record<EloType, { border: string; glow: string; text: string; bg: string }> = {
+  'Sem Rank': { border: '#54565f', glow: '#54565f40', text: 'text-zinc-500', bg: 'bg-zinc-500/10' },
   Ferro: { border: '#6c757d', glow: '#6c757d40', text: 'text-gray-500', bg: 'bg-gray-500/10' },
   Bronze: { border: '#cd7f32', glow: '#cd7f3240', text: 'text-amber-600', bg: 'bg-amber-600/10' },
   Prata: { border: '#c0c0c0', glow: '#c0c0c040', text: 'text-gray-300', bg: 'bg-gray-300/10' },

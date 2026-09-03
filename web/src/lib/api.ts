@@ -880,6 +880,13 @@ export const api = {
       api.get<Array<ApiLegacyRiotAccount & { total_count: number; rank: number }>>(
         `/players/filtrados${qs({ p_offset: params.p_offset, p_limit: params.p_limit, p_search: params.p_search, p_elo_tier: params.p_elo_tier, p_role_lane: params.p_role_lane })}`
       ),
+    /** Refresh do elo_cache das contas (server-side). force=true ignora o TTL e
+     *  atualiza todas as contas. Apenas admin/proprietário (botão do painel). */
+    refreshElos: (force = false) =>
+      api.post<{ verificadas: number; atualizadas: number; erros: number; force: boolean }>(
+        "/players/refresh-elos",
+        { force }
+      ),
   },
 
   discord: {

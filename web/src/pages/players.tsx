@@ -79,52 +79,10 @@ function statsDeRanqueada(c: any): { partidas: number; winRate: number } {
   return { partidas: 0, winRate: 0 };
 }
 
-// ✅ Atualiza o elo_cache das contas stale NO SERVIDOR, em uma única chamada.
-//
-// Gatilho de atualização (mantido o critério atual):
-//   - TTL expirado (1h, acelerado de 24h pra ver wins/losses chegarem rápido); ou
-//   - Não tem tier nenhum (jogador novo); ou
-//   - Tem tier mas o cache antigo não tem `wins`/`losses` (campo só criado agora).
-//
-// `force=true` ignora TTL e atualiza tudo que tiver puuid (botão "Atualizar dados").
-// O servidor decide as contas stale (TTL 30min), busca a Riot em lote serial
-// (3 em paralelo) e grava elo_cache + stats_updated_at — o cliente NÃO chama
-// mais buscarElo em massa.
-const TTL_MS = 60 * 60 * 1000; // 1h
-async function atualizarElosServerSide(contas: any[], force = false): Promise<number> {
-  const agora = Date.now();
-  const contasParaAtualizar = contas.filter(conta => {
-    if (!conta.puuid) return false;
-    if (force) return true;
-
-    const updatedAt = conta.stats_updated_at ?? conta.last_elo_update;
-    const eloAntigo = !updatedAt || (agora - new Date(updatedAt).getTime()) > TTL_MS;
-    const semElo    = !conta.tier;
-    // Cache antigo: tem tier mas wins/losses não foram gravados ainda.
-    const semWinsLosses = !!conta.tier &&
-      (conta.soloq_wins == null || conta.soloq_losses == null) &&
-      (conta.flexq_wins == null || conta.flexq_losses == null);
-
-    return eloAntigo || semElo || semWinsLosses;
-  });
-
-  if (IS_DEV) console.log(`📡 atualizarElosServerSide: ${contasParaAtualizar.length}/${contas.length} contas (force=${force})`);
-  if (contasParaAtualizar.length === 0) return 0;
-
-  try {
-    const res = await fetch('/api/players/refresh-elos', { method: 'POST', credentials: 'include' });
-    if (!res.ok) {
-      console.warn('⚠️ refresh-elos falhou:', res.status, res.statusText);
-      return 0;
-    }
-    const data = await res.json();
-    if (IS_DEV) console.log(`✅ refresh-elos: ${data?.atualizadas ?? 0} atualizadas / ${data?.total ?? 0} total / ${data?.erros ?? 0} erros`);
-    return data?.atualizadas ?? 0;
-  } catch (err: any) {
-    console.warn('⚠️ refresh-elos falhou:', err?.message);
-    return 0;
-  }
-}
+// ✅ Leitura do elo = só cache do banco (elo_cache). Nada de chamada à Riot
+//    no load da página: o refresh de elo é feito por job agendado semanal
+//    (cron) e pelo botão "Atualizar elos agora" no painel admin. O jogador
+//    que não tem elo_cache gravado aparece como "Sem Rank", nunca "Ferro".
 
 // Mapeamentos inversos para filtros server-side
 const ELO_TO_TIER: Record<string, string> = {
@@ -136,15 +94,15 @@ const ROLE_TO_LANE: Record<string, string> = {
   TOP: 'Top', JG: 'Jungle', MID: 'Middle', ADC: 'Bottom', SUP: 'Support', RES: 'Fill',
 };
 
-// ✅ Carregar jogadores — todos os filtros server-side via RPC
+// ✅ Carregar jogadores — todos os filtros server-side via API própria.
+//    O elo vem do elo_cache gravado no banco (leitura leve, sem chamada Riot).
 async function carregarJogadores(
   offset = 0,
   limit = PLAYERS_PAGE,
   searchTerm = '',
   filtroElo: EloType | 'todos' = 'todos',
   filtroRole: Role | 'todos' = 'todos',
-  filtroSemTime = false,
-  opts: { refreshElos?: boolean; forceRefresh?: boolean; onRefreshed?: () => void } = {}
+  filtroSemTime = false
 ): Promise<{ jogadores: Jogador[]; totalCount: number }> {
   const rows = await api.players.filtrados({
     p_offset:    offset,
@@ -159,17 +117,7 @@ async function carregarJogadores(
   const totalCount = Number(rows[0]?.total_count ?? 0);
   const userIds = rows.map((r: any) => r.user_id).filter(Boolean);
 
-  // ✅ Dispara refresh SERVER-SIDE do elo_cache em BACKGROUND (não bloqueia render).
-  //    O servidor decide as contas stale (TTL 30min) e busca a Riot em lote
-  //    serial (3 em paralelo) — o cliente faz UMA chamada em vez de ~154
-  //    buscarElo + ~154 escritas. Quando termina, refetch da página pra exibir o elo novo.
-  if (opts.refreshElos !== false && userIds.length > 0) {
-    atualizarElosServerSide(rows, opts.forceRefresh ?? false)
-      .then(() => { if (opts.onRefreshed) opts.onRefreshed(); })
-      .catch((err) => { if (IS_DEV) console.warn('⚠️ refresh-elos falhou:', err?.message); });
-  }
-
-  // ✅ Partidas/winRate agora vêm da ranqueada do LoL (RPC v3 entrega wins/losses).
+  // ✅ Partidas/winRate vêm do elo_cache (wins/losses das ranqueadas).
   //    O cálculo é feito por linha mais abaixo via statsDeRanqueada().
 
   // ✅ Schema novo: MP/MC vêm de wallets (não mais de contas_riot.mp/mc).
@@ -201,7 +149,7 @@ async function carregarJogadores(
     const membro = membroMap[c.user_id || c.riot_id];
     const time   = membro ? timeMap[membro.time_id] : null;
     const { partidas, winRate } = statsDeRanqueada(c);
-    const eloType: EloType = c.tier ? (TIER_MAP[c.tier] ?? 'Ferro') : 'Ferro';
+    const eloType: EloType = c.tier ? (TIER_MAP[c.tier] ?? 'Sem Rank') : 'Sem Rank';
 
     return {
       id:       c.user_id || c.riot_id,
@@ -368,22 +316,11 @@ export default function App() {
     elo: EloType | 'todos',
     role: Role | 'todos',
     semTime: boolean,
-    isPageNav = false,
-    forceRefresh = false
+    isPageNav = false
   ) => {
     if (isPageNav) setLoadingPage(true); else setLoading(true);
     const { jogadores: lista, totalCount: total } = await carregarJogadores(
-      page * PLAYERS_PAGE, PLAYERS_PAGE, search, elo, role, semTime,
-      {
-        forceRefresh,
-        onRefreshed: () => {
-          // Rebusca a página atual SEM spinner e SEM disparar outro refresh,
-          // pra mostrar o elo que acabou de ser atualizado no servidor.
-          carregarJogadores(page * PLAYERS_PAGE, PLAYERS_PAGE, search, elo, role, semTime, { refreshElos: false })
-            .then(({ jogadores: novos }) => { if (novos.length) setJogadores(novos); })
-            .catch((err: any) => { if (IS_DEV) console.warn('⚠️ refetch pós-refresh falhou:', err?.message); });
-        },
-      }
+      page * PLAYERS_PAGE, PLAYERS_PAGE, search, elo, role, semTime
     );
     setJogadores(lista);
     setCurrentPage(page);

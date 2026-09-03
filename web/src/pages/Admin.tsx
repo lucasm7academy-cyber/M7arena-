@@ -1349,6 +1349,22 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
   const podeRevisar = adminCargo === 'admin' || adminCargo === 'proprietario';
   const [filaRevisao, setFilaRevisao] = useState<number | null>(null);
   const [filaSaques, setFilaSaques] = useState<number | null>(null);
+  const [atualizandoElos, setAtualizandoElos] = useState(false);
+  const [msgElos, setMsgElos] = useState<string | null>(null);
+
+  const atualizarElosAgora = async () => {
+    if (!podeRevisar || atualizandoElos) return;
+    setAtualizandoElos(true);
+    setMsgElos(null);
+    try {
+      const res = await api.players.refreshElos(true);
+      setMsgElos(`${res.atualizadas} conta(s) com elo atualizado · ${res.erros} erro(s).`);
+    } catch (e: any) {
+      setMsgElos('Falha ao atualizar elos: ' + (e?.message ?? 'desconhecido'));
+    } finally {
+      setAtualizandoElos(false);
+    }
+  };
 
   useEffect(() => {
     if (!podeRevisar) return;
@@ -1430,6 +1446,32 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
           </button>
         )}
       </div>
+
+      {/* Atualizar elos dos jogadores (ADM): força o refresh server-side de
+          todas as contas agora, fora do cron semanal. Leve: uma chamada → a
+          API busca na Riot em lote e grava elo_cache no banco. */}
+      {podeRevisar && (
+        <button
+          onClick={atualizarElosAgora}
+          disabled={atualizandoElos}
+          className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] shadow-xl hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed"
+          style={CardStyle()}
+        >
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+            style={{ background: 'rgba(255,183,0,0.12)', border: '1px solid rgba(255,183,0,0.35)' }}>
+            <RefreshCw className={`w-5 h-5 text-[#FFB700] ${atualizandoElos ? 'animate-spin' : ''}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-black text-sm uppercase tracking-wide">
+              {atualizandoElos ? 'Atualizando elos...' : 'Atualizar Elos Agora'}
+            </p>
+            <p className="text-zinc-400 text-xs mt-0.5">
+              {msgElos ?? 'Puxa o elo de todos os jogadores da Riot agora (fora do cron semanal).'}
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
+        </button>
+      )}
 
       <div className="rounded-2xl p-6 flex items-center gap-4 border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent shadow-xl backdrop-blur-md">
         <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0 shadow-sm">
