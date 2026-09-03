@@ -86,12 +86,15 @@ betsRouter.get("/me/active", async (req, res) => {
 });
 
 // GET /api/bets/:id - Detalhe do bilhete (dono vê; anônimo/não-dono não).
-betsRouter.get("/:id", async (req, res) => {
+// Restrito a uuid: impede que esta rota paramétrica engula as rotas estáticas
+// registradas depois (ex.: /history). Sem isso o Express encostava "history"
+// como :id e estourava "invalid input syntax for type uuid" (histórico vazio).
+betsRouter.get("/:id([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ error: "nao_autenticado" });
 
-    const [t] = await db.select().from(betTickets).where(eq(betTickets.id, req.params.id)).limit(1);
+    const [t] = await db.select().from(betTickets).where(eq(betTickets.id, (req.params as any).id)).limit(1);
     if (!t) return res.status(404).json({ error: "bilhete_nao_encontrado" });
     if (t.userId !== user.id) return res.status(403).json({ error: "nao_autorizado" });
 
