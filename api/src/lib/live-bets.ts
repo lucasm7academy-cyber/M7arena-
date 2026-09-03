@@ -15,6 +15,7 @@ import {
   BET_LOCK_MS,
   BET_FANTASMA_MS,
 } from "./bets.js";
+import { criarNotificacao } from "./notifications.js";
 
 /**
  * live-bets.ts — detecção e liquidação das apostas individuais.
@@ -276,6 +277,8 @@ export async function liquidarPartida(d: any, ticketId: string, opts: { agora?: 
   const legs = await d.select().from(betLegs).where(eq(betLegs.ticketId, ticketId));
   let algumaGanha = false;
   let algumaPerdida = false;
+  let ganhoTotal = 0;
+  let perdaTotal = 0;
 
   await d.transaction(async (tx: any) => {
     const [t2] = await tx.select().from(betTickets).where(eq(betTickets.id, ticketId)).limit(1).for("update");
@@ -293,10 +296,12 @@ export async function liquidarPartida(d: any, ticketId: string, opts: { agora?: 
         await tx.update(betLegs).set({ status: "ganha" }).where(eq(betLegs.id, leg.id));
         await pagarLeg(tx, t2.userId, leg.stake, leg.payout, t2.id);
         algumaGanha = true;
+        ganhoTotal += leg.payout;
       } else {
         await tx.update(betLegs).set({ status: "perdida" }).where(eq(betLegs.id, leg.id));
         await perderLeg(tx, t2.userId, leg.stake, t2.id);
         algumaPerdida = true;
+        perdaTotal += leg.stake;
       }
     }
 
@@ -305,6 +310,21 @@ export async function liquidarPartida(d: any, ticketId: string, opts: { agora?: 
       .update(betTickets)
       .set({ status: "finalizada", resultado, endedAt: agora, updatedAt: agora })
       .where(eq(betTickets.id, ticketId));
+
+    const delta = ganhoTotal - perdaTotal;
+    const notif =
+      resultado === "ganha"
+        ? { title: "Desafio ganho!", message: `Você ganhou +${ganhoTotal} MC no desafio.` }
+        : resultado === "perdida"
+        ? { title: "Desafio perdido", message: `Você perdeu ${perdaTotal} MC no desafio.` }
+        : { title: "Desafio anulado", message: "Seu desafio foi anulado e o MC devolvido." };
+    await criarNotificacao(tx, {
+      userId: t2.userId,
+      type: "bet",
+      title: notif.title,
+      message: notif.message,
+      payload: { ticketId: t2.id, fila: t2.queue, resultado, delta, stakeTotal: t2.stakeTotal },
+    });
   });
 
   return { estado: "finalizada", motivo: algumaGanha ? "ganha" : algumaPerdida ? "perdida" : "anulada" };
@@ -324,6 +344,13 @@ async function cancelarComDevolucao(d: any, t: any, motivo: string): Promise<Det
       .update(betTickets)
       .set({ status: "cancelada", resultado: "anulada", endedAt: new Date(), updatedAt: new Date() })
       .where(eq(betTickets.id, t.id));
+    await criarNotificacao(tx, {
+      userId: t2.userId,
+      type: "bet",
+      title: "Desafio cancelado",
+      message: "Nenhuma partida foi detectada no tempo limite e o MC foi devolvido.",
+      payload: { ticketId: t2.id, fila: t2.queue, resultado: "anulada", delta: 0, stakeTotal: t2.stakeTotal },
+    });
   });
   return { estado: "cancelada", motivo };
 }
@@ -342,6 +369,13 @@ async function anularComDevolucao(d: any, t: any, motivo: string): Promise<Settl
       .update(betTickets)
       .set({ status: "anulada", resultado: "anulada", endedAt: new Date(), updatedAt: new Date() })
       .where(eq(betTickets.id, t.id));
+    await criarNotificacao(tx, {
+      userId: t2.userId,
+      type: "bet",
+      title: "Desafio anulado",
+      message: "Não foi possível validar o resultado do desafio e o MC foi devolvido.",
+      payload: { ticketId: t2.id, fila: t2.queue, resultado: "anulada", delta: 0, stakeTotal: t2.stakeTotal },
+    });
   });
   return { estado: "anulada", motivo };
 }

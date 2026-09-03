@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { getDDRVersion } from "./api/riot";
 
 import Layout from "./components/layout/LayoutWrapper";
@@ -185,9 +186,17 @@ export default function App() {
       <PerfilProvider>
         <RoleProvider>
         <VerificacaoProvider>
-          <BrowserRouter>
-          <DDRagonInitializer /> {/* ✅ Inicialização segura do DDragon */}
-          <VerificacaoStatus />
+            <BrowserRouter>
+            <DDRagonInitializer /> {/* ✅ Inicialização segura do DDragon */}
+            <VerificacaoStatus />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                style: { background: '#0a0b0f', color: '#fff', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px' },
+                success: { iconTheme: { primary: '#FFB700', secondary: '#000' }, style: { border: '1px solid rgba(255,183,0,0.3)' } },
+                error: { iconTheme: { primary: '#ef4444', secondary: '#fff' }, style: { border: '1px solid rgba(239,68,68,0.3)' } },
+              }}
+            />
           <RootErrorBoundary>
           <Routes>
             {/* Rotas públicas */}

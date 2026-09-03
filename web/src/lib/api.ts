@@ -575,6 +575,31 @@ export interface ApiBetHistoryItem {
   encerradoEm: string | null;
 }
 
+/** Delta de MC real de um bilhete (mesma regra usada no histórico: ganho = soma
+ * dos payouts das legs ganhas; perda = stakes das legs não anuladas). */
+export function betDeltaMc(t: ApiBetTicket): number {
+  if (t.status !== "finalizada") return 0;
+  if (t.resultado === "ganha") {
+    return t.legs.filter((l) => l.status === "ganha").reduce((a, l) => a + l.payout, 0);
+  }
+  if (t.resultado === "perdida") {
+    return -t.legs.filter((l) => l.status !== "anulada").reduce((a, l) => a + l.stake, 0);
+  }
+  return 0;
+}
+
+export type ApiNotificationType = "bet" | "wallet" | "match" | "team" | "system" | "tournament";
+
+export interface ApiNotification {
+  id: string;
+  type: ApiNotificationType;
+  title: string;
+  message: string;
+  payload: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
 function qs(params: Record<string, string | number | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -1019,5 +1044,14 @@ export const api = {
     /** Força a checagem de detecção/validação (jogador termina a partida e verifica). */
     sync: (id: string) =>
       api.post<{ ok: boolean; status: string; ticket?: ApiBetTicket }>(`/bets/${id}/sync`),
+  },
+
+  notifications: {
+    /** Notificações do usuário + contagem de não lidas (mais recentes primeiro). */
+    list: () => api.get<{ notifications: ApiNotification[]; unreadCount: number }>("/notifications"),
+    /** Marca uma notificação como lida. */
+    markRead: (id: string) => api.post<{ ok: boolean }>(`/notifications/${id}/read`),
+    /** Marca todas como lidas (usado ao abrir o sino). */
+    markAllRead: () => api.post<{ ok: boolean }>("/notifications/read-all"),
   },
 };

@@ -26,6 +26,7 @@ import { contentRouter } from "./routes/content.js";
 import { streamsRouter } from "./routes/streams.js";
 import { adminRouter } from "./routes/admin.js";
 import { betsRouter } from "./routes/bets.js";
+import { notificationsRouter } from "./routes/notifications.js";
 import { ogRouter } from "./routes/og.js";
 
 dotenv.config();
@@ -86,6 +87,7 @@ app.use("/api/content", contentRouter);
 app.use("/api/streams", streamsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/bets", betsRouter);
+app.use("/api/notifications", notificationsRouter);
 
 // Página de preview social (OG) de uma sala — servida só para crawlers
 // (o Nginx desvia bots de /:modo/:id para cá). Ver routes/og.ts.

@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Zap, Minus, Plus, AlertTriangle, Swords, Gamepad2, RefreshCw, Trophy, Medal, Clock, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { api, type ApiBetCatalog, type ApiBetQueue, type ApiBetTicket, type ApiBetGroup } from '../lib/api';
+import { api, betDeltaMc, type ApiBetCatalog, type ApiBetQueue, type ApiBetTicket, type ApiBetGroup } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
 import { buildProfileIconUrl } from '../api/riot';
 import { ItemMercado } from '../components/partidas/ItemMercado';
+import ModalResultadoAposta from '../components/partidas/ModalResultadoAposta';
+
+const isSettled = (s: string) => ['finalizada', 'cancelada', 'anulada'].includes(s);
 
 const ACCENT = '#FFB700';
 
@@ -43,6 +46,13 @@ export default function ApostaIndividualPage() {
   const [filaEscolhida, setFilaEscolhida] = useState<ApiBetQueue | null>(null);
   // Modal de confirmação antes de efetivar a aposta (segurança).
   const [confirmando, setConfirmando] = useState(false);
+  // Resultado de um desafio finalizado (modal de desfecho ganhou/perdeu/anulada).
+  const [resultadoTicket, setResultadoTicket] = useState<ApiBetTicket | null>(null);
+  const [resultadoDeltaMc, setResultadoDeltaMc] = useState(0);
+  // Id do bilhete ativo que estamos observando resolver (polling leve).
+  const watchIdRef = useRef<string | null>(null);
+  // Bilhetes que já geraram feedback (evita modal/toast duplicado).
+  const seenRef = useRef<Set<string>>(new Set());
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -57,6 +67,47 @@ export default function ApostaIndividualPage() {
   }, []);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  // Reage a um desafio finalizado: mostra o modal de desfecho + um toast leve.
+  // Sem som aqui — o som de notificação é do sino (Q5). Idempotente por bilhete.
+  const reactResultado = useCallback((ticket: ApiBetTicket) => {
+    if (seenRef.current.has(ticket.id)) return;
+    seenRef.current.add(ticket.id);
+    const delta = betDeltaMc(ticket);
+    setResultadoTicket(ticket);
+    setResultadoDeltaMc(delta);
+    if (delta > 0) toast.success(`Desafio ganhou! +${delta} MC`);
+    else if (delta < 0) toast.error(`Desafio perdido! ${delta} MC`);
+    else toast(`Desafio ${ticket.status === 'cancelada' ? 'cancelado' : 'anulado'} — MC devolvido.`);
+  }, []);
+
+  // Mantém o watchId apontando para o bilhete ativo (ou null quando não há).
+  useEffect(() => {
+    watchIdRef.current = ativo?.id ?? null;
+  }, [ativo]);
+
+  // Polling LEVE: só pergunta enquanto há um bilhete ativo para acompanhar.
+  // Quando o bilhete ativo some (resolveu), busca o resultado e dispara o modal.
+  // Intervalo de 20s; com watchId null o ciclo vira no-op (custo ~zero).
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const watchId = watchIdRef.current;
+      if (!watchId) return;
+      try {
+        const nowActive = await api.bets.active();
+        // O bilhete observado saiu de ativo → foi resolvido pelo cron.
+        if (!nowActive || nowActive.id !== watchId) {
+          const tickets = await api.bets.mine();
+          const settled = tickets.find((t) => t.id === watchId) ?? null;
+          if (settled) reactResultado(settled);
+          watchIdRef.current = nowActive ? nowActive.id : null;
+        }
+      } catch {
+        // Falha de rede -> silencioso, tenta no próximo ciclo.
+      }
+    }, 20000);
+    return () => clearInterval(timer);
+  }, [reactResultado]);
 
   const toggle = useCallback((marketKey: string, odd: number) => {
     if (ativo) return;
@@ -139,7 +190,11 @@ export default function ApostaIndividualPage() {
     if (!ativo) return;
     try {
       const r = await api.bets.sync(ativo.id);
-      if (r.status === 'em_jogo') toast.success('Partida detectada! Validação em andamento.');
+      if (r.ticket && isSettled(r.ticket.status)) {
+        reactResultado(r.ticket);
+      } else if (r.status === 'em_jogo') {
+        toast.success('Partida detectada! Validação em andamento.');
+      }
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao verificar.');
@@ -465,6 +520,15 @@ export default function ApostaIndividualPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── MODAL DE RESULTADO (ganhou/perdeu/anulada) ── */}
+      {resultadoTicket && (
+        <ModalResultadoAposta
+          ticket={resultadoTicket}
+          deltaMc={resultadoDeltaMc}
+          onClose={() => setResultadoTicket(null)}
+        />
+      )}
     </div>
   );
 }

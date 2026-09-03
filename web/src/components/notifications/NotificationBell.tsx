@@ -4,12 +4,15 @@ import {
   Users,
   CheckCircle2,
   AlertCircle,
+  Trophy,
+  TrendingDown,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSound } from '../../hooks/useSound';
+import { playNotificationSound } from '../../lib/notification-sound';
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -23,6 +26,8 @@ export default function NotificationBell() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Contagem de notificações do sino (desafios, wallet...) ainda não lidas.
+  const [unreadBet, setUnreadBet] = useState(0);
 
   // ✅ Otimização: SEM carregamento automático
   // Notificações carregam apenas quando clica no ícone (lazy loading)
@@ -34,28 +39,32 @@ export default function NotificationBell() {
     setIsLoading(true);
 
     try {
-      // Convites do usuário (recebidos e enviados), vindos da API própria.
-      // O shape é o mesmo que o Supabase devolvia (time_convites) — a tela não muda.
-      const convites = await api.teams.invites();
+      // Convites do usuário (recebidos e enviados) + notificações do sino
+      // (desafios, wallet etc.). Ambos carregam juntos, na primeira abertura.
+      const [convites, betData] = await Promise.all([
+        api.teams.invites().catch(() => []),
+        api.notifications.list().catch(() => ({ notifications: [], unreadCount: 0 })),
+      ]);
+      setUnreadBet(betData.unreadCount);
 
-      if (!convites || convites.length === 0) {
-        setNotifications([]);
-        return;
+      // Som de notificação ao abrir quando há resultado novo de desafio não lido.
+      if (betData.unreadCount > 0) {
+        playNotificationSound();
+        api.notifications.markAllRead().catch(() => {});
+        setUnreadBet(0);
       }
 
-      // Buscar nomes dos times
-      const teamIds = [...new Set(convites.map((r: any) => r.time_id).filter(Boolean))];
-      let teamMap: Record<string, string> = {};
+      const allNotifs: any[] = [];
 
+      // Nomes dos times dos convites (para exibir no card).
+      const teamIds = [...new Set((convites || []).map((r: any) => r.time_id).filter(Boolean))];
+      let teamMap: Record<string, string> = {};
       if (teamIds.length > 0) {
-        const times = await api.teams.batch(teamIds);
+        const times = await api.teams.batch(teamIds).catch(() => []);
         teamMap = Object.fromEntries((times || []).map((t: any) => [t.id, t.nome]));
       }
 
-      // Processar notificações
-      const allNotifs: any[] = [];
-
-      convites.forEach((r: any) => {
+      ;(convites || []).forEach((r: any) => {
         // Solicitação de entrada (alguém quer entrar no seu time)
         if (r.tipo === 'solicitacao' && r.status === 'pendente' && r.para_user_id === user.id) {
           allNotifs.push({
@@ -103,6 +112,11 @@ export default function NotificationBell() {
         }
       });
 
+      // Notificações do sino (desafios, wallet...) — renderizadas no dropdown.
+      betData.notifications.forEach((n) => {
+        allNotifs.push({ id: n.id, type: 'bet', bet: n });
+      });
+
       setNotifications(allNotifs);
     } catch (err) {
       console.error('❌ Erro ao carregar notificações:', err);
@@ -111,15 +125,14 @@ export default function NotificationBell() {
     }
   };
 
-  // ✅ Badge de pendentes SEM polling: calculado só a partir do que carregou
-  // no último clique no sino (join_request / invite_received). O valor fica no
-  // estado do componente até o próximo clique, que recarrega tudo do servidor.
+  // ✅ Badge de pendentes SEM polling: calculado a partir do que carregou no
+  // último clique no sino (join_request / invite_received) + não lidas do sino.
+  // O valor fica no estado até o próximo clique, que recarrega tudo do servidor.
   useEffect(() => {
-    const pendentes = notifications.filter(
-      (n: any) => n.type === 'join_request' || n.type === 'invite_received'
-    ).length;
+    const pendentes =
+      notifications.filter((n: any) => n.type === 'join_request' || n.type === 'invite_received').length + unreadBet;
     setNotificationCount(pendentes);
-  }, [notifications]);
+  }, [notifications, unreadBet]);
 
   // ✅ Click outside
   useEffect(() => {
@@ -325,6 +338,21 @@ export default function NotificationBell() {
                         <p className="text-sm text-white">
                           <span className="font-black">{notif.player_riot_id}</span> {notif.subtype === 'aceito' ? 'aceitou seu convite' : 'recusou seu convite'} para <span className="text-primary">{notif.team_name}</span>
                         </p>
+                      </>
+                    )}
+
+                    {notif.type === 'bet' && notif.bet && (
+                      <>
+                        <div className="flex items-center gap-2 mb-2">
+                          {(() => {
+                            const delta = Number(notif.bet?.payload?.delta ?? 0);
+                            if (delta > 0) return <Trophy className="w-4 h-4 text-green-400" />;
+                            if (delta < 0) return <TrendingDown className="w-4 h-4 text-red-400" />;
+                            return <AlertCircle className="w-4 h-4 text-zinc-400" />;
+                          })()}
+                          <p className="text-xs font-bold text-white/60 uppercase">{notif.bet.title}</p>
+                        </div>
+                        <p className="text-sm text-white">{notif.bet.message}</p>
                       </>
                     )}
                   </div>
