@@ -21,9 +21,33 @@ const GROUP_LABEL: Record<ApiBetGroup, string> = {
 };
 
 // Cards de escolha de fila (img de fundo do LoL). `bg` é o fundo; `accent` a cor.
-const FILAS: { id: ApiBetQueue; label: string; sub: string; bg: string; accent: string }[] = [
-  { id: 'solo', label: 'Solo Duo', sub: 'Ranqueada Solo/Duo', bg: '/images/fundoCard5v5.webp', accent: '#3b82f6' },
-  { id: 'flex', label: 'Ranqueada Flexível', sub: 'Flex', bg: '/images/fundoCardAram.webp', accent: '#a855f7' },
+const FILAS: {
+  id: ApiBetQueue;
+  label: string;
+  sub: string;
+  desc: string;
+  tag: string;
+  bg: string;
+  accent: string;
+}[] = [
+  {
+    id: 'solo',
+    label: 'Solo / Duo',
+    sub: "Summoner's Rift Ranqueada",
+    desc: 'Dispute partidas ranqueadas individuais ou em dupla. Cumpra suas metas no Rift e conquiste recompensas com o seu próprio desempenho.',
+    tag: 'Solo / Dupla',
+    bg: '/images/fundoCard5v5.webp',
+    accent: '#3b82f6',
+  },
+  {
+    id: 'flex',
+    label: 'Ranqueada Flexível',
+    sub: 'Equipe ou Grupo no Rift',
+    desc: 'Jogue em grupo ou time fechado na fila flexível. Transforme a sinergia da sua equipe em conquistas reais.',
+    tag: 'Grupo / Time',
+    bg: '/images/fundoCardAram.webp',
+    accent: '#a855f7',
+  },
 ];
 
 interface Selecao {
@@ -155,15 +179,15 @@ export default function ApostaIndividualPage() {
 
   const handleApostar = async () => {
     if (!catalog) return;
-    if (legs.length === 0) { toast.error('Selecione pelo menos um mercado.'); return; }
-    if (stakeTotal < catalog.minStake) { toast.error(`Aposta mínima de ${catalog.minStake} MC por mercado.`); return; }
+    if (legs.length === 0) { toast.error('Selecione pelo menos um objetivo.'); return; }
+    if (stakeTotal < catalog.minStake) { toast.error(`Desafio mínimo de ${catalog.minStake} MC por objetivo.`); return; }
     if ((perfil?.saldo ?? 0) < stakeTotal) { toast.error('Saldo insuficiente de MC.'); return; }
     // Segurança: pede confirmação antes de efetivar (o jogador revisa o
     // desafio — fila, mercados, total e retorno — e só então confirma).
     setConfirmando(true);
   };
 
-  // Chamado pelo modal de confirmação — só aqui a aposta é criada de verdade.
+  // Chamado pelo modal de confirmação — só aqui o desafio é criado de verdade.
   const confirmarAposta = async () => {
     if (!catalog) return;
     setSubmeter(true);
@@ -171,17 +195,17 @@ export default function ApostaIndividualPage() {
     try {
       const legsBody = legs.map((l) => ({ marketKey: l.marketKey, stake: l.stake }));
       await api.bets.create({ queue, legs: legsBody });
-      toast.success('Aposta registrada! Boa sorte na partida.');
+      toast.success('Desafio registrado! Boa sorte na partida.');
       setSelecoes({});
       await carregar();
     } catch (e: any) {
       const cod = e?.message;
-      if (cod === 'ja_tem_bilhete_aguardando') toast.error('Você já tem uma aposta aguardando entrar em jogo.');
-      else if (cod === 'riot_id_obrigatorio' || cod === 'termos_nao_aceitos') toast.error('Vincule sua conta Riot e aceite os termos para apostar.');
+      if (cod === 'ja_tem_bilhete_aguardando') toast.error('Você já tem um desafio aguardando entrar em jogo.');
+      else if (cod === 'riot_id_obrigatorio' || cod === 'termos_nao_aceitos') toast.error('Vincule sua conta Riot e aceite os termos para participar do desafio.');
       else if (cod === 'saldo_insuficiente') toast.error('Saldo insuficiente de MC.');
-      else if (cod === 'ja_em_jogo_ranqueada') toast.error('Você já está em partida ranqueada — termine antes de apostar.');
-      else if (cod === 'mercados_conflitantes') toast.error('Escolha apenas um mercado por grupo (Vitória OU Derrota, etc.).');
-      else toast.error(e?.message || 'Erro ao apostar.');
+      else if (cod === 'ja_em_jogo_ranqueada') toast.error('Você já está em partida ranqueada — termine antes de iniciar o desafio.');
+      else if (cod === 'mercados_conflitantes') toast.error('Escolha apenas um objetivo por grupo (Vitória OU Derrota, etc.).');
+      else toast.error(e?.message || 'Erro ao iniciar desafio.');
     }
     setSubmeter(false);
   };
@@ -230,10 +254,10 @@ export default function ApostaIndividualPage() {
           </div>
           <div className="min-w-0">
             <span className="inline-block px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-black mb-0.5 rounded-md" style={{ background: ACCENT }}>
-              Aposta Individual
+              Desafio Individual
             </span>
             <h1 className="text-white font-black uppercase tracking-tight text-lg sm:text-xl leading-none truncate" style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif', letterSpacing: '0.02em' }}>
-              Aposte em Você
+              Desafie a Si Mesmo
             </h1>
           </div>
         </div>
@@ -282,7 +306,7 @@ export default function ApostaIndividualPage() {
               <span className="text-[10px] font-black uppercase text-white/80">{legs.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Total apostado</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Valor do desafio</span>
               <span className="text-[10px] font-black uppercase text-white/80">{stakeTotal} MC</span>
             </div>
             <div className="flex justify-between">
@@ -333,8 +357,8 @@ export default function ApostaIndividualPage() {
               </div>
               <p className="text-[10px] text-white/40 text-center pt-1">
                 {ativo.status === 'em_jogo'
-                  ? 'Partida em andamento — a aposta está travada até a validação (automática a cada 10 min).'
-                  : 'A aposta perdura até a partida ser validada. Não é possível cancelar; o MC volta apenas se nenhum jogo acontecer.'}
+                  ? 'Partida em andamento — o desafio está em andamento até a validação (automática a cada 10 min).'
+                  : 'O desafio perdura até a partida ser validada. Não é possível cancelar; o MC volta apenas se nenhum jogo acontecer.'}
               </p>
             </div>
           ) : catalog ? (
@@ -343,28 +367,66 @@ export default function ApostaIndividualPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
                   <Swords className="w-5 h-5 text-[#FFB700]" />
-                  <h2 className="text-sm font-black uppercase tracking-widest text-white">Escolha a Fila Ranqueada</h2>
+                  <h2 className="text-sm font-black uppercase tracking-widest text-white">Escolha a Fila do Desafio</h2>
                 </div>
-                <p className="text-[11px] text-white/40 mb-4 leading-relaxed">
-                  Selecione a fila da sua próxima partida para liberar as apostas. Aposte em você mesmo: Vitória, Derrota, abates e First Blood.
+                <p className="text-[11px] text-white/40 mb-5 leading-relaxed">
+                  Selecione a fila da sua próxima partida para liberar seus objetivos. Desafie a si mesmo no Rift: Vitória, Derrota, abates e First Blood.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {FILAS.map((f) => (
                     <button
                       key={f.id}
                       onClick={() => { setFilaEscolhida(f.id); setQueue(f.id); }}
-                      className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all hover:scale-[1.02] border border-white/10"
+                      className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:scale-[1.02] border border-white/10 hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,0,0,0.8)] text-left min-h-[300px] sm:min-h-[340px] flex flex-col justify-between p-6 sm:p-7"
                     >
-                      <div className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity"
-                        style={{ backgroundImage: `url(${f.bg})` }} />
-                      <div className="absolute inset-0 opacity-70" style={{ background: `linear-gradient(135deg, ${f.accent}33, transparent 50%, #000 100%)` }} />
-                      <div className="relative z-10 p-5 flex flex-col items-start justify-between h-40">
-                        <span className="inline-block px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-md bg-black/60 text-white/80 border border-white/10">
-                          Ranqueada
+                      <div
+                        className="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-50 transition-all duration-500 group-hover:scale-105"
+                        style={{ backgroundImage: `url(${f.bg})` }}
+                      />
+                      <div
+                        className="absolute inset-0 opacity-85 transition-opacity"
+                        style={{ background: `linear-gradient(135deg, ${f.accent}2a 0%, rgba(10,10,14,0.7) 45%, #08080c 100%)` }}
+                      />
+                      <div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none"
+                        style={{ background: `radial-gradient(circle at top right, ${f.accent} 0%, transparent 70%)` }}
+                      />
+
+                      {/* Header do Card com Badges */}
+                      <div className="relative z-10 w-full flex items-center justify-between gap-2">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-black/70 border backdrop-blur-md"
+                          style={{ borderColor: `${f.accent}50`, color: f.accent }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: f.accent }} />
+                          {f.tag}
                         </span>
-                        <div className="mt-auto text-left">
-                          <h3 className="text-white font-black text-xl uppercase tracking-tight drop-shadow">{f.label}</h3>
-                          <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-1">Clique para apostar →</p>
+                        <div
+                          className="w-10 h-10 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform"
+                          style={{ color: f.accent }}
+                        >
+                          <Swords className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      {/* Conteúdo Central e Inferior */}
+                      <div className="relative z-10 w-full mt-auto pt-6">
+                        <span className="text-[11px] font-black uppercase tracking-widest text-white/50 block mb-1">
+                          {f.sub}
+                        </span>
+                        <h3 className="text-white font-black text-2xl sm:text-3xl uppercase tracking-tight drop-shadow-md leading-none mb-2.5">
+                          {f.label}
+                        </h3>
+                        <p className="text-white/60 text-xs sm:text-sm font-medium leading-relaxed mb-5 line-clamp-2">
+                          {f.desc}
+                        </p>
+
+                        <div
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-black transition-all group-hover:shadow-lg group-hover:translate-x-0.5"
+                          style={{ background: f.accent }}
+                        >
+                          <span>Escolher esta fila</span>
+                          <span className="group-hover:translate-x-1 transition-transform">→</span>
                         </div>
                       </div>
                     </button>
@@ -390,7 +452,7 @@ export default function ApostaIndividualPage() {
 
                 {/* Stake */}
                 <div className="mb-4">
-                  <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black mb-1.5 block">Valor por mercado (MC) — mín. {catalog.minStake}</label>
+                  <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black mb-1.5 block">Valor por objetivo (MC) — mín. {catalog.minStake}</label>
                   <div className="flex items-center rounded-xl bg-[#121217] border border-white/10 overflow-hidden">
                     <button onClick={() => mudarStake(-100)} className="p-3 text-white/60 hover:text-[#FFB700] transition-colors cursor-pointer"><Minus className="w-4 h-4" /></button>
                     <div className="flex-1 text-center py-2.5 text-white font-black text-sm">{stake} MC</div>
@@ -419,7 +481,7 @@ export default function ApostaIndividualPage() {
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5 mt-4">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
                   <p className="text-[10px] text-white/40 leading-snug">
-                    Retorno máximo por bilhete: {catalog.maxPayout} MC. Se a partida não começar em {catalog.lockMinutes} min, a aposta é cancelada e o MC volta.
+                    Retorno máximo por bilhete: {catalog.maxPayout} MC. Se a partida não começar em {catalog.lockMinutes} min, o desafio é cancelado e o MC volta.
                   </p>
                 </div>
               </>
@@ -430,11 +492,11 @@ export default function ApostaIndividualPage() {
             </div>
           )}
 
-          {/* Rodapé apostar — só na etapa de mercados */}
+          {/* Rodapé — só na etapa de mercados */}
           {!ativo && catalog && filaEscolhida && (
             <div className="mt-4 border-t border-white/5 pt-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Total apostado</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Valor do desafio</span>
                 <span className="text-sm font-black text-white">{stakeTotal} MC</span>
               </div>
               <div className="flex items-center justify-between mb-3">
@@ -443,14 +505,14 @@ export default function ApostaIndividualPage() {
               </div>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleApostar} disabled={submeter}
                 className="w-full rounded-xl py-3.5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:bg-[#e0a000] transition-colors cursor-pointer disabled:opacity-50 shadow-[0_0_25px_-5px_rgba(255,183,0,0.6)]">
-                <Zap className="w-4 h-4" /> {submeter ? 'Apostando...' : 'Apostar Agora'}
+                <Zap className="w-4 h-4" /> {submeter ? 'Iniciando...' : 'Iniciar Desafio'}
               </motion.button>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── MODAL DE CONFIRMAÇÃO (segurança antes de apostar) ── */}
+      {/* ── MODAL DE CONFIRMAÇÃO (segurança antes de iniciar o desafio) ── */}
       <AnimatePresence>
         {confirmando && (
           <motion.div
@@ -489,7 +551,7 @@ export default function ApostaIndividualPage() {
                     </div>
                   ))}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Total apostado</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Valor do desafio</span>
                     <span className="text-sm font-black text-white">{stakeTotal} MC</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
@@ -501,8 +563,7 @@ export default function ApostaIndividualPage() {
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5 mb-4">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
                   <p className="text-[10px] text-white/40 leading-snug">
-                    Ao confirmar, o MC é reservado e a aposta perdura. O resultado é validado automaticamente ao fim da partida (ou clicando "Verificar"). Sem cancelamento manual — o MC volta apenas se nenhum jogo acontecer (timeout) ou a partida for anulada.
-
+                    Ao confirmar, o MC é reservado e o desafio é iniciado. O resultado é validado automaticamente ao fim da partida (ou clicando "Verificar"). Sem cancelamento manual — o MC volta apenas se nenhum jogo acontecer (timeout) ou a partida for anulada.
                   </p>
                 </div>
 
@@ -512,7 +573,7 @@ export default function ApostaIndividualPage() {
                   </button>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={confirmarAposta} disabled={submeter}
                     className="rounded-xl py-3 bg-[#FFB700] hover:bg-[#e0a000] text-black text-xs font-black uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50">
-                    {submeter ? 'Apostando...' : 'Confirmar Aposta'}
+                    {submeter ? 'Iniciando...' : 'Confirmar Desafio'}
                   </motion.button>
                 </div>
               </div>

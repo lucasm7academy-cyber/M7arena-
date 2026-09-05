@@ -54,13 +54,13 @@ interface UserTeam {
 // ============================================
 
 const heroSlide = {
-  title: "CRIE SUA",
-  subtitle: "EQUIPE",
-  description: "Monte seu time dos sonhos, recrute os melhores parceiros e dispute torneios com premiação em Pix",
-  color: '#4ade80',
-  bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
+  title: "PARTICIPE DO",
+  subtitle: "DESAFIO INDIVIDUAL",
+  description: "Transforme suas ranqueadas Solo/Duo ou Flex em conquistas reais. Mostre sua habilidade no Rift e ganhe MC direto na sua carteira!",
+  color: '#FFB700',
+  bgGradient: 'from-amber-500/25 via-amber-500/5 to-transparent',
   bgImage: '/images/heroSlide1.webp',
-  actionText: 'Ir para o desafio',
+  actionText: 'Quero ir para o desafio',
   actionLink: '/aposta-individual'
 };
 
@@ -684,6 +684,21 @@ const Jogar = () => {
   // Visitante deslogado: a vitrine renderiza normal (o usuário é opcional).
   const currentSlide = heroSlide;
 
+  const handleHeroClick = () => {
+    if (!currentSlide.actionLink) return;
+    if (currentSlide.actionLink === '/sejavip') {
+      window.dispatchEvent(new Event('m7:open-vip'));
+      return;
+    }
+    if (currentSlide.actionLink === '/aposta-individual') {
+      // Mesma verificação do card de aposta: precisa logar e ter
+      // conta Riot vinculada para apostar (regra de negócio no servidor).
+      if (!user) { setShowLoginModal(true); return; }
+      if (!perfil?.contaVinculada) { setShowVincularModal(true); return; }
+    }
+    navigate(currentSlide.actionLink);
+  };
+
   return (
     <div className="min-h-screen bg-transparent text-white font-sans p-6 md:p-10 overflow-x-hidden relative">
       
@@ -692,9 +707,13 @@ const Jogar = () => {
       <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
         
         {/* ============================================ */}
-        {/* HERO BANNER */}
+        {/* HERO BANNER (CARD INTEIRO CLICÁVEL) */}
         {/* ============================================ */}
-        <div className="relative w-full p-[1px] bg-white/10 shadow-2xl group" style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}>
+        <div
+          onClick={handleHeroClick}
+          className="relative w-full p-[1px] bg-white/10 hover:bg-[#FFB700]/30 shadow-2xl group cursor-pointer transition-all duration-300 hover:shadow-[0_0_35px_rgba(255,183,0,0.18)]"
+          style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
+        >
           <div className="relative w-full h-full bg-black overflow-hidden" style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}>
           <div className="relative w-full p-8 md:p-14 flex items-center justify-between min-h-[320px]">
             {currentSlide.bgImage && (
@@ -702,7 +721,7 @@ const Jogar = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 transition={{ duration: 0.8 }}
-                className="absolute inset-0 z-0 bg-cover bg-center scale-[1.45] md:scale-100"
+                className="absolute inset-0 z-0 bg-cover bg-center scale-[1.45] md:scale-100 group-hover:scale-105 transition-transform duration-700"
                 style={{ backgroundImage: `url(${currentSlide.bgImage})` }}
               />
             )}
@@ -722,27 +741,19 @@ const Jogar = () => {
                 {currentSlide.title}<br />
                 <span style={{ color: currentSlide.color }}>{currentSlide.subtitle}</span>
               </h1>
-              <p className="text-lg md:text-xl text-white/60 mb-8 max-w-md font-medium leading-snug">{currentSlide.description}</p>
+              <p className="text-lg md:text-xl text-white/70 mb-8 max-w-md font-medium leading-snug">{currentSlide.description}</p>
               {currentSlide.actionText && (
                 <button
-                  onClick={() => {
-                    if (!currentSlide.actionLink) return;
-                    if (currentSlide.actionLink === '/sejavip') {
-                      window.dispatchEvent(new Event('m7:open-vip'));
-                      return;
-                    }
-                    if (currentSlide.actionLink === '/aposta-individual') {
-                      // Mesma verificação do card de aposta: precisa logar e ter
-                      // conta Riot vinculada para apostar (regra de negócio no servidor).
-                      if (!user) { setShowLoginModal(true); return; }
-                      if (!perfil?.contaVinculada) { setShowVincularModal(true); return; }
-                    }
-                    navigate(currentSlide.actionLink);
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleHeroClick();
                   }}
-                  className="px-6 py-3 rounded-xl font-black text-sm uppercase text-black transition-all hover:scale-105"
+                  className="px-6 py-3 rounded-xl font-black text-sm uppercase text-black transition-all group-hover:scale-105 shadow-lg flex items-center gap-2 cursor-pointer"
                   style={{ background: currentSlide.color }}
                 >
-                  {currentSlide.actionText} →
+                  <span>{currentSlide.actionText}</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
                 </button>
               )}
             </motion.div>
