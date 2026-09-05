@@ -57,8 +57,8 @@ const heroSlide = {
   title: "PARTICIPE DO",
   subtitle: "DESAFIO INDIVIDUAL",
   description: "Transforme suas ranqueadas Solo/Duo ou Flex em conquistas reais. Mostre sua habilidade no Rift e ganhe MC direto na sua carteira!",
-  color: '#FFB700',
-  bgGradient: 'from-amber-500/25 via-amber-500/5 to-transparent',
+  color: '#4ade80',
+  bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
   bgImage: '/images/heroSlide1.webp',
   actionText: 'Quero ir para o desafio',
   actionLink: '/aposta-individual'
@@ -711,7 +711,7 @@ const Jogar = () => {
         {/* ============================================ */}
         <div
           onClick={handleHeroClick}
-          className="relative w-full p-[1px] bg-white/10 hover:bg-[#FFB700]/30 shadow-2xl group cursor-pointer transition-all duration-300 hover:shadow-[0_0_35px_rgba(255,183,0,0.18)]"
+          className="relative w-full p-[1px] bg-white/10 hover:bg-green-500/30 shadow-2xl group cursor-pointer transition-all duration-300 hover:shadow-[0_0_35px_rgba(74,222,128,0.25)]"
           style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
         >
           <div className="relative w-full h-full bg-black overflow-hidden" style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}>
