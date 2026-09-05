@@ -160,7 +160,7 @@ export async function detectarPartida(d: any, ticketId: string, opts: { agora?: 
   const historico = await buscarHistoricoDaAposta(d, puuid, queueEsperada, createdAtMs, agora, t.expiresAt, opts.buscarHistorico);
   if (historico.estado === "em_jogo" || historico.estado === "finalizada") {
     if (historico.matchRiotId) {
-      await travarEmJogo(d, ticketId, summonerId, historico.matchRiotId, queueEsperada, historico.gameStartAt ?? new Date());
+      await travarEmJogo(d, ticketId, summonerId, historico.matchRiotId, queueEsperada, historico.gameStartAt ?? new Date(), historico.championName, historico.championId);
       // Partida já TERMINOU (fallback histórico só vê partidas encerradas):
       // liquida no mesmo ciclo, reutilizando o match que já foi lido — sem
       // outra chamada à Riot. Evita esperar o próximo polling de 10min.
@@ -196,7 +196,7 @@ async function buscarHistoricoDaAposta(
   agora: Date,
   expiresAt: any,
   fetchHistorico?: (url: string) => Promise<any | null>
-): Promise<{ estado: "em_jogo" | "finalizada" | "cancelada" | "aguardando"; matchRiotId?: string; gameStartAt?: Date; match?: any }> {
+): Promise<{ estado: "em_jogo" | "finalizada" | "cancelada" | "aguardando"; matchRiotId?: string; gameStartAt?: Date; match?: any; championName?: string | null; championId?: number | null }> {
   // Janela generosa: do início da aposta (com margem) até "agora". A Riot limita
   // o startTime; usamos o menor delta possível para não pegar jogo antigo.
   const startTime = Math.floor((createdAtMs - 5 * 60 * 1000) / 1000);
@@ -226,18 +226,39 @@ async function buscarHistoricoDaAposta(
 
   const matchRiotId = firstId;
   const terminou = Boolean(info.gameEndTimestamp || info.endOfGameResult);
-  if (terminou) return { estado: "finalizada", matchRiotId, gameStartAt, match };
-  return { estado: "em_jogo", matchRiotId, gameStartAt, match };
+  const jogador = info?.participants?.find((p: any) => p.puuid === puuid);
+  const championName = jogador?.championName ?? null;
+  const championId = jogador?.championId ? Number(jogador.championId) : null;
+  if (terminou) return { estado: "finalizada", matchRiotId, gameStartAt, match, championName, championId };
+  return { estado: "em_jogo", matchRiotId, gameStartAt, match, championName, championId };
 }
 
 /** Trava o bilhete em `em_jogo` (idempotente, transação com lock). */
-async function travarEmJogo(d: any, ticketId: string, summonerId: string | null, matchRiotId: string, queueId: number, gameStartAt: Date) {
+async function travarEmJogo(
+  d: any,
+  ticketId: string,
+  summonerId: string | null,
+  matchRiotId: string,
+  queueId: number,
+  gameStartAt: Date,
+  championName?: string | null,
+  championId?: number | null
+) {
   await d.transaction(async (tx: any) => {
     const [t2] = await tx.select().from(betTickets).where(eq(betTickets.id, ticketId)).limit(1).for("update");
     if (!t2 || t2.status !== "aguardando") return;
     await tx
       .update(betTickets)
-      .set({ status: "em_jogo", summonerId, matchRiotId, queueId, gameStartAt, updatedAt: new Date() })
+      .set({
+        status: "em_jogo",
+        summonerId,
+        matchRiotId,
+        queueId,
+        gameStartAt,
+        ...(championName ? { championName } : {}),
+        ...(championId ? { championId } : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(betTickets.id, ticketId));
   });
 }
@@ -308,7 +329,14 @@ export async function liquidarPartida(d: any, ticketId: string, opts: { agora?: 
     const resultado = algumaGanha ? "ganha" : algumaPerdida ? "perdida" : "anulada";
     await tx
       .update(betTickets)
-      .set({ status: "finalizada", resultado, endedAt: agora, updatedAt: agora })
+      .set({
+        status: "finalizada",
+        resultado,
+        championName: jogador.championName ?? null,
+        championId: jogador.championId ?? null,
+        endedAt: agora,
+        updatedAt: agora,
+      })
       .where(eq(betTickets.id, ticketId));
 
     const delta = ganhoTotal - perdaTotal;

@@ -35,6 +35,8 @@ export const betTickets = pgTable(
     summonerId: varchar("summoner_id", { length: 100 }), // encryptedSummonerId da Riot
     matchRiotId: varchar("match_riot_id", { length: 100 }), // id da partida (match-v5)
     queueId: integer("queue_id"), // 420 | 440
+    championName: varchar("champion_name", { length: 50 }),
+    championId: integer("champion_id"),
     gameStartAt: timestamp("game_start_at", { mode: "date" }),
     // ── Tempos ──
     // Deadline para DETECTAR a partida: se passar e não entrou em jogo, cancela

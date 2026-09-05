@@ -162,6 +162,13 @@
       "when": 1788136327044,
       "tag": "0022_bet_individual",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788140000000,
+      "tag": "0023_bet_champion",
+      "breakpoints": true
     }
   ]
 }

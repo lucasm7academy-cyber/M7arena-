@@ -457,4 +457,26 @@ describe("bets: fluxo de detecção + liquidação (self-bet)", () => {
     const [t2] = await db.select().from(betTickets).where(eq(betTickets.id, ticket.id));
     assert.equal(t2.status, "em_jogo");
   });
+
+  test("liquidarPartida grava championName e championId no ticket ao liquidar", async () => {
+    const db = ctx.db;
+    const uid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0099";
+    const agora = new Date();
+    await criaJogador(db, uid, 500, "puuid-a099");
+    const { ticket } = await criaBilhete(db, uid, "solo", "result_vitoria", 100, agora);
+
+    await db.update(betTickets).set({ status: "em_jogo", matchRiotId: "BR1_559" }).where(eq(betTickets.id, ticket.id));
+
+    const matchPayload = {
+      info: {
+        gameEndTimestamp: Date.now(),
+        participants: [{ puuid: "puuid-a099", win: true, kills: 7, firstBloodKill: false, championName: "Ahri", championId: 103 }],
+      },
+    };
+    const r = await liquidarPartida(db, ticket.id, { agora: new Date(), buscarMatch: async () => matchPayload });
+    assert.equal(r.estado, "finalizada");
+    const [t2] = await db.select().from(betTickets).where(eq(betTickets.id, ticket.id));
+    assert.equal(t2.championName, "Ahri");
+    assert.equal(t2.championId, 103);
+  });
 });

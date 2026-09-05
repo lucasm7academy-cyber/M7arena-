@@ -547,6 +547,8 @@ export interface ApiBetTicket {
   status: ApiBetStatus;
   resultado: "ganha" | "perdida" | "anulada" | null;
   stakeTotal: number;
+  championName?: string | null;
+  championId?: number | null;
   legs: ApiBetLeg[];
   createdAt: string;
   updatedAt: string;
@@ -562,6 +564,8 @@ export interface ApiBetHistoryItem {
   fila?: ApiBetQueue;
   stakeTotal?: number;
   legs?: ApiBetLeg[];
+  championName?: string | null;
+  championId?: number | null;
   // sala_apostada
   salaNum?: number;
   nome?: string | null;

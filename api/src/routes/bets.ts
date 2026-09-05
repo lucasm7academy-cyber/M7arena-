@@ -253,6 +253,8 @@ betsRouter.get("/history", async (req, res) => {
         fila: t.queue,
         status: t.status,
         resultado: t.resultado ?? null,
+        championName: t.championName ?? null,
+        championId: t.championId ?? null,
         stakeTotal: t.stakeTotal ?? 0,
         legs: legs.map((l) => ({ marketKey: l.marketKey, label: l.marketKey, odd: String(l.odd), stake: l.stake, payout: l.payout ?? 0, status: l.status })),
         deltaMc: delta,

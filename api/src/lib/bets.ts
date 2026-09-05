@@ -255,6 +255,8 @@ export interface ShapeTicket {
   status: string;
   resultado: string | null;
   stakeTotal: number;
+  championName?: string | null;
+  championId?: number | null;
   legs: ShapeLeg[];
   createdAt: string;
   updatedAt: string;
@@ -269,6 +271,8 @@ export function shapeTicket(t: any, legs: any[]): ShapeTicket {
     status: t.status,
     resultado: t.resultado ?? null,
     stakeTotal: t.stakeTotal ?? 0,
+    championName: t.championName ?? null,
+    championId: t.championId ?? null,
     legs: legs.map((l) => {
       const market = getMarket(l.marketKey);
       return {
