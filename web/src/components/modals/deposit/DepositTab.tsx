@@ -223,7 +223,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
 
           {/* Resumo do Pedido */}
           <div
-            className="p-[1px] lg:sticky lg:top-0"
+            className="p-[1px] lg:sticky lg:top-0 relative z-10"
             style={{
               clipPath: CUT_BUTTON,
               background: 'linear-gradient(135deg, #FFB700, rgba(255,183,0,0.3))',
