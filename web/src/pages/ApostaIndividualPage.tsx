@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Zap, Minus, Plus, AlertTriangle, Swords, Gamepad2, RefreshCw, Trophy, Medal, Clock, Coins } from 'lucide-react';
+import { ArrowLeft, Zap, Minus, Plus, AlertTriangle, Swords, Trophy, Target, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, betDeltaMc, type ApiBetCatalog, type ApiBetQueue, type ApiBetTicket, type ApiBetGroup } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
-import { buildProfileIconUrl } from '../api/riot';
 import { ItemMercado } from '../components/partidas/ItemMercado';
+import { SummonerCard } from '../components/partidas/SummonerCard';
+import { FilaSelector, type FilaConfig } from '../components/partidas/FilaSelector';
+import { BilheteAtivoView } from '../components/partidas/BilheteAtivoView';
 import ModalResultadoAposta from '../components/partidas/ModalResultadoAposta';
 
 const isSettled = (s: string) => ['finalizada', 'cancelada', 'anulada'].includes(s);
@@ -14,22 +16,27 @@ const isSettled = (s: string) => ['finalizada', 'cancelada', 'anulada'].includes
 const ACCENT = '#FFB700';
 
 const GROUP_ORDER: ApiBetGroup[] = ['resultado', 'kills', 'first_blood'];
-const GROUP_LABEL: Record<ApiBetGroup, string> = {
-  resultado: 'Resultado da Partida',
-  kills: 'Abates (Kills)',
-  first_blood: 'First Blood',
+const GROUP_META: Record<ApiBetGroup, { label: string; desc: string; icon: React.FC<{ className?: string }> }> = {
+  resultado: {
+    label: 'Resultado da Partida',
+    desc: 'Vitória ou Derrota da sua equipe',
+    icon: Trophy,
+  },
+  kills: {
+    label: 'Abates (Kills)',
+    desc: 'Meta de eliminações individuais no jogo',
+    icon: Target,
+  },
+  first_blood: {
+    label: 'First Blood',
+    desc: 'Conquista do primeiro abate da partida',
+    icon: Zap,
+  },
 };
 
-// Cards de escolha de fila (img de fundo do LoL). `bg` é o fundo; `accent` a cor.
-const FILAS: {
-  id: ApiBetQueue;
-  label: string;
-  sub: string;
-  desc: string;
-  tag: string;
-  bg: string;
-  accent: string;
-}[] = [
+const STAKE_PRESETS = [100, 250, 500, 1000];
+
+const FILAS: FilaConfig[] = [
   {
     id: 'solo',
     label: 'Solo / Duo',
@@ -65,17 +72,13 @@ export default function ApostaIndividualPage() {
   const [selecoes, setSelecoes] = useState<Record<string, Selecao>>({});
   const [ativo, setAtivo] = useState<ApiBetTicket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [submeter, setSubmeter] = useState(false);
-  // Fila ainda NÃO escolhida: mostra a tela de seleção antes dos mercados.
   const [filaEscolhida, setFilaEscolhida] = useState<ApiBetQueue | null>(null);
-  // Modal de confirmação antes de efetivar a aposta (segurança).
   const [confirmando, setConfirmando] = useState(false);
-  // Resultado de um desafio finalizado (modal de desfecho ganhou/perdeu/anulada).
   const [resultadoTicket, setResultadoTicket] = useState<ApiBetTicket | null>(null);
   const [resultadoDeltaMc, setResultadoDeltaMc] = useState(0);
-  // Id do bilhete ativo que estamos observando resolver (polling leve).
   const watchIdRef = useRef<string | null>(null);
-  // Bilhetes que já geraram feedback (evita modal/toast duplicado).
   const seenRef = useRef<Set<string>>(new Set());
 
   const carregar = useCallback(async () => {
@@ -90,10 +93,10 @@ export default function ApostaIndividualPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
 
-  // Reage a um desafio finalizado: mostra o modal de desfecho + um toast leve.
-  // Sem som aqui — o som de notificação é do sino (Q5). Idempotente por bilhete.
   const reactResultado = useCallback((ticket: ApiBetTicket) => {
     if (seenRef.current.has(ticket.id)) return;
     seenRef.current.add(ticket.id);
@@ -105,21 +108,16 @@ export default function ApostaIndividualPage() {
     else toast(`Desafio ${ticket.status === 'cancelada' ? 'cancelado' : 'anulado'} — MC devolvido.`);
   }, []);
 
-  // Mantém o watchId apontando para o bilhete ativo (ou null quando não há).
   useEffect(() => {
     watchIdRef.current = ativo?.id ?? null;
   }, [ativo]);
 
-  // Polling LEVE: só pergunta enquanto há um bilhete ativo para acompanhar.
-  // Quando o bilhete ativo some (resolveu), busca o resultado e dispara o modal.
-  // Intervalo de 20s; com watchId null o ciclo vira no-op (custo ~zero).
   useEffect(() => {
     const timer = setInterval(async () => {
       const watchId = watchIdRef.current;
       if (!watchId) return;
       try {
         const nowActive = await api.bets.active();
-        // O bilhete observado saiu de ativo → foi resolvido pelo cron.
         if (!nowActive || nowActive.id !== watchId) {
           const tickets = await api.bets.mine();
           const settled = tickets.find((t) => t.id === watchId) ?? null;
@@ -127,34 +125,37 @@ export default function ApostaIndividualPage() {
           watchIdRef.current = nowActive ? nowActive.id : null;
         }
       } catch {
-        // Falha de rede -> silencioso, tenta no próximo ciclo.
+        // Silencioso em falha de polling de rede
       }
     }, 20000);
     return () => clearInterval(timer);
   }, [reactResultado]);
 
-  const toggle = useCallback((marketKey: string, odd: number) => {
-    if (ativo) return;
-    setSelecoes((prev) => {
-      const has = !!prev[marketKey];
-      const next = { ...prev };
-      if (has) { delete next[marketKey]; return next; }
-      // Mercados do mesmo grupo são mutuamente exclusivos: ao escolher um,
-      // remove os demais do grupo (ex.: Vitória remove Derrota; kills_over_7
-      // remove kills_over_9, etc.). Única exceção: o já selecionado fica.
-      const mercado = catalog?.markets && Object.values(catalog.markets).flat().find((m) => m.key === marketKey);
-      if (mercado) {
-        for (const [k, v] of Object.entries(next)) {
-          const outro = catalog && (Object.values(catalog.markets).flat().find((m) => m.key === k) as any);
-          if (outro && mercado.group === outro.group && k !== marketKey) {
-            delete next[k];
+  const toggle = useCallback(
+    (marketKey: string, odd: number) => {
+      if (ativo) return;
+      setSelecoes((prev) => {
+        const has = !!prev[marketKey];
+        const next = { ...prev };
+        if (has) {
+          delete next[marketKey];
+          return next;
+        }
+        const mercado = catalog?.markets && Object.values(catalog.markets).flat().find((m) => m.key === marketKey);
+        if (mercado) {
+          for (const [k] of Object.entries(next)) {
+            const outro = catalog && (Object.values(catalog.markets).flat().find((m) => m.key === k) as any);
+            if (outro && mercado.group === outro.group && k !== marketKey) {
+              delete next[k];
+            }
           }
         }
-      }
-      next[marketKey] = { marketKey, odd, stake };
-      return next;
-    });
-  }, [ativo, stake, catalog]);
+        next[marketKey] = { marketKey, odd, stake };
+        return next;
+      });
+    },
+    [ativo, stake, catalog]
+  );
 
   const mudarStake = useCallback((delta: number) => {
     setStake((s) => Math.max(100, Math.min(5000, s + delta)));
@@ -179,15 +180,21 @@ export default function ApostaIndividualPage() {
 
   const handleApostar = async () => {
     if (!catalog) return;
-    if (legs.length === 0) { toast.error('Selecione pelo menos um objetivo.'); return; }
-    if (stakeTotal < catalog.minStake) { toast.error(`Desafio mínimo de ${catalog.minStake} MC por objetivo.`); return; }
-    if ((perfil?.saldo ?? 0) < stakeTotal) { toast.error('Saldo insuficiente de MC.'); return; }
-    // Segurança: pede confirmação antes de efetivar (o jogador revisa o
-    // desafio — fila, mercados, total e retorno — e só então confirma).
+    if (legs.length === 0) {
+      toast.error('Selecione pelo menos um objetivo.');
+      return;
+    }
+    if (stakeTotal < catalog.minStake) {
+      toast.error(`Desafio mínimo de ${catalog.minStake} MC por objetivo.`);
+      return;
+    }
+    if ((perfil?.saldo ?? 0) < stakeTotal) {
+      toast.error('Saldo insuficiente de MC.');
+      return;
+    }
     setConfirmando(true);
   };
 
-  // Chamado pelo modal de confirmação — só aqui o desafio é criado de verdade.
   const confirmarAposta = async () => {
     if (!catalog) return;
     setSubmeter(true);
@@ -201,10 +208,13 @@ export default function ApostaIndividualPage() {
     } catch (e: any) {
       const cod = e?.message;
       if (cod === 'ja_tem_bilhete_aguardando') toast.error('Você já tem um desafio aguardando entrar em jogo.');
-      else if (cod === 'riot_id_obrigatorio' || cod === 'termos_nao_aceitos') toast.error('Vincule sua conta Riot e aceite os termos para participar do desafio.');
+      else if (cod === 'riot_id_obrigatorio' || cod === 'termos_nao_aceitos')
+        toast.error('Vincule sua conta Riot e aceite os termos para participar do desafio.');
       else if (cod === 'saldo_insuficiente') toast.error('Saldo insuficiente de MC.');
-      else if (cod === 'ja_em_jogo_ranqueada') toast.error('Você já está em partida ranqueada — termine antes de iniciar o desafio.');
-      else if (cod === 'mercados_conflitantes') toast.error('Escolha apenas um objetivo por grupo (Vitória OU Derrota, etc.).');
+      else if (cod === 'ja_em_jogo_ranqueada')
+        toast.error('Você já está em partida ranqueada — termine antes de iniciar o desafio.');
+      else if (cod === 'mercados_conflitantes')
+        toast.error('Escolha apenas um objetivo por grupo (Vitória OU Derrota, etc.).');
       else toast.error(e?.message || 'Erro ao iniciar desafio.');
     }
     setSubmeter(false);
@@ -212,367 +222,369 @@ export default function ApostaIndividualPage() {
 
   const handleSync = async () => {
     if (!ativo) return;
+    setSyncing(true);
     try {
       const r = await api.bets.sync(ativo.id);
       if (r.ticket && isSettled(r.ticket.status)) {
         reactResultado(r.ticket);
       } else if (r.status === 'em_jogo') {
         toast.success('Partida detectada! Validação em andamento.');
+      } else {
+        toast('Nenhuma nova partida ranqueada concluída detectada.');
       }
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao verificar.');
     }
+    setSyncing(false);
   };
 
-  const ativoLegs = ativo?.legs ?? [];
-  const totalPayoutAtivo = ativoLegs.reduce((a, l) => a + l.payout, 0);
+  const filaAtual = FILAS.find((f) => f.id === filaEscolhida) ?? FILAS[0];
   const nick = perfil?.nome || 'Jogador';
   const tag = perfil?.tag || '';
   const iconId = perfil?.iconId || 0;
 
   return (
     <div className="flex-1 w-full min-h-screen bg-[#050505] font-sans relative overflow-x-hidden text-white">
-      {/* Background */}
+      {/* Background ambiente */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-[#050505]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
       </div>
 
-      {/* ── TOP BAR (padrão sala) ── */}
-      <motion.div initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
-        className="relative z-20 w-full flex items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 bg-black/60 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap">
-        <div className="flex items-center gap-3 z-10">
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}
+      {/* Top Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-20 w-full flex items-center justify-between gap-3 p-3 sm:p-4 bg-black/70 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => navigate('/jogar')}
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-red-500/40 transition-colors flex items-center justify-center text-white/70 hover:text-red-400 shrink-0 cursor-pointer"
-            title="Voltar">
+            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white/80 hover:text-white shrink-0 cursor-pointer"
+            title="Voltar"
+          >
             <ArrowLeft className="w-4 h-4" />
           </motion.button>
-          <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-            <Zap className="w-5 h-5" style={{ color: ACCENT }} />
+          <div className="w-9 h-9 rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/30 flex items-center justify-center shrink-0">
+            <Zap className="w-5 h-5 text-[#FFB700]" />
           </div>
           <div className="min-w-0">
             <span className="inline-block px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-black mb-0.5 rounded-md" style={{ background: ACCENT }}>
               Desafio Individual
             </span>
-            <h1 className="text-white font-black uppercase tracking-tight text-lg sm:text-xl leading-none truncate" style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif', letterSpacing: '0.02em' }}>
+            <h1
+              className="text-white font-black uppercase tracking-tight text-lg sm:text-xl leading-none truncate"
+              style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif', letterSpacing: '0.02em' }}
+            >
               Desafie a Si Mesmo
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-2 z-10">
-          <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-            <span className="text-[10px] font-black uppercase text-[#FFB700] inline-flex items-center gap-1">
-              <Coins className="w-3 h-3" /> Saldo: {perfil?.saldo ?? 0} MC
-            </span>
+
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5">
+            <Coins className="w-3.5 h-3.5 text-[#FFB700]" />
+            <span className="text-xs font-black text-white">{perfil?.saldo ?? 0} MC</span>
           </div>
         </div>
       </motion.div>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5">
-        {/* ── COLUNA JOGADOR (ícone + nick) ── */}
-        <div className="rounded-2xl bg-[#0a0a0d] border border-white/10 p-5 flex flex-col items-center text-center h-fit">
-          <span className="inline-block px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-black mb-4 rounded-md" style={{ background: ACCENT }}>
-            Seu Summoner
-          </span>
-          <div className="relative mb-4">
-            <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: ACCENT }} />
-            {iconId ? (
-              <img src={buildProfileIconUrl(iconId)} alt="Ícone do invocador" className="relative w-24 h-24 rounded-full object-cover border-2 border-[#FFB700]/60 shadow-[0_0_25px_-5px_rgba(255,183,0,0.6)]" loading="lazy" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="relative w-24 h-24 rounded-full bg-[#121217] flex items-center justify-center border-2 border-white/10">
-                <Zap className="w-10 h-10 text-white/20" />
-              </div>
-            )}
-          </div>
-          <h2 className="text-white font-black text-2xl truncate max-w-full" style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif' }}>
-            {nick}
-          </h2>
-          {tag && <p className="text-white/50 text-sm font-bold">{tag}</p>}
-          {perfil?.elo && (
-            <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-wider">
-              <Medal className="w-3.5 h-3.5 text-[#FFB700]" /> {perfil.elo}
-            </span>
-          )}
+      {/* Conteúdo Principal */}
+      <div className="relative z-10 max-w-[1400px] mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-[330px_1fr] gap-6">
+        {/* Coluna do Jogador (SummonerCard modular) */}
+        <SummonerCard
+          nick={nick}
+          tag={tag}
+          iconId={iconId}
+          elo={perfil?.elo}
+          saldo={perfil?.saldo ?? 0}
+          queue={queue}
+          selectedLegsCount={legs.length}
+          stakeTotal={stakeTotal}
+          payoutTotal={payoutTotal}
+        />
 
-          <div className="w-full mt-5 space-y-2.5 border-t border-white/5 pt-4">
-            <div className="flex justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Fila</span>
-              <span className="text-[10px] font-black uppercase text-white/80">{queue === 'flex' ? 'Flex' : 'Solo Duo'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Mercados</span>
-              <span className="text-[10px] font-black uppercase text-white/80">{legs.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Valor do desafio</span>
-              <span className="text-[10px] font-black uppercase text-white/80">{stakeTotal} MC</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Retorno potencial</span>
-              <span className="text-[10px] font-black uppercase text-[#FFB700]">{payoutTotal} MC</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── COLUNA MERCADOS ── */}
-        <div className="rounded-2xl bg-[#0a0a0d] border border-white/10 p-4 sm:p-6 flex flex-col min-h-0">
+        {/* Coluna Principal dos Mercados / Fila / Bilhete */}
+        <div className="rounded-2xl bg-[#0a0a0d] border border-white/10 p-5 sm:p-6 flex flex-col min-h-0 shadow-2xl relative">
           {loading ? (
-            <div className="flex-1 flex items-center justify-center py-24">
+            <div className="flex-1 flex items-center justify-center py-28">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FFB700] border-t-transparent" />
             </div>
           ) : ativo ? (
-            // ── Bilhete ativo ──
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-[#121217] border border-white/10">
-                <div className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" style={{ background: ativo.status === 'em_jogo' ? 'rgba(34,197,94,0.15)' : 'rgba(255,183,0,0.12)' }}>
-                  {ativo.status === 'em_jogo' ? <Gamepad2 className="w-5 h-5 text-green-400" /> : <Clock className="w-5 h-5 text-[#FFB700]" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-[11px] font-black uppercase tracking-widest text-white/60">
-                    {ativo.status === 'em_jogo' ? 'Em jogo — detectado!' : 'Aguardando sua próxima partida'}
-                  </p>
-                  <p className="text-xs text-white/40">{catalog?.queues.find((q) => q.id === ativo.queue)?.label} • espera até {new Date(ativo.expiresAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-              </div>
-              {ativoLegs.map((l) => (
-                <div key={l.id} className="flex items-center justify-between p-3 rounded-xl bg-[#111116] border border-white/8">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">{l.label}</span>
-                  <span className="text-[10px] font-black text-white/40">{l.odd}x • {l.stake} MC</span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Retorno potencial</span>
-                <span className="text-lg font-black" style={{ color: ACCENT }}>{totalPayoutAtivo} MC</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Status geral</span>
-                <span className="text-xs font-black text-white/80">{ativo.resultado?.toUpperCase() ?? 'Aguardando'}</span>
-              </div>
-              <div className="grid grid-cols-1 gap-3 pt-3">
-                <button onClick={handleSync} className="rounded-xl bg-[#FFB700]/10 border border-[#FFB700]/40 py-2.5 flex items-center justify-center gap-2 text-[#FFB700] text-xs font-black uppercase tracking-wider hover:bg-[#FFB700]/20 transition-colors cursor-pointer">
-                  <RefreshCw className="w-3.5 h-3.5" /> Verificar Resultado
-                </button>
-              </div>
-              <p className="text-[10px] text-white/40 text-center pt-1">
-                {ativo.status === 'em_jogo'
-                  ? 'Partida em andamento — o desafio está em andamento até a validação (automática a cada 10 min).'
-                  : 'O desafio perdura até a partida ser validada. Não é possível cancelar; o MC volta apenas se nenhum jogo acontecer.'}
-              </p>
-            </div>
+            <BilheteAtivoView
+              ticket={ativo}
+              catalog={catalog}
+              onSync={handleSync}
+              syncing={syncing}
+            />
           ) : catalog ? (
-            // ── Etapa 1: escolher a fila (Solo Duo / Flex) em cards ──
             !filaEscolhida ? (
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Swords className="w-5 h-5 text-[#FFB700]" />
-                  <h2 className="text-sm font-black uppercase tracking-widest text-white">Escolha a Fila do Desafio</h2>
-                </div>
-                <p className="text-[11px] text-white/40 mb-5 leading-relaxed">
-                  Selecione a fila da sua próxima partida para liberar seus objetivos. Desafie a si mesmo no Rift: Vitória, Derrota, abates e First Blood.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {FILAS.map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => { setFilaEscolhida(f.id); setQueue(f.id); }}
-                      className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:scale-[1.02] border border-white/10 hover:border-white/25 hover:shadow-[0_0_30px_rgba(0,0,0,0.8)] text-left min-h-[300px] sm:min-h-[340px] flex flex-col justify-between p-6 sm:p-7"
-                    >
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-50 transition-all duration-500 group-hover:scale-105"
-                        style={{ backgroundImage: `url(${f.bg})` }}
-                      />
-                      <div
-                        className="absolute inset-0 opacity-85 transition-opacity"
-                        style={{ background: `linear-gradient(135deg, ${f.accent}2a 0%, rgba(10,10,14,0.7) 45%, #08080c 100%)` }}
-                      />
-                      <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none"
-                        style={{ background: `radial-gradient(circle at top right, ${f.accent} 0%, transparent 70%)` }}
-                      />
-
-                      {/* Header do Card com Badges */}
-                      <div className="relative z-10 w-full flex items-center justify-between gap-2">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-black/70 border backdrop-blur-md"
-                          style={{ borderColor: `${f.accent}50`, color: f.accent }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: f.accent }} />
-                          {f.tag}
-                        </span>
-                        <div
-                          className="w-10 h-10 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform"
-                          style={{ color: f.accent }}
-                        >
-                          <Swords className="w-5 h-5" />
-                        </div>
-                      </div>
-
-                      {/* Conteúdo Central e Inferior */}
-                      <div className="relative z-10 w-full mt-auto pt-6">
-                        <span className="text-[11px] font-black uppercase tracking-widest text-white/50 block mb-1">
-                          {f.sub}
-                        </span>
-                        <h3 className="text-white font-black text-2xl sm:text-3xl uppercase tracking-tight drop-shadow-md leading-none mb-2.5">
-                          {f.label}
-                        </h3>
-                        <p className="text-white/60 text-xs sm:text-sm font-medium leading-relaxed mb-5 line-clamp-2">
-                          {f.desc}
-                        </p>
-
-                        <div
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-black transition-all group-hover:shadow-lg group-hover:translate-x-0.5"
-                          style={{ background: f.accent }}
-                        >
-                          <span>Escolher esta fila</span>
-                          <span className="group-hover:translate-x-1 transition-transform">→</span>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <FilaSelector
+                filas={FILAS}
+                onSelect={(fId) => {
+                  setFilaEscolhida(fId);
+                  setQueue(fId);
+                }}
+              />
             ) : (
-              // ── Etapa 2: fila escolhida → mercados ──
-              <>
-                <div className="flex items-center justify-between gap-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    {FILAS.filter((f) => f.id === filaEscolhida).map((f) => (
-                      <button key={f.id} onClick={() => setFilaEscolhida(null)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-                        <span className="w-2 h-2 rounded-full" style={{ background: f.accent }} />
-                        <span className="text-[11px] font-black uppercase tracking-wider text-white">{f.label}</span>
-                        <span className="text-[10px] text-white/40">trocar</span>
-                      </button>
-                    ))}
-                    <Swords className="w-4 h-4 text-[#FFB700]" />
-                  </div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-white/40">Fila selecionada</div>
-                </div>
-
-                {/* Stake */}
-                <div className="mb-4">
-                  <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black mb-1.5 block">Valor por objetivo (MC) — mín. {catalog.minStake}</label>
-                  <div className="flex items-center rounded-xl bg-[#121217] border border-white/10 overflow-hidden">
-                    <button onClick={() => mudarStake(-100)} className="p-3 text-white/60 hover:text-[#FFB700] transition-colors cursor-pointer"><Minus className="w-4 h-4" /></button>
-                    <div className="flex-1 text-center py-2.5 text-white font-black text-sm">{stake} MC</div>
-                    <button onClick={() => mudarStake(100)} className="p-3 text-white/60 hover:text-[#FFB700] transition-colors cursor-pointer"><Plus className="w-4 h-4" /></button>
-                  </div>
-                </div>
-
-                {/* Mercados por grupo */}
-                <div className="space-y-4">
-                  {GROUP_ORDER.map((g) => (
-                    <div key={g}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Trophy className="w-4 h-4 text-[#FFB700]" />
-                        <span className="text-[11px] font-black uppercase tracking-widest text-white/70">{GROUP_LABEL[g]}</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {catalog.markets[g].map((m) => (
-                          <ItemMercado key={m.key} market={m} odd={`${m.odd}x`} selecionado={!!selecoes[m.key]} onClick={() => toggle(m.key, m.odd)} />
-                        ))}
-                      </div>
+              /* Etapa 2: Fila Escolhida -> Configuração de Stake e Mercados */
+              <div className="space-y-5">
+                {/* Barra da Fila Escolhida com botão de retorno */}
+                <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#121218] border border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setFilaEscolhida(null)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold uppercase transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Trocar</span>
+                    </button>
+                    <div
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border backdrop-blur-md"
+                      style={{ background: `${filaAtual.accent}15`, borderColor: `${filaAtual.accent}40` }}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ background: filaAtual.accent }} />
+                      <span className="text-xs font-black uppercase text-white tracking-wider">
+                        {filaAtual.label}
+                      </span>
                     </div>
-                  ))}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                    Etapa 2 de 2 • Objetivos
+                  </span>
                 </div>
 
-                {/* Limite */}
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5 mt-4">
+                {/* Seletor de Valor (Stake) com Presets Rápidos */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-white/[0.03] to-white/[0.01] border border-white/8 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-white block">
+                        Valor por Objetivo (MC)
+                      </label>
+                      <span className="text-[10px] text-white/40">
+                        Mínimo {catalog.minStake} MC • Máximo {catalog.maxPayout} MC de retorno
+                      </span>
+                    </div>
+                    <span className="text-xs font-black text-[#FFB700] px-2.5 py-1 rounded-lg bg-[#FFB700]/10 border border-[#FFB700]/30">
+                      {stake} MC / meta
+                    </span>
+                  </div>
+
+                  {/* Stepper + Presets */}
+                  <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 items-center">
+                    <div className="flex items-center rounded-xl bg-[#121217] border border-white/10 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => mudarStake(-100)}
+                        className="p-3 text-white/60 hover:text-[#FFB700] hover:bg-white/5 transition-colors cursor-pointer"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <div className="flex-1 text-center py-2.5 text-white font-black text-sm">
+                        {stake} MC
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => mudarStake(100)}
+                        className="p-3 text-white/60 hover:text-[#FFB700] hover:bg-white/5 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {STAKE_PRESETS.map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setStake(val)}
+                          className={`px-3 py-2 rounded-lg text-xs font-black uppercase transition-all cursor-pointer ${
+                            stake === val
+                              ? 'bg-[#FFB700] text-black shadow-md'
+                              : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
+                          }`}
+                        >
+                          {val} MC
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grupos de Mercados */}
+                <div className="space-y-5">
+                  {GROUP_ORDER.map((g) => {
+                    const meta = GROUP_META[g];
+                    const IconComp = meta.icon;
+                    return (
+                      <div key={g} className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-2 px-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center">
+                              <IconComp className="w-3.5 h-3.5 text-[#FFB700]" />
+                            </div>
+                            <div>
+                              <span className="text-xs font-black uppercase tracking-wider text-white">
+                                {meta.label}
+                              </span>
+                              <span className="text-[10px] text-white/40 block">
+                                {meta.desc}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-white/40 px-2 py-0.5 rounded bg-white/5 border border-white/8">
+                            Escolha 1
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {catalog.markets[g]?.map((m) => (
+                            <ItemMercado
+                              key={m.key}
+                              market={m}
+                              odd={m.odd}
+                              selecionado={!!selecoes[m.key]}
+                              stake={stake}
+                              onClick={() => toggle(m.key, m.odd)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Caixa de Regras e Limites */}
+                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-gradient-to-r from-[#FFB700]/10 to-transparent border border-[#FFB700]/20">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-white/40 leading-snug">
-                    Retorno máximo por bilhete: {catalog.maxPayout} MC. Se a partida não começar em {catalog.lockMinutes} min, o desafio é cancelado e o MC volta.
+                  <p className="text-[11px] text-white/60 leading-snug">
+                    Teto de retorno: <strong>{catalog.maxPayout} MC</strong> por desafio. O resultado é apurado automaticamente após o término da sua partida ranqueada. Se você não jogar em até {catalog.lockMinutes} min, o valor é estornado integralmente.
                   </p>
                 </div>
-              </>
+
+                {/* Rodapé de Ação */}
+                <div className="pt-4 border-t border-white/8">
+                  <div className="flex items-center justify-between mb-3 text-xs">
+                    <span className="font-bold uppercase tracking-widest text-white/50">Valor Total Reservado</span>
+                    <span className="font-black text-white text-sm">{stakeTotal} MC</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-black uppercase tracking-widest text-white/70">Recompensa Total Estimada</span>
+                    <span className="text-xl font-black text-[#FFB700] drop-shadow">
+                      {payoutTotal} MC
+                    </span>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.015 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleApostar}
+                    disabled={submeter}
+                    className="w-full rounded-xl py-4 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black bg-gradient-to-r from-[#FFB700] via-[#ffd000] to-[#FFB700] hover:brightness-110 transition-all cursor-pointer disabled:opacity-50 shadow-[0_0_30px_rgba(255,183,0,0.5)]"
+                  >
+                    <Zap className="w-4 h-4 fill-black" />
+                    <span>{submeter ? 'Iniciando Desafio...' : 'Iniciar Desafio Agora'}</span>
+                  </motion.button>
+                </div>
+              </div>
             )
           ) : (
-            <div className="flex-1 flex items-center justify-center py-24 text-white/40 text-xs font-bold uppercase tracking-widest">
-              Não foi possível carregar os mercados.
-            </div>
-          )}
-
-          {/* Rodapé — só na etapa de mercados */}
-          {!ativo && catalog && filaEscolhida && (
-            <div className="mt-4 border-t border-white/5 pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Valor do desafio</span>
-                <span className="text-sm font-black text-white">{stakeTotal} MC</span>
-              </div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Retorno potencial</span>
-                <span className="text-lg font-black" style={{ color: ACCENT }}>{payoutTotal} MC</span>
-              </div>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleApostar} disabled={submeter}
-                className="w-full rounded-xl py-3.5 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider text-black bg-[#FFB700] hover:bg-[#e0a000] transition-colors cursor-pointer disabled:opacity-50 shadow-[0_0_25px_-5px_rgba(255,183,0,0.6)]">
-                <Zap className="w-4 h-4" /> {submeter ? 'Iniciando...' : 'Iniciar Desafio'}
-              </motion.button>
+            <div className="flex-1 flex items-center justify-center py-28 text-white/40 text-xs font-bold uppercase tracking-widest">
+              Não foi possível carregar os mercados do desafio.
             </div>
           )}
         </div>
       </div>
 
-      {/* ── MODAL DE CONFIRMAÇÃO (segurança antes de iniciar o desafio) ── */}
+      {/* Modal de Confirmação */}
       <AnimatePresence>
         {confirmando && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
             className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             onClick={() => setConfirmando(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.12 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.12 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl bg-[#0c0c10] border border-white/10 shadow-2xl overflow-hidden"
+              className="w-full max-w-md rounded-2xl bg-[#0c0c10] border border-white/15 shadow-2xl overflow-hidden"
             >
               <div className="p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#FFB700]/10 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="w-5 h-5 text-[#FFB700]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#FFB700]/15 border border-[#FFB700]/40 flex items-center justify-center shrink-0">
+                    <Swords className="w-5 h-5 text-[#FFB700]" />
                   </div>
-                  <div className="min-w-0">
-                    <h2 className="text-white font-black uppercase tracking-tight text-lg leading-none" style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif' }}>
-                      Confirmar Desafio
+                  <div>
+                    <h2
+                      className="text-white font-black uppercase tracking-tight text-lg leading-none"
+                      style={{ fontFamily: '"Anton","Arial Narrow","Bahnschrift Condensed",Impact,sans-serif' }}
+                    >
+                      Confirmar Desafio Individual
                     </h2>
-                    <p className="text-white/40 text-[11px] uppercase tracking-widest mt-1">Você realmente deseja realizar ou aceitar o desafio?</p>
+                    <p className="text-white/40 text-[11px] uppercase tracking-widest mt-1">
+                      Revise suas metas antes de confirmar
+                    </p>
                   </div>
                 </div>
 
-                {/* Resumo do bilhete */}
                 <div className="space-y-2 mb-5">
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
                     <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Fila</span>
-                    <span className="text-xs font-black text-white">{FILAS.find((f) => f.id === filaEscolhida)?.label ?? queue}</span>
+                    <span className="text-xs font-black text-white">{filaAtual.label}</span>
                   </div>
                   {legs.map((l) => (
                     <div key={l.marketKey} className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
-                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">{catalog && (Object.values(catalog.markets).flat().find((m) => m.key === l.marketKey)?.label ?? l.marketKey)}</span>
-                      <span className="text-[10px] font-black text-white/50">{l.odd.toFixed(2)}x • {l.stake} MC</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-200 truncate pr-2">
+                        {catalog && (Object.values(catalog.markets).flat().find((m) => m.key === l.marketKey)?.label ?? l.marketKey)}
+                      </span>
+                      <span className="text-[10px] font-black text-white/60 shrink-0">
+                        @{l.odd.toFixed(2)} • {l.stake} MC
+                      </span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Valor do desafio</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Valor Total Reservado</span>
                     <span className="text-sm font-black text-white">{stakeTotal} MC</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Retorno potencial</span>
-                    <span className="text-lg font-black" style={{ color: ACCENT }}>{payoutTotal} MC</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Recompensa Estimada</span>
+                    <span className="text-lg font-black text-[#FFB700]">{payoutTotal} MC</span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5 mb-4">
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/8 mb-5">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-white/40 leading-snug">
-                    Ao confirmar, o MC é reservado e o desafio é iniciado. O resultado é validado automaticamente ao fim da partida (ou clicando "Verificar"). Sem cancelamento manual — o MC volta apenas se nenhum jogo acontecer (timeout) ou a partida for anulada.
+                  <p className="text-[10px] text-white/50 leading-snug">
+                    O MC é reservado e o resultado será conferido via Riot API na sua próxima partida. Se não houver jogo dentro do tempo limite, o valor retorna à sua carteira.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setConfirmando(false)} className="rounded-xl py-3 bg-[#121217] border border-white/10 text-white/70 text-xs font-black uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmando(false)}
+                    className="rounded-xl py-3 bg-[#121217] border border-white/10 text-white/70 text-xs font-black uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer"
+                  >
                     Revisar
                   </button>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={confirmarAposta} disabled={submeter}
-                    className="rounded-xl py-3 bg-[#FFB700] hover:bg-[#e0a000] text-black text-xs font-black uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={confirmarAposta}
+                    disabled={submeter}
+                    className="rounded-xl py-3 bg-[#FFB700] hover:bg-[#e0a000] text-black text-xs font-black uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                  >
                     {submeter ? 'Iniciando...' : 'Confirmar Desafio'}
                   </motion.button>
                 </div>
@@ -582,7 +594,7 @@ export default function ApostaIndividualPage() {
         )}
       </AnimatePresence>
 
-      {/* ── MODAL DE RESULTADO (ganhou/perdeu/anulada) ── */}
+      {/* Modal de Resultado */}
       {resultadoTicket && (
         <ModalResultadoAposta
           ticket={resultadoTicket}
