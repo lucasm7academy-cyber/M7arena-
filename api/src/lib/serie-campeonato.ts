@@ -308,7 +308,12 @@ export async function verificarSerieCampeonato(
   alvoRef: { matchId?: string; bracketMatchId?: string },
   opts: { buscarIds?: BuscarIdsPorCodigo; buscarMatch?: BuscarMatchRiot } = {}
 ): Promise<ResultadoSerie> {
-  if (alvoRef.matchId) return verificarSerieMatch(tx, alvoRef.matchId, opts);
+  if (alvoRef.matchId) {
+    const resMatch = await verificarSerieMatch(tx, alvoRef.matchId, opts);
+    if (resMatch.estado !== "nao_encontrada") return resMatch;
+    // Se não encontrou em tournamentMatches, tenta como bracketMatch
+    return verificarSerieBracket(tx, alvoRef.matchId, opts);
+  }
   if (alvoRef.bracketMatchId) return verificarSerieBracket(tx, alvoRef.bracketMatchId, opts);
   return { ok: false, estado: "nao_encontrada", scoreA: 0, scoreB: 0, winnerSide: null, irregular: false, motivo: "nao_encontrada" };
 }
@@ -355,10 +360,17 @@ async function verificarSerieMatch(
 
   if (r.estado === "finalizada") {
     // tournament_matches (grupos/cronograma): guarda o resultado via
-    // scoreA/scoreB/status — o front de grupos lê o placar numérico.
+    // scoreA/scoreB/scoreDisplay/status — o front de grupos lê o placar numérico e scoreDisplay.
     await tx
       .update(tournamentMatches)
-      .set({ scoreA: r.scoreA, scoreB: r.scoreB, irregular: r.irregular, status: "finalizada", updatedAt: new Date() })
+      .set({
+        scoreA: r.scoreA,
+        scoreB: r.scoreB,
+        scoreDisplay: `${r.scoreA} - ${r.scoreB}`,
+        irregular: r.irregular,
+        status: "finalizada",
+        updatedAt: new Date(),
+      })
       .where(eq(tournamentMatches.id, serie.id));
     if (serie.codigoPartida) {
       await tx
@@ -369,7 +381,13 @@ async function verificarSerieMatch(
   } else if (r.estado === "em_andamento") {
     await tx
       .update(tournamentMatches)
-      .set({ scoreA: r.scoreA, scoreB: r.scoreB, irregular: r.irregular, updatedAt: new Date() })
+      .set({
+        scoreA: r.scoreA,
+        scoreB: r.scoreB,
+        scoreDisplay: `${r.scoreA} - ${r.scoreB}`,
+        irregular: r.irregular,
+        updatedAt: new Date(),
+      })
       .where(eq(tournamentMatches.id, serie.id));
   }
 

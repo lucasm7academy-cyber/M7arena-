@@ -62,6 +62,7 @@ export function formatToNew(format: string | undefined): string {
 
 /** Traduz o status do cronograma legado para o valor que o fork espera. */
 export function cronogramaStatusToLegacy(status: string | null | undefined): string {
+  if (status === "finalizada") return "finalizado";
   return status || "combinando";
 }
 
@@ -69,15 +70,15 @@ export function cronogramaStatusToLegacy(status: string | null | undefined): str
  * Busca todos os dados relacionados de um torneio de uma vez.
  * Retorna { t, teams, groups, matches, brackets, standings, teamRows }.
  */
-export async function loadTournamentData(id: string) {
-  const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+export async function loadTournamentData(id: string, d: typeof db = db as any) {
+  const [t] = await d.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
   if (!t) return null;
 
-  const teamRows = await db.select().from(teams).innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id)).where(eq(tournamentTeams.tournamentId, id));
-  const groups = await db.select().from(tournamentGroups).where(eq(tournamentGroups.tournamentId, id));
-  const matches = await db.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
-  const brackets = await db.select().from(bracketMatches).where(eq(bracketMatches.tournamentId, id));
-  const standings = await db.select().from(tournamentStandings).where(eq(tournamentStandings.tournamentId, id));
+  const teamRows = await d.select().from(teams).innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id)).where(eq(tournamentTeams.tournamentId, id));
+  const groups = await d.select().from(tournamentGroups).where(eq(tournamentGroups.tournamentId, id));
+  const matches = await d.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+  const brackets = await d.select().from(bracketMatches).where(eq(bracketMatches.tournamentId, id));
+  const standings = await d.select().from(tournamentStandings).where(eq(tournamentStandings.tournamentId, id));
 
   return { t, teamRows, groups, matches, brackets, standings };
 }
@@ -106,7 +107,7 @@ export function buildCronograma(data: NonNullable<Awaited<ReturnType<typeof load
     status: cronogramaStatusToLegacy(m.status),
     data: m.displayDate || "A COMBINAR",
     hora: m.displayTime || "--:--",
-    placar: m.scoreDisplay || "0 - 0",
+    placar: m.scoreDisplay || `${m.scoreA ?? 0} - ${m.scoreB ?? 0}`,
     proposedBy: m.proposedBy || "",
     iconeA: "ShieldCheck",
     iconeB: "Swords",
@@ -138,7 +139,7 @@ export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof l
   // Jogos de chaveamento ("MATA-MATA (CHAVEAMENTO)") são só visuais e não contam.
   const finished = matches.filter((m) => {
     const fase = m.phaseLabel || m.phase;
-    return m.status === "finalizado" && fase !== "MATA-MATA (CHAVEAMENTO)";
+    return (m.status === "finalizado" || m.status === "finalizada") && fase !== "MATA-MATA (CHAVEAMENTO)";
   });
 
   // Se não há jogos finalizados e há classificação manual → devolve a manual
@@ -269,8 +270,10 @@ export function buildBracket(data: NonNullable<Awaited<ReturnType<typeof loadTou
  * Monta o shape legado completo de um torneio (o que o front consome).
  * `teamsCount` é opcional (só na listagem).
  */
-export async function toLegacyTournament(id: string, teamsCount?: number) {
-  const data = await loadTournamentData(id);
+export async function toLegacyTournament(id: string, teamsCountOrDb?: number | any, maybeDb?: any) {
+  const teamsCount = typeof teamsCountOrDb === "number" ? teamsCountOrDb : undefined;
+  const d = typeof teamsCountOrDb === "object" && teamsCountOrDb !== null ? teamsCountOrDb : (maybeDb || db);
+  const data = await loadTournamentData(id, d);
   if (!data) return null;
   const { t } = data;
 

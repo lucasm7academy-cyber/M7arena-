@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { eq, and, gt, asc, desc, inArray } from "drizzle-orm";
 import { db } from "../db.js";
-import { users, userSessions } from "../../../db/schema/identidade.js";
+import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
 import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
@@ -362,9 +363,98 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
     const { id, matchId } = req.params;
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
-    if (t.organizerId !== user.id) return res.status(403).json({ error: "Sem permissão" });
-    const [serie] = await db.select().from(tournamentMatches).where(and(eq(tournamentMatches.id, matchId), eq(tournamentMatches.tournamentId, id))).limit(1);
+
+    // Encontra o jogo tanto em tournament_matches quanto em bracket_matches
+    let isBracket = false;
+    let [serie] = await db
+      .select()
+      .from(tournamentMatches)
+      .where(and(eq(tournamentMatches.id, matchId), eq(tournamentMatches.tournamentId, id)))
+      .limit(1);
+
+    if (!serie) {
+      const [bSerie] = await db
+        .select()
+        .from(bracketMatches)
+        .where(and(eq(bracketMatches.id, matchId), eq(bracketMatches.tournamentId, id)))
+        .limit(1);
+      if (bSerie) {
+        serie = bSerie as any;
+        isBracket = true;
+      }
+    }
+
     if (!serie) return res.status(404).json({ error: "Jogo não encontrado" });
+
+    // Permissão: Staff (admin, proprietário, moderador ou criador do campeonato)
+    const userRoleRows = await db
+      .select({ role: userRoles.role })
+      .from(userRoles)
+      .where(eq(userRoles.userId, user.id));
+    const roles = userRoleRows.map((r) => r.role);
+    const isStaff =
+      t.organizerId === user.id ||
+      roles.some((r) => ["admin", "proprietario", "moderador", "organizer"].includes(r));
+
+    let isParticipant = false;
+
+    // Resolve IDs dos times da partida (se não estiverem preenchidos, tenta pelas tags)
+    let teamAId = serie.teamAId;
+    let teamBId = serie.teamBId;
+
+    if (!teamAId || !teamBId) {
+      const teamRows = await db
+        .select({ id: teams.id, tag: teams.tag })
+        .from(teams)
+        .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
+        .where(eq(tournamentTeams.tournamentId, id));
+
+      if (!teamAId && serie.teamATag) {
+        teamAId =
+          teamRows.find((r) => r.tag.toLowerCase() === serie.teamATag?.toLowerCase())?.id ?? null;
+      }
+      if (!teamBId && serie.teamBTag) {
+        teamBId =
+          teamRows.find((r) => r.tag.toLowerCase() === serie.teamBTag?.toLowerCase())?.id ?? null;
+      }
+    }
+
+    const relevantTeamIds = [teamAId, teamBId].filter(Boolean) as string[];
+    if (relevantTeamIds.length > 0) {
+      // É dono/capitão de um dos times?
+      const [owned] = await db
+        .select({ id: teams.id })
+        .from(teams)
+        .where(and(inArray(teams.id, relevantTeamIds), eq(teams.ownerId, user.id)))
+        .limit(1);
+
+      if (owned) {
+        isParticipant = true;
+      } else {
+        // É membro aceito do time?
+        const [member] = await db
+          .select({ id: teamMembers.id })
+          .from(teamMembers)
+          .where(
+            and(
+              inArray(teamMembers.teamId, relevantTeamIds),
+              eq(teamMembers.userId, user.id),
+              eq(teamMembers.status, "accepted")
+            )
+          )
+          .limit(1);
+
+        if (member) {
+          isParticipant = true;
+        }
+      }
+    }
+
+    if (!isStaff && !isParticipant) {
+      return res.status(403).json({
+        error: "Sem permissão. Apenas capitães/jogadores da partida ou organizadores podem iniciar a série.",
+      });
+    }
 
     let codigo = serie.codigoPartida;
     if (!codigo) {
@@ -374,16 +464,37 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
       if (codigo === "SEM-CODIGO-AGUARDE") return res.status(409).json({ error: "Sem código disponível no momento" });
       // Final (phase='finals') é MD5 (best_of 5); as demais fases são MD3.
       const bestOf = serie.phase === "finals" ? 5 : (serie.bestOf ?? 3);
-      await db.update(tournamentMatches).set({
-        codigoPartida: codigo,
-        status: "em_andamento",
-        bestOf,
-        serieIniciadaAt: new Date(),
-        updatedAt: new Date(),
-      }).where(eq(tournamentMatches.id, serie.id));
+
+      if (isBracket) {
+        await db
+          .update(bracketMatches)
+          .set({
+            codigoPartida: codigo,
+            bestOf,
+            serieIniciadaAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(bracketMatches.id, serie.id));
+      } else {
+        await db
+          .update(tournamentMatches)
+          .set({
+            codigoPartida: codigo,
+            status: "em_andamento",
+            bestOf,
+            serieIniciadaAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(tournamentMatches.id, serie.id));
+      }
     } else {
       // Já tem código: garante o status 'em_andamento'.
-      await db.update(tournamentMatches).set({ status: "em_andamento", updatedAt: new Date() }).where(eq(tournamentMatches.id, serie.id));
+      if (!isBracket) {
+        await db
+          .update(tournamentMatches)
+          .set({ status: "em_andamento", updatedAt: new Date() })
+          .where(eq(tournamentMatches.id, serie.id));
+      }
     }
 
     return res.json(await toLegacyTournament(id));

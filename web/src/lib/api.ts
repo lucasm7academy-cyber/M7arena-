@@ -763,6 +763,19 @@ export const api = {
       api.put<ApiLegacyTournament>(`/tournaments/${id}/cronograma/merge`, { jogos }),
     recalcularPdl: (id: string) =>
       api.post<{ ok: boolean }>(`/tournaments/${id}/recalcular-pdl`),
+    gerarCodigo: (id: string, matchId: string) =>
+      api.post<ApiLegacyTournament>(`/tournaments/${id}/jogo/${matchId}/gerar-codigo`),
+    verificarSerie: (id: string, matchId: string) =>
+      api.post<{
+        ok: boolean;
+        estado: "em_andamento" | "finalizada" | "sem_codigo" | "nao_encontrada";
+        scoreA: number;
+        scoreB: number;
+        winnerSide: "a" | "b" | null;
+        irregular: boolean;
+        motivo?: string;
+        tournament?: ApiLegacyTournament;
+      }>(`/tournaments/${id}/jogo/${matchId}/verificar`),
   },
 
   wallet: {

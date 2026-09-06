@@ -235,16 +235,17 @@ describe("serie-campeonato (persistência no banco)", () => {
     await db.insert(games).values({ id: "lol", name: "League of Legends" }).onConflictDoNothing();
     const dono = crypto.randomUUID();
     await db.insert(users).values({ id: dono, email: dono + "@x.com", displayName: "Dono" });
+    const uid = Math.random().toString(36).slice(2, 8);
     const [torneio] = await db.insert(tournaments).values({
       gameId: "lol",
-      slug: "camp-serie-teste",
+      slug: `camp-serie-teste-${uid}`,
       name: "Campeonato Teste",
       format: "groups",
       status: "in_progress",
       organizerId: dono,
     }).returning();
-    const [timeA] = await db.insert(teams).values({ gameId: "lol", name: "Time A", tag: "TA", ownerId: dono }).returning();
-    const [timeB] = await db.insert(teams).values({ gameId: "lol", name: "Time B", tag: "TB", ownerId: dono }).returning();
+    const [timeA] = await db.insert(teams).values({ gameId: "lol", name: "Time A", tag: `TA${uid}`, ownerId: dono }).returning();
+    const [timeB] = await db.insert(teams).values({ gameId: "lol", name: "Time B", tag: `TB${uid}`, ownerId: dono }).returning();
     await db.insert(teamMembers).values([
       { teamId: timeA.id, userId: dono, roleSlot: "top", status: "accepted", guestPuuid: "PUUID_A" },
       { teamId: timeB.id, userId: dono, roleSlot: "top", status: "accepted", guestPuuid: "PUUID_B" },
@@ -255,13 +256,13 @@ describe("serie-campeonato (persistência no banco)", () => {
       round: 0,
       teamAId: timeA.id,
       teamBId: timeB.id,
-      codigoPartida: "BR-CAMP-COD-PERSIST-0001",
+      codigoPartida: `BR-CAMP-COD-${uid}`,
       bestOf: 3,
       status: "em_andamento",
       phaseLabel: "Grupo A",
-      matchKey: "camp-serie-teste-Grupo A-0-1",
-      teamATag: "TA",
-      teamBTag: "TB",
+      matchKey: `camp-serie-teste-${uid}-Grupo A-0-1`,
+      teamATag: `TA${uid}`,
+      teamBTag: `TB${uid}`,
     }).returning();
     return { db, torneio, serie };
   }
@@ -291,6 +292,13 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(m.status, "finalizada");
     assert.equal(m.scoreA, 2);
     assert.equal(m.scoreB, 0);
+    assert.equal(m.scoreDisplay, "2 - 0");
+
+    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const leg = await toLegacyTournament(torneio.id, db);
+    const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
+    assert.equal(jogoLeg?.placar, "2 - 0");
+    assert.equal(jogoLeg?.status, "finalizado");
 
     const jogadas = await db.select().from(tournamentSeriesGames).where(eq(tournamentSeriesGames.matchId, serie.id));
     assert.equal(jogadas.length, 2, "duas jogadas gravadas");
@@ -298,5 +306,36 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(jogadas[0].winnerSide, "a");
     assert.equal(jogadas[0].killA, 9);
     assert.equal(jogadas[1].gameNumber, 2);
+  });
+
+  test("verificarSerieMatch com irregular marca irregular no banco e no shape legado", async () => {
+    const { db, torneio, serie } = await criaCenario();
+    const { verificarSerieCampeonato } = await import("../src/lib/serie-campeonato.js");
+
+    const r = await verificarSerieCampeonato(
+      db,
+      { matchId: serie.id },
+      {
+        buscarIds: async () => ["M1", "M2"],
+        buscarMatch: async (id: string) =>
+          partidaRiot([
+            { puuid: "PUUID_A", teamId: 100, win: true, kills: 9 },
+            { puuid: "PUUID_EXTERNO", teamId: 100, win: true, kills: 1 },
+            { puuid: "PUUID_B", teamId: 200, win: false, kills: 6 },
+          ]),
+      }
+    );
+
+    assert.equal(r.estado, "finalizada");
+    assert.equal(r.irregular, true);
+
+    const [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(m.irregular, true);
+    assert.equal(m.status, "finalizada");
+
+    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const leg = await toLegacyTournament(torneio.id, db);
+    const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
+    assert.equal(jogoLeg?.irregular, true);
   });
 });

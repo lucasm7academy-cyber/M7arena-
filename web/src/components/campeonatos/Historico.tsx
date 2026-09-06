@@ -211,14 +211,25 @@ export const Historico = ({ campeonato, expandedTeam, setExpandedTeam }: any) =>
                                                       {result}
                                                     </div>
                                                     <div>
-                                                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                                        {match.fase} •{" "}
-                                                        {(() => {
-                                                          const raw = match.data || match.timestamp;
-                                                          if (!raw || raw === "A COMBINAR") return "—";
-                                                          const d = new Date(typeof raw === "string" && raw.length === 10 ? raw + "T00:00:00" : raw);
-                                                          return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-                                                        })()}
+                                                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest flex items-center gap-1.5 flex-wrap">
+                                                        <span>
+                                                          {match.fase} •{" "}
+                                                          {(() => {
+                                                            const raw = match.data || match.timestamp;
+                                                            if (!raw || raw === "A COMBINAR") return "—";
+                                                            const d = new Date(typeof raw === "string" && raw.length === 10 ? raw + "T00:00:00" : raw);
+                                                            return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+                                                          })()}
+                                                        </span>
+                                                        {match.irregular && (
+                                                          <span
+                                                            className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest"
+                                                            style={{ clipPath: CUT_BADGE }}
+                                                            title="Partida jogada com membro fora do elenco oficial"
+                                                          >
+                                                            Irregular
+                                                          </span>
+                                                        )}
                                                       </p>
                                                       <p className="text-sm font-black text-white uppercase">
                                                         vs {opponentName}

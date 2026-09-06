@@ -98,6 +98,7 @@ export interface CampeonatoContextType {
   handleAgreeMatch: (matchId: string) => void;
   handleDeleteMatch: (jogo: any) => void;
   handleResetBracket: () => void;
+  refetchCampeonato: () => Promise<void>;
 }
 
 export const CampeonatoContext = createContext<CampeonatoContextType | undefined>(undefined);
@@ -506,74 +507,77 @@ export function CampeonatoProvider({
   // 🔧 Chave é APENAS visual: nada de sincronizar com cronograma, PDL ou histórico.
   // O vínculo de vitórias/derrotas é 100% pelo Cronograma.
 
+  const refetchCampeonato = React.useCallback(async () => {
+    if (!id) return;
+    try {
+      const data = await api.tournaments.detail(id);
+      const mapped = mapFromDb(data);
+      setCampeonato(mapped);
+      if (data.bracket_data) {
+        setBracketData(migrateBracketData(data.bracket_data));
+      }
+
+      // Busca informações atualizadas dos times (logo, nome, cor) diretamente da tabela 'times'
+      const teamIds = (mapped.timesInscritos || []).map((t: any) => t.id).filter(Boolean);
+      if (teamIds.length > 0) {
+        const dbTeams = await api.teams.batch(teamIds);
+
+        if (dbTeams && dbTeams.length > 0) {
+          setCampeonato((prev: any) => {
+            if (!prev) return prev;
+
+            const updatedTimesInscritos = (prev.timesInscritos || []).map((t: any) => {
+              const dbT = dbTeams.find((dt: any) => dt.id === t.id);
+              if (dbT) {
+                return {
+                  ...t,
+                  name: dbT.nome || t.name,
+                  tag: dbT.tag || t.tag,
+                  logo: dbT.logo_url || t.logo,
+                  cor: dbT.gradient_from || t.cor
+                };
+              }
+              return t;
+            });
+
+            const updatedClassificacao = (prev.classificacao || []).map((t: any) => {
+              const dbT = dbTeams.find((dt: any) => dt.id === t.id || dt.tag === t.tag);
+              if (dbT) {
+                return {
+                  ...t,
+                  nome: dbT.nome || t.nome,
+                  tag: dbT.tag || t.tag,
+                  logo: dbT.logo_url || t.logo,
+                  cor: dbT.gradient_from || t.cor
+                };
+              }
+              return t;
+            });
+
+            return {
+              ...prev,
+              timesInscritos: updatedTimesInscritos,
+              classificacao: updatedClassificacao
+            };
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar campeonato:", err);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     setCampeonatoLoading(true);
 
-    api.tournaments.detail(id)
-      .then(async (data) => {
-        if (cancelled) return;
-        const mapped = mapFromDb(data);
-        setCampeonato(mapped);
-        if (data.bracket_data) {
-          setBracketData(migrateBracketData(data.bracket_data));
-        }
-        setCampeonatoLoading(false);
-
-        // Busca informações atualizadas dos times (logo, nome, cor) diretamente da tabela 'times'
-        const teamIds = (mapped.timesInscritos || []).map((t: any) => t.id).filter(Boolean);
-        if (teamIds.length > 0) {
-          const dbTeams = await api.teams.batch(teamIds);
-
-          if (dbTeams && dbTeams.length > 0 && !cancelled) {
-            setCampeonato((prev: any) => {
-              if (!prev) return prev;
-
-              const updatedTimesInscritos = (prev.timesInscritos || []).map((t: any) => {
-                const dbT = dbTeams.find((dt: any) => dt.id === t.id);
-                if (dbT) {
-                  return {
-                    ...t,
-                    name: dbT.nome || t.name,
-                    tag: dbT.tag || t.tag,
-                    logo: dbT.logo_url || t.logo,
-                    cor: dbT.gradient_from || t.cor
-                  };
-                }
-                return t;
-              });
-
-              const updatedClassificacao = (prev.classificacao || []).map((t: any) => {
-                const dbT = dbTeams.find((dt: any) => dt.id === t.id || dt.tag === t.tag);
-                if (dbT) {
-                  return {
-                    ...t,
-                    nome: dbT.nome || t.nome,
-                    tag: dbT.tag || t.tag,
-                    logo: dbT.logo_url || t.logo,
-                    cor: dbT.gradient_from || t.cor
-                  };
-                }
-                return t;
-              });
-
-              return {
-                ...prev,
-                timesInscritos: updatedTimesInscritos,
-                classificacao: updatedClassificacao
-              };
-            });
-          }
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setCampeonatoLoading(false);
-      });
+    refetchCampeonato().finally(() => {
+      if (!cancelled) setCampeonatoLoading(false);
+    });
 
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, refetchCampeonato]);
 
   // Detecta se o time do usuário já está inscrito (persiste entre reloads)
   useEffect(() => {
@@ -1206,8 +1210,12 @@ export function CampeonatoProvider({
     const raw = [...(campeonato?.cronograma || [])];
 
     const filtered = raw.filter((jogo: any) => {
-      // Apenas jogos confirmados ou finalizados aparecem no cronograma público
-      if (jogo.status !== "confirmado" && jogo.status !== "finalizado")
+      // Jogos em andamento, confirmados ou finalizados aparecem no cronograma público
+      if (
+        jogo.status !== "confirmado" &&
+        jogo.status !== "em_andamento" &&
+        jogo.status !== "finalizado"
+      )
         return false;
 
       // Filtro de Grupo
@@ -1217,11 +1225,12 @@ export function CampeonatoProvider({
       return true;
     });
 
-    // Ordem: Confirmados primeiro, depois finalizados. Se ambos iguais, por data.
+    // Ordem: Em andamento primeiro, depois confirmados, depois finalizados. Se iguais, por data.
     return filtered.sort((a, b) => {
-      const order: any = { confirmado: 0, finalizado: 1 };
-      if (order[a.status] !== order[b.status])
-        return order[a.status] - order[b.status];
+      const order: any = { em_andamento: 0, confirmado: 1, finalizado: 2 };
+      const orderA = order[a.status] !== undefined ? order[a.status] : 9;
+      const orderB = order[b.status] !== undefined ? order[b.status] : 9;
+      if (orderA !== orderB) return orderA - orderB;
 
       const dA =
         a.data && a.hora
@@ -1235,9 +1244,12 @@ export function CampeonatoProvider({
     });
   }, [campeonato?.cronograma, selectedGroupFilter]);
 
-  // Todos os jogos não finalizados/confirmados
+  // Todos os jogos não finalizados/confirmados/em_andamento
   const pendingAll = (campeonato?.cronograma || []).filter(
-    (jogo: any) => jogo.status !== "finalizado" && jogo.status !== "confirmado"
+    (jogo: any) =>
+      jogo.status !== "finalizado" &&
+      jogo.status !== "confirmado" &&
+      jogo.status !== "em_andamento"
   );
 
   // Jogos onde o time do usuário participa (para qualquer um com time, inclusive admin-jogador)
@@ -1343,6 +1355,7 @@ export function CampeonatoProvider({
     handleAgreeMatch,
     handleDeleteMatch,
     handleResetBracket,
+    refetchCampeonato,
   };
 
   return (

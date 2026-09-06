@@ -1,12 +1,112 @@
+import { useState } from "react";
 import { motion } from "motion/react";
-import { Calendar, CheckCircle2, ShieldCheck } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  ShieldCheck,
+  Swords,
+  Copy,
+  Check,
+  RefreshCw,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
+import toast from "react-hot-toast";
 import { CUT_FRAME, CUT_FRAME_INNER, CUT_BADGE, CUT_BADGE_INNER, CUT_BUTTON, CUT_BUTTON_INNER } from "./cut-edge";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
+import { api } from "../../lib/api";
 import { getIcon } from "./icons";
 import { formatDayOfWeek, formatFullDate } from "./dates";
 
+function parseMatchDateTime(dateStr?: string | null, timeStr?: string | null): Date | null {
+  if (!dateStr || dateStr === "A COMBINAR" || dateStr === "A definir") return null;
+  const time = (timeStr && timeStr !== "--:--" && /^\d{2}:\d{2}/.test(timeStr)) ? timeStr.substring(0, 5) : "00:00";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const d = new Date(`${dateStr}T${time}:00`);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    const [dd, mm, yyyy] = dateStr.split("/").map(Number);
+    const d = new Date(`${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}T${time}:00`);
+    if (!isNaN(d.getTime())) return d;
+  }
+  try {
+    const d = new Date(dateStr + (time ? ` ${time}` : ""));
+    if (!isNaN(d.getTime())) return d;
+  } catch {}
+  return null;
+}
+
 export const ListaCronograma = () => {
-  const { campeonato, isAdmin, filteredCronograma, getMyTeamInMatch, setEditingMatchIndex, setJogoStatusAtStart, setEditFormData, setIsScheduleEditModalOpen } = useCampeonato();
+  const {
+    campeonato,
+    isAdmin,
+    filteredCronograma,
+    getMyTeamInMatch,
+    setEditingMatchIndex,
+    setJogoStatusAtStart,
+    setEditFormData,
+    setIsScheduleEditModalOpen,
+    refetchCampeonato,
+  } = useCampeonato();
+
+  const [startingMatchId, setStartingMatchId] = useState<string | null>(null);
+  const [verifyingMatchId, setVerifyingMatchId] = useState<string | null>(null);
+  const [copiedMatchId, setCopiedMatchId] = useState<string | null>(null);
+
+  const handleStartSeries = async (jogo: any) => {
+    const matchId = jogo.match_id || jogo.id;
+    if (!matchId) return;
+    setStartingMatchId(matchId);
+    try {
+      await api.tournaments.gerarCodigo(campeonato.id, matchId);
+      toast.success("Série iniciada! Código Riot gerado com sucesso.");
+      await refetchCampeonato();
+    } catch (err: any) {
+      console.error("Erro ao iniciar série:", err);
+      toast.error(err?.message || "Não foi possível iniciar a série.");
+    } finally {
+      setStartingMatchId(null);
+    }
+  };
+
+  const handleCopyCode = async (code: string, matchId: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedMatchId(matchId);
+      toast.success("Código Riot copiado! Cole no LoL em Jogar > Torneios > Código de Torneio.");
+      setTimeout(() => {
+        setCopiedMatchId((prev) => (prev === matchId ? null : prev));
+      }, 2500);
+    } catch {
+      toast.error("Erro ao copiar código para a área de transferência.");
+    }
+  };
+
+  const handleVerifySeries = async (jogo: any) => {
+    const matchId = jogo.match_id || jogo.id;
+    if (!matchId) return;
+    setVerifyingMatchId(matchId);
+    try {
+      const res = await api.tournaments.verificarSerie(campeonato.id, matchId);
+      if (res.estado === "finalizada") {
+        toast.success(`Série finalizada! Placar: ${res.scoreA} - ${res.scoreB}`);
+      } else if (res.estado === "em_andamento") {
+        toast(`Série em andamento: ${res.scoreA} - ${res.scoreB}`, { icon: "⚔️" });
+      } else if (res.motivo === "sem_codigo") {
+        toast.error("Série ainda não possui código de torneio.");
+      } else {
+        toast("Nenhuma partida nova detectada na Riot ainda.", { icon: "ℹ️" });
+      }
+      await refetchCampeonato();
+    } catch (err: any) {
+      console.error("Erro ao verificar série:", err);
+      toast.error(err?.message || "Erro ao verificar série na Riot.");
+    } finally {
+      setVerifyingMatchId(null);
+    }
+  };
   return (
     <motion.div
       key="schedule"
@@ -81,10 +181,17 @@ export const ListaCronograma = () => {
               const corB =
                 timeB.cor || (jogo as any).corB || "#FFB700";
               const myTeam = getMyTeamInMatch(jogo);
-              const matchDateObj =
-                jogo.data && jogo.hora && jogo.hora !== "--:--"
-                  ? new Date(`${jogo.data}T${jogo.hora}:00`)
-                  : null;
+              const isMatchParticipant = !!myTeam && (
+                myTeam.tag?.toLowerCase() === jogo.timeA?.toLowerCase() ||
+                myTeam.tag?.toLowerCase() === jogo.timeB?.toLowerCase() ||
+                myTeam.name?.toLowerCase() === jogo.timeA?.toLowerCase() ||
+                myTeam.name?.toLowerCase() === jogo.timeB?.toLowerCase() ||
+                myTeam.nome?.toLowerCase() === jogo.timeA?.toLowerCase() ||
+                myTeam.nome?.toLowerCase() === jogo.timeB?.toLowerCase()
+              );
+              const canAccessSeries = isMatchParticipant || isAdmin;
+
+              const matchDateObj = parseMatchDateTime(jogo.data, jogo.hora);
               const isWithin24Hours = matchDateObj
                 ? matchDateObj.getTime() - new Date().getTime() <=
                   24 * 60 * 60 * 1000
@@ -99,13 +206,29 @@ export const ListaCronograma = () => {
                 jogo.status === "proposto" &&
                 jogo.proposedBy !== myTeam?.tag;
 
+              // 5 minutos antes do horário agendado ou horário já alcançado/passado
+              const isTimeToStart = matchDateObj
+                ? matchDateObj.getTime() - Date.now() <= 5 * 60 * 1000
+                : true;
+
+              const isSeriesLive =
+                (jogo.status === "em_andamento" || !!jogo.codigo_partida) &&
+                jogo.status !== "finalizado";
+
+              const canStartSeries =
+                canAccessSeries &&
+                (jogo.status === "confirmado" || isAdmin) &&
+                !jogo.codigo_partida &&
+                isTimeToStart &&
+                jogo.status !== "finalizado";
+
               return (
                 <div
                   key={i}
                   onClick={() => {
                     const canClick =
                       canUserEdit &&
-                      (jogo.status !== "finalizado" || isAdmin);
+                      ((jogo.status !== "finalizado" && !isSeriesLive) || isAdmin);
                     if (canClick) {
                       const realIdx =
                         campeonato.cronograma.findIndex(
@@ -120,12 +243,12 @@ export const ListaCronograma = () => {
                           action: "finish",
                           placar: jogo.placar || "0 - 0",
                         });
-                      } else if (isAdmin && jogo.status === "confirmado") {
+                      } else if (isAdmin && (jogo.status === "confirmado" || isSeriesLive)) {
                         setEditFormData({
                           data: jogo.data,
                           hora: jogo.hora,
                           action: "finish",
-                          placar: "0 - 0",
+                          placar: jogo.placar || "0 - 0",
                         });
                       } else if (
                         jogo.status === "proposto" &&
@@ -151,10 +274,10 @@ export const ListaCronograma = () => {
                   className="relative p-[1px] transition-all hover:scale-[1.003]"
                   style={{
                     clipPath: CUT_BUTTON,
-                    background: jogo.status === "confirmado"
+                    background: (jogo.status === "confirmado" || isSeriesLive)
                       ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05))`
                       : 'rgba(255, 255, 255, 0.08)',
-                    boxShadow: jogo.status === "confirmado"
+                    boxShadow: (jogo.status === "confirmado" || isSeriesLive)
                       ? `0 0 30px -5px ${campeonato.themeColor || '#FFB700'}22`
                       : undefined
                   }}
@@ -236,10 +359,10 @@ export const ListaCronograma = () => {
                             <div className="flex items-center gap-2.5">
                               {(() => {
                                 const scores = (
-                                  jogo as any
-                                ).placar.split(" - ");
-                                const scoreA = parseInt(scores[0]);
-                                const scoreB = parseInt(scores[1]);
+                                  (jogo as any).placar || "0 - 0"
+                                ).split(" - ");
+                                const scoreA = parseInt(scores[0]) || 0;
+                                const scoreB = parseInt(scores[1]) || 0;
                                 return (
                                   <>
                                     <span
@@ -275,12 +398,66 @@ export const ListaCronograma = () => {
                                 );
                               })()}
                             </div>
-                            <span
-                              className="text-[9px] font-black uppercase text-white/50 tracking-widest mt-1.5 px-2 py-0.5 bg-white/5"
-                              style={{ clipPath: CUT_BADGE }}
-                            >
-                              Finalizado
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <span
+                                className="text-[9px] font-black uppercase text-white/50 tracking-widest px-2 py-0.5 bg-white/5"
+                                style={{ clipPath: CUT_BADGE }}
+                              >
+                                Finalizado {jogo.best_of ? `(MD${jogo.best_of})` : ""}
+                              </span>
+                              {jogo.irregular && (
+                                <span
+                                  className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-1"
+                                  style={{ clipPath: CUT_BADGE }}
+                                  title="Partida jogada com membro fora do elenco oficial"
+                                >
+                                  <AlertTriangle className="w-2.5 h-2.5" />
+                                  Irregular
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : isSeriesLive ? (
+                          <div className="flex flex-col items-center">
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const scores = (
+                                  (jogo as any).placar || "0 - 0"
+                                ).split(" - ");
+                                const scoreA = parseInt(scores[0]) || 0;
+                                const scoreB = parseInt(scores[1]) || 0;
+                                return (
+                                  <>
+                                    <span className="text-xl lg:text-2xl font-black tabular-nums text-white">
+                                      {scoreA}
+                                    </span>
+                                    <span className="text-white/20 text-lg font-black">-</span>
+                                    <span className="text-xl lg:text-2xl font-black tabular-nums text-white">
+                                      {scoreB}
+                                    </span>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              <span
+                                className="text-[9px] font-black uppercase text-[#00FF41] tracking-widest px-2 py-0.5 bg-[#00FF41]/10 border border-[#00FF41]/20 flex items-center gap-1"
+                                style={{ clipPath: CUT_BADGE }}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-ping" />
+                                Ao Vivo {jogo.best_of ? `(MD${jogo.best_of})` : ""}
+                              </span>
+                              {jogo.irregular && (
+                                <span
+                                  className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-0.5"
+                                  style={{ clipPath: CUT_BADGE }}
+                                  title="Jogador fora do roster detectado"
+                                >
+                                  <AlertTriangle className="w-2.5 h-2.5" />
+                                  Irreg.
+                                </span>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <span className="text-xs font-black tracking-widest select-none text-white/30">
@@ -326,7 +503,7 @@ export const ListaCronograma = () => {
                     </div>
 
                     {/* Right: Info & Actions */}
-                    <div className="flex flex-col items-center justify-center lg:justify-end gap-2 shrink-0 min-w-[120px]">
+                    <div className="flex flex-col items-center justify-center lg:justify-end gap-2 shrink-0 min-w-[140px]">
                       {jogo.status !== "finalizado" && (
                         <div className="text-center flex flex-col items-center hidden lg:block">
                           <p
@@ -340,8 +517,98 @@ export const ListaCronograma = () => {
                         </div>
                       )}
 
+                      {/* Botão Iniciar Série (5 min antes do horário ou horário alcançado) */}
+                      {canStartSeries && (
+                        <button
+                          type="button"
+                          disabled={startingMatchId === (jogo.match_id || jogo.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartSeries(jogo);
+                          }}
+                          className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 text-black font-black"
+                          style={{
+                            clipPath: CUT_BADGE,
+                            background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, #FFA500)`,
+                            boxShadow: `0 0 15px ${campeonato.themeColor || '#FFB700'}66`
+                          }}
+                        >
+                          {startingMatchId === (jogo.match_id || jogo.id) ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span>Iniciando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Swords className="w-3.5 h-3.5" />
+                              <span>Iniciar Série</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Botões durante Série Ativa: Copiar Código Riot + Verificar */}
+                      {isSeriesLive && (
+                        canAccessSeries ? (
+                          <div className="flex flex-col sm:flex-row items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (jogo.codigo_partida) handleCopyCode(jogo.codigo_partida, jogo.id);
+                              }}
+                              className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 border"
+                              style={{
+                                clipPath: CUT_BADGE,
+                                background: copiedMatchId === jogo.id ? 'rgba(0, 255, 65, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                                borderColor: copiedMatchId === jogo.id ? '#00FF41' : 'rgba(255, 255, 255, 0.15)',
+                                color: copiedMatchId === jogo.id ? '#00FF41' : '#FFFFFF',
+                              }}
+                              title="Copiar código de torneio da Riot para colar no LoL"
+                            >
+                              {copiedMatchId === jogo.id ? (
+                                <>
+                                  <Check className="w-3 h-3 text-[#00FF41]" />
+                                  <span>Copiado!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3 text-[#00F0FF]" />
+                                  <span>Copiar Código Riot</span>
+                                </>
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={verifyingMatchId === (jogo.match_id || jogo.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleVerifySeries(jogo);
+                              }}
+                              className="p-1.5 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all rounded"
+                              style={{ clipPath: CUT_BADGE }}
+                              title="Verificar resultado da série na Riot agora"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${verifyingMatchId === (jogo.match_id || jogo.id) ? 'animate-spin text-[#00F0FF]' : ''}`} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center gap-1.5"
+                            style={{ clipPath: CUT_BADGE }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            Em Andamento
+                          </span>
+                        )
+                      )}
+
+                      {/* Ações de Agendamento Legadas */}
                       {canUserEdit &&
                       jogo.status !== "finalizado" &&
+                      !canStartSeries &&
+                      !isSeriesLive &&
                       !(
                         jogo.status === "confirmado" && !isAdmin
                       ) ? (
