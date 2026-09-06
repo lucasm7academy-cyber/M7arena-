@@ -74,14 +74,18 @@ export const FormCriarCampeonato = ({
             </div>
           </div>
 
-          <div className="space-y-4 md:col-span-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Regulamento do Campeonato</label>
-            <textarea
+          <div className="space-y-3 md:col-span-2">
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Link do Regulamento Oficial</label>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">URL do Google Docs, PDF ou página com as regras (abre em nova aba ao clicar)</p>
+            </div>
+            <input
+              type="url"
               name="regulamento"
-              value={formData.regulamento}
+              value={formData.regulamento || ''}
               onChange={handleInputChange}
-              placeholder="Cole aqui todas as regras, termos e condições do seu campeonato..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 focus:outline-none focus:border-teal-500 transition-all font-bold text-base min-h-[150px] resize-y"
+              placeholder="Ex: https://docs.google.com/document/d/... ou https://seusite.com/regras"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 focus:outline-none focus:border-teal-500 transition-all font-bold text-base shadow-sm"
             />
           </div>
         </div>

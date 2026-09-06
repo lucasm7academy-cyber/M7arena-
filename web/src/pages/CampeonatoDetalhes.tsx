@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -102,6 +102,28 @@ const CampeonatoDetalhesInner = ({
     setCampeonato,
   } = useCampeonato();
 
+  const handleAbrirRegulamento = () => {
+    const raw = (campeonato?.regulamento || '').trim();
+    if (!raw) {
+      alert('Nenhum regulamento cadastrado para este campeonato.');
+      return;
+    }
+    const isUrl =
+      raw.startsWith('http://') ||
+      raw.startsWith('https://') ||
+      raw.startsWith('www.') ||
+      raw.includes('docs.google.com') ||
+      raw.includes('drive.google.com') ||
+      raw.includes('.pdf') ||
+      raw.includes('/');
+    if (isUrl) {
+      const urlFinal = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+      window.open(urlFinal, '_blank', 'noopener,noreferrer');
+    } else {
+      setIsRulesModalOpen(true);
+    }
+  };
+
   if (campeonatoLoading || !campeonato) {
     return (
       <div className="min-h-screen bg-[#060608] flex items-center justify-center">
@@ -198,7 +220,7 @@ const CampeonatoDetalhesInner = ({
               <div className="hidden md:flex flex-col gap-4 w-full md:w-auto shrink-0 items-center">
                 <div className="flex flex-col items-center gap-2">
                   <button
-                    onClick={() => setIsRulesModalOpen(true)}
+                    onClick={handleAbrirRegulamento}
                     className="relative p-[1px] group transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,183,0,0.15)]"
                     style={{
                       clipPath: CUT_BUTTON,
@@ -276,7 +298,7 @@ const CampeonatoDetalhesInner = ({
             </div>
 
             <AnimatePresence mode="wait">
-              {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getIcon={getIcon} isRegistrado={isRegistered} setAbrirInscricao={() => setIsRegistrationModalOpen(true)} setAbrirRegulamento={() => setIsRulesModalOpen(true)} ehEspectador={role === "spectator"} />}
+              {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getIcon={getIcon} isRegistrado={isRegistered} setAbrirInscricao={() => setIsRegistrationModalOpen(true)} setAbrirRegulamento={handleAbrirRegulamento} ehEspectador={role === "spectator"} />}
 
               {activeTab === "history" && <Historico key="history" campeonato={campeonato} expandedTeam={expandedTeam} setExpandedTeam={setExpandedTeam} />}
 

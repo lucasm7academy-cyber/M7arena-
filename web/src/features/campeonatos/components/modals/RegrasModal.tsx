@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { X, FileText } from "lucide-react";
+import { X, FileText, ExternalLink } from "lucide-react";
 import { CUT_FRAME, CUT_FRAME_INNER, CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from "../../../../components/campeonatos/cut-edge";
 
 export const RegrasModal = ({ isOpen, onClose, campeonato }: any) => {
@@ -87,6 +87,28 @@ export const RegrasModal = ({ isOpen, onClose, campeonato }: any) => {
                     </div>
                   </div>
                 </div>
+
+                {(() => {
+                  const raw = (campeonato.regulamento || '').trim();
+                  const isUrl = raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('www.') || raw.includes('docs.google.com') || raw.includes('drive.google.com') || raw.includes('.pdf') || raw.includes('/');
+                  if (!isUrl) return null;
+                  const finalUrl = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+                  return (
+                    <a
+                      href={finalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full text-black font-black py-3.5 flex items-center justify-center gap-2 transition-all text-xs uppercase tracking-widest cursor-pointer hover:scale-[1.01]"
+                      style={{
+                        clipPath: CUT_BUTTON,
+                        backgroundColor: campeonato.themeColor || '#FFB700',
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Abrir Documento Oficial em Nova Aba</span>
+                    </a>
+                  );
+                })()}
 
                 <button
                   onClick={() => onClose()}

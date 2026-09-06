@@ -341,7 +341,8 @@ export default function AdminPanel() {
             bannerUrl: formData.bannerUrl,
             orgPhotoUrl: formData.orgPhotoUrl,
             organizacao: formData.organizacao,
-            themeColor: formData.themeColor
+            themeColor: formData.themeColor,
+            regulamento: formData.regulamento,
           } 
         : t
     );
@@ -369,7 +370,8 @@ export default function AdminPanel() {
         bannerUrl: formData.bannerUrl,
         orgPhotoUrl: formData.orgPhotoUrl,
         organizacao: formData.organizacao,
-        themeColor: formData.themeColor
+        themeColor: formData.themeColor,
+        regulamento: formData.regulamento,
       } : null);
     }
     setIsEditModalOpen(false);
@@ -1515,6 +1517,21 @@ export default function AdminPanel() {
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Prêmio em dinheiro</p>
                       </div>
                       <input name="premiacao" value={formData.premiacao} onChange={handleInputChange} className="w-full sm:w-48 bg-white border border-slate-200 rounded-xl px-4 py-2 focus:border-teal-500 outline-none font-bold text-xs text-teal-600" />
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight">Link do Regulamento</h4>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">URL do documento / regras (abre em nova aba)</p>
+                      </div>
+                      <input 
+                        type="url"
+                        name="regulamento" 
+                        value={formData.regulamento || ''} 
+                        onChange={handleInputChange} 
+                        placeholder="Ex: https://docs.google.com/document/d/..." 
+                        className="w-full sm:w-64 bg-white border border-slate-200 rounded-xl px-4 py-2 focus:border-teal-500 outline-none font-bold text-xs shadow-sm" 
+                      />
                     </div>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
