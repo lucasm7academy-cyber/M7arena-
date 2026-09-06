@@ -20,7 +20,8 @@ function origemHost(req: Request): string {
   // que o app enviou, então ela precisa acompanhar o domínio de quem acessa —
   // em vez de fixar uma única no .env (que quebra os outros domínios).
   const proto = req.protocol === "http" ? "http" : "https";
-  return `${proto}://${req.get("host")}`;
+  const host = req.get("host") || "m7arena.pro";
+  return `${proto}://${host}`;
 }
 
 function config(req: Request) {
@@ -34,7 +35,11 @@ function config(req: Request) {
 }
 
 function appUrl(req: Request) {
-  return process.env.APP_URL || origemHost(req);
+  const host = origemHost(req);
+  if (host && !host.includes("undefined")) {
+    return host;
+  }
+  return process.env.APP_URL || "https://m7arena.pro";
 }
 
 /**
@@ -80,13 +85,21 @@ googleAuthRouter.get("/google", (req, res) => {
  */
 googleAuthRouter.get("/google/callback", async (req, res) => {
   const { clientId, clientSecret, redirectUri } = config(req);
-  const falhar = (motivo: string) =>
-    res.redirect(`${appUrl(req)}/login?erro=${encodeURIComponent(motivo)}`);
+  const falhar = (motivo: string) => {
+    console.warn(`[auth-google] Falha no login Google: ${motivo}`);
+    return res.redirect(`${appUrl(req)}/login?erro=${encodeURIComponent(motivo)}`);
+  };
 
   try {
     if (!clientId || !clientSecret) return falhar("google_nao_configurado");
 
-    const { code, state } = req.query as { code?: string; state?: string };
+    const { code, state, error: googleError } = req.query as {
+      code?: string;
+      state?: string;
+      error?: string;
+    };
+    if (googleError) return falhar(googleError);
+
     const stateEsperado = req.cookies?.[STATE_COOKIE];
     res.clearCookie(STATE_COOKIE, { path: "/" });
 

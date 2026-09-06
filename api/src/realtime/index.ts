@@ -57,7 +57,7 @@ for (const o of (process.env.APP_URL || "http://localhost:3000").split(",")) {
   if (t) allowedOrigins.add(t);
 }
 // Domínios de produção (cutover) — APP_URL fica única (Google OAuth/OG).
-for (const o of ["https://m7arena.pro", "https://www.m7arena.pro"]) {
+for (const o of ["https://m7arena.pro", "https://www.m7arena.pro", "https://dev.m7arena.pro"]) {
   allowedOrigins.add(o);
 }
 

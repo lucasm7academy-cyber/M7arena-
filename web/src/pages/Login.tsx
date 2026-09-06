@@ -32,6 +32,16 @@ export default function Login() {
     }
   }, [user, navigate]);
 
+  // ── Captura erro de OAuth vindo da URL (?erro=...) ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const erro = params.get('erro');
+    if (erro) {
+      showError(erro);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // ── Ações ─────────────────────────────────────────
   /**
    * O OAuth passou a ser resolvido inteiramente no servidor (ADR-011): o
@@ -78,6 +88,14 @@ export default function Login() {
     if (msg.includes('Password should be at least')) return 'A senha deve ter pelo menos 6 caracteres.';
     if (msg.includes('Unable to validate email')) return 'E-mail inválido.';
     if (msg.includes('Email rate limit exceeded')) return 'Muitas tentativas. Aguarde.';
+    if (msg.includes('access_denied')) return 'Acesso cancelado ou não autorizado pelo Google.';
+    if (msg.includes('google_nao_configurado')) return 'Login com Google não configurado no servidor.';
+    if (msg.includes('codigo_ausente')) return 'Código de autorização não recebido do Google.';
+    if (msg.includes('state_invalido')) return 'Sessão de autenticação expirada. Tente novamente.';
+    if (msg.includes('falha_token_google')) return 'Falha na autenticação com o Google.';
+    if (msg.includes('falha_perfil_google')) return 'Não foi possível carregar dados do perfil Google.';
+    if (msg.includes('google_sem_email')) return 'Conta Google sem e-mail associado.';
+    if (msg.includes('erro_inesperado')) return 'Erro inesperado ao realizar login com Google.';
     return msg;
   };
 
