@@ -260,23 +260,53 @@ export const FormCriarCampeonato = ({
             </motion.div>
           )}
 
-          <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-100/50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-teal-600">
-                <Diamond size={24} />
+          <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4 hover:bg-slate-100/50 transition-colors">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-teal-600">
+                  <Diamond size={24} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Restrição / Limite de Elo</h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Free Elo ou Teto Máximo de Pontos</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Tier / Categoria</h4>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nível de habilidade exigido</p>
-              </div>
+              <input
+                type="text"
+                name="tier"
+                value={formData.tier}
+                onChange={handleInputChange}
+                placeholder="Ex: Free Elo ou 300 Pontos"
+                className="w-full md:w-72 bg-white border border-slate-200 rounded-2xl px-6 py-4 focus:outline-none focus:border-teal-500 font-bold text-sm shadow-sm"
+              />
             </div>
-            <select name="tier" value={formData.tier} onChange={handleInputChange} className="w-full md:w-64 bg-white border border-slate-200 rounded-2xl px-6 py-4 focus:outline-none focus:border-teal-500 font-bold text-sm cursor-pointer shadow-sm">
-              <option value="Free Elo">Free Elo</option>
-              <option value="Tier I">Tier 1</option>
-              <option value="Tier II">Tier 2</option>
-              <option value="Tier III">Tier 3</option>
-              <option value="Tier IV">Tier 4</option>
-            </select>
+
+            {/* Presets rápidos */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/60">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Presets Rápidos:</span>
+              {[
+                'Free Elo',
+                '300 Pontos',
+                '500 Pontos',
+                '700 Pontos',
+                '1000 Pontos',
+                'Tier I',
+                'Tier II',
+              ].map(preset => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setFormData((prev: any) => ({ ...prev, tier: preset }))}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                    formData.tier === preset
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300 hover:text-teal-700'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-100/50 transition-colors">

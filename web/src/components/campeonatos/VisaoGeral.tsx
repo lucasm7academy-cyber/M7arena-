@@ -75,7 +75,9 @@ export const VisaoGeral = ({
           </div>
         </div>
         <div>
-          <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">Tier</h4>
+          <h4 className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+            {(campeonato.tier || "").toLowerCase().includes("ponto") ? "Limite de Pontos" : "Tier"}
+          </h4>
           <p className="text-sm font-bold text-white/80">{campeonato.tier || "Free Elo"}</p>
         </div>
       </div>

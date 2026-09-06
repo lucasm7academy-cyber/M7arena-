@@ -1463,17 +1463,42 @@ export default function AdminPanel() {
                       </div>
                     )}
 
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight">Tier</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Nível de habilidade</p>
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight">Restrição / Limite de Elo</h4>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Free Elo ou Teto de Pontos</p>
+                        </div>
+                        <input
+                          type="text"
+                          name="tier"
+                          value={formData.tier}
+                          onChange={handleInputChange}
+                          placeholder="Ex: Free Elo ou 300 Pontos"
+                          className="w-full sm:w-56 bg-white border border-slate-200 rounded-xl px-4 py-2 focus:border-teal-500 outline-none font-bold text-xs shadow-sm"
+                        />
                       </div>
-                      <select name="tier" value={formData.tier} onChange={handleInputChange} className="w-full sm:w-48 bg-white border border-slate-200 rounded-xl px-4 py-2 focus:border-teal-500 outline-none font-bold text-xs appearance-none cursor-pointer">
-                        <option value="Free Elo">Free Elo</option>
-                        <option value="Tier I">Tier I</option>
-                        <option value="Tier II">Tier II</option>
-                        <option value="Tier III">Tier III</option>
-                      </select>
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/60">
+                        {['Free Elo', '300 Pontos', '500 Pontos', '700 Pontos', '1000 Pontos'].map(preset => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, tier: preset }));
+                              if (selectedTournament) {
+                                setSelectedTournament(prev => prev ? { ...prev, tier: preset } : null);
+                              }
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                              formData.tier === preset
+                                ? 'bg-teal-600 text-white'
+                                : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'
+                            }`}
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

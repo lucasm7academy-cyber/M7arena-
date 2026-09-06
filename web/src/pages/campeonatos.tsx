@@ -537,7 +537,11 @@ const Campeonatos = () => {
                               </div>
                               <div className="flex items-center gap-3 text-white/60">
                                 <Diamond size={20} color="#14b8a6" />
-                                <span className="text-base font-medium">Tier: {(card as any).tier || 'Free Elo'}</span>
+                                <span className="text-base font-medium">
+                                  {((card as any).tier || '').toLowerCase().includes('ponto')
+                                    ? `Limite: ${(card as any).tier}`
+                                    : `Tier: ${(card as any).tier || 'Free Elo'}`}
+                                </span>
                               </div>
                               <div className="flex items-center gap-3 text-white/60">
                                 <Users className="w-5 h-5 text-blue-400/70" strokeWidth={1.5} />
