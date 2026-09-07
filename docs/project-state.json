@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-07T20:15:11.749Z",
+  "updatedAt": "2026-09-07T20:16:41.252Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1938,14 +1938,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-30T18:00:47.686Z",
-      "agent": "deepseek",
-      "summary": "Ajuste no layout da Visão Geral do campeonato: a Classificação voltou para a COLUNA PRINCIPAL (left, maior largura) e, na LATERAL (direita), empilhados: Informações → Responsável → Regulamento (mobile) → Inscrição. Na viewport pequena (mobile) tudo empilha (grid-cols-1). Tudo dentro da aba Visão Geral. Validação: web tsc exit 0, vite build exit 0. Commit 3226b25, push origin feat/redesign-modais, fast-forward main VPS, docker compose up -d --build nginx recriado, https://dev.m7arena.pro/ 200. Aguardando usuário conferir novo layout em /campeonato/:id.",
-      "touched": [
-        "web/src/components/campeonatos/VisaoGeral.tsx"
-      ]
-    },
-    {
       "at": "2026-08-30T18:29:13.526Z",
       "agent": "deepseek",
       "summary": "Salvo no status: ADR-048 (mecanismo), ADR-049 (regras) e componente app.campeonato.verificacao-serie atualizado com o 'como funciona'. Rodada: (1) Backend de verificação de série via código Riot deployado — motor serie-campeonato.ts (vencedor por jogada pelo roster, conta vitórias MD3/MD5, irregular se jogou fora), migration 0021, cron varre em_andamento, endpoints gerar-codigo/verificar, shape. 127/127 testes, tsc 0, health 200. (2) Refactor layout CampeonatoDetalhes: bloco único full-width (abas largura total); Info/Resp/inscrição/regulamento-mobile dentro da Visão Geral; depois ajustado — Classificação na coluna principal e Info→Resp→Inscrição na lateral (grid lg:grid-cols-3). web tsc 0, build 0. Commits: 840a758 (backend), b627642 (layout), 3226b25 (visão geral). Deploy VPS (app p/ backend, nginx p/ front). PENDENTE: front da verificação (aba Histórico stats, botão gerar-código, badge irregular) e validação visual do usuário.",
@@ -2283,6 +2275,14 @@
       "at": "2026-09-07T20:15:11.749Z",
       "agent": "gemini",
       "summary": "Aplicado corte cut-edge apenas no Hero Banner da tela de campeonato com borda solida na cor do tema, e removido o titulo CAMPEONATO OFICIAL M7 ARENA do topo do banner. Todo o restante da tela permanece com o design arredondado normal.",
+      "touched": [
+        "web.campeonatos"
+      ]
+    },
+    {
+      "at": "2026-09-07T20:16:41.252Z",
+      "agent": "gemini",
+      "summary": "Card da foto do responsavel/organizador alterado para proporcao 1:1 quadrada (aspect-square) com cantos arredondados (rounded-2xl).",
       "touched": [
         "web.campeonatos"
       ]
