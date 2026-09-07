@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-07T20:09:45.653Z",
+  "updatedAt": "2026-09-07T20:15:11.749Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1938,15 +1938,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-30T17:55:38.947Z",
-      "agent": "deepseek",
-      "summary": "Refactor de layout do CampeonatoDetalhes: a página deixou de ter grid de 2 colunas (abas lg:col-span-2 + lateral sticky) e virou um BLOCO ÚNICO full-width. A barra de abas ocupa a largura total do body, e os cards Informações + Responsável + botão de inscrição + botão Regulamento (mobile) foram movidos para DENTRO da aba Visão Geral, que agora é o bloco que reúne classificação + informações + responsável + inscrição. Banner/hero e botão Regulamento do topo preservados (não mudaram). Limpei imports ociosos do CampeonatoDetalhes (Coins/CreditCard/Calendar/Diamond/Users/ShieldCheck/UserCheck/Trophy/AlertCircle movidos à VisaoGeral). Validação: web tsc exit 0, vite build exit 0. Commit b627642, push origin feat/redesign-modais, fast-forward main na VPS, docker compose up -d --build nginx recriado, https://dev.m7arena.pro/ 200 e /api/health 200. Aguardando usuário validar visualmente o novo layout no /campeonato/:id (criou que o bloco único esteja como esperado e nada quebrou).",
-      "touched": [
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/components/campeonatos/VisaoGeral.tsx"
-      ]
-    },
-    {
       "at": "2026-08-30T18:00:47.686Z",
       "agent": "deepseek",
       "summary": "Ajuste no layout da Visão Geral do campeonato: a Classificação voltou para a COLUNA PRINCIPAL (left, maior largura) e, na LATERAL (direita), empilhados: Informações → Responsável → Regulamento (mobile) → Inscrição. Na viewport pequena (mobile) tudo empilha (grid-cols-1). Tudo dentro da aba Visão Geral. Validação: web tsc exit 0, vite build exit 0. Commit 3226b25, push origin feat/redesign-modais, fast-forward main VPS, docker compose up -d --build nginx recriado, https://dev.m7arena.pro/ 200. Aguardando usuário conferir novo layout em /campeonato/:id.",
@@ -2286,6 +2277,14 @@
       "touched": [
         "web.campeonatos",
         "web.modais"
+      ]
+    },
+    {
+      "at": "2026-09-07T20:15:11.749Z",
+      "agent": "gemini",
+      "summary": "Aplicado corte cut-edge apenas no Hero Banner da tela de campeonato com borda solida na cor do tema, e removido o titulo CAMPEONATO OFICIAL M7 ARENA do topo do banner. Todo o restante da tela permanece com o design arredondado normal.",
+      "touched": [
+        "web.campeonatos"
       ]
     }
   ]

@@ -10,6 +10,7 @@ import {
   GitBranch,
   X,
 } from "lucide-react";
+import { CUT_FRAME, CUT_FRAME_INNER } from "../components/campeonatos/cut-edge";
 
 import { getIcon } from "../components/campeonatos/icons";
 import { formatDayOfWeek, formatFullDate, formatDate } from "../components/campeonatos/dates";
@@ -168,55 +169,55 @@ const CampeonatoDetalhesInner = ({
 
         {/* HERO SECTION */}
         <div
-          className="relative w-full rounded-2xl border-2 overflow-hidden bg-[#08080a] shadow-2xl transition-all min-h-[250px] flex flex-col justify-end"
+          className="relative p-[2px] w-full shadow-2xl transition-all"
           style={{
-            borderColor: campeonato.themeColor || '#FFB700',
+            clipPath: CUT_FRAME,
+            background: campeonato.themeColor || '#FFB700',
             boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
           }}
         >
-          {/* Hero Image */}
           <div
-            className="absolute inset-0 z-0 bg-cover bg-center opacity-40"
-            style={{
-              backgroundImage: `url(${campeonato.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
-            }}
-          />
-          <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#08080a] via-[#08080a]/60 to-transparent" />
+            className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col justify-end min-h-[250px]"
+            style={{ clipPath: CUT_FRAME_INNER }}
+          >
+            {/* Hero Image */}
+            <div
+              className="absolute inset-0 z-0 bg-cover bg-center opacity-40"
+              style={{
+                backgroundImage: `url(${campeonato.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
+              }}
+            />
+            <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#08080a] via-[#08080a]/60 to-transparent" />
 
-          <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-end md:justify-between gap-8 pt-24 pb-6 md:py-10">
-            <div className="space-y-4 max-w-3xl">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-px" style={{ backgroundColor: campeonato.themeColor || '#FFB700' }} />
-                <span className="text-[10px] md:text-sm font-black uppercase tracking-[0.3em]" style={{ color: campeonato.themeColor || '#FFB700' }}>
-                  CAMPEONATO OFICIAL • M7 ARENA
-                </span>
+            <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-end md:justify-between gap-8 pt-24 pb-6 md:py-10">
+              <div className="space-y-4 max-w-3xl">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white">
+                  {campeonato.titulo || campeonato.nome || campeonato.name}
+                </h1>
+
+                {campeonato.descricao && (
+                  <p className="text-white/60 text-xs sm:text-sm md:text-base font-medium leading-relaxed max-w-2xl">
+                    {campeonato.descricao}
+                  </p>
+                )}
               </div>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white">
-                {campeonato.titulo || campeonato.nome || campeonato.name}
-              </h1>
 
-              {campeonato.descricao && (
-                <p className="text-white/60 text-xs sm:text-sm md:text-base font-medium leading-relaxed max-w-2xl">
-                  {campeonato.descricao}
-                </p>
-              )}
-            </div>
-
-            <div className="hidden md:flex flex-col gap-4 w-full md:w-auto shrink-0 items-center">
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={handleAbrirRegulamento}
-                  className="relative w-14 h-14 rounded-xl border border-white/10 bg-[#0c0c10] hover:border-white/20 group transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,183,0,0.15)] flex items-center justify-center"
-                  title="Regulamento"
-                >
-                  <FileText
-                    className="w-6 h-6 group-hover:scale-110 transition-transform"
-                    style={{ color: campeonato.themeColor || '#FFB700' }}
-                  />
-                </button>
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                  Regulamento
-                </span>
+              <div className="hidden md:flex flex-col gap-4 w-full md:w-auto shrink-0 items-center">
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    onClick={handleAbrirRegulamento}
+                    className="relative w-14 h-14 rounded-xl border border-white/10 bg-[#0c0c10] hover:border-white/20 group transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,183,0,0.15)] flex items-center justify-center"
+                    title="Regulamento"
+                  >
+                    <FileText
+                      className="w-6 h-6 group-hover:scale-110 transition-transform"
+                      style={{ color: campeonato.themeColor || '#FFB700' }}
+                    />
+                  </button>
+                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                    Regulamento
+                  </span>
+                </div>
               </div>
             </div>
           </div>
