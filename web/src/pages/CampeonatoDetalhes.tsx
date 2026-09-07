@@ -181,7 +181,7 @@ const CampeonatoDetalhesInner = ({
           className="relative p-[1.5px] w-full shadow-2xl transition-all"
           style={{
             clipPath: CUT_FRAME,
-            background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, ${campeonato.themeColor || '#FFB700'}40 50%, rgba(255,255,255,0.08) 100%)`,
+            background: campeonato.themeColor || '#FFB700',
             boxShadow: `0 0 50px -10px ${campeonato.themeColor || '#FFB700'}33`
           }}
         >
