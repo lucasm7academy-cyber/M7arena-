@@ -425,6 +425,9 @@ teamsRouter.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Time não encontrado" });
     }
 
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isProprietario = roles.some((r) => r.role === "proprietario");
+
     const isOwner = team.ownerId === user.id;
     const [cap] = await db
       .select()
@@ -432,8 +435,8 @@ teamsRouter.put("/:id", async (req, res) => {
       .where(and(eq(teamMembers.teamId, id), eq(teamMembers.isCaptain, true)))
       .limit(1);
     const isCaptain = !isOwner && Boolean(cap && cap.userId === user.id);
-    if (!isOwner && !isCaptain) {
-      return res.status(403).json({ error: "Apenas o dono ou capitão pode editar o time" });
+    if (!isOwner && !isCaptain && !isProprietario) {
+      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode editar o time" });
     }
 
     const { nome, tag, logo_url, gradient_from, gradient_to, whatsapp, discord } = req.body;
@@ -620,9 +623,11 @@ teamsRouter.post("/invites/:id/accept", async (req, res) => {
         .from(teamMembers)
         .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.isCaptain, true)))
         .limit(1);
-      const canManage = team.ownerId === user.id || (cap && cap.userId === user.id);
+      const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+      const isProprietario = roles.some((r) => r.role === "proprietario");
+      const canManage = team.ownerId === user.id || (cap && cap.userId === user.id) || isProprietario;
       if (!canManage) {
-        return res.status(403).json({ error: "Apenas o dono ou capitão pode aceitar solicitações" });
+        return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode aceitar solicitações" });
       }
     }
 
@@ -695,8 +700,12 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
       .from(teamMembers)
       .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.isCaptain, true)))
       .limit(1);
-    if (!isOwner && !cap) {
-      return res.status(403).json({ error: "Apenas o dono ou capitão pode editar o lineup" });
+
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isProprietario = roles.some((r) => r.role === "proprietario");
+
+    if (!isOwner && !cap && !isProprietario) {
+      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode editar o lineup" });
     }
 
     const membros = Array.isArray(req.body?.p_membros) ? req.body.p_membros : Array.isArray(req.body?.membros) ? req.body.membros : [];

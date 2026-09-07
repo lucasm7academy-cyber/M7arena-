@@ -161,7 +161,7 @@ const CampeonatoDetalhesInner = ({
         {/* Top Navigation */}
         <button
           onClick={() => navigate("/campeonatos")}
-          className="group flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-[#08080a] text-white/60 hover:text-white hover:border-white/20 font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 cursor-pointer inline-block"
+          className="group flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/10 bg-[#08080a] text-white/60 hover:text-white hover:border-white/20 font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 cursor-pointer inline-block"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform inline" />
           <span>Voltar para Campeonatos</span>
@@ -206,7 +206,7 @@ const CampeonatoDetalhesInner = ({
                 <div className="flex flex-col items-center gap-2">
                   <button
                     onClick={handleAbrirRegulamento}
-                    className="relative w-14 h-14 rounded-xl border border-white/10 bg-[#0c0c10] hover:border-white/20 group transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,183,0,0.15)] flex items-center justify-center"
+                    className="relative w-14 h-14 rounded-lg border border-white/10 bg-[#0c0c10] hover:border-white/20 group transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,183,0,0.15)] flex items-center justify-center"
                     title="Regulamento"
                   >
                     <FileText
@@ -226,7 +226,7 @@ const CampeonatoDetalhesInner = ({
         {/* MAIN GRID — bloco único full-width */}
         <div className="w-full space-y-8">
             {/* CONTENT TABS */}
-            <div className="w-full p-1.5 bg-[#08080a] border border-white/10 rounded-xl flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="w-full p-1.5 bg-[#08080a] border border-white/10 rounded-lg flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -234,7 +234,7 @@ const CampeonatoDetalhesInner = ({
                   <button
                     key={tab.id}
                     onClick={() => handleTabClick(tab.id)}
-                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex-none sm:flex-1 ${
+                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-md text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex-none sm:flex-1 ${
                       isActive
                         ? 'bg-white/10 text-white shadow-sm'
                         : 'text-white/40 hover:text-white/80 hover:bg-white/5'
@@ -280,9 +280,9 @@ const CampeonatoDetalhesInner = ({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Identidade Visual */}
-                    <div className="w-full rounded-2xl border border-white/10 bg-[#08080a] p-6 sm:p-8 space-y-6 shadow-2xl">
+                    <div className="w-full rounded-xl border border-white/10 bg-[#08080a] p-6 sm:p-8 space-y-6 shadow-2xl">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                           <Sparkles
                             className="w-6 h-6"
                             style={{ color: "#00FFD4" }}
@@ -340,9 +340,9 @@ const CampeonatoDetalhesInner = ({
                     </div>
 
                     {/* Card: Gestão do Chaveamento */}
-                    <div className="w-full rounded-2xl border border-white/10 bg-[#08080a] p-6 sm:p-8 space-y-6 shadow-2xl md:col-span-2">
+                    <div className="w-full rounded-xl border border-white/10 bg-[#08080a] p-6 sm:p-8 space-y-6 shadow-2xl md:col-span-2">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                           <GitBranch className="w-6 h-6" style={{ color: campeonato.themeColor }} />
                         </div>
                         <div>

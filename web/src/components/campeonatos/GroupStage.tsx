@@ -1,4 +1,5 @@
-﻿import { Trophy, ShieldCheck } from "lucide-react";
+import { Trophy, ShieldCheck } from "lucide-react";
+import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 export const GroupStage = ({ tournament }: { tournament: any }) => {
   const classificados = tournament.classificadosPorGrupo || 2;
@@ -81,7 +82,7 @@ export const GroupStage = ({ tournament }: { tournament: any }) => {
       {groups.map((group: any, idx: number) => (
         <div
           key={idx}
-          className="w-full rounded-2xl border border-white/10 bg-[#08080a] overflow-hidden shadow-2xl flex flex-col"
+          className="w-full rounded-xl border border-white/10 bg-[#08080a] overflow-hidden shadow-2xl flex flex-col"
         >
           <div className="bg-[#0c0c10] px-6 py-4 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -121,7 +122,7 @@ export const GroupStage = ({ tournament }: { tournament: any }) => {
                         {tIdx + 1}
                       </span>
                       <div className="flex items-center gap-3 truncate">
-                        <div className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-7 h-7 rounded-md border border-white/10 bg-black flex items-center justify-center overflow-hidden shrink-0">
                           {team.logo ? (
                             <img
                               src={team.logo} loading="lazy"
@@ -131,12 +132,24 @@ export const GroupStage = ({ tournament }: { tournament: any }) => {
                             <ShieldCheck className="w-3.5 h-3.5 text-white/20" />
                           )}
                         </div>
-                        <span className="text-white uppercase truncate max-w-[120px]">
-                          {team.name}{" "}
-                          <span className="text-[9px] text-white/20 ml-1">
-                            [{team.tag}]
+                        <div className="flex items-center gap-2 truncate max-w-[140px]">
+                          <span className="text-white uppercase truncate">
+                            {team.name}
                           </span>
-                        </span>
+                          {team.tag && (
+                            <div
+                              className="p-[1px] shrink-0"
+                              style={{ clipPath: CUT_BADGE, background: `${tournament.themeColor || "#FFB700"}80` }}
+                            >
+                              <div
+                                className="text-[8px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                                style={{ clipPath: CUT_BADGE_INNER, color: tournament.themeColor || "#FFB700" }}
+                              >
+                                #{team.tag}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td

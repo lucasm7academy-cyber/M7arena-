@@ -12,7 +12,7 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
       exit={{ opacity: 0, y: -10 }}
       className="w-full"
     >
-      <div className="w-full rounded-2xl border border-white/10 bg-[#060608] shadow-2xl h-[70vh] min-h-[500px] flex flex-col overflow-hidden">
+      <div className="w-full rounded-xl border border-white/10 bg-[#060608] shadow-2xl h-[70vh] min-h-[500px] flex flex-col overflow-hidden">
         <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between bg-[#0c0c10]">
           <div>
             <h2
@@ -27,7 +27,7 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
           </div>
           <button
             onClick={() => setIsBracketModalOpen(true)}
-            className="w-10 h-10 rounded-xl border border-white/10 bg-[#08080a] flex items-center justify-center transition-all cursor-pointer group text-white/40 hover:text-white hover:border-white/20"
+            className="w-10 h-10 rounded-lg border border-white/10 bg-[#08080a] flex items-center justify-center transition-all cursor-pointer group text-white/40 hover:text-white hover:border-white/20"
             title="Ver em Tela Cheia"
           >
             <Eye

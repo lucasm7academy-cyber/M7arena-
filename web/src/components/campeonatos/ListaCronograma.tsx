@@ -16,6 +16,7 @@ import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { api } from "../../lib/api";
 import { getIcon } from "./icons";
 import { formatDayOfWeek, formatFullDate } from "./dates";
+import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 function parseMatchDateTime(dateStr?: string | null, timeStr?: string | null): Date | null {
   if (!dateStr || dateStr === "A COMBINAR" || dateStr === "A definir") return null;
@@ -112,11 +113,11 @@ export const ListaCronograma = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="w-full rounded-2xl border border-white/10 bg-[#08080a] p-4 sm:p-6 space-y-6 shadow-2xl"
+      className="w-full rounded-xl border border-white/10 bg-[#08080a] p-4 sm:p-6 space-y-6 shadow-2xl"
     >
       <div className="flex items-center justify-between border-b border-white/5 pb-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
             <Calendar className="w-6 h-6" style={{ color: campeonato.themeColor }} />
           </div>
           <div>
@@ -135,7 +136,7 @@ export const ListaCronograma = () => {
 
       <div className="space-y-3">
         {filteredCronograma.length === 0 ? (
-          <div className="py-16 text-center bg-white/[0.01] border border-dashed border-white/10 rounded-xl">
+          <div className="py-16 text-center bg-white/[0.01] border border-dashed border-white/10 rounded-lg">
             <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
               Nenhum jogo confirmado ou finalizado no momento
             </p>
@@ -247,7 +248,7 @@ export const ListaCronograma = () => {
                       setIsScheduleEditModalOpen(true);
                     }
                   }}
-                  className={`w-full p-3.5 lg:p-4 rounded-xl border bg-[#0c0c10] flex flex-col lg:flex-row items-center justify-between gap-4 transition-all hover:scale-[1.003] ${
+                  className={`w-full p-3.5 lg:p-4 rounded-lg border bg-[#0c0c10] flex flex-col lg:flex-row items-center justify-between gap-4 transition-all hover:scale-[1.003] ${
                     isAdmin && jogo.status === "finalizado" ? "cursor-pointer hover:bg-[#101018]" : canUserEdit && jogo.status !== "finalizado" ? "cursor-pointer hover:bg-[#101018]" : ""
                   }`}
                   style={{
@@ -291,7 +292,7 @@ export const ListaCronograma = () => {
                     {/* Team A */}
                     <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
                       <div
-                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-xl overflow-hidden bg-black"
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-md border flex items-center justify-center shrink-0 shadow-xl overflow-hidden bg-black"
                         style={{ borderColor: `${corA}80` }}
                       >
                         {timeA.logo ? (
@@ -306,12 +307,24 @@ export const ListaCronograma = () => {
                           />
                         )}
                       </div>
-                      <div className="text-center w-full">
-                        <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
-                          {timeA.tag
-                            ? `#${timeA.tag}`
-                            : timeA.name || timeA.nome}
-                        </p>
+                      <div className="text-center w-full flex flex-col items-center">
+                        {timeA.tag ? (
+                          <div
+                            className="p-[1px] shrink-0"
+                            style={{ clipPath: CUT_BADGE, background: `${corA}80` }}
+                          >
+                            <div
+                              className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                              style={{ clipPath: CUT_BADGE_INNER, color: corA }}
+                            >
+                              #{timeA.tag}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                            {timeA.name || timeA.nome}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -428,7 +441,7 @@ export const ListaCronograma = () => {
                     {/* Team B */}
                     <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
                       <div
-                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-xl overflow-hidden bg-black"
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-md border flex items-center justify-center shrink-0 shadow-xl overflow-hidden bg-black"
                         style={{ borderColor: `${corB}80` }}
                       >
                         {timeB.logo ? (
@@ -443,12 +456,24 @@ export const ListaCronograma = () => {
                           />
                         )}
                       </div>
-                      <div className="text-center w-full">
-                        <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
-                          {timeB.tag
-                            ? `#${timeB.tag}`
-                            : timeB.name || timeB.nome}
-                        </p>
+                      <div className="text-center w-full flex flex-col items-center">
+                        {timeB.tag ? (
+                          <div
+                            className="p-[1px] shrink-0"
+                            style={{ clipPath: CUT_BADGE, background: `${corB}80` }}
+                          >
+                            <div
+                              className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                              style={{ clipPath: CUT_BADGE_INNER, color: corB }}
+                            >
+                              #{timeB.tag}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                            {timeB.name || timeB.nome}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

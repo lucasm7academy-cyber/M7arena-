@@ -1,5 +1,6 @@
-﻿import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { History, ChevronLeft } from "lucide-react";
+import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 export const Historico = ({ campeonato, expandedTeam, setExpandedTeam }: any) => {
   return (
@@ -10,9 +11,9 @@ export const Historico = ({ campeonato, expandedTeam, setExpandedTeam }: any) =>
       exit={{ opacity: 0, y: -10 }}
       className="w-full"
     >
-      <div className="w-full rounded-2xl border border-white/10 bg-[#08080a] p-4 sm:p-6 shadow-2xl">
+      <div className="w-full rounded-xl border border-white/10 bg-[#08080a] p-4 sm:p-6 shadow-2xl">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
             <History className="w-6 h-6" style={{ color: campeonato.themeColor }} />
           </div>
           <div>
@@ -32,7 +33,7 @@ export const Historico = ({ campeonato, expandedTeam, setExpandedTeam }: any) =>
           {(campeonato.classificacao || []).map((time: any, idx: number) => (
             <div
               key={idx}
-              className="w-full rounded-xl border border-white/10 bg-[#0c0c10] overflow-hidden transition-all"
+              className="w-full rounded-lg border border-white/10 bg-[#0c0c10] overflow-hidden transition-all"
               style={expandedTeam === time.nome ? { borderColor: `${campeonato.themeColor || '#FFB700'}66` } : undefined}
             >
               <button
@@ -49,11 +50,21 @@ export const Historico = ({ campeonato, expandedTeam, setExpandedTeam }: any) =>
                   </span>
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">
-                        {time.nome}{" "}
-                        <span className="text-[10px] text-white/40 ml-2">
-                          [{time.tag}]
-                        </span>
+                      <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                        <span>{time.nome}</span>
+                        {time.tag && (
+                          <div
+                            className="p-[1px] shrink-0"
+                            style={{ clipPath: CUT_BADGE, background: `${time.cor || campeonato.themeColor || "#FFB700"}80` }}
+                          >
+                            <div
+                              className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                              style={{ clipPath: CUT_BADGE_INNER, color: time.cor || campeonato.themeColor || "#FFB700" }}
+                            >
+                              #{time.tag}
+                            </div>
+                          </div>
+                        )}
                       </h3>
                     </div>
                   </div>

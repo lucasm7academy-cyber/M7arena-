@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { usePerfil } from '../contexts/PerfilContext';
 import { buildProfileIconUrl, buscarJogadorCompleto } from '../api/riot';
 import { useSound } from '../hooks/useSound';
 import { AnimatePresence as AP } from 'motion/react';
@@ -1443,6 +1444,7 @@ export default function TimePage() {
   const navigate  = useNavigate();
   const { playSound } = useSound();
   const { user } = useAuth();
+  const { perfil } = usePerfil();
 
   const [time,    setTime]    = useState<TimeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1535,7 +1537,8 @@ export default function TimePage() {
       // (ex: se colocou a si mesmo como reserva).
       const membro = membrosRaw.find(m => m.userId === uid);
       const isDono = t.dono_id === uid;
-      if (membro?.isLeader || isDono) {
+      const isProprietario = perfil?.cargo === 'proprietario';
+      if (membro?.isLeader || isDono || isProprietario) {
         role = 'leader';
       } else if (membro) {
         role = 'member';
