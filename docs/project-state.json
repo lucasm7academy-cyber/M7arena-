@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-07T20:49:10.181Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-09-07T20:52:43.518Z",
+  "updatedBy": "antigravity",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -1947,16 +1947,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-31T01:38:40.964Z",
-      "agent": "deepseek",
-      "summary": "Aposta individual refinada segundo feedback: tela cheia com sidebar (isSalaPage no LayoutWrapper -> isGamePage, hamburger ativo), cards arredondados (removidos clipPath do ItemMercado e da pagina), icone do jogador corrigido (buildProfileIconUrl .jpg + referrerPolicy no-referrer, fallback quando iconId ausente), e fluxo em 2 etapas: escolher fila Solo Duo/Flex em cards com fundo do LoL, depois do clique libera os mercados de aposta. Deploy: commit 44a17eb -> origin feat/redesign-modais -> merge ff main VPS -> compose up --build nginx. chunk novo publicado. Validado: web tsc 0, vite build 7.00s, site 200. Contas Riot verificadas tem profile_icon_id no metadata (191/191). Pronto para validar.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/components/partidas/ItemMercado.tsx",
-        "web/src/pages/ApostaIndividualPage.tsx"
-      ]
-    },
-    {
       "at": "2026-08-31T01:58:57.429Z",
       "agent": "deepseek",
       "summary": "Implementei as 3 mudancas pedidas na aposta individual. 1) Mercados mutuamente exclusivos por grupo: validarBilhete (API) rejeita 2+ mercados do mesmo grupo com erro mercados_conflitantes (Vitoria OU Derrota; uma faixa de kills so; First Blood unico) — teste novo; no front, ao selecionar um mercado, os demais do mesmo grupo sao desmarcados. 2) Modal de confirmacao antes de apostar ('Voce realmente deseja realizar ou aceitar o desafio?') com resumo do bilhete (fila, mercados, total e retorno). 3) Cancelamento: so aparece botao Cancelar enquanto bilhete esta 'aguardando'; quando 'em_jogo' (partida comecou) o botao some e mostra aviso de que a aposta esta travada. Deploy: commit 8606aeb -> origin feat/redesign-modais -> merge ff main VPS -> compose up --build app nginx. health 200, site 200, /aposta-individual 200. ta blz pra validar.",
@@ -2269,6 +2259,12 @@
         "web/src/components/campeonatos/Chaves.tsx",
         "web/src/components/campeonatos/AdminCriarJogo.tsx"
       ]
+    },
+    {
+      "at": "2026-09-07T20:52:43.518Z",
+      "agent": "antigravity",
+      "summary": "Corrigido o upload de logo para permitir também contas com o cargo 'proprietario', além de dono e capitão.",
+      "touched": []
     }
   ]
 }

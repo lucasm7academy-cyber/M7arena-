@@ -170,8 +170,11 @@ export async function validarPermissaoBucketPublico(
       .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.isCaptain, true)))
       .limit(1);
     const isCaptain = !isOwner && Boolean(cap && cap.userId === userId);
-    if (!isOwner && !isCaptain) {
-      return { ok: false, status: 403, erro: "Apenas o dono ou capitão do time pode enviar a logo." };
+    const roles = await getRoles(db, userId);
+    const isProprietario = roles.some((r) => r === "proprietario");
+
+    if (!isOwner && !isCaptain && !isProprietario) {
+      return { ok: false, status: 403, erro: "Apenas o dono, capitão ou proprietário do time pode enviar a logo." };
     }
     return { ok: true };
   }
