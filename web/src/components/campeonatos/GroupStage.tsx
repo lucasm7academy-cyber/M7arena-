@@ -1,5 +1,4 @@
-import { Trophy, ShieldCheck } from "lucide-react";
-import { CUT_FRAME, CUT_FRAME_INNER, CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
+﻿import { Trophy, ShieldCheck } from "lucide-react";
 
 export const GroupStage = ({ tournament }: { tournament: any }) => {
   const classificados = tournament.classificadosPorGrupo || 2;
@@ -79,110 +78,86 @@ export const GroupStage = ({ tournament }: { tournament: any }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {groups.map((group, idx) => (
+      {groups.map((group: any, idx: number) => (
         <div
           key={idx}
-          className="relative p-[1.5px] shadow-2xl transition-all"
-          style={{
-            clipPath: CUT_FRAME,
-            background: `linear-gradient(135deg, ${tournament.themeColor || '#FFB700'}60, rgba(255,255,255,0.05) 100%)`,
-          }}
+          className="w-full rounded-2xl border border-white/10 bg-[#08080a] overflow-hidden shadow-2xl flex flex-col"
         >
-          <div
-            className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col"
-            style={{ clipPath: CUT_FRAME_INNER }}
-          >
-            <div className="bg-[#0c0c10] px-6 py-4 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-2 h-2"
-                  style={{
-                    clipPath: CUT_BADGE,
-                    backgroundColor: tournament.themeColor || "#FFB700",
-                    boxShadow: `0 0 10px ${tournament.themeColor || "#FFB700"}80`,
-                  }}
-                />
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">
-                  {group.name}
-                </h3>
-              </div>
+          <div className="bg-[#0c0c10] px-6 py-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <div
-                className="px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 bg-white/5 border border-white/10"
-                style={{ clipPath: CUT_BADGE }}
-              >
-                Top {classificados} Classificam
-              </div>
+                className="w-2.5 h-2.5 rounded-full"
+                style={{
+                  backgroundColor: tournament.themeColor || "#FFB700",
+                  boxShadow: `0 0 10px ${tournament.themeColor || "#FFB700"}80`,
+                }}
+              />
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">
+                {group.name}
+              </h3>
             </div>
-            <div className="p-3 sm:p-4">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[9px] font-black text-white/20 uppercase tracking-widest">
-                    <th className="px-4 py-3">Equipe</th>
-                    <th className="px-4 py-3 text-center">V</th>
-                    <th className="px-4 py-3 text-center">D</th>
-                    <th className="px-4 py-3 text-center">J</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs font-bold">
-                  {group.teams.map((team, tIdx) => (
-                    <tr
-                      key={tIdx}
-                      className={`border-t border-white/[0.04] transition-colors hover:bg-white/[0.02] ${tIdx < classificados ? "bg-[#00FF41]/[0.03]" : ""}`}
-                    >
-                      <td className="px-4 py-3.5 flex items-center gap-3">
-                        <span className="text-[10px] font-black text-white/20 w-4">
-                          {tIdx + 1}
-                        </span>
-                        <div className="flex items-center gap-3 truncate">
-                          <div
-                            className="w-7 h-7 p-[1px] flex items-center justify-center shrink-0"
-                            style={{
-                              clipPath: CUT_BADGE,
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
-                            }}
-                          >
-                            <div
-                              className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
-                              style={{ clipPath: CUT_BADGE_INNER }}
-                            >
-                              {team.logo ? (
-                                <img
-                                  src={team.logo} loading="lazy"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <ShieldCheck className="w-3.5 h-3.5 text-white/20" />
-                              )}
-                            </div>
-                          </div>
-                          <span className="text-white uppercase truncate max-w-[120px]">
-                            {team.name}{" "}
-                            <span className="text-[9px] text-white/20 ml-1">
-                              [{team.tag}]
-                            </span>
-                          </span>
+            <div className="px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 bg-white/5 border border-white/10 rounded-md">
+              Top {classificados} Classificam
+            </div>
+          </div>
+          <div className="p-3 sm:p-4">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                  <th className="px-4 py-3">Equipe</th>
+                  <th className="px-4 py-3 text-center">V</th>
+                  <th className="px-4 py-3 text-center">D</th>
+                  <th className="px-4 py-3 text-center">J</th>
+                </tr>
+              </thead>
+              <tbody className="text-xs font-bold">
+                {group.teams.map((team: any, tIdx: number) => (
+                  <tr
+                    key={tIdx}
+                    className={`border-t border-white/[0.04] transition-colors hover:bg-white/[0.02] ${tIdx < classificados ? "bg-[#00FF41]/[0.03]" : ""}`}
+                  >
+                    <td className="px-4 py-3.5 flex items-center gap-3">
+                      <span className="text-[10px] font-black text-white/20 w-4">
+                        {tIdx + 1}
+                      </span>
+                      <div className="flex items-center gap-3 truncate">
+                        <div className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center overflow-hidden shrink-0">
+                          {team.logo ? (
+                            <img
+                              src={team.logo} loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ShieldCheck className="w-3.5 h-3.5 text-white/20" />
+                          )}
                         </div>
-                      </td>
-                      <td
-                        className="px-4 py-3.5 text-center font-black"
-                        style={{ color: "#00FF41" }}
-                      >
-                        {team.v}
-                      </td>
-                      <td className="px-4 py-3.5 text-center text-white/60">
-                        {team.d}
-                      </td>
-                      <td 
-                        className="px-4 py-3.5 text-center font-black"
-                        style={{ color: tournament.themeColor || "#FFB700" }}
-                      >
-                        {team.j}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <span className="text-white uppercase truncate max-w-[120px]">
+                          {team.name}{" "}
+                          <span className="text-[9px] text-white/20 ml-1">
+                            [{team.tag}]
+                          </span>
+                        </span>
+                      </div>
+                    </td>
+                    <td
+                      className="px-4 py-3.5 text-center font-black"
+                      style={{ color: "#00FF41" }}
+                    >
+                      {team.v}
+                    </td>
+                    <td className="px-4 py-3.5 text-center text-white/60">
+                      {team.d}
+                    </td>
+                    <td 
+                      className="px-4 py-3.5 text-center font-black"
+                      style={{ color: tournament.themeColor || "#FFB700" }}
+                    >
+                      {team.j}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       ))}

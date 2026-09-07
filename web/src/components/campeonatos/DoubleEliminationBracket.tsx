@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
-import { CUT_BADGE } from "./cut-edge";
+
 import { BracketMatch } from "./BracketMatch";
 import { UpperRound } from "./UpperRound";
 import { LowerRound } from "./LowerRound";
@@ -108,9 +108,8 @@ export const DoubleEliminationBracket = ({
           {tournament.titulo || tournament.nome || tournament.name}
         </h2>
         <div
-          className="h-1 w-32 shadow-[0_0_25px_rgba(255,183,0,0.3)]"
+          className="h-1 w-32 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.3)]"
           style={{
-            clipPath: CUT_BADGE,
             backgroundColor: themeColor,
             boxShadow: `0 0 25px ${themeColor}4D`,
           }}
@@ -123,9 +122,8 @@ export const DoubleEliminationBracket = ({
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 px-6">
               <div
-                className="w-1.5 h-1.5 shadow-[0_0_10px_rgba(255,183,0,0.5)]"
+                className="w-2 h-2 rounded-full shadow-[0_0_10px_rgba(255,183,0,0.5)]"
                 style={{
-                  clipPath: CUT_BADGE,
                   backgroundColor: themeColor,
                   boxShadow: `0 0 10px ${themeColor}80`,
                 }}
@@ -241,8 +239,7 @@ export const DoubleEliminationBracket = ({
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 px-6">
               <div
-                className="w-1.5 h-1.5 bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.5)]"
-                style={{ clipPath: CUT_BADGE }}
+                className="w-2 h-2 rounded-full bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.5)]"
               />
               <span className="text-[11px] font-black text-white uppercase tracking-[0.5em]">
                 Lower

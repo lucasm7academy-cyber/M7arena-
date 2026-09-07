@@ -12,7 +12,6 @@ import {
   Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { CUT_FRAME, CUT_FRAME_INNER, CUT_BADGE, CUT_BADGE_INNER, CUT_BUTTON, CUT_BUTTON_INNER } from "./cut-edge";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { api } from "../../lib/api";
 import { getIcon } from "./icons";
@@ -113,58 +112,35 @@ export const ListaCronograma = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="relative p-[1.5px] shadow-2xl transition-all w-full"
-      style={{
-        clipPath: CUT_FRAME,
-        background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05) 100%)`,
-        boxShadow: `0 0 40px -10px ${campeonato.themeColor || '#FFB700'}26`
-      }}
+      className="w-full rounded-2xl border border-white/10 bg-[#08080a] p-4 sm:p-6 space-y-6 shadow-2xl"
     >
-      <div
-        className="w-full h-full bg-[#08080a] relative overflow-hidden flex flex-col p-4 sm:p-6 space-y-6"
-        style={{ clipPath: CUT_FRAME_INNER }}
-      >
-        <div className="flex items-center justify-between border-b border-white/5 pb-6">
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 p-[1px] flex items-center justify-center shrink-0"
-              style={{
-                clipPath: CUT_BADGE,
-                background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.1))`
-              }}
+      <div className="flex items-center justify-between border-b border-white/5 pb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+            <Calendar className="w-6 h-6" style={{ color: campeonato.themeColor }} />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
+              Cronograma de Jogos
+            </h2>
+            <p
+              className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
+              style={{ color: campeonato.themeColor }}
             >
-              <div
-                className="w-full h-full bg-[#08080a] flex items-center justify-center"
-                style={{ clipPath: CUT_BADGE_INNER }}
-              >
-                <Calendar className="w-6 h-6" style={{ color: campeonato.themeColor }} />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-widest leading-none">
-                Cronograma de Jogos
-              </h2>
-              <p
-                className="text-[10px] font-black uppercase tracking-[0.3em] mt-1"
-                style={{ color: campeonato.themeColor }}
-              >
-                Horário de Brasília (BRT)
-              </p>
-            </div>
+              Horário de Brasília (BRT)
+            </p>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-3">
-          {filteredCronograma.length === 0 ? (
-            <div
-              className="py-16 text-center bg-white/[0.01] border border-dashed border-white/10"
-              style={{ clipPath: CUT_BUTTON }}
-            >
-              <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
-                Nenhum jogo confirmado ou finalizado no momento
-              </p>
-            </div>
-          ) : (
+      <div className="space-y-3">
+        {filteredCronograma.length === 0 ? (
+          <div className="py-16 text-center bg-white/[0.01] border border-dashed border-white/10 rounded-xl">
+            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
+              Nenhum jogo confirmado ou finalizado no momento
+            </p>
+          </div>
+        ) : (
             filteredCronograma.map((jogo, i) => {
               const allTeams = campeonato.timesInscritos || campeonato.classificacao || [];
               const timeA = allTeams.find((t: any) =>
@@ -271,379 +247,346 @@ export const ListaCronograma = () => {
                       setIsScheduleEditModalOpen(true);
                     }
                   }}
-                  className="relative p-[1px] transition-all hover:scale-[1.003]"
+                  className={`w-full p-3.5 lg:p-4 rounded-xl border bg-[#0c0c10] flex flex-col lg:flex-row items-center justify-between gap-4 transition-all hover:scale-[1.003] ${
+                    isAdmin && jogo.status === "finalizado" ? "cursor-pointer hover:bg-[#101018]" : canUserEdit && jogo.status !== "finalizado" ? "cursor-pointer hover:bg-[#101018]" : ""
+                  }`}
                   style={{
-                    clipPath: CUT_BUTTON,
-                    background: (jogo.status === "confirmado" || isSeriesLive)
-                      ? `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, rgba(255,255,255,0.05))`
-                      : 'rgba(255, 255, 255, 0.08)',
+                    borderColor: (jogo.status === "confirmado" || isSeriesLive)
+                      ? `${campeonato.themeColor || '#FFB700'}66`
+                      : 'rgba(255, 255, 255, 0.1)',
                     boxShadow: (jogo.status === "confirmado" || isSeriesLive)
                       ? `0 0 30px -5px ${campeonato.themeColor || '#FFB700'}22`
                       : undefined
                   }}
                 >
-                  <div
-                    className={`w-full p-3.5 lg:p-4 bg-[#0c0c10] flex flex-col lg:flex-row items-center justify-between gap-4 ${
-                      isAdmin && jogo.status === "finalizado" ? "cursor-pointer hover:bg-[#101018]" : canUserEdit && jogo.status !== "finalizado" ? "cursor-pointer hover:bg-[#101018]" : ""
-                    }`}
-                    style={{ clipPath: CUT_BUTTON_INNER }}
-                  >
-                    {/* Left: Info (Date) */}
-                    <div className="flex flex-col items-center justify-center shrink-0 min-w-[120px]">
-                      {jogo.status !== "finalizado" && (
-                        <div className="text-center flex flex-col items-center gap-0.5">
-                          {jogo.data &&
-                            jogo.data !== "A COMBINAR" && (
-                              <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">
-                                {formatDayOfWeek(jogo.data)}
-                              </p>
-                            )}
-                          <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
-                            {formatFullDate(jogo.data) ||
-                              "A definir"}
-                          </p>
-                          {/* Hora no Mobile */}
-                          {jogo.hora && jogo.hora !== "--:--" && (
-                            <p 
-                              className="text-xs sm:text-sm font-black tracking-wider lg:hidden mt-0.5"
-                              style={{ color: campeonato.themeColor }}
-                            >
-                              {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
+                  {/* Left: Info (Date) */}
+                  <div className="flex flex-col items-center justify-center shrink-0 min-w-[120px]">
+                    {jogo.status !== "finalizado" && (
+                      <div className="text-center flex flex-col items-center gap-0.5">
+                        {jogo.data &&
+                          jogo.data !== "A COMBINAR" && (
+                            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">
+                              {formatDayOfWeek(jogo.data)}
                             </p>
                           )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Center: Matchup */}
-                    <div className="flex items-center justify-center gap-3 lg:gap-6 relative flex-1 w-full px-2">
-                      {/* Team A */}
-                      <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
-                        <div
-                          className="w-10 h-10 lg:w-12 lg:h-12 p-[1px] flex items-center justify-center shrink-0 shadow-xl"
-                          style={{
-                            clipPath: CUT_BADGE,
-                            background: `${corA}80`,
-                          }}
-                        >
-                          <div
-                            className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
-                            style={{ clipPath: CUT_BADGE_INNER }}
+                        <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+                          {formatFullDate(jogo.data) ||
+                            "A definir"}
+                        </p>
+                        {/* Hora no Mobile */}
+                        {jogo.hora && jogo.hora !== "--:--" && (
+                          <p 
+                            className="text-xs sm:text-sm font-black tracking-wider lg:hidden mt-0.5"
+                            style={{ color: campeonato.themeColor }}
                           >
-                            {timeA.logo ? (
-                              <img
-                                src={timeA.logo} loading="lazy"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <IconA
-                                className="w-6 h-6"
-                                style={{ color: corA }}
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center w-full">
-                          <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
-                            {timeA.tag
-                              ? `#${timeA.tag}`
-                              : timeA.name || timeA.nome}
+                            {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
                           </p>
-                        </div>
-                      </div>
-
-                      {/* Score Indicator */}
-                      <div className="shrink-0 z-20 flex flex-col items-center justify-center min-w-[70px]">
-                        {jogo.status === "finalizado" ? (
-                          <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-2.5">
-                              {(() => {
-                                const scores = (
-                                  (jogo as any).placar || "0 - 0"
-                                ).split(" - ");
-                                const scoreA = parseInt(scores[0]) || 0;
-                                const scoreB = parseInt(scores[1]) || 0;
-                                return (
-                                  <>
-                                    <span
-                                      className="text-2xl lg:text-3xl font-black tabular-nums"
-                                      style={{
-                                        color:
-                                          scoreA > scoreB
-                                            ? "#00FF41"
-                                            : scoreA < scoreB
-                                              ? "#FF3131"
-                                              : "#FFFFFF",
-                                      }}
-                                    >
-                                      {scoreA}
-                                    </span>
-                                    <span className="text-white/20 text-xl font-black">
-                                      -
-                                    </span>
-                                    <span
-                                      className="text-2xl lg:text-3xl font-black tabular-nums"
-                                      style={{
-                                        color:
-                                          scoreB > scoreA
-                                            ? "#00FF41"
-                                            : scoreB < scoreA
-                                              ? "#FF3131"
-                                              : "#FFFFFF",
-                                      }}
-                                    >
-                                      {scoreB}
-                                    </span>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-1.5">
-                              <span
-                                className="text-[9px] font-black uppercase text-white/50 tracking-widest px-2 py-0.5 bg-white/5"
-                                style={{ clipPath: CUT_BADGE }}
-                              >
-                                Finalizado {jogo.best_of ? `(MD${jogo.best_of})` : ""}
-                              </span>
-                              {jogo.irregular && (
-                                <span
-                                  className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-1"
-                                  style={{ clipPath: CUT_BADGE }}
-                                  title="Partida jogada com membro fora do elenco oficial"
-                                >
-                                  <AlertTriangle className="w-2.5 h-2.5" />
-                                  Irregular
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ) : isSeriesLive ? (
-                          <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-2">
-                              {(() => {
-                                const scores = (
-                                  (jogo as any).placar || "0 - 0"
-                                ).split(" - ");
-                                const scoreA = parseInt(scores[0]) || 0;
-                                const scoreB = parseInt(scores[1]) || 0;
-                                return (
-                                  <>
-                                    <span className="text-xl lg:text-2xl font-black tabular-nums text-white">
-                                      {scoreA}
-                                    </span>
-                                    <span className="text-white/20 text-lg font-black">-</span>
-                                    <span className="text-xl lg:text-2xl font-black tabular-nums text-white">
-                                      {scoreB}
-                                    </span>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            <div className="flex items-center gap-1 mt-1">
-                              <span
-                                className="text-[9px] font-black uppercase text-[#00FF41] tracking-widest px-2 py-0.5 bg-[#00FF41]/10 border border-[#00FF41]/20 flex items-center gap-1"
-                                style={{ clipPath: CUT_BADGE }}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-ping" />
-                                Ao Vivo {jogo.best_of ? `(MD${jogo.best_of})` : ""}
-                              </span>
-                              {jogo.irregular && (
-                                <span
-                                  className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-0.5"
-                                  style={{ clipPath: CUT_BADGE }}
-                                  title="Jogador fora do roster detectado"
-                                >
-                                  <AlertTriangle className="w-2.5 h-2.5" />
-                                  Irreg.
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-xs font-black tracking-widest select-none text-white/30">
-                            VS
-                          </span>
                         )}
                       </div>
+                    )}
+                  </div>
 
-                      {/* Team B */}
-                      <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
-                        <div
-                          className="w-10 h-10 lg:w-12 lg:h-12 p-[1px] flex items-center justify-center shrink-0 shadow-xl"
-                          style={{
-                            clipPath: CUT_BADGE,
-                            background: `${corB}80`,
-                          }}
-                        >
-                          <div
-                            className="w-full h-full bg-black flex items-center justify-center overflow-hidden"
-                            style={{ clipPath: CUT_BADGE_INNER }}
-                          >
-                            {timeB.logo ? (
-                              <img
-                                src={timeB.logo} loading="lazy"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <IconB
-                                className="w-6 h-6"
-                                style={{ color: corB }}
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center w-full">
-                          <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
-                            {timeB.tag
-                              ? `#${timeB.tag}`
-                              : timeB.name || timeB.nome}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Info & Actions */}
-                    <div className="flex flex-col items-center justify-center lg:justify-end gap-2 shrink-0 min-w-[140px]">
-                      {jogo.status !== "finalizado" && (
-                        <div className="text-center flex flex-col items-center hidden lg:block">
-                          <p
-                            className="text-xl sm:text-2xl font-black tracking-tighter tabular-nums"
-                            style={{
-                              color: campeonato.themeColor,
-                            }}
-                          >
-                            {jogo.hora && jogo.hora !== "--:--" && /^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Botão Iniciar Série (5 min antes do horário ou horário alcançado) */}
-                      {canStartSeries && (
-                        <button
-                          type="button"
-                          disabled={startingMatchId === (jogo.match_id || jogo.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStartSeries(jogo);
-                          }}
-                          className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 text-black font-black"
-                          style={{
-                            clipPath: CUT_BADGE,
-                            background: `linear-gradient(135deg, ${campeonato.themeColor || '#FFB700'}, #FFA500)`,
-                            boxShadow: `0 0 15px ${campeonato.themeColor || '#FFB700'}66`
-                          }}
-                        >
-                          {startingMatchId === (jogo.match_id || jogo.id) ? (
-                            <>
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                              <span>Iniciando...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Swords className="w-3.5 h-3.5" />
-                              <span>Iniciar Série</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-
-                      {/* Botões durante Série Ativa: Copiar Código Riot + Verificar */}
-                      {isSeriesLive && (
-                        canAccessSeries ? (
-                          <div className="flex flex-col sm:flex-row items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (jogo.codigo_partida) handleCopyCode(jogo.codigo_partida, jogo.id);
-                              }}
-                              className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 border"
-                              style={{
-                                clipPath: CUT_BADGE,
-                                background: copiedMatchId === jogo.id ? 'rgba(0, 255, 65, 0.15)' : 'rgba(255, 255, 255, 0.08)',
-                                borderColor: copiedMatchId === jogo.id ? '#00FF41' : 'rgba(255, 255, 255, 0.15)',
-                                color: copiedMatchId === jogo.id ? '#00FF41' : '#FFFFFF',
-                              }}
-                              title="Copiar código de torneio da Riot para colar no LoL"
-                            >
-                              {copiedMatchId === jogo.id ? (
-                                <>
-                                  <Check className="w-3 h-3 text-[#00FF41]" />
-                                  <span>Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3 text-[#00F0FF]" />
-                                  <span>Copiar Código Riot</span>
-                                </>
-                              )}
-                            </button>
-
-                            <button
-                              type="button"
-                              disabled={verifyingMatchId === (jogo.match_id || jogo.id)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleVerifySeries(jogo);
-                              }}
-                              className="p-1.5 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all rounded"
-                              style={{ clipPath: CUT_BADGE }}
-                              title="Verificar resultado da série na Riot agora"
-                            >
-                              <RefreshCw className={`w-3.5 h-3.5 ${verifyingMatchId === (jogo.match_id || jogo.id) ? 'animate-spin text-[#00F0FF]' : ''}`} />
-                            </button>
-                          </div>
-                        ) : (
-                          <span
-                            className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center gap-1.5"
-                            style={{ clipPath: CUT_BADGE }}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            Em Andamento
-                          </span>
-                        )
-                      )}
-
-                      {/* Ações de Agendamento Legadas */}
-                      {canUserEdit &&
-                      jogo.status !== "finalizado" &&
-                      !canStartSeries &&
-                      !isSeriesLive &&
-                      !(
-                        jogo.status === "confirmado" && !isAdmin
-                      ) ? (
+                  {/* Center: Matchup */}
+                  <div className="flex items-center justify-center gap-3 lg:gap-6 relative flex-1 w-full px-2">
+                    {/* Team A */}
+                    <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
                       <div
-                        className="text-[9px] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10"
-                        style={{ clipPath: CUT_BADGE }}
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-xl overflow-hidden bg-black"
+                        style={{ borderColor: `${corA}80` }}
                       >
-                        {jogo.status === "proposto" && isMyTurn ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3 text-[#00FF41]" />
-                            <span>Responder</span>
-                          </>
-                        ) : jogo.status === "confirmado" && isAdmin ? (
-                          <>
-                            <ShieldCheck className="w-3 h-3 text-[#00F0FF]" />
-                            <span>Finalizar</span>
-                          </>
-                        ) : jogo.status === "confirmado" ? (
-                          null
+                        {timeA.logo ? (
+                          <img
+                            src={timeA.logo} loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <>
-                            <Calendar className="w-3 h-3 text-[#FFB700]" />
-                            <span>Agendar</span>
-                          </>
+                          <IconA
+                            className="w-6 h-6"
+                            style={{ color: corA }}
+                          />
                         )}
                       </div>
-                    ) : null}
+                      <div className="text-center w-full">
+                        <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                          {timeA.tag
+                            ? `#${timeA.tag}`
+                            : timeA.name || timeA.nome}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Score Indicator */}
+                    <div className="shrink-0 z-20 flex flex-col items-center justify-center min-w-[70px]">
+                      {jogo.status === "finalizado" ? (
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-2.5">
+                            {(() => {
+                              const scores = (
+                                (jogo as any).placar || "0 - 0"
+                              ).split(" - ");
+                              const scoreA = parseInt(scores[0]) || 0;
+                              const scoreB = parseInt(scores[1]) || 0;
+                              return (
+                                <>
+                                  <span
+                                    className="text-2xl lg:text-3xl font-black tabular-nums"
+                                    style={{
+                                      color:
+                                        scoreA > scoreB
+                                          ? "#00FF41"
+                                          : scoreA < scoreB
+                                            ? "#FF3131"
+                                            : "#FFFFFF",
+                                    }}
+                                  >
+                                    {scoreA}
+                                  </span>
+                                  <span className="text-white/20 text-xl font-black">
+                                    -
+                                  </span>
+                                  <span
+                                    className="text-2xl lg:text-3xl font-black tabular-nums"
+                                    style={{
+                                      color:
+                                        scoreB > scoreA
+                                          ? "#00FF41"
+                                          : scoreB < scoreA
+                                            ? "#FF3131"
+                                            : "#FFFFFF",
+                                    }}
+                                  >
+                                    {scoreB}
+                                  </span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <span
+                              className="text-[9px] font-black uppercase text-white/50 tracking-widest px-2 py-0.5 bg-white/5 rounded-md border border-white/10"
+                            >
+                              Finalizado {jogo.best_of ? `(MD${jogo.best_of})` : ""}
+                            </span>
+                            {jogo.irregular && (
+                              <span
+                                className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-1 rounded-md"
+                                title="Partida jogada com membro fora do elenco oficial"
+                              >
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                Irregular
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : isSeriesLive ? (
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const scores = (
+                                (jogo as any).placar || "0 - 0"
+                              ).split(" - ");
+                              const scoreA = parseInt(scores[0]) || 0;
+                              const scoreB = parseInt(scores[1]) || 0;
+                              return (
+                                <>
+                                  <span className="text-xl lg:text-2xl font-black tabular-nums text-white">
+                                    {scoreA}
+                                  </span>
+                                  <span className="text-white/20 text-lg font-black">-</span>
+                                  <span className="text-xl lg:text-2xl font-black tabular-nums text-white">
+                                    {scoreB}
+                                  </span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span
+                              className="text-[9px] font-black uppercase text-[#00FF41] tracking-widest px-2 py-0.5 bg-[#00FF41]/10 border border-[#00FF41]/20 flex items-center gap-1 rounded-md"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-ping" />
+                              Ao Vivo {jogo.best_of ? `(MD${jogo.best_of})` : ""}
+                            </span>
+                            {jogo.irregular && (
+                              <span
+                                className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-0.5 rounded-md"
+                                title="Jogador fora do roster detectado"
+                              >
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                Irreg.
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-black tracking-widest select-none text-white/30">
+                          VS
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Team B */}
+                    <div className="w-16 sm:w-20 lg:w-24 flex flex-col items-center gap-1.5 min-w-0 shrink-0">
+                      <div
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-xl overflow-hidden bg-black"
+                        style={{ borderColor: `${corB}80` }}
+                      >
+                        {timeB.logo ? (
+                          <img
+                            src={timeB.logo} loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <IconB
+                            className="w-6 h-6"
+                            style={{ color: corB }}
+                          />
+                        )}
+                      </div>
+                      <div className="text-center w-full">
+                        <p className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                          {timeB.tag
+                            ? `#${timeB.tag}`
+                            : timeB.name || timeB.nome}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Info & Actions */}
+                  <div className="flex flex-col items-center justify-center lg:justify-end gap-2 shrink-0 min-w-[140px]">
+                    {jogo.status !== "finalizado" && (
+                      <div className="text-center flex flex-col items-center hidden lg:block">
+                        <p
+                          className="text-xl sm:text-2xl font-black tracking-tighter tabular-nums"
+                          style={{
+                            color: campeonato.themeColor,
+                          }}
+                        >
+                          {jogo.hora && jogo.hora !== "--:--" && /^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : "--:--"}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Botão Iniciar Série */}
+                    {canStartSeries && (
+                      <button
+                        type="button"
+                        disabled={startingMatchId === (jogo.match_id || jogo.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartSeries(jogo);
+                        }}
+                        className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 text-black rounded-lg shadow-lg cursor-pointer"
+                        style={{
+                          backgroundColor: campeonato.themeColor || '#FFB700',
+                        }}
+                      >
+                        {startingMatchId === (jogo.match_id || jogo.id) ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>Iniciando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Swords className="w-3.5 h-3.5" />
+                            <span>Iniciar Série</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Botões durante Série Ativa: Copiar Código Riot + Verificar */}
+                    {isSeriesLive && (
+                      canAccessSeries ? (
+                        <div className="flex flex-col sm:flex-row items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (jogo.codigo_partida) handleCopyCode(jogo.codigo_partida, jogo.id);
+                            }}
+                            className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 border rounded-lg cursor-pointer"
+                            style={{
+                              background: copiedMatchId === jogo.id ? 'rgba(0, 255, 65, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                              borderColor: copiedMatchId === jogo.id ? '#00FF41' : 'rgba(255, 255, 255, 0.15)',
+                              color: copiedMatchId === jogo.id ? '#00FF41' : '#FFFFFF',
+                            }}
+                            title="Copiar código de torneio da Riot para colar no LoL"
+                          >
+                            {copiedMatchId === jogo.id ? (
+                              <>
+                                <Check className="w-3 h-3 text-[#00FF41]" />
+                                <span>Copiado!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-[#00F0FF]" />
+                                <span>Copiar Código Riot</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={verifyingMatchId === (jogo.match_id || jogo.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVerifySeries(jogo);
+                            }}
+                            className="p-1.5 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all rounded-lg cursor-pointer"
+                            title="Verificar resultado da série na Riot agora"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${verifyingMatchId === (jogo.match_id || jogo.id) ? 'animate-spin text-[#00F0FF]' : ''}`} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span
+                          className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center gap-1.5 rounded-md"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          Em Andamento
+                        </span>
+                      )
+                    )}
+
+                    {/* Ações de Agendamento */}
+                    {canUserEdit &&
+                    jogo.status !== "finalizado" &&
+                    !canStartSeries &&
+                    !isSeriesLive &&
+                    !(
+                      jogo.status === "confirmado" && !isAdmin
+                    ) ? (
+                    <div
+                      className="text-[9px] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-md"
+                    >
+                      {jogo.status === "proposto" && isMyTurn ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3 text-[#00FF41]" />
+                          <span>Responder</span>
+                        </>
+                      ) : jogo.status === "confirmado" && isAdmin ? (
+                        <>
+                          <ShieldCheck className="w-3 h-3 text-[#00F0FF]" />
+                          <span>Finalizar</span>
+                        </>
+                      ) : jogo.status === "confirmado" ? (
+                        null
+                      ) : (
+                        <>
+                          <Calendar className="w-3 h-3 text-[#FFB700]" />
+                          <span>Agendar</span>
+                        </>
+                      )}
+                    </div>
+                  ) : null}
                   </div>
                 </div>
               );
             })
           )}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
   );
 };

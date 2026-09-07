@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
-import { CUT_BADGE } from "./cut-edge";
+
 import { BracketMatch } from "./BracketMatch";
 
 export const DoubleSideBracket = ({
@@ -115,9 +115,8 @@ export const DoubleSideBracket = ({
           {tournament.titulo || tournament.nome || tournament.name}
         </h2>
         <div
-          className="h-1 w-32 shadow-[0_0_25px_rgba(255,183,0,0.3)]"
+          className="h-1 w-32 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.3)]"
           style={{
-            clipPath: CUT_BADGE,
             backgroundColor: themeColor,
             boxShadow: `0 0 25px ${themeColor}4D`,
           }}
@@ -215,9 +214,8 @@ export const DoubleSideBracket = ({
                     </span>
                   </div>
                   <div
-                    className="w-40 h-1 shadow-[0_0_25px_rgba(255,183,0,0.8)] mt-2"
+                    className="w-40 h-1 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.8)] mt-2"
                     style={{
-                      clipPath: CUT_BADGE,
                       backgroundColor: themeColor,
                       boxShadow: `0 0 25px ${themeColor}CC`,
                     }}
