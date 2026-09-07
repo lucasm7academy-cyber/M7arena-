@@ -133,13 +133,21 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
                 {team.name}
               </h3>
               <div
-                className="px-1.5 py-0.5 rounded-md border text-[9px] font-black text-white tracking-wider shrink-0"
+                className="p-[1px] shrink-0"
                 style={{
-                  borderColor: `${team.gradientFrom}80`,
-                  backgroundColor: `${team.gradientFrom}25`,
+                  clipPath: CUT_BADGE,
+                  background: `${team.gradientFrom}80`
                 }}
               >
-                #{team.tag}
+                <div
+                  className="text-[8px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                  style={{
+                    clipPath: CUT_BADGE_INNER,
+                    color: team.gradientFrom,
+                  }}
+                >
+                  #{team.tag}
+                </div>
               </div>
             </div>
             
@@ -162,13 +170,21 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
                 {team.name}
               </h3>
               <div
-                className="px-2 py-0.5 rounded-md border text-[10px] font-black text-white tracking-widest shrink-0"
+                className="p-[1px] shrink-0"
                 style={{
-                  borderColor: `${team.gradientFrom}80`,
-                  backgroundColor: `${team.gradientFrom}25`,
+                  clipPath: CUT_BADGE,
+                  background: `${team.gradientFrom}80`
                 }}
               >
-                #{team.tag}
+                <div
+                  className="text-[9px] font-black px-2 py-0.5 tracking-widest bg-[#0c0c10]"
+                  style={{
+                    clipPath: CUT_BADGE_INNER,
+                    color: team.gradientFrom,
+                  }}
+                >
+                  #{team.tag}
+                </div>
               </div>
             </div>
           </div>
@@ -532,13 +548,21 @@ export default function Equipes() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="text-white font-black text-base tracking-tight truncate uppercase">{myTeam.nome}</h3>
                           <div
-                            className="px-1.5 py-0.5 rounded-md border text-[9px] font-black text-white tracking-wider shrink-0"
+                            className="p-[1px] shrink-0"
                             style={{
-                              borderColor: `${myTeam.gradientFrom}80`,
-                              backgroundColor: `${myTeam.gradientFrom}25`,
+                              clipPath: CUT_BADGE,
+                              background: `${myTeam.gradientFrom}80`
                             }}
                           >
-                            #{myTeam.tag}
+                            <div
+                              className="text-[8px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                              style={{
+                                clipPath: CUT_BADGE_INNER,
+                                color: myTeam.gradientFrom,
+                              }}
+                            >
+                              #{myTeam.tag}
+                            </div>
                           </div>
                           
                           {/* Rota Icon no mobile ao lado do nome/tag */}
@@ -574,13 +598,21 @@ export default function Equipes() {
                         <div className="flex items-center gap-2">
                           <h3 className="text-white font-black text-lg tracking-tight truncate uppercase">{myTeam.nome}</h3>
                           <div
-                            className="px-2 py-0.5 rounded-md border text-[10px] font-black text-white tracking-widest shrink-0"
+                            className="p-[1px] shrink-0"
                             style={{
-                              borderColor: `${myTeam.gradientFrom}80`,
-                              backgroundColor: `${myTeam.gradientFrom}25`,
+                              clipPath: CUT_BADGE,
+                              background: `${myTeam.gradientFrom}80`
                             }}
                           >
-                            #{myTeam.tag}
+                            <div
+                              className="text-[9px] font-black px-2 py-0.5 tracking-widest bg-[#0c0c10]"
+                              style={{
+                                clipPath: CUT_BADGE_INNER,
+                                color: myTeam.gradientFrom,
+                              }}
+                            >
+                              #{myTeam.tag}
+                            </div>
                           </div>
                         </div>
                       </div>

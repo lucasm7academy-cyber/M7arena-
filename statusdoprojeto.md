@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/09/2026 17:34 — por `gemini`
+**Última atualização:** 07/09/2026 17:39 — por `gemini`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -674,6 +674,7 @@ _07/09/2026 17:17 — gemini_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 07/09/2026 17:39 | gemini | Restaurado estilo cortado (clipPath CUT_BADGE e CUT_BADGE_INNER) nas tags de times em TimePage, /times (equipes.tsx) e /players (players.tsx). A cor de fundo translúcida foi removida (fundo neutro escuro), mantendo a borda cortada na cor do time e o texto na cor do time, proporcionando nitidez e contraste ideal. <br>_tocou: `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`_ |
 | 07/09/2026 17:34 | gemini | Ajustado contraste das tags de time (passadas para text-white com borda e fundo translúcido na cor do time) nas páginas TimePage, equipes (/times) e players (/players). Na página de detalhes do time (TimePage), convertidos todos os cards inferiores e laterais (Lineup, Vagas Abertas, Jogadores, Capitão, Gerenciar, Histórico e Status do Time) para cantos arredondados normais (rounded-xl/rounded-2xl), mantendo o estilo cortado exclusivamente no Hero Banner do time conforme solicitado. Build e typecheck verificados com sucesso. <br>_tocou: `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`_ |
 | 07/09/2026 17:17 | gemini | Implementada e testada a liberação de código de torneio no pool em finalizações manuais de série (W.O. ou decisão do ADM no cronograma e bracket): storeCronograma e storeBracket agora detectam quando um confronto com codigoPartida é finalizado ou ganha vencedor e liberam o código em matchCodes (used=false), garantindo que W.O. não prenda códigos de torneio. Testes unitários 11/11 passando com PGlite e tsc exit 0 em api e web. <br>_tocou: `app.arquitetura.campeonatos`_ |
 | 07/09/2026 17:16 | gemini | Card da foto do responsavel/organizador alterado para proporcao 1:1 quadrada (aspect-square) com cantos arredondados (rounded-2xl). <br>_tocou: `web.campeonatos`_ |
@@ -688,7 +689,6 @@ _07/09/2026 17:17 — gemini_
 | 05/09/2026 20:04 | gemini | Redesign gamer completo da página de Desafio Individual (/aposta-individual): criação do SummonerCard (avatar neon, elo badge, atalho de saldo MC e grid 2x2 de métricas), ItemMercado (ícones temáticos, badges de odds luminosos e preview de retorno potencial calculado), FilaSelector (modularização dos cards altos), BilheteAtivoView (radar animado de detecção e status em tempo real) e seletor de stake com presets rápidos (100, 250, 500, 1000 MC). Validação local (tsc 0, vite build 0) e deploy na VPS com container nginx atualizado (HTTP 200). <br>_tocou: `web/src/pages/ApostaIndividualPage.tsx`, `web/src/components/partidas/ItemMercado.tsx`, `web/src/components/partidas/SummonerCard.tsx`, `web/src/components/partidas/FilaSelector.tsx`, `web/src/components/partidas/BilheteAtivoView.tsx`_ |
 | 05/09/2026 19:56 | gemini | Ajuste de cores no Hero Banner de /jogar: substituído o destaque dourado/amarelo pelo verde original (#4ade80), com borda de hover hover:bg-green-500/30, gradiente verde from-green-500/20 via-green-500/5 e sombra luminosa hover:shadow-[0_0_35px_rgba(74,222,128,0.25)]. Build e deploy do container nginx concluídos na VPS (HTTP 200). <br>_tocou: `web/src/pages/Jogar.tsx`_ |
 | 05/09/2026 19:51 | gemini | Desafio Individual e Hero de /jogar: aumento da altura dos cards de fila Solo/Duo e Flexível (min-h de ~340px com badges de fila, ícones, descrições ricas e botões de ação); transição completa da linguagem de aposta para desafio individual em toda a tela (top bar 'Desafio Individual / Desafie a Si Mesmo', resumos 'Valor do desafio', modais e toasts sem termos de aposta); em /jogar, card hero agora é 100% clicável com hover feedback, título 'PARTICIPE DO DESAFIO INDIVIDUAL', copy persuasivo e botão 'Quero ir para o desafio'. Validação de tipo (tsc exit 0), build do Vite local e na VPS, e redeploy do container nginx com sucesso (HTTP 200). <br>_tocou: `web/src/pages/Jogar.tsx`, `web/src/pages/ApostaIndividualPage.tsx`_ |
-| 05/09/2026 01:33 | gemini | Modal de deposito: reposicionada a imagem do Twisted Fate para fora do container cortado (sem clip-path ou overflow-hidden que o cortava), mantendo o posicionamento lateral original estendendo para fora do card, posicionado em camada intermediaria (z-10) atras do conteudo e do card de Resumo do Pedido (z-20) com fundo solido. Build e deploy do container nginx concluidos na VPS. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/components/modals/deposit/DepositTab.tsx`_ |
 
 ---
 

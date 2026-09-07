@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-07T20:34:13.138Z",
+  "updatedAt": "2026-09-07T20:39:51.336Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1947,19 +1947,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-31T01:02:44.755Z",
-      "agent": "deepseek",
-      "summary": "Endureci o anti-fraude e criei o histórico unificado. Anti-fraude: função jogadorEmJogo (espectador) na criação do bilhete REJEITA apostar se o jogador já está em ranqueada (ja_em_jogo_ranqueada) — só aposta fora de jogo, antes de entrar na fila. A detecção continua rejeitando partida que começou antes da aposta (tol. 2min): aposta é sempre sobre o PRÓXIMO jogo, nunca sobre um rolando. Histórico: GET /api/bets/history junta apostas individuais (bet_tickets/bet_legs) + salas apostadas (matchPlayers+matches, delta via ledger match_prize/match_loss). Novo componente HistoricoApostas no perfil (total ganho/perdido MC + lista). Validação: api tsc 0, bet.test 23/23, web tsc 0, vite build 6.70s. PENDENTE: aplicar migration 0022 na VPS + deploy.",
-      "touched": [
-        "api/src/lib/live-bets.ts",
-        "api/src/routes/bets.ts",
-        "api/test/bets.test.ts",
-        "web/src/lib/api.ts",
-        "web/src/components/perfil/HistoricoApostas.tsx",
-        "web/src/pages/perfil.tsx"
-      ]
-    },
-    {
       "at": "2026-08-31T01:17:46.171Z",
       "agent": "deepseek",
       "summary": "Deploy da aposta individual na VPS (dev.m7arena.pro) concluído. Migration 0022 aplicada via psql no container m7arena_postgres (CREATE TABLE bet_tickets + bet_legs + FKs + indexes). Commit 09643ef pushead no origin/feat/redesign-modais e fast-forward da main da VPS. docker compose --env-file up -d --build → app/realtime/nginx recriados. Validação: /api/health 200, site 200, /api/bets/catalog 200, /api/bets/me e /api/bets/history 401 sem auth (rotas ativas). m7arena_mcp_ops em restart loop pré-existente (roda via stdio por design; fora do escopo). Pronto para o usuário testar: /jogar (card Aposta Individual) e perfil (Histórico de Apostas).",
@@ -2271,6 +2258,16 @@
       "at": "2026-09-07T20:34:13.138Z",
       "agent": "gemini",
       "summary": "Ajustado contraste das tags de time (passadas para text-white com borda e fundo translúcido na cor do time) nas páginas TimePage, equipes (/times) e players (/players). Na página de detalhes do time (TimePage), convertidos todos os cards inferiores e laterais (Lineup, Vagas Abertas, Jogadores, Capitão, Gerenciar, Histórico e Status do Time) para cantos arredondados normais (rounded-xl/rounded-2xl), mantendo o estilo cortado exclusivamente no Hero Banner do time conforme solicitado. Build e typecheck verificados com sucesso.",
+      "touched": [
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/players.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-07T20:39:51.336Z",
+      "agent": "gemini",
+      "summary": "Restaurado estilo cortado (clipPath CUT_BADGE e CUT_BADGE_INNER) nas tags de times em TimePage, /times (equipes.tsx) e /players (players.tsx). A cor de fundo translúcida foi removida (fundo neutro escuro), mantendo a borda cortada na cor do time e o texto na cor do time, proporcionando nitidez e contraste ideal.",
       "touched": [
         "web/src/pages/TimePage.tsx",
         "web/src/pages/equipes.tsx",

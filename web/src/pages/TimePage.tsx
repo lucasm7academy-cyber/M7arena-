@@ -1864,13 +1864,21 @@ export default function TimePage() {
               </div>
               <div className="flex items-center gap-2 justify-center sm:justify-start mb-3">
                 <div
-                  className="px-2.5 py-0.5 rounded-md border text-[10px] font-black text-white tracking-widest shrink-0"
+                  className="p-[1px] shrink-0"
                   style={{
-                    borderColor: `${time.gradientFrom}80`,
-                    backgroundColor: `${time.gradientFrom}25`,
+                    clipPath: CUT_BADGE,
+                    background: `${time.gradientFrom}80`,
                   }}
                 >
-                  #{time.tag}
+                  <div
+                    className="px-2.5 py-0.5 text-[10px] font-black tracking-widest bg-[#08080a]"
+                    style={{
+                      clipPath: CUT_BADGE_INNER,
+                      color: time.gradientFrom,
+                    }}
+                  >
+                    #{time.tag}
+                  </div>
                 </div>
                 <div className="px-2 py-0.5 rounded-md border border-white/10 bg-[#08080a] text-white/40 text-[10px] font-black uppercase tracking-wider">
                   Ranking #{time.ranking}

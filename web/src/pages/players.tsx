@@ -732,13 +732,18 @@ export default function App() {
                         </div>
                         {jogador.timeTag && (
                           <div
-                            className="px-2 py-0.5 rounded-md border text-[10px] font-black text-white uppercase tracking-wider"
-                            style={{
-                              borderColor: `${jogador.timeColor || PRIMARY_COLOR}80`,
-                              backgroundColor: `${jogador.timeColor || PRIMARY_COLOR}25`,
-                            }}
+                            className="relative p-[1px] shrink-0"
+                            style={{ clipPath: CUT_BADGE, background: jogador.timeColor || PRIMARY_COLOR }}
                           >
-                            #{jogador.timeTag.substring(0, 3)}
+                            <span
+                              className="block px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter bg-[#0a0a0f]"
+                              style={{
+                                clipPath: CUT_BADGE_INNER,
+                                color: jogador.timeColor || PRIMARY_COLOR,
+                              }}
+                            >
+                              #{jogador.timeTag.substring(0, 3)}
+                            </span>
                           </div>
                         )}
                       </div>
