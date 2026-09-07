@@ -22,16 +22,17 @@ import {
   tournamentStandings,
 } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
+import { matchCodes } from "../../../db/schema/matches.js";
 
 /** Resolve o id de um time por id ou tag (retorna null se não achar). */
-async function resolveTeamId(idOrTag: string | undefined): Promise<string | null> {
+async function resolveTeamId(idOrTag: string | undefined, d: any = db): Promise<string | null> {
   if (!idOrTag) return null;
   // Se é uuid, usa direto
   if (/^[0-9a-fA-F-]{36}$/.test(idOrTag)) {
-    const [t] = await db.select({ id: teams.id }).from(teams).where(eq(teams.id, idOrTag)).limit(1);
+    const [t] = await d.select({ id: teams.id }).from(teams).where(eq(teams.id, idOrTag)).limit(1);
     return t?.id || null;
   }
-  const [t] = await db.select({ id: teams.id }).from(teams).where(eq(teams.tag, idOrTag)).limit(1);
+  const [t] = await d.select({ id: teams.id }).from(teams).where(eq(teams.tag, idOrTag)).limit(1);
   return t?.id || null;
 }
 
@@ -68,18 +69,23 @@ export async function storeTimesInscritos(tournamentId: string, registrations: a
  * `merge` = true faz upsert por match_key (sem apagar os que não vieram),
  * usado pelos endpoints de merge atômico (merge_jogos_cronograma).
  */
-export async function storeCronograma(tournamentId: string, cronograma: any[], merge = false) {
+export async function storeCronograma(tournamentId: string, cronograma: any[], merge = false, d: any = db) {
   if (!Array.isArray(cronograma)) return;
-  const existingKeys = await db
-    .select({ key: tournamentMatches.matchKey })
+  const existingMatches = await d
+    .select({
+      key: tournamentMatches.matchKey,
+      codigoPartida: tournamentMatches.codigoPartida,
+      status: tournamentMatches.status,
+    })
     .from(tournamentMatches)
     .where(eq(tournamentMatches.tournamentId, tournamentId));
 
   for (const j of cronograma) {
     const key = j.id || j.matchKey;
     if (!key) continue;
-    const teamAId = await resolveTeamId(j.timeA);
-    const teamBId = await resolveTeamId(j.timeB);
+    const teamAId = await resolveTeamId(j.timeA, d);
+    const teamBId = await resolveTeamId(j.timeB, d);
+    const isFinalizado = j.status === "finalizado" || j.status === "finalizada";
     const values = {
       matchKey: key,
       phaseLabel: j.fase ?? j.phaseLabel ?? "Grupo A",
@@ -95,34 +101,70 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
       proposedBy: j.proposedBy ?? "",
       status: j.status ?? "combinando",
     };
-    const exists = existingKeys.some((e) => e.key === key);
-    if (exists) {
-      await db.update(tournamentMatches).set({ ...values, updatedAt: new Date() }).where(and(eq(tournamentMatches.tournamentId, tournamentId), eq(tournamentMatches.matchKey, key)));
+    const matchRow = existingMatches.find((e: any) => e.key === key);
+    if (matchRow) {
+      await d
+        .update(tournamentMatches)
+        .set({ ...values, updatedAt: new Date() })
+        .where(and(eq(tournamentMatches.tournamentId, tournamentId), eq(tournamentMatches.matchKey, key)));
+
+      // Se a partida foi finalizada (W.O. ou decisão manual do ADM) e tinha código de partida, libera o código no pool
+      if (isFinalizado && matchRow.codigoPartida) {
+        await d
+          .update(matchCodes)
+          .set({ used: false, matchId: null, lastUsedAt: new Date() })
+          .where(eq(matchCodes.code, matchRow.codigoPartida));
+      }
     } else {
-      await db.insert(tournamentMatches).values({ tournamentId, phase: "group_stage", round: 0, ...values });
+      await d.insert(tournamentMatches).values({ tournamentId, phase: "group_stage", round: 0, ...values });
     }
   }
 
   // Sem merge: apaga os que não vieram (replaces o cronograma inteiro)
   if (!merge && cronograma.length) {
     const keys = cronograma.map((j) => j.id || j.matchKey).filter(Boolean);
-    const toDelete = existingKeys.filter((e) => e.key && !keys.includes(e.key)).map((e) => e.key);
-    const safeDelete = toDelete.filter((k): k is string => !!k);
+    const toDelete = existingMatches.filter((e: any) => e.key && !keys.includes(e.key));
+    const safeDelete = toDelete.map((e: any) => e.key).filter((k: any): k is string => !!k);
     if (safeDelete.length) {
-      await db.delete(tournamentMatches).where(and(eq(tournamentMatches.tournamentId, tournamentId), inArray(tournamentMatches.matchKey, safeDelete)));
+      for (const del of toDelete) {
+        if (del.codigoPartida) {
+          await d
+            .update(matchCodes)
+            .set({ used: false, matchId: null, lastUsedAt: new Date() })
+            .where(eq(matchCodes.code, del.codigoPartida));
+        }
+      }
+      await d
+        .delete(tournamentMatches)
+        .where(and(eq(tournamentMatches.tournamentId, tournamentId), inArray(tournamentMatches.matchKey, safeDelete)));
     }
   }
 }
 
 /**
  * Persiste bracket_data (árvore) → bracket_matches.
- * Faz replace: apaga as células do torneio e reinsere as que têm conteúdo.
+ * Faz replace: apaga as células do torneio e reinsere as que têm conteúdo,
+ * preservando codigo_partida/status e liberando códigos de jogos com vencedor.
  */
-export async function storeBracket(tournamentId: string, bracket: any) {
+export async function storeBracket(tournamentId: string, bracket: any, d: any = db) {
   if (!bracket || typeof bracket !== "object") return;
-  await db.delete(bracketMatches).where(eq(bracketMatches.tournamentId, tournamentId));
+  const existingRows = await d
+    .select({
+      id: bracketMatches.id,
+      section: bracketMatches.section,
+      round: bracketMatches.round,
+      slot: bracketMatches.slot,
+      codigoPartida: bracketMatches.codigoPartida,
+      bestOf: bracketMatches.bestOf,
+    })
+    .from(bracketMatches)
+    .where(eq(bracketMatches.tournamentId, tournamentId));
+
+  await d.delete(bracketMatches).where(eq(bracketMatches.tournamentId, tournamentId));
 
   const rows: any[] = [];
+  const codigosParaLiberar = new Set<string>();
+
   const walk = (section: string, obj: any, round: string | null) => {
     if (!obj) return;
     // side.left / side.right → arrays por round
@@ -153,6 +195,18 @@ export async function storeBracket(tournamentId: string, bracket: any) {
     const t1 = cell.t1 ?? "";
     const t2 = cell.t2 ?? "";
     if (!t1 && !t2) return; // célula vazia não persiste
+
+    const prev = existingRows.find(
+      (r: any) => r.section === section && r.round === round && r.slot === slot
+    );
+
+    const hasWinner = !!cell.winner || (cell.s1 !== undefined && cell.s2 !== undefined && (cell.s1 > 0 || cell.s2 > 0) && cell.s1 !== cell.s2);
+    let codigoPartida = prev?.codigoPartida ?? null;
+
+    if (hasWinner && prev?.codigoPartida) {
+      codigosParaLiberar.add(prev.codigoPartida);
+    }
+
     rows.push({
       tournamentId,
       section,
@@ -165,6 +219,8 @@ export async function storeBracket(tournamentId: string, bracket: any) {
       scoreA: cell.s1 || 0,
       scoreB: cell.s2 || 0,
       winnerSide: cell.winner ?? null,
+      codigoPartida,
+      bestOf: prev?.bestOf ?? 3,
     });
   };
 
@@ -174,8 +230,26 @@ export async function storeBracket(tournamentId: string, bracket: any) {
   walk("preFinal", bracket.preFinal, null);
   walk("grandFinal", bracket.grandFinal, null);
 
+  for (const prev of existingRows) {
+    if (prev.codigoPartida) {
+      const stillAliveWithoutWinner = rows.find(
+        (r: any) => r.section === prev.section && r.round === prev.round && r.slot === prev.slot && !r.winnerSide
+      );
+      if (!stillAliveWithoutWinner) {
+        codigosParaLiberar.add(prev.codigoPartida);
+      }
+    }
+  }
+
+  for (const code of codigosParaLiberar) {
+    await d
+      .update(matchCodes)
+      .set({ used: false, matchId: null, lastUsedAt: new Date() })
+      .where(eq(matchCodes.code, code));
+  }
+
   if (rows.length) {
-    await db.insert(bracketMatches).values(rows);
+    await d.insert(bracketMatches).values(rows);
   }
 }
 

@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/09/2026 17:16 — por `gemini`
+**Última atualização:** 07/09/2026 17:34 — por `gemini`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -658,6 +658,12 @@ _02/09/2026 22:19 — deepseek_
 
 _05/09/2026 22:14 — gemini_
 
+### ADR-055 — Liberação de código de torneio em finalização manual e W.O. (storeCronograma e storeBracket)
+
+**Decisão:** storeCronograma e storeBracket liberam o match_code no pool (used=false) quando uma partida com codigo_partida é finalizada manualmente pelo ADM (ex: W.O. 2x0) ou recebe vencedor na chave, evitando o esgotamento do pool de códigos Riot quando não há partidas jogadas no LoL.
+
+_07/09/2026 17:17 — gemini_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -668,6 +674,8 @@ _05/09/2026 22:14 — gemini_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 07/09/2026 17:34 | gemini | Ajustado contraste das tags de time (passadas para text-white com borda e fundo translúcido na cor do time) nas páginas TimePage, equipes (/times) e players (/players). Na página de detalhes do time (TimePage), convertidos todos os cards inferiores e laterais (Lineup, Vagas Abertas, Jogadores, Capitão, Gerenciar, Histórico e Status do Time) para cantos arredondados normais (rounded-xl/rounded-2xl), mantendo o estilo cortado exclusivamente no Hero Banner do time conforme solicitado. Build e typecheck verificados com sucesso. <br>_tocou: `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`_ |
+| 07/09/2026 17:17 | gemini | Implementada e testada a liberação de código de torneio no pool em finalizações manuais de série (W.O. ou decisão do ADM no cronograma e bracket): storeCronograma e storeBracket agora detectam quando um confronto com codigoPartida é finalizado ou ganha vencedor e liberam o código em matchCodes (used=false), garantindo que W.O. não prenda códigos de torneio. Testes unitários 11/11 passando com PGlite e tsc exit 0 em api e web. <br>_tocou: `app.arquitetura.campeonatos`_ |
 | 07/09/2026 17:16 | gemini | Card da foto do responsavel/organizador alterado para proporcao 1:1 quadrada (aspect-square) com cantos arredondados (rounded-2xl). <br>_tocou: `web.campeonatos`_ |
 | 07/09/2026 17:15 | gemini | Aplicado corte cut-edge apenas no Hero Banner da tela de campeonato com borda solida na cor do tema, e removido o titulo CAMPEONATO OFICIAL M7 ARENA do topo do banner. Todo o restante da tela permanece com o design arredondado normal. <br>_tocou: `web.campeonatos`_ |
 | 07/09/2026 17:09 | gemini | Redesign completo dos cards da tela de campeonato: removido efeito degrade de bordas que somem, removido corte de poligonos (cut-edge) em cards de cronograma, jogos individuais, botoes de copiar codigo e verificar Riot, modais de regulamento, inscricao, agendamento e criacao de jogos, e estendida imagem do responsavel ate as bordas do card. <br>_tocou: `web.campeonatos`, `web.modais`_ |
@@ -681,8 +689,6 @@ _05/09/2026 22:14 — gemini_
 | 05/09/2026 19:56 | gemini | Ajuste de cores no Hero Banner de /jogar: substituído o destaque dourado/amarelo pelo verde original (#4ade80), com borda de hover hover:bg-green-500/30, gradiente verde from-green-500/20 via-green-500/5 e sombra luminosa hover:shadow-[0_0_35px_rgba(74,222,128,0.25)]. Build e deploy do container nginx concluídos na VPS (HTTP 200). <br>_tocou: `web/src/pages/Jogar.tsx`_ |
 | 05/09/2026 19:51 | gemini | Desafio Individual e Hero de /jogar: aumento da altura dos cards de fila Solo/Duo e Flexível (min-h de ~340px com badges de fila, ícones, descrições ricas e botões de ação); transição completa da linguagem de aposta para desafio individual em toda a tela (top bar 'Desafio Individual / Desafie a Si Mesmo', resumos 'Valor do desafio', modais e toasts sem termos de aposta); em /jogar, card hero agora é 100% clicável com hover feedback, título 'PARTICIPE DO DESAFIO INDIVIDUAL', copy persuasivo e botão 'Quero ir para o desafio'. Validação de tipo (tsc exit 0), build do Vite local e na VPS, e redeploy do container nginx com sucesso (HTTP 200). <br>_tocou: `web/src/pages/Jogar.tsx`, `web/src/pages/ApostaIndividualPage.tsx`_ |
 | 05/09/2026 01:33 | gemini | Modal de deposito: reposicionada a imagem do Twisted Fate para fora do container cortado (sem clip-path ou overflow-hidden que o cortava), mantendo o posicionamento lateral original estendendo para fora do card, posicionado em camada intermediaria (z-10) atras do conteudo e do card de Resumo do Pedido (z-20) com fundo solido. Build e deploy do container nginx concluidos na VPS. <br>_tocou: `web/src/components/modals/deposit/DepositModal.tsx`, `web/src/components/modals/deposit/DepositTab.tsx`_ |
-| 05/09/2026 00:12 | gemini | Historico de apostas do perfil: removido blocos de Total Ganho/Total Perdido; adicionado icone do campeao jogado (Ahri, Wukong, Graves, Ekko, Kayn via Data Dragon) substituindo icone de raio; badges legiveis SOLO/DUO e RANK FLEXIVEL; tags dos mercados traduzidas e destacadas; schema/migration 0023 para championName e championId; build e deploy efetuados na VPS. <br>_tocou: `web/src/components/perfil/HistoricoApostas.tsx`, `web/src/lib/api.ts`, `api/src/lib/bets.ts`, `api/src/lib/live-bets.ts`, `api/src/routes/bets.ts`, `db/schema/bets.ts`, `db/migrations/0023_bet_champion.sql`_ |
-| 02/09/2026 23:16 | deepseek | CAUSA RAIZ do historico vazio: bug de ORDEM DE ROTA, nao dado. GET /bets/:id engolia "history" como :id -> "invalid input syntax for type uuid: history" -> 500 -> historico em branco. Fix: rota /:id restrita a regex uuid em api/src/routes/bets.ts (4dec1f2), deployado. Confirmei no banco (psql vps) que os dados sempre existiram: conta One Lucks#br1 (d6a76e2c) tem 4 tickets liquidados (2 ganha solo +675 e flex +1350, 1 perdida -200, 1 cancelada 0); a query exata da rota retorna igual. Pós-deploy /api/bets/history autenticado retorna os 4 itens (sessao forjada temporaria, removida). DEBITO OPERACIONAL: recriar container app deixa o docker nginx (proxy app:3000) com IP antigo -> 502, resolvido com force-recreate nginx; fix permanente recomendado: proxy_pass com variavel+resolver. Front (34de438) modal/toast/sino ja deployado. Worktree de outro agente nao tocado. Bestas liquidas antes de 34de438 nao tem notificacao retroativa (esperado). <br>_tocou: `api/src/routes/bets.ts`, `api/src/routes/notifications.ts`, `api/src/lib/notifications.ts`, `api/src/lib/live-bets.ts`, `api/src/index.ts`, `web/src/App.tsx`, `web/src/lib/api.ts`, `web/src/lib/notification-sound.ts`, `web/src/components/partidas/ModalResultadoAposta.tsx`, `web/src/pages/ApostaIndividualPage.tsx`, `web/src/components/notifications/NotificationBell.tsx`_ |
 
 ---
 

@@ -10,6 +10,7 @@ import {
   bracketMatches,
   tournamentSeriesGames,
 } from "../../db/schema/tournaments.js";
+import { matchCodes } from "../../db/schema/matches.js";
 import { setupDb } from "./helpers.js";
 import {
   resolverSerie,
@@ -337,5 +338,54 @@ describe("serie-campeonato (persistência no banco)", () => {
     const leg = await toLegacyTournament(torneio.id, db);
     const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
     assert.equal(jogoLeg?.irregular, true);
+  });
+
+  test("storeCronograma libera código de partida quando ADM finaliza série manualmente (W.O.)", async () => {
+    const { db, torneio, serie } = await criaCenario();
+    const { storeCronograma } = await import("../src/lib/tournament-store.js");
+    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+
+    const [code] = await db
+      .insert(matchCodes)
+      .values({ code: `CODE-WO-${Date.now()}`, used: true })
+      .returning();
+
+    await db
+      .update(tournamentMatches)
+      .set({ codigoPartida: code.code })
+      .where(eq(tournamentMatches.id, serie.id));
+
+    // ADM marca W.O. 2x0 para o time A e confirma o resultado
+    await storeCronograma(
+      torneio.id,
+      [
+        {
+          id: serie.matchKey,
+          fase: serie.phaseLabel,
+          timeA: serie.teamATag,
+          timeB: serie.teamBTag,
+          status: "finalizado",
+          placar: "2 - 0",
+        },
+      ],
+      true,
+      db
+    );
+
+    // 1. O código de torneio deve ser liberado de volta ao pool
+    const [codeDb] = await db.select().from(matchCodes).where(eq(matchCodes.code, code.code));
+    assert.equal(codeDb.used, false);
+
+    // 2. A partida deve estar finalizada com placar 2 - 0
+    const [matchDb] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(matchDb.status, "finalizado");
+    assert.equal(matchDb.scoreA, 2);
+    assert.equal(matchDb.scoreB, 0);
+
+    // 3. O shape legado reflete o resultado finalizado
+    const leg = await toLegacyTournament(torneio.id, db);
+    const jogo = leg.cronograma.find((j: any) => j.id === serie.matchKey);
+    assert.equal(jogo.status, "finalizado");
+    assert.equal(jogo.placar, "2 - 0");
   });
 });
