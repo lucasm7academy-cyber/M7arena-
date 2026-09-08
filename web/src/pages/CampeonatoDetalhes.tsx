@@ -139,15 +139,6 @@ const CampeonatoDetalhesInner = ({
 
   return (
     <div className="min-h-screen bg-transparent text-white font-sans overflow-x-hidden relative">
-      {/* Background Decor & Depth Atmosphere */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div
-          className="absolute -top-[10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[140px]"
-          style={{ backgroundColor: `${campeonato.themeColor || '#FFB700'}0D` }}
-        />
-        <div className="absolute top-[35%] right-[10%] w-[500px] h-[500px] bg-[#9146FF]/5 rounded-full blur-[140px]" />
-        <div className="absolute top-[65%] left-[15%] w-[550px] h-[550px] bg-[#00F0FF]/4 rounded-full blur-[150px]" />
-      </div>
 
       {/* Bracket Modal (Full-Screen Popup) */}
       <BracketModal isOpen={isBracketModalOpen} onClose={() => setIsBracketModalOpen(false)} campeonato={campeonato} bracketData={bracketData} onScoreChange={handleBracketScoreChange} isAdmin={isAdmin} availableTeams={bracketAvailableTeams} modalBracketRef={modalBracketRef} modalBracketHandlers={modalBracketHandlers} modalBracketScale={modalBracketScale} />

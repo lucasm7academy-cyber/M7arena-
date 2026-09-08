@@ -89,15 +89,10 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
     <motion.div
       whileTap={{ scale: 0.99 }}
       onClick={() => { playSound('click'); onClick(team); }}
-      className="relative p-[2px] cursor-pointer transition-all hover:scale-[1.005] group"
-      style={{
-        clipPath: CUT_BUTTON,
-        background: `linear-gradient(135deg, ${team.gradientFrom}40, rgba(255,255,255,0.05) 100%)`,
-      }}
+      className="relative cursor-pointer transition-all hover:scale-[1.005] group rounded-2xl border border-white/10 hover:border-white/20 bg-[#0c0c10] overflow-hidden"
     >
       <div
         className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 group-hover:bg-[#101018] transition-colors"
-        style={{ clipPath: CUT_BUTTON_INNER }}
       >
         {/* Logo + Nome/Tag no mobile, Apenas Logo no desktop */}
         <div className="flex items-center gap-4 md:block shrink-0">
@@ -190,7 +185,7 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
           </div>
 
           {/* Stats em Linha */}
-          <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-2.5 md:p-0 border border-white/5 md:border-none" style={{ clipPath: CUT_BADGE }}>
+          <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-2.5 md:p-0 border border-white/5 md:border-none rounded-lg">
             <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
               <div className="flex items-center gap-1 mb-0.5">
                 <Flame className="w-3 h-3" style={{ color: team.gradientFrom }} />
@@ -404,15 +399,13 @@ export default function Equipes() {
             className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center cursor-zoom-out p-4"
           >
             <div
-              className="p-[1.5px] max-w-[min(480px,90vw)] max-h-[80vh] shadow-2xl"
+              className="p-[1.5px] rounded-2xl max-w-[min(480px,90vw)] max-h-[80vh] shadow-2xl overflow-hidden"
               style={{
-                clipPath: CUT_FRAME,
-                background: 'linear-gradient(135deg, rgba(255,183,0,0.8), rgba(255,255,255,0.1))'
+                background: '#FFB700'
               }}
             >
               <div
-                className="w-full h-full bg-[#08080a] flex items-center justify-center overflow-hidden"
-                style={{ clipPath: CUT_FRAME_INNER }}
+                className="w-full h-full bg-[#08080a] rounded-[14.5px] flex items-center justify-center overflow-hidden"
               >
                 <motion.img
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -428,8 +421,7 @@ export default function Equipes() {
             </div>
             <button
               onClick={() => setLightboxUrl(null)}
-              className="absolute top-5 right-5 w-10 h-10 bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
-              style={{ clipPath: CUT_BADGE }}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-5 h-5 text-white" />
             </button>
@@ -443,7 +435,7 @@ export default function Equipes() {
           className="relative p-[1.5px] shadow-2xl overflow-hidden"
           style={{
             clipPath: CUT_FRAME,
-            background: 'linear-gradient(135deg, rgba(255,183,0,0.5), rgba(255,255,255,0.06) 100%)'
+            background: 'rgba(255,183,0,0.5)'
           }}
         >
           <div
@@ -477,48 +469,33 @@ export default function Equipes() {
               {loadingMyTeam ? (
                 /* Skeleton do meu time */
                 <div
-                  className="relative p-[1px] animate-pulse"
-                  style={{
-                    clipPath: CUT_BUTTON,
-                    background: 'rgba(255,255,255,0.08)'
-                  }}
+                  className="relative rounded-2xl border border-white/5 bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 animate-pulse"
                 >
-                  <div
-                    className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6"
-                    style={{ clipPath: CUT_BUTTON_INNER }}
-                  >
-                    <div className="flex items-center gap-4 md:block shrink-0">
-                      <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 shrink-0" style={{ clipPath: CUT_BADGE }} />
-                      <div className="md:hidden flex-1 space-y-2">
-                        <div className="h-4 bg-white/5 w-32" />
-                        <div className="h-3 bg-white/5 w-16" />
-                      </div>
+                  <div className="flex items-center gap-4 md:block shrink-0">
+                    <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 shrink-0 rounded-xl" />
+                    <div className="md:hidden flex-1 space-y-2">
+                      <div className="h-4 bg-white/5 w-32" />
+                      <div className="h-3 bg-white/5 w-16" />
                     </div>
-                    <div className="flex-1 space-y-3">
-                      <div className="hidden md:block h-5 bg-white/5 w-40" />
-                      <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 border border-white/5 md:border-none">
-                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
-                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
-                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
-                      </div>
-                    </div>
-                    <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5" />
                   </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="hidden md:block h-5 bg-white/5 w-40" />
+                    <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 border border-white/5 md:border-none">
+                      <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                      <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                      <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                    </div>
+                  </div>
+                  <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5" />
                 </div>
               ) : myTeam ? (
                 <motion.div 
                   whileTap={{ scale: 0.99 }}
                   onClick={() => { playSound('click'); navigate(`/times/${myTeam.id}`); }}
-                  className="relative p-[2.5px] cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl"
-                  style={{
-                    clipPath: CUT_BUTTON,
-                    background: `linear-gradient(135deg, ${myTeam.gradientFrom}, rgba(255,255,255,0.1) 100%)`,
-                    boxShadow: `0 0 35px -10px ${myTeam.gradientFrom}4D`
-                  }}
+                  className="relative cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl rounded-2xl border border-white/10 hover:border-white/20 bg-[#0c0c10] overflow-hidden"
                 >
                   <div
                     className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 group-hover:bg-[#101018] transition-colors"
-                    style={{ clipPath: CUT_BUTTON_INNER }}
                   >
                     {/* Logo + Nome/Tag no mobile, Apenas Logo no desktop */}
                     <div className="flex items-center gap-4 md:block shrink-0">
@@ -618,7 +595,7 @@ export default function Equipes() {
                       </div>
 
                       {/* Stats em Linha */}
-                      <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-2.5 md:p-0 border border-white/5 md:border-none" style={{ clipPath: CUT_BADGE }}>
+                      <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8 w-full mt-2 bg-white/[0.02] md:bg-transparent p-2.5 md:p-0 border border-white/5 md:border-none rounded-lg">
                         <div className="flex flex-col items-center md:items-start flex-1 md:flex-initial">
                           <div className="flex items-center gap-1 mb-0.5">
                             <Flame className="w-3 h-3" style={{ color: myTeam.gradientFrom }} />
@@ -745,7 +722,7 @@ export default function Equipes() {
           className="relative p-[1.5px] shadow-2xl overflow-hidden"
           style={{
             clipPath: CUT_FRAME,
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03) 100%)'
+            background: 'rgba(255,255,255,0.1)'
           }}
         >
           <div
@@ -760,27 +737,18 @@ export default function Equipes() {
                 <p className="text-white/40 text-xs mt-1">Analise as equipes cadastradas e acompanhe seus rendimentos na liga.</p>
               </div>
 
-              {/* Barra de Busca Cut-Edge */}
+              {/* Barra de Busca */}
               <div
-                className="relative p-[1px] w-full md:w-72"
-                style={{
-                  clipPath: CUT_BUTTON,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))'
-                }}
+                className="relative w-full md:w-72 bg-[#0c0c10] border border-white/10 rounded-xl flex items-center px-3.5 py-2.5 gap-2.5 focus-within:border-white/25 transition-colors"
               >
-                <div
-                  className="w-full bg-[#0c0c10] flex items-center px-3.5 py-2.5 gap-2.5 focus-within:bg-[#121218] transition-colors"
-                  style={{ clipPath: CUT_BUTTON_INNER }}
-                >
-                  <Search className="w-4 h-4 text-white/30" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Buscar times..."
-                    className="bg-transparent border-none outline-none text-xs text-white w-full placeholder:text-white/20 font-medium"
-                  />
-                </div>
+                <Search className="w-4 h-4 text-white/30" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Buscar times..."
+                  className="bg-transparent border-none outline-none text-xs text-white w-full placeholder:text-white/20 font-medium"
+                />
               </div>
             </div>
 
@@ -790,30 +758,24 @@ export default function Equipes() {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="relative p-[1px] animate-pulse"
-                    style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.06)' }}
+                    className="relative rounded-2xl border border-white/5 bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 animate-pulse"
                   >
-                    <div
-                      className="w-full bg-[#0c0c10] p-4 flex flex-col md:flex-row md:items-center gap-4 md:gap-6"
-                      style={{ clipPath: CUT_BUTTON_INNER }}
-                    >
-                      <div className="flex items-center gap-4 md:block shrink-0">
-                        <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 shrink-0" style={{ clipPath: CUT_BADGE }} />
-                        <div className="md:hidden flex-1 space-y-2">
-                          <div className="h-4 bg-white/5 w-32" />
-                          <div className="h-3 bg-white/5 w-16" />
-                        </div>
+                    <div className="flex items-center gap-4 md:block shrink-0">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 shrink-0 rounded-xl" />
+                      <div className="md:hidden flex-1 space-y-2">
+                        <div className="h-4 bg-white/5 w-32" />
+                        <div className="h-3 bg-white/5 w-16" />
                       </div>
-                      <div className="flex-1 space-y-3">
-                        <div className="hidden md:block h-5 bg-white/5 w-40" />
-                        <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 border border-white/5 md:border-none">
-                          <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
-                          <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
-                          <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
-                        </div>
-                      </div>
-                      <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5" />
                     </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="hidden md:block h-5 bg-white/5 w-40" />
+                      <div className="flex gap-4 md:gap-6 mt-3 bg-white/[0.02] md:bg-transparent p-3 md:p-0 border border-white/5 md:border-none">
+                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                        <div className="h-4 bg-white/5 w-12 flex-1 md:flex-initial" />
+                      </div>
+                    </div>
+                    <div className="hidden md:flex shrink-0 flex-col items-center pl-8 pr-4 w-24 h-12 bg-white/5" />
                   </div>
                 ))}
               </div>
@@ -1039,15 +1001,13 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
           <div className="border-b border-white/5 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 p-[1px] flex items-center justify-center shrink-0"
+                className="w-10 h-10 rounded-xl p-[1px] flex items-center justify-center shrink-0"
                 style={{
-                  clipPath: CUT_BADGE,
-                  background: `linear-gradient(135deg, ${theme.from}, rgba(255,255,255,0.1))`
+                  background: theme.from
                 }}
               >
                 <div
-                  className="w-full h-full bg-[#08080a] flex items-center justify-center"
-                  style={{ clipPath: CUT_BADGE_INNER }}
+                  className="w-full h-full bg-[#08080a] rounded-[11px] flex items-center justify-center"
                 >
                   <Plus className="w-5 h-5" style={{ color: theme.from }} />
                 </div>
@@ -1068,36 +1028,24 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
           <div className="pt-6 space-y-4">
             <div>
               <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Nome do Time</label>
-              <div
-                className="p-[1px]"
-                style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
-              >
-                <input
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Ex: M7 Esports"
-                  maxLength={24}
-                  className="w-full bg-[#0c0c10] px-4 py-3 text-white text-xs font-semibold focus:outline-none placeholder:text-white/20"
-                  style={{ clipPath: CUT_BUTTON_INNER }}
-                />
-              </div>
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Ex: M7 Esports"
+                maxLength={24}
+                className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-semibold focus:outline-none focus:border-white/25 placeholder:text-white/20 transition-colors"
+              />
             </div>
 
             <div>
               <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tag (3 letras)</label>
-              <div
-                className="p-[1px]"
-                style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
-              >
-                <input
-                  value={tag}
-                  onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))}
-                  placeholder="Ex: M7E"
-                  maxLength={3}
-                  className="w-full bg-[#0c0c10] px-4 py-3 text-white text-xs font-black tracking-widest focus:outline-none placeholder:text-white/20"
-                  style={{ clipPath: CUT_BUTTON_INNER }}
-                />
-              </div>
+              <input
+                value={tag}
+                onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))}
+                placeholder="Ex: M7E"
+                maxLength={3}
+                className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-black tracking-widest focus:outline-none focus:border-white/25 placeholder:text-white/20 transition-colors"
+              />
               <p className="text-white/30 text-[9px] mt-1 font-bold">Sua tag aparece em rankings, campeonatos e no Hall da Fama.</p>
             </div>
 
@@ -1105,44 +1053,27 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
               <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Logo do Time</label>
               <div className="flex items-center gap-3">
                 <div
-                  className="w-16 h-16 p-[1px] flex items-center justify-center shrink-0"
-                  style={{
-                    clipPath: CUT_BADGE,
-                    background: `linear-gradient(135deg, ${theme.from}, rgba(255,255,255,0.1))`
-                  }}
+                  className="w-16 h-16 rounded-xl border border-white/10 bg-[#0c0c10] flex items-center justify-center shrink-0 overflow-hidden"
                 >
-                  <div
-                    className="w-full h-full bg-[#0c0c10] flex items-center justify-center overflow-hidden"
-                    style={{ clipPath: CUT_BADGE_INNER }}
-                  >
-                    {logoPreview ? (
-                      <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
-                    ) : (
-                      <Upload className="w-5 h-5 text-white/30" />
-                    )}
-                  </div>
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload className="w-5 h-5 text-white/30" />
+                  )}
                 </div>
 
                 <label className="flex-1 cursor-pointer">
                   <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
                   <div
-                    className="p-[1px] transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-2 py-3.5 border rounded-xl transition-all cursor-pointer font-black text-xs uppercase tracking-widest"
                     style={{
-                      clipPath: CUT_BUTTON,
-                      background: `${theme.from}60`,
+                      borderColor: `${theme.from}50`,
+                      background: `${theme.from}15`,
+                      color: theme.from,
                     }}
                   >
-                    <div
-                      className="flex items-center justify-center gap-2 py-3.5 font-black text-xs uppercase tracking-widest"
-                      style={{
-                        clipPath: CUT_BUTTON_INNER,
-                        background: `${theme.from}18`,
-                        color: theme.from
-                      }}
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span>Enviar Logo</span>
-                    </div>
+                    <Upload className="w-4 h-4" />
+                    <span>Enviar Logo</span>
                   </div>
                 </label>
               </div>
@@ -1156,21 +1087,15 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
                   <button
                     key={t.label}
                     onClick={() => setTheme({ from: t.from, to: t.to })}
-                    className="relative h-9 overflow-hidden transition-all cursor-pointer p-[1px]"
+                    className={`relative h-9 rounded-lg transition-all cursor-pointer flex items-center justify-center p-[1px] ${
+                      theme.from === t.from ? 'ring-2 ring-white scale-105' : 'hover:scale-105 border border-white/10'
+                    }`}
                     style={{
-                      clipPath: CUT_BADGE,
-                      background: theme.from === t.from ? '#ffffff' : 'rgba(255,255,255,0.1)'
+                      background: `linear-gradient(135deg, ${t.from}, ${t.to})`
                     }}
+                    title={t.label}
                   >
-                    <div
-                      className="w-full h-full flex items-center justify-center"
-                      style={{
-                        clipPath: CUT_BADGE_INNER,
-                        background: `linear-gradient(135deg, ${t.from}, ${t.to})`
-                      }}
-                    >
-                      {theme.from === t.from && <Check className="w-3.5 h-3.5 text-white" />}
-                    </div>
+                    {theme.from === t.from && <Check className="w-3.5 h-3.5 text-white drop-shadow" />}
                   </button>
                 ))}
               </div>
@@ -1181,37 +1106,25 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
               <p className="text-white/40 text-[10px] uppercase tracking-widest font-black">Contato do Responsável</p>
               <div>
                 <label className="text-white/30 text-[9px] uppercase tracking-widest block mb-1">WhatsApp</label>
-                <div
-                  className="p-[1px]"
-                  style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
-                >
-                  <input
-                    value={whatsapp}
-                    onChange={e => setWhatsapp(e.target.value)}
-                    placeholder="Ex: (11) 99999-9999"
-                    type="tel"
-                    className="w-full bg-[#0c0c10] px-4 py-2.5 text-white text-xs font-semibold focus:outline-none placeholder:text-white/20"
-                    style={{ clipPath: CUT_BUTTON_INNER }}
-                  />
-                </div>
+                <input
+                  value={whatsapp}
+                  onChange={e => setWhatsapp(e.target.value)}
+                  placeholder="Ex: (11) 99999-9999"
+                  type="tel"
+                  className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs font-semibold focus:outline-none focus:border-white/25 placeholder:text-white/20 transition-colors"
+                />
               </div>
               <div>
                 <label className="text-white/30 text-[9px] uppercase tracking-widest flex items-center gap-1.5 mb-1">
                   <FaDiscord className="w-3 h-3 text-[#5865F2]" /> Discord
                 </label>
-                <div
-                  className="p-[1px]"
-                  style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.1)' }}
-                >
-                  <input
-                    value={discord}
-                    onChange={e => setDiscord(e.target.value)}
-                    placeholder="Ex: usuario#1234"
-                    type="text"
-                    className="w-full bg-[#0c0c10] px-4 py-2.5 text-white text-xs font-semibold focus:outline-none placeholder:text-white/20"
-                    style={{ clipPath: CUT_BUTTON_INNER }}
-                  />
-                </div>
+                <input
+                  value={discord}
+                  onChange={e => setDiscord(e.target.value)}
+                  placeholder="Ex: usuario#1234"
+                  type="text"
+                  className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs font-semibold focus:outline-none focus:border-white/25 placeholder:text-white/20 transition-colors"
+                />
               </div>
             </div>
 
@@ -1219,10 +1132,9 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
               <button
                 onClick={handleCreate}
                 disabled={!name || tag.length < 3 || !hasRiot || !whatsapp || !discord}
-                className="w-full py-4 text-black font-black text-xs uppercase tracking-widest transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full py-4 text-black font-black text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
-                  clipPath: CUT_BUTTON,
-                  background: `linear-gradient(135deg, ${theme.from}, ${theme.to})`,
+                  backgroundColor: theme.from,
                   boxShadow: `0 0 30px -5px ${theme.from}66`
                 }}
               >

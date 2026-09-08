@@ -157,17 +157,19 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060608] text-white relative">
-      {/* Luzes de Fundo Ambiente Global Suaves (Nível Leve) */}
+    <div className="min-h-screen bg-[#050505] text-white relative">
+      {/* Background Layer Oficial (Mesma imagem das salas) */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Glow Superior Dourado Suave */}
-        <div className="absolute -top-[10%] left-[20%] w-[650px] h-[650px] bg-[#FFB700]/[0.05] rounded-full blur-[160px]" />
-        {/* Glow Médio Direito Roxo Twitch Suave */}
-        <div className="absolute top-[35%] -right-[5%] w-[600px] h-[600px] bg-[#9146FF]/[0.045] rounded-full blur-[160px]" />
-        {/* Glow Médio Esquerdo Ciano LoL Suave */}
-        <div className="absolute top-[60%] -left-[5%] w-[600px] h-[600px] bg-[#00F0FF]/[0.035] rounded-full blur-[170px]" />
-        {/* Glow Inferior Dourado Suave */}
-        <div className="absolute -bottom-[10%] right-[20%] w-[550px] h-[550px] bg-[#FFB700]/[0.04] rounded-full blur-[150px]" />
+        <div className="absolute inset-0 bg-[#050505]" />
+        <div className="absolute inset-0">
+          <img
+            src="/images/fundo_elite.jpg"
+            alt=""
+            className="w-full h-full object-cover object-center opacity-30"
+          />
+        </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
       </div>
 
       {/* Header */}

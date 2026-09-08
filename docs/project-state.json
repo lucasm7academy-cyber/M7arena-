@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-07T20:52:43.518Z",
-  "updatedBy": "antigravity",
+  "updatedAt": "2026-09-08T04:32:51.007Z",
+  "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -1947,41 +1947,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-08-31T01:58:57.429Z",
-      "agent": "deepseek",
-      "summary": "Implementei as 3 mudancas pedidas na aposta individual. 1) Mercados mutuamente exclusivos por grupo: validarBilhete (API) rejeita 2+ mercados do mesmo grupo com erro mercados_conflitantes (Vitoria OU Derrota; uma faixa de kills so; First Blood unico) — teste novo; no front, ao selecionar um mercado, os demais do mesmo grupo sao desmarcados. 2) Modal de confirmacao antes de apostar ('Voce realmente deseja realizar ou aceitar o desafio?') com resumo do bilhete (fila, mercados, total e retorno). 3) Cancelamento: so aparece botao Cancelar enquanto bilhete esta 'aguardando'; quando 'em_jogo' (partida comecou) o botao some e mostra aviso de que a aposta esta travada. Deploy: commit 8606aeb -> origin feat/redesign-modais -> merge ff main VPS -> compose up --build app nginx. health 200, site 200, /aposta-individual 200. ta blz pra validar.",
-      "touched": [
-        "api/src/lib/bets.ts",
-        "api/test/bets.test.ts",
-        "web/src/pages/ApostaIndividualPage.tsx"
-      ]
-    },
-    {
-      "at": "2026-08-31T02:39:16.695Z",
-      "agent": "deepseek",
-      "summary": "Mudei a aposta para 'perdura + validacao por historico'. Diagnostico: a chave Riot funciona em account/summoner/match-v5 mas da 403 constante no espectador (ate Faker) -> deteccao ao vivo nao funciona. Solucao: fallback por historico (match-v5) — busca by-puuid a partida que comecou depois da aposta (gameStartTime, anti-fraude 2min) e, se terminou (gameEndTimestamp), liquida no mesmo ciclo reutilizando o match lido. Removido cancelamento manual (rota DELETE + botao): aposta perdura; devolucao so por timeout (nenhum jogo) ou anulacao. Timeout 20min->90min. /sync roda deteccao+liquidacao ('Verificar Resultado'). Testes 26/26 (2 novos). Deploy: commit 4e54209 -> origin -> merge ff main VPS -> up --build app nginx. health 200, catalog 200, site 200.",
-      "touched": [
-        "api/src/lib/bets.ts",
-        "api/src/lib/live-bets.ts",
-        "api/src/routes/bets.ts",
-        "api/test/bets.test.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/ApostaIndividualPage.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-01T04:13:09.579Z",
-      "agent": "deepseek",
-      "summary": "Cutover do domínio: m7arena.pro agora serve o site real via HTTPS na VPS 179.198.120.11. Antes o raiz apontava para uma página \"Parked Domain\" do Hostinger (2.57.91.91), sem nada de valor — nada se perdeu. Feito: DNS @ e www → 179.198.120.11 no Hostinger (CUTOVER_CHECKLIST usava 187.127.6.136, IP antigo sem resposta; corrigido em docs/CUTOVER_CHECKLIST.md); certbot emitiu cert para m7arena.pro + www (expira 2026-11-30); criado server block m7arena-main-proxy.conf (proxy ao container 8090) e recarregado nginx. Validei: 200 em m7arena.pro/, www/ e /api/health, título correto, DNS público resolve. dev.m7arena.pro intacto. Pendentes (da migração, não do cutover): BLK-001 (login migrados 401), BLK-006 (RIOT dev key expira). mig.cutover doing, ADR-051 registrada.",
-      "touched": [
-        "docs/CUTOVER_CHECKLIST.md",
-        "DNS Hostinger (m7arena.pro @/www)",
-        "certbot m7arena.pro",
-        "/etc/nginx/sites-available/m7arena-main-proxy.conf (VPS 179.198.120.11)",
-        "mig.cutover"
-      ]
-    },
-    {
       "at": "2026-09-02T00:42:20.165Z",
       "agent": "deepseek",
       "summary": "Design fix em web/src/pages/players.tsx: cards de jogadores deixaram de usar gradiente e clip-path cortado. Agora a borda externa do card é cor sólida do elo (ou dourado VIP, PRIMARY_COLOR #FFB700), uniforme em toda a volta, com cantos arredondados (16px externo / 15px interno). Removida a variável outerGradient (gradient que escurecia embaixo) e trocado clipPath CUT_FRAME/CUT_FRAME_INNER por borderRadius nos cards. Banner, filtros, paginação e badges internos mantiveram o design cut-edge. npx tsc --noEmit passou sem erro.",
@@ -2265,6 +2230,36 @@
       "agent": "antigravity",
       "summary": "Corrigido o upload de logo para permitir também contas com o cargo 'proprietario', além de dono e capitão.",
       "touched": []
+    },
+    {
+      "at": "2026-09-08T04:13:51.226Z",
+      "agent": "antigravity",
+      "summary": "Suporte ao admin: vinculou conta do Roman Siege (coroa de capitão); inscreveu BKS, LDL e NKA pendentes nas Copas; corrigiu a tabela de classificação limpando o manual_standings; gerou novos cronogramas de 8 jogos (2 por time) corrigindo tags e datas; alterou e reduziu a fonte do título do Campeonato (Anton/Impact) com deploy em prod.",
+      "touched": [
+        "api/src/routes/upload.ts",
+        "web/src/pages/CampeonatoDetalhes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-08T04:30:12.241Z",
+      "agent": "gemini",
+      "summary": "Ajustado design dos cards em /times e /times/:id: logo com borda arredondada, primeiro card e cards gerais grandes com borda cortada em cor solida sem degrade, cards compridos dos times e modais internos totalmente arredondados sem degrade.",
+      "touched": [
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/equipes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-08T04:32:50.989Z",
+      "agent": "gemini",
+      "summary": "Fundo das páginas principais padronizado com a imagem oficial das salas (/images/fundo_elite.jpg) com opacidade suave e gradiente no LayoutWrapper.tsx; removida iluminação local com glows coloridos em CampeonatoDetalhes.tsx; atualizado fundo de ApostaIndividualPage.tsx; ajustado design dos cards em /times e /times/:id. Verificado com tsc exit 0.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/CampeonatoDetalhes.tsx",
+        "web/src/pages/ApostaIndividualPage.tsx",
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/equipes.tsx"
+      ]
     }
   ]
 }
