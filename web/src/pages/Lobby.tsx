@@ -812,7 +812,7 @@ const Home = () => {
 
         {/* UPCOMING MATCHES - PRÓXIMOS JOGOS */}
         {upcomingLoaded && upcomingMatches.length > 0 && (
-          <section className="py-6 px-4 max-w-7xl mx-auto overflow-hidden relative">
+          <section className="py-6 px-4 max-w-7xl mx-auto relative">
             <div className="space-y-6 relative">
               <div className="flex flex-col items-center text-center">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">
@@ -820,31 +820,23 @@ const Home = () => {
                 </h2>
               </div>
 
+              {/* Matchup Solto / Sem Card para não cortar a iluminação dos times */}
               <div
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="relative p-[1px] w-full transition-all"
-                style={{
-                  clipPath: CUT_FRAME,
-                  background: 'linear-gradient(135deg, rgba(255,183,0,0.3) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)',
-                  boxShadow: '0 0 35px -10px rgba(255,183,0,0.12)'
-                }}
+                className="relative flex items-center justify-between min-h-[360px] md:min-h-[400px] w-full px-2 md:px-8 py-6"
               >
-                <div
-                  className="w-full bg-[#08080a] relative flex items-center justify-between min-h-[380px] md:min-h-[420px] px-2 md:px-14 py-8 overflow-hidden"
-                  style={{ clipPath: CUT_FRAME_INNER }}
-                >
-                  {/* Ambient Background Glows */}
-                  <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
-                    <div
-                      className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute left-[5%] md:left-[15%] transition-all duration-700"
-                      style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
-                    />
-                    <div
-                      className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[90px] opacity-15 absolute right-[5%] md:right-[15%] transition-all duration-700"
-                      style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
-                    />
-                  </div>
+                {/* Ambient Background Glows Livres (sem card cortando) */}
+                <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0 overflow-visible">
+                  <div
+                    className="w-[280px] h-[280px] md:w-[450px] md:h-[450px] rounded-full blur-[110px] opacity-25 absolute left-[2%] md:left-[10%] transition-all duration-700"
+                    style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
+                  />
+                  <div
+                    className="w-[280px] h-[280px] md:w-[450px] md:h-[450px] rounded-full blur-[110px] opacity-25 absolute right-[2%] md:right-[10%] transition-all duration-700"
+                    style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
+                  />
+                </div>
 
                   {/* Left Navigation Arrow */}
                   <div
@@ -875,11 +867,11 @@ const Home = () => {
                             <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
                               <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
                                 <div
-                                  className="w-24 h-24 md:w-32 md:h-32 p-[1px] shadow-2xl relative group transition-all"
+                                  className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 p-[1px] shadow-2xl relative group transition-all"
                                   style={{
                                     clipPath: CUT_FRAME,
                                     background: `linear-gradient(135deg, ${upcomingMatches[currentMatchIndex].colorA}80 0%, ${upcomingMatches[currentMatchIndex].colorA}20 50%, rgba(255,255,255,0.05) 100%)`,
-                                    boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorA}25`
+                                    boxShadow: `0 0 30px ${upcomingMatches[currentMatchIndex].colorA}33`
                                   }}
                                 >
                                   <div
@@ -890,7 +882,7 @@ const Home = () => {
                                       <img
                                         src={upcomingMatches[currentMatchIndex].logoA}
                                         alt={upcomingMatches[currentMatchIndex].tagA}
-                                        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       />
                                     ) : (
                                       <span
@@ -926,11 +918,11 @@ const Home = () => {
                             <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
                               <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
                                 <div
-                                  className="w-24 h-24 md:w-32 md:h-32 p-[1px] shadow-2xl relative group transition-all"
+                                  className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 p-[1px] shadow-2xl relative group transition-all"
                                   style={{
                                     clipPath: CUT_FRAME,
                                     background: `linear-gradient(135deg, ${upcomingMatches[currentMatchIndex].colorB}80 0%, ${upcomingMatches[currentMatchIndex].colorB}20 50%, rgba(255,255,255,0.05) 100%)`,
-                                    boxShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorB}25`
+                                    boxShadow: `0 0 30px ${upcomingMatches[currentMatchIndex].colorB}33`
                                   }}
                                 >
                                   <div
@@ -941,7 +933,7 @@ const Home = () => {
                                       <img
                                         src={upcomingMatches[currentMatchIndex].logoB}
                                         alt={upcomingMatches[currentMatchIndex].tagB}
-                                        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       />
                                     ) : (
                                       <span
@@ -1050,7 +1042,6 @@ const Home = () => {
                     </button>
                   </div>
                 </div>
-              </div>
             </div>
           </section>
         )}
