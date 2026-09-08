@@ -191,7 +191,13 @@ const CampeonatoDetalhesInner = ({
 
             <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-end md:justify-between gap-8 pt-24 pb-6 md:py-10">
               <div className="space-y-4 max-w-3xl">
-                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white">
+                <h1 
+                  className="text-3xl sm:text-5xl md:text-6xl font-normal tracking-tighter uppercase leading-[0.95] sm:leading-[0.85] text-white drop-shadow-lg"
+                  style={{
+                    fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                    textShadow: '0 2px 12px rgba(0,0,0,0.65), 0 0 20px rgba(0,0,0,0.4)',
+                  }}
+                >
                   {campeonato.titulo || campeonato.nome || campeonato.name}
                 </h1>
 
