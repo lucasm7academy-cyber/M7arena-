@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 10/09/2026 02:22 — por `deepseek`
+**Última atualização:** 10/09/2026 02:31 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 83/96` concluído
+`████████████████████████░░░░ 84/97` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 52/59 | 3 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 53/60 | 3 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 4 | — |
 
@@ -41,7 +41,7 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Aplicação (React + Vite) | ███████████░ 45/50 | 3 | 2 |
+| Aplicação (React + Vite) | ███████████░ 46/51 | 3 | 2 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 4 | — |
@@ -74,7 +74,7 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
 - `mig.cutover` **Cutover: re-sync + DNS + TLS** — deepseek · Cutover de produção em execução: DNS m7arena.pro apontado para a VPS real 179.198.120.11 (o IP 187.127.6.136 do CUTOVER_CHECKLIST estava desatualizado — VPS foi trocada). Cert emitido via certbot para m7arena.pro + www.m7arena.pro, proxy host nginx criado e recarregado. Site servindo HTTPS 200 com cert válido (CN=m7arena.pro, expira 2026-11-30).
 - `app.saque` **Saque de MC via PIX (withdrawals + admin decide)** — deepseek · Fluxo de saque implementado e testado. Backend commitado por outro agente (3062c68: migration 0012, lib/routes/testes/SDK). Front (Tasks 5-6: DepositTab/SaqueTab/SaquesPix/Admin) escrito e buildando, AINDA NÃO COMMITADO nem deployado. Falta: commit do front + aplicar migration 0012 na VPS + deploy.
 - `app.chat.mensagens` **Chat de sala via WebSocket (envio + histórico + purge)** — deepseek · Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
-- `app.campeonatos.agendamento` **Agendamento de jogos: contra-proposta e confirmação com horário** — deepseek · Bug do 20:00: jogo agendado em hora cheia ia direto pra confirmado sem horário. Causa: painel de pendentes pré-preenchia 20:00 e o aceite ignorava data/hora. Fix (ADR-060): decisão centralizada no handleUpdateSchedule (accept+alterado=propose), modal sem salvamento inline, validação de data/hora, e rota merge recusa confirmado sem horário (400). Testes 179/179.
+- `app.campeonatos.inscricoes` **Inscrições: remover time e excluir campeonato** — deepseek · X de excluir candidato só fazia upsert (time voltava no reload) e o delete do campeonato exigia ser o criador (admin tomava 403 silencioso). Fix: DELETE /tournaments/:id/inscricoes/:teamId (remove tournament_teams + standings) e DELETE /tournaments/:id com admin/proprietario; front com endpoint dedicado + banner de erro. Testes 181/181.
 
 ## Componentes
 
@@ -194,7 +194,8 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **Participação: vaga de convidado reconhecida por vínculo Riot (botão Iniciar Série)** `app.participacao.vinculo-riot`<br>  Deployado. Convidado com conta vinculada resolve o time por PUUID/Riot ID em /teams/by-user e gerar-codigo; front normaliza tag/nome. Verificado em produção com o usuário do Ghozt. Falta o teste visual dele clicando (botão Iniciar Série/Copiar Código).<br>  _evidência:_ `Deploy VPS bbb6235 (health 200). GET /api/teams/by-user/21bc6733 (Ghozt) → membership time_id=445b12d8 (M7W) status=ativo — antes vinha vazio. Suite 174/174, tsc api/web 0.`<br>  _concluído 10/09/2026 02:11 por deepseek_
 - `[x]` **Verificação de série de campeonato via PUUID + tournamentCode** `app.campeonatos.verificacao-serie`<br>  Deployado. by-tournament-code (403 sempre com a chave atual) trocado por match-v5 by-puuid + info.tournamentCode; placar recalculado do zero, jogadas idempotentes, remake ignorado, manual preservado, erro visível se a Riot falhar (429 etc.).<br>  _evidência:_ `E2E read-only no container prod (dist novo + Riot ao vivo): resolverSerie da série M7WxBKA → {"estado":"finalizada","scoreA":2,"scoreB":0,"winnerSide":"a","irregular":false}; busca achou BR1_3281421243 e BR1_3281447250. Banco intacto (teste sem onJogada). Suite 174/174.`<br>  _concluído 10/09/2026 02:11 por deepseek_
 - `[x]` **PDL global: recálculo no servidor (paridade recalcular_pdl_global)** `app.campeonatos.pdl-global`<br>  Deployado + backfill feito. Recalculo do zero (+15/-13, clamp 0, chave não conta, ranking pdl>wins) chamado no endpoint, storeCronograma, finalização de série e exclusão de campeonato. Testes 3/3 (PGlite) + suíte 174/174.<br>  _evidência:_ `Recálculo rodado em prod: {"times":39,"jogos":16}. M7W → pdl 15, wins 1, losses 0, rank 4; BKA 0 (clamp), 1D. GET /api/teams?search=M7W → pdl=15 winrate=100 wins=1 games=1 rank=4. Históricos intactos (M7O 60, CRN/NCP 19, ZRG 15).`<br>  _concluído 10/09/2026 02:11 por deepseek_
-- `[~]` **Agendamento de jogos: contra-proposta e confirmação com horário** `app.campeonatos.agendamento`<br>  Bug do 20:00: jogo agendado em hora cheia ia direto pra confirmado sem horário. Causa: painel de pendentes pré-preenchia 20:00 e o aceite ignorava data/hora. Fix (ADR-060): decisão centralizada no handleUpdateSchedule (accept+alterado=propose), modal sem salvamento inline, validação de data/hora, e rota merge recusa confirmado sem horário (400). Testes 179/179.
+- `[x]` **Agendamento de jogos: contra-proposta e confirmação com horário** `app.campeonatos.agendamento`<br>  Deployado. Bug do 20:00 corrigido (painel não inventa hora; accept+alterado=contra-proposta; confirmar exige data/hora). Admin: Arbitrar agora define data/hora e confirma na hora (ação arbitrate) — sem propor e aceitar em 2 etapas. Servidor recusa (400) jogo confirmado sem horário. Falta teste visual do usuário.<br>  _evidência:_ `Deploy bac99c2 (health 200); bundle no nginx contém "Confirmar Arbitragem" (CampeonatoDetalhes-QAdaFch_.js); api/web tsc 0; vite build 0; suíte 179/179; teste agendamento 5/5.`<br>  _concluído 10/09/2026 02:24 por deepseek_
+- `[~]` **Inscrições: remover time e excluir campeonato** `app.campeonatos.inscricoes`<br>  X de excluir candidato só fazia upsert (time voltava no reload) e o delete do campeonato exigia ser o criador (admin tomava 403 silencioso). Fix: DELETE /tournaments/:id/inscricoes/:teamId (remove tournament_teams + standings) e DELETE /tournaments/:id com admin/proprietario; front com endpoint dedicado + banner de erro. Testes 181/181.
 
 **Design & Paridade Visual**
 
@@ -708,6 +709,14 @@ _10/09/2026 02:09 — deepseek_
 
 _10/09/2026 02:22 — deepseek_
 
+### ADR-061 — Exclusão de inscrição e de campeonato: endpoints dedicados com staff
+
+**Decisão:** Nova rota DELETE /tournaments/:id/inscricoes/:teamId remove tournament_teams + tournament_standings (organizador ou admin/proprietario); DELETE /tournaments/:id passa a aceitar admin/proprietario além do criador; o front usa o endpoint dedicado no X e mostra a falha no banner (antes era 403 silencioso).
+
+**Por quê:** O save legado só faz upsert: tirar o time do array não apagava a linha e a inscrição voltava ao recarregar. O delete do campeonato exigia ser o criador — o admin tomava 403 e o campeonato voltava (LEITEIROS CUP tem organizador diferente). Endpoint dedicado é atômico e evita que um save parcial (storeTimesInscritos([teamEntry]) das inscrições) apague outras inscrições.
+
+_10/09/2026 02:31 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -718,6 +727,7 @@ _10/09/2026 02:22 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 10/09/2026 02:24 | deepseek | Agendamento revisado e corrigido (ADR-060, commit bac99c2, deployado VPS+GitHub). Bug do 20:00: o painel de pendentes pré-preenchia 20:00 num jogo sem horário e o aceite ignorava data/hora, confirmando sem hora; com 20:01 o input virava propose e funcionava. Fix: accept+horário alterado = contra-proposta; confirmação exige data/hora válidos (front) e a rota merge recusa 400 jogo confirmado sem horário (servidor); modal centraliza a decisão no handleUpdateSchedule (sem salvamento inline). Admin: botão Arbitrar agora abre modo arbitrate e confirma na hora (antes exigia propor e aceitar em 2 etapas). Jogos pendentes: causa provável era o vínculo de convidado (ADR-056, já deployado). Evidência: api/web tsc 0, build 0, suíte 179/179, teste agendamento 5/5, bundle no ar com "Confirmar Arbitragem". Falta teste visual do usuário. Obs: container m7arena_mcp_ops em restart loop (não é dessas mudanças). <br>_tocou: `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/AgendamentoModal.tsx`, `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`, `api/src/lib/tournament-store.ts`, `api/src/routes/tournaments.ts`, `api/test/tournament-agendamento.test.ts`, `mcp/status-server/lib/plan.js`_ |
 | 10/09/2026 02:11 | deepseek | Fixes da Copa do Kraken deployados (2c795cb e bbb6235, branch feat/redesign-modais). 1) Botão Iniciar Série: convidado com conta vinculada resolve o time por PUUID/Riot ID (ADR-056); by-user do Ghozt confirmou M7W ativo. 2) Verificação de série: by-tournament-code dá 403 sempre com a chave atual (endpoint restrito a provedor de torneio, não é expiração); trocado por match-v5 by-puuid + info.tournamentCode (ADR-058), placar do zero (corrige 3x0), idempotente, remake ignorado, manual preservado, erro visível em 429. E2E read-only em prod: M7W 2-0. 3) PDL: endpoint era no-op; recalcularPdlGlobal (ADR-059) + backfill: M7W 15 PDL/1V/rank4/100%, históricos intactos. Suíte 174/174. Pendente: teste visual do Ghozt; opcional retro-verificar a série (tournament_series_games vazio). <br>_tocou: `api/src/lib/team-membership.ts`, `api/src/lib/serie-campeonato.ts`, `api/src/lib/tournament-pdl.ts`, `api/src/lib/tournament-store.ts`, `api/src/routes/teams.ts`, `api/src/routes/tournaments.ts`, `api/test/team-membership.test.ts`, `api/test/serie-campeonato.test.ts`, `api/test/tournament-pdl.test.ts`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/features/campeonatos/domain/team-ref.ts`, `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/AgendamentoModal.tsx`, `mcp/status-server/lib/plan.js`_ |
 | 10/09/2026 01:53 | claude | Diagnóstico do 0/0/0 na aba Grupos da Copa do Kraken: o modal Criar Confronto gravava fase fixa 'Cronograma', invisível ao filtro da aba Grupos (GRUPO/DESEMPATE). Corrigido: seletor de fase (Fase de Grupos/Mata-Mata) no AdminMatchModal (admin, campeonatos com grupos), fase default ajustada ao formato no refetchCampeonato, teste novo em classificacao.test.ts, UPDATE do jogo M7W 2x0 BKA no banco da VPS para 'Fase de Grupos' — API já devolve M7W 2V na classificação. Commit 95dab47 pushado no GitHub e deployado na VPS (app+nginx+realtime recriados; bundle prod contém o seletor; HTTPS/api 200). Lobby.tsx não-commitado na VPS preservado (stash + /root/backup-Lobby-vps-20260910.tsx). Notas: mcp_ops em loop de restart pré-existente; logs cheios de Riot 403 (dev key expirada, BLK-006). Pendente: usuário validar aba Grupos do Kraken e o seletor. <br>_tocou: `web/src/features/campeonatos/components/modals/AdminMatchModal.tsx`, `web/src/features/campeonatos/CampeonatoContext.tsx`, `api/test/classificacao.test.ts`, `VPS: tournament_matches jogo M7WxBKA`_ |
 | 10/09/2026 01:49 | deepseek | Fix do botão Iniciar Série para convidados com conta vinculada (ADR-056), implementado e verificado LOCALMENTE; não commitado nem deployado. API: helper findUserTeamMemberships casa vaga por user_id OU guest_puuid=game_accounts.external_id OU guest_riot_id/guest_handle=handle/users.riot_id (case-insensitive, aceito); usado em /teams/by-user (destrava myTeams) e /tournaments/.../gerar-codigo (senão 403). Front: sameTeamRef normaliza tag/nome. Evidência: api tsc 0, web tsc 0, vite build 0, suíte 164/164 (serializada; na paralela 5 arquivos morreram por OOM do runner, não do código), team-membership 7/7. Pendente: commit+deploy na VPS (outro agente estava lá) e smoke com a conta do Ghozt. Maikey sem conta vinculada continua sem ver (esperado); sair do time por vaga de convidado não foi estendido. <br>_tocou: `api/src/lib/team-membership.ts`, `api/test/team-membership.test.ts`, `api/src/routes/teams.ts`, `api/src/routes/tournaments.ts`, `web/src/features/campeonatos/domain/team-ref.ts`, `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/AgendamentoModal.tsx`, `mcp/status-server/lib/plan.js`_ |
@@ -732,7 +742,6 @@ _10/09/2026 02:22 — deepseek_
 | 08/09/2026 01:13 | antigravity | Suporte ao admin: vinculou conta do Roman Siege (coroa de capitão); inscreveu BKS, LDL e NKA pendentes nas Copas; corrigiu a tabela de classificação limpando o manual_standings; gerou novos cronogramas de 8 jogos (2 por time) corrigindo tags e datas; alterou e reduziu a fonte do título do Campeonato (Anton/Impact) com deploy em prod. <br>_tocou: `api/src/routes/upload.ts`, `web/src/pages/CampeonatoDetalhes.tsx`_ |
 | 07/09/2026 17:52 | antigravity | Corrigido o upload de logo para permitir também contas com o cargo 'proprietario', além de dono e capitão. |
 | 07/09/2026 17:49 | gemini | Ajustada a página de Detalhes do Campeonato (CampeonatoDetalhes e seus componentes VisaoGeral, ListaCronograma, GroupStage, Historico, Chaves, AdminCriarJogo): reduzido o arredondamento geral (containers de rounded-2xl para rounded-xl, cards e botoes de rounded-xl para rounded-lg, logos de time de rounded-xl para rounded-md) e substituídas as tags de time redondas pelo badge cortado cut-edge oficial com borda e texto na cor do time sem preenchimento colorido. <br>_tocou: `web/src/pages/CampeonatoDetalhes.tsx`, `web/src/components/campeonatos/VisaoGeral.tsx`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/GroupStage.tsx`, `web/src/components/campeonatos/Historico.tsx`, `web/src/components/campeonatos/Chaves.tsx`, `web/src/components/campeonatos/AdminCriarJogo.tsx`_ |
-| 07/09/2026 17:45 | antigravity | Permitido que contas com cargo 'proprietario' editem lineups e gerenciem times (TimePage, backend PUT, e aceitar convites) assim como donos e capitães. Validação de TypeScript de ambos front e back passou com sucesso. |
 
 ---
 

@@ -79,6 +79,20 @@ export async function storeTimesInscritos(tournamentId: string, registrations: a
 }
 
 /**
+ * Remove a inscrição de um time do campeonato (tournament_teams) e a linha de
+ * classificação dele. O save do shape legado só faz upsert — sem isso, remover
+ * o time do array no front não apagava nada e ele "voltava" ao recarregar.
+ */
+export async function removerInscricao(tournamentId: string, teamId: string, d: any = db) {
+  await d
+    .delete(tournamentTeams)
+    .where(and(eq(tournamentTeams.tournamentId, tournamentId), eq(tournamentTeams.teamId, teamId)));
+  await d
+    .delete(tournamentStandings)
+    .where(and(eq(tournamentStandings.tournamentId, tournamentId), eq(tournamentStandings.teamId, teamId)));
+}
+
+/**
  * Persiste cronograma (array de jogos) → tournament_matches.
  * `merge` = true faz upsert por match_key (sem apagar os que não vieram),
  * usado pelos endpoints de merge atômico (merge_jogos_cronograma).

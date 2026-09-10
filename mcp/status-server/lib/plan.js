@@ -86,6 +86,8 @@ export const PLAN = {
   "app.campeonatos.pdl-global": ["fase-3", "app.swap.campeonatos"],
   // Agendamento: contra-proposta e arbitragem direta do admin (ADR-060).
   "app.campeonatos.agendamento": ["fase-3", "app.swap.campeonatos"],
+  // Inscrições: remover time e excluir campeonato (ADR-061).
+  "app.campeonatos.inscricoes": ["fase-3", "app.swap.campeonatos"],
   "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
   "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],

@@ -5,7 +5,7 @@ import { users, userSessions, userRoles } from "../../../db/schema/identidade.js
 import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
-import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario } from "../lib/tournament-store.js";
+import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario, removerInscricao } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
 import { findUserTeamMemberships } from "../lib/team-membership.js";
@@ -229,8 +229,13 @@ tournamentsRouter.delete("/:id", async (req, res) => {
     if (!t) {
       return res.status(404).json({ error: "Campeonato não encontrado" });
     }
-    if (t.organizerId !== user.id) {
-      return res.status(403).json({ error: "Apenas o organizador pode excluir o campeonato" });
+    // Organizador dono OU admin/proprietário (antes só o criador podia; o
+    // admin tomava 403 silencioso e o campeonato "voltava" ao recarregar).
+    const roles = await db.select({ role: userRoles.role }).from(userRoles).where(eq(userRoles.userId, user.id));
+    const podeExcluir =
+      t.organizerId === user.id || roles.some((r) => ["admin", "proprietario"].includes(r.role));
+    if (!podeExcluir) {
+      return res.status(403).json({ error: "Apenas o organizador ou um administrador pode excluir o campeonato" });
     }
 
     await db.delete(tournaments).where(eq(tournaments.id, id));
@@ -278,6 +283,32 @@ tournamentsRouter.post("/:id/inscricoes/:teamId/aprovar", async (req, res) => {
     return res.json(await toLegacyTournament(id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao aprovar time" });
+  }
+});
+
+// ── Remover inscrição de time ──────────────────────────────────────────────
+// Exclui a inscrição (tournament_teams) e a classificação do time. Antes a tela
+// mandava o campeonato inteiro no save e o upsert não removia nada — o time
+// "voltava" ao recarregar a página.
+tournamentsRouter.delete("/:id/inscricoes/:teamId", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const { id, teamId } = req.params;
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+    if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    const roles = await db.select({ role: userRoles.role }).from(userRoles).where(eq(userRoles.userId, user.id));
+    const podeGerenciar =
+      t.organizerId === user.id || roles.some((r) => ["admin", "proprietario"].includes(r.role));
+    if (!podeGerenciar) {
+      return res.status(403).json({ error: "Apenas o organizador ou um administrador pode remover inscrições" });
+    }
+
+    await removerInscricao(id, teamId);
+    return res.json(await toLegacyTournament(id));
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao remover inscrição" });
   }
 });
 

@@ -505,10 +505,18 @@ export default function AdminPanel() {
   // e classificadosPorGrupo, e funciona para 4, 8, 16 ou 32 times.
 
   const handleDeleteTournament = (id: string) => {
+    const anterior = myTournaments;
     setMyTournaments(prev => prev.filter(t => t.id !== id));
     setSelectedTournament(null);
     api.tournaments.remove(id)
-      .catch((error: any) => console.error('Erro ao deletar campeonato:', error?.message || error));
+      .then(() => setPersistError(prev => (prev ? null : prev)))
+      .catch((error: any) => {
+        console.error('Erro ao deletar campeonato:', error?.message || error);
+        setPersistError(
+          `Falha ao excluir o campeonato. Detalhe: ${error?.message || error}`
+        );
+        setMyTournaments(anterior);
+      });
   };
 
   const handleStatusChange = (tournamentId: string, newStatus: Tournament['status']) => {
@@ -920,23 +928,30 @@ export default function AdminPanel() {
                                       Aprovar
                                     </button>
                                     <button 
-                                      onClick={() => {
-                                        const updatedTournaments = myTournaments.map(t => {
-                                          if (t.id === selectedTournament.id) {
-                                            return {
-                                              ...t,
-                                              timesInscritos: t.timesInscritos.filter(team_ => team_.id !== team.id)
-                                            };
-                                          }
-                                          return t;
+                                      onClick={async () => {
+                                        if (!window.confirm(`Remover a inscrição de ${team.name || team.tag} do campeonato?`)) return;
+                                        const tId = selectedTournament.id;
+                                        const listaAnterior = myTournaments;
+                                        const selAnterior = selectedTournament;
+                                        const semTime = (t: any) => ({
+                                          ...t,
+                                          timesInscritos: t.timesInscritos.filter((team_: any) => team_.id !== team.id),
                                         });
-                                        setMyTournaments(updatedTournaments);
-                                        const updT = updatedTournaments.find(t => t.id === selectedTournament?.id);
-                                        if (updT) saveToDB(updT);
-                                        setSelectedTournament(prev => prev ? {
-                                          ...prev,
-                                          timesInscritos: prev.timesInscritos.filter(team_ => team_.id !== team.id)
-                                        } : null);
+                                        setMyTournaments(prev => prev.map(t => (t.id === tId ? semTime(t) : t)));
+                                        setSelectedTournament(prev => (prev ? semTime(prev) : null));
+                                        try {
+                                          // Endpoint dedicado: o save legado só faz upsert e o
+                                          // time "voltava" ao recarregar a página.
+                                          await api.tournaments.removerInscricao(tId, team.id);
+                                          setPersistError(prev => (prev ? null : prev));
+                                        } catch (error: any) {
+                                          console.error('Erro ao remover inscrição:', error?.message || error);
+                                          setPersistError(
+                                            `Falha ao remover a inscrição de ${team.name || team.tag}. Detalhe: ${error?.message || error}`
+                                          );
+                                          setMyTournaments(listaAnterior);
+                                          setSelectedTournament(selAnterior);
+                                        }
                                       }}
                                       className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-all"
                                       title="Excluir Candidato"

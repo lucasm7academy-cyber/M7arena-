@@ -755,6 +755,8 @@ export const api = {
       api.post<ApiLegacyTournament>(`/tournaments/${id}/inscricoes`, teamEntry),
     aprovarTime: (id: string, teamId: string, aprovar = true) =>
       api.post<ApiLegacyTournament>(`/tournaments/${id}/inscricoes/${teamId}/aprovar`, { p_aprovar: aprovar }),
+    removerInscricao: (id: string, teamId: string) =>
+      api.delete<ApiLegacyTournament>(`/tournaments/${id}/inscricoes/${teamId}`),
     reabrir: (id: string) =>
       api.post<ApiLegacyTournament>(`/tournaments/${id}/reabrir`),
     atualizarCronograma: (id: string, cronograma: any[]) =>
