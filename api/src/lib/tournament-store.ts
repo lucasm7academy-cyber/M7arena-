@@ -23,6 +23,7 @@ import {
 } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
 import { matchCodes } from "../../../db/schema/matches.js";
+import { recalcularPdlGlobal } from "./tournament-pdl.js";
 
 /** Resolve o id de um time por id ou tag (retorna null se não achar). */
 async function resolveTeamId(idOrTag: string | undefined, d: any = db): Promise<string | null> {
@@ -139,6 +140,10 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
         .where(and(eq(tournamentMatches.tournamentId, tournamentId), inArray(tournamentMatches.matchKey, safeDelete)));
     }
   }
+
+  // PDL/V/D/ranking derivam dos jogos finalizados do cronograma. Recalcula
+  // sempre (idempotente) para cobrir W.O., edição de placar e exclusão.
+  await recalcularPdlGlobal(d);
 }
 
 /**

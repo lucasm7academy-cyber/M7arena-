@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-10T05:00:49.191Z",
+  "updatedAt": "2026-09-10T05:09:48.098Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1405,6 +1405,18 @@
       "owner": "deepseek",
       "createdAt": "2026-09-10T05:00:49.191Z",
       "updatedAt": "2026-09-10T05:00:49.191Z"
+    },
+    {
+      "id": "app.campeonatos.pdl-global",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "PDL global: recálculo no servidor (paridade recalcular_pdl_global)",
+      "status": "doing",
+      "notes": "O endpoint recalcular-pdl era no-op desde o swap: PDL/winrate/ranking não atualizavam (M7W 0 após vencer o Kraken). Fix ADR-059: api/src/lib/tournament-pdl.ts recalcula do zero (+15/-13, clamp 0, chave não conta, ranking pdl>wins) e é chamado no endpoint, no storeCronograma, ao finalizar série e ao excluir campeonato. Verificado local (174/174) e análise do recálculo contra os dados da VPS. Falta deploy + backfill.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-09-10T05:09:48.098Z",
+      "updatedAt": "2026-09-10T05:09:48.098Z"
     }
   ],
   "decisions": [
@@ -1928,6 +1940,15 @@
       "title": "Verificação de série via PUUID + tournamentCode",
       "decision": "A verificação de série abandona o endpoint match-v5 by-tournament-code (403 para QUALQUER código com a chave atual) e usa o mecanismo do motor de salas: match-v5 by-puuid dos rosters + confirmação pelo info.tournamentCode. Placar recalculado do zero a cada verificação (corrige o 3x0), jogadas idempotentes por matchIdRiot, remake ignorado, e série finalizada (inclusive 'finalizado' legado) não é reescrita — preserva o resultado manual do ADM. Riot indisponível devolve motivo=riot_indisponivel e o front mostra erro.",
       "rationale": "O by-tournament-code devolve 403 até para código inexistente com a chave dev (testado ao vivo) — foi a causa do 0x0 na Copa do Kraken com os 2 jogos existindo. O mecanismo por PUUID+tournamentCode já funciona no motor de salas e foi validado contra a Riot real (achou BR1_3281421243 e BR1_3281447250, M7W 2x0). Alternativa descartada: exigir chave de produção/provedor — processo externo e os códigos do pool podem pertencer a outro app.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-059",
+      "date": "2026-09-10T05:09:47.190Z",
+      "author": "deepseek",
+      "title": "PDL global recalculado no servidor a partir do cronograma",
+      "decision": "POST /tournaments/:id/recalcular-pdl deixa de ser stub e chama recalcularPdlGlobal(db): reset por time, +15 vitória / -13 derrota (clamp 0), empate/chave/não-finalizado ignorados, ranking = pdl desc > wins desc (empate por tag). Disparado ao finalizar série (motor), salvar cronograma (storeCronograma), excluir campeonato e no próprio endpoint. Regra replica a RPC recalcular_pdl_global do site antigo.",
+      "rationale": "O endpoint era no-op desde o swap: PDL/winrate/ranking do time ficavam defasados (M7W venceu 2-0 no Kraken e seguia 0/0). Recálculo do zero é idempotente e se autocorrige em edição/exclusão de jogo. O recálculo global foi validado contra os dados da VPS antes de ligar: os valores esperados batem com os históricos (M7O 60, CRN/NCP 19, ZRG 15, AES 4) e só falta o jogo do Kraken (M7W 15/1V — 1 jogo de cronograma = 1 vitória, não importa o 2-0 da série).",
       "supersedes": null
     }
   ],

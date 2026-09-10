@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { games } from "../../db/schema/games.js";
 import { users } from "../../db/schema/identidade.js";
-import { teams, teamMembers } from "../../db/schema/teams.js";
+import { teams, teamMembers, teamStats } from "../../db/schema/teams.js";
 import {
   tournaments,
   tournamentMatches,
@@ -362,11 +362,11 @@ describe("serie-campeonato (persistência no banco)", () => {
       teamATag: `TA${uid}`,
       teamBTag: `TB${uid}`,
     }).returning();
-    return { db, torneio, serie };
+    return { db, torneio, serie, timeA, timeB };
   }
 
   test("verificarSerieMatch fecha série e grava partidas individuais", async () => {
-    const { db, torneio, serie } = await criaCenario();
+    const { db, torneio, serie, timeA } = await criaCenario();
     const { verificarSerieCampeonato } = await import("../src/lib/serie-campeonato.js");
 
     const r = await verificarSerieCampeonato(
@@ -407,6 +407,9 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(jogadas[0].winnerSide, "a");
     assert.equal(jogadas[0].killA, 9);
     assert.equal(jogadas[1].gameNumber, 2);
+
+    const [statsA] = await db.select().from(teamStats).where(eq(teamStats.teamId, timeA.id));
+    assert.equal(statsA.pdl, 15, "resultado da série entra no PDL global");
   });
 
   test("reverificar a série não duplica jogadas nem infla o placar", async () => {

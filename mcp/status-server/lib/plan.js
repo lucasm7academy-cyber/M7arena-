@@ -82,6 +82,8 @@ export const PLAN = {
   // Verificação de série por PUUID + tournamentCode (ADR-058) — substitui o
   // by-tournament-code, que é proibido para a chave atual (403 sempre).
   "app.campeonatos.verificacao-serie": ["fase-3", "app.swap.campeonatos"],
+  // PDL global recalculado do cronograma (ADR-059) — o endpoint era no-op.
+  "app.campeonatos.pdl-global": ["fase-3", "app.swap.campeonatos"],
   "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
   "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],

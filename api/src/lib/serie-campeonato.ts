@@ -32,6 +32,7 @@ import {
 } from "../../../db/schema/tournaments.js";
 import { riotRaw } from "../routes/riot.js";
 import { RiotMatch, QUEUE_SUMMONERS_RIFT, QUEUE_HOWLING_ABYSS } from "./verificar-partida.js";
+import { recalcularPdlGlobal } from "./tournament-pdl.js";
 
 /** Peso de cada jogada em número de vitórias (usado para a fileira de melhor-de). */
 export function bestOfToWins(bestOf: number): number {
@@ -514,6 +515,9 @@ async function verificarSerieMatch(
         .set({ used: false, matchId: null, lastUsedAt: new Date() })
         .where(eq(matchCodes.code, serie.codigoPartida));
     }
+    // O resultado da série entra no PDL/ranking global dos times (deriva dos
+    // jogos finalizados do cronograma — a chave continua fora, como no antigo).
+    await recalcularPdlGlobal(tx);
   } else if (r.estado === "em_andamento") {
     await tx
       .update(tournamentMatches)

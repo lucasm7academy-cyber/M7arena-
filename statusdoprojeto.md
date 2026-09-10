@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 10/09/2026 02:00 — por `deepseek`
+**Última atualização:** 10/09/2026 02:09 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 80/94` concluído
+`████████████████████████░░░░ 80/95` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 49/57 | 4 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 49/58 | 5 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 4 | — |
 
@@ -41,7 +41,7 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Aplicação (React + Vite) | ███████████░ 42/48 | 4 | 2 |
+| Aplicação (React + Vite) | ██████████░░ 42/49 | 5 | 2 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 4 | — |
@@ -76,6 +76,7 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
 - `app.chat.mensagens` **Chat de sala via WebSocket (envio + histórico + purge)** — deepseek · Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
 - `app.participacao.vinculo-riot` **Participação: vaga de convidado reconhecida por vínculo Riot (botão Iniciar Série)** — deepseek · Implementado local, verificado localmente. Falta: commit + deploy na VPS + smoke real (ghotz ver o botão). NÃO tocar na VPS agora — outro agente estava deployando. Mudanças: api/src/lib/team-membership.ts (novo, ADR-056), by-user e gerar-codigo usam o helper, front normaliza tag/nome (domain/team-ref.ts).
 - `app.campeonatos.verificacao-serie` **Verificação de série de campeonato via PUUID + tournamentCode** — deepseek · Bug Copa do Kraken: by-tournament-code dá 403 para qualquer código com a chave dev, então a série nunca era verificada (0x0 mudo). Fix ADR-058: busca por PUUID + info.tournamentCode (mesmo mecanismo das salas), placar recalculado do zero (corrige 3x0), jogadas idempotentes, remake ignorado, resultado manual preservado, erro visível quando a Riot falha. Verificado local + contra a Riot real (achou os 2 jogos). Falta deploy e smoke na VPS.
+- `app.campeonatos.pdl-global` **PDL global: recálculo no servidor (paridade recalcular_pdl_global)** — deepseek · O endpoint recalcular-pdl era no-op desde o swap: PDL/winrate/ranking não atualizavam (M7W 0 após vencer o Kraken). Fix ADR-059: api/src/lib/tournament-pdl.ts recalcula do zero (+15/-13, clamp 0, chave não conta, ranking pdl>wins) e é chamado no endpoint, no storeCronograma, ao finalizar série e ao excluir campeonato. Verificado local (174/174) e análise do recálculo contra os dados da VPS. Falta deploy + backfill.
 
 ## Componentes
 
@@ -194,6 +195,7 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **Apostas individuais (self-bet) em partidas ranqueadas Solo/Flex** `app.aposta-individual`<br>  Redesign gamer completo de /aposta-individual: SummonerCard modular com avatar neon, elo badge e métricas 2x2; ItemMercado com ícones temáticos, odds em badge luminoso e preview de retorno em MC; seletor de stake com presets rápidos (100, 250, 500, 1000 MC); BilheteAtivoView com radar animado; rodapé com retorno destacado. Build e deploy concluídos na VPS (HTTP 200).<br>  _evidência:_ `web tsc exit 0; vite build local e na VPS (13.96s); container m7arena_nginx recriado e iniciado na VPS; curl https://m7arena.pro/ -> 200.`<br>  _concluído 05/09/2026 20:04 por gemini_
 - `[~]` **Participação: vaga de convidado reconhecida por vínculo Riot (botão Iniciar Série)** `app.participacao.vinculo-riot`<br>  Implementado local, verificado localmente. Falta: commit + deploy na VPS + smoke real (ghotz ver o botão). NÃO tocar na VPS agora — outro agente estava deployando. Mudanças: api/src/lib/team-membership.ts (novo, ADR-056), by-user e gerar-codigo usam o helper, front normaliza tag/nome (domain/team-ref.ts).<br>  _evidência:_ `api tsc exit 0; web tsc exit 0; vite build exit 0 (8.95s); node --import tsx --test --test-concurrency=1 (22 arquivos) → 164/164 pass; team-membership 7/7 (PGlite migrations reais).`
 - `[~]` **Verificação de série de campeonato via PUUID + tournamentCode** `app.campeonatos.verificacao-serie`<br>  Bug Copa do Kraken: by-tournament-code dá 403 para qualquer código com a chave dev, então a série nunca era verificada (0x0 mudo). Fix ADR-058: busca por PUUID + info.tournamentCode (mesmo mecanismo das salas), placar recalculado do zero (corrige 3x0), jogadas idempotentes, remake ignorado, resultado manual preservado, erro visível quando a Riot falha. Verificado local + contra a Riot real (achou os 2 jogos). Falta deploy e smoke na VPS.
+- `[~]` **PDL global: recálculo no servidor (paridade recalcular_pdl_global)** `app.campeonatos.pdl-global`<br>  O endpoint recalcular-pdl era no-op desde o swap: PDL/winrate/ranking não atualizavam (M7W 0 após vencer o Kraken). Fix ADR-059: api/src/lib/tournament-pdl.ts recalcula do zero (+15/-13, clamp 0, chave não conta, ranking pdl>wins) e é chamado no endpoint, no storeCronograma, ao finalizar série e ao excluir campeonato. Verificado local (174/174) e análise do recálculo contra os dados da VPS. Falta deploy + backfill.
 
 **Design & Paridade Visual**
 
@@ -690,6 +692,14 @@ _10/09/2026 01:52 — claude_
 **Por quê:** O by-tournament-code devolve 403 até para código inexistente com a chave dev (testado ao vivo) — foi a causa do 0x0 na Copa do Kraken com os 2 jogos existindo. O mecanismo por PUUID+tournamentCode já funciona no motor de salas e foi validado contra a Riot real (achou BR1_3281421243 e BR1_3281447250, M7W 2x0). Alternativa descartada: exigir chave de produção/provedor — processo externo e os códigos do pool podem pertencer a outro app.
 
 _10/09/2026 02:00 — deepseek_
+
+### ADR-059 — PDL global recalculado no servidor a partir do cronograma
+
+**Decisão:** POST /tournaments/:id/recalcular-pdl deixa de ser stub e chama recalcularPdlGlobal(db): reset por time, +15 vitória / -13 derrota (clamp 0), empate/chave/não-finalizado ignorados, ranking = pdl desc > wins desc (empate por tag). Disparado ao finalizar série (motor), salvar cronograma (storeCronograma), excluir campeonato e no próprio endpoint. Regra replica a RPC recalcular_pdl_global do site antigo.
+
+**Por quê:** O endpoint era no-op desde o swap: PDL/winrate/ranking do time ficavam defasados (M7W venceu 2-0 no Kraken e seguia 0/0). Recálculo do zero é idempotente e se autocorrige em edição/exclusão de jogo. O recálculo global foi validado contra os dados da VPS antes de ligar: os valores esperados batem com os históricos (M7O 60, CRN/NCP 19, ZRG 15, AES 4) e só falta o jogo do Kraken (M7W 15/1V — 1 jogo de cronograma = 1 vitória, não importa o 2-0 da série).
+
+_10/09/2026 02:09 — deepseek_
 
 ## Bloqueios resolvidos
 

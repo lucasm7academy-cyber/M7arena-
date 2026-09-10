@@ -9,6 +9,7 @@ import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket }
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
 import { findUserTeamMemberships } from "../lib/team-membership.js";
+import { recalcularPdlGlobal } from "../lib/tournament-pdl.js";
 
 export const tournamentsRouter = Router();
 
@@ -233,6 +234,8 @@ tournamentsRouter.delete("/:id", async (req, res) => {
     }
 
     await db.delete(tournaments).where(eq(tournaments.id, id));
+    // Os jogos do campeonato saem junto (cascade): PDL/V/D precisam refletir.
+    await recalcularPdlGlobal(db);
     return res.json({ ok: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao excluir campeonato" });
@@ -332,9 +335,9 @@ tournamentsRouter.put("/:id/cronograma/merge", async (req, res) => {
 });
 
 // ── Recalcular PDL global ──────────────────────────────────────────────────
-// Substitui a RPC recalcular_pdl_global. No schema novo o PDL de cada time é
-// derivado das partidas finalizadas; aqui apenas devolvemos ok (a classificação
-// é sempre recalculada no shape).
+// Substitui a RPC recalcular_pdl_global: PDL/V/D/ranking de cada time derivam
+// dos jogos FINALIZADOS do cronograma (chave não conta). Recálculo do zero,
+// idempotente — chamado pelo front após finalizar/editar um jogo.
 tournamentsRouter.post("/:id/recalcular-pdl", async (req, res) => {
   try {
     const user = await getAuthUser(req);
@@ -343,7 +346,8 @@ tournamentsRouter.post("/:id/recalcular-pdl", async (req, res) => {
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
-    return res.json({ ok: true });
+    const r = await recalcularPdlGlobal(db);
+    return res.json({ ok: true, ...r });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao recalcular PDL" });
   }
