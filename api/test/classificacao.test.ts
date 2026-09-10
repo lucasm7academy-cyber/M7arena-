@@ -54,6 +54,27 @@ test("mata-mata: filtra chaveamento e conta serie vencida", () => {
   assert.equal(c[1].d, 1);
 });
 
+test("liga: confronto manual 'Fase de Grupos' conta; 'Mata-Mata' tambem conta na geral", () => {
+  const data: any = {
+    t: { format: "groups" },
+    teamRows: [team("1", "A", "TA"), team("2", "B", "TB")],
+    matches: [
+      match("TA", "TB", "2 - 0", "Fase de Grupos"),
+      match("TA", "TB", "2 - 1", "Mata-Mata"),
+    ],
+    brackets: [],
+    standings: [],
+  };
+  const c = buildClassificacao(data);
+  // Ambos contam na classificação geral (só o chaveamento visual é excluído).
+  assert.equal(c[0].tag, "TA");
+  assert.equal(c[0].v, 4);
+  assert.equal(c[0].d, 1);
+  assert.equal(c[1].tag, "TB");
+  assert.equal(c[1].v, 1);
+  assert.equal(c[1].d, 4);
+});
+
 test("fallback para classificacao manual sem jogos finalizados", () => {
   const data: any = {
     t: { format: "single_elimination" },

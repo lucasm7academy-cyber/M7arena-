@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-08T04:41:06.634Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-09-10T04:29:28.037Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -1352,11 +1352,11 @@
       "area": "app",
       "name": "Arquitetura do módulo campeonatos (features/ + classificação server-side)",
       "status": "doing",
-      "notes": "Merge c2b2f20 deployado na VPS (dev.m7arena.pro). Tasks 6-12 concluídas e buildadas (HTTP 200, API health 200). Falta Task 13 (verificação visual 1:1) — aguardando usuário testar /campeonatos/:id e /criar-campeonato.",
+      "notes": "Adicionando seletor de fase (Grupos/Mata-Mata) no modal Criar Confronto; convertendo jogo M7W x BKA do Kraken para Fase de Grupos; deploy VPS + push GitHub.",
       "evidence": "",
-      "owner": "deepseek",
+      "owner": "claude",
       "createdAt": "2026-08-21T01:43:10.460Z",
-      "updatedAt": "2026-08-22T23:52:23.732Z"
+      "updatedAt": "2026-09-10T04:21:08.529Z"
     },
     {
       "id": "app.campeonato.verificacao-serie",
@@ -1947,61 +1947,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-02T00:59:53.703Z",
-      "agent": "deepseek",
-      "summary": "Causa raiz do 500 no /times: apos o cutover o m7arena.pro foi apontado a VPS, mas APP_URL no .env seguiu https://dev.m7arena.pro e o CORS_ALLOWLIST da API derivava so de APP_URL. Toda request do browser em m7arena.pro (envia Origin) caia no erro CORS -> Express 500 HTML em qualquer endpoint (o POST /players/by-ids era so o mais visivel). Fix: origens de producao (m7arena.pro/www) adicionadas literalmente em CORS_ALLOWLIST e allowedOrigins do realtime; APP_URL mantido single (dev) p/ nao quebrar Google OAuth/OG/payments. Tambem blindei o /players/by-ids contra id nao-uuid. tsc api exit 0. Commits 1634109 e bc00634, ff-merge na main da VPS, docker compose up -d --build app realtime. Verificado: team/:id 200, by-ids 200 (sessao) e 401 (anon) sem 500, admin/balances 200, health 200. Nota: origin/main (55e70e8) e main VPS (bc00634) divergentes (outro agente); nao toquei em origin/main.",
-      "touched": [
-        "api/src/index.ts",
-        "api/src/realtime/index.ts",
-        "api/src/routes/players.ts"
-      ]
-    },
-    {
-      "at": "2026-09-03T01:19:58.504Z",
-      "agent": "deepseek",
-      "summary": "Resolvi o sistema de elo (leveza + correção do \"Ferro\"). Diagnóstico: o elo já vivia em game_accounts.metadata.elo_cache, mas o /players disparava refresh-elos em background a cada load (excesso de chamadas à Riot) e jogador sem elo_cache caía no default \"Ferro\" (players.tsx:204). Fiz: nova lib api/src/lib/atualizar-elos.ts (fonte única de escrita, lote 2000 + concorrência 3, grava só elo_cache + stats_updated_at, sem tabela nova, não grava IRON por fallback); cron semanal no index.ts (runRefreshElos, ttlMs 7 dias); POST /players/refresh-elos virou admin/proprietário-only com force=true; removi o refresh em background do players.tsx (leitura 100% cache); adicionei \"Sem Rank\" ao EloType/ELO_STYLES e mudei o default; api.players.refreshElos(force) no lib/api.ts; botão \"Atualizar Elos Agora\" na AbaDashboard do Admin.tsx. tsc api exit 0, tsc web exit 0, testes api 14/14. ADR-053. Pendente: RIOT_API_KEY permanente (BLK-006) e deploy.",
-      "touched": [
-        "api/src/lib/atualizar-elos.ts",
-        "api/src/routes/players.ts",
-        "api/src/index.ts",
-        "web/src/pages/players.tsx",
-        "web/src/components/players/PlayerDetailModal.tsx",
-        "web/src/pages/Admin.tsx",
-        "web/src/lib/api.ts"
-      ]
-    },
-    {
-      "at": "2026-09-03T01:58:38.116Z",
-      "agent": "deepseek",
-      "summary": "Deploy do sistema de elo (commit 69a8c15) na VPS. Fluxo: a VPS (/root/m7arena) tem 'main' checked out e o remote 'vps' aponta p/ ela — push direto na main é recusado (denyCurrentBranch=refuse). Solução: `git push vps <commit>:refs/heads/_deploy` e `ssh pandapost-vps \"cd /root/m7arena && git merge --ff-only _deploy && git branch -d _deploy\"`. ATENÇÃO: working tree local tem trabalho de OUTRO agente misturado (notificações + aposta individual em index.ts e lib/api.ts) — committo seletivo via git apply --cached (só meus hunks). Rebuild: `docker compose --env-file /root/m7arena/.env -f infra/docker-compose.yml up -d --build app nginx` (realtime recriado junto, compartilha imagem; não toquei no código dele). Verificado: health 200, site 200, refresh-elos anônimo=401. Chave Riot válida (job de handles toma 429 rate-limit no boot, pré-existente — não é do elo).",
-      "touched": [
-        "api/src/lib/atualizar-elos.ts",
-        "api/src/routes/players.ts",
-        "api/src/index.ts",
-        "web/src/pages/players.tsx",
-        "web/src/components/players/PlayerDetailModal.tsx",
-        "web/src/pages/Admin.tsx",
-        "web/src/lib/api.ts"
-      ]
-    },
-    {
-      "at": "2026-09-03T02:02:22.765Z",
-      "agent": "deepseek",
-      "summary": "Notificação+modal de resultado da aposta individual implementados e deployados (34de438 na main VPS). Backend: lib notifications.ts, rota /api/notifications (GET listar+unreadCount, POST /:id/read, POST /read-all, auth getAuthUser), cron de liquidacao/cancelamento/anulacao grava na tabela notifications. Front: Toaster global (destrava toasts invisiveis), ModalResultadoAposta (desfecho ganhou/perdeu/anulada), polling 20s so com aposta ativa, NotificationBell com badge+lida+som WebAudio, SDK api.notifications.*+betDeltaMc(). Verificado: web tsc+build ok, api tsc 0, bets.test 26/26. Live: health 200, site 200, notifications(anon) 401. Commitei so meus arquivos; worktree de outro agente intacto. PENDENTE: historico no perfil em branco apos desafio ganho — provavel bilhete nao liquidado (chave Riot dev BLK-006) impedindo deteccao; investigar com dado real.",
-      "touched": [
-        "api/src/lib/notifications.ts",
-        "api/src/routes/notifications.ts",
-        "api/src/lib/live-bets.ts",
-        "api/src/index.ts",
-        "web/src/App.tsx",
-        "web/src/lib/api.ts",
-        "web/src/lib/notification-sound.ts",
-        "web/src/components/partidas/ModalResultadoAposta.tsx",
-        "web/src/pages/ApostaIndividualPage.tsx",
-        "web/src/components/notifications/NotificationBell.tsx"
-      ]
-    },
-    {
       "at": "2026-09-03T02:16:10.225Z",
       "agent": "deepseek",
       "summary": "CAUSA RAIZ do historico vazio: bug de ORDEM DE ROTA, nao dado. GET /bets/:id engolia \"history\" como :id -> \"invalid input syntax for type uuid: history\" -> 500 -> historico em branco. Fix: rota /:id restrita a regex uuid em api/src/routes/bets.ts (4dec1f2), deployado. Confirmei no banco (psql vps) que os dados sempre existiram: conta One Lucks#br1 (d6a76e2c) tem 4 tickets liquidados (2 ganha solo +675 e flex +1350, 1 perdida -200, 1 cancelada 0); a query exata da rota retorna igual. Pós-deploy /api/bets/history autenticado retorna os 4 itens (sessao forjada temporaria, removida). DEBITO OPERACIONAL: recriar container app deixa o docker nginx (proxy app:3000) com IP antigo -> 502, resolvido com force-recreate nginx; fix permanente recomendado: proxy_pass com variavel+resolver. Front (34de438) modal/toast/sino ja deployado. Worktree de outro agente nao tocado. Bestas liquidas antes de 34de438 nao tem notificacao retroativa (esperado).",
@@ -2259,6 +2204,40 @@
       "summary": "Ajustada a secao Proximos Jogos no Lobby: removido o card externo chanfrado com overflow-hidden para deixar o confronto solto e permitir que a iluminacao/glow de cada time se expanda livremente; logos dos times aumentados e ajustados para object-cover cobrindo o card por completo.",
       "touched": [
         "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-10T03:43:19.712Z",
+      "agent": "gemini",
+      "summary": "Analisei o bug do botão 'Iniciar Série' não aparecer para jogadores normais, apenas para admin. Nenhuma alteração de código foi feita conforme solicitado.",
+      "touched": []
+    },
+    {
+      "at": "2026-09-10T03:54:30.596Z",
+      "agent": "gemini",
+      "summary": "Reavaliação do bug após input do usuário: o problema real é a restrição de status ('confirmado') que bloqueia os jogadores mas é ignorada pela flag isAdmin.",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-10T04:11:20.443Z",
+      "agent": "gemini",
+      "summary": "Confirmação de que o bug real é case-sensitivity na função getMyTeamInMatch que bloqueia o time correto de ser reconhecido.",
+      "touched": [
+        "web/src/features/campeonatos/CampeonatoContext.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-10T04:29:28.029Z",
+      "agent": "deepseek",
+      "summary": "Verificação (sem alterar código) da causa do botão \"Iniciar Série\" aparecer só para o proprietário na Copa do Kraken. A hipótese de case-sensitivity em getMyTeamInMatch está ERRADA para este caso: dado real da API mostra timeA=\"M7W\" e tag do time=\"M7W\" (iguais). Causa real: o roster da M7 WHITE tem 6 convidados (guest_riot_id, user_id NULL) e só o dono/coach com user_id; myTeams é montado só por team_members.user_id (PerfilContext→/teams/by-user), então getMyTeamInMatch retorna undefined para ghotz e demais. O proprietário via o botão porque isAdmin=true ignora os gates (canAccessSeries || isAdmin e status confirmado || isAdmin). O servidor (gerar-codigo) também exige user_id accepted, então conta não vinculada tomaria 403. Fica registrado também o gate secundário: jogo criado pelo admin nasce \"proposto\" e não-admin só vê o botão com status confirmado.",
+      "touched": [
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "web/src/components/campeonatos/ListaCronograma.tsx",
+        "web/src/contexts/PerfilContext.tsx",
+        "api/src/routes/teams.ts",
+        "api/src/routes/tournaments.ts"
       ]
     }
   ]

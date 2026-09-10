@@ -135,7 +135,7 @@ export function CampeonatoProvider({
   const [adminMatchData, setAdminMatchData] = useState({
     timeA: "",
     timeB: "",
-    fase: "Cronograma", // fase fixa — sem divisão de grupos/desempate/mata-mata
+    fase: "Fase de Grupos", // ajustado ao formato do campeonato quando ele carrega
   });
   const [registrationData, setRegistrationData] = useState({
     teamId: "",
@@ -513,6 +513,14 @@ export function CampeonatoProvider({
       const data = await api.tournaments.detail(id);
       const mapped = mapFromDb(data);
       setCampeonato(mapped);
+      // Fase default do "Criar Confronto" segue o formato do campeonato:
+      // com grupos nasce como Fase de Grupos (soma na tabela), fora disso mata-mata.
+      setAdminMatchData((prev: any) => ({
+        ...prev,
+        fase: mapped.formato === "liga" || (mapped.grupos && Object.keys(mapped.grupos).length > 0)
+          ? "Fase de Grupos"
+          : "Mata-Mata",
+      }));
       if (data.bracket_data) {
         setBracketData(migrateBracketData(data.bracket_data));
       }

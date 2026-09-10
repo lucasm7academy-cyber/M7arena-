@@ -1,7 +1,11 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { X, Swords, Check } from "lucide-react";
+import { X, Swords, Check, Layers } from "lucide-react";
 
 export const AdminMatchModal = ({ isOpen, onClose, campeonato, isAdmin, adminMatchData, setAdminMatchData, onSubmit, myTeams }: any) => {
+  // Só oferece escolha de fase em campeonatos com grupos (liga); no mata-mata
+  // puro a classificação geral já é por confronto e o jogo nasce como mata-mata.
+  const temGrupos = ["liga", "grupos_16_4_2", "grupos"].includes(campeonato?.formato) ||
+    (campeonato?.grupos && Object.keys(campeonato.grupos).length > 0);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -96,6 +100,32 @@ export const AdminMatchModal = ({ isOpen, onClose, campeonato, isAdmin, adminMat
                   )}
                 </select>
               </div>
+
+          {isAdmin && temGrupos && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                <Layers className="w-3 h-3" />
+                Fase do Confronto
+              </label>
+              <select
+                value={adminMatchData.fase}
+                onChange={(e) =>
+                  setAdminMatchData({
+                    ...adminMatchData,
+                    fase: e.target.value,
+                  })
+                }
+                className="w-full bg-[#0c0c10] px-4 py-3 rounded-xl border border-white/10 text-white focus:outline-none transition-all font-black text-xs cursor-pointer"
+              >
+                <option value="Fase de Grupos" className="bg-[#0A0A0A]">
+                  Fase de Grupos (soma na tabela dos grupos)
+                </option>
+                <option value="Mata-Mata" className="bg-[#0A0A0A]">
+                  Mata-Mata (não soma nos grupos)
+                </option>
+              </select>
+            </div>
+          )}
 
               <div className="text-center text-[10px] font-black text-white/20 uppercase tracking-[0.5em] py-1">
                 VS
