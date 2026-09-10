@@ -90,7 +90,9 @@ export const ListaCronograma = () => {
     setVerifyingMatchId(matchId);
     try {
       const res = await api.tournaments.verificarSerie(campeonato.id, matchId);
-      if (res.estado === "finalizada") {
+      if (res.motivo === "riot_indisponivel") {
+        toast.error("Não foi possível consultar a Riot agora. Tente de novo em instantes.");
+      } else if (res.estado === "finalizada") {
         toast.success(`Série finalizada! Placar: ${res.scoreA} - ${res.scoreB}`);
       } else if (res.estado === "em_andamento") {
         toast(`Série em andamento: ${res.scoreA} - ${res.scoreB}`, { icon: "⚔️" });

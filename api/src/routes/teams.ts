@@ -9,6 +9,7 @@ import {
   teamInvites,
 } from "../../../db/schema/teams.js";
 import { gameAccounts } from "../../../db/schema/games.js";
+import { findUserTeamMemberships } from "../lib/team-membership.js";
 
 export const teamsRouter = Router();
 
@@ -217,10 +218,9 @@ teamsRouter.get("/members", async (req, res) => {
 teamsRouter.get("/by-user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const rows = await db
-      .select()
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, userId));
+    // Inclui vagas de convidado reconhecidas pelo vínculo Riot da conta
+    // (ADR-056) — sem isso o jogador com conta não enxergava o próprio time.
+    const rows = await findUserTeamMemberships(db, userId);
 
     const memberships = rows.map((m) => ({ time_id: m.teamId, status: memberStatusToLegacy(m.status) }));
 

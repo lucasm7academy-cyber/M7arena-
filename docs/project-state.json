@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-10T04:29:28.037Z",
+  "updatedAt": "2026-09-10T05:00:49.191Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1351,12 +1351,12 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Arquitetura do módulo campeonatos (features/ + classificação server-side)",
-      "status": "doing",
-      "notes": "Adicionando seletor de fase (Grupos/Mata-Mata) no modal Criar Confronto; convertendo jogo M7W x BKA do Kraken para Fase de Grupos; deploy VPS + push GitHub.",
-      "evidence": "",
+      "status": "done",
+      "notes": "0/0/0 nos grupos: jogo do Painel de Arbitragem gravava fase fixa 'Cronograma', invisível ao filtro da aba Grupos. Fix: seletor de fase no Criar Confronto (Fase de Grupos/Mata-Mata), default segue o formato, teste novo, UPDATE do jogo M7WxBKA, commit 95dab47, deploy VPS.",
+      "evidence": "tsc exit 0; vite build ok; tsx --test 8/8 pass; VPS UPDATE 1 row (M7W 2-0 BKA → Fase de Grupos); API devolve classificacao[0]=M7W 2V; bundle prod contém o seletor; HTTPS+health 200; app+nginx+realtime recriados.",
       "owner": "claude",
       "createdAt": "2026-08-21T01:43:10.460Z",
-      "updatedAt": "2026-09-10T04:21:08.529Z"
+      "updatedAt": "2026-09-10T04:52:34.879Z"
     },
     {
       "id": "app.campeonato.verificacao-serie",
@@ -1381,6 +1381,30 @@
       "owner": "gemini",
       "createdAt": "2026-08-30T18:32:49.341Z",
       "updatedAt": "2026-09-05T23:04:39.355Z"
+    },
+    {
+      "id": "app.participacao.vinculo-riot",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Participação: vaga de convidado reconhecida por vínculo Riot (botão Iniciar Série)",
+      "status": "doing",
+      "notes": "Implementado local, verificado localmente. Falta: commit + deploy na VPS + smoke real (ghotz ver o botão). NÃO tocar na VPS agora — outro agente estava deployando. Mudanças: api/src/lib/team-membership.ts (novo, ADR-056), by-user e gerar-codigo usam o helper, front normaliza tag/nome (domain/team-ref.ts).",
+      "evidence": "api tsc exit 0; web tsc exit 0; vite build exit 0 (8.95s); node --import tsx --test --test-concurrency=1 (22 arquivos) → 164/164 pass; team-membership 7/7 (PGlite migrations reais).",
+      "owner": "deepseek",
+      "createdAt": "2026-09-10T04:40:35.840Z",
+      "updatedAt": "2026-09-10T04:49:34.280Z"
+    },
+    {
+      "id": "app.campeonatos.verificacao-serie",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Verificação de série de campeonato via PUUID + tournamentCode",
+      "status": "doing",
+      "notes": "Bug Copa do Kraken: by-tournament-code dá 403 para qualquer código com a chave dev, então a série nunca era verificada (0x0 mudo). Fix ADR-058: busca por PUUID + info.tournamentCode (mesmo mecanismo das salas), placar recalculado do zero (corrige 3x0), jogadas idempotentes, remake ignorado, resultado manual preservado, erro visível quando a Riot falha. Verificado local + contra a Riot real (achou os 2 jogos). Falta deploy e smoke na VPS.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-09-10T05:00:49.191Z",
+      "updatedAt": "2026-09-10T05:00:49.191Z"
     }
   ],
   "decisions": [
@@ -1878,6 +1902,33 @@
       "decision": "storeCronograma e storeBracket liberam o match_code no pool (used=false) quando uma partida com codigo_partida é finalizada manualmente pelo ADM (ex: W.O. 2x0) ou recebe vencedor na chave, evitando o esgotamento do pool de códigos Riot quando não há partidas jogadas no LoL.",
       "rationale": "",
       "supersedes": null
+    },
+    {
+      "id": "ADR-056",
+      "date": "2026-09-10T04:40:37.531Z",
+      "author": "deepseek",
+      "title": "Participação no time: vaga de convidado vinculada por PUUID/Riot ID",
+      "decision": "A API passa a resolver participação do usuário no time por user_id OU por vínculo Riot da vaga de convidado: guest_puuid = game_accounts.external_id OU guest_riot_id = game_accounts.handle/users.riot_id (normalizado, status accepted). Aplicado em GET /teams/by-user/:userId e POST /tournaments/:id/jogo/:matchId/gerar-codigo. O front também normaliza as comparações de tag/nome em getMyTeamInMatch.",
+      "rationale": "Times podem ter convidados sem conta (decisão do usuário: não obrigar 8 cadastros). O front só conhece myTeams via team_members.user_id, então o convidado com conta vinculada não via botão/código e o servidor negaria a série. PUUID primeiro por ser estável a mudança de nick; Riot ID como fallback. Sem migration e sem alterar o roster: quando o convidado vincula a conta, o acesso passa a funcionar sozinho. Alternativa descartada: backfill de user_id nas vagas de convidado — mudaria a natureza da vaga e não cobre quem vincular depois.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-057",
+      "date": "2026-09-10T04:52:43.088Z",
+      "author": "claude",
+      "title": "Seletor de fase no Criar Confronto + reclassificação do jogo M7W x BKA",
+      "decision": "Confrontos manuais de campeonato ganham seletor de fase: 'Fase de Grupos' (soma na tabela de grupos) ou 'Mata-Mata' (não soma nos grupos), oferecido só em campeonatos com grupos. A classificação geral (Visão Geral) continua contando AMBAS as fases — só o chaveamento visual 'MATA-MATA (CHAVEAMENTO)' é excluído — para não zerar campeonatos puros de mata-mata. O jogo M7W 2x0 BKA do Kraken foi reclassificado no banco de 'Cronograma' para 'Fase de Grupos'.",
+      "rationale": "O modal gravava fase fixa 'Cronograma' (herdada 1:1 do site antigo), que o filtro da aba Grupos (fase contém GRUPO/DESEMPATE) exclui — jogo finalizado constava 0/0/0. O usuário confirmou que mata-mata não deve ser excluído da classificação geral porque existe modalidade de campeonato só disso.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-058",
+      "date": "2026-09-10T05:00:42.677Z",
+      "author": "deepseek",
+      "title": "Verificação de série via PUUID + tournamentCode",
+      "decision": "A verificação de série abandona o endpoint match-v5 by-tournament-code (403 para QUALQUER código com a chave atual) e usa o mecanismo do motor de salas: match-v5 by-puuid dos rosters + confirmação pelo info.tournamentCode. Placar recalculado do zero a cada verificação (corrige o 3x0), jogadas idempotentes por matchIdRiot, remake ignorado, e série finalizada (inclusive 'finalizado' legado) não é reescrita — preserva o resultado manual do ADM. Riot indisponível devolve motivo=riot_indisponivel e o front mostra erro.",
+      "rationale": "O by-tournament-code devolve 403 até para código inexistente com a chave dev (testado ao vivo) — foi a causa do 0x0 na Copa do Kraken com os 2 jogos existindo. O mecanismo por PUUID+tournamentCode já funciona no motor de salas e foi validado contra a Riot real (achou BR1_3281421243 e BR1_3281447250, M7W 2x0). Alternativa descartada: exigir chave de produção/provedor — processo externo e os códigos do pool podem pertencer a outro app.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -1946,38 +1997,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-03T02:16:10.225Z",
-      "agent": "deepseek",
-      "summary": "CAUSA RAIZ do historico vazio: bug de ORDEM DE ROTA, nao dado. GET /bets/:id engolia \"history\" como :id -> \"invalid input syntax for type uuid: history\" -> 500 -> historico em branco. Fix: rota /:id restrita a regex uuid em api/src/routes/bets.ts (4dec1f2), deployado. Confirmei no banco (psql vps) que os dados sempre existiram: conta One Lucks#br1 (d6a76e2c) tem 4 tickets liquidados (2 ganha solo +675 e flex +1350, 1 perdida -200, 1 cancelada 0); a query exata da rota retorna igual. Pós-deploy /api/bets/history autenticado retorna os 4 itens (sessao forjada temporaria, removida). DEBITO OPERACIONAL: recriar container app deixa o docker nginx (proxy app:3000) com IP antigo -> 502, resolvido com force-recreate nginx; fix permanente recomendado: proxy_pass com variavel+resolver. Front (34de438) modal/toast/sino ja deployado. Worktree de outro agente nao tocado. Bestas liquidas antes de 34de438 nao tem notificacao retroativa (esperado).",
-      "touched": [
-        "api/src/routes/bets.ts",
-        "api/src/routes/notifications.ts",
-        "api/src/lib/notifications.ts",
-        "api/src/lib/live-bets.ts",
-        "api/src/index.ts",
-        "web/src/App.tsx",
-        "web/src/lib/api.ts",
-        "web/src/lib/notification-sound.ts",
-        "web/src/components/partidas/ModalResultadoAposta.tsx",
-        "web/src/pages/ApostaIndividualPage.tsx",
-        "web/src/components/notifications/NotificationBell.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-05T03:12:23.245Z",
-      "agent": "gemini",
-      "summary": "Historico de apostas do perfil: removido blocos de Total Ganho/Total Perdido; adicionado icone do campeao jogado (Ahri, Wukong, Graves, Ekko, Kayn via Data Dragon) substituindo icone de raio; badges legiveis SOLO/DUO e RANK FLEXIVEL; tags dos mercados traduzidas e destacadas; schema/migration 0023 para championName e championId; build e deploy efetuados na VPS.",
-      "touched": [
-        "web/src/components/perfil/HistoricoApostas.tsx",
-        "web/src/lib/api.ts",
-        "api/src/lib/bets.ts",
-        "api/src/lib/live-bets.ts",
-        "api/src/routes/bets.ts",
-        "db/schema/bets.ts",
-        "db/migrations/0023_bet_champion.sql"
-      ]
-    },
     {
       "at": "2026-09-05T04:33:06.960Z",
       "agent": "gemini",
@@ -2238,6 +2257,32 @@
         "web/src/contexts/PerfilContext.tsx",
         "api/src/routes/teams.ts",
         "api/src/routes/tournaments.ts"
+      ]
+    },
+    {
+      "at": "2026-09-10T04:49:46.385Z",
+      "agent": "deepseek",
+      "summary": "Fix do botão Iniciar Série para convidados com conta vinculada (ADR-056), implementado e verificado LOCALMENTE; não commitado nem deployado. API: helper findUserTeamMemberships casa vaga por user_id OU guest_puuid=game_accounts.external_id OU guest_riot_id/guest_handle=handle/users.riot_id (case-insensitive, aceito); usado em /teams/by-user (destrava myTeams) e /tournaments/.../gerar-codigo (senão 403). Front: sameTeamRef normaliza tag/nome. Evidência: api tsc 0, web tsc 0, vite build 0, suíte 164/164 (serializada; na paralela 5 arquivos morreram por OOM do runner, não do código), team-membership 7/7. Pendente: commit+deploy na VPS (outro agente estava lá) e smoke com a conta do Ghozt. Maikey sem conta vinculada continua sem ver (esperado); sair do time por vaga de convidado não foi estendido.",
+      "touched": [
+        "api/src/lib/team-membership.ts",
+        "api/test/team-membership.test.ts",
+        "api/src/routes/teams.ts",
+        "api/src/routes/tournaments.ts",
+        "web/src/features/campeonatos/domain/team-ref.ts",
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "web/src/features/campeonatos/components/modals/AgendamentoModal.tsx",
+        "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-09-10T04:53:14.432Z",
+      "agent": "claude",
+      "summary": "Diagnóstico do 0/0/0 na aba Grupos da Copa do Kraken: o modal Criar Confronto gravava fase fixa 'Cronograma', invisível ao filtro da aba Grupos (GRUPO/DESEMPATE). Corrigido: seletor de fase (Fase de Grupos/Mata-Mata) no AdminMatchModal (admin, campeonatos com grupos), fase default ajustada ao formato no refetchCampeonato, teste novo em classificacao.test.ts, UPDATE do jogo M7W 2x0 BKA no banco da VPS para 'Fase de Grupos' — API já devolve M7W 2V na classificação. Commit 95dab47 pushado no GitHub e deployado na VPS (app+nginx+realtime recriados; bundle prod contém o seletor; HTTPS/api 200). Lobby.tsx não-commitado na VPS preservado (stash + /root/backup-Lobby-vps-20260910.tsx). Notas: mcp_ops em loop de restart pré-existente; logs cheios de Riot 403 (dev key expirada, BLK-006). Pendente: usuário validar aba Grupos do Kraken e o seletor.",
+      "touched": [
+        "web/src/features/campeonatos/components/modals/AdminMatchModal.tsx",
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "api/test/classificacao.test.ts",
+        "VPS: tournament_matches jogo M7WxBKA"
       ]
     }
   ]

@@ -76,6 +76,12 @@ export const PLAN = {
   "app.swap.identidade": ["fase-3", "app.sdk", "app.auth.sessao", "db.identidade"],
   "app.swap.times": ["fase-3", "app.sdk", "app.auth.sessao", "db.teams"],
   "app.swap.campeonatos": ["fase-3", "app.sdk", "app.auth.sessao", "db.tournaments"],
+  // Participação de convidado sem conta no campeonato: a vaga é reconhecida
+  // pelo vínculo Riot (PUUID/Riot ID) da conta do jogador (ADR-056).
+  "app.participacao.vinculo-riot": ["fase-3", "app.swap.times", "app.swap.campeonatos"],
+  // Verificação de série por PUUID + tournamentCode (ADR-058) — substitui o
+  // by-tournament-code, que é proibido para a chave atual (403 sempre).
+  "app.campeonatos.verificacao-serie": ["fase-3", "app.swap.campeonatos"],
   "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
   "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],

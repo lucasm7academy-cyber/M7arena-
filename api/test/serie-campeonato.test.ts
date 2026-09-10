@@ -17,6 +17,7 @@ import {
   ladoVencedorDaJogada,
   killsPorLado,
   bestOfToWins,
+  buscaIdsPorCodigo,
 } from "../src/lib/serie-campeonato.js";
 
 function partidaRiot(participants: any[], teams: any[] = [], over: any = {}) {
@@ -155,7 +156,7 @@ describe("serie-campeonato (motor de série)", () => {
       teamAId: null,
       teamBId: null,
       status: "em_andamento",
-      scoreA: 1,
+      scoreA: 0,
       scoreB: 0,
     };
     const r = await resolverSerie(db, alvo, {
@@ -168,9 +169,67 @@ describe("serie-campeonato (motor de série)", () => {
       rostB: new Set(["PB1"]),
     });
     assert.equal(r.estado, "em_andamento");
-    assert.equal(r.scoreA, 1);
+    assert.equal(r.scoreA, 0);
     assert.equal(r.scoreB, 1);
     assert.equal(r.winnerSide, null);
+  });
+
+  test("recontagem ignora o placar salvo e não infla (bug do 3x0)", async () => {
+    const db = ctx.db;
+    // Placar salvo diz 1x0, mas a busca devolve os DOIS jogos da série: o
+    // resultado correto é 2x0 — não 3x0 (somar em cima do salvo).
+    const alvo = {
+      id: "aaa-serie-recontagem",
+      modo: "groups",
+      matchId: "aaa-serie-recontagem",
+      bracketMatchId: null,
+      codigoPartida: "BR-CAMP-COD-REC",
+      bestOf: 3,
+      teamAId: null,
+      teamBId: null,
+      status: "em_andamento",
+      scoreA: 1,
+      scoreB: 0,
+    };
+    const vitoriaA = partidaRiot([
+      { puuid: "PA1", teamId: 100, win: true },
+      { puuid: "PB1", teamId: 200, win: false },
+    ]);
+    const r = await resolverSerie(db, alvo, {
+      buscarIds: async () => ["M1", "M2"],
+      buscarMatch: async () => vitoriaA,
+      rostA: new Set(["PA1"]),
+      rostB: new Set(["PB1"]),
+    });
+    assert.equal(r.estado, "finalizada");
+    assert.equal(r.scoreA, 2);
+    assert.equal(r.scoreB, 0);
+  });
+
+  test("resolverSerie preserva série já finalizada (resultado manual do ADM)", async () => {
+    const db = ctx.db;
+    const alvo = {
+      id: "aaa-serie-final",
+      modo: "groups",
+      matchId: "aaa-serie-final",
+      bracketMatchId: null,
+      codigoPartida: "BR-CAMP-COD-FIN",
+      bestOf: 3,
+      teamAId: null,
+      teamBId: null,
+      status: "finalizado",
+      scoreA: 2,
+      scoreB: 0,
+    };
+    const r = await resolverSerie(db, alvo, {
+      buscarIds: async () => {
+        throw new Error("não deve consultar a Riot para série finalizada");
+      },
+      buscarMatch: async () => null,
+    });
+    assert.equal(r.estado, "finalizada");
+    assert.equal(r.scoreA, 2);
+    assert.equal(r.scoreB, 0);
   });
 
   test("resolverSerie marca irregular quando há jogador de fora, mas conta normal", async () => {
@@ -226,6 +285,44 @@ describe("serie-campeonato (motor de série)", () => {
   });
 });
 
+describe("serie-campeonato (busca por código via histórico dos PUUIDs)", () => {
+  const mk = (id: string, code: string, creation: number) => ({
+    metadata: { matchId: id },
+    info: { tournamentCode: code, gameCreation: creation, participants: [], teams: [] },
+  });
+
+  test("filtra pelo tournamentCode e devolve em ordem cronológica", async () => {
+    const ids = await buscaIdsPorCodigo(
+      "COD",
+      { puuids: ["PA", "PB"], inicio: 0, fim: 1, queue: 3130 },
+      {
+        buscarIdsPuuid: async (puuid: string) => (puuid === "PA" ? ["M2", "M1", "MX"] : ["M1"]),
+        buscarMatch: async (id: string) =>
+          id === "MX" ? mk(id, "OUTRO", 50) : mk(id, "COD", id === "M1" ? 100 : 200),
+      }
+    );
+    assert.deepEqual(ids, ["M1", "M2"]);
+  });
+
+  test("sem partida do código → lista vazia (não é falha)", async () => {
+    const ids = await buscaIdsPorCodigo(
+      "COD",
+      { puuids: ["PA"], inicio: 0, fim: 1, queue: 3130 },
+      { buscarIdsPuuid: async () => [], buscarMatch: async () => null }
+    );
+    assert.deepEqual(ids, []);
+  });
+
+  test("Riot falhou em todos os PUUIDs → null (não confundir com vazio)", async () => {
+    const ids = await buscaIdsPorCodigo(
+      "COD",
+      { puuids: ["PA", "PB"], inicio: 0, fim: 1, queue: 3130 },
+      { buscarIdsPuuid: async () => null, buscarMatch: async () => null }
+    );
+    assert.equal(ids, null);
+  });
+});
+
 describe("serie-campeonato (persistência no banco)", () => {
   let ctx: any;
   before(async () => { ctx = await setupDb(); });
@@ -277,11 +374,14 @@ describe("serie-campeonato (persistência no banco)", () => {
       { matchId: serie.id },
       {
         buscarIds: async () => ["M1", "M2"],
-        buscarMatch: async (id: string) =>
-          partidaRiot([
+        buscarMatch: async (id: string) => {
+          const m: any = partidaRiot([
             { puuid: "PUUID_A", teamId: 100, win: true, kills: 9 },
             { puuid: "PUUID_B", teamId: 200, win: false, kills: 6 },
-          ]),
+          ]);
+          m.metadata.matchId = id;
+          return m;
+        },
       }
     );
 
@@ -307,6 +407,72 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(jogadas[0].winnerSide, "a");
     assert.equal(jogadas[0].killA, 9);
     assert.equal(jogadas[1].gameNumber, 2);
+  });
+
+  test("reverificar a série não duplica jogadas nem infla o placar", async () => {
+    const { db, serie } = await criaCenario();
+    const { verificarSerieCampeonato } = await import("../src/lib/serie-campeonato.js");
+
+    const jogo = (matchIdRiot: string, creation: number) => {
+      const m: any = partidaRiot(
+        [
+          { puuid: "PUUID_A", teamId: 100, win: true, kills: 9 },
+          { puuid: "PUUID_B", teamId: 200, win: false, kills: 6 },
+        ],
+        [],
+        { gameCreation: creation }
+      );
+      m.metadata.matchId = matchIdRiot;
+      return m;
+    };
+    const m1 = jogo("BR1_G1", 1000);
+    const m2 = jogo("BR1_G2", 2000);
+
+    // 1ª verificação: só o jogo 1 → 1x0
+    const r1 = await verificarSerieCampeonato(db, { matchId: serie.id }, {
+      buscarIds: async () => ["BR1_G1"],
+      buscarMatch: async () => m1,
+    });
+    assert.equal(r1.estado, "em_andamento");
+    assert.equal(r1.scoreA, 1);
+
+    // 2ª verificação: os dois jogos → 2x0 (não 3x0) e sem duplicar linhas
+    const r2 = await verificarSerieCampeonato(db, { matchId: serie.id }, {
+      buscarIds: async () => ["BR1_G1", "BR1_G2"],
+      buscarMatch: async (id: string) => (id === "BR1_G1" ? m1 : m2),
+    });
+    assert.equal(r2.estado, "finalizada");
+    assert.equal(r2.scoreA, 2);
+    assert.equal(r2.scoreB, 0);
+
+    const jogadas = await db.select().from(tournamentSeriesGames).where(eq(tournamentSeriesGames.matchId, serie.id));
+    assert.equal(jogadas.length, 2, "a recontagem não pode duplicar jogadas");
+  });
+
+  test("série finalizada manualmente pelo ADM não é reescrita", async () => {
+    const { db, serie } = await criaCenario();
+    const { verificarSerieCampeonato } = await import("../src/lib/serie-campeonato.js");
+
+    await db
+      .update(tournamentMatches)
+      .set({ status: "finalizado", scoreA: 2, scoreB: 0, scoreDisplay: "2 - 0" })
+      .where(eq(tournamentMatches.id, serie.id));
+
+    const r = await verificarSerieCampeonato(db, { matchId: serie.id }, {
+      buscarIds: async () => ["BR1_G1"],
+      buscarMatch: async () =>
+        partidaRiot([
+          { puuid: "PUUID_B", teamId: 100, win: true },
+          { puuid: "PUUID_A", teamId: 200, win: false },
+        ]),
+    });
+    assert.equal(r.estado, "finalizada");
+    assert.equal(r.scoreA, 2);
+    assert.equal(r.scoreB, 0);
+
+    const [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(m.status, "finalizado", "status manual preservado");
+    assert.equal(m.scoreA, 2);
   });
 
   test("verificarSerieMatch com irregular marca irregular no banco e no shape legado", async () => {

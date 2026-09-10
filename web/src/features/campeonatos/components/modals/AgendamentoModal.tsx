@@ -1,6 +1,7 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
 import { X, Clock, Minus, Plus } from "lucide-react";
 import { api } from "../../../../lib/api";
+import { sameTeamRef } from "../../domain/team-ref";
 
 export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, setEditFormData, jogoStatusAtStart, editingMatchIndex, onSubmit, onDelete, myTeams, isAdmin, id, setCampeonato }: any) => {
   return (
@@ -277,10 +278,10 @@ export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, se
                       let actingTeamTag = "ADMIN";
                       const myTeamForAccept = myTeams.find(
                         (t: any) =>
-                          t.tag === match.timeA ||
-                          t.tag === match.timeB ||
-                          t.nome === match.timeA ||
-                          t.nome === match.timeB,
+                          sameTeamRef(t.tag, match.timeA) ||
+                          sameTeamRef(t.tag, match.timeB) ||
+                          sameTeamRef(t.nome, match.timeA) ||
+                          sameTeamRef(t.nome, match.timeB),
                       );
                       if (myTeamForAccept) actingTeamTag = myTeamForAccept.tag;
 

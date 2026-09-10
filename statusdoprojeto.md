@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 10/09/2026 01:29 — por `deepseek`
+**Última atualização:** 10/09/2026 02:00 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 79/92` concluído
+`████████████████████████░░░░ 80/94` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 48/55 | 3 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 49/57 | 4 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 4 | — |
 
@@ -41,7 +41,7 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Aplicação (React + Vite) | ███████████░ 41/46 | 3 | 2 |
+| Aplicação (React + Vite) | ███████████░ 42/48 | 4 | 2 |
 | Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 4 | — |
@@ -74,7 +74,8 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
 - `mig.cutover` **Cutover: re-sync + DNS + TLS** — deepseek · Cutover de produção em execução: DNS m7arena.pro apontado para a VPS real 179.198.120.11 (o IP 187.127.6.136 do CUTOVER_CHECKLIST estava desatualizado — VPS foi trocada). Cert emitido via certbot para m7arena.pro + www.m7arena.pro, proxy host nginx criado e recarregado. Site servindo HTTPS 200 com cert válido (CN=m7arena.pro, expira 2026-11-30).
 - `app.saque` **Saque de MC via PIX (withdrawals + admin decide)** — deepseek · Fluxo de saque implementado e testado. Backend commitado por outro agente (3062c68: migration 0012, lib/routes/testes/SDK). Front (Tasks 5-6: DepositTab/SaqueTab/SaquesPix/Admin) escrito e buildando, AINDA NÃO COMMITADO nem deployado. Falta: commit do front + aplicar migration 0012 na VPS + deploy.
 - `app.chat.mensagens` **Chat de sala via WebSocket (envio + histórico + purge)** — deepseek · Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
-- `app.arquitetura.campeonatos` **Arquitetura do módulo campeonatos (features/ + classificação server-side)** — claude · Adicionando seletor de fase (Grupos/Mata-Mata) no modal Criar Confronto; convertendo jogo M7W x BKA do Kraken para Fase de Grupos; deploy VPS + push GitHub.
+- `app.participacao.vinculo-riot` **Participação: vaga de convidado reconhecida por vínculo Riot (botão Iniciar Série)** — deepseek · Implementado local, verificado localmente. Falta: commit + deploy na VPS + smoke real (ghotz ver o botão). NÃO tocar na VPS agora — outro agente estava deployando. Mudanças: api/src/lib/team-membership.ts (novo, ADR-056), by-user e gerar-codigo usam o helper, front normaliza tag/nome (domain/team-ref.ts).
+- `app.campeonatos.verificacao-serie` **Verificação de série de campeonato via PUUID + tournamentCode** — deepseek · Bug Copa do Kraken: by-tournament-code dá 403 para qualquer código com a chave dev, então a série nunca era verificada (0x0 mudo). Fix ADR-058: busca por PUUID + info.tournamentCode (mesmo mecanismo das salas), placar recalculado do zero (corrige 3x0), jogadas idempotentes, remake ignorado, resultado manual preservado, erro visível quando a Riot falha. Verificado local + contra a Riot real (achou os 2 jogos). Falta deploy e smoke na VPS.
 
 ## Componentes
 
@@ -188,9 +189,11 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **P10: Index cron + externos** `perf.externos`<br>  Tarefa A: index composto de matches(status,updated_at) JÁ EXISTE como constraint manual da migration 0009 (idx_matches_status_updated, IF NOT EXISTS). Nenhuma migration nova gerada — schema mantido intacto (revertido). Tarefa B: análise dos externos (CDN ícones, supabase-js residual, storage Supabase hardcoded) entregue como relatório. tsc api exit 0.<br>  _evidência:_ `Index do cron já existe (0009 idx_matches_status_updated). CDN ícones: não vale cache próprio. Achados: verify-swap gap + Login.tsx URLs supabase hardcoded. tsc api exit 0`<br>  _concluído 10/08/2026 02:26 por deepseek_
 - `[~]` **Chat de sala via WebSocket (envio + histórico + purge)** `app.chat.mensagens`<br>  Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
 - `[x]` **Corte do CampeonatoDetalhes.tsx em componentes por aba** `app.refactor.campeonatodetalhes`<br>  Fases 1-4 concluídas e deployadas. 12 componentes + 3 módulos (cut-edge/icons/dates) em components/campeonatos/. 4 componentes órfãos removidos. Imagens: web/public/ já limpo (ADR-018). Pendente: verificação visual do usuário (paridade 1:1).<br>  _evidência:_ `vite build exit 0 (2216 modules); CampeonatoDetalhes.tsx 6388→3319 linhas; deploy ff-merge 85a93a6→911a58c; / /jogar /campeonatos /players = 200; diff verbatim (--patience: 14 ins/2780 del)`<br>  _concluído 20/08/2026 02:04 por deepseek_
-- `[~]` **Arquitetura do módulo campeonatos (features/ + classificação server-side)** `app.arquitetura.campeonatos`<br>  Adicionando seletor de fase (Grupos/Mata-Mata) no modal Criar Confronto; convertendo jogo M7W x BKA do Kraken para Fase de Grupos; deploy VPS + push GitHub.
+- `[x]` **Arquitetura do módulo campeonatos (features/ + classificação server-side)** `app.arquitetura.campeonatos`<br>  0/0/0 nos grupos: jogo do Painel de Arbitragem gravava fase fixa 'Cronograma', invisível ao filtro da aba Grupos. Fix: seletor de fase no Criar Confronto (Fase de Grupos/Mata-Mata), default segue o formato, teste novo, UPDATE do jogo M7WxBKA, commit 95dab47, deploy VPS.<br>  _evidência:_ `tsc exit 0; vite build ok; tsx --test 8/8 pass; VPS UPDATE 1 row (M7W 2-0 BKA → Fase de Grupos); API devolve classificacao[0]=M7W 2V; bundle prod contém o seletor; HTTPS+health 200; app+nginx+realtime recriados.`<br>  _concluído 10/09/2026 01:52 por claude_
 - `[x]` **Verificação de série de campeonato via código Riot (MD3/MD5)** `app.campeonato.verificacao-serie`<br>  Ciclo completo de séries verificado: botão Iniciar Série (5 min antes do horário para participantes/admin), código Riot restrito a participantes/staff, exibição Ao Vivo e placar da série, verificação automática via cron a cada 10min + botão manual, validação por PUUID e detecção de irregular.<br>  _evidência:_ `npx tsx --test test/serie-campeonato.test.ts → 10/10 ok; test/cron.test.ts test/classificacao.test.ts → 9/9 ok; tsc --noEmit api/web → exit 0; vite build → 0 errors (7.22s); curl https://m7arena.pro/api/health → 200 OK live.`<br>  _concluído 06/09/2026 04:49 por gemini_
 - `[x]` **Apostas individuais (self-bet) em partidas ranqueadas Solo/Flex** `app.aposta-individual`<br>  Redesign gamer completo de /aposta-individual: SummonerCard modular com avatar neon, elo badge e métricas 2x2; ItemMercado com ícones temáticos, odds em badge luminoso e preview de retorno em MC; seletor de stake com presets rápidos (100, 250, 500, 1000 MC); BilheteAtivoView com radar animado; rodapé com retorno destacado. Build e deploy concluídos na VPS (HTTP 200).<br>  _evidência:_ `web tsc exit 0; vite build local e na VPS (13.96s); container m7arena_nginx recriado e iniciado na VPS; curl https://m7arena.pro/ -> 200.`<br>  _concluído 05/09/2026 20:04 por gemini_
+- `[~]` **Participação: vaga de convidado reconhecida por vínculo Riot (botão Iniciar Série)** `app.participacao.vinculo-riot`<br>  Implementado local, verificado localmente. Falta: commit + deploy na VPS + smoke real (ghotz ver o botão). NÃO tocar na VPS agora — outro agente estava deployando. Mudanças: api/src/lib/team-membership.ts (novo, ADR-056), by-user e gerar-codigo usam o helper, front normaliza tag/nome (domain/team-ref.ts).<br>  _evidência:_ `api tsc exit 0; web tsc exit 0; vite build exit 0 (8.95s); node --import tsx --test --test-concurrency=1 (22 arquivos) → 164/164 pass; team-membership 7/7 (PGlite migrations reais).`
+- `[~]` **Verificação de série de campeonato via PUUID + tournamentCode** `app.campeonatos.verificacao-serie`<br>  Bug Copa do Kraken: by-tournament-code dá 403 para qualquer código com a chave dev, então a série nunca era verificada (0x0 mudo). Fix ADR-058: busca por PUUID + info.tournamentCode (mesmo mecanismo das salas), placar recalculado do zero (corrige 3x0), jogadas idempotentes, remake ignorado, resultado manual preservado, erro visível quando a Riot falha. Verificado local + contra a Riot real (achou os 2 jogos). Falta deploy e smoke na VPS.
 
 **Design & Paridade Visual**
 
@@ -664,6 +667,30 @@ _05/09/2026 22:14 — gemini_
 
 _07/09/2026 17:17 — gemini_
 
+### ADR-056 — Participação no time: vaga de convidado vinculada por PUUID/Riot ID
+
+**Decisão:** A API passa a resolver participação do usuário no time por user_id OU por vínculo Riot da vaga de convidado: guest_puuid = game_accounts.external_id OU guest_riot_id = game_accounts.handle/users.riot_id (normalizado, status accepted). Aplicado em GET /teams/by-user/:userId e POST /tournaments/:id/jogo/:matchId/gerar-codigo. O front também normaliza as comparações de tag/nome em getMyTeamInMatch.
+
+**Por quê:** Times podem ter convidados sem conta (decisão do usuário: não obrigar 8 cadastros). O front só conhece myTeams via team_members.user_id, então o convidado com conta vinculada não via botão/código e o servidor negaria a série. PUUID primeiro por ser estável a mudança de nick; Riot ID como fallback. Sem migration e sem alterar o roster: quando o convidado vincula a conta, o acesso passa a funcionar sozinho. Alternativa descartada: backfill de user_id nas vagas de convidado — mudaria a natureza da vaga e não cobre quem vincular depois.
+
+_10/09/2026 01:40 — deepseek_
+
+### ADR-057 — Seletor de fase no Criar Confronto + reclassificação do jogo M7W x BKA
+
+**Decisão:** Confrontos manuais de campeonato ganham seletor de fase: 'Fase de Grupos' (soma na tabela de grupos) ou 'Mata-Mata' (não soma nos grupos), oferecido só em campeonatos com grupos. A classificação geral (Visão Geral) continua contando AMBAS as fases — só o chaveamento visual 'MATA-MATA (CHAVEAMENTO)' é excluído — para não zerar campeonatos puros de mata-mata. O jogo M7W 2x0 BKA do Kraken foi reclassificado no banco de 'Cronograma' para 'Fase de Grupos'.
+
+**Por quê:** O modal gravava fase fixa 'Cronograma' (herdada 1:1 do site antigo), que o filtro da aba Grupos (fase contém GRUPO/DESEMPATE) exclui — jogo finalizado constava 0/0/0. O usuário confirmou que mata-mata não deve ser excluído da classificação geral porque existe modalidade de campeonato só disso.
+
+_10/09/2026 01:52 — claude_
+
+### ADR-058 — Verificação de série via PUUID + tournamentCode
+
+**Decisão:** A verificação de série abandona o endpoint match-v5 by-tournament-code (403 para QUALQUER código com a chave atual) e usa o mecanismo do motor de salas: match-v5 by-puuid dos rosters + confirmação pelo info.tournamentCode. Placar recalculado do zero a cada verificação (corrige o 3x0), jogadas idempotentes por matchIdRiot, remake ignorado, e série finalizada (inclusive 'finalizado' legado) não é reescrita — preserva o resultado manual do ADM. Riot indisponível devolve motivo=riot_indisponivel e o front mostra erro.
+
+**Por quê:** O by-tournament-code devolve 403 até para código inexistente com a chave dev (testado ao vivo) — foi a causa do 0x0 na Copa do Kraken com os 2 jogos existindo. O mecanismo por PUUID+tournamentCode já funciona no motor de salas e foi validado contra a Riot real (achou BR1_3281421243 e BR1_3281447250, M7W 2x0). Alternativa descartada: exigir chave de produção/provedor — processo externo e os códigos do pool podem pertencer a outro app.
+
+_10/09/2026 02:00 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -674,6 +701,8 @@ _07/09/2026 17:17 — gemini_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 10/09/2026 01:53 | claude | Diagnóstico do 0/0/0 na aba Grupos da Copa do Kraken: o modal Criar Confronto gravava fase fixa 'Cronograma', invisível ao filtro da aba Grupos (GRUPO/DESEMPATE). Corrigido: seletor de fase (Fase de Grupos/Mata-Mata) no AdminMatchModal (admin, campeonatos com grupos), fase default ajustada ao formato no refetchCampeonato, teste novo em classificacao.test.ts, UPDATE do jogo M7W 2x0 BKA no banco da VPS para 'Fase de Grupos' — API já devolve M7W 2V na classificação. Commit 95dab47 pushado no GitHub e deployado na VPS (app+nginx+realtime recriados; bundle prod contém o seletor; HTTPS/api 200). Lobby.tsx não-commitado na VPS preservado (stash + /root/backup-Lobby-vps-20260910.tsx). Notas: mcp_ops em loop de restart pré-existente; logs cheios de Riot 403 (dev key expirada, BLK-006). Pendente: usuário validar aba Grupos do Kraken e o seletor. <br>_tocou: `web/src/features/campeonatos/components/modals/AdminMatchModal.tsx`, `web/src/features/campeonatos/CampeonatoContext.tsx`, `api/test/classificacao.test.ts`, `VPS: tournament_matches jogo M7WxBKA`_ |
+| 10/09/2026 01:49 | deepseek | Fix do botão Iniciar Série para convidados com conta vinculada (ADR-056), implementado e verificado LOCALMENTE; não commitado nem deployado. API: helper findUserTeamMemberships casa vaga por user_id OU guest_puuid=game_accounts.external_id OU guest_riot_id/guest_handle=handle/users.riot_id (case-insensitive, aceito); usado em /teams/by-user (destrava myTeams) e /tournaments/.../gerar-codigo (senão 403). Front: sameTeamRef normaliza tag/nome. Evidência: api tsc 0, web tsc 0, vite build 0, suíte 164/164 (serializada; na paralela 5 arquivos morreram por OOM do runner, não do código), team-membership 7/7. Pendente: commit+deploy na VPS (outro agente estava lá) e smoke com a conta do Ghozt. Maikey sem conta vinculada continua sem ver (esperado); sair do time por vaga de convidado não foi estendido. <br>_tocou: `api/src/lib/team-membership.ts`, `api/test/team-membership.test.ts`, `api/src/routes/teams.ts`, `api/src/routes/tournaments.ts`, `web/src/features/campeonatos/domain/team-ref.ts`, `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/AgendamentoModal.tsx`, `mcp/status-server/lib/plan.js`_ |
 | 10/09/2026 01:29 | deepseek | Verificação (sem alterar código) da causa do botão "Iniciar Série" aparecer só para o proprietário na Copa do Kraken. A hipótese de case-sensitivity em getMyTeamInMatch está ERRADA para este caso: dado real da API mostra timeA="M7W" e tag do time="M7W" (iguais). Causa real: o roster da M7 WHITE tem 6 convidados (guest_riot_id, user_id NULL) e só o dono/coach com user_id; myTeams é montado só por team_members.user_id (PerfilContext→/teams/by-user), então getMyTeamInMatch retorna undefined para ghotz e demais. O proprietário via o botão porque isAdmin=true ignora os gates (canAccessSeries || isAdmin e status confirmado || isAdmin). O servidor (gerar-codigo) também exige user_id accepted, então conta não vinculada tomaria 403. Fica registrado também o gate secundário: jogo criado pelo admin nasce "proposto" e não-admin só vê o botão com status confirmado. <br>_tocou: `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/contexts/PerfilContext.tsx`, `api/src/routes/teams.ts`, `api/src/routes/tournaments.ts`_ |
 | 10/09/2026 01:11 | gemini | Confirmação de que o bug real é case-sensitivity na função getMyTeamInMatch que bloqueia o time correto de ser reconhecido. <br>_tocou: `web/src/features/campeonatos/CampeonatoContext.tsx`_ |
 | 10/09/2026 00:54 | gemini | Reavaliação do bug após input do usuário: o problema real é a restrição de status ('confirmado') que bloqueia os jogadores mas é ignorada pela flag isAdmin. <br>_tocou: `web/src/components/campeonatos/ListaCronograma.tsx`_ |
@@ -687,8 +716,6 @@ _07/09/2026 17:17 — gemini_
 | 07/09/2026 17:49 | gemini | Ajustada a página de Detalhes do Campeonato (CampeonatoDetalhes e seus componentes VisaoGeral, ListaCronograma, GroupStage, Historico, Chaves, AdminCriarJogo): reduzido o arredondamento geral (containers de rounded-2xl para rounded-xl, cards e botoes de rounded-xl para rounded-lg, logos de time de rounded-xl para rounded-md) e substituídas as tags de time redondas pelo badge cortado cut-edge oficial com borda e texto na cor do time sem preenchimento colorido. <br>_tocou: `web/src/pages/CampeonatoDetalhes.tsx`, `web/src/components/campeonatos/VisaoGeral.tsx`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/GroupStage.tsx`, `web/src/components/campeonatos/Historico.tsx`, `web/src/components/campeonatos/Chaves.tsx`, `web/src/components/campeonatos/AdminCriarJogo.tsx`_ |
 | 07/09/2026 17:45 | antigravity | Permitido que contas com cargo 'proprietario' editem lineups e gerenciem times (TimePage, backend PUT, e aceitar convites) assim como donos e capitães. Validação de TypeScript de ambos front e back passou com sucesso. |
 | 07/09/2026 17:39 | gemini | Restaurado estilo cortado (clipPath CUT_BADGE e CUT_BADGE_INNER) nas tags de times em TimePage, /times (equipes.tsx) e /players (players.tsx). A cor de fundo translúcida foi removida (fundo neutro escuro), mantendo a borda cortada na cor do time e o texto na cor do time, proporcionando nitidez e contraste ideal. <br>_tocou: `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`_ |
-| 07/09/2026 17:34 | gemini | Ajustado contraste das tags de time (passadas para text-white com borda e fundo translúcido na cor do time) nas páginas TimePage, equipes (/times) e players (/players). Na página de detalhes do time (TimePage), convertidos todos os cards inferiores e laterais (Lineup, Vagas Abertas, Jogadores, Capitão, Gerenciar, Histórico e Status do Time) para cantos arredondados normais (rounded-xl/rounded-2xl), mantendo o estilo cortado exclusivamente no Hero Banner do time conforme solicitado. Build e typecheck verificados com sucesso. <br>_tocou: `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`_ |
-| 07/09/2026 17:17 | gemini | Implementada e testada a liberação de código de torneio no pool em finalizações manuais de série (W.O. ou decisão do ADM no cronograma e bracket): storeCronograma e storeBracket agora detectam quando um confronto com codigoPartida é finalizado ou ganha vencedor e liberam o código em matchCodes (used=false), garantindo que W.O. não prenda códigos de torneio. Testes unitários 11/11 passando com PGlite e tsc exit 0 em api e web. <br>_tocou: `app.arquitetura.campeonatos`_ |
 
 ---
 

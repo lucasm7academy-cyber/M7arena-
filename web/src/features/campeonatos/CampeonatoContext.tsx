@@ -28,6 +28,7 @@ import { api } from "../../lib/api";
 import { mapFromDb } from "./mappers";
 import { INITIAL_BRACKET_DATA, migrateBracketData, advanceTeamsInBracket } from "./domain/bracket";
 import { History, Eye, List, Clock, GitBranch, type LucideIcon } from "lucide-react";
+import { sameTeamRef } from "./domain/team-ref";
 
 export interface CampeonatoContextType {
   id: string;
@@ -969,8 +970,8 @@ export function CampeonatoProvider({
     // um time nessa partida (inclusive admins que são jogadores)
     let actingTeamTag = "ADMIN";
     const myTeamInAction = myTeams.find(
-      (t) => t.tag === match.timeA  || t.tag === match.timeB ||
-             t.nome === match.timeA || t.nome === match.timeB
+      (t) => sameTeamRef(t.tag, match.timeA) || sameTeamRef(t.tag, match.timeB) ||
+             sameTeamRef(t.nome, match.timeA) || sameTeamRef(t.nome, match.timeB)
     );
     if (myTeamInAction) actingTeamTag = myTeamInAction.tag;
 
@@ -1121,7 +1122,7 @@ export function CampeonatoProvider({
       status: "proposto",
       proposedBy: isAdmin
         ? "ADMIN"
-        : myTeams.find((t) => t.tag === adminMatchData.timeA)?.tag ||
+        : myTeams.find((t) => sameTeamRef(t.tag, adminMatchData.timeA))?.tag ||
           adminMatchData.timeA,
     };
 
@@ -1208,8 +1209,8 @@ export function CampeonatoProvider({
 
   const getMyTeamInMatch = (match: any) => {
     return myTeams.find((t) =>
-      t.tag === match.timeA  || t.tag === match.timeB ||
-      t.nome === match.timeA || t.nome === match.timeB
+      sameTeamRef(t.tag, match.timeA) || sameTeamRef(t.tag, match.timeB) ||
+      sameTeamRef(t.nome, match.timeA) || sameTeamRef(t.nome, match.timeB)
     );
   };
 

@@ -31,7 +31,7 @@ import {
   tournamentSeriesGames,
 } from "../../../db/schema/tournaments.js";
 import { riotRaw } from "../routes/riot.js";
-import { RiotMatch } from "./verificar-partida.js";
+import { RiotMatch, QUEUE_SUMMONERS_RIFT, QUEUE_HOWLING_ABYSS } from "./verificar-partida.js";
 
 /** Peso de cada jogada em número de vitórias (usado para a fileira de melhor-de). */
 export function bestOfToWins(bestOf: number): number {
@@ -174,11 +174,29 @@ export function killsPorLado(
 }
 
 // ── Busca Riot de partidas por código ────────────────────────────────────────
+//
+// O endpoint match-v5 `by-tournament-code` é restrito a chaves de provedor de
+// torneio: com a chave atual ele devolve 403 até para um código inexistente
+// (verificado em 2026-09-10), então NÃO é usado aqui. O motor de salas já
+// resolve pelo histórico dos jogadores — busca as partidas recentes de cada
+// PUUID do roster (filtro de queue + janela) e confirma no detalhe da partida
+// pelo `info.tournamentCode`. É o mesmo mecanismo, e funciona com a chave dev.
 
-/** Lista os matchIds de um tournament code na Riot (match-v5). */
-export async function buscaIdsPorCodigo(codigo: string): Promise<string[] | null> {
-  const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-tournament-code/${encodeURIComponent(codigo)}`;
-  return (await riotRaw(`serie:ids:${codigo}`, url)) as string[] | null;
+export type BuscarIdsPuuid = (
+  puuid: string,
+  inicio: number,
+  fim: number,
+  queue: number
+) => Promise<string[] | null>;
+
+async function buscaIdsPuuidRiot(
+  puuid: string,
+  inicio: number,
+  fim: number,
+  queue: number
+): Promise<string[] | null> {
+  const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?queue=${queue}&startTime=${inicio}&endTime=${fim}&count=50`;
+  return (await riotRaw(`serie:ids:${puuid}:${inicio}:${fim}:${queue}`, url)) as string[] | null;
 }
 
 /** Busca uma partida individual da Riot na americas (match-v5). */
@@ -187,8 +205,55 @@ export async function buscaMatchRiot(matchId: string): Promise<RiotMatch | null>
   return (await riotRaw(`serie:match:${matchId}`, url)) as RiotMatch | null;
 }
 
-export type BuscarIdsPorCodigo = (codigo: string) => Promise<string[] | null>;
 export type BuscarMatchRiot = (matchId: string) => Promise<RiotMatch | null>;
+
+export type BuscarIdsPorCodigo = (
+  codigo: string,
+  ctx: { puuids: string[]; inicio: number; fim: number; queue: number }
+) => Promise<string[] | null>;
+
+/**
+ * Descobre as partidas de um código de série pelo histórico dos jogadores:
+ * lista os matchIds recentes de cada PUUID (queue + janela), confirma no detalhe
+ * pelo `info.tournamentCode` e devolve em ordem cronológica (gameNumber 1..n).
+ * `null` = a Riot falhou (não confundir com lista vazia = ainda não há partida).
+ */
+export async function buscaIdsPorCodigo(
+  codigo: string,
+  ctx: { puuids: string[]; inicio: number; fim: number; queue: number },
+  deps: { buscarIdsPuuid?: BuscarIdsPuuid; buscarMatch?: BuscarMatchRiot } = {}
+): Promise<string[] | null> {
+  const buscarIdsPuuid = deps.buscarIdsPuuid ?? buscaIdsPuuidRiot;
+  const buscarMatch = deps.buscarMatch ?? buscaMatchRiot;
+
+  const vistos = new Set<string>();
+  const candidatos: string[] = [];
+  let falhas = 0;
+  for (const puuid of ctx.puuids) {
+    const ids = await buscarIdsPuuid(puuid, ctx.inicio, ctx.fim, ctx.queue);
+    if (ids === null) {
+      falhas++;
+      continue;
+    }
+    for (const id of ids) {
+      if (!vistos.has(id)) {
+        vistos.add(id);
+        candidatos.push(id);
+      }
+    }
+  }
+  if (ctx.puuids.length > 0 && falhas === ctx.puuids.length) return null;
+
+  const doCodigo: { id: string; creation: number }[] = [];
+  for (const id of candidatos) {
+    const match = await buscarMatch(id);
+    if (!match) continue;
+    if (match.info?.tournamentCode !== codigo) continue;
+    doCodigo.push({ id: match.metadata?.matchId ?? id, creation: match.info?.gameCreation ?? 0 });
+  }
+  doCodigo.sort((a, b) => a.creation - b.creation);
+  return doCodigo.map((c) => c.id);
+}
 
 export interface ResultadoSerie {
   ok: boolean;
@@ -212,7 +277,12 @@ interface SerieAlvo {
   status: string;
   scoreA: number;
   scoreB: number;
+  serieIniciadaAt?: Date | string | null;
+  queue?: number;
 }
+
+/** Status que representam série já decidida — resultado não é reescrito. */
+const STATUS_FINALIZADOS = ["finalizada", "finalizado", "finished"];
 
 /**
  * Empacota a resolução de rosters + escritas por jogada, para um teste de
@@ -228,7 +298,7 @@ export async function resolverSerie(
   const buscarMatch = opts.buscarMatch ?? buscaMatchRiot;
 
   if (!alvo.codigoPartida) return { ok: false, estado: "sem_codigo", scoreA: 0, scoreB: 0, winnerSide: null, irregular: false, motivo: "sem_codigo" };
-  if (alvo.status === "finalizada" || alvo.status === "finished") return { ok: true, estado: "finalizada", scoreA: alvo.scoreA, scoreB: alvo.scoreB, winnerSide: null, irregular: false };
+  if (STATUS_FINALIZADOS.includes(alvo.status)) return { ok: true, estado: "finalizada", scoreA: alvo.scoreA, scoreB: alvo.scoreB, winnerSide: null, irregular: false };
 
   // Rosters de cada time (titulares + reservas accepted). `opts.rostA/rostB`
   // é override para testes de unidade (sem time no banco).
@@ -244,18 +314,52 @@ export async function resolverSerie(
   }
   const winsNeeded = bestOfToWins(alvo.bestOf || 3);
 
-  const ids = (await buscarIds(alvo.codigoPartida)) ?? [];
-  let scoreA = alvo.scoreA ?? 0;
-  let scoreB = alvo.scoreB ?? 0;
-  let irregular = false;
-  const jaVistos = new Set<string>();
-  let gameNumber = 0;
+  // Janela: do início da série até agora. A lista por PUUID não traz o código,
+  // então o filtro final é no detalhe da partida (info.tournamentCode).
+  const fim = Math.floor(Date.now() / 1000);
+  const inicio = alvo.serieIniciadaAt
+    ? Math.floor(new Date(alvo.serieIniciadaAt).getTime() / 1000) - 300
+    : fim - 24 * 60 * 60;
 
+  const ids = await buscarIds(alvo.codigoPartida, {
+    puuids: [...rostApuuids, ...rostBpuuids],
+    inicio,
+    fim,
+    queue: alvo.queue ?? QUEUE_SUMMONERS_RIFT,
+  });
+  if (ids === null) {
+    // Riot indisponível/limitada: NÃO é "0 a 0" — o front mostra erro e o cron
+    // tenta de novo. Sem isso o clique em Verificar ficava mudo.
+    return { ok: false, estado: "em_andamento", scoreA: alvo.scoreA ?? 0, scoreB: alvo.scoreB ?? 0, winnerSide: null, irregular: false, motivo: "riot_indisponivel" };
+  }
+
+  // Detalhes + ordem cronológica: o gameNumber (1..n) precisa ser estável entre
+  // verificações para a gravação idempotente das jogadas.
+  const partidas: { id: string; match: RiotMatch }[] = [];
+  const jaVistos = new Set<string>();
   for (const id of ids) {
     if (jaVistos.has(id)) continue;
     jaVistos.add(id);
     const match = await buscarMatch(id);
     if (!match) continue;
+    partidas.push({ id, match });
+  }
+  partidas.sort((a, b) => (a.match.info?.gameCreation ?? 0) - (b.match.info?.gameCreation ?? 0));
+
+  // Placar SEMPRE recalculado do zero: a busca devolve TODAS as partidas do
+  // código, então somar em cima do placar salvo contaria a mesma jogada duas
+  // vezes (ex.: verificou 1x0 e depois achou 2 jogos → 3x0). Resultado manual
+  // do ADM é preservado pelo guard de status finalizado no topo.
+  let scoreA = 0;
+  let scoreB = 0;
+  let irregular = false;
+  let gameNumber = 0;
+
+  for (const { id, match } of partidas) {
+    // Remake/abortada não é jogada válida de série (mesma regra das salas).
+    const fimJogo = match.info?.endOfGameResult;
+    if (fimJogo && fimJogo !== "GameComplete") continue;
+
     const { lado, irregular: irregJogada } = ladoVencedorDaJogada(match, rostApuuids, rostBpuuids);
     const { a, b } = killsPorLado(match, rostApuuids, rostBpuuids);
     if (irregJogada) irregular = true;
@@ -318,6 +422,20 @@ export async function verificarSerieCampeonato(
   return { ok: false, estado: "nao_encontrada", scoreA: 0, scoreB: 0, winnerSide: null, irregular: false, motivo: "nao_encontrada" };
 }
 
+/**
+ * Fila do pool define o queue do mapa da Riot: códigos 1v1 são ARAM (3200),
+ * os genéricos são Summoner's Rift (3130) — mesma convenção do motor de salas.
+ */
+async function resolverQueueSerie(tx: any, codigo: string | null): Promise<number> {
+  if (!codigo) return QUEUE_SUMMONERS_RIFT;
+  const [mc] = await tx
+    .select({ mode: matchCodes.mode })
+    .from(matchCodes)
+    .where(eq(matchCodes.code, codigo))
+    .limit(1);
+  return mc?.mode === "1v1" ? QUEUE_HOWLING_ABYSS : QUEUE_SUMMONERS_RIFT;
+}
+
 async function verificarSerieMatch(
   tx: any,
   matchId: string,
@@ -325,6 +443,11 @@ async function verificarSerieMatch(
 ): Promise<ResultadoSerie> {
   const [serie] = await tx.select().from(tournamentMatches).where(eq(tournamentMatches.id, matchId)).limit(1).for("update");
   if (!serie) return { ok: false, estado: "nao_encontrada", scoreA: 0, scoreB: 0, winnerSide: null, irregular: false, motivo: "nao_encontrada" };
+
+  // Resultado já decidido (motor ou ADM manual) não é reescrito.
+  if (STATUS_FINALIZADOS.includes(serie.status)) {
+    return { ok: true, estado: "finalizada", scoreA: serie.scoreA ?? 0, scoreB: serie.scoreB ?? 0, winnerSide: null, irregular: serie.irregular ?? false };
+  }
 
   const alvo: SerieAlvo = {
     id: serie.id,
@@ -338,11 +461,24 @@ async function verificarSerieMatch(
     status: serie.status,
     scoreA: serie.scoreA ?? 0,
     scoreB: serie.scoreB ?? 0,
+    serieIniciadaAt: serie.serieIniciadaAt ?? null,
+    queue: await resolverQueueSerie(tx, serie.codigoPartida ?? null),
   };
 
   const r = await resolverSerie(tx, alvo, {
     ...opts,
     onJogada: async (d, jogada) => {
+      // Idempotente: a série é recontada do zero a cada verificação, então a
+      // mesma jogada não pode virar duas linhas.
+      const [existente] = await d
+        .select({ id: tournamentSeriesGames.id })
+        .from(tournamentSeriesGames)
+        .where(and(
+          eq(tournamentSeriesGames.matchId, serie.id),
+          eq(tournamentSeriesGames.matchIdRiot, jogada.matchIdRiot)
+        ))
+        .limit(1);
+      if (existente) return;
       await d.insert(tournamentSeriesGames).values({
         matchId: serie.id,
         tournamentId: serie.tournamentId,
@@ -402,6 +538,11 @@ async function verificarSerieBracket(
   const [serie] = await tx.select().from(bracketMatches).where(eq(bracketMatches.id, bracketMatchId)).limit(1).for("update");
   if (!serie) return { ok: false, estado: "nao_encontrada", scoreA: 0, scoreB: 0, winnerSide: null, irregular: false, motivo: "nao_encontrada" };
 
+  // Resultado já decidido (motor ou ADM manual) não é reescrito.
+  if (STATUS_FINALIZADOS.includes(serie.status)) {
+    return { ok: true, estado: "finalizada", scoreA: serie.scoreA ?? 0, scoreB: serie.scoreB ?? 0, winnerSide: (serie.winnerSide as "a" | "b" | null) ?? null, irregular: serie.irregular ?? false };
+  }
+
   const alvo: SerieAlvo = {
     id: serie.id,
     modo: "bracket",
@@ -414,11 +555,24 @@ async function verificarSerieBracket(
     status: serie.status,
     scoreA: serie.scoreA ?? 0,
     scoreB: serie.scoreB ?? 0,
+    serieIniciadaAt: serie.serieIniciadaAt ?? null,
+    queue: await resolverQueueSerie(tx, serie.codigoPartida ?? null),
   };
 
   const r = await resolverSerie(tx, alvo, {
     ...opts,
     onJogada: async (d, jogada) => {
+      // Idempotente: a série é recontada do zero a cada verificação, então a
+      // mesma jogada não pode virar duas linhas.
+      const [existente] = await d
+        .select({ id: tournamentSeriesGames.id })
+        .from(tournamentSeriesGames)
+        .where(and(
+          eq(tournamentSeriesGames.bracketMatchId, serie.id),
+          eq(tournamentSeriesGames.matchIdRiot, jogada.matchIdRiot)
+        ))
+        .limit(1);
+      if (existente) return;
       await d.insert(tournamentSeriesGames).values({
         bracketMatchId: serie.id,
         tournamentId: serie.tournamentId,

@@ -3,11 +3,12 @@ import { eq, and, gt, asc, desc, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
 import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
-import { teams, teamMembers } from "../../../db/schema/teams.js";
+import { teams } from "../../../db/schema/teams.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
+import { findUserTeamMemberships } from "../lib/team-membership.js";
 
 export const tournamentsRouter = Router();
 
@@ -431,20 +432,14 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
       if (owned) {
         isParticipant = true;
       } else {
-        // É membro aceito do time?
-        const [member] = await db
-          .select({ id: teamMembers.id })
-          .from(teamMembers)
-          .where(
-            and(
-              inArray(teamMembers.teamId, relevantTeamIds),
-              eq(teamMembers.userId, user.id),
-              eq(teamMembers.status, "accepted")
-            )
-          )
-          .limit(1);
+        // É membro aceito do time? Vale também para vaga de convidado
+        // reconhecida pelo vínculo Riot da conta (ADR-056).
+        const memberships = await findUserTeamMemberships(db, user.id, {
+          teamIds: relevantTeamIds,
+          onlyAccepted: true,
+        });
 
-        if (member) {
+        if (memberships.length > 0) {
           isParticipant = true;
         }
       }
