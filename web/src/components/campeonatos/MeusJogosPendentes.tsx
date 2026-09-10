@@ -1,6 +1,7 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
 import { Swords, ChevronDown, Clock, Zap, Calendar } from "lucide-react";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
+import { sameTeamRef } from "../../features/campeonatos/domain/team-ref";
 
 export const MeusJogosPendentes = () => {
   const { campeonato, myPendingMatches, getMyTeamInMatch, isPendingMatchesOpen, setIsPendingMatchesOpen, setEditingMatchIndex, setJogoStatusAtStart, setEditFormData, setIsScheduleEditModalOpen } = useCampeonato();
@@ -63,20 +64,20 @@ export const MeusJogosPendentes = () => {
 
                 const allTeamsPend = campeonato.timesInscritos || campeonato.classificacao || [];
                 const teamAData = allTeamsPend.find((t: any) =>
-                  t.tag === teamATag || t.name === teamATag || t.nome === teamATag
+                  sameTeamRef(t.tag, teamATag) || sameTeamRef(t.name, teamATag) || sameTeamRef(t.nome, teamATag)
                 ) || { name: teamATag, tag: teamATag, cor: (jogo as any).corA || "#FFB700", icone: "ShieldCheck" };
                 const teamBData = allTeamsPend.find((t: any) =>
-                  t.tag === teamBTag || t.name === teamBTag || t.nome === teamBTag
+                  sameTeamRef(t.tag, teamBTag) || sameTeamRef(t.name, teamBTag) || sameTeamRef(t.nome, teamBTag)
                 ) || { name: teamBTag, tag: teamBTag, cor: (jogo as any).corB || "#FFB700", icone: "ShieldCheck" };
 
                 const isWaitingForMyResponse =
                   jogo.status === "proposto" &&
                   myTeamInMatch &&
-                  jogo.proposedBy !== myTeamInMatch.tag;
+                  !sameTeamRef(jogo.proposedBy, myTeamInMatch.tag);
                 const amITheProposer =
                   jogo.status === "proposto" &&
                   myTeamInMatch &&
-                  jogo.proposedBy === myTeamInMatch.tag;
+                  sameTeamRef(jogo.proposedBy, myTeamInMatch.tag);
 
                 return (
                   <div
@@ -170,7 +171,7 @@ export const MeusJogosPendentes = () => {
                               jogo.hora &&
                               jogo.hora !== "--:--"
                                 ? jogo.hora
-                                : "20:00",
+                                : "",
                             action:
                               jogo.status === "proposto"
                                 ? "accept"

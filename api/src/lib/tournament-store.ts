@@ -38,6 +38,19 @@ async function resolveTeamId(idOrTag: string | undefined, d: any = db): Promise<
 }
 
 /**
+ * Jogo "confirmado" sem data/hora válidos é inválido: o aceite do agendamento
+ * não pode confirmar um confronto sem horário (bug do 20:00 no painel de
+ * pendentes, em que o aceite ignorava o horário digitado). Regra no servidor;
+ * o front valida antes de enviar.
+ */
+export function jogoConfirmadoSemHorario(jogo: any): boolean {
+  if (!jogo || jogo.status !== "confirmado") return false;
+  const data = jogo.data ?? jogo.displayDate;
+  const hora = jogo.hora ?? jogo.displayTime;
+  return !data || data === "A COMBINAR" || !hora || hora === "--:--";
+}
+
+/**
  * Persiste times_inscritos (array de TeamRegistration) → tournament_teams.
  * Resolve team por id ou tag. Upsert por (tournament_id, team_id).
  */

@@ -96,8 +96,8 @@ export const TodosJogosPendentes = () => {
                             data: jogo.data && jogo.data !== "A COMBINAR"
                               ? jogo.data
                               : new Date().toISOString().split("T")[0],
-                            hora: jogo.hora && jogo.hora !== "--:--" ? jogo.hora : "20:00",
-                            action: "accept",
+                            hora: jogo.hora && jogo.hora !== "--:--" ? jogo.hora : "",
+                            action: "arbitrate",
                             placar: "",
                           });
                           setIsScheduleEditModalOpen(true);

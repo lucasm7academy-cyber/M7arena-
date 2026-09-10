@@ -1,9 +1,7 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
 import { X, Clock, Minus, Plus } from "lucide-react";
-import { api } from "../../../../lib/api";
-import { sameTeamRef } from "../../domain/team-ref";
 
-export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, setEditFormData, jogoStatusAtStart, editingMatchIndex, onSubmit, onDelete, myTeams, isAdmin, id, setCampeonato }: any) => {
+export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, setEditFormData, jogoStatusAtStart, editingMatchIndex, onSubmit, onDelete, isAdmin }: any) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -38,11 +36,13 @@ export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, se
                   >
                     {editFormData.action === "accept"
                       ? "Responder Proposta"
-                      : editFormData.action === "finish"
-                        ? jogoStatusAtStart === "finalizado"
-                          ? "Editar Resultado"
-                          : "Finalizar Jogo"
-                        : "Propor Horário"}
+                      : editFormData.action === "arbitrate"
+                        ? "Arbitrar Jogo"
+                        : editFormData.action === "finish"
+                          ? jogoStatusAtStart === "finalizado"
+                            ? "Editar Resultado"
+                            : "Finalizar Jogo"
+                          : "Propor Horário"}
                   </h3>
                   <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">
                     Defina o status e horário do jogo
@@ -83,7 +83,9 @@ export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, se
                   >
                     {editFormData.action === "accept"
                       ? "Aceite ou altere para enviar uma contra-proposta."
-                      : "Selecione a data e o horário para o confronto."}
+                      : editFormData.action === "arbitrate"
+                        ? "Defina a data e o horário — o jogo será confirmado na hora."
+                        : "Selecione a data e o horário para o confronto."}
                   </p>
                 </div>
               )}
@@ -262,39 +264,11 @@ export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, se
                 {editFormData.action === "accept" && (
                   <button
                     type="button"
-                    onClick={() => {
-                      const match =
-                        campeonato.cronograma[editingMatchIndex!];
-                      const isChanged =
-                        editFormData.data !== match.data ||
-                        editFormData.hora !== match.hora;
-
-                      if (isChanged) {
-                        const form = document.querySelector("form");
-                        if (form) form.requestSubmit();
-                        return;
-                      }
-
-                      let actingTeamTag = "ADMIN";
-                      const myTeamForAccept = myTeams.find(
-                        (t: any) =>
-                          sameTeamRef(t.tag, match.timeA) ||
-                          sameTeamRef(t.tag, match.timeB) ||
-                          sameTeamRef(t.nome, match.timeA) ||
-                          sameTeamRef(t.nome, match.timeB),
-                      );
-                      if (myTeamForAccept) actingTeamTag = myTeamForAccept.tag;
-
-                      match.status = "confirmado";
-                      match.lastActionBy = actingTeamTag;
-                      const updatedCampeonato = {
-                        ...campeonato,
-                        cronograma: [...campeonato.cronograma],
-                      };
-                      setCampeonato(updatedCampeonato);
-                      api.tournaments.atualizarCronograma(id, updatedCampeonato.cronograma)
-                        .catch((error: any) => console.error('Erro ao aceitar:', error.message));
-                      onClose();
+                    onClick={(e) => {
+                      // Toda a decisão vive no handleUpdateSchedule: horário
+                      // alterado vira contra-proposta; inalterado confirma (e só
+                      // confirma se o jogo tiver data/hora válidos).
+                      (e.currentTarget as HTMLButtonElement).form?.requestSubmit();
                     }}
                     className="w-full py-3.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                     style={{
@@ -327,20 +301,22 @@ export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, se
                     type="submit"
                     className="w-full py-3.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                     style={{
-                      backgroundColor: editFormData.action === "finish"
+                      backgroundColor: editFormData.action === "finish" || editFormData.action === "arbitrate"
                         ? "#00FF41"
                         : (campeonato.themeColor || "#FFB700"),
                       color: "#000000",
-                      boxShadow: editFormData.action === "finish"
+                      boxShadow: editFormData.action === "finish" || editFormData.action === "arbitrate"
                         ? "0 0 25px rgba(0,255,65,0.3)"
                         : `0 0 25px ${campeonato.themeColor || '#FFB700'}4D`
                     }}
                   >
                     {editFormData.action === "finish"
                       ? "Confirmar Resultado"
-                      : jogoStatusAtStart === "proposto"
-                        ? "Enviar Contra-Proposta"
-                        : "Enviar Proposta de Horário"}
+                      : editFormData.action === "arbitrate"
+                        ? "Confirmar Arbitragem"
+                        : jogoStatusAtStart === "proposto"
+                          ? "Enviar Contra-Proposta"
+                          : "Enviar Proposta de Horário"}
                   </button>
                 )}
 

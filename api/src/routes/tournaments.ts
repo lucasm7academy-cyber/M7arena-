@@ -5,7 +5,7 @@ import { users, userSessions, userRoles } from "../../../db/schema/identidade.js
 import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
-import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket } from "../lib/tournament-store.js";
+import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
 import { findUserTeamMemberships } from "../lib/team-membership.js";
@@ -326,8 +326,16 @@ tournamentsRouter.put("/:id/cronograma/merge", async (req, res) => {
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
-    await storeCronograma(id, req.body?.jogos || req.body?.cronograma || [], true);
-    await applyAutoTiebreakers(id, req.body?.jogos || req.body?.cronograma || []);
+    const jogos = req.body?.jogos || req.body?.cronograma || [];
+    // Confirmação exige data/hora: o aceite do agendamento não pode criar um
+    // jogo confirmado sem horário (bug do 20:00).
+    const semHorario = jogos.find(jogoConfirmadoSemHorario);
+    if (semHorario) {
+      return res.status(400).json({ error: "Jogo confirmado sem data/horário definidos. Proponha um horário antes de confirmar." });
+    }
+
+    await storeCronograma(id, jogos, true);
+    await applyAutoTiebreakers(id, jogos);
     return res.json(await toLegacyTournament(id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao mesclar cronograma" });

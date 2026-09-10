@@ -45,7 +45,7 @@ export interface CampeonatoContextType {
   isAllPendingOpen: boolean;
   editingMatchIndex: number | null;
   jogoStatusAtStart: string | null;
-  editFormData: { data: string; hora: string; action: "propose" | "counter" | "accept" | "finish"; placar: string };
+  editFormData: { data: string; hora: string; action: "propose" | "counter" | "accept" | "arbitrate" | "finish"; placar: string };
   adminMatchData: { timeA: string; timeB: string; fase: string };
   registrationData: { teamId: string; discord: string; whatsapp: string };
   isRegistered: boolean;
@@ -130,7 +130,7 @@ export function CampeonatoProvider({
   const [editFormData, setEditFormData] = useState({
     data: "",
     hora: "",
-    action: "propose" as "propose" | "counter" | "accept" | "finish",
+    action: "propose" as "propose" | "counter" | "accept" | "arbitrate" | "finish",
     placar: "",
   });
   const [adminMatchData, setAdminMatchData] = useState({
@@ -975,16 +975,49 @@ export function CampeonatoProvider({
     );
     if (myTeamInAction) actingTeamTag = myTeamInAction.tag;
 
-    if (editFormData.action === "accept") {
+    // "Aceitar" com data/hora alterados é contra-proposta: o modal manda tudo
+    // pelo mesmo submit e a decisão fica aqui. Antes o aceite ignorava o
+    // horário digitado e confirmava o jogo sem hora (bug do 20:00).
+    const mudouHorario =
+      editFormData.data !== match.data || editFormData.hora !== match.hora;
+    let acao =
+      editFormData.action === "accept" && mudouHorario
+        ? "propose"
+        : editFormData.action;
+    // Arbitragem é ato do admin: define data/hora e confirma na hora.
+    if (acao === "arbitrate" && !isAdmin) acao = "propose";
+    const semHorario = (data?: string, hora?: string) =>
+      !data || data === "A COMBINAR" || !hora || hora === "--:--";
+
+    if (acao === "accept") {
+      if (semHorario(match.data, match.hora)) {
+        alert(
+          "Este jogo ainda não tem data e horário definidos. Proponha um horário antes de confirmar.",
+        );
+        return;
+      }
       match.status = "confirmado";
       match.lastActionBy = actingTeamTag;
-    } else if (editFormData.action === "finish") {
+    } else if (acao === "arbitrate") {
+      if (semHorario(editFormData.data, editFormData.hora)) {
+        alert("Defina a data e o horário para arbitrar o jogo.");
+        return;
+      }
+      match.data = editFormData.data;
+      match.hora = editFormData.hora;
+      match.status = "confirmado";
+      match.lastActionBy = actingTeamTag;
+    } else if (acao === "finish") {
       match.status = "finalizado";
       match.placar = editFormData.placar;
       // PDL/V/D são recalculados do cronograma após salvar (recalcular_pdl_global
       // no .then do merge abaixo). Editar o placar reverte/reaplica sozinho.
     } else {
       // Propose or Counter-propose
+      if (semHorario(editFormData.data, editFormData.hora)) {
+        alert("Defina a data e o horário para enviar a proposta.");
+        return;
+      }
       match.data = editFormData.data;
       match.hora = editFormData.hora;
       match.status = "proposto";
