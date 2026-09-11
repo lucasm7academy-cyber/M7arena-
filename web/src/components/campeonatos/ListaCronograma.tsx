@@ -207,22 +207,22 @@ export const ListaCronograma = () => {
                 const scoreA = parseInt(scores[0]) || 0;
                 const scoreB = parseInt(scores[1]) || 0;
 
-                // Regra: manter quem perdeu na ESQUERDA e quem ganhou na DIREITA
-                const teamAWon = scoreA > scoreB;
+                // Regra: manter quem GANHOU na ESQUERDA e quem PERDEU na DIREITA
+                const teamBWon = scoreB > scoreA;
                 const isTie = scoreA === scoreB;
 
-                const leftTeam = teamAWon ? timeB : timeA;
-                const LeftIcon = teamAWon ? IconB : IconA;
-                const leftCor = teamAWon ? corB : corA;
-                const leftScore = teamAWon ? scoreB : scoreA;
+                const leftTeam = teamBWon ? timeB : timeA;
+                const LeftIcon = teamBWon ? IconB : IconA;
+                const leftCor = teamBWon ? corB : corA;
+                const leftScore = teamBWon ? scoreB : scoreA;
 
-                const rightTeam = teamAWon ? timeA : timeB;
-                const RightIcon = teamAWon ? IconA : IconB;
-                const rightCor = teamAWon ? corA : corB;
-                const rightScore = teamAWon ? scoreA : scoreB;
+                const rightTeam = teamBWon ? timeA : timeB;
+                const RightIcon = teamBWon ? IconA : IconB;
+                const rightCor = teamBWon ? corA : corB;
+                const rightScore = teamBWon ? scoreA : scoreB;
 
-                const leftScoreColor = isTie ? "#FFFFFF" : "#FF3131";
-                const rightScoreColor = isTie ? "#FFFFFF" : "#00FF41";
+                const leftScoreColor = isTie ? "#FFFFFF" : "#00FF41";
+                const rightScoreColor = isTie ? "#FFFFFF" : "#FF3131";
                 const primaryColor = campeonato.themeColor || "#FFB700";
 
                 return (
@@ -251,14 +251,13 @@ export const ListaCronograma = () => {
                       boxShadow: "0 4px 24px -4px rgba(0, 0, 0, 0.6)",
                     }}
                   >
-                    {/* MOBILE (< md): Top bar with diagonal badge and match date/time */}
+                    {/* MOBILE (< md): Top bar with rounded badge and match date/time */}
                     <div className="w-full flex md:hidden items-center justify-between px-3.5 py-2 border-b border-white/10 bg-white/[0.02]">
                       <div
-                        className="px-3 py-1 flex items-center select-none"
+                        className="px-3 py-1 rounded-full flex items-center select-none border"
                         style={{
-                          clipPath: "polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
-                          background: `linear-gradient(135deg, ${primaryColor}30 0%, rgba(25,25,35,0.95) 100%)`,
-                          border: `1px solid ${primaryColor}50`,
+                          background: `linear-gradient(135deg, ${primaryColor}20 0%, rgba(25,25,35,0.95) 100%)`,
+                          borderColor: `${primaryColor}40`,
                         }}
                       >
                         <span
@@ -266,7 +265,7 @@ export const ListaCronograma = () => {
                           style={{
                             fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                             color: primaryColor,
-                            textShadow: `0 0 12px ${primaryColor}44`,
+                            textShadow: `0 0 10px ${primaryColor}44`,
                           }}
                         >
                           FINALIZADA
@@ -285,22 +284,21 @@ export const ListaCronograma = () => {
                       </div>
                     </div>
 
-                    {/* DESKTOP (>= md): Left diagonal banner with primary color */}
-                    <div className="hidden md:flex items-center self-stretch shrink-0">
+                    {/* DESKTOP (>= md): Left rounded badge with primary color */}
+                    <div className="hidden md:flex items-center pl-4 lg:pl-5 shrink-0">
                       <div
-                        className="h-full min-w-[130px] lg:min-w-[150px] px-4 lg:px-5 flex flex-col items-center justify-center relative select-none"
+                        className="px-3.5 py-1.5 rounded-full border flex items-center justify-center select-none"
                         style={{
-                          clipPath: "polygon(0 0, 100% 0, calc(100% - 18px) 100%, 0 100%)",
-                          background: `linear-gradient(135deg, ${primaryColor}25 0%, rgba(20,20,28,0.95) 100%)`,
-                          borderRight: `1px solid ${primaryColor}44`,
+                          background: `linear-gradient(135deg, ${primaryColor}20 0%, rgba(20,20,28,0.95) 100%)`,
+                          borderColor: `${primaryColor}40`,
                         }}
                       >
                         <span
-                          className="text-base lg:text-lg uppercase tracking-wider leading-none"
+                          className="text-sm lg:text-base uppercase tracking-wider leading-none"
                           style={{
                             fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                             color: primaryColor,
-                            textShadow: `0 0 20px ${primaryColor}55`,
+                            textShadow: `0 0 15px ${primaryColor}55`,
                           }}
                         >
                           FINALIZADA
@@ -330,9 +328,9 @@ export const ListaCronograma = () => {
                       )}
                     </div>
 
-                    {/* CENTER: Matchup (Left: Loser, Right: Winner) */}
+                    {/* CENTER: Matchup (Left: Winner, Right: Loser) */}
                     <div className="flex items-center justify-center gap-3 sm:gap-6 flex-1 w-full px-3 py-3.5 md:py-3 min-w-0">
-                      {/* Left Team (Quem perdeu) */}
+                      {/* Left Team (Quem ganhou) */}
                       <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-end min-w-0">
                         <div className="flex flex-col items-end text-right min-w-0">
                           <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
@@ -409,7 +407,7 @@ export const ListaCronograma = () => {
                         )}
                       </div>
 
-                      {/* Right Team (Quem ganhou) */}
+                      {/* Right Team (Quem perdeu) */}
                       <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-start min-w-0">
                         <div
                           className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black"
