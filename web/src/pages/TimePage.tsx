@@ -847,7 +847,7 @@ const EditTeamModal = ({
     playSound('success');
     onSave({
       nome: name,
-      tag: tag.toUpperCase().slice(0, 3),
+      tag: tag.toUpperCase().slice(0, 4),
       gradientFrom: theme.from,
       gradientTo: theme.to,
       logoUrl: (logoUrl && !logoUrl.startsWith('blob:')) ? logoUrl : undefined,
@@ -896,11 +896,11 @@ const EditTeamModal = ({
           </div>
 
           <div>
-            <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tag (3 letras)</label>
+            <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tag (até 4 letras)</label>
             <input
               value={tag}
-              onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))}
-              maxLength={3}
+              onChange={e => setTag(e.target.value.toUpperCase().slice(0, 4))}
+              maxLength={4}
               className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-black tracking-widest focus:outline-none focus:border-white/25 transition-colors"
             />
           </div>

@@ -366,13 +366,18 @@ teamsRouter.post("/", async (req, res) => {
       return res.status(400).json({ error: "Nome e TAG do time são obrigatórios" });
     }
 
+    const tagLimpa = String(tag).trim().toUpperCase();
+    if (tagLimpa.length > 4) {
+      return res.status(400).json({ error: "A TAG do time pode ter no máximo 4 caracteres" });
+    }
+
     const [existing] = await db
       .select()
       .from(teams)
-      .where(and(eq(teams.gameId, "lol"), eq(teams.tag, String(tag).trim().toUpperCase())))
+      .where(and(eq(teams.gameId, "lol"), eq(teams.tag, tagLimpa)))
       .limit(1);
     if (existing) {
-      return res.status(409).json({ error: `A tag #${String(tag).trim().toUpperCase()} já está em uso. Escolha outra tag.` });
+      return res.status(409).json({ error: `A tag #${tagLimpa} já está em uso. Escolha outra tag.` });
     }
 
     const [newTeam] = await db
@@ -380,7 +385,7 @@ teamsRouter.post("/", async (req, res) => {
       .values({
         gameId: "lol",
         name: String(nome).trim(),
-        tag: String(tag).trim().toUpperCase(),
+        tag: tagLimpa,
         logoUrl: logo_url ?? null,
         gradientFrom: gradient_from || "#FFB700",
         gradientTo: gradient_to || "#FF6600",
@@ -440,11 +445,15 @@ teamsRouter.put("/:id", async (req, res) => {
     }
 
     const { nome, tag, logo_url, gradient_from, gradient_to, whatsapp, discord } = req.body;
+    const tagLimpa = tag !== undefined ? String(tag).trim().toUpperCase() : undefined;
+    if (tagLimpa !== undefined && tagLimpa.length > 4) {
+      return res.status(400).json({ error: "A TAG do time pode ter no máximo 4 caracteres" });
+    }
     const [updated] = await db
       .update(teams)
       .set({
         ...(nome !== undefined ? { name: String(nome).trim() } : {}),
-        ...(tag !== undefined ? { tag: String(tag).trim().toUpperCase() } : {}),
+        ...(tagLimpa !== undefined ? { tag: tagLimpa } : {}),
         ...(logo_url !== undefined ? { logoUrl: logo_url || null } : {}),
         ...(gradient_from !== undefined ? { gradientFrom: gradient_from || null } : {}),
         ...(gradient_to !== undefined ? { gradientTo: gradient_to || null } : {}),

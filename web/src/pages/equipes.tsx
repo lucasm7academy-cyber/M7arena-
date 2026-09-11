@@ -969,7 +969,7 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
     playSound('success');
     onCreate({
       name,
-      tag: tag.toUpperCase().slice(0, 3),
+      tag: tag.toUpperCase().slice(0, 4),
       gradientFrom: theme.from,
       gradientTo: theme.to,
       logoUrl: logoPreview || undefined,
@@ -1046,12 +1046,12 @@ const CreateTeamModal = ({ onClose, onCreate, hasRiot, discordPrefill = '' }: an
             </div>
 
             <div>
-              <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tag (3 letras)</label>
+              <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-1.5">Tag (até 4 letras)</label>
               <input
                 value={tag}
-                onChange={e => setTag(e.target.value.toUpperCase().slice(0, 3))}
-                placeholder="Ex: M7E"
-                maxLength={3}
+                onChange={e => setTag(e.target.value.toUpperCase().slice(0, 4))}
+                placeholder="Ex: M7ES"
+                maxLength={4}
                 className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-black tracking-widest focus:outline-none focus:border-white/25 placeholder:text-white/20 transition-colors"
               />
               <p className="text-white/30 text-[9px] mt-1 font-bold">Sua tag aparece em rankings, campeonatos e no Hall da Fama.</p>

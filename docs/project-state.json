@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-11T03:54:58.965Z",
+  "updatedAt": "2026-09-11T22:10:47.804Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1400,11 +1400,11 @@
       "area": "app",
       "name": "Verificação de série de campeonato via PUUID + tournamentCode",
       "status": "done",
-      "notes": "Deployado. by-tournament-code (403 sempre com a chave atual) trocado por match-v5 by-puuid + info.tournamentCode; placar recalculado do zero, jogadas idempotentes, remake ignorado, manual preservado, erro visível se a Riot falhar (429 etc.).",
-      "evidence": "E2E read-only no container prod (dist novo + Riot ao vivo): resolverSerie da série M7WxBKA → {\"estado\":\"finalizada\",\"scoreA\":2,\"scoreB\":0,\"winnerSide\":\"a\",\"irregular\":false}; busca achou BR1_3281421243 e BR1_3281447250. Banco intacto (teste sem onJogada). Suite 174/174.",
+      "notes": "Incidente 2026-09-11: jogos group_* de Tesouro/Kraken inseridos com best_of=1 (script solto make_schedule.js) faziam o motor fechar a série na 1ª vitória (RMDxMDR fechou 1-0 com o jogo 2 rolando). Fix: piso MD3 no resolverSerie (Math.max(3,...)), gerar-codigo força 3/5, 14 jogos corrigidos na VPS, série reaberta + código re-travado; make_schedule.js e query.sql removidos.",
+      "evidence": "tsx --test api/test/serie-campeonato.test.ts → 19/19; suíte completa 182/182; tsc -p api/tsconfig.json → exit 0; deploy c7e0868; prod: Tesouro RMDxMDR fechou 1-2 com 3 jogadas gravadas (BR1_3281803300/3281820356/3281839478).",
       "owner": "deepseek",
       "createdAt": "2026-09-10T05:00:49.191Z",
-      "updatedAt": "2026-09-10T05:11:12.804Z"
+      "updatedAt": "2026-09-11T05:09:01.596Z"
     },
     {
       "id": "app.campeonatos.pdl-global",
@@ -1992,6 +1992,24 @@
       "decision": "Nova rota DELETE /tournaments/:id/inscricoes/:teamId remove tournament_teams + tournament_standings (organizador ou admin/proprietario); DELETE /tournaments/:id passa a aceitar admin/proprietario além do criador; o front usa o endpoint dedicado no X e mostra a falha no banner (antes era 403 silencioso).",
       "rationale": "O save legado só faz upsert: tirar o time do array não apagava a linha e a inscrição voltava ao recarregar. O delete do campeonato exigia ser o criador — o admin tomava 403 e o campeonato voltava (LEITEIROS CUP tem organizador diferente). Endpoint dedicado é atômico e evita que um save parcial (storeTimesInscritos([teamEntry]) das inscrições) apague outras inscrições.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-062",
+      "date": "2026-09-11T05:09:07.241Z",
+      "author": "deepseek",
+      "title": "Série de campeonato: piso MD3 no motor e best_of forçado na geração do código",
+      "decision": "O motor de série usa bestOf com piso 3 (Math.max(3, bestOf)), e POST /tournaments/:id/jogo/:matchId/gerar-codigo grava bestOf=5 na final (phase='finals') ou 3 nas demais fases, ignorando o valor armazenado no banco.",
+      "rationale": "Incidente 2026-09-11 (Copa do Tesouro/Kraken): jogos inseridos direto no banco com best_of=1 fecharam séries na primeira vitória (RMDxMDR 1-0 com o jogo 2 rolando). ADR-047 define que todo jogo de campeonato é MD3 (ou MD5 na final) — MD1 não existe. O piso no motor protege contra dado errado de qualquer origem (script, SQL manual), e a rota deixa de propagar bestOf legado. Dado corrigido e série reaberta; sem isso o jogo 2 nunca seria contado.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-063",
+      "date": "2026-09-11T22:10:46.574Z",
+      "author": "deepseek",
+      "title": "Tag de time: limite sobe de 3 para 4 caracteres, sem migration",
+      "decision": "O limite de caracteres da tag de time passou de 3 para 4. A coluna já era varchar(10) (migration 0000), então NÃO há migration — 4 caracteres já cabiam. O limite era só `.slice(0,3)`/maxLength no front (equipes.tsx e TimePage.tsx) e ausente no servidor. Adicionado guard no servidor (api/src/routes/teams.ts POST/PUT) que rejeita tag > 4 com 400.",
+      "rationale": "Enforçar no servidor para o limite não depender do cliente. Não migrar porque o schema já suporta 10. O port morto em src/app/** tem os mesmos slice(0,3), mas é código descartado pela ADR-010 e não foi tocado.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2060,30 +2078,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-06T01:14:32.627Z",
-      "agent": "gemini",
-      "summary": "Correção do redirecionamento para dev.m7arena.pro/login no fluxo de autenticação e campeonatos. 1) No backend (api/src/routes/auth-google.ts), appUrl e origemHost foram ajustados para priorizar o host da requisição (m7arena.pro) e ter fallback para https://m7arena.pro, além de capturar mensagens de erro do Google e logar warnings. 2) No .env da VPS e docker-compose.yml, APP_URL e MERCADO_PAGO_NOTIFICATION_URL foram atualizados de dev.m7arena.pro para m7arena.pro. 3) CORS_ALLOWLIST e allowedOrigins no realtime mantiveram dev.m7arena.pro apenas como fallback. 4) No front (web/src/pages/Login.tsx), adicionado useEffect para capturar ?erro= da URL e exibir alerta traduzido em português. Validação: tsc api/web exit 0, vite build ok, teste curl https://m7arena.pro/api/auth/google/callback redirecionando para https://m7arena.pro/login?erro=state_invalido (testado ao vivo). ADR-054 registrada.",
-      "touched": [
-        "api/src/routes/auth-google.ts",
-        "api/src/index.ts",
-        "api/src/realtime/index.ts",
-        "web/src/pages/Login.tsx",
-        "infra/docker-compose.yml",
-        "VPS: /root/m7arena/.env"
-      ]
-    },
-    {
-      "at": "2026-09-06T06:12:39.509Z",
-      "agent": "gemini",
-      "summary": "Configuração flexível de restrição de campeonatos por pontos ou Free Elo: 1) Em FormCriarCampeonato e no modal de edição de createCampPage, adicionado seletor com presets rápidos de 1 clique ('Free Elo', '300 Pontos', '500 Pontos', '700 Pontos', '1000 Pontos', 'Tier I', 'Tier II') e campo de texto livre para quantidade personalizada de pontos. 2) Em campeonatos.tsx e VisaoGeral.tsx, o rótulo foi tornado dinâmico para exibir 'Limite: X Pontos' / 'Limite de Pontos: X Pontos' quando configurado por pontos, mantendo 'Tier: Free Elo' / 'Tier I'. 3) Verificado com tsc --noEmit (exit 0), vite build (exit 0), commit c8b93cb e deploy na VPS com rebuild do container nginx (HTTP 200 ao vivo em m7arena.pro).",
-      "touched": [
-        "web/src/features/campeonatos/components/FormCriarCampeonato.tsx",
-        "web/src/pages/createCampPage.tsx",
-        "web/src/pages/campeonatos.tsx",
-        "web/src/components/campeonatos/VisaoGeral.tsx"
-      ]
-    },
     {
       "at": "2026-09-06T06:38:00.086Z",
       "agent": "gemini",
@@ -2365,6 +2359,29 @@
       "summary": "Reset manual de senha em produção (não há fluxo de reset). Usuário trafiquentirj@hotmail.com (id b8280683-1187-4787-b673-00e174e6f808) tinha senha mas perdeu acesso. Gerei hash bcrypt (bcryptjs, 10 rounds — mesmo algoritmo de api/src/routes/auth.ts) e apliquei UPDATE users.password_hash via psql no container m7arena_postgres da VPS 179.198.120.11. Evidência: UPDATE 1 e login real POST https://m7arena.pro/api/auth/login → HTTP 200 com o user. Senha nova: 123@m7pro. Obs: o produto continua sem fluxo de reset de senha — se isso for recorrente, vale criar rota admin de reset.",
       "touched": [
         "VPS: users.password_hash (trafiquentirj@hotmail.com)"
+      ]
+    },
+    {
+      "at": "2026-09-11T05:09:13.052Z",
+      "agent": "deepseek",
+      "summary": "Bug dos campeonatos Tesouro/Kraken (séries MD3 fechando como MD1) diagnosticado e corrigido. Causa: jogos group_* inseridos com best_of=1 pelo script solto make_schedule.js; motor fechava na 1ª vitória (RMDxMDR finalizou 1-0 com o jogo 2 rolando; BKSxNKZ idem, ajustado manual p/ 1-2). Fix em prod: 14 jogos best_of 1→3, RMDxMDR reaberta como em_andamento 1-0 e código re-travado; jogo 2 e 3 foram contados pelo cron e a série fechou 1-2 corretamente. Código: piso MD3 no resolverSerie, gerar-codigo força 3/5 (ADR-062), teste de regressão, schema comment corrigido. Evidência: motor 19/19, suíte 182/182, tsc 0, commit c7e0868 deployado na VPS (bundle com clamp verificado, site/API 200). make_schedule.js e query.sql deletados. Obs: checkout da VPS tem web/src/pages/Lobby.tsx modificado localmente (não commitado) — preservado, não é deste fix.",
+      "touched": [
+        "api/src/lib/serie-campeonato.ts",
+        "api/src/routes/tournaments.ts",
+        "api/test/serie-campeonato.test.ts",
+        "db/schema/tournaments.ts",
+        "app.campeonatos.verificacao-serie"
+      ]
+    },
+    {
+      "at": "2026-09-11T22:10:47.804Z",
+      "agent": "deepseek",
+      "summary": "Aumentei o limite da tag de time de 3 para 4 caracteres. Front: equipes.tsx (CreateTeamModal) e TimePage.tsx (modal Editar Time) — slice(0,3)→slice(0,4), maxLength 3→4, label \"Tag (3 letras)\"→\"Tag (até 4 letras)\"; players.tsx parou de truncar a tag exibida em substring(0,3). Servidor: api/src/routes/teams.ts POST e PUT agora rejeitam tag com >4 caracteres (400). VERIFICADO que não quebra nada: a coluna teams.tag já é varchar(10) na migration 0000, então 4 chars cabem e nenhuma migration é necessária; tags existentes (≤3) intactas; índice único teams_game_tag_idx inalterado. Evidência: `npx tsc --noEmit` em api e web → exit 0 (sem output). PENDENTE: precisa rebuild do web + deploy da API para valer em produção (não deployei). Obs: src/app/** (port Next morto, ADR-010) ainda tem slice(0,3) mas não foi tocado de propósito.",
+      "touched": [
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/players.tsx",
+        "api/src/routes/teams.ts"
       ]
     }
   ]

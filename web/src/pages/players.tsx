@@ -742,7 +742,7 @@ export default function App() {
                                 color: jogador.timeColor || PRIMARY_COLOR,
                               }}
                             >
-                              #{jogador.timeTag.substring(0, 3)}
+                              #{jogador.timeTag}
                             </span>
                           </div>
                         )}
