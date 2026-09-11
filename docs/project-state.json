@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-11T22:10:47.804Z",
+  "updatedAt": "2026-09-11T22:24:11.750Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2010,6 +2010,15 @@
       "decision": "O limite de caracteres da tag de time passou de 3 para 4. A coluna já era varchar(10) (migration 0000), então NÃO há migration — 4 caracteres já cabiam. O limite era só `.slice(0,3)`/maxLength no front (equipes.tsx e TimePage.tsx) e ausente no servidor. Adicionado guard no servidor (api/src/routes/teams.ts POST/PUT) que rejeita tag > 4 com 400.",
       "rationale": "Enforçar no servidor para o limite não depender do cliente. Não migrar porque o schema já suporta 10. O port morto em src/app/** tem os mesmos slice(0,3), mas é código descartado pela ADR-010 e não foi tocado.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-064",
+      "date": "2026-09-11T22:24:11.750Z",
+      "author": "deepseek",
+      "title": "Renomear time propaga a tag aos snapshots de campeonato",
+      "decision": "PUT /api/teams/:id, ao mudar a tag, propaga a tag nova para os snapshots de exibição por team_id: tournament_matches.team_a_tag/team_b_tag e bracket_matches.team_a_tag/team_b_tag, além de array_replace em tournaments.seed_order. Motivo: conforme ADR-016, cronograma/chave guardam a tag gravada no agendamento; o front resolve logo/cor procurando o time por tag em times_inscritos, então uma tag defasada mostrava a tag velha no Lobby e derrubava a logo.",
+      "rationale": "Alternativa era resolver a tag de exibição por team_id em tempo de leitura, mas o fork usa a tag como identidade em vários pontos (grupos, desempate, verificação por série), então manter o snapshot (ADR-016) e propagar na renomeação é a mudança mínima e sem efeito colateral no front. Dados já corrigidos na VPS via UPDATE por id.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2078,17 +2087,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-06T06:38:00.086Z",
-      "agent": "gemini",
-      "summary": "Atualização do fluxo de Regulamento dos campeonatos: 1) Em FormCriarCampeonato.tsx e no modal de edição de createCampPage.tsx, o campo de regulamento foi transformado em campo de URL/Link oficial (Google Docs/PDF/página externa). 2) Em createCampPage.tsx, corrigida a persistência do regulamento no handleSaveEdit que não gravava ao salvar edição. 3) Em CampeonatoDetalhes.tsx e VisaoGeral.tsx, o clique no botão/card de Regulamento agora abre diretamente uma nova aba (_blank) com o link informado, com fallback para o modal de regras caso haja texto legado. 4) No RegrasModal.tsx, adicionado botão de abrir documento oficial em nova aba. 5) Verificado com tsc (exit 0), vite build (exit 0), commit f14044e, push origin e deploy na VPS com container nginx rebuildado (HTTP 200 ao vivo).",
-      "touched": [
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/features/campeonatos/components/FormCriarCampeonato.tsx",
-        "web/src/pages/createCampPage.tsx",
-        "web/src/features/campeonatos/components/modals/RegrasModal.tsx"
-      ]
-    },
     {
       "at": "2026-09-06T07:50:09.732Z",
       "agent": "gemini",
@@ -2382,6 +2380,17 @@
         "web/src/pages/TimePage.tsx",
         "web/src/pages/players.tsx",
         "api/src/routes/teams.ts"
+      ]
+    },
+    {
+      "at": "2026-09-11T22:14:38.162Z",
+      "agent": "deepseek",
+      "summary": "Deploy na VPS concluído (commit fc7d887 no branch feat/redesign-modais, push origin + pull na VPS). Rebuild app+nginx via docker compose --env-file (ADR-015). Verificado ao vivo: https://m7arena.pro/api/health → status ok; bundle equipes-ClQYMORd.js em /usr/share/nginx/html/assets contém o novo placeholder M7ES (front 4 chars no ar); /app/dist/api/src/routes/teams.js no container m7arena_app contém o guard \"no máximo 4 caracteres\". Containers m7arena_nginx/app/realtime recriados e Up. Lobby.tsx local da VPS preservado. Obs: m7arena_mcp_ops está em Restarting (pré-existente, não relacionado a esta mudança).",
+      "touched": [
+        "api/src/routes/teams.ts",
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/players.tsx"
       ]
     }
   ]

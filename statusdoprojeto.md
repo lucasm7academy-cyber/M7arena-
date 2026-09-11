@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 11/09/2026 19:10 — por `deepseek`
+**Última atualização:** 11/09/2026 19:24 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -732,6 +732,14 @@ _11/09/2026 02:09 — deepseek_
 
 _11/09/2026 19:10 — deepseek_
 
+### ADR-064 — Renomear time propaga a tag aos snapshots de campeonato
+
+**Decisão:** PUT /api/teams/:id, ao mudar a tag, propaga a tag nova para os snapshots de exibição por team_id: tournament_matches.team_a_tag/team_b_tag e bracket_matches.team_a_tag/team_b_tag, além de array_replace em tournaments.seed_order. Motivo: conforme ADR-016, cronograma/chave guardam a tag gravada no agendamento; o front resolve logo/cor procurando o time por tag em times_inscritos, então uma tag defasada mostrava a tag velha no Lobby e derrubava a logo.
+
+**Por quê:** Alternativa era resolver a tag de exibição por team_id em tempo de leitura, mas o fork usa a tag como identidade em vários pontos (grupos, desempate, verificação por série), então manter o snapshot (ADR-016) e propagar na renomeação é a mudança mínima e sem efeito colateral no front. Dados já corrigidos na VPS via UPDATE por id.
+
+_11/09/2026 19:24 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -742,6 +750,7 @@ _11/09/2026 19:10 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 11/09/2026 19:14 | deepseek | Deploy na VPS concluído (commit fc7d887 no branch feat/redesign-modais, push origin + pull na VPS). Rebuild app+nginx via docker compose --env-file (ADR-015). Verificado ao vivo: https://m7arena.pro/api/health → status ok; bundle equipes-ClQYMORd.js em /usr/share/nginx/html/assets contém o novo placeholder M7ES (front 4 chars no ar); /app/dist/api/src/routes/teams.js no container m7arena_app contém o guard "no máximo 4 caracteres". Containers m7arena_nginx/app/realtime recriados e Up. Lobby.tsx local da VPS preservado. Obs: m7arena_mcp_ops está em Restarting (pré-existente, não relacionado a esta mudança). <br>_tocou: `api/src/routes/teams.ts`, `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`_ |
 | 11/09/2026 19:10 | deepseek | Aumentei o limite da tag de time de 3 para 4 caracteres. Front: equipes.tsx (CreateTeamModal) e TimePage.tsx (modal Editar Time) — slice(0,3)→slice(0,4), maxLength 3→4, label "Tag (3 letras)"→"Tag (até 4 letras)"; players.tsx parou de truncar a tag exibida em substring(0,3). Servidor: api/src/routes/teams.ts POST e PUT agora rejeitam tag com >4 caracteres (400). VERIFICADO que não quebra nada: a coluna teams.tag já é varchar(10) na migration 0000, então 4 chars cabem e nenhuma migration é necessária; tags existentes (≤3) intactas; índice único teams_game_tag_idx inalterado. Evidência: `npx tsc --noEmit` em api e web → exit 0 (sem output). PENDENTE: precisa rebuild do web + deploy da API para valer em produção (não deployei). Obs: src/app/** (port Next morto, ADR-010) ainda tem slice(0,3) mas não foi tocado de propósito. <br>_tocou: `web/src/pages/equipes.tsx`, `web/src/pages/TimePage.tsx`, `web/src/pages/players.tsx`, `api/src/routes/teams.ts`_ |
 | 11/09/2026 02:09 | deepseek | Bug dos campeonatos Tesouro/Kraken (séries MD3 fechando como MD1) diagnosticado e corrigido. Causa: jogos group_* inseridos com best_of=1 pelo script solto make_schedule.js; motor fechava na 1ª vitória (RMDxMDR finalizou 1-0 com o jogo 2 rolando; BKSxNKZ idem, ajustado manual p/ 1-2). Fix em prod: 14 jogos best_of 1→3, RMDxMDR reaberta como em_andamento 1-0 e código re-travado; jogo 2 e 3 foram contados pelo cron e a série fechou 1-2 corretamente. Código: piso MD3 no resolverSerie, gerar-codigo força 3/5 (ADR-062), teste de regressão, schema comment corrigido. Evidência: motor 19/19, suíte 182/182, tsc 0, commit c7e0868 deployado na VPS (bundle com clamp verificado, site/API 200). make_schedule.js e query.sql deletados. Obs: checkout da VPS tem web/src/pages/Lobby.tsx modificado localmente (não commitado) — preservado, não é deste fix. <br>_tocou: `api/src/lib/serie-campeonato.ts`, `api/src/routes/tournaments.ts`, `api/test/serie-campeonato.test.ts`, `db/schema/tournaments.ts`, `app.campeonatos.verificacao-serie`_ |
 | 11/09/2026 00:54 | deepseek | Reset manual de senha em produção (não há fluxo de reset). Usuário trafiquentirj@hotmail.com (id b8280683-1187-4787-b673-00e174e6f808) tinha senha mas perdeu acesso. Gerei hash bcrypt (bcryptjs, 10 rounds — mesmo algoritmo de api/src/routes/auth.ts) e apliquei UPDATE users.password_hash via psql no container m7arena_postgres da VPS 179.198.120.11. Evidência: UPDATE 1 e login real POST https://m7arena.pro/api/auth/login → HTTP 200 com o user. Senha nova: 123@m7pro. Obs: o produto continua sem fluxo de reset de senha — se isso for recorrente, vale criar rota admin de reset. <br>_tocou: `VPS: users.password_hash (trafiquentirj@hotmail.com)`_ |
@@ -756,7 +765,6 @@ _11/09/2026 19:10 — deepseek_
 | 10/09/2026 00:43 | gemini | Analisei o bug do botão 'Iniciar Série' não aparecer para jogadores normais, apenas para admin. Nenhuma alteração de código foi feita conforme solicitado. |
 | 08/09/2026 01:41 | gemini | Ajustada a secao Proximos Jogos no Lobby: removido o card externo chanfrado com overflow-hidden para deixar o confronto solto e permitir que a iluminacao/glow de cada time se expanda livremente; logos dos times aumentados e ajustados para object-cover cobrindo o card por completo. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 08/09/2026 01:37 | gemini | Adicionada borda sutil com a cor original do time e glow suave nos cards compridos de cada time em /times (TimeCard e Meu Time). Deploy na VPS disparado. <br>_tocou: `web/src/pages/equipes.tsx`_ |
-| 08/09/2026 01:32 | gemini | Fundo das páginas principais padronizado com a imagem oficial das salas (/images/fundo_elite.jpg) com opacidade suave e gradiente no LayoutWrapper.tsx; removida iluminação local com glows coloridos em CampeonatoDetalhes.tsx; atualizado fundo de ApostaIndividualPage.tsx; ajustado design dos cards em /times e /times/:id. Verificado com tsc exit 0. <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`, `web/src/pages/CampeonatoDetalhes.tsx`, `web/src/pages/ApostaIndividualPage.tsx`, `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`_ |
 
 ---
 

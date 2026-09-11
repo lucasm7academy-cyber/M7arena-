@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, or, ilike, desc, asc, inArray, count, gt, ne } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, inArray, count, gt, ne, sql } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
 import {
@@ -9,6 +9,7 @@ import {
   teamInvites,
 } from "../../../db/schema/teams.js";
 import { gameAccounts } from "../../../db/schema/games.js";
+import { tournamentMatches, bracketMatches, tournaments } from "../../../db/schema/tournaments.js";
 import { findUserTeamMemberships } from "../lib/team-membership.js";
 
 export const teamsRouter = Router();
@@ -464,6 +465,21 @@ teamsRouter.put("/:id", async (req, res) => {
       })
       .where(eq(teams.id, id))
       .returning();
+
+    // ADR-016: cronograma e chaveamento guardam a tag do time como snapshot de
+    // exibição, gravada no agendamento. Ao renomear a tag, propaga para os
+    // snapshots por id — senão o cronograma mostra a tag velha e o front não
+    // acha o time em times_inscritos (perde logo e cor, que resolvem por tag).
+    if (updated && updated.tag !== team.tag) {
+      await db.update(tournamentMatches).set({ teamATag: updated.tag }).where(eq(tournamentMatches.teamAId, id));
+      await db.update(tournamentMatches).set({ teamBTag: updated.tag }).where(eq(tournamentMatches.teamBId, id));
+      await db.update(bracketMatches).set({ teamATag: updated.tag }).where(eq(bracketMatches.teamAId, id));
+      await db.update(bracketMatches).set({ teamBTag: updated.tag }).where(eq(bracketMatches.teamBId, id));
+      await db
+        .update(tournaments)
+        .set({ seedOrder: sql`array_replace(${tournaments.seedOrder}, ${team.tag}, ${updated.tag})` })
+        .where(sql`${team.tag} = ANY(${tournaments.seedOrder})`);
+    }
 
     return res.json(toLegacyTeam(updated, await getStats(id), cap?.userId ?? team.ownerId));
   } catch (error: any) {
