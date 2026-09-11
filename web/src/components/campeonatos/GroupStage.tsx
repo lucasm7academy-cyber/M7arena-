@@ -19,6 +19,7 @@ export const GroupStage = ({ tournament }: { tournament: any }) => {
       if (m.timeA !== teamName && m.timeB !== teamName) return;
 
       matches++;
+      j++;
       const scores = (m.placar || "0 - 0").split(" - ");
       const s1 = parseInt(scores[0]) || 0;
       const s2 = parseInt(scores[1]) || 0;
@@ -26,10 +27,11 @@ export const GroupStage = ({ tournament }: { tournament: any }) => {
       const myScore = isMatchA ? s1 : s2;
       const oppScore = isMatchA ? s2 : s1;
 
-      // Cada partida vencida (mapa) na série vale vitórias
-      v += myScore;
-      d += oppScore;
-      j += s1 + s2;
+      // A série (MD3/MD5) é a unidade que pontua: quem vence a série soma 1
+      // vitória e o adversário 1 derrota, independente do placar de mapas
+      // (2x1 e 2x0 valem o mesmo). Espelha o Histórico e o gerador de chaves.
+      if (myScore > oppScore) v++;
+      else if (myScore < oppScore) d++;
     });
     return { v, d, matches, j };
   };

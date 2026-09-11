@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-11T22:24:11.750Z",
+  "updatedAt": "2026-09-11T22:32:28.677Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2019,6 +2019,15 @@
       "decision": "PUT /api/teams/:id, ao mudar a tag, propaga a tag nova para os snapshots de exibição por team_id: tournament_matches.team_a_tag/team_b_tag e bracket_matches.team_a_tag/team_b_tag, além de array_replace em tournaments.seed_order. Motivo: conforme ADR-016, cronograma/chave guardam a tag gravada no agendamento; o front resolve logo/cor procurando o time por tag em times_inscritos, então uma tag defasada mostrava a tag velha no Lobby e derrubava a logo.",
       "rationale": "Alternativa era resolver a tag de exibição por team_id em tempo de leitura, mas o fork usa a tag como identidade em vários pontos (grupos, desempate, verificação por série), então manter o snapshot (ADR-016) e propagar na renomeação é a mudança mínima e sem efeito colateral no front. Dados já corrigidos na VPS via UPDATE por id.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-065",
+      "date": "2026-09-11T22:32:28.677Z",
+      "author": "deepseek",
+      "title": "Fase de grupos pontua por série (MD3/MD5), não por mapa",
+      "decision": "Na aba Grupos (GroupStage) e no cálculo de classificados/desempate (CampeonatoContext.getStatsForTeamForCalculation), a unidade de pontuação passa a ser a SÉRIE: vencer o MD3/MD5 = 1 V (o adversário 1 D), independente do placar de mapas (2x1 e 2x0 valem o mesmo). Já era o critério do gerador de chaves (createCampPage). O J passou a contar séries jogadas. A Classificação geral do servidor (tournament-shape.buildClassificacao, usada na Visão Geral e no Histórico) PERMANECE por mapa, a pedido do usuário.",
+      "rationale": "Pedido explícito do usuário: na fase de grupos 2x1 deve valer 1 ponto para o vencedor e 0 para o perdedor, igual ao Histórico. O gerador de chaves já contava por série, então exibição e elegibilidade estavam divergentes — alinhei os dois para que a tabela mostrada bata com quem se classifica. Manter a Classificação por mapa evita mexer no shape do servidor onde o usuário disse não haver problema.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2087,22 +2096,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-06T07:50:09.732Z",
-      "agent": "gemini",
-      "summary": "Validação completa do ciclo de séries de campeonato e verificação na Riot: 1) Botão Iniciar Série no cronograma: exibe 5 min antes do horário (ou horário alcançado/passado) para participantes do confronto e staff. 2) Cópia do Código Riot de Torneio restrita aos membros dos 2 times e staff; espectadores veem 'Em Andamento' e placar da série ao vivo. 3) Motor de resolução (MD3/MD5): validação por PUUID dos rosters cadastrados, tolerância com flag 'irregular: true' para jogadores fora do roster, atualização em tempo real de scoreA/scoreB e fechamento automático ao atingir o limite de vitórias. 4) Varredura periódica via cron (10min) + acionamento instantâneo via botão 'Verificar'. 5) Testes (10/10 serie-campeonato, 9/9 cron/classificacao) passando, tsc exit 0 em api e web, build do Vite exit 0, healthcheck de produção na VPS retornando 200 OK. Componente app.campeonato.verificacao-serie concluído.",
-      "touched": [
-        "api/src/routes/tournaments.ts",
-        "api/src/lib/serie-campeonato.ts",
-        "api/src/lib/tournament-shape.ts",
-        "api/src/cron.ts",
-        "api/test/serie-campeonato.test.ts",
-        "web/src/components/campeonatos/ListaCronograma.tsx",
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/lib/api.ts",
-        "app.campeonato.verificacao-serie"
-      ]
-    },
     {
       "at": "2026-09-07T19:37:06.701Z",
       "agent": "gemini",
@@ -2391,6 +2384,14 @@
         "web/src/pages/TimePage.tsx",
         "web/src/pages/equipes.tsx",
         "web/src/pages/players.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-11T22:25:14.820Z",
+      "agent": "deepseek",
+      "summary": "Bug do Lobby (#NKA em vez de #NKZA + logo sumida) corrigido. Causa: o time NKZ Academy foi renomeado NKA→NKZA, mas os snapshots tournament_matches.team_a_tag/team_b_tag continuavam 'NKA'; o Lobby usa a tag do snapshot e resolve logo por tag em times_inscritos, então a tag velha derrubava a logo. Fix dados: UPDATE por id ressincronizou tournament_matches e bracket_matches na VPS — ao vivo GET /api/tournaments/2bcef957 devolve timeA=NKZA e times_inscritos NKZA logo=true. Fix código: PUT /api/teams/:id propaga a tag nova aos snapshots (tournament_matches, bracket_matches) + array_replace em tournaments.seed_order; commit 77357a6 deployado (rebuild app). Evidência: tsc api exit 0, health 200, dist teams.js contém array_replace. ADR-064. Falta reload do usuário no Lobby.",
+      "touched": [
+        "api/src/routes/teams.ts"
       ]
     }
   ]

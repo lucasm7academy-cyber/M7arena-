@@ -718,11 +718,17 @@ export function CampeonatoProvider({
       const myScore = isMatchA ? s1 : s2;
       const oppScore = isMatchA ? s2 : s1;
 
-      p += myScore;
-      v += myScore;
-      d += oppScore;
+      // A série (MD3/MD5) é a unidade: vitória de série = 1 V (3 pts internos
+      // para o desempate), derrota = 1 D. O placar de mapas (2x1 vs 2x0) não
+      // diferencia. O gerador de chaves (createCampPage) já usava este critério.
+      if (myScore > oppScore) {
+        v++;
+        p += 3;
+      } else if (myScore < oppScore) {
+        d++;
+      }
     });
-    return { p, v, d, matches, j: v + d };
+    return { p, v, d, matches, j: matches };
   };
 
   // (Removido) findNewlyFormedMatches: a chave é 100% visual e não cria mais
