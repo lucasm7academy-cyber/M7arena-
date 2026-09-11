@@ -244,108 +244,71 @@ export const ListaCronograma = () => {
                         setIsScheduleEditModalOpen(true);
                       }
                     }}
-                    className={`group relative w-full rounded-xl border border-white/10 bg-[#09090d] flex flex-col md:flex-row items-center justify-between overflow-hidden transition-all hover:border-white/20 ${
-                      isAdmin ? "cursor-pointer hover:bg-[#0d0d14]" : ""
+                    className={`group relative w-full rounded-xl border border-white/10 bg-[#09090d] flex flex-col overflow-hidden transition-all hover:border-white/20 ${
+                      isAdmin ? "cursor-pointer hover:bg-[#0c0c14]" : ""
                     }`}
                     style={{
                       boxShadow: "0 4px 24px -4px rgba(0, 0, 0, 0.6)",
                     }}
                   >
-                    {/* MOBILE (< md): Top bar with rounded badge and match date/time */}
-                    <div className="w-full flex md:hidden items-center justify-between px-3.5 py-2 border-b border-white/10 bg-white/[0.02]">
-                      <div
-                        className="px-3 py-1 rounded-full flex items-center select-none border"
+                    {/* TOPO: LARGURA INTEIRA (w-full) com FINALIZADA GRANDE e DATA/HORA */}
+                    <div
+                      className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                      style={{
+                        background: `linear-gradient(90deg, ${primaryColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
+                      }}
+                    >
+                      <span
+                        className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none"
                         style={{
-                          background: `linear-gradient(135deg, ${primaryColor}20 0%, rgba(25,25,35,0.95) 100%)`,
-                          borderColor: `${primaryColor}40`,
+                          fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                          color: primaryColor,
+                          textShadow: `0 0 25px ${primaryColor}66`,
                         }}
                       >
-                        <span
-                          className="text-xs uppercase tracking-wider leading-none"
-                          style={{
-                            fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                            color: primaryColor,
-                            textShadow: `0 0 10px ${primaryColor}44`,
-                          }}
-                        >
-                          FINALIZADA
-                        </span>
-                      </div>
+                        FINALIZADA
+                      </span>
 
-                      <div className="flex items-center gap-2 text-[10px] font-black tracking-wider text-white/60">
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
                         {jogo.data && jogo.data !== "A COMBINAR" && (
-                          <span>{formatFullDate(jogo.data)}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                              {formatDayOfWeek(jogo.data)} •
+                            </span>
+                            <span className="text-white font-bold">
+                              {formatFullDate(jogo.data)}
+                            </span>
+                          </div>
                         )}
                         {jogo.hora && jogo.hora !== "--:--" && (
-                          <span style={{ color: primaryColor }}>
+                          <span
+                            className="font-bold pl-2 border-l border-white/15"
+                            style={{ color: primaryColor }}
+                          >
                             {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* DESKTOP (>= md): Left rounded badge with primary color */}
-                    <div className="hidden md:flex items-center pl-4 lg:pl-5 shrink-0">
-                      <div
-                        className="px-3.5 py-1.5 rounded-full border flex items-center justify-center select-none"
-                        style={{
-                          background: `linear-gradient(135deg, ${primaryColor}20 0%, rgba(20,20,28,0.95) 100%)`,
-                          borderColor: `${primaryColor}40`,
-                        }}
-                      >
-                        <span
-                          className="text-sm lg:text-base uppercase tracking-wider leading-none"
-                          style={{
-                            fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                            color: primaryColor,
-                            textShadow: `0 0 15px ${primaryColor}55`,
-                          }}
-                        >
-                          FINALIZADA
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* DESKTOP (>= md): Date & Time (sem BRT) */}
-                    <div className="hidden md:flex flex-col items-center lg:items-start justify-center px-4 lg:px-5 shrink-0 min-w-[115px] lg:min-w-[130px]">
-                      {jogo.data && jogo.data !== "A COMBINAR" && (
-                        <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] leading-none mb-1">
-                          {formatDayOfWeek(jogo.data)}
-                        </span>
-                      )}
-                      <span className="text-xs lg:text-sm font-black text-white uppercase tracking-tight leading-none">
-                        {formatFullDate(jogo.data) || "A definir"}
-                      </span>
-                      {jogo.hora && jogo.hora !== "--:--" && (
-                        <span
-                          className="text-[10px] lg:text-xs font-black tracking-wider mt-1"
-                          style={{ color: primaryColor }}
-                        >
-                          {/^\d{2}:\d{2}/.test(jogo.hora)
-                            ? jogo.hora.substring(0, 5)
-                            : jogo.hora}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* CENTER: Matchup (Left: Winner, Right: Loser) */}
-                    <div className="flex items-center justify-center gap-3 sm:gap-6 flex-1 w-full px-3 py-3.5 md:py-3 min-w-0">
+                    {/* CORPO DO CARD: MATCHUP (Esquerda: Vencedor, Centro: Placar, Direita: Perdedor) */}
+                    <div className="w-full flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
                       {/* Left Team (Quem ganhou) */}
-                      <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-end min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
                         <div className="flex flex-col items-end text-right min-w-0">
-                          <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
                             {leftTeam.name || leftTeam.nome}
                           </span>
                           {leftTeam.tag && (
                             <div
-                              className="p-[1px] shrink-0 mt-0.5"
+                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
                               style={{
                                 clipPath: CUT_BADGE,
                                 background: `${leftCor}80`,
                               }}
                             >
                               <div
-                                className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
                                 style={{
                                   clipPath: CUT_BADGE_INNER,
                                   color: leftCor,
@@ -358,7 +321,7 @@ export const ListaCronograma = () => {
                         </div>
 
                         <div
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black"
+                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                           style={{ borderColor: `${leftCor}80` }}
                         >
                           {leftTeam.logo ? (
@@ -370,27 +333,27 @@ export const ListaCronograma = () => {
                             />
                           ) : (
                             <LeftIcon
-                              className="w-5 h-5 sm:w-6 sm:h-6"
+                              className="w-5 h-5 sm:w-7 sm:h-7"
                               style={{ color: leftCor }}
                             />
                           )}
                         </div>
                       </div>
 
-                      {/* Scoreboard Box (Placar com verde apenas no vencedor) */}
-                      <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-4 py-1.5 rounded-lg bg-black/50 border border-white/10 shadow-inner">
-                        <div className="flex items-center gap-2 sm:gap-2.5">
+                      {/* Scoreboard Box (Placar com verde no vencedor à esquerda e vermelho no perdedor à direita) */}
+                      <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner">
+                        <div className="flex items-center gap-2 sm:gap-3.5">
                           <span
-                            className="text-xl sm:text-2xl lg:text-3xl font-black tabular-nums font-mono leading-none"
+                            className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
                             style={{ color: leftScoreColor }}
                           >
                             {leftScore}
                           </span>
-                          <span className="text-white/20 text-base sm:text-lg font-black select-none leading-none">
+                          <span className="text-white/20 text-base sm:text-xl font-black select-none leading-none">
                             :
                           </span>
                           <span
-                            className="text-xl sm:text-2xl lg:text-3xl font-black tabular-nums font-mono leading-none"
+                            className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
                             style={{ color: rightScoreColor }}
                           >
                             {rightScore}
@@ -398,7 +361,7 @@ export const ListaCronograma = () => {
                         </div>
                         {jogo.irregular && (
                           <span
-                            className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-1 rounded mt-1"
+                            className="text-[8px] font-black uppercase text-amber-400 bg-amber-400/10 px-1.5 py-0.5 border border-amber-400/30 tracking-widest flex items-center gap-1 rounded mt-1.5"
                             title="Partida jogada com membro fora do elenco oficial"
                           >
                             <AlertTriangle className="w-2.5 h-2.5" />
@@ -408,9 +371,9 @@ export const ListaCronograma = () => {
                       </div>
 
                       {/* Right Team (Quem perdeu) */}
-                      <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-start min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
                         <div
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black"
+                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                           style={{ borderColor: `${rightCor}80` }}
                         >
                           {rightTeam.logo ? (
@@ -422,26 +385,26 @@ export const ListaCronograma = () => {
                             />
                           ) : (
                             <RightIcon
-                              className="w-5 h-5 sm:w-6 sm:h-6"
+                              className="w-5 h-5 sm:w-7 sm:h-7"
                               style={{ color: rightCor }}
                             />
                           )}
                         </div>
 
                         <div className="flex flex-col items-start text-left min-w-0">
-                          <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
                             {rightTeam.name || rightTeam.nome}
                           </span>
                           {rightTeam.tag && (
                             <div
-                              className="p-[1px] shrink-0 mt-0.5"
+                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
                               style={{
                                 clipPath: CUT_BADGE,
                                 background: `${rightCor}80`,
                               }}
                             >
                               <div
-                                className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
+                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
                                 style={{
                                   clipPath: CUT_BADGE_INNER,
                                   color: rightCor,
@@ -454,9 +417,6 @@ export const ListaCronograma = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Spacer na direita no Desktop para manter o confronto centralizado */}
-                    <div className="hidden md:block shrink-0 min-w-[115px] lg:min-w-[130px]" />
                   </div>
                 );
               }
