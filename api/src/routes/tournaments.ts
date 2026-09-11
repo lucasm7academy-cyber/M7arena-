@@ -501,7 +501,9 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
       codigo = await atribuirCodigoSerie(db, modo);
       if (codigo === "SEM-CODIGO-AGUARDE") return res.status(409).json({ error: "Sem código disponível no momento" });
       // Final (phase='finals') é MD5 (best_of 5); as demais fases são MD3.
-      const bestOf = serie.phase === "finals" ? 5 : (serie.bestOf ?? 3);
+      // Nunca herdar bestOf do banco: dado legado com 1 fechava a série na
+      // primeira vitória (incidente Tesouro/Kraken, 2026-09-11).
+      const bestOf = serie.phase === "finals" ? 5 : 3;
 
       if (isBracket) {
         await db

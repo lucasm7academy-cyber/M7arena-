@@ -131,7 +131,8 @@ export const tournamentMatches = pgTable(
     nextMatchId: uuid("next_match_id").references((): any => tournamentMatches.id, { onDelete: "set null" }),
     // ── Verificação de série via código Riot (ADR-047) ──────────────────────
     // A série (MD3/MD5) usa 1 tournament code. O código é gerado ao entrar em
-    // 'em_andamento'. `bestOf` = vitórias necessárias para fechar (3=md3, 5=md5).
+    // 'em_andamento'. `bestOf` = formato da série (3=MD3, 5=MD5); as vitórias
+    // necessárias para fechar são ceil(bestOf/2) (2 no MD3, 3 no MD5).
     // `irregular` = jogou alguém fora do roster (titulares+reservas) — a série
     // conta normal, mas fica sinalizada para o ADM decidir punição depois.
     codigoPartida: text("codigo_partida"),

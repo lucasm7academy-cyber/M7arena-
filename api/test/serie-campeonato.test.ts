@@ -174,6 +174,38 @@ describe("serie-campeonato (motor de série)", () => {
     assert.equal(r.winnerSide, null);
   });
 
+  test("bestOf=1 no banco não fecha a série no 1-0 (piso MD3)", async () => {
+    const db = ctx.db;
+    // Incidente Tesouro/Kraken 2026-09-11: jogos criados com best_of=1 faziam o
+    // motor fechar a série na primeira vitória. O motor deve tratar como MD3.
+    const alvo = {
+      id: "aaa-serie-md1",
+      modo: "groups",
+      matchId: "aaa-serie-md1",
+      bracketMatchId: null,
+      codigoPartida: "BR-CAMP-COD-MD1",
+      bestOf: 1,
+      teamAId: null,
+      teamBId: null,
+      status: "em_andamento",
+      scoreA: 0,
+      scoreB: 0,
+    };
+    const r = await resolverSerie(db, alvo, {
+      buscarIds: async () => ["M1"],
+      buscarMatch: async () => partidaRiot([
+        { puuid: "PA1", teamId: 100, win: true },
+        { puuid: "PB1", teamId: 200, win: false },
+      ]),
+      rostA: new Set(["PA1"]),
+      rostB: new Set(["PB1"]),
+    });
+    assert.equal(r.estado, "em_andamento");
+    assert.equal(r.scoreA, 1);
+    assert.equal(r.scoreB, 0);
+    assert.equal(r.winnerSide, null);
+  });
+
   test("recontagem ignora o placar salvo e não infla (bug do 3x0)", async () => {
     const db = ctx.db;
     // Placar salvo diz 1x0, mas a busca devolve os DOIS jogos da série: o

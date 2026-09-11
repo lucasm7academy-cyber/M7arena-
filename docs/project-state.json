@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-10T05:31:59.145Z",
+  "updatedAt": "2026-09-11T03:54:58.965Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1435,12 +1435,12 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Inscrições: remover time e excluir campeonato",
-      "status": "doing",
-      "notes": "X de excluir candidato só fazia upsert (time voltava no reload) e o delete do campeonato exigia ser o criador (admin tomava 403 silencioso). Fix: DELETE /tournaments/:id/inscricoes/:teamId (remove tournament_teams + standings) e DELETE /tournaments/:id com admin/proprietario; front com endpoint dedicado + banner de erro. Testes 181/181.",
-      "evidence": "",
+      "status": "done",
+      "notes": "Deployado. X de excluir candidato agora usa endpoint dedicado (remove tournament_teams + standings); delete do campeonato aceita admin/proprietário; falhas aparecem no banner em vez de sumir no console. Falta o teste visual do usuário (remover M7K da COPA DO TESOURO).",
+      "evidence": "Deploy ea2516a (health 200). DELETE /tournaments/:id/inscricoes/:teamId sem auth → 401 (rota montada, não 404). Bundle createCampPage-Cq62RtWp.js contém removerInscricao. Suíte 181/181, teste inscrição 2/2, tsc/build 0.",
       "owner": "deepseek",
       "createdAt": "2026-09-10T05:31:59.145Z",
-      "updatedAt": "2026-09-10T05:31:59.145Z"
+      "updatedAt": "2026-09-10T05:33:44.603Z"
     }
   ],
   "decisions": [
@@ -2061,26 +2061,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-05T22:56:53.116Z",
-      "agent": "gemini",
-      "summary": "Ajuste de cores no Hero Banner de /jogar: substituído o destaque dourado/amarelo pelo verde original (#4ade80), com borda de hover hover:bg-green-500/30, gradiente verde from-green-500/20 via-green-500/5 e sombra luminosa hover:shadow-[0_0_35px_rgba(74,222,128,0.25)]. Build e deploy do container nginx concluídos na VPS (HTTP 200).",
-      "touched": [
-        "web/src/pages/Jogar.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-05T23:04:44.621Z",
-      "agent": "gemini",
-      "summary": "Redesign gamer completo da página de Desafio Individual (/aposta-individual): criação do SummonerCard (avatar neon, elo badge, atalho de saldo MC e grid 2x2 de métricas), ItemMercado (ícones temáticos, badges de odds luminosos e preview de retorno potencial calculado), FilaSelector (modularização dos cards altos), BilheteAtivoView (radar animado de detecção e status em tempo real) e seletor de stake com presets rápidos (100, 250, 500, 1000 MC). Validação local (tsc 0, vite build 0) e deploy na VPS com container nginx atualizado (HTTP 200).",
-      "touched": [
-        "web/src/pages/ApostaIndividualPage.tsx",
-        "web/src/components/partidas/ItemMercado.tsx",
-        "web/src/components/partidas/SummonerCard.tsx",
-        "web/src/components/partidas/FilaSelector.tsx",
-        "web/src/components/partidas/BilheteAtivoView.tsx"
-      ]
-    },
-    {
       "at": "2026-09-06T01:14:32.627Z",
       "agent": "gemini",
       "summary": "Correção do redirecionamento para dev.m7arena.pro/login no fluxo de autenticação e campeonatos. 1) No backend (api/src/routes/auth-google.ts), appUrl e origemHost foram ajustados para priorizar o host da requisição (m7arena.pro) e ter fallback para https://m7arena.pro, além de capturar mensagens de erro do Google e logar warnings. 2) No .env da VPS e docker-compose.yml, APP_URL e MERCADO_PAGO_NOTIFICATION_URL foram atualizados de dev.m7arena.pro para m7arena.pro. 3) CORS_ALLOWLIST e allowedOrigins no realtime mantiveram dev.m7arena.pro apenas como fallback. 4) No front (web/src/pages/Login.tsx), adicionado useEffect para capturar ?erro= da URL e exibir alerta traduzido em português. Validação: tsc api/web exit 0, vite build ok, teste curl https://m7arena.pro/api/auth/google/callback redirecionando para https://m7arena.pro/login?erro=state_invalido (testado ao vivo). ADR-054 registrada.",
@@ -2364,6 +2344,27 @@
         "api/src/routes/tournaments.ts",
         "api/test/tournament-agendamento.test.ts",
         "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-09-10T05:33:45.796Z",
+      "agent": "deepseek",
+      "summary": "Exclusão de inscrição e campeonato corrigidas (ADR-061, commit ea2516a, deployado). Causa 1: o X de excluir candidato só chamava o save legado (upsert) — a linha de tournament_teams nunca era apagada e o time voltava no reload. Causa 2: DELETE /tournaments/:id exigia ser o criador; o admin tomava 403 silencioso (LEITEIROS CUP tem organizador 57d73844, diferente do admin) e o campeonato voltava. Fix: rota DELETE /tournaments/:id/inscricoes/:teamId (organizador ou admin/proprietário) remove inscrição + classificação; DELETE do campeonato aceita admin/proprietário; front usa o endpoint dedicado e mostra falha no banner. Evidência: suíte 181/181, teste inscrição 2/2, rota sem auth → 401, bundle com removerInscricao no ar. Falta teste visual do usuário (remover M7K da COPA DO TESOURO).",
+      "touched": [
+        "api/src/lib/tournament-store.ts",
+        "api/src/routes/tournaments.ts",
+        "api/test/tournament-inscricao.test.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/createCampPage.tsx",
+        "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-09-11T03:54:58.964Z",
+      "agent": "deepseek",
+      "summary": "Reset manual de senha em produção (não há fluxo de reset). Usuário trafiquentirj@hotmail.com (id b8280683-1187-4787-b673-00e174e6f808) tinha senha mas perdeu acesso. Gerei hash bcrypt (bcryptjs, 10 rounds — mesmo algoritmo de api/src/routes/auth.ts) e apliquei UPDATE users.password_hash via psql no container m7arena_postgres da VPS 179.198.120.11. Evidência: UPDATE 1 e login real POST https://m7arena.pro/api/auth/login → HTTP 200 com o user. Senha nova: 123@m7pro. Obs: o produto continua sem fluxo de reset de senha — se isso for recorrente, vale criar rota admin de reset.",
+      "touched": [
+        "VPS: users.password_hash (trafiquentirj@hotmail.com)"
       ]
     }
   ]

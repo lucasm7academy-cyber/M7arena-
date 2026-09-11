@@ -313,7 +313,11 @@ export async function resolverSerie(
     rostApuuids = rostApuuids ?? a.puuids;
     rostBpuuids = rostBpuuids ?? b.puuids;
   }
-  const winsNeeded = bestOfToWins(alvo.bestOf || 3);
+  // Piso de MD3: série de campeonato é MD3/MD5 (ADR-047). bestOf < 3 no banco
+  // (ex.: 1) fecharia a série na primeira vitória — incidente COPA DO TESOURO
+  // e COPA DO KRAKEN em 2026-09-11, em que jogos criados com best_of=1 foram
+  // "finalizados" no 1-0 com o jogo 2 ainda rolando.
+  const winsNeeded = bestOfToWins(Math.max(3, alvo.bestOf || 3));
 
   // Janela: do início da série até agora. A lista por PUUID não traz o código,
   // então o filtro final é no detalhe da partida (info.tournamentCode).
