@@ -206,8 +206,24 @@ export const ListaCronograma = () => {
                 const scores = ((jogo as any).placar || "0 - 0").split(" - ");
                 const scoreA = parseInt(scores[0]) || 0;
                 const scoreB = parseInt(scores[1]) || 0;
-                const isWinnerA = scoreA > scoreB;
-                const isWinnerB = scoreB > scoreA;
+
+                // Regra: manter quem perdeu na ESQUERDA e quem ganhou na DIREITA
+                const teamAWon = scoreA > scoreB;
+                const isTie = scoreA === scoreB;
+
+                const leftTeam = teamAWon ? timeB : timeA;
+                const LeftIcon = teamAWon ? IconB : IconA;
+                const leftCor = teamAWon ? corB : corA;
+                const leftScore = teamAWon ? scoreB : scoreA;
+
+                const rightTeam = teamAWon ? timeA : timeB;
+                const RightIcon = teamAWon ? IconA : IconB;
+                const rightCor = teamAWon ? corA : corB;
+                const rightScore = teamAWon ? scoreA : scoreB;
+
+                const leftScoreColor = isTie ? "#FFFFFF" : "#FF3131";
+                const rightScoreColor = isTie ? "#FFFFFF" : "#00FF41";
+                const primaryColor = campeonato.themeColor || "#FFB700";
 
                 return (
                   <div
@@ -238,26 +254,23 @@ export const ListaCronograma = () => {
                     {/* MOBILE (< md): Top bar with diagonal badge and match date/time */}
                     <div className="w-full flex md:hidden items-center justify-between px-3.5 py-2 border-b border-white/10 bg-white/[0.02]">
                       <div
-                        className="px-3 py-1 flex items-center gap-1.5 select-none"
+                        className="px-3 py-1 flex items-center select-none"
                         style={{
                           clipPath: "polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
-                          background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(30,30,42,0.95) 100%)",
+                          background: `linear-gradient(135deg, ${primaryColor}30 0%, rgba(25,25,35,0.95) 100%)`,
+                          border: `1px solid ${primaryColor}50`,
                         }}
                       >
                         <span
-                          className="text-xs uppercase tracking-wider text-[#f4f4f2] leading-none"
+                          className="text-xs uppercase tracking-wider leading-none"
                           style={{
                             fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                            textShadow: "0 1px 6px rgba(0,0,0,0.8)",
+                            color: primaryColor,
+                            textShadow: `0 0 12px ${primaryColor}44`,
                           }}
                         >
                           FINALIZADA
                         </span>
-                        {jogo.best_of && (
-                          <span className="text-[8px] font-black text-white/50 tracking-widest">
-                            MD{jogo.best_of}
-                          </span>
-                        )}
                       </div>
 
                       <div className="flex items-center gap-2 text-[10px] font-black tracking-wider text-white/60">
@@ -265,44 +278,37 @@ export const ListaCronograma = () => {
                           <span>{formatFullDate(jogo.data)}</span>
                         )}
                         {jogo.hora && jogo.hora !== "--:--" && (
-                          <span style={{ color: campeonato.themeColor || "#FFB700" }}>
+                          <span style={{ color: primaryColor }}>
                             {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
                           </span>
-                        )}
-                        {isAdmin && (
-                          <Pencil className="w-3 h-3 text-white/40 ml-1" />
                         )}
                       </div>
                     </div>
 
-                    {/* DESKTOP (>= md): Left diagonal banner */}
+                    {/* DESKTOP (>= md): Left diagonal banner with primary color */}
                     <div className="hidden md:flex items-center self-stretch shrink-0">
                       <div
                         className="h-full min-w-[130px] lg:min-w-[150px] px-4 lg:px-5 flex flex-col items-center justify-center relative select-none"
                         style={{
                           clipPath: "polygon(0 0, 100% 0, calc(100% - 18px) 100%, 0 100%)",
-                          background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(24,24,32,0.95) 100%)",
-                          borderRight: "1px solid rgba(255, 255, 255, 0.12)",
+                          background: `linear-gradient(135deg, ${primaryColor}25 0%, rgba(20,20,28,0.95) 100%)`,
+                          borderRight: `1px solid ${primaryColor}44`,
                         }}
                       >
                         <span
-                          className="text-base lg:text-lg uppercase tracking-wider text-[#f4f4f2] leading-none"
+                          className="text-base lg:text-lg uppercase tracking-wider leading-none"
                           style={{
                             fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                            textShadow: "0 2px 10px rgba(0,0,0,0.8)",
+                            color: primaryColor,
+                            textShadow: `0 0 20px ${primaryColor}55`,
                           }}
                         >
                           FINALIZADA
                         </span>
-                        {jogo.best_of && (
-                          <span className="text-[9px] font-black uppercase text-white/50 tracking-widest mt-1.5 px-2 py-0.5 rounded bg-white/5 border border-white/5">
-                            MD{jogo.best_of}
-                          </span>
-                        )}
                       </div>
                     </div>
 
-                    {/* DESKTOP (>= md): Date & Time */}
+                    {/* DESKTOP (>= md): Date & Time (sem BRT) */}
                     <div className="hidden md:flex flex-col items-center lg:items-start justify-center px-4 lg:px-5 shrink-0 min-w-[115px] lg:min-w-[130px]">
                       {jogo.data && jogo.data !== "A COMBINAR" && (
                         <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] leading-none mb-1">
@@ -315,108 +321,81 @@ export const ListaCronograma = () => {
                       {jogo.hora && jogo.hora !== "--:--" && (
                         <span
                           className="text-[10px] lg:text-xs font-black tracking-wider mt-1"
-                          style={{ color: campeonato.themeColor || "#FFB700" }}
+                          style={{ color: primaryColor }}
                         >
                           {/^\d{2}:\d{2}/.test(jogo.hora)
-                            ? `${jogo.hora.substring(0, 5)} BRT`
+                            ? jogo.hora.substring(0, 5)
                             : jogo.hora}
                         </span>
                       )}
                     </div>
 
-                    {/* CENTER: Matchup (Teams & Scoreboard) */}
+                    {/* CENTER: Matchup (Left: Loser, Right: Winner) */}
                     <div className="flex items-center justify-center gap-3 sm:gap-6 flex-1 w-full px-3 py-3.5 md:py-3 min-w-0">
-                      {/* Team A */}
-                      <div
-                        className={`flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-end min-w-0 transition-opacity ${
-                          isWinnerA ? "" : "opacity-65"
-                        }`}
-                      >
+                      {/* Left Team (Quem perdeu) */}
+                      <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-end min-w-0">
                         <div className="flex flex-col items-end text-right min-w-0">
-                          <div className="flex items-center gap-1.5 max-w-full">
-                            {isWinnerA && (
-                              <span className="hidden sm:inline-block text-[8px] font-black uppercase tracking-wider text-[#00FF41] bg-[#00FF41]/10 border border-[#00FF41]/25 px-1.5 py-0.5 rounded shrink-0">
-                                VITÓRIA
-                              </span>
-                            )}
-                            <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
-                              {timeA.name || timeA.nome}
-                            </span>
-                          </div>
-                          {timeA.tag && (
+                          <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                            {leftTeam.name || leftTeam.nome}
+                          </span>
+                          {leftTeam.tag && (
                             <div
                               className="p-[1px] shrink-0 mt-0.5"
                               style={{
                                 clipPath: CUT_BADGE,
-                                background: isWinnerA ? "#00FF4180" : `${corA}80`,
+                                background: `${leftCor}80`,
                               }}
                             >
                               <div
                                 className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
                                 style={{
                                   clipPath: CUT_BADGE_INNER,
-                                  color: isWinnerA ? "#00FF41" : corA,
+                                  color: leftCor,
                                 }}
                               >
-                                #{timeA.tag}
+                                #{leftTeam.tag}
                               </div>
                             </div>
                           )}
                         </div>
 
                         <div
-                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black transition-all ${
-                            isWinnerA
-                              ? "ring-2 ring-[#00FF41]/40 shadow-[0_0_15px_rgba(0,255,65,0.25)]"
-                              : ""
-                          }`}
-                          style={{ borderColor: isWinnerA ? "#00FF41" : `${corA}80` }}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black"
+                          style={{ borderColor: `${leftCor}80` }}
                         >
-                          {timeA.logo ? (
+                          {leftTeam.logo ? (
                             <img
-                              src={timeA.logo}
-                              alt={timeA.tag}
+                              src={leftTeam.logo}
+                              alt={leftTeam.tag}
                               loading="lazy"
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <IconA
+                            <LeftIcon
                               className="w-5 h-5 sm:w-6 sm:h-6"
-                              style={{ color: isWinnerA ? "#00FF41" : corA }}
+                              style={{ color: leftCor }}
                             />
                           )}
                         </div>
                       </div>
 
-                      {/* Scoreboard Box */}
+                      {/* Scoreboard Box (Placar com verde apenas no vencedor) */}
                       <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-4 py-1.5 rounded-lg bg-black/50 border border-white/10 shadow-inner">
                         <div className="flex items-center gap-2 sm:gap-2.5">
                           <span
                             className="text-xl sm:text-2xl lg:text-3xl font-black tabular-nums font-mono leading-none"
-                            style={{
-                              color: isWinnerA
-                                ? "#00FF41"
-                                : scoreA < scoreB
-                                  ? "#FF3131"
-                                  : "#FFFFFF",
-                            }}
+                            style={{ color: leftScoreColor }}
                           >
-                            {scoreA}
+                            {leftScore}
                           </span>
                           <span className="text-white/20 text-base sm:text-lg font-black select-none leading-none">
                             :
                           </span>
                           <span
                             className="text-xl sm:text-2xl lg:text-3xl font-black tabular-nums font-mono leading-none"
-                            style={{
-                              color: isWinnerB
-                                ? "#00FF41"
-                                : scoreB < scoreA
-                                  ? "#FF3131"
-                                  : "#FFFFFF",
-                            }}
+                            style={{ color: rightScoreColor }}
                           >
-                            {scoreB}
+                            {rightScore}
                           </span>
                         </div>
                         {jogo.irregular && (
@@ -430,62 +409,47 @@ export const ListaCronograma = () => {
                         )}
                       </div>
 
-                      {/* Team B */}
-                      <div
-                        className={`flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-start min-w-0 transition-opacity ${
-                          isWinnerB ? "" : "opacity-65"
-                        }`}
-                      >
+                      {/* Right Team (Quem ganhou) */}
+                      <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-start min-w-0">
                         <div
-                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black transition-all ${
-                            isWinnerB
-                              ? "ring-2 ring-[#00FF41]/40 shadow-[0_0_15px_rgba(0,255,65,0.25)]"
-                              : ""
-                          }`}
-                          style={{ borderColor: isWinnerB ? "#00FF41" : `${corB}80` }}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black"
+                          style={{ borderColor: `${rightCor}80` }}
                         >
-                          {timeB.logo ? (
+                          {rightTeam.logo ? (
                             <img
-                              src={timeB.logo}
-                              alt={timeB.tag}
+                              src={rightTeam.logo}
+                              alt={rightTeam.tag}
                               loading="lazy"
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <IconB
+                            <RightIcon
                               className="w-5 h-5 sm:w-6 sm:h-6"
-                              style={{ color: isWinnerB ? "#00FF41" : corB }}
+                              style={{ color: rightCor }}
                             />
                           )}
                         </div>
 
                         <div className="flex flex-col items-start text-left min-w-0">
-                          <div className="flex items-center gap-1.5 max-w-full">
-                            <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
-                              {timeB.name || timeB.nome}
-                            </span>
-                            {isWinnerB && (
-                              <span className="hidden sm:inline-block text-[8px] font-black uppercase tracking-wider text-[#00FF41] bg-[#00FF41]/10 border border-[#00FF41]/25 px-1.5 py-0.5 rounded shrink-0">
-                                VITÓRIA
-                              </span>
-                            )}
-                          </div>
-                          {timeB.tag && (
+                          <span className="text-xs sm:text-sm font-black text-white uppercase truncate tracking-tight">
+                            {rightTeam.name || rightTeam.nome}
+                          </span>
+                          {rightTeam.tag && (
                             <div
                               className="p-[1px] shrink-0 mt-0.5"
                               style={{
                                 clipPath: CUT_BADGE,
-                                background: isWinnerB ? "#00FF4180" : `${corB}80`,
+                                background: `${rightCor}80`,
                               }}
                             >
                               <div
                                 className="text-[9px] font-black px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
                                 style={{
                                   clipPath: CUT_BADGE_INNER,
-                                  color: isWinnerB ? "#00FF41" : corB,
+                                  color: rightCor,
                                 }}
                               >
-                                #{timeB.tag}
+                                #{rightTeam.tag}
                               </div>
                             </div>
                           )}
@@ -493,15 +457,8 @@ export const ListaCronograma = () => {
                       </div>
                     </div>
 
-                    {/* RIGHT: Admin Actions / Spacer */}
-                    <div className="hidden md:flex items-center justify-end px-4 shrink-0 min-w-[115px] lg:min-w-[130px]">
-                      {isAdmin ? (
-                        <div className="opacity-60 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-wider text-white/80">
-                          <Pencil className="w-2.5 h-2.5" />
-                          <span>Súmula</span>
-                        </div>
-                      ) : null}
-                    </div>
+                    {/* Spacer na direita no Desktop para manter o confronto centralizado */}
+                    <div className="hidden md:block shrink-0 min-w-[115px] lg:min-w-[130px]" />
                   </div>
                 );
               }
