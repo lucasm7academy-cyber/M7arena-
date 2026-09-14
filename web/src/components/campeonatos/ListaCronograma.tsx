@@ -315,21 +315,10 @@ export const ListaCronograma = () => {
                         {isSeriesLive && (
                           <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#00FF41] animate-ping shrink-0" />
                         )}
-                        {statusLabel}
+                        <span>{statusLabel}</span>
+                        <span className="text-white/20 select-none">-</span>
+                        <span className="text-white/80">MD{jogo.best_of || 3}</span>
                       </span>
-
-                      {!isFinalizado && jogo.best_of && (
-                        <span
-                          className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border"
-                          style={{
-                            color: statusColor,
-                            backgroundColor: `${statusColor}15`,
-                            borderColor: `${statusColor}30`,
-                          }}
-                        >
-                          MD{jogo.best_of}
-                        </span>
-                      )}
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">

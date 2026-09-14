@@ -152,34 +152,17 @@ export const MeusJogosPendentes = () => {
                       >
                         <div className="flex items-center gap-2.5 sm:gap-3">
                           <span
-                            className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2"
+                            className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2 sm:gap-2.5"
                             style={{
                               fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                               color: statusColor,
                               textShadow: `0 0 25px ${statusColor}66`,
                             }}
                           >
-                            {statusLabel}
+                            <span>{statusLabel}</span>
+                            <span className="text-white/20 select-none">-</span>
+                            <span className="text-white/80">MD{jogo.best_of || 3}</span>
                           </span>
-
-                          {jogo.best_of && (
-                            <span
-                              className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border"
-                              style={{
-                                color: statusColor,
-                                backgroundColor: `${statusColor}15`,
-                                borderColor: `${statusColor}30`,
-                              }}
-                            >
-                              MD{jogo.best_of}
-                            </span>
-                          )}
-
-                          {jogo.fase && (
-                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/50">
-                              {jogo.fase}
-                            </span>
-                          )}
                         </div>
 
                         <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
