@@ -24,7 +24,7 @@ export const LowerRound = ({
     <div className="flex flex-col w-64 shrink-0">
       {title && (
         <div className="h-12 flex flex-col items-center justify-center shrink-0 select-none">
-          <div className="px-3.5 py-1 rounded-full bg-[#0d0d14] border border-white/10 flex items-center gap-2 shadow-md">
+          <div className="px-3.5 py-1 rounded-full bg-[#161624]/90 border border-white/15 flex items-center gap-2 shadow-lg backdrop-blur-sm">
             <span
               className="w-1.5 h-1.5 rounded-full shrink-0"
               style={{

@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-14T02:37:56.875Z",
+  "updatedAt": "2026-09-14T02:51:28.289Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2097,15 +2097,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-08T04:13:51.226Z",
-      "agent": "antigravity",
-      "summary": "Suporte ao admin: vinculou conta do Roman Siege (coroa de capitão); inscreveu BKS, LDL e NKA pendentes nas Copas; corrigiu a tabela de classificação limpando o manual_standings; gerou novos cronogramas de 8 jogos (2 por time) corrigindo tags e datas; alterou e reduziu a fonte do título do Campeonato (Anton/Impact) com deploy em prod.",
-      "touched": [
-        "api/src/routes/upload.ts",
-        "web/src/pages/CampeonatoDetalhes.tsx"
-      ]
-    },
-    {
       "at": "2026-09-08T04:30:12.241Z",
       "agent": "gemini",
       "summary": "Ajustado design dos cards em /times e /times/:id: logo com borda arredondada, primeiro card e cards gerais grandes com borda cortada em cor solida sem degrade, cards compridos dos times e modais internos totalmente arredondados sem degrade.",
@@ -2396,6 +2387,21 @@
         "web/src/components/campeonatos/ListaCronograma.tsx",
         "web/src/components/campeonatos/MeusJogosPendentes.tsx",
         "web/src/components/campeonatos/TodosJogosPendentes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T02:51:28.289Z",
+      "agent": "gemini",
+      "summary": "Redesign completo do chaveamento de campeonatos: correcao do zoom reto/centralizado (transformOrigin center center + flex layout m-auto), adicao de controles visuais de zoom (+, -, reset, indicador percentual), redesign esportivo dos cards de confrontos (BracketMatch) com destaque lateral para vitorias e opacidade em perdedores, estilizacao de badges de rodadas (DoubleSideBracket, UpperRound, LowerRound) e destaque visual da Grande Final/Trofeu. Deploy executado com sucesso na VPS.",
+      "touched": [
+        "web/src/components/campeonatos/BracketMatch.tsx",
+        "web/src/components/campeonatos/Chaves.tsx",
+        "web/src/components/campeonatos/DoubleEliminationBracket.tsx",
+        "web/src/components/campeonatos/DoubleSideBracket.tsx",
+        "web/src/components/campeonatos/LowerRound.tsx",
+        "web/src/components/campeonatos/UpperRound.tsx",
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "web/src/features/campeonatos/components/modals/BracketModal.tsx"
       ]
     }
   ]

@@ -17,26 +17,38 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
       exit={{ opacity: 0, y: -10 }}
       className="w-full"
     >
-      <div className="w-full rounded-2xl border border-white/10 bg-[#060608] shadow-2xl h-[72vh] min-h-[520px] flex flex-col overflow-hidden">
+      <div className="w-full rounded-2xl border border-white/15 bg-[#101018] shadow-2xl h-[72vh] min-h-[520px] flex flex-col overflow-hidden relative">
+        {/* Background do Campeonato com Imagem */}
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
+          style={{
+            backgroundImage: `url(${campeonato?.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
+            opacity: 0.32,
+            filter: "blur(1.5px)",
+          }}
+        />
+        {/* Overlay escuro esportivo para legibilidade e contraste */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0e0e18]/90 via-[#0a0a14]/80 to-[#0e0e18]/95 pointer-events-none" />
+
         {/* Header com Título e Controles de Zoom */}
-        <div className="px-5 py-4 sm:px-7 sm:py-5 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 bg-[#0a0a0e]">
+        <div className="relative z-10 px-5 py-4 sm:px-7 sm:py-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 bg-[#12121d]/85 backdrop-blur-md">
           <div>
             <div className="flex items-center gap-2">
               <span
                 className="w-2 h-2 rounded-full animate-pulse"
                 style={{
-                  backgroundColor: campeonato.themeColor || "#FFB700",
-                  boxShadow: `0 0 10px ${campeonato.themeColor || "#FFB700"}`,
+                  backgroundColor: campeonato?.themeColor || "#FFB700",
+                  boxShadow: `0 0 10px ${campeonato?.themeColor || "#FFB700"}`,
                 }}
               />
               <h2
                 className="text-lg sm:text-xl font-black uppercase tracking-[0.2em]"
-                style={{ color: campeonato.themeColor || "#FFB700" }}
+                style={{ color: campeonato?.themeColor || "#FFB700" }}
               >
                 Chaveamento Oficial
               </h2>
             </div>
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-0.5">
+            <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-0.5">
               Confrontos eliminatórios em tempo real • Arraste para navegar
             </p>
           </div>
@@ -44,7 +56,7 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
           <div className="flex items-center gap-2">
             {/* Controles de Zoom */}
             {setBracketScale && (
-              <div className="flex items-center bg-[#060608] border border-white/10 rounded-xl p-1 gap-1 shadow-inner">
+              <div className="flex items-center bg-[#181827] border border-white/10 rounded-xl p-1 gap-1 shadow-inner">
                 <button
                   type="button"
                   onClick={() => setBracketScale((s: number) => Math.max(+(s - 0.1).toFixed(2), 0.35))}
@@ -89,7 +101,7 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
             <button
               type="button"
               onClick={() => setIsBracketModalOpen(true)}
-              className="h-9 px-3.5 rounded-xl border border-white/10 bg-[#060608] flex items-center gap-2 transition-all cursor-pointer group text-white/60 hover:text-white hover:border-white/20 hover:bg-white/5 text-xs font-semibold shadow-sm"
+              className="h-9 px-3.5 rounded-xl border border-white/10 bg-[#181827] flex items-center gap-2 transition-all cursor-pointer group text-white/70 hover:text-white hover:border-white/25 hover:bg-[#202034] text-xs font-semibold shadow-sm"
               title="Abrir em Tela Cheia"
             >
               <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -102,7 +114,7 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
         <div
           ref={bracketRef}
           {...bracketHandlers}
-          className="flex-1 overflow-auto no-scrollbar bg-[#060608] cursor-grab active:cursor-grabbing relative flex select-none"
+          className="relative z-10 flex-1 overflow-auto no-scrollbar bg-transparent cursor-grab active:cursor-grabbing flex select-none"
           style={{ touchAction: "none" }}
         >
           <div className="min-w-full min-h-full flex items-center justify-center p-8 md:p-14 m-auto">

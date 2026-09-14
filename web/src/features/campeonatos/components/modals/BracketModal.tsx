@@ -35,11 +35,23 @@ export const BracketModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => onClose()}
-            className="absolute inset-0 bg-black/95 backdrop-blur-3xl"
+            className="absolute inset-0 bg-black/85 backdrop-blur-2xl"
           />
 
+          {/* Background do Campeonato com Imagem */}
+          <div
+            className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
+            style={{
+              backgroundImage: `url(${campeonato?.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
+              opacity: 0.35,
+              filter: "blur(2px)",
+            }}
+          />
+          {/* Overlay escuro esportivo para ambientação e contraste */}
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0a0a14]/90 via-[#0a0a14]/75 to-[#0a0a14]/95 pointer-events-none" />
+
           {/* Floating Controls Toolbar */}
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2 bg-[#0c0c12]/90 backdrop-blur-xl border border-white/15 rounded-2xl px-3 py-2 shadow-2xl">
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2 bg-[#12121e]/90 backdrop-blur-xl border border-white/15 rounded-2xl px-3 py-2 shadow-2xl">
             <div className="flex items-center gap-2 pr-3 border-r border-white/10 hidden sm:flex">
               <span
                 className="w-2 h-2 rounded-full animate-pulse"
@@ -55,7 +67,7 @@ export const BracketModal = ({
 
             {/* Controles de Zoom */}
             {setModalBracketScale && (
-              <div className="flex items-center bg-[#060608] border border-white/10 rounded-xl p-1 gap-1 shadow-inner">
+              <div className="flex items-center bg-[#181827] border border-white/10 rounded-xl p-1 gap-1 shadow-inner">
                 <button
                   type="button"
                   onClick={() =>
@@ -108,7 +120,7 @@ export const BracketModal = ({
           {/* Fixed Exit Button */}
           <button
             onClick={() => onClose()}
-            className="fixed top-6 right-6 z-[110] w-11 h-11 rounded-2xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all shadow-2xl bg-[#0c0c12]/90 backdrop-blur-xl border border-white/15 cursor-pointer"
+            className="fixed top-6 right-6 z-[110] w-11 h-11 rounded-2xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all shadow-2xl bg-[#12121e]/90 backdrop-blur-xl border border-white/15 cursor-pointer"
             title="Fechar (Esc)"
           >
             <X className="w-5 h-5" />
@@ -119,7 +131,7 @@ export const BracketModal = ({
             ref={modalBracketRef}
             {...modalBracketHandlers}
             className="relative w-full h-full overflow-auto no-scrollbar cursor-grab active:cursor-grabbing z-10 select-none flex"
-            style={{ backgroundColor: "#060608", touchAction: "none" }}
+            style={{ backgroundColor: "transparent", touchAction: "none" }}
           >
             <div className="min-w-full min-h-full flex items-center justify-center p-12 md:p-24 m-auto">
               <div
