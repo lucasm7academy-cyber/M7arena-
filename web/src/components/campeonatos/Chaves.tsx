@@ -17,18 +17,20 @@ export const Chaves = ({ campeonato, isAdmin, isBracketModalOpen, setIsBracketMo
       exit={{ opacity: 0, y: -10 }}
       className="w-full"
     >
-      <div className="w-full rounded-2xl border border-white/15 bg-[#101018] shadow-2xl h-[72vh] min-h-[520px] flex flex-col overflow-hidden relative">
-        {/* Background do Campeonato com Imagem */}
-        <div
-          className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
-          style={{
-            backgroundImage: `url(${campeonato?.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
-            opacity: 0.32,
-            filter: "blur(1.5px)",
-          }}
-        />
-        {/* Overlay escuro esportivo para legibilidade e contraste */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0e0e18]/90 via-[#0a0a14]/80 to-[#0e0e18]/95 pointer-events-none" />
+      <div className="w-full rounded-2xl border border-white/15 bg-[#08080c] shadow-2xl h-[72vh] min-h-[520px] flex flex-col overflow-hidden relative">
+        {/* Background Layer Oficial (Mesma imagem das salas e lobby) */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <div className="absolute inset-0 bg-[#050508]" />
+          <div className="absolute inset-0">
+            <img
+              src="/images/fundo_elite.jpg"
+              alt=""
+              className="w-full h-full object-cover object-center opacity-45"
+            />
+          </div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.06)_0%,#08080c_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.75)_100%)]" />
+        </div>
 
         {/* Header com Título e Controles de Zoom */}
         <div className="relative z-10 px-5 py-4 sm:px-7 sm:py-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 bg-[#12121d]/85 backdrop-blur-md">

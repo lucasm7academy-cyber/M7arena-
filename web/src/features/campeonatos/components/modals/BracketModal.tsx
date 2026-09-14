@@ -38,17 +38,19 @@ export const BracketModal = ({
             className="absolute inset-0 bg-black/85 backdrop-blur-2xl"
           />
 
-          {/* Background do Campeonato com Imagem */}
-          <div
-            className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
-            style={{
-              backgroundImage: `url(${campeonato?.bannerUrl || "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2070"})`,
-              opacity: 0.35,
-              filter: "blur(2px)",
-            }}
-          />
-          {/* Overlay escuro esportivo para ambientação e contraste */}
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0a0a14]/90 via-[#0a0a14]/75 to-[#0a0a14]/95 pointer-events-none" />
+          {/* Background Layer Oficial (Mesma imagem das salas e lobby) */}
+          <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+            <div className="absolute inset-0 bg-[#050508]" />
+            <div className="absolute inset-0">
+              <img
+                src="/images/fundo_elite.jpg"
+                alt=""
+                className="w-full h-full object-cover object-center opacity-45"
+              />
+            </div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.06)_0%,#050508_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.75)_100%)]" />
+          </div>
 
           {/* Floating Controls Toolbar */}
           <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-2 bg-[#12121e]/90 backdrop-blur-xl border border-white/15 rounded-2xl px-3 py-2 shadow-2xl">
