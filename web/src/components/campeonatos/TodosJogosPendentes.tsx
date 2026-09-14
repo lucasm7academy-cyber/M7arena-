@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronDown, ShieldCheck, X } from "lucide-react";
+import { ChevronDown, ShieldCheck } from "lucide-react";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { sameTeamRef } from "../../features/campeonatos/domain/team-ref";
 import { getIcon } from "./icons";
@@ -7,7 +7,7 @@ import { formatDayOfWeek, formatFullDate } from "./dates";
 import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 export const TodosJogosPendentes = () => {
-  const { campeonato, isAdmin, allPendingMatches, isAllPendingOpen, setIsAllPendingOpen, setEditingMatchIndex, setJogoStatusAtStart, setEditFormData, setIsScheduleEditModalOpen, handleDeleteMatch } = useCampeonato();
+  const { campeonato, isAdmin, allPendingMatches, isAllPendingOpen, setIsAllPendingOpen, setEditingMatchIndex, setJogoStatusAtStart, setEditFormData, setIsScheduleEditModalOpen } = useCampeonato();
   if (!isAdmin || allPendingMatches.length === 0) return null;
   return (
     <motion.div
@@ -287,12 +287,12 @@ export const TodosJogosPendentes = () => {
                       </div>
                     </div>
 
-                    {/* CARD 2: ~20% - BOTÃO DE ARBITRAR PINTADO NA COR DO CAMPEONATO + EXCLUIR */}
-                    <div className="w-full md:w-[22%] md:min-w-[170px] shrink-0 flex flex-col gap-2">
+                    {/* CARD 2: ~20% - BOTÃO DE ARBITRAR PINTADO NA COR DO CAMPEONATO */}
+                    <div className="w-full md:w-[22%] md:min-w-[170px] shrink-0 flex">
                       <button
                         type="button"
                         onClick={handleOpenArbitrate}
-                        className="flex-1 w-full rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xl group border border-black/10 text-black"
+                        className="w-full rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xl group border border-black/10 text-black min-h-[90px] md:min-h-0"
                         style={{
                           backgroundColor: primaryColor,
                           boxShadow: `0 4px 30px ${primaryColor}40`,
@@ -305,19 +305,6 @@ export const TodosJogosPendentes = () => {
                         <span className="text-[9px] font-black text-black/70 uppercase tracking-widest mt-0.5">
                           Painel ADM
                         </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMatch(jogo);
-                        }}
-                        title="Excluir confronto"
-                        className="w-full py-2 px-3 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 rounded-lg flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>Excluir Jogo</span>
                       </button>
                     </div>
                   </div>
