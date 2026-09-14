@@ -54,6 +54,8 @@ export interface CampeonatoContextType {
   bracketData: any;
   bracketScale: number;
   modalBracketScale: number;
+  setBracketScale: React.Dispatch<React.SetStateAction<number>>;
+  setModalBracketScale: React.Dispatch<React.SetStateAction<number>>;
   bracketAvailableTeams: any[];
   bracketRef: React.RefObject<HTMLDivElement>;
   modalBracketRef: React.RefObject<HTMLDivElement>;
@@ -461,10 +463,9 @@ export function CampeonatoProvider({
         ref.current.scrollTop = scrollTop - walkY;
       },
       onWheel: (e: React.WheelEvent) => {
-        if (e.ctrlKey) return;
         e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.02 : 0.02;
-        setScale((prev) => Math.min(Math.max(prev + delta, 0.4), 2.5));
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        setScale((prev) => Math.min(Math.max(+(prev + delta).toFixed(2), 0.35), 2.0));
       },
     };
   };
@@ -1358,6 +1359,8 @@ export function CampeonatoProvider({
     bracketData,
     bracketScale,
     modalBracketScale,
+    setBracketScale,
+    setModalBracketScale,
     bracketAvailableTeams,
     bracketRef,
     modalBracketRef,

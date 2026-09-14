@@ -23,11 +23,20 @@ export const LowerRound = ({
   return (
     <div className="flex flex-col w-64 shrink-0">
       {title && (
-        <div className="h-12 flex flex-col items-center justify-center shrink-0">
-          <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-1">
-            {title}
-          </span>
-          <div className="w-8 h-[1px] bg-white/10" />
+        <div className="h-12 flex flex-col items-center justify-center shrink-0 select-none">
+          <div className="px-3.5 py-1 rounded-full bg-[#0d0d14] border border-white/10 flex items-center gap-2 shadow-md">
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{
+                backgroundColor: "#ef4444",
+                boxShadow: "0 0 8px #ef4444",
+              }}
+            />
+            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/90">
+              {title}
+            </span>
+          </div>
+          <div className="w-8 h-[1px] bg-white/10 mt-1.5" />
         </div>
       )}
       <div
@@ -61,19 +70,19 @@ export const LowerRound = ({
 
               {showConnectors && (
                 <>
-                  <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 w-[42px] md:w-[58px] lg:w-[82px] h-[2px] bg-white/10 pointer-events-none" />
+                  <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 w-[42px] md:w-[58px] lg:w-[82px] h-[2px] bg-white/20 pointer-events-none" />
 
                   {isMerging && i % 2 === 0 && (
                     <div className="absolute top-1/2 -right-10 md:-right-14 lg:-right-20 pointer-events-none">
                       <div
-                        className="absolute right-0 w-[2px] bg-white/10"
+                        className="absolute right-0 w-[2px] bg-white/20"
                         style={{
                           height: `${matchGap + MATCH_HEIGHT}px`,
                           top: "1px",
                         }}
                       />
                       <div
-                        className="absolute right-0 w-[38px] md:w-[50px] lg:w-[68px] h-[2px] translate-x-full bg-white/10"
+                        className="absolute right-0 w-[38px] md:w-[50px] lg:w-[68px] h-[2px] translate-x-full bg-white/20"
                         style={{ top: `${(matchGap + MATCH_HEIGHT) / 2}px` }}
                       />
                     </div>

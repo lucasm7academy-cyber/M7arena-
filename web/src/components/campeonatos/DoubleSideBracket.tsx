@@ -41,11 +41,20 @@ export const DoubleSideBracket = ({
         style={{ height: `${TOTAL_HEIGHT}px` }}
       >
         {title && (
-          <div className="h-16 flex flex-col items-center justify-center shrink-0">
-            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-1">
-              {title}
-            </span>
-            <div className="w-8 h-[1px] bg-white/5" />
+          <div className="h-16 flex flex-col items-center justify-center shrink-0 select-none">
+            <div className="px-3.5 py-1 rounded-full bg-[#0d0d14] border border-white/10 flex items-center gap-2 shadow-md">
+              <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{
+                  backgroundColor: themeColor,
+                  boxShadow: `0 0 8px ${themeColor}`,
+                }}
+              />
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/90">
+                {title}
+              </span>
+            </div>
+            <div className="w-8 h-[1px] bg-white/10 mt-1.5" />
           </div>
         )}
         <div className="flex-1 flex flex-col justify-around relative px-2">
@@ -77,7 +86,7 @@ export const DoubleSideBracket = ({
 
                 {/* Horizontal exit line */}
                 <div
-                  className={`absolute top-1/2 ${side === "left" ? "-right-10 md:-right-14" : "-left-10 md:-left-14"} w-10 md:w-14 h-[2px] bg-white/10 pointer-events-none`}
+                  className={`absolute top-1/2 ${side === "left" ? "-right-10 md:-right-14" : "-left-10 md:-left-14"} w-10 md:w-14 h-[2px] bg-white/20 pointer-events-none`}
                 />
 
                 {/* Vertical and horizontal step connector */}
@@ -86,14 +95,14 @@ export const DoubleSideBracket = ({
                     className={`absolute top-1/2 ${side === "left" ? "-right-10 md:-right-14" : "-left-10 md:-left-14"} pointer-events-none`}
                   >
                     <div
-                      className={`absolute ${side === "left" ? "right-0" : "left-0"} w-[2px] bg-white/10`}
+                      className={`absolute ${side === "left" ? "right-0" : "left-0"} w-[2px] bg-white/20`}
                       style={{
                         height: `${(TOTAL_HEIGHT - 64) / count}px`,
                         top: "1px",
                       }}
                     />
                     <div
-                      className={`absolute ${side === "left" ? "right-0 w-8 md:w-12 h-[2px] translate-x-full" : "left-0 w-8 md:w-12 h-[2px] -translate-x-full"} bg-white/10`}
+                      className={`absolute ${side === "left" ? "right-0 w-8 md:w-12 h-[2px] translate-x-full" : "left-0 w-8 md:w-12 h-[2px] -translate-x-full"} bg-white/20`}
                       style={{ top: `${(TOTAL_HEIGHT - 64) / count / 2}px` }}
                     />
                   </div>
@@ -109,16 +118,22 @@ export const DoubleSideBracket = ({
   const finalMatch = bracketData?.side?.grandFinal || {};
 
   return (
-    <div className="flex flex-col items-center w-full py-16 min-w-max">
-      <div className="mb-20 flex flex-col items-center">
-        <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mb-2">
+    <div className="flex flex-col items-center w-full py-16 min-w-max select-none">
+      <div className="mb-14 flex flex-col items-center text-center">
+        <span
+          className="text-[11px] font-black uppercase tracking-[0.35em] mb-1.5 opacity-80"
+          style={{ color: themeColor }}
+        >
+          Chaveamento Eliminatório
+        </span>
+        <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-2.5">
           {tournament.titulo || tournament.nome || tournament.name}
         </h2>
         <div
-          className="h-1 w-32 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.3)]"
+          className="h-1 w-28 rounded-full"
           style={{
             backgroundColor: themeColor,
-            boxShadow: `0 0 25px ${themeColor}4D`,
+            boxShadow: `0 0 20px ${themeColor}`,
           }}
         />
       </div>
@@ -166,13 +181,33 @@ export const DoubleSideBracket = ({
           className="flex flex-col w-64 shrink-0 z-30"
           style={{ height: `${TOTAL_HEIGHT}px` }}
         >
-          <div className="h-16 border-b border-white/5 bg-black/20 shrink-0" />
+          <div className="h-16 flex flex-col items-center justify-center shrink-0">
+            <div
+              className="px-3.5 py-1 rounded-full border flex items-center gap-2 shadow-lg"
+              style={{
+                backgroundColor: `${themeColor}15`,
+                borderColor: `${themeColor}40`,
+              }}
+            >
+              <Trophy className="w-3.5 h-3.5" style={{ color: themeColor }} />
+              <span
+                className="text-[11px] font-black uppercase tracking-[0.2em]"
+                style={{ color: themeColor }}
+              >
+                Decisão do Título
+              </span>
+            </div>
+            <div
+              className="w-10 h-[1px] mt-1.5"
+              style={{ backgroundColor: `${themeColor}60` }}
+            />
+          </div>
 
           <div className="flex-1 flex flex-col justify-around items-center relative px-4">
             {bracketTeams > 2 && (
               <>
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 md:w-8 lg:w-16 h-[2px] bg-white/10" />
-                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 md:w-8 lg:w-16 h-[2px] bg-white/10" />
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 md:w-8 lg:w-16 h-[2px] bg-white/20" />
+                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 md:w-8 lg:w-16 h-[2px] bg-white/20" />
               </>
             )}
 
@@ -185,10 +220,10 @@ export const DoubleSideBracket = ({
                 >
                   <div className="relative">
                     <Trophy
-                      size={64}
+                      size={68}
                       style={{
                         color: themeColor,
-                        filter: `drop-shadow(0 0 20px ${themeColor}80)`,
+                        filter: `drop-shadow(0 0 24px ${themeColor}90)`,
                       }}
                     />
                     <motion.div
@@ -199,22 +234,27 @@ export const DoubleSideBracket = ({
                         ease: "linear",
                       }}
                       className="absolute inset-0 blur-2xl rounded-full -z-10"
-                      style={{ backgroundColor: `${themeColor}33` }}
+                      style={{ backgroundColor: `${themeColor}40` }}
                     />
                   </div>
                   <div className="flex flex-col items-center">
-                    <span className="text-[12px] font-black text-white/40 uppercase tracking-[0.4em] mb-1">
-                      Grande Campeão
-                    </span>
+                    <div className="px-3 py-1 rounded-full bg-white/[0.05] border border-white/10 mb-1.5 shadow">
+                      <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em]">
+                        🏆 Campeão do Torneio
+                      </span>
+                    </div>
                     <span
-                      className="text-2xl font-black uppercase tracking-widest text-center max-w-[240px] truncate"
-                      style={{ color: themeColor }}
+                      className="text-2xl md:text-3xl font-black uppercase tracking-wider text-center max-w-[260px] truncate"
+                      style={{
+                        color: themeColor,
+                        textShadow: `0 0 24px ${themeColor}60`,
+                      }}
                     >
                       {finalMatch.winner}
                     </span>
                   </div>
                   <div
-                    className="w-40 h-1 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.8)] mt-2"
+                    className="w-44 h-1 rounded-full shadow-[0_0_25px_rgba(255,183,0,0.8)] mt-2"
                     style={{
                       backgroundColor: themeColor,
                       boxShadow: `0 0 25px ${themeColor}CC`,
@@ -223,15 +263,24 @@ export const DoubleSideBracket = ({
                 </motion.div>
               ) : (
                 <div className="flex flex-col items-center">
-                  <span
-                    className="text-[12px] font-black uppercase tracking-[0.6em] mb-1"
-                    style={{ color: themeColor }}
-                  >
-                    Grande Final <span className="opacity-50">(MD5)</span>
-                  </span>
                   <div
-                    className="w-12 h-[1px]"
-                    style={{ backgroundColor: `${themeColor}4D` }}
+                    className="px-4 py-1.5 rounded-full border flex items-center gap-2 shadow-xl backdrop-blur-sm"
+                    style={{
+                      backgroundColor: `${themeColor}12`,
+                      borderColor: `${themeColor}35`,
+                    }}
+                  >
+                    <Trophy className="w-4 h-4" style={{ color: themeColor }} />
+                    <span
+                      className="text-xs font-black uppercase tracking-[0.2em]"
+                      style={{ color: themeColor }}
+                    >
+                      Grande Final <span className="text-white/40 font-mono font-normal text-[10px]">(MD5)</span>
+                    </span>
+                  </div>
+                  <div
+                    className="w-12 h-[1px] mt-2.5"
+                    style={{ backgroundColor: `${themeColor}40` }}
                   />
                 </div>
               )}
