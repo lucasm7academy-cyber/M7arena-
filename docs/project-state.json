@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-11T22:32:28.677Z",
-  "updatedBy": "deepseek",
+  "updatedAt": "2026-09-14T02:18:11.367Z",
+  "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -2097,73 +2097,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-07T19:37:06.701Z",
-      "agent": "gemini",
-      "summary": "Removido degradê das bordas pintadas do card hero do banner na página de detalhes do campeonato (web/src/pages/CampeonatoDetalhes.tsx), tornando a borda sólida na cor do tema do campeonato (campeonato.themeColor || '#FFB700') uniforme em todo o contorno sem fading/transparência. Build do Vite e typecheck validados com sucesso (exit 0). Commit 934a6d7 mergeado na branch main da VPS, container nginx rebuildado e novo bundle servido com HTTP 200 em dev.m7arena.pro.",
-      "touched": [
-        "web/src/pages/CampeonatoDetalhes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-07T20:02:10.148Z",
-      "agent": "gemini",
-      "summary": "Análise e esclarecimento ao usuário sobre o funcionamento do fluxo de código de torneio e apuração automática de partidas no campeonato DEMOSTRATIVO (ADR-047/ADR-048/ADR-049), confirmando que o código já foi gerado e está em andamento, e explicando as regras de resolução via Riot API.",
-      "touched": []
-    },
-    {
-      "at": "2026-09-07T20:09:45.653Z",
-      "agent": "gemini",
-      "summary": "Redesign completo dos cards da tela de campeonato: removido efeito degrade de bordas que somem, removido corte de poligonos (cut-edge) em cards de cronograma, jogos individuais, botoes de copiar codigo e verificar Riot, modais de regulamento, inscricao, agendamento e criacao de jogos, e estendida imagem do responsavel ate as bordas do card.",
-      "touched": [
-        "web.campeonatos",
-        "web.modais"
-      ]
-    },
-    {
-      "at": "2026-09-07T20:15:11.749Z",
-      "agent": "gemini",
-      "summary": "Aplicado corte cut-edge apenas no Hero Banner da tela de campeonato com borda solida na cor do tema, e removido o titulo CAMPEONATO OFICIAL M7 ARENA do topo do banner. Todo o restante da tela permanece com o design arredondado normal.",
-      "touched": [
-        "web.campeonatos"
-      ]
-    },
-    {
-      "at": "2026-09-07T20:16:41.252Z",
-      "agent": "gemini",
-      "summary": "Card da foto do responsavel/organizador alterado para proporcao 1:1 quadrada (aspect-square) com cantos arredondados (rounded-2xl).",
-      "touched": [
-        "web.campeonatos"
-      ]
-    },
-    {
-      "at": "2026-09-07T20:17:11.309Z",
-      "agent": "gemini",
-      "summary": "Implementada e testada a liberação de código de torneio no pool em finalizações manuais de série (W.O. ou decisão do ADM no cronograma e bracket): storeCronograma e storeBracket agora detectam quando um confronto com codigoPartida é finalizado ou ganha vencedor e liberam o código em matchCodes (used=false), garantindo que W.O. não prenda códigos de torneio. Testes unitários 11/11 passando com PGlite e tsc exit 0 em api e web.",
-      "touched": [
-        "app.arquitetura.campeonatos"
-      ]
-    },
-    {
-      "at": "2026-09-07T20:34:13.138Z",
-      "agent": "gemini",
-      "summary": "Ajustado contraste das tags de time (passadas para text-white com borda e fundo translúcido na cor do time) nas páginas TimePage, equipes (/times) e players (/players). Na página de detalhes do time (TimePage), convertidos todos os cards inferiores e laterais (Lineup, Vagas Abertas, Jogadores, Capitão, Gerenciar, Histórico e Status do Time) para cantos arredondados normais (rounded-xl/rounded-2xl), mantendo o estilo cortado exclusivamente no Hero Banner do time conforme solicitado. Build e typecheck verificados com sucesso.",
-      "touched": [
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/players.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-07T20:39:51.336Z",
-      "agent": "gemini",
-      "summary": "Restaurado estilo cortado (clipPath CUT_BADGE e CUT_BADGE_INNER) nas tags de times em TimePage, /times (equipes.tsx) e /players (players.tsx). A cor de fundo translúcida foi removida (fundo neutro escuro), mantendo a borda cortada na cor do time e o texto na cor do time, proporcionando nitidez e contraste ideal.",
-      "touched": [
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/players.tsx"
-      ]
-    },
-    {
       "at": "2026-09-07T20:45:37.522Z",
       "agent": "antigravity",
       "summary": "Permitido que contas com cargo 'proprietario' editem lineups e gerenciem times (TimePage, backend PUT, e aceitar convites) assim como donos e capitães. Validação de TypeScript de ambos front e back passou com sucesso.",
@@ -2392,6 +2325,75 @@
       "summary": "Bug do Lobby (#NKA em vez de #NKZA + logo sumida) corrigido. Causa: o time NKZ Academy foi renomeado NKA→NKZA, mas os snapshots tournament_matches.team_a_tag/team_b_tag continuavam 'NKA'; o Lobby usa a tag do snapshot e resolve logo por tag em times_inscritos, então a tag velha derrubava a logo. Fix dados: UPDATE por id ressincronizou tournament_matches e bracket_matches na VPS — ao vivo GET /api/tournaments/2bcef957 devolve timeA=NKZA e times_inscritos NKZA logo=true. Fix código: PUT /api/teams/:id propaga a tag nova aos snapshots (tournament_matches, bracket_matches) + array_replace em tournaments.seed_order; commit 77357a6 deployado (rebuild app). Evidência: tsc api exit 0, health 200, dist teams.js contém array_replace. ADR-064. Falta reload do usuário no Lobby.",
       "touched": [
         "api/src/routes/teams.ts"
+      ]
+    },
+    {
+      "at": "2026-09-11T22:33:22.823Z",
+      "agent": "deepseek",
+      "summary": "Fase de grupos agora pontua por série (MD3/MD5), não por mapa. GroupStage.tsx e CampeonatoContext.getStatsForTeamForCalculation passaram a contar vitória de série = 1 V (adversário 1 D); J = séries jogadas. Alinha com o gerador de chaves (createCampPage, que já era por série). Classificação geral do servidor (buildClassificacao) ficou por mapa, a pedido do usuário. Validado com dados reais via script: MDR 2x1 RMD → MDR V=1/D=0; M7W 2x0 BKA → V=1/D=0 (antes somava mapas). Evidência: tsc web exit 0; deploy commit 0a0b6ae (rebuild nginx); bundle CampeonatoDetalhes-3AQdyYpJ→CnrurGZL; health 200. ADR-065. Falta hard-refresh do usuário na aba Grupos.",
+      "touched": [
+        "web/src/components/campeonatos/GroupStage.tsx",
+        "web/src/features/campeonatos/CampeonatoContext.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-11T23:07:07.514Z",
+      "agent": "gemini",
+      "summary": "Design do card de partida finalizada no cronograma dos campeonatos: adicionado banner inicial cortado na diagonal com a palavra FINALIZADA na fonte Anton (padrão das salas), exibição de data/hora original da partida, destaque esportivo com badge VITÓRIA e glow para o vencedor, scoreboard central em caixa escura contrastada, e ação discreta de súmula para admins. Build verificado e deploy do container nginx concluído na VPS.",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-11T23:16:36.260Z",
+      "agent": "gemini",
+      "summary": "Ajuste visual do card finalizado: o time perdedor sempre é exibido na esquerda e o vencedor na direita; cores originais preservadas nas bordas/tags dos times (verde apenas no número do placar do vencedor); banner FINALIZADA com a cor primária do campeonato; removidos badges MD3, string BRT e texto Súmula. Build validado e deploy na VPS concluído.",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-11T23:20:52.034Z",
+      "agent": "gemini",
+      "summary": "Ajuste visual do card finalizado: time vencedor posicionado na ESQUERDA (com placar verde) e time perdedor na DIREITA (com placar vermelho); o selo FINALIZADA deixou de ter corte diagonal e passou a ter cantos arredondados (rounded-full) com a cor primária do campeonato. Build e deploy no Nginx da VPS concluídos com sucesso.",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-11T23:24:36.485Z",
+      "agent": "gemini",
+      "summary": "Ajuste do card finalizado: transformado em barra de largura inteira (w-full) no topo do card com a palavra FINALIZADA em tamanho grande (fonte Anton) na cor primária e data/hora na direita; abaixo fica o confronto centralizado com o vencedor na esquerda e perdedor na direita, ambos com tamanhos generosos e proporções esportivas. Deploy na VPS concluído.",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T01:55:01.150Z",
+      "agent": "gemini",
+      "summary": "Design dos cards de cronograma: 1) No card de partida finalizada (ListaCronograma.tsx), substituído o separador de dois pontos por hífen ('2 - 0' em vez de '2:0'). 2) Aplicado o novo design esportivo oficial com fonte Anton, barra superior completa, tags com corte cut-edge e logos/confronto nos cards de Meus Jogos Pendentes (MeusJogosPendentes.tsx) e Todos os Jogos Pendentes (TodosJogosPendentes.tsx), preservando 100% da lógica e ações (propor/aceitar data, arbitrar e excluir). 3) Typecheck (tsc exit 0), build do Vite bem-sucedido, push para origin e deploy concluído na VPS com container nginx reconstruído (HTTP 200).",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx",
+        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T02:12:08.613Z",
+      "agent": "gemini",
+      "summary": "Ajuste de layout nos cards de Meus Jogos Pendentes e Todos os Jogos Pendentes (ADM): reposicionados os botões de ação (Arbitrar, Excluir, Responder, Propor Data, Aguardando) para a lateral direita (md:flex-row com container shrink-0 de 180px e borda divisória sutil), mantendo o novo estilo esportivo com fonte Anton, barra superior, tags chanfradas e logos. Verificado com tsc exit 0, build do Vite concluído e container nginx atualizado na VPS (HTTP 200).",
+      "touched": [
+        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T02:18:11.367Z",
+      "agent": "gemini",
+      "summary": "Refatorado o layout dos cards de jogos pendentes (MeusJogosPendentes e TodosJogosPendentes) para o padrão de 2 cards lado a lado na mesma linha (80% confronto / 20% botão de ação pintado na cor do campeonato). Validado com npx tsc e deployado com sucesso na VPS (nginx rebuildado).",
+      "touched": [
+        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
       ]
     }
   ]
