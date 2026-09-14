@@ -128,99 +128,98 @@ export const MeusJogosPendentes = () => {
                 };
 
                 return (
-                  <div
-                    key={i}
-                    onClick={handleOpenModal}
-                    className={`group relative w-full rounded-xl border bg-[#09090d] flex flex-col overflow-hidden transition-all shadow-lg ${
-                      canClickCard ? "cursor-pointer hover:bg-[#0c0c14] hover:border-white/20" : ""
-                    }`}
-                    style={{
-                      borderColor: isWaitingForMyResponse
-                        ? "rgba(0, 255, 65, 0.4)"
-                        : amITheProposer
-                          ? "rgba(0, 240, 255, 0.3)"
-                          : "rgba(255, 255, 255, 0.1)",
-                    }}
-                  >
-                    {/* TOPO: LARGURA INTEIRA COM ANTON E DATA/HORA */}
+                  <div key={i} className="w-full flex flex-col md:flex-row gap-3 items-stretch">
+                    {/* CARD 1: ~80% - DADOS DO CONFRONTO */}
                     <div
-                      className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                      onClick={canClickCard ? handleOpenModal : undefined}
+                      className={`flex-1 md:w-[78%] rounded-xl border bg-[#09090d] flex flex-col justify-between overflow-hidden transition-all shadow-lg ${
+                        canClickCard ? "cursor-pointer hover:bg-[#0c0c14] hover:border-white/20" : "border-white/10"
+                      }`}
                       style={{
-                        background: `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
+                        borderColor: isWaitingForMyResponse
+                          ? "rgba(0, 255, 65, 0.4)"
+                          : amITheProposer
+                            ? "rgba(0, 240, 255, 0.3)"
+                            : "rgba(255, 255, 255, 0.1)",
                       }}
                     >
-                      <div className="flex items-center gap-2.5 sm:gap-3">
-                        <span
-                          className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2"
-                          style={{
-                            fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                            color: statusColor,
-                            textShadow: `0 0 25px ${statusColor}66`,
-                          }}
-                        >
-                          {statusLabel}
-                        </span>
-
-                        {jogo.best_of && (
+                      {/* TOPO: LARGURA INTEIRA COM ANTON E DATA/HORA */}
+                      <div
+                        className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                        style={{
+                          background: `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5 sm:gap-3">
                           <span
-                            className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border"
+                            className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2"
                             style={{
+                              fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                               color: statusColor,
-                              backgroundColor: `${statusColor}15`,
-                              borderColor: `${statusColor}30`,
+                              textShadow: `0 0 25px ${statusColor}66`,
                             }}
                           >
-                            MD{jogo.best_of}
+                            {statusLabel}
                           </span>
-                        )}
 
-                        {jogo.fase && (
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/50">
-                            {jogo.fase}
-                          </span>
-                        )}
+                          {jogo.best_of && (
+                            <span
+                              className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border"
+                              style={{
+                                color: statusColor,
+                                backgroundColor: `${statusColor}15`,
+                                borderColor: `${statusColor}30`,
+                              }}
+                            >
+                              MD{jogo.best_of}
+                            </span>
+                          )}
+
+                          {jogo.fase && (
+                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/50">
+                              {jogo.fase}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
+                          {jogo.data && jogo.data !== "A COMBINAR" && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                                {formatDayOfWeek(jogo.data)} •
+                              </span>
+                              <span className="text-white font-bold">
+                                {formatFullDate(jogo.data)}
+                              </span>
+                            </div>
+                          )}
+                          {jogo.hora && jogo.hora !== "--:--" && (
+                            <span
+                              className="font-bold pl-2 border-l border-white/15"
+                              style={{ color: statusColor }}
+                            >
+                              {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
+                            </span>
+                          )}
+                          {(!jogo.data || jogo.data === "A COMBINAR") && (
+                            <span className="text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                              A Definir
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
-                        {jogo.data && jogo.data !== "A COMBINAR" && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
-                              {formatDayOfWeek(jogo.data)} •
-                            </span>
-                            <span className="text-white font-bold">
-                              {formatFullDate(jogo.data)}
-                            </span>
-                          </div>
-                        )}
-                        {jogo.hora && jogo.hora !== "--:--" && (
-                          <span
-                            className="font-bold pl-2 border-l border-white/15"
-                            style={{ color: statusColor }}
-                          >
-                            {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
-                          </span>
-                        )}
-                        {(!jogo.data || jogo.data === "A COMBINAR") && (
-                          <span className="text-white/40 uppercase text-[10px] tracking-[0.15em]">
-                            A Definir
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* CORPO DO CARD: MATCHUP NA ESQUERDA/CENTRO E BOTÕES NA LATERAL DIREITA */}
-                    <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 px-4 sm:px-6 py-4">
-                      {/* Matchup */}
-                      <div className="flex-1 flex items-center justify-center gap-3 sm:gap-6 w-full min-w-0">
+                      {/* CORPO DO MATCHUP (TIME A | VS | TIME B) */}
+                      <div className="w-full flex-1 flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
                         {/* Left Team */}
-                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 justify-end min-w-0">
+                        <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
                           <div className="flex flex-col items-end text-right min-w-0">
                             <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
                               {teamAData.name || teamAData.nome}
                             </span>
                             {teamAData.tag && (
                               <div
-                                className="p-[1px] shrink-0 mt-0.5"
+                                className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
                                 style={{
                                   clipPath: CUT_BADGE,
                                   background: `${corA}80`,
@@ -240,7 +239,7 @@ export const MeusJogosPendentes = () => {
                           </div>
 
                           <div
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                             style={{ borderColor: `${corA}80` }}
                           >
                             {teamAData.logo ? (
@@ -252,7 +251,7 @@ export const MeusJogosPendentes = () => {
                               />
                             ) : (
                               <IconA
-                                className="w-5 h-5 sm:w-6 sm:h-6"
+                                className="w-5 h-5 sm:w-7 sm:h-7"
                                 style={{ color: corA }}
                               />
                             )}
@@ -260,16 +259,16 @@ export const MeusJogosPendentes = () => {
                         </div>
 
                         {/* VS Box */}
-                        <div className="shrink-0 flex items-center justify-center px-3 sm:px-4 py-1.5 rounded-xl bg-black/60 border border-white/10 shadow-inner">
-                          <span className="text-base sm:text-xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
+                        <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[70px] sm:min-w-[90px]">
+                          <span className="text-xl sm:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
                             VS
                           </span>
                         </div>
 
                         {/* Right Team */}
-                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 justify-start min-w-0">
+                        <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
                           <div
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                             style={{ borderColor: `${corB}80` }}
                           >
                             {teamBData.logo ? (
@@ -281,7 +280,7 @@ export const MeusJogosPendentes = () => {
                               />
                             ) : (
                               <IconB
-                                className="w-5 h-5 sm:w-6 sm:h-6"
+                                className="w-5 h-5 sm:w-7 sm:h-7"
                                 style={{ color: corB }}
                               />
                             )}
@@ -293,7 +292,7 @@ export const MeusJogosPendentes = () => {
                             </span>
                             {teamBData.tag && (
                               <div
-                                className="p-[1px] shrink-0 mt-0.5"
+                                className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
                                 style={{
                                   clipPath: CUT_BADGE,
                                   background: `${corB}80`,
@@ -313,49 +312,54 @@ export const MeusJogosPendentes = () => {
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      {/* LATERAL DIREITA: BOTÕES DE AÇÃO */}
-                      <div className="w-full md:w-[180px] shrink-0 flex flex-col gap-1.5 md:border-l md:border-white/10 md:pl-4">
-                        {amITheProposer ? (
+                    {/* CARD 2: ~20% - BOTÃO PINTADO NA COR DO CAMPEONATO */}
+                    {amITheProposer ? (
+                      <div className="w-full md:w-[22%] md:min-w-[170px] shrink-0 rounded-xl border border-white/10 bg-[#0c0c12] p-4 flex flex-col items-center justify-center text-center shadow-lg select-none">
+                        <Clock className="w-7 h-7 text-amber-400" />
+                        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-400 mt-2 leading-tight">
+                          Aguardando
+                        </span>
+                        <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest mt-1">
+                          Resposta do Rival
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleOpenModal}
+                        className="w-full md:w-[22%] md:min-w-[170px] shrink-0 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xl group border border-black/10"
+                        style={{
+                          backgroundColor: isWaitingForMyResponse ? "#00FF41" : primaryColor,
+                          boxShadow: isWaitingForMyResponse
+                            ? "0 4px 30px rgba(0, 255, 65, 0.4)"
+                            : `0 4px 30px ${primaryColor}40`,
+                        }}
+                      >
+                        {isWaitingForMyResponse ? (
                           <>
-                            <div className="w-full py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-white/40 flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider">
-                              <Clock className="w-3.5 h-3.5 text-amber-400" />
-                              <span>Aguardando</span>
-                            </div>
-                            <p className="text-[8px] font-black text-white/20 uppercase text-center tracking-widest">
-                              Aguardando resposta
-                            </p>
+                            <Zap className="w-8 h-8 text-black transition-transform group-hover:scale-110" />
+                            <span className="text-sm sm:text-base font-black uppercase tracking-wider text-black mt-2 leading-tight">
+                              Responder
+                            </span>
+                            <span className="text-[9px] font-black text-black/70 uppercase tracking-widest mt-0.5">
+                              Proposta
+                            </span>
                           </>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenModal();
-                            }}
-                            className="w-full px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl flex items-center justify-center gap-2 text-black hover:scale-105 active:scale-95 cursor-pointer"
-                            style={{
-                              backgroundColor: isWaitingForMyResponse ? "#00FF41" : primaryColor,
-                              boxShadow: isWaitingForMyResponse
-                                ? "0 4px 20px rgba(0, 255, 65, 0.35)"
-                                : `0 4px 20px ${primaryColor}40`,
-                            }}
-                          >
-                            {isWaitingForMyResponse ? (
-                              <>
-                                <Zap className="w-3.5 h-3.5" />
-                                <span>Responder</span>
-                              </>
-                            ) : (
-                              <>
-                                <Calendar className="w-3.5 h-3.5" />
-                                <span>Propor Data</span>
-                              </>
-                            )}
-                          </button>
+                          <>
+                            <Calendar className="w-8 h-8 text-black transition-transform group-hover:scale-110" />
+                            <span className="text-sm sm:text-base font-black uppercase tracking-wider text-black mt-2 leading-tight">
+                              Propor Data
+                            </span>
+                            <span className="text-[9px] font-black text-black/70 uppercase tracking-widest mt-0.5">
+                              Fazer Proposta
+                            </span>
+                          </>
                         )}
-                      </div>
-                    </div>
+                      </button>
+                    )}
                   </div>
                 );
               })}
