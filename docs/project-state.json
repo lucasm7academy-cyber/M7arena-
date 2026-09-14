@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-14T02:29:36.912Z",
+  "updatedAt": "2026-09-14T02:37:56.875Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2097,12 +2097,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-07T20:52:43.518Z",
-      "agent": "antigravity",
-      "summary": "Corrigido o upload de logo para permitir também contas com o cargo 'proprietario', além de dono e capitão.",
-      "touched": []
-    },
-    {
       "at": "2026-09-08T04:13:51.226Z",
       "agent": "antigravity",
       "summary": "Suporte ao admin: vinculou conta do Roman Siege (coroa de capitão); inscreveu BKS, LDL e NKA pendentes nas Copas; corrigiu a tabela de classificação limpando o manual_standings; gerou novos cronogramas de 8 jogos (2 por time) corrigindo tags e datas; alterou e reduziu a fonte do título do Campeonato (Anton/Impact) com deploy em prod.",
@@ -2388,6 +2382,16 @@
       "at": "2026-09-14T02:29:36.912Z",
       "agent": "gemini",
       "summary": "Removida a badge de 'fase de grupos' dos cards e adicionado 'MD3' no cabeçalho na mesma fonte Anton e no mesmo tamanho do título (ex: PROPOSTA ENVIADA - MD3 / AGENDADA - MD3) em ListaCronograma, MeusJogosPendentes e TodosJogosPendentes. Buildado e deployado na VPS com sucesso.",
+      "touched": [
+        "web/src/components/campeonatos/ListaCronograma.tsx",
+        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T02:37:56.875Z",
+      "agent": "gemini",
+      "summary": "Removido o '- MD3' dos títulos dos cards. Unificado o card de jogos pendentes em um único card (ao invés de 2 cards separados), com o confronto (Time A vs Time B) 100% centralizado através de grid balanceado, e o botão de ação (Arbitrar / Responder / Propor Data) posicionado na lateral direita estilizado estritamente na cor do campeonato (campeonato.themeColor). Buildado e deployado com sucesso na VPS.",
       "touched": [
         "web/src/components/campeonatos/ListaCronograma.tsx",
         "web/src/components/campeonatos/MeusJogosPendentes.tsx",
