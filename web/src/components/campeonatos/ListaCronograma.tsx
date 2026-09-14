@@ -315,9 +315,7 @@ export const ListaCronograma = () => {
                         {isSeriesLive && (
                           <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#00FF41] animate-ping shrink-0" />
                         )}
-                        <span>{statusLabel}</span>
-                        <span className="text-white/20 select-none">-</span>
-                        <span className="text-white/80">MD{jogo.best_of || 3}</span>
+                        {statusLabel}
                       </span>
                     </div>
 

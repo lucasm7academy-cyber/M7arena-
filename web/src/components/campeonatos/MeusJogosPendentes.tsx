@@ -86,13 +86,14 @@ export const MeusJogosPendentes = () => {
                 const IconB = getIcon(teamBData.icone || "ShieldCheck");
                 const corA = teamAData.cor || (jogo as any).corA || "#FFB700";
                 const corB = teamBData.cor || (jogo as any).corB || "#FFB700";
-                const primaryColor = campeonato.themeColor || "#FFB700";
+                const primaryColor = campeonato.themeColor || (campeonato as any).theme_color || "#FFB700";
+                const isConfirmado = jogo.status === "confirmado";
 
                 const statusLabel = isWaitingForMyResponse
                   ? "PROPOSTA RECEBIDA"
                   : amITheProposer
                     ? "PROPOSTA ENVIADA"
-                    : jogo.status === "confirmado"
+                    : isConfirmado
                       ? "AGENDADA"
                       : "A AGENDAR";
 
@@ -128,72 +129,76 @@ export const MeusJogosPendentes = () => {
                 };
 
                 return (
-                  <div key={i} className="w-full flex flex-col md:flex-row gap-3 items-stretch">
-                    {/* CARD 1: ~80% - DADOS DO CONFRONTO */}
-                    <div
-                      onClick={canClickCard ? handleOpenModal : undefined}
-                      className={`flex-1 md:w-[78%] rounded-xl border bg-[#09090d] flex flex-col justify-between overflow-hidden transition-all shadow-lg ${
-                        canClickCard ? "cursor-pointer hover:bg-[#0c0c14] hover:border-white/20" : "border-white/10"
-                      }`}
-                      style={{
-                        borderColor: isWaitingForMyResponse
-                          ? "rgba(0, 255, 65, 0.4)"
-                          : amITheProposer
-                            ? "rgba(0, 240, 255, 0.3)"
+                  <div
+                    key={i}
+                    onClick={canClickCard ? handleOpenModal : undefined}
+                    className={`w-full rounded-xl border bg-[#09090d] flex flex-col overflow-hidden transition-all shadow-lg ${
+                      canClickCard ? "cursor-pointer hover:bg-[#0c0c14] hover:border-white/20" : "border-white/10"
+                    }`}
+                    style={{
+                      borderColor: isWaitingForMyResponse
+                        ? "rgba(0, 255, 65, 0.4)"
+                        : amITheProposer
+                          ? "rgba(0, 240, 255, 0.3)"
+                          : isConfirmado
+                            ? `${primaryColor}40`
                             : "rgba(255, 255, 255, 0.1)",
+                    }}
+                  >
+                    {/* TOPO: LARGURA INTEIRA COM ANTON E DATA/HORA */}
+                    <div
+                      className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                      style={{
+                        background: `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
                       }}
                     >
-                      {/* TOPO: LARGURA INTEIRA COM ANTON E DATA/HORA */}
-                      <div
-                        className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
-                        style={{
-                          background: `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
-                        }}
-                      >
-                        <div className="flex items-center gap-2.5 sm:gap-3">
-                          <span
-                            className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2 sm:gap-2.5"
-                            style={{
-                              fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                              color: statusColor,
-                              textShadow: `0 0 25px ${statusColor}66`,
-                            }}
-                          >
-                            <span>{statusLabel}</span>
-                            <span className="text-white/20 select-none">-</span>
-                            <span className="text-white/80">MD{jogo.best_of || 3}</span>
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
-                          {jogo.data && jogo.data !== "A COMBINAR" && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
-                                {formatDayOfWeek(jogo.data)} •
-                              </span>
-                              <span className="text-white font-bold">
-                                {formatFullDate(jogo.data)}
-                              </span>
-                            </div>
-                          )}
-                          {jogo.hora && jogo.hora !== "--:--" && (
-                            <span
-                              className="font-bold pl-2 border-l border-white/15"
-                              style={{ color: statusColor }}
-                            >
-                              {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
-                            </span>
-                          )}
-                          {(!jogo.data || jogo.data === "A COMBINAR") && (
-                            <span className="text-white/40 uppercase text-[10px] tracking-[0.15em]">
-                              A Definir
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <span
+                          className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2 sm:gap-2.5"
+                          style={{
+                            fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                            color: statusColor,
+                            textShadow: `0 0 25px ${statusColor}66`,
+                          }}
+                        >
+                          {statusLabel}
+                        </span>
                       </div>
 
-                      {/* CORPO DO MATCHUP (TIME A | VS | TIME B) */}
-                      <div className="w-full flex-1 flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
+                        {jogo.data && jogo.data !== "A COMBINAR" && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                              {formatDayOfWeek(jogo.data)} •
+                            </span>
+                            <span className="text-white font-bold">
+                              {formatFullDate(jogo.data)}
+                            </span>
+                          </div>
+                        )}
+                        {jogo.hora && jogo.hora !== "--:--" && (
+                          <span
+                            className="font-bold pl-2 border-l border-white/15"
+                            style={{ color: statusColor }}
+                          >
+                            {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
+                          </span>
+                        )}
+                        {(!jogo.data || jogo.data === "A COMBINAR") && (
+                          <span className="text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                            A Definir
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CORPO DO CARD: TIME VS TIME CENTRALIZADO NO CARD E BOTÃO NA LATERAL DIREITA */}
+                    <div className="w-full flex flex-col md:grid md:grid-cols-[180px_1fr_180px] items-center gap-4 px-4 sm:px-6 py-4">
+                      {/* Espaçador esquerdo invisível para manter o confronto centralizado no desktop */}
+                      <div className="hidden md:block w-[180px]" />
+
+                      {/* Matchup Centralizado */}
+                      <div className="flex items-center justify-center gap-3 sm:gap-6 w-full min-w-0">
                         {/* Left Team */}
                         <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
                           <div className="flex flex-col items-end text-right min-w-0">
@@ -295,54 +300,42 @@ export const MeusJogosPendentes = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* CARD 2: ~20% - BOTÃO PINTADO NA COR DO CAMPEONATO */}
-                    {amITheProposer ? (
-                      <div className="w-full md:w-[22%] md:min-w-[170px] shrink-0 rounded-xl border border-white/10 bg-[#0c0c12] p-4 flex flex-col items-center justify-center text-center shadow-lg select-none">
-                        <Clock className="w-7 h-7 text-amber-400" />
-                        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-400 mt-2 leading-tight">
-                          Aguardando
-                        </span>
-                        <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest mt-1">
-                          Resposta do Rival
-                        </span>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleOpenModal}
-                        className="w-full md:w-[22%] md:min-w-[170px] shrink-0 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] active:scale-98 shadow-xl group border border-black/10"
-                        style={{
-                          backgroundColor: isWaitingForMyResponse ? "#00FF41" : primaryColor,
-                          boxShadow: isWaitingForMyResponse
-                            ? "0 4px 30px rgba(0, 255, 65, 0.4)"
-                            : `0 4px 30px ${primaryColor}40`,
-                        }}
-                      >
-                        {isWaitingForMyResponse ? (
-                          <>
-                            <Zap className="w-8 h-8 text-black transition-transform group-hover:scale-110" />
-                            <span className="text-sm sm:text-base font-black uppercase tracking-wider text-black mt-2 leading-tight">
-                              Responder
-                            </span>
-                            <span className="text-[9px] font-black text-black/70 uppercase tracking-widest mt-0.5">
-                              Proposta
-                            </span>
-                          </>
+                      {/* LATERAL DIREITA: BOTÃO DE AÇÃO */}
+                      <div className="w-full md:w-[180px] shrink-0 flex flex-col justify-center items-stretch md:border-l md:border-white/10 md:pl-4">
+                        {amITheProposer ? (
+                          <div className="w-full py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-white/40 flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider">
+                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Aguardando</span>
+                          </div>
                         ) : (
-                          <>
-                            <Calendar className="w-8 h-8 text-black transition-transform group-hover:scale-110" />
-                            <span className="text-sm sm:text-base font-black uppercase tracking-wider text-black mt-2 leading-tight">
-                              Propor Data
-                            </span>
-                            <span className="text-[9px] font-black text-black/70 uppercase tracking-widest mt-0.5">
-                              Fazer Proposta
-                            </span>
-                          </>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenModal();
+                            }}
+                            className="w-full px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-xl flex items-center justify-center gap-2 text-black hover:scale-105 active:scale-95 cursor-pointer border border-black/10"
+                            style={{
+                              backgroundColor: primaryColor,
+                              boxShadow: `0 4px 20px ${primaryColor}40`,
+                            }}
+                          >
+                            {isWaitingForMyResponse ? (
+                              <>
+                                <Zap className="w-4 h-4 text-black" />
+                                <span>Responder</span>
+                              </>
+                            ) : (
+                              <>
+                                <Calendar className="w-4 h-4 text-black" />
+                                <span>Propor Data</span>
+                              </>
+                            )}
+                          </button>
                         )}
-                      </button>
-                    )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
