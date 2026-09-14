@@ -418,8 +418,8 @@ export const ListaCronograma = () => {
                           >
                             {leftScore}
                           </span>
-                          <span className="text-white/20 text-base sm:text-xl font-black select-none leading-none">
-                            :
+                          <span className="text-white/30 text-base sm:text-xl font-black select-none leading-none">
+                            -
                           </span>
                           <span
                             className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
@@ -433,8 +433,8 @@ export const ListaCronograma = () => {
                           <span className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none text-white">
                             {scoreA}
                           </span>
-                          <span className="text-white/20 text-base sm:text-xl font-black select-none leading-none">
-                            :
+                          <span className="text-white/30 text-base sm:text-xl font-black select-none leading-none">
+                            -
                           </span>
                           <span className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none text-white">
                             {scoreB}

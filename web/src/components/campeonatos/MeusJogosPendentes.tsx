@@ -1,7 +1,10 @@
-﻿import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Swords, ChevronDown, Clock, Zap, Calendar } from "lucide-react";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { sameTeamRef } from "../../features/campeonatos/domain/team-ref";
+import { getIcon } from "./icons";
+import { formatDayOfWeek, formatFullDate } from "./dates";
+import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 export const MeusJogosPendentes = () => {
   const { campeonato, myPendingMatches, getMyTeamInMatch, isPendingMatchesOpen, setIsPendingMatchesOpen, setEditingMatchIndex, setJogoStatusAtStart, setEditFormData, setIsScheduleEditModalOpen } = useCampeonato();
@@ -79,143 +82,267 @@ export const MeusJogosPendentes = () => {
                   myTeamInMatch &&
                   sameTeamRef(jogo.proposedBy, myTeamInMatch.tag);
 
+                const IconA = getIcon(teamAData.icone || "ShieldCheck");
+                const IconB = getIcon(teamBData.icone || "ShieldCheck");
+                const corA = teamAData.cor || (jogo as any).corA || "#FFB700";
+                const corB = teamBData.cor || (jogo as any).corB || "#FFB700";
+                const primaryColor = campeonato.themeColor || "#FFB700";
+
+                const statusLabel = isWaitingForMyResponse
+                  ? "PROPOSTA RECEBIDA"
+                  : amITheProposer
+                    ? "PROPOSTA ENVIADA"
+                    : jogo.status === "confirmado"
+                      ? "AGENDADA"
+                      : "A AGENDAR";
+
+                const statusColor = isWaitingForMyResponse
+                  ? "#00FF41"
+                  : amITheProposer
+                    ? "#00F0FF"
+                    : primaryColor;
+
+                const canClickCard = !amITheProposer;
+
+                const handleOpenModal = () => {
+                  if (amITheProposer) return;
+                  const realIdx = campeonato.cronograma.findIndex((c: any) => c === jogo);
+                  setEditingMatchIndex(realIdx);
+                  setJogoStatusAtStart(jogo.status);
+                  setEditFormData({
+                    data:
+                      jogo.data && jogo.data !== "A COMBINAR"
+                        ? jogo.data
+                        : new Date().toISOString().split("T")[0],
+                    hora:
+                      jogo.hora && jogo.hora !== "--:--"
+                        ? jogo.hora
+                        : "",
+                    action:
+                      jogo.status === "proposto"
+                        ? "accept"
+                        : "propose",
+                    placar: "",
+                  });
+                  setIsScheduleEditModalOpen(true);
+                };
+
                 return (
                   <div
                     key={i}
-                    className="w-full rounded-xl border border-white/10 bg-[#0c0c10] p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all"
+                    onClick={handleOpenModal}
+                    className={`group relative w-full rounded-xl border bg-[#09090d] flex flex-col overflow-hidden transition-all shadow-lg ${
+                      canClickCard ? "cursor-pointer hover:bg-[#0c0c14] hover:border-white/20" : ""
+                    }`}
+                    style={{
+                      borderColor: isWaitingForMyResponse
+                        ? "rgba(0, 255, 65, 0.4)"
+                        : amITheProposer
+                          ? "rgba(0, 240, 255, 0.3)"
+                          : "rgba(255, 255, 255, 0.1)",
+                    }}
                   >
-                    <div className="flex-1 flex items-center gap-4 w-full">
-                      {myTeamInMatch ? (
-                        <div className="flex items-center gap-2">
-                          <div className="text-white text-[10px] font-black select-none">
-                            VS
-                          </div>
+                    {/* TOPO: LARGURA INTEIRA COM ANTON E DATA/HORA */}
+                    <div
+                      className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                      style={{
+                        background: `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <span
+                          className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2"
+                          style={{
+                            fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                            color: statusColor,
+                            textShadow: `0 0 25px ${statusColor}66`,
+                          }}
+                        >
+                          {statusLabel}
+                        </span>
+
+                        {jogo.best_of && (
+                          <span
+                            className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border"
+                            style={{
+                              color: statusColor,
+                              backgroundColor: `${statusColor}15`,
+                              borderColor: `${statusColor}30`,
+                            }}
+                          >
+                            MD{jogo.best_of}
+                          </span>
+                        )}
+
+                        {jogo.fase && (
+                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/50">
+                            {jogo.fase}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
+                        {jogo.data && jogo.data !== "A COMBINAR" && (
                           <div className="flex items-center gap-1.5">
-                            <p className="text-base sm:text-lg font-black text-white uppercase truncate max-w-[150px]">
-                              {myTeamInMatch.tag === teamATag
-                                ? teamBData.name ||
-                                  teamBData.nome
-                                : teamAData.name ||
-                                  teamAData.nome}
-                            </p>
-                            <span
-                              className="text-base sm:text-lg font-black"
-                              style={{
-                                color: campeonato.themeColor,
-                              }}
-                            >
-                              #
-                              {myTeamInMatch.tag === teamATag
-                                ? teamBData.tag
-                                : teamAData.tag}
+                            <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                              {formatDayOfWeek(jogo.data)} •
+                            </span>
+                            <span className="text-white font-bold">
+                              {formatFullDate(jogo.data)}
                             </span>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-black text-white uppercase truncate max-w-[100px]">
-                              {teamAData.name ||
-                                teamAData.nome}
-                            </p>
-                            <span
-                              className="text-sm font-black"
-                              style={{
-                                color: campeonato.themeColor,
-                              }}
-                            >
-                              #{teamAData.tag}
-                            </span>
-                          </div>
-                          <div className="text-white text-[10px] font-black">
-                            VS
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-black text-white uppercase truncate max-w-[100px]">
-                              {teamBData.name ||
-                                teamBData.nome}
-                            </p>
-                            <span
-                              className="text-sm font-black"
-                              style={{
-                                color: campeonato.themeColor,
-                              }}
-                            >
-                              #{teamBData.tag}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                        )}
+                        {jogo.hora && jogo.hora !== "--:--" && (
+                          <span
+                            className="font-bold pl-2 border-l border-white/15"
+                            style={{ color: statusColor }}
+                          >
+                            {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
+                          </span>
+                        )}
+                        {(!jogo.data || jogo.data === "A COMBINAR") && (
+                          <span className="text-white/40 uppercase text-[10px] tracking-[0.15em]">
+                            A Definir
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Botões de ação */}
-                    <div className="flex flex-col gap-2 w-full md:w-[180px] shrink-0">
-                      <button
-                        onClick={() => {
-                          if (amITheProposer) return;
-                          const realIdx =
-                            campeonato.cronograma.findIndex(
-                              (c: any) => c === jogo,
-                            );
-                          setEditingMatchIndex(realIdx);
-                          setJogoStatusAtStart(jogo.status);
-                          setEditFormData({
-                            data:
-                              jogo.data &&
-                              jogo.data !== "A COMBINAR"
-                                ? jogo.data
-                                : new Date()
-                                    .toISOString()
-                                    .split("T")[0],
-                            hora:
-                              jogo.hora &&
-                              jogo.hora !== "--:--"
-                                ? jogo.hora
-                                : "",
-                            action:
-                              jogo.status === "proposto"
-                                ? "accept"
-                                : "propose",
-                            placar: "",
-                          });
-                          setIsScheduleEditModalOpen(true);
-                        }}
-                        disabled={amITheProposer}
-                        className={`w-full px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl flex items-center justify-center gap-2 ${
-                          amITheProposer
-                            ? "bg-white/10 text-white/40 cursor-not-allowed"
-                            : "text-black hover:scale-105 active:scale-95 cursor-pointer"
-                        }`}
-                        style={{
-                          backgroundColor: amITheProposer
-                            ? undefined
-                            : isWaitingForMyResponse
-                              ? "#00FF41"
-                              : (campeonato.themeColor || '#FFB700'),
-                          boxShadow: amITheProposer
-                            ? undefined
-                            : isWaitingForMyResponse
-                              ? "0 10px 40px rgba(0, 255, 65, 0.3)"
-                              : `0 10px 40px ${campeonato.themeColor || '#FFB700'}33`,
-                        }}
-                      >
-                        {amITheProposer ? (
-                          <Clock className="w-3.5 h-3.5" />
-                        ) : isWaitingForMyResponse ? (
-                          <Zap className="w-3.5 h-3.5" />
-                        ) : (
-                          <Calendar className="w-3.5 h-3.5" />
-                        )}
-                        {jogo.status === "proposto"
-                          ? amITheProposer
-                            ? "Aguardando"
-                            : "Responder"
-                          : "Propor Data"}
-                      </button>
-                      {amITheProposer && (
-                        <p className="text-[8px] font-black text-white/20 uppercase text-center tracking-widest">
-                          Aguardando resposta
-                        </p>
+                    {/* CORPO DO MATCHUP (TIME A | VS | TIME B) */}
+                    <div className="w-full flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
+                      {/* Left Team */}
+                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
+                        <div className="flex flex-col items-end text-right min-w-0">
+                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                            {teamAData.name || teamAData.nome}
+                          </span>
+                          {teamAData.tag && (
+                            <div
+                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
+                              style={{
+                                clipPath: CUT_BADGE,
+                                background: `${corA}80`,
+                              }}
+                            >
+                              <div
+                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                style={{
+                                  clipPath: CUT_BADGE_INNER,
+                                  color: corA,
+                                }}
+                              >
+                                #{teamAData.tag}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div
+                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                          style={{ borderColor: `${corA}80` }}
+                        >
+                          {teamAData.logo ? (
+                            <img
+                              src={teamAData.logo}
+                              alt={teamAData.tag}
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <IconA
+                              className="w-5 h-5 sm:w-7 sm:h-7"
+                              style={{ color: corA }}
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* VS Box */}
+                      <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[70px] sm:min-w-[90px]">
+                        <span className="text-xl sm:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
+                          VS
+                        </span>
+                      </div>
+
+                      {/* Right Team */}
+                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
+                        <div
+                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                          style={{ borderColor: `${corB}80` }}
+                        >
+                          {teamBData.logo ? (
+                            <img
+                              src={teamBData.logo}
+                              alt={teamBData.tag}
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <IconB
+                              className="w-5 h-5 sm:w-7 sm:h-7"
+                              style={{ color: corB }}
+                            />
+                          )}
+                        </div>
+
+                        <div className="flex flex-col items-start text-left min-w-0">
+                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                            {teamBData.name || teamBData.nome}
+                          </span>
+                          {teamBData.tag && (
+                            <div
+                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
+                              style={{
+                                clipPath: CUT_BADGE,
+                                background: `${corB}80`,
+                              }}
+                            >
+                              <div
+                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                style={{
+                                  clipPath: CUT_BADGE_INNER,
+                                  color: corB,
+                                }}
+                              >
+                                #{teamBData.tag}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RODAPÉ: BOTÕES DE AÇÃO */}
+                    <div className="w-full flex items-center justify-center px-4 py-2 sm:py-2.5 border-t border-white/10 bg-black/40">
+                      {amITheProposer ? (
+                        <div className="text-[9px] sm:text-[10px] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-md">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Aguardando Resposta do Adversário</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenModal();
+                          }}
+                          className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 text-black rounded-lg shadow-lg cursor-pointer"
+                          style={{
+                            backgroundColor: isWaitingForMyResponse ? "#00FF41" : primaryColor,
+                          }}
+                        >
+                          {isWaitingForMyResponse ? (
+                            <>
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>Responder Proposta</span>
+                            </>
+                          ) : (
+                            <>
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>Propor Data</span>
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
                   </div>
