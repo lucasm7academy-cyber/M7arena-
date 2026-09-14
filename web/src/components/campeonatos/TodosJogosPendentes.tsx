@@ -181,136 +181,138 @@ export const TodosJogosPendentes = () => {
                       </div>
                     </div>
 
-                    {/* CORPO DO MATCHUP (TIME A | VS | TIME B) */}
-                    <div className="w-full flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
-                      {/* Left Team */}
-                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
-                        <div className="flex flex-col items-end text-right min-w-0">
-                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
-                            {teamAData.name || teamAData.nome}
-                          </span>
-                          {teamAData.tag && (
-                            <div
-                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
-                              style={{
-                                clipPath: CUT_BADGE,
-                                background: `${corA}80`,
-                              }}
-                            >
+                    {/* CORPO DO CARD: MATCHUP NA ESQUERDA/CENTRO E BOTÕES NA LATERAL DIREITA */}
+                    <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 px-4 sm:px-6 py-4">
+                      {/* Matchup */}
+                      <div className="flex-1 flex items-center justify-center gap-3 sm:gap-6 w-full min-w-0">
+                        {/* Left Team */}
+                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 justify-end min-w-0">
+                          <div className="flex flex-col items-end text-right min-w-0">
+                            <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                              {teamAData.name || teamAData.nome}
+                            </span>
+                            {teamAData.tag && (
                               <div
-                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                className="p-[1px] shrink-0 mt-0.5"
                                 style={{
-                                  clipPath: CUT_BADGE_INNER,
-                                  color: corA,
+                                  clipPath: CUT_BADGE,
+                                  background: `${corA}80`,
                                 }}
                               >
-                                #{teamAData.tag}
+                                <div
+                                  className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                  style={{
+                                    clipPath: CUT_BADGE_INNER,
+                                    color: corA,
+                                  }}
+                                >
+                                  #{teamAData.tag}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
+
+                          <div
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            style={{ borderColor: `${corA}80` }}
+                          >
+                            {teamAData.logo ? (
+                              <img
+                                src={teamAData.logo}
+                                alt={teamAData.tag}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <IconA
+                                className="w-5 h-5 sm:w-6 sm:h-6"
+                                style={{ color: corA }}
+                              />
+                            )}
+                          </div>
                         </div>
 
-                        <div
-                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
-                          style={{ borderColor: `${corA}80` }}
-                        >
-                          {teamAData.logo ? (
-                            <img
-                              src={teamAData.logo}
-                              alt={teamAData.tag}
-                              loading="lazy"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <IconA
-                              className="w-5 h-5 sm:w-7 sm:h-7"
-                              style={{ color: corA }}
-                            />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* VS Box */}
-                      <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[70px] sm:min-w-[90px]">
-                        <span className="text-xl sm:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
-                          VS
-                        </span>
-                      </div>
-
-                      {/* Right Team */}
-                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
-                        <div
-                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
-                          style={{ borderColor: `${corB}80` }}
-                        >
-                          {teamBData.logo ? (
-                            <img
-                              src={teamBData.logo}
-                              alt={teamBData.tag}
-                              loading="lazy"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <IconB
-                              className="w-5 h-5 sm:w-7 sm:h-7"
-                              style={{ color: corB }}
-                            />
-                          )}
-                        </div>
-
-                        <div className="flex flex-col items-start text-left min-w-0">
-                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
-                            {teamBData.name || teamBData.nome}
+                        {/* VS Box */}
+                        <div className="shrink-0 flex items-center justify-center px-3 sm:px-4 py-1.5 rounded-xl bg-black/60 border border-white/10 shadow-inner">
+                          <span className="text-base sm:text-xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
+                            VS
                           </span>
-                          {teamBData.tag && (
-                            <div
-                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
-                              style={{
-                                clipPath: CUT_BADGE,
-                                background: `${corB}80`,
-                              }}
-                            >
+                        </div>
+
+                        {/* Right Team */}
+                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 justify-start min-w-0">
+                          <div
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            style={{ borderColor: `${corB}80` }}
+                          >
+                            {teamBData.logo ? (
+                              <img
+                                src={teamBData.logo}
+                                alt={teamBData.tag}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <IconB
+                                className="w-5 h-5 sm:w-6 sm:h-6"
+                                style={{ color: corB }}
+                              />
+                            )}
+                          </div>
+
+                          <div className="flex flex-col items-start text-left min-w-0">
+                            <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                              {teamBData.name || teamBData.nome}
+                            </span>
+                            {teamBData.tag && (
                               <div
-                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                className="p-[1px] shrink-0 mt-0.5"
                                 style={{
-                                  clipPath: CUT_BADGE_INNER,
-                                  color: corB,
+                                  clipPath: CUT_BADGE,
+                                  background: `${corB}80`,
                                 }}
                               >
-                                #{teamBData.tag}
+                                <div
+                                  className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                  style={{
+                                    clipPath: CUT_BADGE_INNER,
+                                    color: corB,
+                                  }}
+                                >
+                                  #{teamBData.tag}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* RODAPÉ: BOTÕES DE AÇÃO */}
-                    <div className="w-full flex items-center justify-between gap-3 px-4 py-2 sm:py-2.5 border-t border-white/10 bg-black/40">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenArbitrate();
-                        }}
-                        className="px-4 py-1.5 bg-white text-black font-black uppercase tracking-wider text-[10px] rounded-lg hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5 text-black" />
-                        <span>Arbitrar Jogo</span>
-                      </button>
+                      {/* LATERAL DIREITA: BOTÕES DE AÇÃO */}
+                      <div className="w-full md:w-[180px] shrink-0 flex items-center gap-2 md:border-l md:border-white/10 md:pl-4">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenArbitrate();
+                          }}
+                          className="flex-1 px-4 py-2.5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-black" />
+                          <span>Arbitrar</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMatch(jogo);
-                        }}
-                        title="Excluir confronto"
-                        className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all rounded-lg flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Excluir</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteMatch(jogo);
+                          }}
+                          title="Excluir confronto"
+                          className="px-3 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all rounded-lg flex items-center justify-center shrink-0 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

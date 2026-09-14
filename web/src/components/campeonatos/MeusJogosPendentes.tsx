@@ -208,142 +208,153 @@ export const MeusJogosPendentes = () => {
                       </div>
                     </div>
 
-                    {/* CORPO DO MATCHUP (TIME A | VS | TIME B) */}
-                    <div className="w-full flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
-                      {/* Left Team */}
-                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
-                        <div className="flex flex-col items-end text-right min-w-0">
-                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
-                            {teamAData.name || teamAData.nome}
-                          </span>
-                          {teamAData.tag && (
-                            <div
-                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
-                              style={{
-                                clipPath: CUT_BADGE,
-                                background: `${corA}80`,
-                              }}
-                            >
+                    {/* CORPO DO CARD: MATCHUP NA ESQUERDA/CENTRO E BOTÕES NA LATERAL DIREITA */}
+                    <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 px-4 sm:px-6 py-4">
+                      {/* Matchup */}
+                      <div className="flex-1 flex items-center justify-center gap-3 sm:gap-6 w-full min-w-0">
+                        {/* Left Team */}
+                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 justify-end min-w-0">
+                          <div className="flex flex-col items-end text-right min-w-0">
+                            <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                              {teamAData.name || teamAData.nome}
+                            </span>
+                            {teamAData.tag && (
                               <div
-                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                className="p-[1px] shrink-0 mt-0.5"
                                 style={{
-                                  clipPath: CUT_BADGE_INNER,
-                                  color: corA,
+                                  clipPath: CUT_BADGE,
+                                  background: `${corA}80`,
                                 }}
                               >
-                                #{teamAData.tag}
+                                <div
+                                  className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                  style={{
+                                    clipPath: CUT_BADGE_INNER,
+                                    color: corA,
+                                  }}
+                                >
+                                  #{teamAData.tag}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
+
+                          <div
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            style={{ borderColor: `${corA}80` }}
+                          >
+                            {teamAData.logo ? (
+                              <img
+                                src={teamAData.logo}
+                                alt={teamAData.tag}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <IconA
+                                className="w-5 h-5 sm:w-6 sm:h-6"
+                                style={{ color: corA }}
+                              />
+                            )}
+                          </div>
                         </div>
 
-                        <div
-                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
-                          style={{ borderColor: `${corA}80` }}
-                        >
-                          {teamAData.logo ? (
-                            <img
-                              src={teamAData.logo}
-                              alt={teamAData.tag}
-                              loading="lazy"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <IconA
-                              className="w-5 h-5 sm:w-7 sm:h-7"
-                              style={{ color: corA }}
-                            />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* VS Box */}
-                      <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[70px] sm:min-w-[90px]">
-                        <span className="text-xl sm:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
-                          VS
-                        </span>
-                      </div>
-
-                      {/* Right Team */}
-                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
-                        <div
-                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
-                          style={{ borderColor: `${corB}80` }}
-                        >
-                          {teamBData.logo ? (
-                            <img
-                              src={teamBData.logo}
-                              alt={teamBData.tag}
-                              loading="lazy"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <IconB
-                              className="w-5 h-5 sm:w-7 sm:h-7"
-                              style={{ color: corB }}
-                            />
-                          )}
-                        </div>
-
-                        <div className="flex flex-col items-start text-left min-w-0">
-                          <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
-                            {teamBData.name || teamBData.nome}
+                        {/* VS Box */}
+                        <div className="shrink-0 flex items-center justify-center px-3 sm:px-4 py-1.5 rounded-xl bg-black/60 border border-white/10 shadow-inner">
+                          <span className="text-base sm:text-xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
+                            VS
                           </span>
-                          {teamBData.tag && (
-                            <div
-                              className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
-                              style={{
-                                clipPath: CUT_BADGE,
-                                background: `${corB}80`,
-                              }}
-                            >
+                        </div>
+
+                        {/* Right Team */}
+                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 justify-start min-w-0">
+                          <div
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            style={{ borderColor: `${corB}80` }}
+                          >
+                            {teamBData.logo ? (
+                              <img
+                                src={teamBData.logo}
+                                alt={teamBData.tag}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <IconB
+                                className="w-5 h-5 sm:w-6 sm:h-6"
+                                style={{ color: corB }}
+                              />
+                            )}
+                          </div>
+
+                          <div className="flex flex-col items-start text-left min-w-0">
+                            <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                              {teamBData.name || teamBData.nome}
+                            </span>
+                            {teamBData.tag && (
                               <div
-                                className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                className="p-[1px] shrink-0 mt-0.5"
                                 style={{
-                                  clipPath: CUT_BADGE_INNER,
-                                  color: corB,
+                                  clipPath: CUT_BADGE,
+                                  background: `${corB}80`,
                                 }}
                               >
-                                #{teamBData.tag}
+                                <div
+                                  className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                  style={{
+                                    clipPath: CUT_BADGE_INNER,
+                                    color: corB,
+                                  }}
+                                >
+                                  #{teamBData.tag}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* RODAPÉ: BOTÕES DE AÇÃO */}
-                    <div className="w-full flex items-center justify-center px-4 py-2 sm:py-2.5 border-t border-white/10 bg-black/40">
-                      {amITheProposer ? (
-                        <div className="text-[9px] sm:text-[10px] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-md">
-                          <Clock className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Aguardando Resposta do Adversário</span>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenModal();
-                          }}
-                          className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 text-black rounded-lg shadow-lg cursor-pointer"
-                          style={{
-                            backgroundColor: isWaitingForMyResponse ? "#00FF41" : primaryColor,
-                          }}
-                        >
-                          {isWaitingForMyResponse ? (
-                            <>
-                              <Zap className="w-3.5 h-3.5" />
-                              <span>Responder Proposta</span>
-                            </>
-                          ) : (
-                            <>
-                              <Calendar className="w-3.5 h-3.5" />
-                              <span>Propor Data</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                      {/* LATERAL DIREITA: BOTÕES DE AÇÃO */}
+                      <div className="w-full md:w-[180px] shrink-0 flex flex-col gap-1.5 md:border-l md:border-white/10 md:pl-4">
+                        {amITheProposer ? (
+                          <>
+                            <div className="w-full py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-white/40 flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider">
+                              <Clock className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Aguardando</span>
+                            </div>
+                            <p className="text-[8px] font-black text-white/20 uppercase text-center tracking-widest">
+                              Aguardando resposta
+                            </p>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenModal();
+                            }}
+                            className="w-full px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl flex items-center justify-center gap-2 text-black hover:scale-105 active:scale-95 cursor-pointer"
+                            style={{
+                              backgroundColor: isWaitingForMyResponse ? "#00FF41" : primaryColor,
+                              boxShadow: isWaitingForMyResponse
+                                ? "0 4px 20px rgba(0, 255, 65, 0.35)"
+                                : `0 4px 20px ${primaryColor}40`,
+                            }}
+                          >
+                            {isWaitingForMyResponse ? (
+                              <>
+                                <Zap className="w-3.5 h-3.5" />
+                                <span>Responder</span>
+                              </>
+                            ) : (
+                              <>
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>Propor Data</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
