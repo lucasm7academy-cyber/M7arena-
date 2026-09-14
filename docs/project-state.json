@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-14T02:18:11.367Z",
+  "updatedAt": "2026-09-14T02:24:06.701Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2097,12 +2097,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-07T20:45:37.522Z",
-      "agent": "antigravity",
-      "summary": "Permitido que contas com cargo 'proprietario' editem lineups e gerenciem times (TimePage, backend PUT, e aceitar convites) assim como donos e capitães. Validação de TypeScript de ambos front e back passou com sucesso.",
-      "touched": []
-    },
-    {
       "at": "2026-09-07T20:49:10.177Z",
       "agent": "gemini",
       "summary": "Ajustada a página de Detalhes do Campeonato (CampeonatoDetalhes e seus componentes VisaoGeral, ListaCronograma, GroupStage, Historico, Chaves, AdminCriarJogo): reduzido o arredondamento geral (containers de rounded-2xl para rounded-xl, cards e botoes de rounded-xl para rounded-lg, logos de time de rounded-xl para rounded-md) e substituídas as tags de time redondas pelo badge cortado cut-edge oficial com borda e texto na cor do time sem preenchimento colorido.",
@@ -2393,6 +2387,14 @@
       "summary": "Refatorado o layout dos cards de jogos pendentes (MeusJogosPendentes e TodosJogosPendentes) para o padrão de 2 cards lado a lado na mesma linha (80% confronto / 20% botão de ação pintado na cor do campeonato). Validado com npx tsc e deployado com sucesso na VPS (nginx rebuildado).",
       "touched": [
         "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T02:24:06.701Z",
+      "agent": "gemini",
+      "summary": "Removido o botão duplicado de 'Excluir Jogo' do card de arbitragem em TodosJogosPendentes, deixando o card 2 ocupado inteiramente pelo botão Arbitrar pintado na cor do campeonato. Buildado e deployado na VPS.",
+      "touched": [
         "web/src/components/campeonatos/TodosJogosPendentes.tsx"
       ]
     }
