@@ -115,16 +115,16 @@ export const TodosJogosPendentes = () => {
                           : "rgba(255, 255, 255, 0.1)",
                     }}
                   >
-                    {/* TOPO: LARGURA INTEIRA COM ANTON E DATA/HORA */}
+                    {/* TOPO: STATUS E DATA/HORA RESPONSIVOS */}
                     <div
-                      className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                      className="w-full flex flex-wrap items-center justify-between gap-1.5 sm:gap-3 px-3 sm:px-6 py-2 sm:py-2.5 border-b border-white/10 select-none"
                       style={{
                         background: `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
                       }}
                     >
-                      <div className="flex items-center gap-2.5 sm:gap-3">
+                      <div className="flex items-center gap-2">
                         <span
-                          className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2 sm:gap-2.5"
+                          className="text-lg sm:text-2xl md:text-3xl uppercase tracking-wider leading-none flex items-center gap-2"
                           style={{
                             fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                             color: statusColor,
@@ -135,9 +135,9 @@ export const TodosJogosPendentes = () => {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
+                      <div className="flex items-center gap-1.5 sm:gap-3 text-[11px] sm:text-xs md:text-sm font-bold tracking-wider text-white/70">
                         {jogo.data && jogo.data !== "A COMBINAR" && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
                               {formatDayOfWeek(jogo.data)} •
                             </span>
@@ -148,7 +148,7 @@ export const TodosJogosPendentes = () => {
                         )}
                         {jogo.hora && jogo.hora !== "--:--" && (
                           <span
-                            className="font-bold pl-2 border-l border-white/15"
+                            className="font-bold pl-1.5 sm:pl-2 border-l border-white/15"
                             style={{ color: statusColor }}
                           >
                             {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
@@ -162,29 +162,29 @@ export const TodosJogosPendentes = () => {
                       </div>
                     </div>
 
-                    {/* CORPO DO CARD: TIME VS TIME CENTRALIZADO NO CARD E BOTÃO NA LATERAL DIREITA */}
-                    <div className="w-full flex flex-col md:grid md:grid-cols-[180px_1fr_180px] items-center gap-4 px-4 sm:px-6 py-4">
+                    {/* CORPO DO CARD: TIME VS TIME CENTRALIZADO NO CARD E BOTÃO NA LATERAL DIREITA NO DESKTOP / ABAIXO NO MOBILE */}
+                    <div className="w-full flex flex-col md:grid md:grid-cols-[160px_1fr_160px] items-center gap-3 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4">
                       {/* Espaçador esquerdo invisível para manter o confronto centralizado no desktop */}
-                      <div className="hidden md:block w-[180px]" />
+                      <div className="hidden md:block w-[160px]" />
 
                       {/* Matchup Centralizado */}
-                      <div className="flex items-center justify-center gap-3 sm:gap-6 w-full min-w-0">
+                      <div className="flex items-center justify-between sm:justify-center gap-1.5 sm:gap-4 md:gap-6 w-full min-w-0">
                         {/* Left Team */}
-                        <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-3 flex-1 justify-end min-w-0">
                           <div className="flex flex-col items-end text-right min-w-0">
-                            <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                            <span className="text-xs sm:text-sm md:text-base font-black text-white uppercase truncate tracking-tight">
                               {teamAData.name || teamAData.nome}
                             </span>
                             {teamAData.tag && (
                               <div
-                                className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
+                                className="p-[1px] shrink-0 mt-0.5"
                                 style={{
                                   clipPath: CUT_BADGE,
                                   background: `${corA}80`,
                                 }}
                               >
                                 <div
-                                  className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                  className="text-[8px] sm:text-[9px] md:text-[10px] font-black px-1 sm:px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
                                   style={{
                                     clipPath: CUT_BADGE_INNER,
                                     color: corA,
@@ -197,7 +197,7 @@ export const TodosJogosPendentes = () => {
                           </div>
 
                           <div
-                            className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                             style={{ borderColor: `${corA}80` }}
                           >
                             {teamAData.logo ? (
@@ -209,7 +209,7 @@ export const TodosJogosPendentes = () => {
                               />
                             ) : (
                               <IconA
-                                className="w-5 h-5 sm:w-7 sm:h-7"
+                                className="w-4 h-4 sm:w-6 sm:h-6"
                                 style={{ color: corA }}
                               />
                             )}
@@ -217,16 +217,16 @@ export const TodosJogosPendentes = () => {
                         </div>
 
                         {/* VS Box */}
-                        <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[70px] sm:min-w-[90px]">
-                          <span className="text-xl sm:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
+                        <div className="shrink-0 flex flex-col items-center justify-center px-2.5 sm:px-4 md:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[50px] sm:min-w-[65px] md:min-w-[80px]">
+                          <span className="text-base sm:text-2xl md:text-3xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
                             VS
                           </span>
                         </div>
 
                         {/* Right Team */}
-                        <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-3 flex-1 justify-start min-w-0">
                           <div
-                            className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                            className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                             style={{ borderColor: `${corB}80` }}
                           >
                             {teamBData.logo ? (
@@ -238,26 +238,26 @@ export const TodosJogosPendentes = () => {
                               />
                             ) : (
                               <IconB
-                                className="w-5 h-5 sm:w-7 sm:h-7"
+                                className="w-4 h-4 sm:w-6 sm:h-6"
                                 style={{ color: corB }}
                               />
                             )}
                           </div>
 
                           <div className="flex flex-col items-start text-left min-w-0">
-                            <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                            <span className="text-xs sm:text-sm md:text-base font-black text-white uppercase truncate tracking-tight">
                               {teamBData.name || teamBData.nome}
                             </span>
                             {teamBData.tag && (
                               <div
-                                className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
+                                className="p-[1px] shrink-0 mt-0.5"
                                 style={{
                                   clipPath: CUT_BADGE,
                                   background: `${corB}80`,
                                 }}
                               >
                                 <div
-                                  className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                                  className="text-[8px] sm:text-[9px] md:text-[10px] font-black px-1 sm:px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
                                   style={{
                                     clipPath: CUT_BADGE_INNER,
                                     color: corB,
@@ -272,14 +272,14 @@ export const TodosJogosPendentes = () => {
                       </div>
 
                       {/* LATERAL DIREITA: BOTÃO DE ARBITRAR */}
-                      <div className="w-full md:w-[180px] shrink-0 flex items-center justify-end md:border-l md:border-white/10 md:pl-4">
+                      <div className="w-full md:w-[160px] shrink-0 flex flex-col justify-center items-stretch md:border-l md:border-white/10 md:pl-4 pt-2.5 md:pt-0 border-t border-white/5 md:border-t-0">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenArbitrate();
                           }}
-                          className="w-full px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-xl flex items-center justify-center gap-2 text-black hover:scale-105 active:scale-95 cursor-pointer border border-black/10"
+                          className="w-full px-4 py-2.5 sm:py-3 rounded-xl font-black uppercase tracking-wider text-xs sm:text-[11px] transition-all shadow-xl flex items-center justify-center gap-2 text-black hover:scale-105 active:scale-95 cursor-pointer border border-black/10"
                           style={{
                             backgroundColor: primaryColor,
                             boxShadow: `0 4px 20px ${primaryColor}40`,

@@ -116,9 +116,9 @@ export const ListaCronograma = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="w-full rounded-xl border border-white/10 bg-[#08080a] p-4 sm:p-6 space-y-6 shadow-2xl"
+      className="w-full rounded-xl border border-white/10 bg-[#08080a] p-3 sm:p-6 space-y-4 sm:space-y-6 shadow-2xl"
     >
-      <div className="flex items-center justify-between border-b border-white/5 pb-6">
+      <div className="flex items-center justify-between border-b border-white/5 pb-4 sm:pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
             <Calendar className="w-6 h-6" style={{ color: campeonato.themeColor }} />
@@ -294,18 +294,18 @@ export const ListaCronograma = () => {
                         : "rgba(255, 255, 255, 0.1)",
                   }}
                 >
-                  {/* TOPO: LARGURA INTEIRA (w-full) com PALAVRA EM ANTON e DATA/HORA */}
+                  {/* TOPO: STATUS E DATA/HORA RESPONSIVOS */}
                   <div
-                    className="w-full flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 select-none"
+                    className="w-full flex flex-wrap items-center justify-between gap-1.5 sm:gap-3 px-3 sm:px-6 py-2 sm:py-2.5 border-b border-white/10 select-none"
                     style={{
                       background: isSeriesLive
                         ? "linear-gradient(90deg, rgba(0,255,65,0.2) 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)"
                         : `linear-gradient(90deg, ${statusColor}22 0%, rgba(15,15,22,0.95) 50%, rgba(10,10,15,0.6) 100%)`,
                     }}
                   >
-                    <div className="flex items-center gap-2.5 sm:gap-3">
+                    <div className="flex items-center gap-2">
                       <span
-                        className="text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider leading-none flex items-center gap-2 sm:gap-2.5"
+                        className="text-lg sm:text-2xl md:text-3xl uppercase tracking-wider leading-none flex items-center gap-2"
                         style={{
                           fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
                           color: statusColor,
@@ -313,15 +313,15 @@ export const ListaCronograma = () => {
                         }}
                       >
                         {isSeriesLive && (
-                          <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#00FF41] animate-ping shrink-0" />
+                          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#00FF41] animate-ping shrink-0" />
                         )}
                         {statusLabel}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-black tracking-wider text-white/70">
+                    <div className="flex items-center gap-1.5 sm:gap-3 text-[11px] sm:text-xs md:text-sm font-bold tracking-wider text-white/70">
                       {jogo.data && jogo.data !== "A COMBINAR" && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <span className="hidden sm:inline-block text-white/40 uppercase text-[10px] tracking-[0.15em]">
                             {formatDayOfWeek(jogo.data)} •
                           </span>
@@ -332,7 +332,7 @@ export const ListaCronograma = () => {
                       )}
                       {jogo.hora && jogo.hora !== "--:--" && (
                         <span
-                          className="font-bold pl-2 border-l border-white/15"
+                          className="font-bold pl-1.5 sm:pl-2 border-l border-white/15"
                           style={{ color: statusColor }}
                         >
                           {/^\d{2}:\d{2}/.test(jogo.hora) ? jogo.hora.substring(0, 5) : jogo.hora}
@@ -346,24 +346,24 @@ export const ListaCronograma = () => {
                     </div>
                   </div>
 
-                  {/* CORPO DO CARD: MATCHUP (Esquerda: Time A/Vencedor, Centro: Placar/VS, Direita: Time B/Perdedor) */}
-                  <div className="w-full flex items-center justify-between gap-3 sm:gap-8 px-4 sm:px-8 py-4 sm:py-5">
+                  {/* CORPO DO CARD: MATCHUP RESPONSIVO (Esquerda: Time A/Vencedor, Centro: Placar/VS, Direita: Time B/Perdedor) */}
+                  <div className="w-full flex items-center justify-between gap-1.5 sm:gap-6 md:gap-8 px-3 sm:px-8 py-3 sm:py-5">
                     {/* Left Team */}
-                    <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-end min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-3 flex-1 justify-end min-w-0">
                       <div className="flex flex-col items-end text-right min-w-0">
-                        <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                        <span className="text-xs sm:text-sm md:text-base font-black text-white uppercase truncate tracking-tight">
                           {leftTeam.name || leftTeam.nome}
                         </span>
                         {leftTeam.tag && (
                           <div
-                            className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
+                            className="p-[1px] shrink-0 mt-0.5"
                             style={{
                               clipPath: CUT_BADGE,
                               background: `${leftCor}80`,
                             }}
                           >
                             <div
-                              className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                              className="text-[8px] sm:text-[9px] md:text-[10px] font-black px-1 sm:px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
                               style={{
                                 clipPath: CUT_BADGE_INNER,
                                 color: leftCor,
@@ -376,7 +376,7 @@ export const ListaCronograma = () => {
                       </div>
 
                       <div
-                        className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                        className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                         style={{ borderColor: `${leftCor}80` }}
                       >
                         {leftTeam.logo ? (
@@ -388,7 +388,7 @@ export const ListaCronograma = () => {
                           />
                         ) : (
                           <LeftIcon
-                            className="w-5 h-5 sm:w-7 sm:h-7"
+                            className="w-4 h-4 sm:w-6 sm:h-6"
                             style={{ color: leftCor }}
                           />
                         )}
@@ -396,39 +396,39 @@ export const ListaCronograma = () => {
                     </div>
 
                     {/* Scoreboard / VS Box */}
-                    <div className="shrink-0 flex flex-col items-center justify-center px-3.5 sm:px-6 py-2 rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[70px] sm:min-w-[90px]">
+                    <div className="shrink-0 flex flex-col items-center justify-center px-2.5 sm:px-5 md:px-6 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-black/60 border border-white/10 shadow-inner min-w-[50px] sm:min-w-[70px] md:min-w-[90px]">
                       {isFinalizado ? (
-                        <div className="flex items-center gap-2 sm:gap-3.5">
+                        <div className="flex items-center gap-1.5 sm:gap-3">
                           <span
-                            className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
+                            className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
                             style={{ color: leftScoreColor }}
                           >
                             {leftScore}
                           </span>
-                          <span className="text-white/30 text-base sm:text-xl font-black select-none leading-none">
+                          <span className="text-white/30 text-sm sm:text-lg md:text-xl font-black select-none leading-none">
                             -
                           </span>
                           <span
-                            className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
+                            className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none"
                             style={{ color: rightScoreColor }}
                           >
                             {rightScore}
                           </span>
                         </div>
                       ) : isSeriesLive ? (
-                        <div className="flex items-center gap-2 sm:gap-3.5">
-                          <span className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none text-white">
+                        <div className="flex items-center gap-1.5 sm:gap-3">
+                          <span className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none text-white">
                             {scoreA}
                           </span>
-                          <span className="text-white/30 text-base sm:text-xl font-black select-none leading-none">
+                          <span className="text-white/30 text-sm sm:text-lg md:text-xl font-black select-none leading-none">
                             -
                           </span>
-                          <span className="text-xl sm:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none text-white">
+                          <span className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tabular-nums font-mono leading-none text-white">
                             {scoreB}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xl sm:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
+                        <span className="text-base sm:text-2xl md:text-3xl lg:text-4xl font-black tracking-widest text-white/30 font-mono select-none leading-none">
                           VS
                         </span>
                       )}
@@ -445,9 +445,9 @@ export const ListaCronograma = () => {
                     </div>
 
                     {/* Right Team */}
-                    <div className="flex items-center gap-2.5 sm:gap-4 flex-1 justify-start min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-3 flex-1 justify-start min-w-0">
                       <div
-                        className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
+                        className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden bg-black shadow-lg"
                         style={{ borderColor: `${rightCor}80` }}
                       >
                         {rightTeam.logo ? (
@@ -459,26 +459,26 @@ export const ListaCronograma = () => {
                           />
                         ) : (
                           <RightIcon
-                            className="w-5 h-5 sm:w-7 sm:h-7"
+                            className="w-4 h-4 sm:w-6 sm:h-6"
                             style={{ color: rightCor }}
                           />
                         )}
                       </div>
 
                       <div className="flex flex-col items-start text-left min-w-0">
-                        <span className="text-xs sm:text-base font-black text-white uppercase truncate tracking-tight">
+                        <span className="text-xs sm:text-sm md:text-base font-black text-white uppercase truncate tracking-tight">
                           {rightTeam.name || rightTeam.nome}
                         </span>
                         {rightTeam.tag && (
                           <div
-                            className="p-[1px] shrink-0 mt-0.5 sm:mt-1"
+                            className="p-[1px] shrink-0 mt-0.5"
                             style={{
                               clipPath: CUT_BADGE,
                               background: `${rightCor}80`,
                             }}
                           >
                             <div
-                              className="text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 tracking-wider bg-[#0c0c10]"
+                              className="text-[8px] sm:text-[9px] md:text-[10px] font-black px-1 sm:px-1.5 py-0.5 tracking-wider bg-[#0c0c10]"
                               style={{
                                 clipPath: CUT_BADGE_INNER,
                                 color: rightCor,
@@ -580,21 +580,21 @@ export const ListaCronograma = () => {
                   )}
 
                   {!canStartSeries && !isSeriesLive && !isFinalizado && canUserEdit && !(jogo.status === "confirmado" && !isAdmin) && (
-                    <div className="w-full flex items-center justify-center px-4 py-1.5 sm:py-2 border-t border-white/10 bg-black/40">
-                      <div className="text-[9px] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-md">
+                    <div className="w-full flex items-center justify-center px-2 sm:px-4 py-1.5 sm:py-2 border-t border-white/10 bg-black/40">
+                      <div className="text-[9px] font-black uppercase text-white/70 tracking-wider flex flex-wrap items-center justify-center text-center gap-1.5 px-2.5 sm:px-3 py-1 bg-white/5 border border-white/10 rounded-md">
                         {jogo.status === "proposto" && isMyTurn ? (
                           <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF41]" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF41] shrink-0" />
                             <span>Clique para Responder Proposta</span>
                           </>
                         ) : jogo.status === "confirmado" && isAdmin ? (
                           <>
-                            <ShieldCheck className="w-3.5 h-3.5 text-[#00F0FF]" />
+                            <ShieldCheck className="w-3.5 h-3.5 text-[#00F0FF] shrink-0" />
                             <span>Clique para Gerenciar / Finalizar</span>
                           </>
                         ) : (
                           <>
-                            <Calendar className="w-3.5 h-3.5 text-[#FFB700]" />
+                            <Calendar className="w-3.5 h-3.5 text-[#FFB700] shrink-0" />
                             <span>{jogo.status === "proposto" ? "Aguardando Resposta do Adversário" : "Clique para Agendar"}</span>
                           </>
                         )}
