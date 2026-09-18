@@ -2,7 +2,7 @@ import { Router } from "express";
 import { timingSafeEqual } from "crypto";
 import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
-import { users, userSessions, userWallets, userRoles } from "../../../db/schema/identidade.js";
+import { users, userWallets, userRoles } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers, matchResults, matchCodes, salaMensagens } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
@@ -431,32 +431,6 @@ matchesRouter.post("/:id/join", async (req, res) => {
     return res.json(r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
-  }
-});
-
-// ── POST /api/matches/:id/vote — registra voto num jogo (ex.: enquete do Lobby) ─
-// Substitui a RPC votar_jogo. A tabela votos_jogos foi descartada no schema novo
-// (DISCARDED.md) e o front mantém a contagem em localStorage; aqui apenas
-// validamos auth + partida existente e devolvemos ok (contrato preservado).
-matchesRouter.post("/:id/vote", async (req, res) => {
-  try {
-    const token = req.cookies?.m7_session || req.headers.authorization?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({ error: "Não autenticado" });
-    const [session] = await db
-      .select()
-      .from(userSessions)
-      .where(and(eq(userSessions.sessionToken, token), gt(userSessions.expires, new Date())))
-      .limit(1);
-    if (!session) return res.status(401).json({ error: "Não autenticado" });
-
-    const { id } = req.params;
-    const [match] = await db.select().from(matches).where(eq(matches.id, id)).limit(1);
-    if (!match) return res.status(404).json({ error: "Partida não encontrada" });
-
-    // O voto em si (p_team_tag) é agregado no cliente (localStorage); aqui é no-op.
-    return res.json({ ok: true });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao votar" });
   }
 });
 

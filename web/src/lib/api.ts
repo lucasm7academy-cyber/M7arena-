@@ -407,8 +407,6 @@ export interface ApiMatchesSdk {
   recusar: (id: number) => Promise<ApiSalaResultado>;
   tick: (id: number) => Promise<ApiSalaResultado>;
   start: (id: number) => Promise<ApiSalaResultado>;
-  /** Registra voto num jogo (substitui RPC votar_jogo). */
-  vote: (id: number | string, teamTag: string) => Promise<{ ok: boolean }>;
   /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
   excluir: (id: number | string) => Promise<{ ok: boolean; id: string; salaNum: number }>;
   /** Dispara a verificação automática na hora (acelerador do polling). */
@@ -872,9 +870,6 @@ export const api = {
     confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),
     recusar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/recusar`),
     tick: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/tick`),
-    /** Registra voto num jogo (substitui RPC votar_jogo). */
-    vote: (id: number | string, teamTag: string) =>
-      api.post<{ ok: boolean }>(`/matches/${id}/vote`, { p_team_tag: teamTag }),
     /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
     excluir: (id: number | string) =>
       api.delete<{ ok: boolean; id: string; salaNum: number }>(`/matches/${id}`),

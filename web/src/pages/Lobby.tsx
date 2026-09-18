@@ -13,7 +13,6 @@ import { FaDiscord, FaTwitch } from "react-icons/fa6";
 import { ImWhatsapp } from "react-icons/im";
 import { useTransmissoesAtivas } from '../hooks/useTransmissoesAtivas';
 import { api } from '../lib/api';
-import { supabase } from '../lib/supabase';
 
 // Constantes de polígonos chanfrados oficiais (M7 Arena Cut-Edge com borda uniforme)
 const CUT_FRAME = 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)';
@@ -309,9 +308,6 @@ interface Noticia {
   destaque: boolean;
 }
 
-const _VOTES_CACHE_TTL = 5 * 60 * 1000;
-let _votesCache: { data: Record<string, { a: number; b: number }>; ts: number; matchKey: string } | null = null;
-
 const Home = () => {
   const navigate = useNavigate();
   const liveScrollRef = React.useRef<HTMLDivElement>(null);
@@ -323,8 +319,6 @@ const Home = () => {
   const [highlights, setHighlights] = React.useState<Array<{ id: string; titulo: string; link: string; thumbnail_url: string | null; categoria: string }>>([]);
   const [upcomingMatches, setUpcomingMatches] = React.useState<UpcomingMatch[]>([]);
   const [upcomingLoaded, setUpcomingLoaded] = React.useState(false);
-  const [votes, setVotes] = React.useState<Record<string, { a: number; b: number }>>({});
-  const [userVotes, setUserVotes] = React.useState<Record<string, 'a' | 'b'>>({});
   const [noticias, setNoticias] = React.useState<Noticia[]>([]);
   const [openFaqId, setOpenFaqId] = React.useState<number | null>(null);
   const [selectedNoticia, setSelectedNoticia] = React.useState<any>(null);
@@ -440,74 +434,6 @@ const Home = () => {
         console.error('Erro ao buscar notícias:', err);
       });
   }, []);
-
-  // Carrega votos já dados pelo usuário (localStorage)
-  React.useEffect(() => {
-    const stored: Record<string, 'a' | 'b'> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('vote_')) {
-        const val = localStorage.getItem(key);
-        if (val === 'a' || val === 'b') stored[key.slice(5)] = val;
-      }
-    }
-    setUserVotes(stored);
-  }, []);
-
-  // Busca contagem de votos quando os jogos carregam
-  React.useEffect(() => {
-    if (!upcomingMatches.length) return;
-    const ids = upcomingMatches.map((m) => m.id);
-    const matchKey = ids.join('|');
-
-    if (
-      _votesCache &&
-      _votesCache.matchKey === matchKey &&
-      Date.now() - _votesCache.ts < _VOTES_CACHE_TTL
-    ) {
-      setVotes(_votesCache.data);
-      return;
-    }
-
-    const fetchVotes = async () => {
-      const { data, error } = await supabase
-        .from('votos_jogos')
-        .select('match_id, team_tag, votos')
-        .in('match_id', ids);
-      if (error || !data) return;
-      const map: Record<string, { a: number; b: number }> = {};
-      for (const row of data) {
-        if (!map[row.match_id]) map[row.match_id] = { a: 0, b: 0 };
-        const match = upcomingMatches.find((m) => m.id === row.match_id);
-        if (!match) continue;
-        const rawTagA = match.tagA.replace('#', '');
-        if (row.team_tag === rawTagA) map[row.match_id].a = row.votos;
-        else map[row.match_id].b = row.votos;
-      }
-      setVotes(map);
-      _votesCache = { data: map, ts: Date.now(), matchKey };
-    };
-    fetchVotes();
-  }, [upcomingMatches]);
-
-  // Registra voto do usuário
-  const handleVote = async (matchId: string, side: 'a' | 'b') => {
-    if (userVotes[matchId]) return;
-    const match = upcomingMatches.find((m) => m.id === matchId);
-    if (!match) return;
-    const teamTag = side === 'a' ? match.tagA.replace('#', '') : match.tagB.replace('#', '');
-    setVotes((prev) => ({
-      ...prev,
-      [matchId]: {
-        a: (prev[matchId]?.a || 0) + (side === 'a' ? 1 : 0),
-        b: (prev[matchId]?.b || 0) + (side === 'b' ? 1 : 0),
-      },
-    }));
-    setUserVotes((prev) => ({ ...prev, [matchId]: side }));
-    localStorage.setItem(`vote_${matchId}`, side);
-    _votesCache = null;
-    await api.matches.vote(matchId, teamTag).catch((e: any) => console.error('Erro ao votar:', e.message));
-  };
 
   const handlePrev = () => {
     if (!upcomingMatches.length) return;
@@ -955,73 +881,6 @@ const Home = () => {
                             </div>
                           </div>
 
-                          {/* Votação da torcida */}
-                          {(() => {
-                            const m = upcomingMatches[currentMatchIndex];
-                            if (!m) return null;
-                            const v = votes[m.id] || { a: 0, b: 0 };
-                            const total = v.a + v.b;
-                            const pctA = total > 0 ? Math.round((v.a / total) * 100) : 50;
-                            const pctB = 100 - pctA;
-                            const voted = userVotes[m.id];
-                            return (
-                              <div className="w-full max-w-sm mx-auto flex flex-col gap-2.5">
-                                {/* Barra de votos chanfrada */}
-                                <div
-                                  className="relative flex h-2.5 overflow-hidden bg-white/10 p-[1px]"
-                                  style={{ clipPath: CUT_BADGE }}
-                                >
-                                  <div
-                                    className="h-full transition-all duration-500 ease-out"
-                                    style={{ width: `${pctA}%`, backgroundColor: m.colorA, opacity: 0.9 }}
-                                  />
-                                  <div
-                                    className="h-full transition-all duration-500 ease-out"
-                                    style={{ width: `${pctB}%`, backgroundColor: m.colorB, opacity: 0.9 }}
-                                  />
-                                </div>
-                                {/* Botões GO */}
-                                <div className="flex items-center justify-between gap-2">
-                                  <div
-                                    className={`p-[1px] transition-all ${voted === 'a' ? 'bg-[#FFB700]' : voted ? 'opacity-30' : 'bg-white/15 hover:bg-white/40'}`}
-                                    style={{ clipPath: CUT_BADGE }}
-                                  >
-                                    <button
-                                      onClick={() => handleVote(m.id, 'a')}
-                                      disabled={!!voted}
-                                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer
-                                        ${voted === 'a' ? 'bg-[#FFB700]/20 text-[#FFB700]' : voted ? 'cursor-not-allowed bg-black/40 text-white/30' : 'bg-[#0a0a0c] text-white/70 hover:text-white'}`}
-                                      style={{ clipPath: CUT_BADGE_INNER }}
-                                    >
-                                      {voted === 'a' && '✓ '}GO {m.tagA}
-                                      <span className="opacity-60 font-mono">{pctA}%</span>
-                                    </button>
-                                  </div>
-
-                                  <span className="text-[9px] text-white/30 font-black uppercase tracking-widest whitespace-nowrap">
-                                    {total > 0 ? `${total} voto${total !== 1 ? 's' : ''}` : 'Vote!'}
-                                  </span>
-
-                                  <div
-                                    className={`p-[1px] transition-all ${voted === 'b' ? 'bg-[#FFB700]' : voted ? 'opacity-30' : 'bg-white/15 hover:bg-white/40'}`}
-                                    style={{ clipPath: CUT_BADGE }}
-                                  >
-                                    <button
-                                      onClick={() => handleVote(m.id, 'b')}
-                                      disabled={!!voted}
-                                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer
-                                        ${voted === 'b' ? 'bg-[#FFB700]/20 text-[#FFB700]' : voted ? 'cursor-not-allowed bg-black/40 text-white/30' : 'bg-[#0a0a0c] text-white/70 hover:text-white'}`}
-                                      style={{ clipPath: CUT_BADGE_INNER }}
-                                    >
-                                      GO {m.tagB}
-                                      <span className="opacity-60 font-mono">{pctB}%</span>
-                                      {voted === 'b' && ' ✓'}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })()}
                         </div>
                       )}
                     </AnimatePresence>
