@@ -353,7 +353,7 @@ export default function App() {
   };
 
   return (
-    <div ref={listTopRef} className="w-full max-w-7xl mx-auto px-4 py-8 overflow-hidden">
+    <div ref={listTopRef} className="w-full max-w-[1400px] mx-auto px-4 py-8 overflow-hidden">
       <AnimatePresence>
         {popup && (
           <motion.div

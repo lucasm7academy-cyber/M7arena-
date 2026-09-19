@@ -534,7 +534,7 @@ const Home = () => {
       <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,118,0.03))] bg-[length:100%_2px,3px_100%] z-[100] opacity-20" />
 
       {/* HERO SECTION - BANNER PRINCIPAL STYLE */}
-      <section className="pt-10 pb-4 px-4 max-w-7xl mx-auto">
+      <section className="pt-10 pb-4 px-4 max-w-[1400px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -621,7 +621,7 @@ const Home = () => {
       </section>
 
       {/* AO VIVO AGORA - LIVE STREAMS */}
-      <section className="py-6 px-4 max-w-7xl mx-auto">
+      <section className="py-6 px-4 max-w-[1400px] mx-auto">
         <div className="space-y-8">
           <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
             <div className="space-y-2 text-center sm:text-left">
@@ -746,7 +746,7 @@ const Home = () => {
 
       {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (oculto quando não há jogos) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-10 pb-4 px-4 max-w-7xl mx-auto overflow-hidden relative">
+      <section className="pt-10 pb-4 px-4 max-w-[1400px] mx-auto overflow-hidden relative">
         <div className="space-y-8 relative">
           <div className="flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
@@ -892,7 +892,7 @@ const Home = () => {
       {/* ════════════════════════════════════════════════════════════════
           COMO FUNCIONA — Linha do Tempo da Jornada com Banners de Imagem
          ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto">
+      <section className="py-20 px-4 max-w-[1400px] mx-auto">
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
             Do Cadastro ao <span className="text-[#FFB700]">Campeonato</span>
@@ -1009,7 +1009,7 @@ const Home = () => {
       {/* ════════════════════════════════════════════════════════════════
           NOTÍCIAS & ATUALIZAÇÕES — Clicáveis com Leitura Completa
          ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
+      <section className="py-20 px-4 max-w-[1400px] mx-auto border-t border-white/5">
         <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div className="text-center sm:text-left">
             <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
@@ -1161,7 +1161,7 @@ const Home = () => {
       {/* ════════════════════════════════════════════════════════════════
           DEPOIMENTOS — Avatares Estilo Anime / Gamer Real
          ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
+      <section className="py-20 px-4 max-w-[1400px] mx-auto border-t border-white/5">
         <div className="text-center mb-14">
           <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
             Hall da Fama & Depoimentos
@@ -1246,7 +1246,7 @@ const Home = () => {
       {/* ════════════════════════════════════════════════════════════════
           CENTRAL DE COMUNIDADE & REDES SOCIAIS — Clean sem marca d'água gigante
          ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-7xl mx-auto border-t border-white/5">
+      <section className="py-20 px-4 max-w-[1400px] mx-auto border-t border-white/5">
         <div className="text-center mb-14">
           <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-full">
             <Globe className="w-3.5 h-3.5 text-[#FFB700]" />
@@ -1445,7 +1445,7 @@ const Home = () => {
       {/* ════════════════════════════════════════════════════════════════
           BANNER CTA FINAL — Call-to-Action Épico
          ════════════════════════════════════════════════════════════════ */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
+      <section className="py-16 px-4 max-w-[1400px] mx-auto">
         <div className="relative rounded-3xl p-8 md:p-14 bg-gradient-to-r from-black via-[#FFB700]/10 to-black border border-[#FFB700]/30 overflow-hidden shadow-2xl text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#FFB700]/10 rounded-full blur-3xl pointer-events-none" />
 

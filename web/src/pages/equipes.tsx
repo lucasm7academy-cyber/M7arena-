@@ -433,7 +433,7 @@ export default function Equipes() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-[1400px] mx-auto space-y-8">
         {/* Banner Minha Equipe */}
         <div
           className="relative p-[1.5px] shadow-2xl overflow-hidden"

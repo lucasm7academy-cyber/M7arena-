@@ -487,7 +487,7 @@ export default function Perfil() {
 
   return (
     <div className="relative min-h-screen w-full text-white font-sans overflow-x-hidden">
-      <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-32">
+      <div className="relative z-10 max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 pb-32">
         
         {/* HEADER */}
         <CutCard

@@ -415,7 +415,7 @@ export default function Streamers() {
 
   return (
     <div className="min-h-screen bg-transparent text-white">
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-[1400px] mx-auto px-4 py-12">
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">

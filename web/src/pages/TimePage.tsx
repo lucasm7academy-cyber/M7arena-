@@ -1521,7 +1521,7 @@ export default function TimePage() {
   // ── loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+      <div className="min-h-screen p-4 md:p-8 max-w-[1400px] mx-auto space-y-6">
         {/* Voltar skeleton */}
         <div className="h-8 w-24 bg-white/5 animate-pulse" style={{ clipPath: CUT_BUTTON }} />
 
@@ -1639,7 +1639,7 @@ export default function TimePage() {
         )}
       </AnimatePresence>
 
-      <div className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto space-y-6 font-sans text-white">
+      <div className="min-h-screen p-4 md:p-8 max-w-[1400px] mx-auto space-y-6 font-sans text-white">
         {/* Voltar */}
         <motion.button
           initial={{ opacity: 0, x: -10 }}

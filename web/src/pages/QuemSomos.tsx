@@ -8,7 +8,7 @@ export default function QuemSomos() {
 
   return (
     <div className="min-h-full bg-transparent text-white py-10 md:py-16 px-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <button
           onClick={() => navigate(-1)}
