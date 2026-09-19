@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 19/09/2026 20:31 — por `gemini`
+**Última atualização:** 19/09/2026 20:29 — por `gemini`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -775,7 +775,6 @@ _19/09/2026 20:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
-| 19/09/2026 20:31 | gemini | Ajustada a opacidade e gradiente da imagem de fundo no banner da TimePage (opacity 55% e gradiente to-transparent) para reduzir a escuridão excessiva. <br>_tocou: `web/src/pages/TimePage.tsx`_ |
 | 19/09/2026 20:29 | gemini | Removido o botão de recarregar na TimePage e adicionada imagem de fundo no banner da equipe (/images/fundo fanaticaaa.webp) com gradientes escuros e z-index ajustado. <br>_tocou: `web/src/pages/TimePage.tsx`_ |
 | 19/09/2026 20:18 | gemini | Na página de time (TimePage.tsx): substituído o nome do elo nos cards da lineup pelo ícone do elo (/ranks/*.png) com tooltip; e adicionados 4 slots quadrados com borda arredondada e tracejada (dashed) vazios no lado direito do banner superior para simbolizar os troféus da equipe. Build e typecheck validados com sucesso. <br>_tocou: `web/src/pages/TimePage.tsx`_ |
 | 19/09/2026 20:00 | deepseek | Fix pedido pelo usuário: os cards de /campeonatos usavam banner_url como imagem de fundo; trocados para logo_url (fallback gradiente). O banner continua só no hero do CampeonatoDetalhes (campeonato.bannerUrl, linha 178). Registrada ADR-067 (o original usava banner-primeiro — não é regressão). Verificação headless com Playwright (sem janela): 3 cards no ar, todos "LOGO OK" comparando o background-image computado com logo_url/banner_url da API. Commit fea3980 pushado e deployado (build nginx + up -d). Observação: durante a sessão a VPS/origin recebeu um commit de outro agente (62c6b88) — merge ff-only, sem conflito. Também nesta sessão: fix do w-full na TimePage (commit 59e3bb3) que resolveu o encolhimento da página do time (507px→1400px medido). <br>_tocou: `web/src/pages/campeonatos.tsx`, `web/src/pages/TimePage.tsx`_ |
@@ -790,6 +789,7 @@ _19/09/2026 20:00 — deepseek_
 | 14/09/2026 00:50 | gemini | Ajuste completo da responsividade mobile dos cards de cronograma (MeusJogosPendentes, TodosJogosPendentes, ListaCronograma e Painel de Arbitragem) para telas pequenas (<640px e 320-400px), evitando textos encavalados, truncamento desordenado e botões sobrepostos. Build e deploy ao vivo no Nginx da VPS concluídos com sucesso. <br>_tocou: `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/AdminCriarJogo.tsx`_ |
 | 14/09/2026 00:06 | gemini | Atualizado o background do chaveamento e do modal para usar a imagem oficial das salas e lobby (/images/fundo_elite.jpg) com os overlays originais. Build e deploy ao vivo na VPS concluidos com sucesso. <br>_tocou: `web/src/components/campeonatos/Chaves.tsx`, `web/src/features/campeonatos/components/modals/BracketModal.tsx`_ |
 | 13/09/2026 23:58 | gemini | Ajuste de design do chaveamento: removido degradê do vencedor e aplicada a cor primária sólida direta com tipografia em preto de alto contraste; fundo dos cards clareado para #161622 (menos preto); adicionado banner do campeonato com overlay atmosférico no fundo do chaveamento e no modal de tela cheia. Deploy ao vivo na VPS concluído com sucesso. <br>_tocou: `web/src/components/campeonatos/BracketMatch.tsx`, `web/src/components/campeonatos/Chaves.tsx`, `web/src/features/campeonatos/components/modals/BracketModal.tsx`, `web/src/components/campeonatos/DoubleSideBracket.tsx`, `web/src/components/campeonatos/UpperRound.tsx`, `web/src/components/campeonatos/LowerRound.tsx`_ |
+| 13/09/2026 23:51 | gemini | Redesign completo do chaveamento de campeonatos: correcao do zoom reto/centralizado (transformOrigin center center + flex layout m-auto), adicao de controles visuais de zoom (+, -, reset, indicador percentual), redesign esportivo dos cards de confrontos (BracketMatch) com destaque lateral para vitorias e opacidade em perdedores, estilizacao de badges de rodadas (DoubleSideBracket, UpperRound, LowerRound) e destaque visual da Grande Final/Trofeu. Deploy executado com sucesso na VPS. <br>_tocou: `web/src/components/campeonatos/BracketMatch.tsx`, `web/src/components/campeonatos/Chaves.tsx`, `web/src/components/campeonatos/DoubleEliminationBracket.tsx`, `web/src/components/campeonatos/DoubleSideBracket.tsx`, `web/src/components/campeonatos/LowerRound.tsx`, `web/src/components/campeonatos/UpperRound.tsx`, `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/BracketModal.tsx`_ |
 
 ---
 
