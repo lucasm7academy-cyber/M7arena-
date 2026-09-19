@@ -1702,10 +1702,9 @@ export default function TimePage() {
               <img
                 src="/images/fundo fanaticaaa.webp"
                 alt=""
-                className="w-full h-full object-cover opacity-35"
+                className="w-full h-full object-cover opacity-55"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#08080a] via-[#08080a]/80 to-[#08080a]/60" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#08080a]/90 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#08080a] via-[#08080a]/70 to-transparent" />
             </div>
 
             {/* Glow de fundo */}
