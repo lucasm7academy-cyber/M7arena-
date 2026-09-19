@@ -89,6 +89,37 @@ function eloDisplay(elo: string): string {
   return tier;
 }
 
+const ELO_TO_ICON_NAME: Record<string, string> = {
+  ferro: 'bronze',
+  iron: 'bronze',
+  bronze: 'bronze',
+  prata: 'silver',
+  silver: 'silver',
+  ouro: 'gold',
+  gold: 'gold',
+  platina: 'platinum',
+  platinum: 'platinum',
+  esmeralda: 'emerald',
+  emerald: 'emerald',
+  diamante: 'diamond',
+  diamond: 'diamond',
+  mestre: 'master',
+  master: 'master',
+  'grão-mestre': 'grandmaster',
+  'grao-mestre': 'grandmaster',
+  grandmaster: 'grandmaster',
+  desafiante: 'challenger',
+  challenger: 'challenger',
+};
+
+function getEloRankIcon(elo?: string | null): string | null {
+  if (!elo || elo === 'Sem Rank' || elo === 'UNRANKED') return null;
+  const firstWord = elo.trim().toLowerCase().split(' ')[0];
+  const fileKey = ELO_TO_ICON_NAME[firstWord];
+  if (!fileKey) return null;
+  return `/ranks/${fileKey}.png`;
+}
+
 // ── ModalBase Cut-Edge ──────────────────────────────────────────────────────
 const ModalBase = ({ onClose, children, gradientFrom, title, transparent = false }: {
   onClose: () => void;
@@ -1663,7 +1694,7 @@ export default function TimePage() {
           }}
         >
           <div
-            className="w-full bg-[#08080a] relative overflow-hidden p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6"
+            className="w-full bg-[#08080a] relative overflow-hidden p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-center gap-6 justify-between"
             style={{ clipPath: CUT_FRAME_INNER }}
           >
             {/* Glow de fundo */}
@@ -1729,6 +1760,24 @@ export default function TimePage() {
                   Ranking #{time.ranking}
                 </div>
               </div>
+            </div>
+
+            {/* Espaços para Troféus da Equipe */}
+            <div className="flex flex-col items-center sm:items-end gap-1.5 shrink-0 mt-2 sm:mt-0">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {[...Array(4)].map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 border-dashed border-white/20 bg-white/[0.02] flex items-center justify-center relative group/trophy hover:border-white/35 transition-all shadow-inner"
+                    title={`Espaço de Troféu ${idx + 1}`}
+                  >
+                    <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-white/10 group-hover/trophy:text-white/20 transition-colors" />
+                  </div>
+                ))}
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">
+                Troféus
+              </span>
             </div>
           </div>
         </motion.div>
@@ -1822,7 +1871,23 @@ export default function TimePage() {
                     </div>
 
                     {/* Elo */}
-                    <span className="text-white/40 text-xs font-semibold shrink-0">{eloDisplay(m.elo)}</span>
+                    {getEloRankIcon(m.elo) ? (
+                      <div
+                        className="flex items-center justify-center shrink-0 w-8 h-8 cursor-help"
+                        title={eloDisplay(m.elo)}
+                      >
+                        <img
+                          src={getEloRankIcon(m.elo)!}
+                          alt={eloDisplay(m.elo)}
+                          className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] hover:scale-110 transition-transform"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-white/25 text-[10px] font-black uppercase tracking-wider shrink-0">
+                        {eloDisplay(m.elo)}
+                      </span>
+                    )}
 
                     <ChevronRight className="w-4 h-4 text-white/20 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </motion.div>
