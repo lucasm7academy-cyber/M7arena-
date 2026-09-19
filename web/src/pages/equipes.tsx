@@ -89,10 +89,10 @@ const TimeCard = ({ team, onClick, onLogoClick }: {
     <motion.div
       whileTap={{ scale: 0.99 }}
       onClick={() => { playSound('click'); onClick(team); }}
-      className="relative cursor-pointer transition-all hover:scale-[1.005] group rounded-2xl border bg-[#0c0c10] overflow-hidden"
+      className="relative cursor-pointer transition-all hover:scale-[1.005] group rounded-2xl border-2 bg-[#0c0c10] overflow-hidden"
       style={{
-        borderColor: team.gradientFrom ? `${team.gradientFrom}55` : 'rgba(255,255,255,0.1)',
-        boxShadow: `0 4px 20px -5px ${team.gradientFrom}18`
+        borderColor: team.gradientFrom ? `${team.gradientFrom}80` : 'rgba(255,255,255,0.15)',
+        boxShadow: `0 4px 20px -5px ${team.gradientFrom}20`
       }}
     >
       <div
@@ -496,10 +496,10 @@ export default function Equipes() {
                 <motion.div 
                   whileTap={{ scale: 0.99 }}
                   onClick={() => { playSound('click'); navigate(`/times/${myTeam.id}`); }}
-                  className="relative cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl rounded-2xl border bg-[#0c0c10] overflow-hidden"
+                  className="relative cursor-pointer transition-all hover:scale-[1.005] group shadow-2xl rounded-2xl border-2 bg-[#0c0c10] overflow-hidden"
                   style={{
-                    borderColor: myTeam.gradientFrom ? `${myTeam.gradientFrom}60` : 'rgba(255,255,255,0.1)',
-                    boxShadow: `0 4px 25px -5px ${myTeam.gradientFrom}20`
+                    borderColor: myTeam.gradientFrom ? `${myTeam.gradientFrom}90` : 'rgba(255,255,255,0.2)',
+                    boxShadow: `0 4px 25px -5px ${myTeam.gradientFrom}25`
                   }}
                 >
                   <div

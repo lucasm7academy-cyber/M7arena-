@@ -1655,7 +1655,7 @@ export default function TimePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative p-[1.5px] shadow-2xl overflow-hidden"
+          className="relative p-[2px] shadow-2xl overflow-hidden"
           style={{
             clipPath: CUT_FRAME,
             background: time.gradientFrom,
@@ -1674,7 +1674,7 @@ export default function TimePage() {
 
             {/* Logo */}
             <div
-              className="w-24 h-24 sm:w-28 sm:h-28 p-[1.5px] rounded-2xl flex items-center justify-center shrink-0 relative shadow-2xl cursor-pointer"
+              className="w-24 h-24 sm:w-28 sm:h-28 p-[2px] rounded-2xl flex items-center justify-center shrink-0 relative shadow-2xl cursor-pointer"
               style={{
                 background: time.gradientFrom,
                 boxShadow: `0 0 35px -5px ${time.gradientFrom}80`

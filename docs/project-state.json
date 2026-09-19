@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-19T20:12:27.365Z",
+  "updatedAt": "2026-09-19T22:46:23.506Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1441,6 +1441,18 @@
       "owner": "deepseek",
       "createdAt": "2026-09-10T05:31:59.145Z",
       "updatedAt": "2026-09-10T05:33:44.603Z"
+    },
+    {
+      "id": "design.largura-padronizada",
+      "phase": "fase-3",
+      "area": "design",
+      "name": "Padronizar largura do conteúdo das páginas na largura do /jogar",
+      "status": "done",
+      "notes": "Fix pós-deploy: o container raiz da TimePage é filho direto do wrapper flex-col do layout; com mx-auto e sem w-full o item flex não estica (shrink-to-fit ~507px). Adicionado w-full nos 2 containers (loading+main). Demais páginas medidas e ok em 1400. Usuário comparava com o site original, que renderiza 1024 (max-w-5xl) — agora 1400.",
+      "evidence": "Medição headless (Playwright, viewport 1920) das páginas ao vivo: TIME 1400px, TIMES 1400px, JOGAR 1400px (antes: TIME 507px). Chunk servido TimePage-CHOB3iIu.js contém 2x \"w-full max-w-[1400px]\". Deploy commit 59e3bb3 na VPS.",
+      "owner": "deepseek",
+      "createdAt": "2026-09-19T20:29:31.210Z",
+      "updatedAt": "2026-09-19T22:28:54.611Z"
     }
   ],
   "decisions": [
@@ -2106,53 +2118,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-10T04:49:46.385Z",
-      "agent": "deepseek",
-      "summary": "Fix do botão Iniciar Série para convidados com conta vinculada (ADR-056), implementado e verificado LOCALMENTE; não commitado nem deployado. API: helper findUserTeamMemberships casa vaga por user_id OU guest_puuid=game_accounts.external_id OU guest_riot_id/guest_handle=handle/users.riot_id (case-insensitive, aceito); usado em /teams/by-user (destrava myTeams) e /tournaments/.../gerar-codigo (senão 403). Front: sameTeamRef normaliza tag/nome. Evidência: api tsc 0, web tsc 0, vite build 0, suíte 164/164 (serializada; na paralela 5 arquivos morreram por OOM do runner, não do código), team-membership 7/7. Pendente: commit+deploy na VPS (outro agente estava lá) e smoke com a conta do Ghozt. Maikey sem conta vinculada continua sem ver (esperado); sair do time por vaga de convidado não foi estendido.",
-      "touched": [
-        "api/src/lib/team-membership.ts",
-        "api/test/team-membership.test.ts",
-        "api/src/routes/teams.ts",
-        "api/src/routes/tournaments.ts",
-        "web/src/features/campeonatos/domain/team-ref.ts",
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/features/campeonatos/components/modals/AgendamentoModal.tsx",
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
-    {
-      "at": "2026-09-10T04:53:14.432Z",
-      "agent": "claude",
-      "summary": "Diagnóstico do 0/0/0 na aba Grupos da Copa do Kraken: o modal Criar Confronto gravava fase fixa 'Cronograma', invisível ao filtro da aba Grupos (GRUPO/DESEMPATE). Corrigido: seletor de fase (Fase de Grupos/Mata-Mata) no AdminMatchModal (admin, campeonatos com grupos), fase default ajustada ao formato no refetchCampeonato, teste novo em classificacao.test.ts, UPDATE do jogo M7W 2x0 BKA no banco da VPS para 'Fase de Grupos' — API já devolve M7W 2V na classificação. Commit 95dab47 pushado no GitHub e deployado na VPS (app+nginx+realtime recriados; bundle prod contém o seletor; HTTPS/api 200). Lobby.tsx não-commitado na VPS preservado (stash + /root/backup-Lobby-vps-20260910.tsx). Notas: mcp_ops em loop de restart pré-existente; logs cheios de Riot 403 (dev key expirada, BLK-006). Pendente: usuário validar aba Grupos do Kraken e o seletor.",
-      "touched": [
-        "web/src/features/campeonatos/components/modals/AdminMatchModal.tsx",
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "api/test/classificacao.test.ts",
-        "VPS: tournament_matches jogo M7WxBKA"
-      ]
-    },
-    {
-      "at": "2026-09-10T05:11:25.085Z",
-      "agent": "deepseek",
-      "summary": "Fixes da Copa do Kraken deployados (2c795cb e bbb6235, branch feat/redesign-modais). 1) Botão Iniciar Série: convidado com conta vinculada resolve o time por PUUID/Riot ID (ADR-056); by-user do Ghozt confirmou M7W ativo. 2) Verificação de série: by-tournament-code dá 403 sempre com a chave atual (endpoint restrito a provedor de torneio, não é expiração); trocado por match-v5 by-puuid + info.tournamentCode (ADR-058), placar do zero (corrige 3x0), idempotente, remake ignorado, manual preservado, erro visível em 429. E2E read-only em prod: M7W 2-0. 3) PDL: endpoint era no-op; recalcularPdlGlobal (ADR-059) + backfill: M7W 15 PDL/1V/rank4/100%, históricos intactos. Suíte 174/174. Pendente: teste visual do Ghozt; opcional retro-verificar a série (tournament_series_games vazio).",
-      "touched": [
-        "api/src/lib/team-membership.ts",
-        "api/src/lib/serie-campeonato.ts",
-        "api/src/lib/tournament-pdl.ts",
-        "api/src/lib/tournament-store.ts",
-        "api/src/routes/teams.ts",
-        "api/src/routes/tournaments.ts",
-        "api/test/team-membership.test.ts",
-        "api/test/serie-campeonato.test.ts",
-        "api/test/tournament-pdl.test.ts",
-        "web/src/components/campeonatos/ListaCronograma.tsx",
-        "web/src/features/campeonatos/domain/team-ref.ts",
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/features/campeonatos/components/modals/AgendamentoModal.tsx",
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
-    {
       "at": "2026-09-10T05:24:50.209Z",
       "agent": "deepseek",
       "summary": "Agendamento revisado e corrigido (ADR-060, commit bac99c2, deployado VPS+GitHub). Bug do 20:00: o painel de pendentes pré-preenchia 20:00 num jogo sem horário e o aceite ignorava data/hora, confirmando sem hora; com 20:01 o input virava propose e funcionava. Fix: accept+horário alterado = contra-proposta; confirmação exige data/hora válidos (front) e a rota merge recusa 400 jogo confirmado sem horário (servidor); modal centraliza a decisão no handleUpdateSchedule (sem salvamento inline). Admin: botão Arbitrar agora abre modo arbitrate e confirma na hora (antes exigia propor e aceitar em 2 etapas). Jogos pendentes: causa provável era o vínculo de convidado (ADR-056, já deployado). Evidência: api/web tsc 0, build 0, suíte 179/179, teste agendamento 5/5, bundle no ar com \"Confirmar Arbitragem\". Falta teste visual do usuário. Obs: container m7arena_mcp_ops em restart loop (não é dessas mudanças).",
@@ -2419,6 +2384,39 @@
         "web/src/components/campeonatos/ListaCronograma.tsx",
         "web/src/components/campeonatos/MeusJogosPendentes.tsx",
         "web/src/components/campeonatos/TodosJogosPendentes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-19T20:33:57.285Z",
+      "agent": "deepseek",
+      "summary": "Padronização de largura do conteúdo das páginas a pedido do usuário (referência: /jogar = max-w-[1400px]). Alteradas apenas as classes de largura do container externo de 9 arquivos: Lobby (8 seções 7xl→1400), TimePage (2x 5xl→1400), equipes, players, Streamers, recrutamento, QuemSomos (7xl→1400), perfil (6xl→1400), MinhasPartidas (5xl→1400). Jogar, campeonatos, CampeonatoDetalhes e ApostaIndividual já eram 1400. Verificado: tsc 0, vite build 0, commit c437d45 pushed e deployado na VPS (build nginx + up -d), chunks no ar conferidos (Lobby 8x, TimePage 2x, demais 1x), site HTTP 200. O deploy levou junto o estado do commit 2b081c4 (cores do cronograma) que já estava no git da VPS. Pendente: validação visual do usuário nas abas.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/TimePage.tsx",
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/players.tsx",
+        "web/src/pages/Streamers.tsx",
+        "web/src/pages/recrutamento.tsx",
+        "web/src/pages/QuemSomos.tsx",
+        "web/src/pages/perfil.tsx",
+        "web/src/pages/MinhasPartidas.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-19T22:28:58.941Z",
+      "agent": "deepseek",
+      "summary": "Bug real encontrado na página do time após a padronização: o container raiz da TimePage (max-w-[1400px] mx-auto) é filho direto do wrapper \"min-h-full flex flex-col\" do LayoutWrapper. Em flex-col, auto-margin no eixo cruzado impede o stretch — a página renderizava shrink-to-fit (507px medidos com Playwright headless em 1920px), por isso os cards ficavam menores que o original (que renderiza 1024). Fix: adicionado w-full nos 2 containers da TimePage (loading + main). Commit 59e3bb3 pushado e deployado (build nginx + up -d). Verificação headless pós-deploy: TIME 1400px, TIMES 1400px, JOGAR 1400px; chunk servido contém 2x \"w-full max-w-[1400px]\". Descoberta de método: comparação de largura pode ser feita com Playwright headless (sem janela), via mcp/browser-server/node_modules/playwright. Pendente: validação visual do usuário (Ctrl+F5).",
+      "touched": [
+        "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-19T22:46:23.505Z",
+      "agent": "gemini",
+      "summary": "Ajustada a espessura da borda dos cards de times em /times (equipes.tsx) e do banner/logo em TimePage.tsx para 2px (border-2 / p-[2px]) com maior opacidade na cor do time, acompanhando o destaque da borda da logo. Validado com tsc e build.",
+      "touched": [
+        "web/src/pages/equipes.tsx",
+        "web/src/pages/TimePage.tsx"
       ]
     }
   ]

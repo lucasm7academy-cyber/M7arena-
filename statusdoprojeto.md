@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 19/09/2026 17:12 — por `gemini`
+**Última atualização:** 19/09/2026 19:46 — por `gemini`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`█████████████████████████░░░ 85/97` concluído
+`█████████████████████████░░░ 86/98` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 54/60 | 2 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 55/61 | 2 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 4 | — |
 
@@ -42,7 +42,7 @@
 | Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
 | Aplicação (React + Vite) | ███████████░ 47/51 | 2 | 2 |
-| Design & Paridade Visual | ██████░░░░░░ 1/2 | — | 1 |
+| Design & Paridade Visual | ████████░░░░ 2/3 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 4 | — |
 | Segurança | ██████████░░ 6/7 | — | — |
@@ -204,6 +204,7 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **public/ portado (40 imagens, lanes, ranks, sounds)** `design.assets`<br>  Todas as 40 imagens, assets de lanes, ranks e sons portados 1:1 de M7AcademySite/public para M7arenaSite/public.<br>  _evidência:_ `D:/Aplicativos/M7arenaSite/public/ (40 imagens, lanes, ranks, sounds)`<br>  _concluído 01/08/2026 01:13 por gemini_
 - `[-]` **ElectricBorder + VipBadge/VipCrown** `design.ui`<br>  ADR-010: ElectricBorder e VipBadge vêm prontos no fork.<br>  _evidência:_ `src/components/ui/ElectricBorder.tsx:1, src/components/ui/VipBadge.tsx:1`
 - `[!]` **Regressão visual antigo vs novo** `design.regressao`<br>  Revertido — erro meu. BLK-004 continua válido.<br>  _evidência:_ `Paridade visual e estrutural 1:1 confirmada. App.tsx possui as 25 rotas idênticas em bytes. Build estático gerou 2.186 módulos em dist/ sem divergências de classe ou layout.`
+- `[x]` **Padronizar largura do conteúdo das páginas na largura do /jogar** `design.largura-padronizada`<br>  Fix pós-deploy: o container raiz da TimePage é filho direto do wrapper flex-col do layout; com mx-auto e sem w-full o item flex não estica (shrink-to-fit ~507px). Adicionado w-full nos 2 containers (loading+main). Demais páginas medidas e ok em 1400. Usuário comparava com o site original, que renderiza 1024 (max-w-5xl) — agora 1400.<br>  _evidência:_ `Medição headless (Playwright, viewport 1920) das páginas ao vivo: TIME 1400px, TIMES 1400px, JOGAR 1400px (antes: TIME 507px). Chunk servido TimePage-CHOB3iIu.js contém 2x "w-full max-w-[1400px]". Deploy commit 59e3bb3 na VPS.`<br>  _concluído 19/09/2026 19:28 por deepseek_
 
 **Segurança**
 
@@ -766,6 +767,9 @@ _18/09/2026 00:46 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 19/09/2026 19:46 | gemini | Ajustada a espessura da borda dos cards de times em /times (equipes.tsx) e do banner/logo em TimePage.tsx para 2px (border-2 / p-[2px]) com maior opacidade na cor do time, acompanhando o destaque da borda da logo. Validado com tsc e build. <br>_tocou: `web/src/pages/equipes.tsx`, `web/src/pages/TimePage.tsx`_ |
+| 19/09/2026 19:28 | deepseek | Bug real encontrado na página do time após a padronização: o container raiz da TimePage (max-w-[1400px] mx-auto) é filho direto do wrapper "min-h-full flex flex-col" do LayoutWrapper. Em flex-col, auto-margin no eixo cruzado impede o stretch — a página renderizava shrink-to-fit (507px medidos com Playwright headless em 1920px), por isso os cards ficavam menores que o original (que renderiza 1024). Fix: adicionado w-full nos 2 containers da TimePage (loading + main). Commit 59e3bb3 pushado e deployado (build nginx + up -d). Verificação headless pós-deploy: TIME 1400px, TIMES 1400px, JOGAR 1400px; chunk servido contém 2x "w-full max-w-[1400px]". Descoberta de método: comparação de largura pode ser feita com Playwright headless (sem janela), via mcp/browser-server/node_modules/playwright. Pendente: validação visual do usuário (Ctrl+F5). <br>_tocou: `web/src/pages/TimePage.tsx`_ |
+| 19/09/2026 17:33 | deepseek | Padronização de largura do conteúdo das páginas a pedido do usuário (referência: /jogar = max-w-[1400px]). Alteradas apenas as classes de largura do container externo de 9 arquivos: Lobby (8 seções 7xl→1400), TimePage (2x 5xl→1400), equipes, players, Streamers, recrutamento, QuemSomos (7xl→1400), perfil (6xl→1400), MinhasPartidas (5xl→1400). Jogar, campeonatos, CampeonatoDetalhes e ApostaIndividual já eram 1400. Verificado: tsc 0, vite build 0, commit c437d45 pushed e deployado na VPS (build nginx + up -d), chunks no ar conferidos (Lobby 8x, TimePage 2x, demais 1x), site HTTP 200. O deploy levou junto o estado do commit 2b081c4 (cores do cronograma) que já estava no git da VPS. Pendente: validação visual do usuário nas abas. <br>_tocou: `web/src/pages/Lobby.tsx`, `web/src/pages/TimePage.tsx`, `web/src/pages/equipes.tsx`, `web/src/pages/players.tsx`, `web/src/pages/Streamers.tsx`, `web/src/pages/recrutamento.tsx`, `web/src/pages/QuemSomos.tsx`, `web/src/pages/perfil.tsx`, `web/src/pages/MinhasPartidas.tsx`_ |
 | 19/09/2026 17:12 | gemini | Melhoria na visualização de cores e status do cronograma (ListaCronograma, MeusJogosPendentes, TodosJogosPendentes): partidas finalizadas em vermelho (#FF3131), partidas confirmadas com data de hoje exibindo 'HOJE' em verde (#00FF41), partidas agendadas na cor tema do campeonato, propostas enviadas na cor tema do campeonato. Validados typecheck (tsc) e build do Vite com sucesso. <br>_tocou: `web/src/components/campeonatos/dates.ts`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
 | 19/09/2026 16:41 | deepseek | Complemento do backup manual: além do dump do banco, copiei os uploads (imagens de logos de time, prints de partida, avatares — 26.4MB/128 arquivos) do volume infra_uploads_data via tar para D:\Backups\M7Arena\uploads_20260919.tar.gz (25.57MB, md5 166d56875ef2d9187c85649d4665c2ef, conferido nos dois lados). Verificação do dump vs banco vivo: 43 tabelas no banco vivo, 43 no dump, zero diferenças (comm vazio nos dois sentidos); restore testado com contagens (328 users/85 com senha, 253 game_accounts, 203 wallets, 42 teams, 228 members, 3 tournaments, 38 matches, 1 payment, 240 sessions). Backup no PC agora cobre banco + arquivos. Pendente: definir cópia periódica automática para o PC. <br>_tocou: `D:\Backups\M7Arena\uploads_20260919.tar.gz`_ |
 | 19/09/2026 16:37 | deepseek | Backup manual do banco de produção solicitado pelo usuário. Gerado pg_dump (plain+gzip) do m7arena na VPS via docker exec m7arena_postgres, copiado por scp para D:\Backups\M7Arena\m7arena_20260919_163708.sql.gz (755KB/772.516 bytes). Verificado: md5sum idêntico nos dois lados (556a08cfabe512ebb68bbe17595ddb13) e teste de restauração real em banco temporário m7arena_restore_test na VPS (328 users, 85 com password_hash, 42 teams, 3 tournaments, 8 match_codes) — banco de teste dropado em seguida. Dump contém hashes de senha, mantido FORA do git. Pendente: definir se haverá cópia periódica automática para o PC (a VPS só tem o container backup diário em volume local, que morre com a VPS). <br>_tocou: `D:\Backups\M7Arena\m7arena_20260919_163708.sql.gz`, `/root/backups/m7arena_20260919_163708.sql.gz`_ |
@@ -778,9 +782,6 @@ _18/09/2026 00:46 — deepseek_
 | 13/09/2026 23:37 | gemini | Removido o '- MD3' dos títulos dos cards. Unificado o card de jogos pendentes em um único card (ao invés de 2 cards separados), com o confronto (Time A vs Time B) 100% centralizado através de grid balanceado, e o botão de ação (Arbitrar / Responder / Propor Data) posicionado na lateral direita estilizado estritamente na cor do campeonato (campeonato.themeColor). Buildado e deployado com sucesso na VPS. <br>_tocou: `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
 | 13/09/2026 23:29 | gemini | Removida a badge de 'fase de grupos' dos cards e adicionado 'MD3' no cabeçalho na mesma fonte Anton e no mesmo tamanho do título (ex: PROPOSTA ENVIADA - MD3 / AGENDADA - MD3) em ListaCronograma, MeusJogosPendentes e TodosJogosPendentes. Buildado e deployado na VPS com sucesso. <br>_tocou: `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
 | 13/09/2026 23:24 | gemini | Removido o botão duplicado de 'Excluir Jogo' do card de arbitragem em TodosJogosPendentes, deixando o card 2 ocupado inteiramente pelo botão Arbitrar pintado na cor do campeonato. Buildado e deployado na VPS. <br>_tocou: `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
-| 13/09/2026 23:18 | gemini | Refatorado o layout dos cards de jogos pendentes (MeusJogosPendentes e TodosJogosPendentes) para o padrão de 2 cards lado a lado na mesma linha (80% confronto / 20% botão de ação pintado na cor do campeonato). Validado com npx tsc e deployado com sucesso na VPS (nginx rebuildado). <br>_tocou: `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
-| 13/09/2026 23:12 | gemini | Ajuste de layout nos cards de Meus Jogos Pendentes e Todos os Jogos Pendentes (ADM): reposicionados os botões de ação (Arbitrar, Excluir, Responder, Propor Data, Aguardando) para a lateral direita (md:flex-row com container shrink-0 de 180px e borda divisória sutil), mantendo o novo estilo esportivo com fonte Anton, barra superior, tags chanfradas e logos. Verificado com tsc exit 0, build do Vite concluído e container nginx atualizado na VPS (HTTP 200). <br>_tocou: `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
-| 13/09/2026 22:55 | gemini | Design dos cards de cronograma: 1) No card de partida finalizada (ListaCronograma.tsx), substituído o separador de dois pontos por hífen ('2 - 0' em vez de '2:0'). 2) Aplicado o novo design esportivo oficial com fonte Anton, barra superior completa, tags com corte cut-edge e logos/confronto nos cards de Meus Jogos Pendentes (MeusJogosPendentes.tsx) e Todos os Jogos Pendentes (TodosJogosPendentes.tsx), preservando 100% da lógica e ações (propor/aceitar data, arbitrar e excluir). 3) Typecheck (tsc exit 0), build do Vite bem-sucedido, push para origin e deploy concluído na VPS com container nginx reconstruído (HTTP 200). <br>_tocou: `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`_ |
 
 ---
 
