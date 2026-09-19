@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { api } from "../../lib/api";
 import { getIcon } from "./icons";
-import { formatDayOfWeek, formatFullDate } from "./dates";
+import { formatDayOfWeek, formatFullDate, isMatchToday } from "./dates";
 import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 function parseMatchDateTime(dateStr?: string | null, timeStr?: string | null): Date | null {
@@ -225,21 +225,25 @@ export const ListaCronograma = () => {
               const rightScoreColor = isTie ? "#FFFFFF" : "#FF3131";
               const primaryColor = campeonato.themeColor || "#FFB700";
 
+              const isToday = isMatchToday(jogo.data);
+
               const statusLabel = isFinalizado
                 ? "FINALIZADA"
                 : isSeriesLive
                   ? "AO VIVO"
                   : jogo.status === "confirmado"
-                    ? "AGENDADA"
+                    ? (isToday ? "HOJE" : "AGENDADA")
                     : jogo.status === "proposto"
                       ? "PROPOSTA"
                       : (jogo.status || "JOGO").toUpperCase();
 
-              const statusColor = isSeriesLive
-                ? "#00FF41"
-                : jogo.status === "proposto"
-                  ? "#00F0FF"
-                  : primaryColor;
+              const statusColor = isFinalizado
+                ? "#FF3131"
+                : isSeriesLive
+                  ? "#00FF41"
+                  : (jogo.status === "confirmado" && isToday)
+                    ? "#00FF41"
+                    : primaryColor;
 
               const canClickCard =
                 isAdmin ||
@@ -286,12 +290,20 @@ export const ListaCronograma = () => {
                   style={{
                     boxShadow: isSeriesLive
                       ? "0 0 30px -5px rgba(0, 255, 65, 0.25)"
-                      : "0 4px 24px -4px rgba(0, 0, 0, 0.6)",
+                      : (jogo.status === "confirmado" && isToday)
+                        ? "0 0 25px -5px rgba(0, 255, 65, 0.2)"
+                        : isFinalizado
+                          ? "0 4px 24px -4px rgba(255, 49, 49, 0.15)"
+                          : "0 4px 24px -4px rgba(0, 0, 0, 0.6)",
                     borderColor: isSeriesLive
                       ? "rgba(0, 255, 65, 0.4)"
-                      : jogo.status === "confirmado"
-                        ? `${primaryColor}40`
-                        : "rgba(255, 255, 255, 0.1)",
+                      : isFinalizado
+                        ? "rgba(255, 49, 49, 0.35)"
+                        : (jogo.status === "confirmado" && isToday)
+                          ? "rgba(0, 255, 65, 0.4)"
+                          : jogo.status === "confirmado"
+                            ? `${primaryColor}40`
+                            : "rgba(255, 255, 255, 0.1)",
                   }}
                 >
                   {/* TOPO: STATUS E DATA/HORA RESPONSIVOS */}

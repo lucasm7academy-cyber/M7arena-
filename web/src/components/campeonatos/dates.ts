@@ -57,3 +57,49 @@ export const formatDate = (dateStr: string) => {
     return dateStr;
   }
 };
+
+export const isMatchToday = (dateStr?: string | null): boolean => {
+  if (!dateStr || dateStr === "A COMBINAR" || dateStr === "A definir") return false;
+
+  try {
+    let ymd = "";
+    const trimmed = dateStr.trim();
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      ymd = trimmed.substring(0, 10);
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+      const [dd, mm, yyyy] = trimmed.split("/");
+      ymd = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    } else {
+      const parsed = new Date(trimmed);
+      if (!isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        const m = String(parsed.getMonth() + 1).padStart(2, "0");
+        const d = String(parsed.getDate()).padStart(2, "0");
+        ymd = `${y}-${m}-${d}`;
+      }
+    }
+
+    if (!ymd) return false;
+
+    // Horário de Brasília (BRT - America/Sao_Paulo)
+    const now = new Date();
+    const brtFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const todayBrt = brtFormatter.format(now); // "YYYY-MM-DD"
+
+    const localY = now.getFullYear();
+    const localM = String(now.getMonth() + 1).padStart(2, "0");
+    const localD = String(now.getDate()).padStart(2, "0");
+    const todayLocal = `${localY}-${localM}-${localD}`;
+
+    return ymd === todayBrt || ymd === todayLocal;
+  } catch (err) {
+    console.error("Erro ao verificar data de hoje:", err);
+    return false;
+  }
+};

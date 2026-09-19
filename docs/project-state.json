@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-14T02:51:28.289Z",
+  "updatedAt": "2026-09-19T20:12:27.365Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2028,6 +2028,15 @@
       "decision": "Na aba Grupos (GroupStage) e no cálculo de classificados/desempate (CampeonatoContext.getStatsForTeamForCalculation), a unidade de pontuação passa a ser a SÉRIE: vencer o MD3/MD5 = 1 V (o adversário 1 D), independente do placar de mapas (2x1 e 2x0 valem o mesmo). Já era o critério do gerador de chaves (createCampPage). O J passou a contar séries jogadas. A Classificação geral do servidor (tournament-shape.buildClassificacao, usada na Visão Geral e no Histórico) PERMANECE por mapa, a pedido do usuário.",
       "rationale": "Pedido explícito do usuário: na fase de grupos 2x1 deve valer 1 ponto para o vencedor e 0 para o perdedor, igual ao Histórico. O gerador de chaves já contava por série, então exibição e elegibilidade estavam divergentes — alinhei os dois para que a tabela mostrada bata com quem se classifica. Manter a Classificação por mapa evita mexer no shape do servidor onde o usuário disse não haver problema.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-066",
+      "date": "2026-09-18T03:46:02.255Z",
+      "author": "deepseek",
+      "title": "Lobby: votação da torcida removida e Lobby restaurado para a versão 1:1 que está no ar",
+      "decision": "A votação da torcida (votos_jogos/localStorage + api.matches.vote) foi removida do Lobby, e o web/src/pages/Lobby.tsx do git foi restaurado para a mesma versão 1:1 (cópia do site antigo + swaps) que a VPS já servia — o redesign cut-edge que estava commitado nunca havia sido deployado.",
+      "rationale": "O Lobby no git (blob e7880f9, redesign cut-edge) divergia do que estava no ar: a VPS tinha um Lobby.tsx local (mtime 2026-09-12, preservado nos deploys anteriores) equivalente ao do m7academy (unsplash/rounded-2xl, sem os polígonos cut-edge). Deployar o commit original teria trocado a home inteira, \"danificando\" o que o usuário vê. Por isso o arquivo do git foi reconciliado com a versão viva antes de remover a votação; o design cut-edge segue no histórico. A rota no-op POST /api/matches/:id/vote e o método api.matches.vote foram removidos junto.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2096,77 +2105,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-08T04:30:12.241Z",
-      "agent": "gemini",
-      "summary": "Ajustado design dos cards em /times e /times/:id: logo com borda arredondada, primeiro card e cards gerais grandes com borda cortada em cor solida sem degrade, cards compridos dos times e modais internos totalmente arredondados sem degrade.",
-      "touched": [
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/equipes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-08T04:32:50.989Z",
-      "agent": "gemini",
-      "summary": "Fundo das páginas principais padronizado com a imagem oficial das salas (/images/fundo_elite.jpg) com opacidade suave e gradiente no LayoutWrapper.tsx; removida iluminação local com glows coloridos em CampeonatoDetalhes.tsx; atualizado fundo de ApostaIndividualPage.tsx; ajustado design dos cards em /times e /times/:id. Verificado com tsc exit 0.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx",
-        "web/src/pages/CampeonatoDetalhes.tsx",
-        "web/src/pages/ApostaIndividualPage.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/equipes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-08T04:37:12.915Z",
-      "agent": "gemini",
-      "summary": "Adicionada borda sutil com a cor original do time e glow suave nos cards compridos de cada time em /times (TimeCard e Meu Time). Deploy na VPS disparado.",
-      "touched": [
-        "web/src/pages/equipes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-08T04:41:06.634Z",
-      "agent": "gemini",
-      "summary": "Ajustada a secao Proximos Jogos no Lobby: removido o card externo chanfrado com overflow-hidden para deixar o confronto solto e permitir que a iluminacao/glow de cada time se expanda livremente; logos dos times aumentados e ajustados para object-cover cobrindo o card por completo.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-10T03:43:19.712Z",
-      "agent": "gemini",
-      "summary": "Analisei o bug do botão 'Iniciar Série' não aparecer para jogadores normais, apenas para admin. Nenhuma alteração de código foi feita conforme solicitado.",
-      "touched": []
-    },
-    {
-      "at": "2026-09-10T03:54:30.596Z",
-      "agent": "gemini",
-      "summary": "Reavaliação do bug após input do usuário: o problema real é a restrição de status ('confirmado') que bloqueia os jogadores mas é ignorada pela flag isAdmin.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-10T04:11:20.443Z",
-      "agent": "gemini",
-      "summary": "Confirmação de que o bug real é case-sensitivity na função getMyTeamInMatch que bloqueia o time correto de ser reconhecido.",
-      "touched": [
-        "web/src/features/campeonatos/CampeonatoContext.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-10T04:29:28.029Z",
-      "agent": "deepseek",
-      "summary": "Verificação (sem alterar código) da causa do botão \"Iniciar Série\" aparecer só para o proprietário na Copa do Kraken. A hipótese de case-sensitivity em getMyTeamInMatch está ERRADA para este caso: dado real da API mostra timeA=\"M7W\" e tag do time=\"M7W\" (iguais). Causa real: o roster da M7 WHITE tem 6 convidados (guest_riot_id, user_id NULL) e só o dono/coach com user_id; myTeams é montado só por team_members.user_id (PerfilContext→/teams/by-user), então getMyTeamInMatch retorna undefined para ghotz e demais. O proprietário via o botão porque isAdmin=true ignora os gates (canAccessSeries || isAdmin e status confirmado || isAdmin). O servidor (gerar-codigo) também exige user_id accepted, então conta não vinculada tomaria 403. Fica registrado também o gate secundário: jogo criado pelo admin nasce \"proposto\" e não-admin só vê o botão com status confirmado.",
-      "touched": [
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/components/campeonatos/ListaCronograma.tsx",
-        "web/src/contexts/PerfilContext.tsx",
-        "api/src/routes/teams.ts",
-        "api/src/routes/tournaments.ts"
-      ]
-    },
     {
       "at": "2026-09-10T04:49:46.385Z",
       "agent": "deepseek",
@@ -2402,6 +2340,85 @@
         "web/src/components/campeonatos/UpperRound.tsx",
         "web/src/features/campeonatos/CampeonatoContext.tsx",
         "web/src/features/campeonatos/components/modals/BracketModal.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T02:58:43.788Z",
+      "agent": "gemini",
+      "summary": "Ajuste de design do chaveamento: removido degradê do vencedor e aplicada a cor primária sólida direta com tipografia em preto de alto contraste; fundo dos cards clareado para #161622 (menos preto); adicionado banner do campeonato com overlay atmosférico no fundo do chaveamento e no modal de tela cheia. Deploy ao vivo na VPS concluído com sucesso.",
+      "touched": [
+        "web/src/components/campeonatos/BracketMatch.tsx",
+        "web/src/components/campeonatos/Chaves.tsx",
+        "web/src/features/campeonatos/components/modals/BracketModal.tsx",
+        "web/src/components/campeonatos/DoubleSideBracket.tsx",
+        "web/src/components/campeonatos/UpperRound.tsx",
+        "web/src/components/campeonatos/LowerRound.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T03:06:09.622Z",
+      "agent": "gemini",
+      "summary": "Atualizado o background do chaveamento e do modal para usar a imagem oficial das salas e lobby (/images/fundo_elite.jpg) com os overlays originais. Build e deploy ao vivo na VPS concluidos com sucesso.",
+      "touched": [
+        "web/src/components/campeonatos/Chaves.tsx",
+        "web/src/features/campeonatos/components/modals/BracketModal.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T03:50:39.602Z",
+      "agent": "gemini",
+      "summary": "Ajuste completo da responsividade mobile dos cards de cronograma (MeusJogosPendentes, TodosJogosPendentes, ListaCronograma e Painel de Arbitragem) para telas pequenas (<640px e 320-400px), evitando textos encavalados, truncamento desordenado e botões sobrepostos. Build e deploy ao vivo no Nginx da VPS concluídos com sucesso.",
+      "touched": [
+        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx",
+        "web/src/components/campeonatos/ListaCronograma.tsx",
+        "web/src/components/campeonatos/AdminCriarJogo.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-14T04:02:46.849Z",
+      "agent": "deepseek",
+      "summary": "Sorteio de 2 novos confrontos por time (fase de grupos) nas Copas do Kraken e do Tesouro, na VPS. Estado real: cada copa tem 1 Grupo A com 8 times e todos já tinham 2 jogos (diferente da lembrança do usuário). Inseridos 8 jogos por copa (16 total) em tournament_matches: phase=group_stage, phase_label='Fase de Grupos', status='combinando', display_date='A COMBINAR', display_time='--:--' — pendentes para os capitães agendarem. Nenhum par repetido; cada time ficou com 4 jogos (2 novos). Validado por SQL (0 pares duplicados) e pela API de dev.m7arena.pro (cronograma=16, pendentes=8 em cada). Não houve mudança de schema nem de código.",
+      "touched": [
+        "tournament_matches"
+      ]
+    },
+    {
+      "at": "2026-09-18T03:46:11.841Z",
+      "agent": "deepseek",
+      "summary": "Removida a votação da torcida da home (Lobby) e deploy na VPS. Descoberta: o Lobby.tsx do git era um redesign cut-edge NUNCA deployado; a VPS servia uma versão local 1:1 do site antigo (preservada desde 2026-09-12). Para não danificar o visual, restaurei o git para a versão que está no ar e só então removi a votação (estado, 2 useEffects, handleVote, bloco JSX 'Votação da torcida', import supabase) e a rota no-op POST /api/matches/:id/vote + api.matches.vote. Verificação: web tsc 0, api tsc 0, vite build 0; blobs git batem local/VPS (4d327408); rebuild app+nginx; m7arena.pro/ e /api/health 200; chunk Lobby-DNJrr5R8.js sem 'Vote!'/'votos_jogos' e com unsplash/rounded-2xl (design 1:1 intacto); POST .../vote agora 404. Commit 2c8e323. Pendente: validação visual do usuário. m7arena_mcp_ops segue em Restarting (pré-existente).",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/lib/api.ts",
+        "api/src/routes/matches.ts"
+      ]
+    },
+    {
+      "at": "2026-09-19T19:37:45.239Z",
+      "agent": "deepseek",
+      "summary": "Backup manual do banco de produção solicitado pelo usuário. Gerado pg_dump (plain+gzip) do m7arena na VPS via docker exec m7arena_postgres, copiado por scp para D:\\Backups\\M7Arena\\m7arena_20260919_163708.sql.gz (755KB/772.516 bytes). Verificado: md5sum idêntico nos dois lados (556a08cfabe512ebb68bbe17595ddb13) e teste de restauração real em banco temporário m7arena_restore_test na VPS (328 users, 85 com password_hash, 42 teams, 3 tournaments, 8 match_codes) — banco de teste dropado em seguida. Dump contém hashes de senha, mantido FORA do git. Pendente: definir se haverá cópia periódica automática para o PC (a VPS só tem o container backup diário em volume local, que morre com a VPS).",
+      "touched": [
+        "D:\\Backups\\M7Arena\\m7arena_20260919_163708.sql.gz",
+        "/root/backups/m7arena_20260919_163708.sql.gz"
+      ]
+    },
+    {
+      "at": "2026-09-19T19:41:02.081Z",
+      "agent": "deepseek",
+      "summary": "Complemento do backup manual: além do dump do banco, copiei os uploads (imagens de logos de time, prints de partida, avatares — 26.4MB/128 arquivos) do volume infra_uploads_data via tar para D:\\Backups\\M7Arena\\uploads_20260919.tar.gz (25.57MB, md5 166d56875ef2d9187c85649d4665c2ef, conferido nos dois lados). Verificação do dump vs banco vivo: 43 tabelas no banco vivo, 43 no dump, zero diferenças (comm vazio nos dois sentidos); restore testado com contagens (328 users/85 com senha, 253 game_accounts, 203 wallets, 42 teams, 228 members, 3 tournaments, 38 matches, 1 payment, 240 sessions). Backup no PC agora cobre banco + arquivos. Pendente: definir cópia periódica automática para o PC.",
+      "touched": [
+        "D:\\Backups\\M7Arena\\uploads_20260919.tar.gz"
+      ]
+    },
+    {
+      "at": "2026-09-19T20:12:27.364Z",
+      "agent": "gemini",
+      "summary": "Melhoria na visualização de cores e status do cronograma (ListaCronograma, MeusJogosPendentes, TodosJogosPendentes): partidas finalizadas em vermelho (#FF3131), partidas confirmadas com data de hoje exibindo 'HOJE' em verde (#00FF41), partidas agendadas na cor tema do campeonato, propostas enviadas na cor tema do campeonato. Validados typecheck (tsc) e build do Vite com sucesso.",
+      "touched": [
+        "web/src/components/campeonatos/dates.ts",
+        "web/src/components/campeonatos/ListaCronograma.tsx",
+        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
+        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
       ]
     }
   ]

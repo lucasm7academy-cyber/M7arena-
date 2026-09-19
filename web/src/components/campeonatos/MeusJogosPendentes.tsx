@@ -3,7 +3,7 @@ import { Swords, ChevronDown, Clock, Zap, Calendar } from "lucide-react";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { sameTeamRef } from "../../features/campeonatos/domain/team-ref";
 import { getIcon } from "./icons";
-import { formatDayOfWeek, formatFullDate } from "./dates";
+import { formatDayOfWeek, formatFullDate, isMatchToday } from "./dates";
 import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 export const MeusJogosPendentes = () => {
@@ -88,20 +88,23 @@ export const MeusJogosPendentes = () => {
                 const corB = teamBData.cor || (jogo as any).corB || "#FFB700";
                 const primaryColor = campeonato.themeColor || (campeonato as any).theme_color || "#FFB700";
                 const isConfirmado = jogo.status === "confirmado";
+                const isToday = isMatchToday(jogo.data);
 
                 const statusLabel = isWaitingForMyResponse
                   ? "PROPOSTA RECEBIDA"
                   : amITheProposer
                     ? "PROPOSTA ENVIADA"
                     : isConfirmado
-                      ? "AGENDADA"
+                      ? (isToday ? "HOJE" : "AGENDADA")
                       : "A AGENDAR";
 
                 const statusColor = isWaitingForMyResponse
                   ? "#00FF41"
                   : amITheProposer
-                    ? "#00F0FF"
-                    : primaryColor;
+                    ? primaryColor
+                    : (isConfirmado && isToday)
+                      ? "#00FF41"
+                      : primaryColor;
 
                 const canClickCard = !amITheProposer;
 
@@ -139,10 +142,12 @@ export const MeusJogosPendentes = () => {
                       borderColor: isWaitingForMyResponse
                         ? "rgba(0, 255, 65, 0.4)"
                         : amITheProposer
-                          ? "rgba(0, 240, 255, 0.3)"
-                          : isConfirmado
-                            ? `${primaryColor}40`
-                            : "rgba(255, 255, 255, 0.1)",
+                          ? `${primaryColor}50`
+                          : (isConfirmado && isToday)
+                            ? "rgba(0, 255, 65, 0.4)"
+                            : isConfirmado
+                              ? `${primaryColor}40`
+                              : "rgba(255, 255, 255, 0.1)",
                     }}
                   >
                     {/* TOPO: STATUS E DATA/HORA RESPONSIVOS */}

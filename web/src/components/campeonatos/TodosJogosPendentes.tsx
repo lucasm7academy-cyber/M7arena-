@@ -3,7 +3,7 @@ import { ChevronDown, ShieldCheck } from "lucide-react";
 import { useCampeonato } from "../../features/campeonatos/CampeonatoContext";
 import { sameTeamRef } from "../../features/campeonatos/domain/team-ref";
 import { getIcon } from "./icons";
-import { formatDayOfWeek, formatFullDate } from "./dates";
+import { formatDayOfWeek, formatFullDate, isMatchToday } from "./dates";
 import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
 export const TodosJogosPendentes = () => {
@@ -71,19 +71,20 @@ export const TodosJogosPendentes = () => {
 
                 const isProposto = jogo.status === "proposto";
                 const isConfirmado = jogo.status === "confirmado";
+                const isToday = isMatchToday(jogo.data);
 
                 const statusLabel = isProposto
                   ? "PROPOSTA ENVIADA"
                   : isConfirmado
-                    ? "CONFIRMADO"
+                    ? (isToday ? "HOJE" : "CONFIRMADO")
                     : jogo.status === "combinando"
                       ? "A COMBINAR"
                       : (jogo.status || "PENDENTE").toUpperCase();
 
                 const statusColor = isProposto
-                  ? "#00F0FF"
-                  : isConfirmado
-                    ? primaryColor
+                  ? primaryColor
+                  : (isConfirmado && isToday)
+                    ? "#00FF41"
                     : primaryColor;
 
                 const handleOpenArbitrate = () => {
@@ -109,10 +110,12 @@ export const TodosJogosPendentes = () => {
                     className="w-full rounded-xl border bg-[#09090d] flex flex-col overflow-hidden transition-all shadow-lg cursor-pointer hover:bg-[#0c0c14] hover:border-white/20"
                     style={{
                       borderColor: isProposto
-                        ? "rgba(0, 240, 255, 0.3)"
-                        : isConfirmado
-                          ? `${primaryColor}40`
-                          : "rgba(255, 255, 255, 0.1)",
+                        ? `${primaryColor}50`
+                        : (isConfirmado && isToday)
+                          ? "rgba(0, 255, 65, 0.4)"
+                          : isConfirmado
+                            ? `${primaryColor}40`
+                            : "rgba(255, 255, 255, 0.1)",
                     }}
                   >
                     {/* TOPO: STATUS E DATA/HORA RESPONSIVOS */}
