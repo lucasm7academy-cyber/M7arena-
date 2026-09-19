@@ -488,14 +488,8 @@ const Campeonatos = () => {
                         }}
                       >
                         {/* Background Image (Lazy Loaded Card by Card) */}
-                        {torneioImagens[card.id]?.banner ? (
-                          <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.2 }}
-                            className="absolute inset-0 z-0 bg-cover bg-center group-hover:opacity-30 transition-opacity duration-300"
-                            style={{ backgroundImage: `url(${torneioImagens[card.id].banner})` }}
-                          />
-                        ) : torneioImagens[card.id]?.logo ? (
+                        {/* O banner é exclusivo do hero do detalhe do campeonato; o card usa a logo. */}
+                        {torneioImagens[card.id]?.logo ? (
                           <motion.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 0.2 }}
