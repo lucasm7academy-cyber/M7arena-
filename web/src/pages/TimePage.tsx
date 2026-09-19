@@ -1697,15 +1697,26 @@ export default function TimePage() {
             className="w-full bg-[#08080a] relative overflow-hidden p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-center gap-6 justify-between"
             style={{ clipPath: CUT_FRAME_INNER }}
           >
+            {/* Imagem de Fundo e Gradientes */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+              <img
+                src="/images/fundo fanaticaaa.webp"
+                alt=""
+                className="w-full h-full object-cover opacity-35"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#08080a] via-[#08080a]/80 to-[#08080a]/60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#08080a]/90 via-transparent to-transparent" />
+            </div>
+
             {/* Glow de fundo */}
             <div
-              className="absolute -top-20 -left-20 w-96 h-96 rounded-full blur-[120px] opacity-25 pointer-events-none"
+              className="absolute -top-20 -left-20 w-96 h-96 rounded-full blur-[120px] opacity-25 pointer-events-none z-0"
               style={{ background: time.gradientFrom }}
             />
 
             {/* Logo */}
             <div
-              className="w-24 h-24 sm:w-28 sm:h-28 p-[2px] rounded-2xl flex items-center justify-center shrink-0 relative shadow-2xl cursor-pointer"
+              className="w-24 h-24 sm:w-28 sm:h-28 p-[2px] rounded-2xl flex items-center justify-center shrink-0 relative z-10 shadow-2xl cursor-pointer"
               style={{
                 background: time.gradientFrom,
                 boxShadow: `0 0 35px -5px ${time.gradientFrom}80`
@@ -1726,17 +1737,10 @@ export default function TimePage() {
             </div>
 
             {/* Info */}
-            <div className="flex-1 text-center sm:text-left min-w-0">
+            <div className="flex-1 text-center sm:text-left min-w-0 relative z-10">
               <div className="flex items-center gap-3 justify-center sm:justify-start mb-1 flex-wrap">
                 <h1 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight truncate">{time.nome}</h1>
                 {userRole === 'leader' && <Crown className="w-5 h-5 shrink-0" style={{ color: time.gradientFrom }} />}
-                <button
-                  onClick={() => window.location.reload()}
-                  title="Atualizar dados do time"
-                  className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/40 hover:text-white transition-all ml-auto sm:ml-0 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
               </div>
               <div className="flex items-center gap-2 justify-center sm:justify-start mb-3">
                 <div
@@ -1763,7 +1767,7 @@ export default function TimePage() {
             </div>
 
             {/* Espaços para Troféus da Equipe */}
-            <div className="flex flex-col items-center sm:items-end gap-1.5 shrink-0 mt-2 sm:mt-0">
+            <div className="flex flex-col items-center sm:items-end gap-1.5 shrink-0 mt-2 sm:mt-0 relative z-10">
               <div className="flex items-center gap-2 sm:gap-2.5">
                 {[...Array(4)].map((_, idx) => (
                   <div

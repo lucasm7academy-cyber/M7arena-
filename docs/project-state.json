@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-19T23:18:33.564Z",
+  "updatedAt": "2026-09-19T23:29:13.934Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2127,14 +2127,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-11T03:54:58.964Z",
-      "agent": "deepseek",
-      "summary": "Reset manual de senha em produção (não há fluxo de reset). Usuário trafiquentirj@hotmail.com (id b8280683-1187-4787-b673-00e174e6f808) tinha senha mas perdeu acesso. Gerei hash bcrypt (bcryptjs, 10 rounds — mesmo algoritmo de api/src/routes/auth.ts) e apliquei UPDATE users.password_hash via psql no container m7arena_postgres da VPS 179.198.120.11. Evidência: UPDATE 1 e login real POST https://m7arena.pro/api/auth/login → HTTP 200 com o user. Senha nova: 123@m7pro. Obs: o produto continua sem fluxo de reset de senha — se isso for recorrente, vale criar rota admin de reset.",
-      "touched": [
-        "VPS: users.password_hash (trafiquentirj@hotmail.com)"
-      ]
-    },
-    {
       "at": "2026-09-11T05:09:13.052Z",
       "agent": "deepseek",
       "summary": "Bug dos campeonatos Tesouro/Kraken (séries MD3 fechando como MD1) diagnosticado e corrigido. Causa: jogos group_* inseridos com best_of=1 pelo script solto make_schedule.js; motor fechava na 1ª vitória (RMDxMDR finalizou 1-0 com o jogo 2 rolando; BKSxNKZ idem, ajustado manual p/ 1-2). Fix em prod: 14 jogos best_of 1→3, RMDxMDR reaberta como em_andamento 1-0 e código re-travado; jogo 2 e 3 foram contados pelo cron e a série fechou 1-2 corretamente. Código: piso MD3 no resolverSerie, gerar-codigo força 3/5 (ADR-062), teste de regressão, schema comment corrigido. Evidência: motor 19/19, suíte 182/182, tsc 0, commit c7e0868 deployado na VPS (bundle com clamp verificado, site/API 200). make_schedule.js e query.sql deletados. Obs: checkout da VPS tem web/src/pages/Lobby.tsx modificado localmente (não commitado) — preservado, não é deste fix.",
@@ -2413,6 +2405,14 @@
       "at": "2026-09-19T23:18:33.564Z",
       "agent": "gemini",
       "summary": "Na página de time (TimePage.tsx): substituído o nome do elo nos cards da lineup pelo ícone do elo (/ranks/*.png) com tooltip; e adicionados 4 slots quadrados com borda arredondada e tracejada (dashed) vazios no lado direito do banner superior para simbolizar os troféus da equipe. Build e typecheck validados com sucesso.",
+      "touched": [
+        "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-19T23:29:13.934Z",
+      "agent": "gemini",
+      "summary": "Removido o botão de recarregar na TimePage e adicionada imagem de fundo no banner da equipe (/images/fundo fanaticaaa.webp) com gradientes escuros e z-index ajustado.",
       "touched": [
         "web/src/pages/TimePage.tsx"
       ]
