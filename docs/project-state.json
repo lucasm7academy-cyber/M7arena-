@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-19T23:38:17.782Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-09-21T16:12:22.077Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -2058,6 +2058,24 @@
       "decision": "O card de campeonato em /campeonatos usa a logo (logo_url) como imagem de fundo, com fallback para gradiente. O banner (banner_url) é usado exclusivamente no hero do CampeonatoDetalhes. O card não usa mais o banner.",
       "rationale": "Pedido explícito do usuário: logo e banner são imagens diferentes e o banner pertence só ao detalhe. O site original usava banner-primeiro no card (1:1), então um agente futuro pode achar que é regressão e reverter — não é.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-068",
+      "date": "2026-09-21T15:54:08.880Z",
+      "author": "deepseek",
+      "title": "Sorteio semanal das copas: 2 adversários novos por time (8 jogos/copa) via insert direto",
+      "decision": "O sorteio semanal das Copas do Kraken e do Tesouro insere 8 jogos por copa (cada um dos 8 times enfrenta 2 adversários inéditos) direto em tournament_matches: phase=group_stage, round=0, phase_label='Fase de Grupos', status='combinando', display_date='A COMBINAR', display_time='--:--', score_display='0 - 0', proposed_by='', best_of=3, match_key='manual-<ts>-<n>'. O sorteio escolhe aleatoriamente dois emparelhamentos perfeitos disjuntos sobre os pares ainda não jogados.",
+      "rationale": "Round-robin de 8 times = 28 pares; as duas primeiras semanas consumiram 16 (8/semana, 2 por time). Manter 2 por time preserva a cadência semanal. Inserção direta evita mudança de código (o mesmo que a sessão de 14/09 fez); status 'combinando' + 'A COMBINAR' faz o jogo cair em 'Meus Jogos Pendentes' e habilita os capitães a propor data. Evidência: API dev.m7arena.pro devolve 24 jogos e 8 pendentes por copa, 0 pares repetidos.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-069",
+      "date": "2026-09-21T16:11:51.137Z",
+      "author": "deepseek",
+      "title": "Reconciliação Riot: pacing anti-429 + ícone e nível automáticos",
+      "decision": "A reconciliação Riot (cron 3 dias) passa a: (1) espaçar a varredura em lotes de 3 contas com 10s entre lotes (~72 req/2min, teto da chave pessoal é 100) e repetir 429 respeitando o Retry-After; (2) sincronizar também metadata.profile_icon_id e metadata.level (summoner-v4 by-puuid), além do handle/users.riot_id que já sincronizava.",
+      "rationale": "Diagnóstico: os logs do container tinham 304 respostas 429 — a rotina antiga disparava ~220 requisições de uma vez (concorrência 3 sem pausa) e a maioria das contas nunca sincronizava (ex.: Ironhide#BR01 seguia velho no banco). E o ícone não tinha NENHUM refresh automático: só o botão \"Atualizar dados\" do próprio usuário, então quem trocava de ícone no LoL ficava com o antigo no site. Evidência: npx tsc --noEmit exit 0; npx tsx --test → 185/186 (única falha é o smoke test-realtime.mjs que exige servidor ao vivo, pré-existente).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2126,28 +2144,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-11T22:10:47.804Z",
-      "agent": "deepseek",
-      "summary": "Aumentei o limite da tag de time de 3 para 4 caracteres. Front: equipes.tsx (CreateTeamModal) e TimePage.tsx (modal Editar Time) — slice(0,3)→slice(0,4), maxLength 3→4, label \"Tag (3 letras)\"→\"Tag (até 4 letras)\"; players.tsx parou de truncar a tag exibida em substring(0,3). Servidor: api/src/routes/teams.ts POST e PUT agora rejeitam tag com >4 caracteres (400). VERIFICADO que não quebra nada: a coluna teams.tag já é varchar(10) na migration 0000, então 4 chars cabem e nenhuma migration é necessária; tags existentes (≤3) intactas; índice único teams_game_tag_idx inalterado. Evidência: `npx tsc --noEmit` em api e web → exit 0 (sem output). PENDENTE: precisa rebuild do web + deploy da API para valer em produção (não deployei). Obs: src/app/** (port Next morto, ADR-010) ainda tem slice(0,3) mas não foi tocado de propósito.",
-      "touched": [
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/players.tsx",
-        "api/src/routes/teams.ts"
-      ]
-    },
-    {
-      "at": "2026-09-11T22:14:38.162Z",
-      "agent": "deepseek",
-      "summary": "Deploy na VPS concluído (commit fc7d887 no branch feat/redesign-modais, push origin + pull na VPS). Rebuild app+nginx via docker compose --env-file (ADR-015). Verificado ao vivo: https://m7arena.pro/api/health → status ok; bundle equipes-ClQYMORd.js em /usr/share/nginx/html/assets contém o novo placeholder M7ES (front 4 chars no ar); /app/dist/api/src/routes/teams.js no container m7arena_app contém o guard \"no máximo 4 caracteres\". Containers m7arena_nginx/app/realtime recriados e Up. Lobby.tsx local da VPS preservado. Obs: m7arena_mcp_ops está em Restarting (pré-existente, não relacionado a esta mudança).",
-      "touched": [
-        "api/src/routes/teams.ts",
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/players.tsx"
-      ]
-    },
     {
       "at": "2026-09-11T22:25:14.820Z",
       "agent": "deepseek",
@@ -2411,6 +2407,24 @@
       "summary": "Revertido o clareamento da imagem de fundo no banner da TimePage para o estado original mais escuro conforme pedido do usuario.",
       "touched": [
         "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-21T15:54:09.879Z",
+      "agent": "deepseek",
+      "summary": "Sorteio da 3ª semana das Copas do Kraken e do Tesouro na VPS. Estado confirmado via SQL e API: 8 times/1 Grupo A em cada copa, 16 jogos finalizados, cada time com 4 jogos, 0 pendentes. Sorteio aleatório de 2 emparelhamentos perfeitos disjuntos por copa → 8 jogos novos por copa (16 total), cada time com 2 adversários inéditos, 0 pares repetidos. Inseridos em tournament_matches via transação com validação (phase=group_stage, phase_label='Fase de Grupos', status='combinando', 'A COMBINAR'/'--:--', best_of=3, ids de time resolvidos, 0 nulos). Validado pela API: 24 jogos e 8 pendentes por copa. Restam 4 pares por copa para a próxima semana. Nenhuma mudança de código ou schema.",
+      "touched": [
+        "tournament_matches"
+      ]
+    },
+    {
+      "at": "2026-09-21T16:12:22.077Z",
+      "agent": "deepseek",
+      "summary": "Ícones/nomes desatualizados: diagnóstico + correção. Causa dupla: (1) profile_icon_id/level sem nenhum refresh automático (só o botão 'Atualizar dados' do usuário; Ironhide com sync de 10/09); (2) cron de handle (3 dias) tomava 429 em massa (304 nos logs) porque disparava ~220 chamadas sem pausa, então quase nada sincronizava. Verificado via Riot pelo PUUID: nick BKS Flint#team (banco Ironhide#BR01), ícone 7185 (banco 6297), nível 333 (banco 308). Fix em api/src/lib/reconciliar-handles.ts: lotes de 3 contas/10s (~72 req/2min, teto 100), retry 429 com Retry-After e sync de profile_icon_id/level via summoner-v4. Testes 6/6 e suíte 185/186 (única falha: smoke test-realtime.mjs, exige servidor, pré-existente). Registro do Ironhide já corrigido no banco. PENDENTE: deploy da API (aguardando OK) — boot roda a reconciliação e corrige as demais contas em ~12min.",
+      "touched": [
+        "api/src/lib/reconciliar-handles.ts",
+        "api/test/reconciliar-handles.test.ts",
+        "game_accounts"
       ]
     }
   ]

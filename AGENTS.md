@@ -223,6 +223,7 @@ M7arenaSite/
 │   ├── project-state.json       ← fonte da verdade do status
 │   ├── status-log.jsonl         ← histórico append-only
 │   ├── ARQUITETURA.md           ← modelo de domínio, camadas, schema novo
+│   ├── ROTINA_SORTEIO_COPAS.md  ← sorteio semanal das copas (rotina recorrente)
 │   └── PLANO_MIGRACAO.md        ← fases, mapeamento de dados, cutover
 ├── mcp/
 │   ├── status-server/           ← o MCP m7-status
@@ -230,6 +231,7 @@ M7arenaSite/
 ├── db/                          ← schema Drizzle + migrations
 ├── infra/                       ← docker-compose, postgresql.conf, nginx
 ├── scripts/migrate/             ← extract/transform/load do Supabase
+├── scripts/campeonatos/         ← sortear-semana.mjs (sorteio semanal das copas)
 ├── web/                         ← o fork React+Vite (ADR-010). O front vive aqui.
 ├── api/                         ← servidor de API Node + Drizzle (serviço `app`)
 └── src/                         ← MORTO: port em Next descartado pela ADR-010.
@@ -266,3 +268,18 @@ O usuário está no Windows com PowerShell. Ele tem Node 24, Docker 29 e git ins
 3. O site antigo é somente leitura.
 4. Regra de negócio e segredo ficam no servidor.
 5. `set_component_status` + `log_session` antes de encerrar.
+
+---
+
+## 8. Rotina recorrente: sorteio semanal das copas
+
+Quando o usuário pedir algo como **"segue com o sorteio da copa do Kraken"** (ou Tesouro, ou as duas), **não releia o código**: o procedimento está pronto em `docs/ROTINA_SORTEIO_COPAS.md` e o script em `scripts/campeonatos/sortear-semana.mjs`. O resumo é:
+
+```powershell
+scp scripts/campeonatos/sortear-semana.mjs pandapost-vps:/root/m7arena/sortear-semana.mjs
+ssh pandapost-vps "docker cp /root/m7arena/sortear-semana.mjs m7arena_app:/app/sortear-semana.mjs"
+ssh pandapost-vps "docker exec -w /app m7arena_app node sortear-semana.mjs kraken --dry-run"  # prévia
+ssh pandapost-vps "docker exec -w /app m7arena_app node sortear-semana.mjs kraken"            # aplicar
+```
+
+Convenção (ADR-068): 2 adversários inéditos por time = 8 jogos por copa, pendentes de fase de grupos (`A COMBINAR`). O script valida em transação (0 pares repetidos) e imprime o que sobra para a próxima semana. Depois de aplicar, confirme pela API (`dev.m7arena.pro`) e registre `log_session`.

@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 19/09/2026 20:38 — por `gemini`
+**Última atualização:** 21/09/2026 13:12 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -765,6 +765,22 @@ _18/09/2026 00:46 — deepseek_
 
 _19/09/2026 20:00 — deepseek_
 
+### ADR-068 — Sorteio semanal das copas: 2 adversários novos por time (8 jogos/copa) via insert direto
+
+**Decisão:** O sorteio semanal das Copas do Kraken e do Tesouro insere 8 jogos por copa (cada um dos 8 times enfrenta 2 adversários inéditos) direto em tournament_matches: phase=group_stage, round=0, phase_label='Fase de Grupos', status='combinando', display_date='A COMBINAR', display_time='--:--', score_display='0 - 0', proposed_by='', best_of=3, match_key='manual-<ts>-<n>'. O sorteio escolhe aleatoriamente dois emparelhamentos perfeitos disjuntos sobre os pares ainda não jogados.
+
+**Por quê:** Round-robin de 8 times = 28 pares; as duas primeiras semanas consumiram 16 (8/semana, 2 por time). Manter 2 por time preserva a cadência semanal. Inserção direta evita mudança de código (o mesmo que a sessão de 14/09 fez); status 'combinando' + 'A COMBINAR' faz o jogo cair em 'Meus Jogos Pendentes' e habilita os capitães a propor data. Evidência: API dev.m7arena.pro devolve 24 jogos e 8 pendentes por copa, 0 pares repetidos.
+
+_21/09/2026 12:54 — deepseek_
+
+### ADR-069 — Reconciliação Riot: pacing anti-429 + ícone e nível automáticos
+
+**Decisão:** A reconciliação Riot (cron 3 dias) passa a: (1) espaçar a varredura em lotes de 3 contas com 10s entre lotes (~72 req/2min, teto da chave pessoal é 100) e repetir 429 respeitando o Retry-After; (2) sincronizar também metadata.profile_icon_id e metadata.level (summoner-v4 by-puuid), além do handle/users.riot_id que já sincronizava.
+
+**Por quê:** Diagnóstico: os logs do container tinham 304 respostas 429 — a rotina antiga disparava ~220 requisições de uma vez (concorrência 3 sem pausa) e a maioria das contas nunca sincronizava (ex.: Ironhide#BR01 seguia velho no banco). E o ícone não tinha NENHUM refresh automático: só o botão "Atualizar dados" do próprio usuário, então quem trocava de ícone no LoL ficava com o antigo no site. Evidência: npx tsc --noEmit exit 0; npx tsx --test → 185/186 (única falha é o smoke test-realtime.mjs que exige servidor ao vivo, pré-existente).
+
+_21/09/2026 13:11 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -775,6 +791,8 @@ _19/09/2026 20:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 21/09/2026 13:12 | deepseek | Ícones/nomes desatualizados: diagnóstico + correção. Causa dupla: (1) profile_icon_id/level sem nenhum refresh automático (só o botão 'Atualizar dados' do usuário; Ironhide com sync de 10/09); (2) cron de handle (3 dias) tomava 429 em massa (304 nos logs) porque disparava ~220 chamadas sem pausa, então quase nada sincronizava. Verificado via Riot pelo PUUID: nick BKS Flint#team (banco Ironhide#BR01), ícone 7185 (banco 6297), nível 333 (banco 308). Fix em api/src/lib/reconciliar-handles.ts: lotes de 3 contas/10s (~72 req/2min, teto 100), retry 429 com Retry-After e sync de profile_icon_id/level via summoner-v4. Testes 6/6 e suíte 185/186 (única falha: smoke test-realtime.mjs, exige servidor, pré-existente). Registro do Ironhide já corrigido no banco. PENDENTE: deploy da API (aguardando OK) — boot roda a reconciliação e corrige as demais contas em ~12min. <br>_tocou: `api/src/lib/reconciliar-handles.ts`, `api/test/reconciliar-handles.test.ts`, `game_accounts`_ |
+| 21/09/2026 12:54 | deepseek | Sorteio da 3ª semana das Copas do Kraken e do Tesouro na VPS. Estado confirmado via SQL e API: 8 times/1 Grupo A em cada copa, 16 jogos finalizados, cada time com 4 jogos, 0 pendentes. Sorteio aleatório de 2 emparelhamentos perfeitos disjuntos por copa → 8 jogos novos por copa (16 total), cada time com 2 adversários inéditos, 0 pares repetidos. Inseridos em tournament_matches via transação com validação (phase=group_stage, phase_label='Fase de Grupos', status='combinando', 'A COMBINAR'/'--:--', best_of=3, ids de time resolvidos, 0 nulos). Validado pela API: 24 jogos e 8 pendentes por copa. Restam 4 pares por copa para a próxima semana. Nenhuma mudança de código ou schema. <br>_tocou: `tournament_matches`_ |
 | 19/09/2026 20:38 | gemini | Revertido o clareamento da imagem de fundo no banner da TimePage para o estado original mais escuro conforme pedido do usuario. <br>_tocou: `web/src/pages/TimePage.tsx`_ |
 | 19/09/2026 20:29 | gemini | Removido o botão de recarregar na TimePage e adicionada imagem de fundo no banner da equipe (/images/fundo fanaticaaa.webp) com gradientes escuros e z-index ajustado. <br>_tocou: `web/src/pages/TimePage.tsx`_ |
 | 19/09/2026 20:18 | gemini | Na página de time (TimePage.tsx): substituído o nome do elo nos cards da lineup pelo ícone do elo (/ranks/*.png) com tooltip; e adicionados 4 slots quadrados com borda arredondada e tracejada (dashed) vazios no lado direito do banner superior para simbolizar os troféus da equipe. Build e typecheck validados com sucesso. <br>_tocou: `web/src/pages/TimePage.tsx`_ |
@@ -788,8 +806,6 @@ _19/09/2026 20:00 — deepseek_
 | 18/09/2026 00:46 | deepseek | Removida a votação da torcida da home (Lobby) e deploy na VPS. Descoberta: o Lobby.tsx do git era um redesign cut-edge NUNCA deployado; a VPS servia uma versão local 1:1 do site antigo (preservada desde 2026-09-12). Para não danificar o visual, restaurei o git para a versão que está no ar e só então removi a votação (estado, 2 useEffects, handleVote, bloco JSX 'Votação da torcida', import supabase) e a rota no-op POST /api/matches/:id/vote + api.matches.vote. Verificação: web tsc 0, api tsc 0, vite build 0; blobs git batem local/VPS (4d327408); rebuild app+nginx; m7arena.pro/ e /api/health 200; chunk Lobby-DNJrr5R8.js sem 'Vote!'/'votos_jogos' e com unsplash/rounded-2xl (design 1:1 intacto); POST .../vote agora 404. Commit 2c8e323. Pendente: validação visual do usuário. m7arena_mcp_ops segue em Restarting (pré-existente). <br>_tocou: `web/src/pages/Lobby.tsx`, `web/src/lib/api.ts`, `api/src/routes/matches.ts`_ |
 | 14/09/2026 01:02 | deepseek | Sorteio de 2 novos confrontos por time (fase de grupos) nas Copas do Kraken e do Tesouro, na VPS. Estado real: cada copa tem 1 Grupo A com 8 times e todos já tinham 2 jogos (diferente da lembrança do usuário). Inseridos 8 jogos por copa (16 total) em tournament_matches: phase=group_stage, phase_label='Fase de Grupos', status='combinando', display_date='A COMBINAR', display_time='--:--' — pendentes para os capitães agendarem. Nenhum par repetido; cada time ficou com 4 jogos (2 novos). Validado por SQL (0 pares duplicados) e pela API de dev.m7arena.pro (cronograma=16, pendentes=8 em cada). Não houve mudança de schema nem de código. <br>_tocou: `tournament_matches`_ |
 | 14/09/2026 00:50 | gemini | Ajuste completo da responsividade mobile dos cards de cronograma (MeusJogosPendentes, TodosJogosPendentes, ListaCronograma e Painel de Arbitragem) para telas pequenas (<640px e 320-400px), evitando textos encavalados, truncamento desordenado e botões sobrepostos. Build e deploy ao vivo no Nginx da VPS concluídos com sucesso. <br>_tocou: `web/src/components/campeonatos/MeusJogosPendentes.tsx`, `web/src/components/campeonatos/TodosJogosPendentes.tsx`, `web/src/components/campeonatos/ListaCronograma.tsx`, `web/src/components/campeonatos/AdminCriarJogo.tsx`_ |
-| 14/09/2026 00:06 | gemini | Atualizado o background do chaveamento e do modal para usar a imagem oficial das salas e lobby (/images/fundo_elite.jpg) com os overlays originais. Build e deploy ao vivo na VPS concluidos com sucesso. <br>_tocou: `web/src/components/campeonatos/Chaves.tsx`, `web/src/features/campeonatos/components/modals/BracketModal.tsx`_ |
-| 13/09/2026 23:58 | gemini | Ajuste de design do chaveamento: removido degradê do vencedor e aplicada a cor primária sólida direta com tipografia em preto de alto contraste; fundo dos cards clareado para #161622 (menos preto); adicionado banner do campeonato com overlay atmosférico no fundo do chaveamento e no modal de tela cheia. Deploy ao vivo na VPS concluído com sucesso. <br>_tocou: `web/src/components/campeonatos/BracketMatch.tsx`, `web/src/components/campeonatos/Chaves.tsx`, `web/src/features/campeonatos/components/modals/BracketModal.tsx`, `web/src/components/campeonatos/DoubleSideBracket.tsx`, `web/src/components/campeonatos/UpperRound.tsx`, `web/src/components/campeonatos/LowerRound.tsx`_ |
 
 ---
 
