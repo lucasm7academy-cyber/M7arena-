@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-21T16:12:22.077Z",
+  "updatedAt": "2026-09-22T02:59:15.242Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2076,6 +2076,24 @@
       "decision": "A reconciliação Riot (cron 3 dias) passa a: (1) espaçar a varredura em lotes de 3 contas com 10s entre lotes (~72 req/2min, teto da chave pessoal é 100) e repetir 429 respeitando o Retry-After; (2) sincronizar também metadata.profile_icon_id e metadata.level (summoner-v4 by-puuid), além do handle/users.riot_id que já sincronizava.",
       "rationale": "Diagnóstico: os logs do container tinham 304 respostas 429 — a rotina antiga disparava ~220 requisições de uma vez (concorrência 3 sem pausa) e a maioria das contas nunca sincronizava (ex.: Ironhide#BR01 seguia velho no banco). E o ícone não tinha NENHUM refresh automático: só o botão \"Atualizar dados\" do próprio usuário, então quem trocava de ícone no LoL ficava com o antigo no site. Evidência: npx tsc --noEmit exit 0; npx tsx --test → 185/186 (única falha é o smoke test-realtime.mjs que exige servidor ao vivo, pré-existente).",
       "supersedes": null
+    },
+    {
+      "id": "ADR-070",
+      "date": "2026-09-22T02:59:06.558Z",
+      "author": "deepseek",
+      "title": "Nginx do host: gzip_types ligado e HTTP/2 nos proxy hosts",
+      "decision": "No nginx do host (VPS): gzip_types habilitado (text/css, application/javascript, application/json, svg, xml) e os dois proxy hosts do M7Arena passam a `listen 443 ssl http2;`.",
+      "rationale": "`gzip on;` existia mas `gzip_types` estava comentado, então o nginx só comprimia text/html: o bundle JS saía com 710 KB crus (agora 208 KB, -71%). E o proxy estava em HTTP/1.1 puro (sem http2), forçando o navegador a enfileirar dezenas de imagens em ~6 conexões. Evidência: `curl -H 'Accept-Encoding: gzip'` no bundle → 208318 bytes; `curl --http2 -I https://dev.m7arena.pro` → HTTP/2 200; `openssl s_client -alpn h2` → ALPN h2. Backup em /etc/nginx/*.bak-*; nginx -t ok.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-071",
+      "date": "2026-09-22T02:59:07.821Z",
+      "author": "deepseek",
+      "title": "Pipeline de imagens: WebP no upload + fim do Supabase no storage",
+      "decision": "Imagens de exibição passam a ser convertidas para WebP redimensionado no upload (team-logos 512px, public-images 1920px, qualidade 82, \"nunca piora\") e as imagens legadas do Supabase foram migradas para o volume local via scripts/otimizar-imagens.mjs. match-prints ficam intactos (prova de resultado).",
+      "rationale": "Os logos eram gravados crus (PNG de até 2 MB) renderizados em ~40–120px, e 22 dos 42 times ainda apontavam para o Supabase (TTFB medido 1,32s vs 0,25s local) — daí o card preto por ~1s. Após a migração: 0 URLs do Supabase em teams/tournaments/standings/matches; ACE 2038 KB → 42 KB, YFC 984 KB → 20 KB; total ~8 MB economizados. Também removidas as 2 URLs hardcoded do Supabase no Login.tsx (bytes idênticos conferidos por sha256). Evidência: npx tsc --noEmit 0; npx tsx --test 194/195 (única falha é o smoke test-realtime.mjs que exige servidor ao vivo).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2144,23 +2162,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-11T22:25:14.820Z",
-      "agent": "deepseek",
-      "summary": "Bug do Lobby (#NKA em vez de #NKZA + logo sumida) corrigido. Causa: o time NKZ Academy foi renomeado NKA→NKZA, mas os snapshots tournament_matches.team_a_tag/team_b_tag continuavam 'NKA'; o Lobby usa a tag do snapshot e resolve logo por tag em times_inscritos, então a tag velha derrubava a logo. Fix dados: UPDATE por id ressincronizou tournament_matches e bracket_matches na VPS — ao vivo GET /api/tournaments/2bcef957 devolve timeA=NKZA e times_inscritos NKZA logo=true. Fix código: PUT /api/teams/:id propaga a tag nova aos snapshots (tournament_matches, bracket_matches) + array_replace em tournaments.seed_order; commit 77357a6 deployado (rebuild app). Evidência: tsc api exit 0, health 200, dist teams.js contém array_replace. ADR-064. Falta reload do usuário no Lobby.",
-      "touched": [
-        "api/src/routes/teams.ts"
-      ]
-    },
-    {
-      "at": "2026-09-11T22:33:22.823Z",
-      "agent": "deepseek",
-      "summary": "Fase de grupos agora pontua por série (MD3/MD5), não por mapa. GroupStage.tsx e CampeonatoContext.getStatsForTeamForCalculation passaram a contar vitória de série = 1 V (adversário 1 D); J = séries jogadas. Alinha com o gerador de chaves (createCampPage, que já era por série). Classificação geral do servidor (buildClassificacao) ficou por mapa, a pedido do usuário. Validado com dados reais via script: MDR 2x1 RMD → MDR V=1/D=0; M7W 2x0 BKA → V=1/D=0 (antes somava mapas). Evidência: tsc web exit 0; deploy commit 0a0b6ae (rebuild nginx); bundle CampeonatoDetalhes-3AQdyYpJ→CnrurGZL; health 200. ADR-065. Falta hard-refresh do usuário na aba Grupos.",
-      "touched": [
-        "web/src/components/campeonatos/GroupStage.tsx",
-        "web/src/features/campeonatos/CampeonatoContext.tsx"
-      ]
-    },
     {
       "at": "2026-09-11T23:07:07.514Z",
       "agent": "gemini",
@@ -2425,6 +2426,32 @@
         "api/src/lib/reconciliar-handles.ts",
         "api/test/reconciliar-handles.test.ts",
         "game_accounts"
+      ]
+    },
+    {
+      "at": "2026-09-21T16:31:55.182Z",
+      "agent": "deepseek",
+      "summary": "Deploy do fix de reconciliação Riot (commit 98eecb7) + conhecimento salvo (3de6dd0). Build app na VPS, container recriado, site/API 200. A varredura de boot rodou completa: 246 das 254 contas LoL sincronizadas (as 8 restantes não tinham mudança), 0 erros e 0 respostas 429 (antes: 304). Ironhide agora está BKS Flint#team / ícone 7185 / nível 333 no banco. Conhecimento salvo: scripts/campeonatos/sortear-semana.mjs + docs/ROTINA_SORTEIO_COPAS.md + seção 8 do AGENTS.md (sorteio semanal), ADRs 068 e 069. Cadência da reconciliação mantida em 3 dias.",
+      "touched": [
+        "api/src/lib/reconciliar-handles.ts",
+        "api/test/reconciliar-handles.test.ts",
+        "AGENTS.md",
+        "docs/ROTINA_SORTEIO_COPAS.md",
+        "scripts/campeonatos/sortear-semana.mjs"
+      ]
+    },
+    {
+      "at": "2026-09-22T02:59:15.242Z",
+      "agent": "deepseek",
+      "summary": "Os 4 pontos de performance de imagem/entrega resolvidos e deployados. (1) nginx do host: gzip_types ligado (bundle JS 710KB→208KB) e HTTP/2 nos dois proxy hosts (ALPN h2 confirmado). (2) Supabase fora do storage: 22 logos de time + 1 logo e 1 banner de campeonato migrados para o volume local; 0 URLs do Supabase em teams/tournaments/standings/matches. (3) Upload gera WebP redimensionado com sharp (team-logos 512px, public-images 1920px, qualidade 82, regra 'nunca piora'); match-prints intactos. (4) Login.tsx sem URLs hardcoded do Supabase (bytes idênticos, sha256). ~8MB economizados; ACE 2038KB→42KB, YFC 984KB→20KB, TTFB 1,3s→0,25s. Evidência: tsc 0, testes 194/195 (falha única = smoke test-realtime.mjs que exige servidor ao vivo), verificação da função compilada no container (foto 2,7MB→30KB; webp já otimizado volta intacto). Commits b4c3216, 40348ab, 3f53109. ADRs 070 e 071.",
+      "touched": [
+        "api/src/routes/upload.ts",
+        "api/test/upload-otimizacao.test.ts",
+        "scripts/otimizar-imagens.mjs",
+        "web/src/pages/Login.tsx",
+        "/etc/nginx/nginx.conf (VPS)",
+        "/etc/nginx/sites-available/m7arena-proxy.conf (VPS)",
+        "/etc/nginx/sites-available/m7arena-main-proxy.conf (VPS)"
       ]
     }
   ]
