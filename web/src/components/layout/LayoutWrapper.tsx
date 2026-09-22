@@ -192,18 +192,6 @@ export default function Layout() {
               <Menu className="w-6 h-6 md:w-6 md:h-6" />
             </button>
 
-            <Link
-              to="/lobby"
-              onClick={() => playSound('click')}
-              className="lg:hidden flex items-center hover:opacity-90 transition-all"
-            >
-              <img
-                alt="M7 Arena Logo"
-                className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_2px_#FFFF00] drop-shadow-[0_0_5px_#FFFF00] drop-shadow-[0_0_10px_rgba(255,255,0,0.4)]"
-                src={LOGO_URL}
-              />
-            </Link>
-
             <Link 
               to="/lobby" 
               onClick={() => playSound('click')}
