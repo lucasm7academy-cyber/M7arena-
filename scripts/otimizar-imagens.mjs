@@ -29,12 +29,16 @@ const path = await import("node:path");
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "/var/www/uploads";
 const LADO_MAX = { "team-logos": 512, "public-images": 1920 };
-const PESO_MINIMO = 60 * 1024; // abaixo disso não vale reprocessar
+// Abaixo disso a imagem já carrega rápido no tamanho em que é renderizada —
+// não vale trocar a URL por ganho marginal.
+const PESO_MINIMO = 30 * 1024;
 
 const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await db.connect();
 
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
+/** URL sem cache-buster (`?t=...`) — o arquivo em disco não tem a query. */
+const semQuery = (url) => url.split("?")[0];
 
 async function otimizar(buffer, bucket) {
   const lado = LADO_MAX[bucket] ?? 1920;
@@ -52,7 +56,7 @@ async function lerImagem(url) {
     if (!res.ok) throw new Error(`download ${res.status}`);
     return Buffer.from(await res.arrayBuffer());
   }
-  return fs.readFile(path.join(UPLOAD_DIR, url.replace(/^\/uploads\//, "")));
+  return fs.readFile(path.join(UPLOAD_DIR, semQuery(url).replace(/^\/uploads\//, "")));
 }
 
 /** Caminho/URL de destino de uma imagem otimizada, seguindo a convenção de cada bucket. */
@@ -67,21 +71,22 @@ let economizado = 0;
 /** Otimiza uma referência e devolve a URL nova (ou null se nada a fazer). */
 async function processar({ url, bucket, subpasta, nomeBase, origem }) {
   if (!url) return null;
-  if (url.endsWith(".webp")) {
-    // Já é webp: só confere se não está pesada demais para o que renderiza.
-    try {
-      const buf = await lerImagem(url);
-      if (buf.length <= PESO_MINIMO) return null;
-    } catch {
-      return null;
-    }
-  }
+  const externo = /^https?:\/\//i.test(url);
+
+  // Arquivo local já convertido: nada a fazer (mantém o script idempotente).
+  if (!externo && semQuery(url).endsWith(".webp")) return null;
 
   const antes = await lerImagem(url).catch((e) => {
     console.warn(`  ! falhou ler ${url}: ${e.message}`);
     return null;
   });
   if (!antes) return null;
+
+  // Arquivo local já leve: não vale trocar a URL por ganho marginal.
+  if (!externo && antes.length <= PESO_MINIMO) {
+    relatorios.push(`  = ${origem} ${url} mantido (já leve: ${kb(antes.length)})`);
+    return null;
+  }
 
   let otimizada;
   try {
@@ -94,22 +99,24 @@ async function processar({ url, bucket, subpasta, nomeBase, origem }) {
   const { disco, url: urlNova } = destino(bucket, subpasta, nomeBase);
   const economia = antes.length - otimizada.length;
 
-  // Nunca piora: se o WebP não ficou menor, mantém o original.
-  if (economia <= 0) {
+  // Local: nunca piora (se o WebP não ficou menor, mantém o original).
+  // Externo: SEMPRE traz para casa — o que importa é remover a dependência do
+  // Supabase (o TTFB de 1,3s existe mesmo para arquivo pequeno).
+  if (!externo && economia <= 0) {
     relatorios.push(`  = ${origem} ${url} mantido (webp ${kb(otimizada.length)} >= original ${kb(antes.length)})`);
     return null;
   }
 
   if (dryRun) {
     relatorios.push(`  [dry-run] ${origem} ${url}\n      -> ${urlNova} (${kb(antes.length)} -> ${kb(otimizada.length)})`);
-    economizado += economia;
+    economizado += Math.max(0, economia);
     return urlNova;
   }
 
   await fs.mkdir(path.dirname(disco), { recursive: true });
   await fs.writeFile(disco, otimizada);
   relatorios.push(`  ${origem} ${url}\n      -> ${urlNova} (${kb(antes.length)} -> ${kb(otimizada.length)}, -${kb(economia)})`);
-  economizado += economia;
+  economizado += Math.max(0, economia);
   return urlNova;
 }
 
@@ -127,7 +134,8 @@ console.log(`\n=== OTIMIZAÇÃO/MIGRAÇÃO DE IMAGENS ${dryRun ? "(DRY-RUN)" : "
 const times = (await db.query(`SELECT id, tag, logo_url FROM teams WHERE logo_url IS NOT NULL ORDER BY tag`)).rows;
 console.log(`--- ${times.length} logos de time ---`);
 for (const t of times) {
-  const nomeBase = path.basename(t.logo_url, path.extname(t.logo_url)) || `logo-${t.id}`;
+  const limpa = semQuery(t.logo_url);
+  const nomeBase = path.basename(limpa, path.extname(limpa)) || `logo-${t.id}`;
   const urlNova = await processar({
     url: t.logo_url,
     bucket: "team-logos",
@@ -162,6 +170,25 @@ for (const c of camps) {
 }
 
 console.log(relatorios.join("\n"));
+
+// Snapshots de classificação que ainda apontam para storage externo (logo de um
+// time que já trocou de imagem e cujo arquivo antigo não é referenciado por
+// ninguém): re-aponta para a logo ATUAL do time.
+if (dryRun) {
+  const { rows } = await db.query(
+    `SELECT count(*)::int c FROM tournament_standings ts JOIN teams tm ON tm.id = ts.team_id
+     WHERE ts.logo LIKE '%supabase%' AND tm.logo_url IS NOT NULL AND tm.logo_url NOT LIKE '%supabase%'`
+  );
+  console.log(`\nstandings a re-apontar para a logo atual do time: ${rows[0].c} (dry-run)`);
+} else {
+  const rep = await db.query(
+    `UPDATE tournament_standings ts SET logo = tm.logo_url FROM teams tm
+     WHERE ts.team_id = tm.id AND ts.logo LIKE '%supabase%'
+       AND tm.logo_url IS NOT NULL AND tm.logo_url NOT LIKE '%supabase%'`
+  );
+  console.log(`\nstandings re-apontados para a logo atual do time: ${rep.rowCount}`);
+}
+
 console.log(`\nTotal economizado: ${kb(economizado)}`);
 if (dryRun) console.log("(dry-run — nada foi gravado)");
 

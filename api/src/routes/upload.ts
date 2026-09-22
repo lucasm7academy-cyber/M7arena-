@@ -129,15 +129,24 @@ const LADO_MAX_EXIBICAO: Record<string, number> = {
 /**
  * Converte a imagem enviada para WebP redimensionado (qualidade 82). `rotate()`
  * aplica a orientação do EXIF antes de redimensionar (foto de celular não sai
- * deitada). Exportado para os testes exercerem o mesmo caminho da rota.
+ * deitada).
+ *
+ * "Nunca piora": se o WebP sair maior que o original (acontece com imagens já
+ * otimizadas ou muito ruidosas), devolve o buffer original — o upload guarda o
+ * arquivo cru em vez de inflá-lo. Exportado para os testes exercerem o mesmo
+ * caminho da rota.
  */
-export async function otimizarImagemExibicao(buffer: Buffer, bucket: string): Promise<Buffer> {
+export type ImagemProcessada = { buffer: Buffer; otimizada: boolean };
+
+export async function otimizarImagemExibicao(buffer: Buffer, bucket: string): Promise<ImagemProcessada> {
   const lado = LADO_MAX_EXIBICAO[bucket] ?? 1920;
-  return sharp(buffer)
+  const webp = await sharp(buffer)
     .rotate()
     .resize({ width: lado, height: lado, fit: "inside", withoutEnlargement: true })
     .webp({ quality: 82 })
     .toBuffer();
+  if (webp.length >= buffer.length) return { buffer, otimizada: false };
+  return { buffer: webp, otimizada: true };
 }
 
 /**
@@ -456,8 +465,9 @@ uploadRouter.post(
       let bufferFinal = file.buffer;
       let ext = path.extname(filename).toLowerCase() || EXT_POR_FORMATO[img.formato];
       try {
-        bufferFinal = await otimizarImagemExibicao(file.buffer, bucket);
-        ext = ".webp";
+        const processada = await otimizarImagemExibicao(file.buffer, bucket);
+        bufferFinal = processada.buffer;
+        if (processada.otimizada) ext = ".webp";
       } catch (err: any) {
         console.warn(`[upload] sharp falhou em ${bucket}, salvando original:`, err?.message || err);
       }
