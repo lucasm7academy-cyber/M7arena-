@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import multer from "multer";
+import sharp from "sharp";
 import { eq, and, gt } from "drizzle-orm";
 import { db } from "../db.js";
 import { userSessions } from "../../../db/schema/identidade.js";
@@ -109,6 +110,34 @@ export function validarArquivoImagem(buffer: Buffer, mimetype: string): Validaca
   if (!formato) return { ok: false, erro: "formato_desconhecido" };
   if (FORMATO_POR_MIME[mimetype] !== formato) return { ok: false, erro: "conteudo_divergente" };
   return { ok: true, formato };
+}
+
+/**
+ * Lado máximo (px) por bucket de imagem de EXIBIÇÃO. Um logo renderiza em
+ * ~40–120px e o banner em ~1400px; guardar o arquivo original (1–2 MB PNG)
+ * fazia o card ficar preto por ~1s até o download terminar. 512/1920 dão
+ * folga para telas retina sem carregar o arquivo cru.
+ *
+ * `match-prints` NÃO passa por aqui de propósito: print é prova de resultado e
+ * tem que manter os bytes originais.
+ */
+const LADO_MAX_EXIBICAO: Record<string, number> = {
+  "team-logos": 512,
+  "public-images": 1920,
+};
+
+/**
+ * Converte a imagem enviada para WebP redimensionado (qualidade 82). `rotate()`
+ * aplica a orientação do EXIF antes de redimensionar (foto de celular não sai
+ * deitada). Exportado para os testes exercerem o mesmo caminho da rota.
+ */
+export async function otimizarImagemExibicao(buffer: Buffer, bucket: string): Promise<Buffer> {
+  const lado = LADO_MAX_EXIBICAO[bucket] ?? 1920;
+  return sharp(buffer)
+    .rotate()
+    .resize({ width: lado, height: lado, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toBuffer();
 }
 
 /**
@@ -420,18 +449,30 @@ uploadRouter.post(
         return res.status(400).json({ error: "Nome de arquivo inválido." });
       }
 
+      // Imagem de exibição vira WebP redimensionado; o nome troca para `.webp` e
+      // a URL devolvida (fonte da verdade para o front) reflete isso. Se o sharp
+      // falhar, salva o original — upload do usuário nunca quebra por causa da
+      // otimização.
+      let bufferFinal = file.buffer;
+      let ext = path.extname(filename).toLowerCase() || EXT_POR_FORMATO[img.formato];
+      try {
+        bufferFinal = await otimizarImagemExibicao(file.buffer, bucket);
+        ext = ".webp";
+      } catch (err: any) {
+        console.warn(`[upload] sharp falhou em ${bucket}, salvando original:`, err?.message || err);
+      }
+      const base = path.basename(filename, path.extname(filename)) || "imagem";
+
       const dir = path.join(obterUploadDir(), bucket, subpath);
       await fs.promises.mkdir(dir, { recursive: true });
 
       // Preserva o nome enviado pelo cliente; se colidir (mesmo bucket + nome),
       // desambigua com sufixo curto em vez de sobrescrever o arquivo existente.
-      let destino = path.join(dir, filename);
+      let destino = path.join(dir, `${base}${ext}`);
       if (fs.existsSync(destino)) {
-        const ext = path.extname(filename);
-        const base = path.basename(filename, ext);
         destino = path.join(dir, `${base}-${crypto.randomBytes(3).toString("hex")}${ext}`);
       }
-      await fs.promises.writeFile(destino, file.buffer);
+      await fs.promises.writeFile(destino, bufferFinal);
 
       const nomeFinal = path.basename(destino);
       const publicUrl = `/uploads/${bucket}${subpath ? "/" + subpath : ""}/${nomeFinal}`;
