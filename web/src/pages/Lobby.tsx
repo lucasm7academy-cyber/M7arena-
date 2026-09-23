@@ -324,13 +324,13 @@ let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = nu
 // Efeito dinâmico de marca de tinta + fumaça atmosférica na cor do time
 const TeamPaintSplatter = ({ color, isLeft }: { color: string; isLeft: boolean }) => (
   <div
-    className={`absolute -inset-6 md:-inset-10 pointer-events-none z-0 flex items-center justify-center transition-all duration-700 ${
-      isLeft ? 'left-auto -right-3 md:-right-6' : 'right-auto -left-3 md:-left-6 scale-x-[-1]'
+    className={`absolute -inset-10 md:-inset-16 pointer-events-none z-0 flex items-center justify-center transition-all duration-700 ${
+      isLeft ? 'left-auto -right-6 md:-right-12' : 'right-auto -left-6 md:-left-12 scale-x-[-1]'
     }`}
   >
     {/* Fumaça / Vapor Atmosférico Difuso */}
     <div
-      className="absolute w-[220px] h-[220px] md:w-[320px] md:h-[320px] rounded-full blur-[45px] md:blur-[65px] opacity-40 animate-pulse pointer-events-none"
+      className="absolute w-[260px] h-[260px] md:w-[380px] md:h-[380px] rounded-full blur-[50px] md:blur-[75px] opacity-45 animate-pulse pointer-events-none"
       style={{
         background: `radial-gradient(circle, ${color} 0%, ${color}40 45%, transparent 70%)`,
       }}
@@ -338,7 +338,7 @@ const TeamPaintSplatter = ({ color, isLeft }: { color: string; isLeft: boolean }
 
     {/* Halo Secundário com Rotação Sutil */}
     <div
-      className="absolute w-[180px] h-[180px] md:w-[260px] md:h-[260px] rounded-full blur-[30px] opacity-25 pointer-events-none"
+      className="absolute w-[200px] h-[200px] md:w-[300px] md:h-[300px] rounded-full blur-[35px] opacity-30 pointer-events-none"
       style={{
         background: `radial-gradient(ellipse at top left, ${color} 0%, transparent 60%)`,
       }}
@@ -347,64 +347,168 @@ const TeamPaintSplatter = ({ color, isLeft }: { color: string; isLeft: boolean }
     {/* Marca de Tinta Vetorial / Paint Splatter & Brush Stroke */}
     <svg
       viewBox="0 0 320 320"
-      className="w-[200px] h-[200px] md:w-[290px] md:h-[290px] opacity-60 transition-transform duration-700 group-hover:scale-110"
-      style={{ color, filter: `drop-shadow(0 0 12px ${color}80)` }}
+      className="w-[240px] h-[240px] md:w-[360px] md:h-[360px] opacity-75 transition-transform duration-700 group-hover/crest:scale-110"
+      style={{ color, filter: `drop-shadow(0 0 16px ${color}90)` }}
       fill="currentColor"
     >
       {/* Núcleo do Respingo */}
-      <path d="M158 55 C185 58, 205 78, 222 92 C245 110, 275 125, 270 152 C265 180, 240 195, 228 218 C215 242, 195 268, 165 265 C135 262, 118 238, 98 222 C78 205, 48 192, 52 162 C56 132, 85 115, 102 95 C120 75, 138 52, 158 55 Z" opacity="0.35" />
+      <path d="M158 55 C185 58, 205 78, 222 92 C245 110, 275 125, 270 152 C265 180, 240 195, 228 218 C215 242, 195 268, 165 265 C135 262, 118 238, 98 222 C78 205, 48 192, 52 162 C56 132, 85 115, 102 95 C120 75, 138 52, 158 55 Z" opacity="0.45" />
       
-      {/* Pincelada Angular de Tinta */}
-      <path d="M35 175 Q90 120 160 145 T285 135 Q220 185 155 170 T35 175 Z" opacity="0.65" />
-      <path d="M50 205 Q120 160 180 185 T270 180 Q200 220 140 210 T50 205 Z" opacity="0.5" />
+      {/* Pinceladas Angulares de Tinta / Brush Marks */}
+      <path d="M25 180 Q85 115 160 145 T295 130 Q230 190 155 170 T25 180 Z" opacity="0.8" />
+      <path d="M40 215 Q115 155 185 185 T280 175 Q210 225 140 215 T40 215 Z" opacity="0.6" />
+      <path d="M70 120 Q130 90 190 105 T260 95 Q205 130 150 125 T70 120 Z" opacity="0.5" />
 
       {/* Gotas e Respingo Orgânico Radial */}
-      <path d="M160 70 C175 40, 190 35, 195 48 C188 65, 178 75, 168 85 Z" opacity="0.75" />
-      <path d="M225 105 C255 85, 270 82, 272 96 C260 110, 245 115, 230 118 Z" opacity="0.8" />
-      <path d="M245 160 C280 155, 298 162, 295 174 C278 180, 260 175, 242 168 Z" opacity="0.85" />
-      <path d="M228 215 C260 235, 275 248, 268 258 C250 255, 238 238, 222 225 Z" opacity="0.75" />
-      <path d="M165 245 C170 275, 178 292, 168 296 C158 288, 155 268, 158 245 Z" opacity="0.8" />
-      <path d="M105 225 C80 255, 65 268, 55 260 C58 245, 75 232, 95 218 Z" opacity="0.75" />
-      <path d="M85 150 C50 145, 32 138, 35 125 C50 122, 68 132, 82 142 Z" opacity="0.8" />
-      <path d="M110 98 C85 75, 72 62, 80 52 C95 58, 102 75, 115 90 Z" opacity="0.8" />
+      <path d="M160 70 C175 35, 190 30, 196 45 C188 65, 178 75, 168 85 Z" opacity="0.85" />
+      <path d="M225 105 C258 80, 275 78, 278 92 C262 110, 245 115, 230 118 Z" opacity="0.9" />
+      <path d="M245 160 C285 152, 305 160, 302 174 C282 182, 260 175, 242 168 Z" opacity="0.9" />
+      <path d="M228 215 C265 238, 280 252, 272 262 C252 258, 238 238, 222 225 Z" opacity="0.85" />
+      <path d="M165 245 C172 280, 180 298, 168 302 C158 292, 155 268, 158 245 Z" opacity="0.85" />
+      <path d="M105 225 C75 260, 58 275, 48 265 C52 248, 75 232, 95 218 Z" opacity="0.85" />
+      <path d="M85 150 C45 142, 25 135, 28 120 C45 118, 68 132, 82 142 Z" opacity="0.9" />
+      <path d="M110 98 C80 70, 65 55, 75 45 C92 52, 102 75, 115 90 Z" opacity="0.85" />
 
       {/* Partículas e Pingos de Tinta Espalhados */}
-      <circle cx="205" cy="30" r="5" opacity="0.8" />
-      <circle cx="225" cy="42" r="3" opacity="0.6" />
-      <circle cx="285" cy="80" r="4.5" opacity="0.75" />
-      <circle cx="305" cy="110" r="3" opacity="0.6" />
-      <circle cx="310" cy="165" r="5" opacity="0.85" />
-      <circle cx="295" cy="195" r="3.5" opacity="0.7" />
-      <circle cx="282" cy="270" r="4" opacity="0.75" />
-      <circle cx="250" cy="285" r="3" opacity="0.6" />
-      <circle cx="180" cy="310" r="4.5" opacity="0.8" />
-      <circle cx="140" cy="305" r="3" opacity="0.5" />
-      <circle cx="45" cy="280" r="4" opacity="0.75" />
-      <circle cx="25" cy="240" r="3.5" opacity="0.6" />
-      <circle cx="15" cy="180" r="4.5" opacity="0.8" />
-      <circle cx="20" cy="115" r="3" opacity="0.6" />
-      <circle cx="60" cy="45" r="4" opacity="0.75" />
-      <circle cx="120" cy="25" r="3.5" opacity="0.7" />
+      <circle cx="205" cy="25" r="5.5" opacity="0.85" />
+      <circle cx="230" cy="38" r="3.5" opacity="0.7" />
+      <circle cx="290" cy="75" r="5" opacity="0.8" />
+      <circle cx="312" cy="105" r="3.5" opacity="0.7" />
+      <circle cx="316" cy="165" r="5.5" opacity="0.9" />
+      <circle cx="300" cy="200" r="4" opacity="0.75" />
+      <circle cx="286" cy="275" r="4.5" opacity="0.8" />
+      <circle cx="255" cy="292" r="3.5" opacity="0.7" />
+      <circle cx="180" cy="315" r="5" opacity="0.85" />
+      <circle cx="135" cy="310" r="3.5" opacity="0.6" />
+      <circle cx="40" cy="285" r="4.5" opacity="0.8" />
+      <circle cx="20" cy="245" r="4" opacity="0.7" />
+      <circle cx="10" cy="180" r="5" opacity="0.85" />
+      <circle cx="15" cy="110" r="3.5" opacity="0.7" />
+      <circle cx="55" cy="40" r="4.5" opacity="0.8" />
+      <circle cx="115" cy="20" r="4" opacity="0.75" />
     </svg>
   </div>
 );
 
+// Escudo / Crest de Time em estilo eSports (chanfrado com tech brackets, sem quadrado genérico)
+const TeamCrest = ({
+  logo,
+  tag,
+  color,
+  isLeft,
+}: {
+  logo: string;
+  tag: string;
+  color: string;
+  isLeft: boolean;
+}) => {
+  const cutPolygon =
+    'polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px)';
+
+  return (
+    <div className="relative group/crest flex items-center justify-center">
+      {/* Fumaça e Respingo de Tinta Expandindo no Fundo */}
+      <TeamPaintSplatter color={color} isLeft={isLeft} />
+
+      {/* Tech Corner Brackets / Moldura Angular de eSports */}
+      <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 p-1.5 flex items-center justify-center transition-transform duration-500 group-hover/crest:scale-105 z-10">
+        {/* Cantoneiras Tech Brackets */}
+        <span
+          className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 transition-all duration-300 group-hover/crest:-translate-x-1 group-hover/crest:-translate-y-1 pointer-events-none"
+          style={{ borderColor: color, filter: `drop-shadow(0 0 6px ${color})` }}
+        />
+        <span
+          className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 transition-all duration-300 group-hover/crest:translate-x-1 group-hover/crest:-translate-y-1 pointer-events-none"
+          style={{ borderColor: color, filter: `drop-shadow(0 0 6px ${color})` }}
+        />
+        <span
+          className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 transition-all duration-300 group-hover/crest:-translate-x-1 group-hover/crest:translate-y-1 pointer-events-none"
+          style={{ borderColor: color, filter: `drop-shadow(0 0 6px ${color})` }}
+        />
+        <span
+          className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 transition-all duration-300 group-hover/crest:translate-x-1 group-hover/crest:translate-y-1 pointer-events-none"
+          style={{ borderColor: color, filter: `drop-shadow(0 0 6px ${color})` }}
+        />
+
+        {/* Linhas Laterais de Acento Luminoso */}
+        <span
+          className="absolute top-1/2 -left-1 -translate-y-1/2 w-[2px] h-8 rounded-full opacity-70 pointer-events-none"
+          style={{ background: `linear-gradient(to bottom, transparent, ${color}, transparent)` }}
+        />
+        <span
+          className="absolute top-1/2 -right-1 -translate-y-1/2 w-[2px] h-8 rounded-full opacity-70 pointer-events-none"
+          style={{ background: `linear-gradient(to bottom, transparent, ${color}, transparent)` }}
+        />
+
+        {/* Camada Chanfrada Externa (Borda Angular) */}
+        <div
+          className="w-full h-full p-[2px] shadow-2xl relative"
+          style={{
+            clipPath: cutPolygon,
+            background: `linear-gradient(135deg, ${color}95 0%, ${color}25 50%, ${color}80 100%)`,
+            filter: `drop-shadow(0 0 25px ${color}35)`,
+          }}
+        >
+          {/* Corpo Interno do Escudo / Base Metálica Dark */}
+          <div
+            className="w-full h-full bg-gradient-to-br from-[#161823] via-[#0E1016] to-[#07080B] flex items-center justify-center relative overflow-hidden"
+            style={{ clipPath: cutPolygon }}
+          >
+            {/* Reflexo Diagonal no Vidro */}
+            <div
+              className="absolute inset-0 opacity-20 pointer-events-none"
+              style={{
+                background: `linear-gradient(120deg, transparent 30%, ${color} 50%, transparent 70%)`,
+              }}
+            />
+
+            {/* Brilho Ambiente Central */}
+            <div
+              className="absolute w-24 h-24 rounded-full blur-xl opacity-30 pointer-events-none"
+              style={{ backgroundColor: color }}
+            />
+
+            {/* Imagem do Logo ou Letra Inicial */}
+            {logo ? (
+              <img
+                src={logo}
+                alt={tag}
+                className="w-[82%] h-[82%] object-contain relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] group-hover/crest:scale-110 transition-transform duration-500"
+              />
+            ) : (
+              <span
+                className="text-5xl md:text-7xl font-black font-display opacity-30 select-none relative z-10 transition-all duration-500 group-hover/crest:scale-110"
+                style={{
+                  color,
+                  textShadow: `0 0 30px ${color}`,
+                }}
+              >
+                {tag.replace(/^#/, '')[0]}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Badge de Tag estilizado com efeito de pincelada/marca de tinta
 const TeamTagBadge = ({ tag, color }: { tag: string; color: string }) => (
-  <div className="relative inline-flex items-center justify-center px-4 py-1.5 group/tag">
+  <div className="relative inline-flex items-center justify-center px-4 py-1.5 group/tag mt-1">
     {/* Pincelada / Mancha de Fundo */}
     <div
-      className="absolute inset-0 -skew-x-12 rounded-lg opacity-25 transition-opacity group-hover/tag:opacity-40"
+      className="absolute inset-0 -skew-x-12 rounded-md opacity-25 transition-opacity group-hover/tag:opacity-40"
       style={{
         backgroundColor: color,
-        boxShadow: `0 0 20px ${color}40`,
+        boxShadow: `0 0 25px ${color}50`,
       }}
     />
     <div
-      className="absolute inset-x-0 bottom-0 h-[2px] rounded-full opacity-70"
+      className="absolute inset-x-0 bottom-0 h-[2px] rounded-full opacity-80"
       style={{
         background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
-        boxShadow: `0 0 10px ${color}`,
+        boxShadow: `0 0 12px ${color}`,
       }}
     />
     {/* Texto da Tag com Glow */}
@@ -412,7 +516,7 @@ const TeamTagBadge = ({ tag, color }: { tag: string; color: string }) => (
       className="relative text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter font-display leading-none transition-all duration-300 drop-shadow-md"
       style={{
         color,
-        textShadow: `0 0 25px ${color}60`,
+        textShadow: `0 0 25px ${color}70, 0 0 45px ${color}35`,
       }}
     >
       {tag}
@@ -903,9 +1007,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (oculto quando não há jogos) */}
+      {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (direto no site, sem card de fora) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-10 pb-6 px-4 max-w-[1400px] mx-auto overflow-hidden relative">
+      <section className="pt-8 pb-8 px-4 max-w-[1400px] mx-auto relative select-none">
         <div className="space-y-6 relative">
           <div className="flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
@@ -916,25 +1020,16 @@ const Home = () => {
           <div
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="relative w-full rounded-3xl bg-gradient-to-b from-[#111319]/90 via-[#0C0D12]/95 to-[#07080B] border border-white/10 p-4 sm:p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden"
+            className="relative flex items-center justify-between min-h-[380px] md:min-h-[440px] w-full px-2 sm:px-6 md:px-14 py-4"
           >
-            {/* Top Glowing Clash Energy Line */}
-            <div
-              className="absolute top-0 inset-x-0 h-[2px] opacity-80"
-              style={{
-                background: `linear-gradient(90deg, ${upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF'} 0%, ${upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF'}80 30%, #FFB700 50%, ${upcomingMatches[currentMatchIndex]?.colorB ?? '#FF4655'}80 70%, ${upcomingMatches[currentMatchIndex]?.colorB ?? '#FF4655'} 100%)`,
-                boxShadow: `0 0 15px ${upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF'}60`,
-              }}
-            />
-
-            {/* Ambient Background Glows / Atmospheric Smoke */}
+            {/* Fumaça Atmosférica / Ambient Glows diretamente no fundo do site */}
             <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
               <div
-                className="w-[220px] h-[220px] md:w-[380px] md:h-[380px] rounded-full blur-[80px] md:blur-[140px] opacity-20 absolute left-[2%] md:left-[8%] transition-all duration-700 pointer-events-none"
+                className="w-[280px] h-[280px] md:w-[480px] md:h-[480px] rounded-full blur-[100px] md:blur-[160px] opacity-20 absolute left-[0%] md:left-[5%] transition-all duration-700 pointer-events-none"
                 style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF' }}
               />
               <div
-                className="w-[220px] h-[220px] md:w-[380px] md:h-[380px] rounded-full blur-[80px] md:blur-[140px] opacity-20 absolute right-[2%] md:right-[8%] transition-all duration-700 pointer-events-none"
+                className="w-[280px] h-[280px] md:w-[480px] md:h-[480px] rounded-full blur-[100px] md:blur-[160px] opacity-20 absolute right-[0%] md:right-[5%] transition-all duration-700 pointer-events-none"
                 style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FF4655' }}
               />
             </div>
@@ -943,9 +1038,9 @@ const Home = () => {
             <button
               onClick={handlePrev}
               aria-label="Jogo anterior"
-              className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-white/40 hover:text-[#FFB700] hover:scale-110 active:scale-95 transition-all flex items-center justify-center backdrop-blur-sm shadow-lg group"
+              className="absolute left-0 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 md:w-13 md:h-13 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-[#FFB700]/40 text-white/40 hover:text-[#FFB700] hover:scale-110 active:scale-95 transition-all flex items-center justify-center backdrop-blur-md shadow-xl group"
             >
-              <ChevronRight className="rotate-180 w-5 h-5 md:w-6 md:h-6 group-hover:-translate-x-0.5 transition-transform" />
+              <ChevronRight className="rotate-180 w-5 h-5 md:w-7 md:h-7 group-hover:-translate-x-0.5 transition-transform" />
             </button>
 
             {/* Center Animating Area */}
@@ -959,16 +1054,16 @@ const Home = () => {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="w-full max-w-4xl flex flex-col items-center gap-6"
+                    className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
                   >
                     {/* Tournament & Phase Badge */}
                     {upcomingMatches[currentMatchIndex].campTitle && (
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/15 backdrop-blur-md text-[11px] md:text-xs font-black tracking-widest uppercase text-white/90 shadow-md">
+                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md text-[11px] md:text-xs font-black tracking-widest uppercase text-white/80 shadow-md">
                         <Trophy className="w-3.5 h-3.5 text-[#FFB700]" />
                         <span>{upcomingMatches[currentMatchIndex].campTitle}</span>
                         {upcomingMatches[currentMatchIndex].fase && (
                           <>
-                            <span className="text-white/30">•</span>
+                            <span className="text-white/20">•</span>
                             <span className="text-[#FFB700]">{upcomingMatches[currentMatchIndex].fase}</span>
                           </>
                         )}
@@ -980,43 +1075,14 @@ const Home = () => {
 
                       {/* Team A Showcase */}
                       <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
-                        <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
-                          {/* Logo with Ink Splatter & Smoke Aura */}
-                          <div className="relative group">
-                            <TeamPaintSplatter color={upcomingMatches[currentMatchIndex].colorA} isLeft={true} />
-                            
-                            <div
-                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-black/80 via-[#13141C] to-black/95 border-2 flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-all duration-500 z-10"
-                              style={{
-                                borderColor: `${upcomingMatches[currentMatchIndex].colorA}60`,
-                                boxShadow: `0 0 35px ${upcomingMatches[currentMatchIndex].colorA}25, 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px ${upcomingMatches[currentMatchIndex].colorA}15`,
-                              }}
-                            >
-                              {/* Highlight reflection */}
-                              <div
-                                className="absolute -top-10 -left-10 w-20 h-20 rounded-full blur-xl opacity-25 pointer-events-none"
-                                style={{ backgroundColor: upcomingMatches[currentMatchIndex].colorA }}
-                              />
-
-                              {upcomingMatches[currentMatchIndex].logoA ? (
-                                <img
-                                  src={upcomingMatches[currentMatchIndex].logoA}
-                                  alt={upcomingMatches[currentMatchIndex].tagA}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-10"
-                                />
-                              ) : (
-                                <span
-                                  className="text-6xl md:text-8xl font-black opacity-20 select-none transition-all duration-500 group-hover:scale-110 relative z-10"
-                                  style={{
-                                    color: upcomingMatches[currentMatchIndex].colorA,
-                                    textShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorA}60`,
-                                  }}
-                                >
-                                  {upcomingMatches[currentMatchIndex].tagA.replace(/^#/, '')[0]}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="flex flex-col items-center md:items-end gap-3">
+                          {/* Crest angular do time com marca de tinta e fumaça */}
+                          <TeamCrest
+                            logo={upcomingMatches[currentMatchIndex].logoA}
+                            tag={upcomingMatches[currentMatchIndex].tagA}
+                            color={upcomingMatches[currentMatchIndex].colorA}
+                            isLeft={true}
+                          />
 
                           {/* Tag & Full Name */}
                           <div className="flex flex-col items-center md:items-end">
@@ -1025,7 +1091,7 @@ const Home = () => {
                               color={upcomingMatches[currentMatchIndex].colorA}
                             />
                             {upcomingMatches[currentMatchIndex].nameA && upcomingMatches[currentMatchIndex].nameA !== upcomingMatches[currentMatchIndex].tagA && (
-                              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/40 mt-1 max-w-[140px] md:max-w-[180px] truncate">
+                              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/40 mt-1 max-w-[150px] md:max-w-[200px] truncate">
                                 {upcomingMatches[currentMatchIndex].nameA}
                               </span>
                             )}
@@ -1033,40 +1099,33 @@ const Home = () => {
                         </div>
                       </div>
 
-                      {/* VS & Timing Area (Battle Card) */}
-                      <div className="flex flex-col items-center order-3 w-full md:w-auto md:order-none min-w-[180px] relative select-none">
-                        <div className="flex flex-col items-center gap-3 p-4 md:p-5 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md shadow-2xl relative w-full max-w-[240px]">
-                          {/* Top accent glow line */}
-                          <div
-                            className="absolute top-0 inset-x-4 h-[1px]"
-                            style={{
-                              background: `linear-gradient(90deg, ${upcomingMatches[currentMatchIndex].colorA}, ${upcomingMatches[currentMatchIndex].colorB})`,
-                            }}
-                          />
-
-                          {/* VS text with dual gradient */}
+                      {/* VS & Timing Area (Direto no layout, sem card fechado) */}
+                      <div className="flex flex-col items-center gap-3 md:gap-4 order-3 w-full md:w-auto md:order-none min-w-[160px] relative select-none">
+                        {/* VS Emblem com gradiente e clash */}
+                        <div className="relative flex items-center justify-center">
                           <span
-                            className="text-4xl md:text-5xl font-black italic tracking-widest uppercase leading-none"
+                            className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-widest uppercase leading-none select-none"
                             style={{
                               backgroundImage: `linear-gradient(135deg, ${upcomingMatches[currentMatchIndex].colorA} 0%, #FFFFFF 50%, ${upcomingMatches[currentMatchIndex].colorB} 100%)`,
                               WebkitBackgroundClip: 'text',
                               WebkitTextFillColor: 'transparent',
-                              filter: 'drop-shadow(0 0 15px rgba(255,255,255,0.25))',
+                              filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.25))',
                             }}
                           >
                             VS
                           </span>
+                        </div>
 
-                          {/* Date Badge */}
-                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] border border-white/10">
+                        {/* Date & Time Hub */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-sm shadow-sm">
                             <Calendar className="w-3 h-3 text-white/50" />
-                            <span className="text-[10px] md:text-xs font-bold text-white/70 uppercase tracking-widest">
+                            <span className="text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-widest">
                               {upcomingMatches[currentMatchIndex].date}
                             </span>
                           </div>
 
-                          {/* Time with glow */}
-                          <span className="text-2xl md:text-3xl font-black text-[#FFB700] tracking-widest drop-shadow-[0_0_15px_rgba(255,183,0,0.5)]">
+                          <span className="text-2xl sm:text-3xl md:text-4xl font-black text-[#FFB700] tracking-widest font-display drop-shadow-[0_0_20px_rgba(255,183,0,0.55)]">
                             {upcomingMatches[currentMatchIndex].time}
                           </span>
                         </div>
@@ -1074,43 +1133,14 @@ const Home = () => {
 
                       {/* Team B Showcase */}
                       <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
-                        <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
-                          {/* Logo with Ink Splatter & Smoke Aura */}
-                          <div className="relative group">
-                            <TeamPaintSplatter color={upcomingMatches[currentMatchIndex].colorB} isLeft={false} />
-                            
-                            <div
-                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-black/80 via-[#13141C] to-black/95 border-2 flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-all duration-500 z-10"
-                              style={{
-                                borderColor: `${upcomingMatches[currentMatchIndex].colorB}60`,
-                                boxShadow: `0 0 35px ${upcomingMatches[currentMatchIndex].colorB}25, 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px ${upcomingMatches[currentMatchIndex].colorB}15`,
-                              }}
-                            >
-                              {/* Highlight reflection */}
-                              <div
-                                className="absolute -top-10 -right-10 w-20 h-20 rounded-full blur-xl opacity-25 pointer-events-none"
-                                style={{ backgroundColor: upcomingMatches[currentMatchIndex].colorB }}
-                              />
-
-                              {upcomingMatches[currentMatchIndex].logoB ? (
-                                <img
-                                  src={upcomingMatches[currentMatchIndex].logoB}
-                                  alt={upcomingMatches[currentMatchIndex].tagB}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-10"
-                                />
-                              ) : (
-                                <span
-                                  className="text-6xl md:text-8xl font-black opacity-20 select-none transition-all duration-500 group-hover:scale-110 relative z-10"
-                                  style={{
-                                    color: upcomingMatches[currentMatchIndex].colorB,
-                                    textShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorB}60`,
-                                  }}
-                                >
-                                  {upcomingMatches[currentMatchIndex].tagB.replace(/^#/, '')[0]}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="flex flex-col items-center md:items-start gap-3">
+                          {/* Crest angular do time com marca de tinta e fumaça */}
+                          <TeamCrest
+                            logo={upcomingMatches[currentMatchIndex].logoB}
+                            tag={upcomingMatches[currentMatchIndex].tagB}
+                            color={upcomingMatches[currentMatchIndex].colorB}
+                            isLeft={false}
+                          />
 
                           {/* Tag & Full Name */}
                           <div className="flex flex-col items-center md:items-start">
@@ -1119,7 +1149,7 @@ const Home = () => {
                               color={upcomingMatches[currentMatchIndex].colorB}
                             />
                             {upcomingMatches[currentMatchIndex].nameB && upcomingMatches[currentMatchIndex].nameB !== upcomingMatches[currentMatchIndex].tagB && (
-                              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/40 mt-1 max-w-[140px] md:max-w-[180px] truncate">
+                              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/40 mt-1 max-w-[150px] md:max-w-[200px] truncate">
                                 {upcomingMatches[currentMatchIndex].nameB}
                               </span>
                             )}
@@ -1137,9 +1167,9 @@ const Home = () => {
             <button
               onClick={handleNext}
               aria-label="Próximo jogo"
-              className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-white/40 hover:text-[#FFB700] hover:scale-110 active:scale-95 transition-all flex items-center justify-center backdrop-blur-sm shadow-lg group"
+              className="absolute right-0 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 md:w-13 md:h-13 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-[#FFB700]/40 text-white/40 hover:text-[#FFB700] hover:scale-110 active:scale-95 transition-all flex items-center justify-center backdrop-blur-md shadow-xl group"
             >
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className="w-5 h-5 md:w-7 md:h-7 group-hover:translate-x-0.5 transition-transform" />
             </button>
 
             {/* Match Pagination Dots / Indicators */}
