@@ -323,18 +323,18 @@ let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = nu
 
 // Efeito dinâmico de pincelada em formato de "X" (estilo marca de mapa de tesouro) na cor do time
 const TeamBrushX = ({ color }: { color: string }) => (
-  <div className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center transition-all duration-700">
+  <div className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center">
     {/* Fumaça / Vapor Atmosférico Difuso Circular na Cor do Time */}
     <div
-      className="absolute w-[240px] h-[240px] md:w-[350px] md:h-[350px] rounded-full blur-[45px] md:blur-[75px] opacity-45 pointer-events-none"
+      className="absolute w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] md:w-[520px] md:h-[520px] rounded-full blur-[60px] md:blur-[100px] opacity-60 pointer-events-none"
       style={{
-        background: `radial-gradient(circle at center, ${color} 0%, ${color}40 45%, transparent 70%)`,
+        background: `radial-gradient(circle at center, ${color} 0%, ${color}60 40%, transparent 70%)`,
       }}
     />
 
     {/* Halo Secundário com Iluminação Central Suave */}
     <div
-      className="absolute w-[180px] h-[180px] md:w-[260px] md:h-[260px] rounded-full blur-[30px] opacity-35 pointer-events-none"
+      className="absolute w-[240px] h-[240px] sm:w-[320px] sm:h-[320px] md:w-[400px] md:h-[400px] rounded-full blur-[35px] opacity-45 pointer-events-none"
       style={{
         background: `radial-gradient(circle, ${color} 0%, transparent 65%)`,
       }}
@@ -342,65 +342,72 @@ const TeamBrushX = ({ color }: { color: string }) => (
 
     {/* Pincelada em Formato de "X" de Mapa de Tesouro / Treasure Map X Brush Mark */}
     <svg
-      viewBox="0 0 400 400"
-      className="w-[230px] h-[230px] sm:w-[290px] sm:h-[290px] md:w-[370px] md:h-[370px] opacity-85 transition-transform duration-700 group-hover/crest:scale-105 pointer-events-none select-none"
-      style={{ color, filter: `drop-shadow(0 0 16px ${color}90)` }}
+      viewBox="0 0 500 500"
+      className="w-[360px] h-[360px] sm:w-[460px] sm:h-[460px] md:w-[580px] md:h-[580px] opacity-95 transition-transform duration-700 group-hover/crest:scale-105 pointer-events-none select-none shrink-0"
+      style={{
+        color,
+        filter: `drop-shadow(0 0 16px ${color}) drop-shadow(0 0 35px ${color}90)`,
+      }}
       fill="currentColor"
     >
       {/* --- TRAÇO 1: Diagonal Noroeste -> Sudeste (\) --- */}
-      {/* 1.1 Corpo principal espesso com textura de pincel */}
+      {/* 1.1 Corpo principal espesso com textura de pincel largo */}
       <path
-        d="M 52 75 C 65 58, 88 54, 115 78 C 155 114, 175 142, 202 195 C 230 248, 258 276, 292 312 C 322 344, 342 348, 348 335 C 354 320, 335 298, 310 270 C 270 225, 245 198, 222 150 C 196 98, 162 65, 122 45 C 92 30, 68 35, 52 48 C 38 60, 42 70, 52 75 Z"
-        opacity="0.88"
+        d="M 35 85 C 50 60, 75 40, 105 55 C 160 85, 190 140, 235 210 C 275 270, 320 330, 385 390 C 420 425, 455 450, 475 435 C 490 420, 475 385, 440 350 C 380 290, 330 230, 290 165 C 245 95, 205 45, 140 25 C 100 12, 60 20, 35 45 C 20 60, 22 75, 35 85 Z"
+        opacity="0.95"
       />
       {/* 1.2 Cerdas secas e ranhuras arrastadas (\) */}
       <path
-        d="M 40 82 C 75 58, 125 98, 180 156 C 235 214, 290 282, 330 318 C 348 334, 356 345, 345 352 C 334 358, 318 346, 292 320 C 242 268, 192 208, 138 144 C 95 92, 52 70, 38 76 C 35 78, 37 80, 40 82 Z"
-        opacity="0.65"
+        d="M 20 95 C 65 65, 125 105, 195 180 C 265 255, 335 340, 425 425 C 460 460, 480 475, 470 482 C 455 490, 435 470, 390 425 C 310 345, 240 260, 170 185 C 110 120, 50 85, 25 90 C 18 92, 16 94, 20 95 Z"
+        opacity="0.75"
       />
-      <path d="M 68 45 Q 138 102 208 184 T 325 315" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
-      <path d="M 48 88 Q 124 148 194 224 T 310 345" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
-      <path d="M 90 40 Q 155 92 225 170 T 345 295" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35" />
+      <path d="M 50 30 Q 150 110 250 250 T 450 470" stroke="currentColor" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.65" />
+      <path d="M 25 105 Q 130 185 240 300 T 425 480" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.55" />
+      <path d="M 85 20 Q 180 95 285 210 T 480 430" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.45" />
 
       {/* --- TRAÇO 2: Diagonal Nordeste -> Sudoeste (/) --- */}
-      {/* 2.1 Corpo principal espesso com textura de pincel */}
+      {/* 2.1 Corpo principal espesso com textura de pincel largo */}
       <path
-        d="M 348 75 C 335 58, 312 54, 285 78 C 245 114, 225 142, 198 195 C 170 248, 142 276, 108 312 C 78 344, 58 348, 52 335 C 46 320, 65 298, 90 270 C 130 225, 155 198, 178 150 C 204 98, 238 65, 278 45 C 308 30, 332 35, 348 48 C 362 60, 358 70, 348 75 Z"
-        opacity="0.9"
+        d="M 465 85 C 450 60, 425 40, 395 55 C 340 85, 310 140, 265 210 C 225 270, 180 330, 115 390 C 80 425, 45 450, 25 435 C 10 420, 25 385, 60 350 C 120 290, 170 230, 210 165 C 255 95, 295 45, 360 25 C 400 12, 440 20, 465 45 C 480 60, 478 75, 465 85 Z"
+        opacity="0.95"
       />
       {/* 2.2 Cerdas secas e ranhuras arrastadas (/) */}
       <path
-        d="M 360 82 C 325 58, 275 98, 220 156 C 165 214, 110 282, 70 318 C 52 334, 44 345, 55 352 C 66 358, 82 346, 108 320 C 158 268, 208 208, 262 144 C 305 92, 348 70, 362 76 C 365 78, 363 80, 360 82 Z"
-        opacity="0.65"
+        d="M 480 95 C 435 65, 375 105, 305 180 C 235 255, 165 340, 75 425 C 40 460, 20 475, 30 482 C 45 490, 65 470, 110 425 C 190 345, 260 260, 330 185 C 390 120, 450 85, 475 90 C 482 92, 484 94, 480 95 Z"
+        opacity="0.75"
       />
-      <path d="M 332 45 Q 262 102 192 184 T 75 315" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
-      <path d="M 352 88 Q 276 148 206 224 T 90 345" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
-      <path d="M 310 40 Q 245 92 175 170 T 55 295" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35" />
+      <path d="M 450 30 Q 350 110 250 250 T 50 470" stroke="currentColor" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.65" />
+      <path d="M 475 105 Q 370 185 260 300 T 75 480" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.55" />
+      <path d="M 415 20 Q 320 95 215 210 T 20 430" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.45" />
 
       {/* --- NÚCLEO CENTRAL & PARTICULAS --- */}
       {/* Cruzamento central do X */}
-      <circle cx="200" cy="200" r="16" opacity="0.35" />
+      <circle cx="250" cy="250" r="24" opacity="0.4" />
 
       {/* Gotículas e respingos nas 4 pontas da marca de mapa de tesouro */}
-      <circle cx="45" cy="40" r="4.5" opacity="0.8" />
-      <circle cx="32" cy="60" r="3" opacity="0.65" />
-      <circle cx="65" cy="30" r="2.5" opacity="0.6" />
-      <circle cx="28" cy="85" r="2" opacity="0.5" />
+      <circle cx="25" cy="40" r="6" opacity="0.85" />
+      <circle cx="15" cy="65" r="4.5" opacity="0.7" />
+      <circle cx="55" cy="20" r="3.5" opacity="0.65" />
+      <circle cx="75" cy="12" r="2.5" opacity="0.5" />
+      <circle cx="10" cy="95" r="3" opacity="0.6" />
 
-      <circle cx="355" cy="40" r="4.5" opacity="0.8" />
-      <circle cx="368" cy="60" r="3" opacity="0.65" />
-      <circle cx="335" cy="30" r="2.5" opacity="0.6" />
-      <circle cx="372" cy="85" r="2" opacity="0.5" />
+      <circle cx="475" cy="40" r="6" opacity="0.85" />
+      <circle cx="485" cy="65" r="4.5" opacity="0.7" />
+      <circle cx="445" cy="20" r="3.5" opacity="0.65" />
+      <circle cx="425" cy="12" r="2.5" opacity="0.5" />
+      <circle cx="490" cy="95" r="3" opacity="0.6" />
 
-      <circle cx="45" cy="360" r="4.5" opacity="0.8" />
-      <circle cx="32" cy="340" r="3" opacity="0.65" />
-      <circle cx="65" cy="370" r="2.5" opacity="0.6" />
-      <circle cx="28" cy="315" r="2" opacity="0.5" />
+      <circle cx="25" cy="460" r="6" opacity="0.85" />
+      <circle cx="15" cy="435" r="4.5" opacity="0.7" />
+      <circle cx="55" cy="480" r="3.5" opacity="0.65" />
+      <circle cx="75" cy="488" r="2.5" opacity="0.5" />
+      <circle cx="10" cy="405" r="3" opacity="0.6" />
 
-      <circle cx="355" cy="360" r="4.5" opacity="0.8" />
-      <circle cx="368" cy="340" r="3" opacity="0.65" />
-      <circle cx="335" cy="370" r="2.5" opacity="0.6" />
-      <circle cx="372" cy="315" r="2" opacity="0.5" />
+      <circle cx="475" cy="460" r="6" opacity="0.85" />
+      <circle cx="485" cy="435" r="4.5" opacity="0.7" />
+      <circle cx="445" cy="480" r="3.5" opacity="0.65" />
+      <circle cx="425" cy="488" r="2.5" opacity="0.5" />
+      <circle cx="490" cy="405" r="3" opacity="0.6" />
     </svg>
   </div>
 );
@@ -1022,16 +1029,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (direto no site, sem card de fora) */}
+      {/* UPCOMING MATCHES (direto no site, sem card de fora) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-8 pb-8 px-4 max-w-[1400px] mx-auto relative select-none">
+      <section className="pt-6 pb-8 px-4 max-w-[1400px] mx-auto relative select-none">
         <div className="space-y-6 relative">
-          <div className="flex flex-col items-center text-center">
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
-              Próximos <span className="text-[#FFB700]">Jogos</span>
-            </h2>
-          </div>
-
           <div
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
