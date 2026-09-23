@@ -1020,16 +1020,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (direto no site, sem card de fora) */}
+      {/* UPCOMING MATCHES (direto no site, sem card de fora) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-8 pb-8 px-4 max-w-[1400px] mx-auto relative select-none">
+      <section className="pt-6 pb-8 px-4 max-w-[1400px] mx-auto relative select-none">
         <div className="space-y-6 relative">
-          <div className="flex flex-col items-center text-center">
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
-              Próximos <span className="text-[#FFB700]">Jogos</span>
-            </h2>
-          </div>
-
           <div
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -1069,17 +1063,41 @@ const Home = () => {
                     exit="exit"
                     className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
                   >
-                    {/* Tournament & Phase Badge */}
+                    {/* Tournament Showcase Header - Estilo Partidas Personalizadas com Fonte Anton */}
                     {upcomingMatches[currentMatchIndex].campTitle && (
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md text-[11px] md:text-xs font-black tracking-widest uppercase text-white/80 shadow-md">
-                        <Trophy className="w-3.5 h-3.5 text-[#FFB700]" />
-                        <span>{upcomingMatches[currentMatchIndex].campTitle}</span>
+                      <div className="flex flex-col items-center gap-2 select-none text-center">
+                        {/* Badge da Fase com corte chanfrado e dourado */}
                         {upcomingMatches[currentMatchIndex].fase && (
-                          <>
-                            <span className="text-white/20">•</span>
-                            <span className="text-[#FFB700]">{upcomingMatches[currentMatchIndex].fase}</span>
-                          </>
+                          <div
+                            className="px-3.5 py-0.5 text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] bg-[#FFB700] text-black shadow-[0_0_12px_rgba(255,183,0,0.35)]"
+                            style={{ clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)' }}
+                          >
+                            {upcomingMatches[currentMatchIndex].fase}
+                          </div>
                         )}
+
+                        {/* Nome da Copa estilizado com Anton e Ícone de Troféu */}
+                        <div className="flex items-center justify-center gap-3">
+                          <div
+                            className="w-8 h-8 sm:w-9 sm:h-9 bg-black/70 border border-[#FFB700]/30 flex items-center justify-center shadow-[0_0_14px_rgba(255,183,0,0.25)] shrink-0"
+                            style={{ clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)' }}
+                          >
+                            <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#FFB700] drop-shadow-[0_0_6px_rgba(255,183,0,0.6)]" />
+                          </div>
+
+                          <h3
+                            className="text-2xl sm:text-3xl md:text-5xl text-white uppercase tracking-wider leading-none select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
+                            style={{
+                              fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                              letterSpacing: '0.06em',
+                            }}
+                          >
+                            {upcomingMatches[currentMatchIndex].campTitle}
+                          </h3>
+                        </div>
+
+                        {/* Linha decorativa de gradiente abaixo do título */}
+                        <div className="w-28 sm:w-48 h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/60 to-transparent mt-0.5" />
                       </div>
                     )}
 
