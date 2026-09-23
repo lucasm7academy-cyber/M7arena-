@@ -321,71 +321,84 @@ const _UPCOMING_CACHE_TTL = 5 * 60 * 1000;
 const _UPCOMING_CACHE_VER = 4; // bump ao mudar estrutura
 let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = null;
 
-// Efeito dinâmico de marca de tinta + fumaça atmosférica na cor do time
-const TeamPaintSplatter = ({ color, isLeft }: { color: string; isLeft: boolean }) => (
+// Efeito dinâmico de pincelada de tinta acrílica (brush stroke) na cor do time
+const TeamBrushStroke = ({ color, isLeft }: { color: string; isLeft: boolean }) => (
   <div
-    className={`absolute -inset-10 md:-inset-16 pointer-events-none z-0 flex items-center justify-center transition-all duration-700 ${
-      isLeft ? 'left-auto -right-6 md:-right-12' : 'right-auto -left-6 md:-left-12 scale-x-[-1]'
+    className={`absolute pointer-events-none z-0 flex items-center justify-center transition-all duration-700 ${
+      isLeft
+        ? '-left-10 sm:-left-16 md:-left-24 -right-4 md:-right-8'
+        : '-right-10 sm:-right-16 md:-right-24 -left-4 md:-left-8 scale-x-[-1]'
     }`}
   >
-    {/* Fumaça / Vapor Atmosférico Difuso */}
+    {/* Fumaça / Vapor Atmosférico Difuso na Cor do Time */}
     <div
-      className="absolute w-[260px] h-[260px] md:w-[380px] md:h-[380px] rounded-full blur-[50px] md:blur-[75px] opacity-45 animate-pulse pointer-events-none"
+      className="absolute w-[240px] h-[160px] md:w-[380px] md:h-[220px] rounded-full blur-[45px] md:blur-[70px] opacity-45 pointer-events-none"
       style={{
-        background: `radial-gradient(circle, ${color} 0%, ${color}40 45%, transparent 70%)`,
+        background: `radial-gradient(ellipse at center, ${color} 0%, ${color}40 50%, transparent 75%)`,
       }}
     />
 
-    {/* Halo Secundário com Rotação Sutil */}
+    {/* Halo Secundário com Iluminação Suave */}
     <div
-      className="absolute w-[200px] h-[200px] md:w-[300px] md:h-[300px] rounded-full blur-[35px] opacity-30 pointer-events-none"
+      className="absolute w-[180px] h-[120px] md:w-[280px] md:h-[180px] rounded-full blur-[30px] opacity-35 pointer-events-none"
       style={{
-        background: `radial-gradient(ellipse at top left, ${color} 0%, transparent 60%)`,
+        background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
       }}
     />
 
-    {/* Marca de Tinta Vetorial / Paint Splatter & Brush Stroke */}
+    {/* Pincelada de Tinta Vetorial / Acrylic Brush Stroke */}
     <svg
-      viewBox="0 0 320 320"
-      className="w-[240px] h-[240px] md:w-[360px] md:h-[360px] opacity-75 transition-transform duration-700 group-hover/crest:scale-110"
-      style={{ color, filter: `drop-shadow(0 0 16px ${color}90)` }}
+      viewBox="0 0 530 220"
+      className="w-[260px] sm:w-[340px] md:w-[440px] h-auto opacity-80 transition-transform duration-700 group-hover/crest:scale-105"
+      style={{ color, filter: `drop-shadow(0 0 16px ${color}80)` }}
       fill="currentColor"
     >
-      {/* Núcleo do Respingo */}
-      <path d="M158 55 C185 58, 205 78, 222 92 C245 110, 275 125, 270 152 C265 180, 240 195, 228 218 C215 242, 195 268, 165 265 C135 262, 118 238, 98 222 C78 205, 48 192, 52 162 C56 132, 85 115, 102 95 C120 75, 138 52, 158 55 Z" opacity="0.45" />
-      
-      {/* Pinceladas Angulares de Tinta / Brush Marks */}
-      <path d="M25 180 Q85 115 160 145 T295 130 Q230 190 155 170 T25 180 Z" opacity="0.8" />
-      <path d="M40 215 Q115 155 185 185 T280 175 Q210 225 140 215 T40 215 Z" opacity="0.6" />
-      <path d="M70 120 Q130 90 190 105 T260 95 Q205 130 150 125 T70 120 Z" opacity="0.5" />
+      {/* 1. Traço Principal Largo com Textura e Variação de Pressão */}
+      <path
+        d="M 25 110 C 45 95, 75 102, 110 98 C 160 92, 215 88, 270 94 C 330 100, 395 106, 445 98 C 475 93, 502 96, 510 112 C 516 125, 498 138, 465 142 C 405 150, 335 146, 265 148 C 195 150, 125 154, 75 146 C 40 140, 15 132, 18 122 C 20 115, 22 112, 25 110 Z"
+        opacity="0.85"
+      />
 
-      {/* Gotas e Respingo Orgânico Radial */}
-      <path d="M160 70 C175 35, 190 30, 196 45 C188 65, 178 75, 168 85 Z" opacity="0.85" />
-      <path d="M225 105 C258 80, 275 78, 278 92 C262 110, 245 115, 230 118 Z" opacity="0.9" />
-      <path d="M245 160 C285 152, 305 160, 302 174 C282 182, 260 175, 242 168 Z" opacity="0.9" />
-      <path d="M228 215 C265 238, 280 252, 272 262 C252 258, 238 238, 222 225 Z" opacity="0.85" />
-      <path d="M165 245 C172 280, 180 298, 168 302 C158 292, 155 268, 158 245 Z" opacity="0.85" />
-      <path d="M105 225 C75 260, 58 275, 48 265 C52 248, 75 232, 95 218 Z" opacity="0.85" />
-      <path d="M85 150 C45 142, 25 135, 28 120 C45 118, 68 132, 82 142 Z" opacity="0.9" />
-      <path d="M110 98 C80 70, 65 55, 75 45 C92 52, 102 75, 115 90 Z" opacity="0.85" />
+      {/* 2. Cerdas Superiores Arrastadas (Dry Brush Superior) */}
+      <path
+        d="M 60 78 C 110 68, 175 66, 240 70 C 310 74, 385 78, 440 68 C 465 63, 485 66, 475 74 C 455 82, 400 84, 345 82 C 275 80, 205 78, 140 84 C 95 88, 65 86, 55 82 C 52 80, 56 79, 60 78 Z"
+        opacity="0.65"
+      />
 
-      {/* Partículas e Pingos de Tinta Espalhados */}
-      <circle cx="205" cy="25" r="5.5" opacity="0.85" />
-      <circle cx="230" cy="38" r="3.5" opacity="0.7" />
-      <circle cx="290" cy="75" r="5" opacity="0.8" />
-      <circle cx="312" cy="105" r="3.5" opacity="0.7" />
-      <circle cx="316" cy="165" r="5.5" opacity="0.9" />
-      <circle cx="300" cy="200" r="4" opacity="0.75" />
-      <circle cx="286" cy="275" r="4.5" opacity="0.8" />
-      <circle cx="255" cy="292" r="3.5" opacity="0.7" />
-      <circle cx="180" cy="315" r="5" opacity="0.85" />
-      <circle cx="135" cy="310" r="3.5" opacity="0.6" />
-      <circle cx="40" cy="285" r="4.5" opacity="0.8" />
-      <circle cx="20" cy="245" r="4" opacity="0.7" />
-      <circle cx="10" cy="180" r="5" opacity="0.85" />
-      <circle cx="15" cy="110" r="3.5" opacity="0.7" />
-      <circle cx="55" cy="40" r="4.5" opacity="0.8" />
-      <circle cx="115" cy="20" r="4" opacity="0.75" />
+      {/* 3. Cerdas Inferiores Arrastadas (Dry Brush Inferior) */}
+      <path
+        d="M 45 160 C 95 162, 150 166, 210 168 C 280 170, 350 174, 420 166 C 455 162, 480 168, 490 175 C 475 182, 430 180, 375 182 C 300 184, 225 182, 150 186 C 100 188, 55 182, 35 174 C 30 170, 38 162, 45 160 Z"
+        opacity="0.6"
+      />
+
+      {/* 4. Núcleo Vigoroso da Pincelada */}
+      <path
+        d="M 12 128 C 30 118, 90 115, 160 118 C 240 121, 330 124, 420 120 C 470 118, 505 125, 515 132 C 495 140, 440 136, 360 138 C 270 140, 175 138, 95 142 C 45 144, 18 138, 10 132 C 8 130, 10 129, 12 128 Z"
+        opacity="0.9"
+      />
+
+      {/* 5. Linhas Finas de Cerdas Secas (Bristle Trails) */}
+      <path d="M 30 92 Q 120 82 230 84 T 430 80 Q 470 78 495 82" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.5" />
+      <path d="M 20 148 Q 110 154 220 152 T 440 156 Q 480 158 505 152" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.45" />
+      <path d="M 50 102 Q 160 98 280 102 T 480 96" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
+      <path d="M 40 136 Q 150 138 270 136 T 470 140" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
+
+      {/* 6. Respingo e Pontas Angulares da Pincelada */}
+      <path d="M 470 85 C 485 70, 505 65, 512 75 C 500 88, 485 92, 470 85 Z" opacity="0.75" />
+      <path d="M 490 135 C 508 128, 522 135, 518 145 C 505 150, 492 145, 490 135 Z" opacity="0.8" />
+      <path d="M 450 165 C 470 178, 485 185, 478 195 C 462 190, 452 178, 450 165 Z" opacity="0.7" />
+      <path d="M 35 98 C 22 85, 12 88, 15 78 C 25 75, 38 85, 35 98 Z" opacity="0.7" />
+      <path d="M 25 152 C 12 165, 5 160, 8 172 C 18 172, 26 162, 25 152 Z" opacity="0.75" />
+
+      {/* 7. Gotículas e Partículas de Tinta */}
+      <circle cx="505" cy="62" r="3.5" opacity="0.7" />
+      <circle cx="518" cy="92" r="4.5" opacity="0.8" />
+      <circle cx="525" cy="120" r="3" opacity="0.6" />
+      <circle cx="512" cy="162" r="4" opacity="0.75" />
+      <circle cx="488" cy="198" r="3.5" opacity="0.6" />
+      <circle cx="15" cy="72" r="3" opacity="0.65" />
+      <circle cx="8" cy="115" r="4" opacity="0.75" />
+      <circle cx="12" cy="165" r="3.5" opacity="0.6" />
     </svg>
   </div>
 );
@@ -407,8 +420,8 @@ const TeamCrest = ({
 
   return (
     <div className="relative group/crest flex items-center justify-center">
-      {/* Fumaça e Respingo de Tinta Expandindo no Fundo */}
-      <TeamPaintSplatter color={color} isLeft={isLeft} />
+      {/* Pincelada de Tinta Expandindo no Fundo com a Cor do Time */}
+      <TeamBrushStroke color={color} isLeft={isLeft} />
 
       {/* Tech Corner Brackets / Moldura Angular de eSports */}
       <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 p-1.5 flex items-center justify-center transition-transform duration-500 group-hover/crest:scale-105 z-10">
@@ -468,12 +481,12 @@ const TeamCrest = ({
               style={{ backgroundColor: color }}
             />
 
-            {/* Imagem do Logo ou Letra Inicial */}
+            {/* Imagem do Logo Estendida no Card ou Letra Inicial */}
             {logo ? (
               <img
                 src={logo}
                 alt={tag}
-                className="w-[82%] h-[82%] object-contain relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] group-hover/crest:scale-110 transition-transform duration-500"
+                className="w-full h-full object-cover relative z-10 group-hover/crest:scale-105 transition-transform duration-500"
               />
             ) : (
               <span
@@ -1171,31 +1184,31 @@ const Home = () => {
             >
               <ChevronRight className="w-5 h-5 md:w-7 md:h-7 group-hover:translate-x-0.5 transition-transform" />
             </button>
-
-            {/* Match Pagination Dots / Indicators */}
-            {upcomingMatches.length > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-4 relative z-20">
-                {upcomingMatches.map((m, idx) => {
-                  const isActive = idx === currentMatchIndex;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => {
-                        setDirection(idx > currentMatchIndex ? 1 : -1);
-                        setCurrentMatchIndex(idx);
-                      }}
-                      aria-label={`Ver jogo ${idx + 1}`}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        isActive
-                          ? 'w-7 bg-[#FFB700] shadow-[0_0_8px_#FFB700]'
-                          : 'w-2 bg-white/20 hover:bg-white/40'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-            )}
           </div>
+
+          {/* Match Pagination Dots / Indicators (Centralizado abaixo da arena de jogos) */}
+          {upcomingMatches.length > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2 relative z-20">
+              {upcomingMatches.map((m, idx) => {
+                const isActive = idx === currentMatchIndex;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setDirection(idx > currentMatchIndex ? 1 : -1);
+                      setCurrentMatchIndex(idx);
+                    }}
+                    aria-label={`Ver jogo ${idx + 1}`}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? 'w-7 bg-[#FFB700] shadow-[0_0_8px_#FFB700]'
+                        : 'w-2 bg-white/20 hover:bg-white/40'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
       )}
