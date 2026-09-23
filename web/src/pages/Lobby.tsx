@@ -321,84 +321,86 @@ const _UPCOMING_CACHE_TTL = 5 * 60 * 1000;
 const _UPCOMING_CACHE_VER = 4; // bump ao mudar estrutura
 let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = null;
 
-// Efeito dinâmico de pincelada de tinta acrílica (brush stroke) na cor do time
-const TeamBrushStroke = ({ color, isLeft }: { color: string; isLeft: boolean }) => (
-  <div
-    className={`absolute pointer-events-none z-0 flex items-center justify-center transition-all duration-700 ${
-      isLeft
-        ? '-left-10 sm:-left-16 md:-left-24 -right-4 md:-right-8'
-        : '-right-10 sm:-right-16 md:-right-24 -left-4 md:-left-8 scale-x-[-1]'
-    }`}
-  >
-    {/* Fumaça / Vapor Atmosférico Difuso na Cor do Time */}
+// Efeito dinâmico de pincelada em formato de "X" (estilo marca de mapa de tesouro) na cor do time
+const TeamBrushX = ({ color }: { color: string }) => (
+  <div className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center transition-all duration-700">
+    {/* Fumaça / Vapor Atmosférico Difuso Circular na Cor do Time */}
     <div
-      className="absolute w-[240px] h-[160px] md:w-[380px] md:h-[220px] rounded-full blur-[45px] md:blur-[70px] opacity-45 pointer-events-none"
+      className="absolute w-[240px] h-[240px] md:w-[350px] md:h-[350px] rounded-full blur-[45px] md:blur-[75px] opacity-45 pointer-events-none"
       style={{
-        background: `radial-gradient(ellipse at center, ${color} 0%, ${color}40 50%, transparent 75%)`,
+        background: `radial-gradient(circle at center, ${color} 0%, ${color}40 45%, transparent 70%)`,
       }}
     />
 
-    {/* Halo Secundário com Iluminação Suave */}
+    {/* Halo Secundário com Iluminação Central Suave */}
     <div
-      className="absolute w-[180px] h-[120px] md:w-[280px] md:h-[180px] rounded-full blur-[30px] opacity-35 pointer-events-none"
+      className="absolute w-[180px] h-[180px] md:w-[260px] md:h-[260px] rounded-full blur-[30px] opacity-35 pointer-events-none"
       style={{
-        background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${color} 0%, transparent 65%)`,
       }}
     />
 
-    {/* Pincelada de Tinta Vetorial / Acrylic Brush Stroke */}
+    {/* Pincelada em Formato de "X" de Mapa de Tesouro / Treasure Map X Brush Mark */}
     <svg
-      viewBox="0 0 530 220"
-      className="w-[260px] sm:w-[340px] md:w-[440px] h-auto opacity-80 transition-transform duration-700 group-hover/crest:scale-105"
-      style={{ color, filter: `drop-shadow(0 0 16px ${color}80)` }}
+      viewBox="0 0 400 400"
+      className="w-[230px] h-[230px] sm:w-[290px] sm:h-[290px] md:w-[370px] md:h-[370px] opacity-85 transition-transform duration-700 group-hover/crest:scale-105 pointer-events-none select-none"
+      style={{ color, filter: `drop-shadow(0 0 16px ${color}90)` }}
       fill="currentColor"
     >
-      {/* 1. Traço Principal Largo com Textura e Variação de Pressão */}
+      {/* --- TRAÇO 1: Diagonal Noroeste -> Sudeste (\) --- */}
+      {/* 1.1 Corpo principal espesso com textura de pincel */}
       <path
-        d="M 25 110 C 45 95, 75 102, 110 98 C 160 92, 215 88, 270 94 C 330 100, 395 106, 445 98 C 475 93, 502 96, 510 112 C 516 125, 498 138, 465 142 C 405 150, 335 146, 265 148 C 195 150, 125 154, 75 146 C 40 140, 15 132, 18 122 C 20 115, 22 112, 25 110 Z"
-        opacity="0.85"
+        d="M 52 75 C 65 58, 88 54, 115 78 C 155 114, 175 142, 202 195 C 230 248, 258 276, 292 312 C 322 344, 342 348, 348 335 C 354 320, 335 298, 310 270 C 270 225, 245 198, 222 150 C 196 98, 162 65, 122 45 C 92 30, 68 35, 52 48 C 38 60, 42 70, 52 75 Z"
+        opacity="0.88"
       />
-
-      {/* 2. Cerdas Superiores Arrastadas (Dry Brush Superior) */}
+      {/* 1.2 Cerdas secas e ranhuras arrastadas (\) */}
       <path
-        d="M 60 78 C 110 68, 175 66, 240 70 C 310 74, 385 78, 440 68 C 465 63, 485 66, 475 74 C 455 82, 400 84, 345 82 C 275 80, 205 78, 140 84 C 95 88, 65 86, 55 82 C 52 80, 56 79, 60 78 Z"
+        d="M 40 82 C 75 58, 125 98, 180 156 C 235 214, 290 282, 330 318 C 348 334, 356 345, 345 352 C 334 358, 318 346, 292 320 C 242 268, 192 208, 138 144 C 95 92, 52 70, 38 76 C 35 78, 37 80, 40 82 Z"
         opacity="0.65"
       />
+      <path d="M 68 45 Q 138 102 208 184 T 325 315" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
+      <path d="M 48 88 Q 124 148 194 224 T 310 345" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
+      <path d="M 90 40 Q 155 92 225 170 T 345 295" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35" />
 
-      {/* 3. Cerdas Inferiores Arrastadas (Dry Brush Inferior) */}
+      {/* --- TRAÇO 2: Diagonal Nordeste -> Sudoeste (/) --- */}
+      {/* 2.1 Corpo principal espesso com textura de pincel */}
       <path
-        d="M 45 160 C 95 162, 150 166, 210 168 C 280 170, 350 174, 420 166 C 455 162, 480 168, 490 175 C 475 182, 430 180, 375 182 C 300 184, 225 182, 150 186 C 100 188, 55 182, 35 174 C 30 170, 38 162, 45 160 Z"
-        opacity="0.6"
-      />
-
-      {/* 4. Núcleo Vigoroso da Pincelada */}
-      <path
-        d="M 12 128 C 30 118, 90 115, 160 118 C 240 121, 330 124, 420 120 C 470 118, 505 125, 515 132 C 495 140, 440 136, 360 138 C 270 140, 175 138, 95 142 C 45 144, 18 138, 10 132 C 8 130, 10 129, 12 128 Z"
+        d="M 348 75 C 335 58, 312 54, 285 78 C 245 114, 225 142, 198 195 C 170 248, 142 276, 108 312 C 78 344, 58 348, 52 335 C 46 320, 65 298, 90 270 C 130 225, 155 198, 178 150 C 204 98, 238 65, 278 45 C 308 30, 332 35, 348 48 C 362 60, 358 70, 348 75 Z"
         opacity="0.9"
       />
+      {/* 2.2 Cerdas secas e ranhuras arrastadas (/) */}
+      <path
+        d="M 360 82 C 325 58, 275 98, 220 156 C 165 214, 110 282, 70 318 C 52 334, 44 345, 55 352 C 66 358, 82 346, 108 320 C 158 268, 208 208, 262 144 C 305 92, 348 70, 362 76 C 365 78, 363 80, 360 82 Z"
+        opacity="0.65"
+      />
+      <path d="M 332 45 Q 262 102 192 184 T 75 315" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
+      <path d="M 352 88 Q 276 148 206 224 T 90 345" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
+      <path d="M 310 40 Q 245 92 175 170 T 55 295" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35" />
 
-      {/* 5. Linhas Finas de Cerdas Secas (Bristle Trails) */}
-      <path d="M 30 92 Q 120 82 230 84 T 430 80 Q 470 78 495 82" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.5" />
-      <path d="M 20 148 Q 110 154 220 152 T 440 156 Q 480 158 505 152" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.45" />
-      <path d="M 50 102 Q 160 98 280 102 T 480 96" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
-      <path d="M 40 136 Q 150 138 270 136 T 470 140" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
+      {/* --- NÚCLEO CENTRAL & PARTICULAS --- */}
+      {/* Cruzamento central do X */}
+      <circle cx="200" cy="200" r="16" opacity="0.35" />
 
-      {/* 6. Respingo e Pontas Angulares da Pincelada */}
-      <path d="M 470 85 C 485 70, 505 65, 512 75 C 500 88, 485 92, 470 85 Z" opacity="0.75" />
-      <path d="M 490 135 C 508 128, 522 135, 518 145 C 505 150, 492 145, 490 135 Z" opacity="0.8" />
-      <path d="M 450 165 C 470 178, 485 185, 478 195 C 462 190, 452 178, 450 165 Z" opacity="0.7" />
-      <path d="M 35 98 C 22 85, 12 88, 15 78 C 25 75, 38 85, 35 98 Z" opacity="0.7" />
-      <path d="M 25 152 C 12 165, 5 160, 8 172 C 18 172, 26 162, 25 152 Z" opacity="0.75" />
+      {/* Gotículas e respingos nas 4 pontas da marca de mapa de tesouro */}
+      <circle cx="45" cy="40" r="4.5" opacity="0.8" />
+      <circle cx="32" cy="60" r="3" opacity="0.65" />
+      <circle cx="65" cy="30" r="2.5" opacity="0.6" />
+      <circle cx="28" cy="85" r="2" opacity="0.5" />
 
-      {/* 7. Gotículas e Partículas de Tinta */}
-      <circle cx="505" cy="62" r="3.5" opacity="0.7" />
-      <circle cx="518" cy="92" r="4.5" opacity="0.8" />
-      <circle cx="525" cy="120" r="3" opacity="0.6" />
-      <circle cx="512" cy="162" r="4" opacity="0.75" />
-      <circle cx="488" cy="198" r="3.5" opacity="0.6" />
-      <circle cx="15" cy="72" r="3" opacity="0.65" />
-      <circle cx="8" cy="115" r="4" opacity="0.75" />
-      <circle cx="12" cy="165" r="3.5" opacity="0.6" />
+      <circle cx="355" cy="40" r="4.5" opacity="0.8" />
+      <circle cx="368" cy="60" r="3" opacity="0.65" />
+      <circle cx="335" cy="30" r="2.5" opacity="0.6" />
+      <circle cx="372" cy="85" r="2" opacity="0.5" />
+
+      <circle cx="45" cy="360" r="4.5" opacity="0.8" />
+      <circle cx="32" cy="340" r="3" opacity="0.65" />
+      <circle cx="65" cy="370" r="2.5" opacity="0.6" />
+      <circle cx="28" cy="315" r="2" opacity="0.5" />
+
+      <circle cx="355" cy="360" r="4.5" opacity="0.8" />
+      <circle cx="368" cy="340" r="3" opacity="0.65" />
+      <circle cx="335" cy="370" r="2.5" opacity="0.6" />
+      <circle cx="372" cy="315" r="2" opacity="0.5" />
     </svg>
   </div>
 );
@@ -413,15 +415,15 @@ const TeamCrest = ({
   logo: string;
   tag: string;
   color: string;
-  isLeft: boolean;
+  isLeft?: boolean;
 }) => {
   const cutPolygon =
     'polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px)';
 
   return (
     <div className="relative group/crest flex items-center justify-center">
-      {/* Pincelada de Tinta Expandindo no Fundo com a Cor do Time */}
-      <TeamBrushStroke color={color} isLeft={isLeft} />
+      {/* Pincelada em Formato de X (Estilo Marca de Mapa de Tesouro) com a Cor do Time */}
+      <TeamBrushX color={color} />
 
       {/* Tech Corner Brackets / Moldura Angular de eSports */}
       <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 p-1.5 flex items-center justify-center transition-transform duration-500 group-hover/crest:scale-105 z-10">
@@ -1069,17 +1071,41 @@ const Home = () => {
                     exit="exit"
                     className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
                   >
-                    {/* Tournament & Phase Badge */}
+                    {/* Tournament Showcase Header - Estilo Partidas Finalizadas com Fonte Anton */}
                     {upcomingMatches[currentMatchIndex].campTitle && (
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md text-[11px] md:text-xs font-black tracking-widest uppercase text-white/80 shadow-md">
-                        <Trophy className="w-3.5 h-3.5 text-[#FFB700]" />
-                        <span>{upcomingMatches[currentMatchIndex].campTitle}</span>
+                      <div className="flex flex-col items-center gap-2 select-none text-center">
+                        {/* Badge da Fase com corte chanfrado e dourado */}
                         {upcomingMatches[currentMatchIndex].fase && (
-                          <>
-                            <span className="text-white/20">•</span>
-                            <span className="text-[#FFB700]">{upcomingMatches[currentMatchIndex].fase}</span>
-                          </>
+                          <div
+                            className="px-3.5 py-0.5 text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] bg-[#FFB700] text-black shadow-[0_0_12px_rgba(255,183,0,0.35)]"
+                            style={{ clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)' }}
+                          >
+                            {upcomingMatches[currentMatchIndex].fase}
+                          </div>
                         )}
+
+                        {/* Nome da Copa estilizado com Anton e Ícone de Troféu */}
+                        <div className="flex items-center justify-center gap-3">
+                          <div
+                            className="w-8 h-8 sm:w-9 sm:h-9 bg-black/70 border border-[#FFB700]/30 flex items-center justify-center shadow-[0_0_14px_rgba(255,183,0,0.25)] shrink-0"
+                            style={{ clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)' }}
+                          >
+                            <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#FFB700] drop-shadow-[0_0_6px_rgba(255,183,0,0.6)]" />
+                          </div>
+
+                          <h3
+                            className="text-2xl sm:text-3xl md:text-5xl text-white uppercase tracking-wider leading-none select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
+                            style={{
+                              fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                              letterSpacing: '0.06em',
+                            }}
+                          >
+                            {upcomingMatches[currentMatchIndex].campTitle}
+                          </h3>
+                        </div>
+
+                        {/* Linha decorativa de gradiente abaixo do título */}
+                        <div className="w-28 sm:w-48 h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/60 to-transparent mt-0.5" />
                       </div>
                     )}
 
