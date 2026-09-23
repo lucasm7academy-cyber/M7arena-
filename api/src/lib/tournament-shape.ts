@@ -94,6 +94,9 @@ export function buildTimesInscritos(data: NonNullable<Awaited<ReturnType<typeof 
     discord: tt.discord,
     whatsapp: tt.whatsapp,
     logo: team.logoUrl,
+    gradient_from: team.gradientFrom,
+    gradient_to: team.gradientTo,
+    cor: team.gradientFrom || team.gradientTo || "#FFB700",
   }));
 }
 

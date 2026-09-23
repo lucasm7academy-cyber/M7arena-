@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-22T02:59:15.242Z",
-  "updatedBy": "deepseek",
+  "updatedAt": "2026-09-23T03:00:41.819Z",
+  "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -2163,22 +2163,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-11T23:07:07.514Z",
-      "agent": "gemini",
-      "summary": "Design do card de partida finalizada no cronograma dos campeonatos: adicionado banner inicial cortado na diagonal com a palavra FINALIZADA na fonte Anton (padrão das salas), exibição de data/hora original da partida, destaque esportivo com badge VITÓRIA e glow para o vencedor, scoreboard central em caixa escura contrastada, e ação discreta de súmula para admins. Build verificado e deploy do container nginx concluído na VPS.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-11T23:16:36.260Z",
-      "agent": "gemini",
-      "summary": "Ajuste visual do card finalizado: o time perdedor sempre é exibido na esquerda e o vencedor na direita; cores originais preservadas nas bordas/tags dos times (verde apenas no número do placar do vencedor); banner FINALIZADA com a cor primária do campeonato; removidos badges MD3, string BRT e texto Súmula. Build validado e deploy na VPS concluído.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx"
-      ]
-    },
-    {
       "at": "2026-09-11T23:20:52.034Z",
       "agent": "gemini",
       "summary": "Ajuste visual do card finalizado: time vencedor posicionado na ESQUERDA (com placar verde) e time perdedor na DIREITA (com placar vermelho); o selo FINALIZADA deixou de ter corte diagonal e passou a ter cantos arredondados (rounded-full) com a cor primária do campeonato. Build e deploy no Nginx da VPS concluídos com sucesso.",
@@ -2452,6 +2436,23 @@
         "/etc/nginx/nginx.conf (VPS)",
         "/etc/nginx/sites-available/m7arena-proxy.conf (VPS)",
         "/etc/nginx/sites-available/m7arena-main-proxy.conf (VPS)"
+      ]
+    },
+    {
+      "at": "2026-09-22T05:09:43.800Z",
+      "agent": "gemini",
+      "summary": "Removido o logotipo mobile do header em LayoutWrapper.tsx (mantendo o logotipo visível no menu suspenso/drawer lateral e no desktop), compilado localmente com tsc e vite build (exit 0) e deployado na VPS via rebuild do container nginx. Site e API respondendo HTTP 200.",
+      "touched": [
+        "web/src/components/layout/LayoutWrapper.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:00:41.817Z",
+      "agent": "gemini",
+      "summary": "Estilização da seção Próximos Jogos na Home (Lobby): resolução correta da cor de cada time (colorA e colorB) via times_inscritos e api.teams.list (corrigido fallback indevido para theme_color do campeonato), efeito de marca de tinta (brush/paint splatter SVG) e aura de fumaça atmosférica na cor de cada time, card central estilizado com badge de torneio/fase, 'VS' em gradiente metálico dual e paginação por dots.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "api/src/lib/tournament-shape.ts"
       ]
     }
   ]

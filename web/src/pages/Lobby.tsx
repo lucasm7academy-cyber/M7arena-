@@ -7,7 +7,7 @@ import {
   Cpu, MousePointer2, Medal, Tv2,
   Instagram, BookOpen, Megaphone, ArrowRight, UserPlus, Swords as SwordsIcon,
   HelpCircle, ChevronDown, CheckCircle2, Sparkles, TrendingUp, Gamepad2,
-  X, Calendar, Share2
+  X, Calendar, Clock, Share2
 } from 'lucide-react';
 import { FaDiscord, FaTwitch } from "react-icons/fa6";
 import { ImWhatsapp } from "react-icons/im";
@@ -300,18 +300,125 @@ const LiveBroadcastCard = ({ teamA, teamB, logoA, logoB, tagA, tagB, streamer, l
 interface UpcomingMatch {
   id: string;
   tagA: string;
+  nameA?: string;
   colorA: string;
+  colorA2?: string;
   logoA: string;
   tagB: string;
+  nameB?: string;
   colorB: string;
+  colorB2?: string;
   logoB: string;
   date: string;
   time: string;
+  campId?: string;
+  campTitle?: string;
+  campColor?: string;
+  fase?: string;
 }
 
 const _UPCOMING_CACHE_TTL = 5 * 60 * 1000;
-const _UPCOMING_CACHE_VER = 3; // bump ao mudar estrutura
+const _UPCOMING_CACHE_VER = 4; // bump ao mudar estrutura
 let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = null;
+
+// Efeito dinâmico de marca de tinta + fumaça atmosférica na cor do time
+const TeamPaintSplatter = ({ color, isLeft }: { color: string; isLeft: boolean }) => (
+  <div
+    className={`absolute -inset-6 md:-inset-10 pointer-events-none z-0 flex items-center justify-center transition-all duration-700 ${
+      isLeft ? 'left-auto -right-3 md:-right-6' : 'right-auto -left-3 md:-left-6 scale-x-[-1]'
+    }`}
+  >
+    {/* Fumaça / Vapor Atmosférico Difuso */}
+    <div
+      className="absolute w-[220px] h-[220px] md:w-[320px] md:h-[320px] rounded-full blur-[45px] md:blur-[65px] opacity-40 animate-pulse pointer-events-none"
+      style={{
+        background: `radial-gradient(circle, ${color} 0%, ${color}40 45%, transparent 70%)`,
+      }}
+    />
+
+    {/* Halo Secundário com Rotação Sutil */}
+    <div
+      className="absolute w-[180px] h-[180px] md:w-[260px] md:h-[260px] rounded-full blur-[30px] opacity-25 pointer-events-none"
+      style={{
+        background: `radial-gradient(ellipse at top left, ${color} 0%, transparent 60%)`,
+      }}
+    />
+
+    {/* Marca de Tinta Vetorial / Paint Splatter & Brush Stroke */}
+    <svg
+      viewBox="0 0 320 320"
+      className="w-[200px] h-[200px] md:w-[290px] md:h-[290px] opacity-60 transition-transform duration-700 group-hover:scale-110"
+      style={{ color, filter: `drop-shadow(0 0 12px ${color}80)` }}
+      fill="currentColor"
+    >
+      {/* Núcleo do Respingo */}
+      <path d="M158 55 C185 58, 205 78, 222 92 C245 110, 275 125, 270 152 C265 180, 240 195, 228 218 C215 242, 195 268, 165 265 C135 262, 118 238, 98 222 C78 205, 48 192, 52 162 C56 132, 85 115, 102 95 C120 75, 138 52, 158 55 Z" opacity="0.35" />
+      
+      {/* Pincelada Angular de Tinta */}
+      <path d="M35 175 Q90 120 160 145 T285 135 Q220 185 155 170 T35 175 Z" opacity="0.65" />
+      <path d="M50 205 Q120 160 180 185 T270 180 Q200 220 140 210 T50 205 Z" opacity="0.5" />
+
+      {/* Gotas e Respingo Orgânico Radial */}
+      <path d="M160 70 C175 40, 190 35, 195 48 C188 65, 178 75, 168 85 Z" opacity="0.75" />
+      <path d="M225 105 C255 85, 270 82, 272 96 C260 110, 245 115, 230 118 Z" opacity="0.8" />
+      <path d="M245 160 C280 155, 298 162, 295 174 C278 180, 260 175, 242 168 Z" opacity="0.85" />
+      <path d="M228 215 C260 235, 275 248, 268 258 C250 255, 238 238, 222 225 Z" opacity="0.75" />
+      <path d="M165 245 C170 275, 178 292, 168 296 C158 288, 155 268, 158 245 Z" opacity="0.8" />
+      <path d="M105 225 C80 255, 65 268, 55 260 C58 245, 75 232, 95 218 Z" opacity="0.75" />
+      <path d="M85 150 C50 145, 32 138, 35 125 C50 122, 68 132, 82 142 Z" opacity="0.8" />
+      <path d="M110 98 C85 75, 72 62, 80 52 C95 58, 102 75, 115 90 Z" opacity="0.8" />
+
+      {/* Partículas e Pingos de Tinta Espalhados */}
+      <circle cx="205" cy="30" r="5" opacity="0.8" />
+      <circle cx="225" cy="42" r="3" opacity="0.6" />
+      <circle cx="285" cy="80" r="4.5" opacity="0.75" />
+      <circle cx="305" cy="110" r="3" opacity="0.6" />
+      <circle cx="310" cy="165" r="5" opacity="0.85" />
+      <circle cx="295" cy="195" r="3.5" opacity="0.7" />
+      <circle cx="282" cy="270" r="4" opacity="0.75" />
+      <circle cx="250" cy="285" r="3" opacity="0.6" />
+      <circle cx="180" cy="310" r="4.5" opacity="0.8" />
+      <circle cx="140" cy="305" r="3" opacity="0.5" />
+      <circle cx="45" cy="280" r="4" opacity="0.75" />
+      <circle cx="25" cy="240" r="3.5" opacity="0.6" />
+      <circle cx="15" cy="180" r="4.5" opacity="0.8" />
+      <circle cx="20" cy="115" r="3" opacity="0.6" />
+      <circle cx="60" cy="45" r="4" opacity="0.75" />
+      <circle cx="120" cy="25" r="3.5" opacity="0.7" />
+    </svg>
+  </div>
+);
+
+// Badge de Tag estilizado com efeito de pincelada/marca de tinta
+const TeamTagBadge = ({ tag, color }: { tag: string; color: string }) => (
+  <div className="relative inline-flex items-center justify-center px-4 py-1.5 group/tag">
+    {/* Pincelada / Mancha de Fundo */}
+    <div
+      className="absolute inset-0 -skew-x-12 rounded-lg opacity-25 transition-opacity group-hover/tag:opacity-40"
+      style={{
+        backgroundColor: color,
+        boxShadow: `0 0 20px ${color}40`,
+      }}
+    />
+    <div
+      className="absolute inset-x-0 bottom-0 h-[2px] rounded-full opacity-70"
+      style={{
+        background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+        boxShadow: `0 0 10px ${color}`,
+      }}
+    />
+    {/* Texto da Tag com Glow */}
+    <span
+      className="relative text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter font-display leading-none transition-all duration-300 drop-shadow-md"
+      style={{
+        color,
+        textShadow: `0 0 25px ${color}60`,
+      }}
+    >
+      {tag}
+    </span>
+  </div>
+);
 
 // ⚡ OTIMIZAÇÃO: cache em memória de 5min para highlights e votos.
 // Evita refetch ao navegar Lobby ↔ outras páginas ↔ Lobby de novo.
@@ -358,7 +465,20 @@ const Home = () => {
         return;
       }
       try {
-        const camps = await api.tournaments.list();
+        const [camps, allTeams] = await Promise.all([
+          api.tournaments.list(),
+          api.teams.list().catch(() => [] as any[]),
+        ]);
+
+        const teamMap = new Map<string, any>();
+        if (Array.isArray(allTeams)) {
+          for (const tm of allTeams) {
+            if (tm.tag) teamMap.set(tm.tag.trim().toUpperCase(), tm);
+            if (tm.nome) teamMap.set(tm.nome.trim().toUpperCase(), tm);
+            if (tm.name) teamMap.set(tm.name.trim().toUpperCase(), tm);
+            if (tm.id) teamMap.set(String(tm.id), tm);
+          }
+        }
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -379,10 +499,34 @@ const Home = () => {
             );
             if (isNaN(mDate.getTime())) continue;
 
-            const findTeam = (tag: string) =>
-              times.find((t: any) => t.tag === tag || t.name === tag || t.nome === tag);
-            const tA = findTeam(match.timeA);
-            const tB = findTeam(match.timeB);
+            const resolveTeam = (tagOrName: string) => {
+              if (!tagOrName) return null;
+              const norm = tagOrName.trim().toUpperCase();
+              const fromCamp = times.find((t: any) =>
+                (t.tag && t.tag.trim().toUpperCase() === norm) ||
+                (t.name && t.name.trim().toUpperCase() === norm) ||
+                (t.nome && t.nome.trim().toUpperCase() === norm) ||
+                (t.id && String(t.id) === norm)
+              );
+              const fromApi = teamMap.get(norm) || (fromCamp?.id ? teamMap.get(String(fromCamp.id)) : null);
+              const color = fromApi?.gradient_from || fromApi?.gradientFrom || fromCamp?.cor || fromCamp?.gradient_from || fromCamp?.gradientFrom || null;
+              const color2 = fromApi?.gradient_to || fromApi?.gradientTo || fromCamp?.gradient_to || fromCamp?.gradientTo || null;
+              const logo = fromApi?.logo_url || fromApi?.logoUrl || fromCamp?.logo || fromCamp?.logo_url || '';
+              const tag = fromApi?.tag || fromCamp?.tag || tagOrName;
+              const name = fromApi?.nome || fromApi?.name || fromCamp?.name || fromCamp?.nome || tag;
+              return {
+                ...fromCamp,
+                ...fromApi,
+                color,
+                color2,
+                logo,
+                tag,
+                name,
+              };
+            };
+
+            const tA = resolveTeam(match.timeA);
+            const tB = resolveTeam(match.timeB);
 
             const diffDays = Math.round(
               (mDate.getTime() - today.getTime()) / 86400000
@@ -406,17 +550,32 @@ const Home = () => {
 
         raw.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
-        const mapped: UpcomingMatch[] = raw.map(({ match, camp: c }) => ({
-          id: `${c.id}_${match.timeA}_${match.timeB}_${match.data}`,
-          tagA: `#${match.timeA}`,
-          colorA: c._tA?.cor || c.theme_color || '#FFB700',
-          logoA: c._tA?.logo || '',
-          tagB: `#${match.timeB}`,
-          colorB: c._tB?.cor || c.theme_color || '#FFB700',
-          logoB: c._tB?.logo || '',
-          date: c._dateStr,
-          time: match.hora || match.horario || '—',
-        }));
+        const mapped: UpcomingMatch[] = raw.map(({ match, camp: c }) => {
+          const colorA = c._tA?.color || c._tA?.gradient_from || c._tA?.cor || '#00E5FF';
+          const colorA2 = c._tA?.color2 || c._tA?.gradient_to || colorA;
+          const colorB = c._tB?.color || c._tB?.gradient_from || c._tB?.cor || '#FF4655';
+          const colorB2 = c._tB?.color2 || c._tB?.gradient_to || colorB;
+
+          return {
+            id: `${c.id}_${match.timeA}_${match.timeB}_${match.data}_${match.hora || match.horario || ''}`,
+            campId: c.id,
+            campTitle: c.titulo || c.nome || c.name || 'CAMPEONATO',
+            campColor: c.theme_color || '#FFB700',
+            fase: match.fase || match.phase_label || match.phase || 'Fase de Grupos',
+            tagA: c._tA?.tag ? `#${c._tA.tag.replace(/^#/, '')}` : `#${match.timeA}`,
+            nameA: c._tA?.name || match.timeA,
+            colorA,
+            colorA2,
+            logoA: c._tA?.logo || '',
+            tagB: c._tB?.tag ? `#${c._tB.tag.replace(/^#/, '')}` : `#${match.timeB}`,
+            nameB: c._tB?.name || match.timeB,
+            colorB,
+            colorB2,
+            logoB: c._tB?.logo || '',
+            date: c._dateStr,
+            time: match.hora || match.horario || '—',
+          };
+        });
 
         _upcomingCache = { data: mapped, ts: Date.now(), v: _UPCOMING_CACHE_VER };
         setUpcomingMatches(mapped);
@@ -746,8 +905,8 @@ const Home = () => {
 
       {/* UPCOMING MATCHES - PRÓXIMOS JOGOS (oculto quando não há jogos) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-10 pb-4 px-4 max-w-[1400px] mx-auto overflow-hidden relative">
-        <div className="space-y-8 relative">
+      <section className="pt-10 pb-6 px-4 max-w-[1400px] mx-auto overflow-hidden relative">
+        <div className="space-y-6 relative">
           <div className="flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter font-display">
               Próximos <span className="text-[#FFB700]">Jogos</span>
@@ -755,135 +914,258 @@ const Home = () => {
           </div>
 
           <div
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="relative flex items-center justify-between min-h-[380px] md:min-h-[420px] w-full px-4 md:px-16 py-8"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="relative w-full rounded-3xl bg-gradient-to-b from-[#111319]/90 via-[#0C0D12]/95 to-[#07080B] border border-white/10 p-4 sm:p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden"
+          >
+            {/* Top Glowing Clash Energy Line */}
+            <div
+              className="absolute top-0 inset-x-0 h-[2px] opacity-80"
+              style={{
+                background: `linear-gradient(90deg, ${upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF'} 0%, ${upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF'}80 30%, #FFB700 50%, ${upcomingMatches[currentMatchIndex]?.colorB ?? '#FF4655'}80 70%, ${upcomingMatches[currentMatchIndex]?.colorB ?? '#FF4655'} 100%)`,
+                boxShadow: `0 0 15px ${upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF'}60`,
+              }}
+            />
+
+            {/* Ambient Background Glows / Atmospheric Smoke */}
+            <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
+              <div
+                className="w-[220px] h-[220px] md:w-[380px] md:h-[380px] rounded-full blur-[80px] md:blur-[140px] opacity-20 absolute left-[2%] md:left-[8%] transition-all duration-700 pointer-events-none"
+                style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#00E5FF' }}
+              />
+              <div
+                className="w-[220px] h-[220px] md:w-[380px] md:h-[380px] rounded-full blur-[80px] md:blur-[140px] opacity-20 absolute right-[2%] md:right-[8%] transition-all duration-700 pointer-events-none"
+                style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FF4655' }}
+              />
+            </div>
+
+            {/* Left Navigation Arrow */}
+            <button
+              onClick={handlePrev}
+              aria-label="Jogo anterior"
+              className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-white/40 hover:text-[#FFB700] hover:scale-110 active:scale-95 transition-all flex items-center justify-center backdrop-blur-sm shadow-lg group"
             >
-              {/* Ambient Background Glows */}
-              <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
-                <div
-                  className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[80px] md:blur-[130px] opacity-10 absolute left-[5%] md:left-[15%] transition-all duration-700"
-                  style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorA ?? '#FFB700' }}
-                />
-                <div
-                  className="w-[200px] h-[200px] md:w-[350px] md:h-[350px] rounded-full blur-[80px] md:blur-[130px] opacity-10 absolute right-[5%] md:right-[15%] transition-all duration-700"
-                  style={{ backgroundColor: upcomingMatches[currentMatchIndex]?.colorB ?? '#FFB700' }}
-                />
-              </div>
+              <ChevronRight className="rotate-180 w-5 h-5 md:w-6 md:h-6 group-hover:-translate-x-0.5 transition-transform" />
+            </button>
 
-              {/* Left Navigation Arrow */}
-              <button
-                onClick={handlePrev}
-                className="absolute left-0 sm:left-2 md:left-4 z-30 text-white/20 hover:text-[#FFB700] hover:scale-110 active:scale-90 transition-all flex items-center justify-center py-4"
-              >
-                <ChevronRight className="rotate-180 w-6 h-6 md:w-8 md:h-8" />
-              </button>
+            {/* Center Animating Area */}
+            <div className="w-full flex justify-center items-center z-10 overflow-visible py-2">
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                {upcomingMatches[currentMatchIndex] && (
+                  <motion.div
+                    key={upcomingMatches[currentMatchIndex].id}
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="w-full max-w-4xl flex flex-col items-center gap-6"
+                  >
+                    {/* Tournament & Phase Badge */}
+                    {upcomingMatches[currentMatchIndex].campTitle && (
+                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/15 backdrop-blur-md text-[11px] md:text-xs font-black tracking-widest uppercase text-white/90 shadow-md">
+                        <Trophy className="w-3.5 h-3.5 text-[#FFB700]" />
+                        <span>{upcomingMatches[currentMatchIndex].campTitle}</span>
+                        {upcomingMatches[currentMatchIndex].fase && (
+                          <>
+                            <span className="text-white/30">•</span>
+                            <span className="text-[#FFB700]">{upcomingMatches[currentMatchIndex].fase}</span>
+                          </>
+                        )}
+                      </div>
+                    )}
 
-              {/* Center Animating Area */}
-              <div className="w-full flex justify-center items-center z-10 overflow-visible">
-                <AnimatePresence initial={false} custom={direction} mode="wait">
-                  {upcomingMatches[currentMatchIndex] && (
-                    <motion.div
-                      key={upcomingMatches[currentMatchIndex].id}
-                      custom={direction}
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-10"
-                    >
-                      {/* Main Matchup Arena */}
-                      <div className="flex flex-wrap md:flex-nowrap md:flex-row items-center justify-center md:justify-between w-full gap-y-6 gap-x-2 md:gap-12 py-4">
+                    {/* Main Matchup Arena */}
+                    <div className="flex flex-wrap md:flex-nowrap md:flex-row items-center justify-center md:justify-between w-full gap-y-6 gap-x-2 md:gap-12 py-2">
 
-                        {/* Team A Showcase */}
-                        <div className="flex flex-col items-center gap-4 md:gap-6 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
-                          <div className="flex flex-col items-center md:items-end gap-2 md:gap-4">
+                      {/* Team A Showcase */}
+                      <div className="flex flex-col items-center gap-3 md:gap-4 order-1 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-end md:text-right">
+                        <div className="flex flex-col items-center md:items-end gap-2 md:gap-3">
+                          {/* Logo with Ink Splatter & Smoke Aura */}
+                          <div className="relative group">
+                            <TeamPaintSplatter color={upcomingMatches[currentMatchIndex].colorA} isLeft={true} />
+                            
                             <div
-                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-white/5 to-transparent border flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform duration-700"
-                              style={{ borderColor: `${upcomingMatches[currentMatchIndex].colorA}30`, boxShadow: `0 0 30px ${upcomingMatches[currentMatchIndex].colorA}05` }}
+                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-black/80 via-[#13141C] to-black/95 border-2 flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-all duration-500 z-10"
+                              style={{
+                                borderColor: `${upcomingMatches[currentMatchIndex].colorA}60`,
+                                boxShadow: `0 0 35px ${upcomingMatches[currentMatchIndex].colorA}25, 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px ${upcomingMatches[currentMatchIndex].colorA}15`,
+                              }}
                             >
+                              {/* Highlight reflection */}
+                              <div
+                                className="absolute -top-10 -left-10 w-20 h-20 rounded-full blur-xl opacity-25 pointer-events-none"
+                                style={{ backgroundColor: upcomingMatches[currentMatchIndex].colorA }}
+                              />
+
                               {upcomingMatches[currentMatchIndex].logoA ? (
                                 <img
                                   src={upcomingMatches[currentMatchIndex].logoA}
                                   alt={upcomingMatches[currentMatchIndex].tagA}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-10"
                                 />
                               ) : (
                                 <span
-                                  className="text-6xl md:text-8xl font-black opacity-10 select-none transition-all duration-500 group-hover:scale-110"
-                                  style={{ color: upcomingMatches[currentMatchIndex].colorA, textShadow: `0 0 20px ${upcomingMatches[currentMatchIndex].colorA}30` }}
+                                  className="text-6xl md:text-8xl font-black opacity-20 select-none transition-all duration-500 group-hover:scale-110 relative z-10"
+                                  style={{
+                                    color: upcomingMatches[currentMatchIndex].colorA,
+                                    textShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorA}60`,
+                                  }}
                                 >
-                                  {upcomingMatches[currentMatchIndex].tagA[1] ?? upcomingMatches[currentMatchIndex].tagA[0]}
+                                  {upcomingMatches[currentMatchIndex].tagA.replace(/^#/, '')[0]}
                                 </span>
                               )}
                             </div>
-                            <span
-                              className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter font-display leading-none transition-colors duration-500"
-                              style={{ color: upcomingMatches[currentMatchIndex].colorA }}
-                            >
-                              {upcomingMatches[currentMatchIndex].tagA}
-                            </span>
+                          </div>
+
+                          {/* Tag & Full Name */}
+                          <div className="flex flex-col items-center md:items-end">
+                            <TeamTagBadge
+                              tag={upcomingMatches[currentMatchIndex].tagA}
+                              color={upcomingMatches[currentMatchIndex].colorA}
+                            />
+                            {upcomingMatches[currentMatchIndex].nameA && upcomingMatches[currentMatchIndex].nameA !== upcomingMatches[currentMatchIndex].tagA && (
+                              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/40 mt-1 max-w-[140px] md:max-w-[180px] truncate">
+                                {upcomingMatches[currentMatchIndex].nameA}
+                              </span>
+                            )}
                           </div>
                         </div>
+                      </div>
 
-                        {/* VS & Timing Area */}
-                        <div className="flex flex-col items-center gap-3 md:gap-4 order-3 w-full md:w-auto md:order-none min-w-[160px] relative select-none">
-                          <span className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/10 tracking-widest uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                      {/* VS & Timing Area (Battle Card) */}
+                      <div className="flex flex-col items-center order-3 w-full md:w-auto md:order-none min-w-[180px] relative select-none">
+                        <div className="flex flex-col items-center gap-3 p-4 md:p-5 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md shadow-2xl relative w-full max-w-[240px]">
+                          {/* Top accent glow line */}
+                          <div
+                            className="absolute top-0 inset-x-4 h-[1px]"
+                            style={{
+                              background: `linear-gradient(90deg, ${upcomingMatches[currentMatchIndex].colorA}, ${upcomingMatches[currentMatchIndex].colorB})`,
+                            }}
+                          />
+
+                          {/* VS text with dual gradient */}
+                          <span
+                            className="text-4xl md:text-5xl font-black italic tracking-widest uppercase leading-none"
+                            style={{
+                              backgroundImage: `linear-gradient(135deg, ${upcomingMatches[currentMatchIndex].colorA} 0%, #FFFFFF 50%, ${upcomingMatches[currentMatchIndex].colorB} 100%)`,
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              filter: 'drop-shadow(0 0 15px rgba(255,255,255,0.25))',
+                            }}
+                          >
                             VS
                           </span>
-                          <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.25em]">{upcomingMatches[currentMatchIndex].date}</span>
-                            <span className="text-xl md:text-2xl font-black text-[#FFB700] tracking-widest mt-0.5 drop-shadow-[0_0_15px_rgba(255,183,0,0.45)]">{upcomingMatches[currentMatchIndex].time}</span>
-                          </div>
-                        </div>
 
-                        {/* Team B Showcase */}
-                        <div className="flex flex-col items-center gap-4 md:gap-6 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
-                          <div className="flex flex-col items-center md:items-start gap-2 md:gap-4">
+                          {/* Date Badge */}
+                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] border border-white/10">
+                            <Calendar className="w-3 h-3 text-white/50" />
+                            <span className="text-[10px] md:text-xs font-bold text-white/70 uppercase tracking-widest">
+                              {upcomingMatches[currentMatchIndex].date}
+                            </span>
+                          </div>
+
+                          {/* Time with glow */}
+                          <span className="text-2xl md:text-3xl font-black text-[#FFB700] tracking-widest drop-shadow-[0_0_15px_rgba(255,183,0,0.5)]">
+                            {upcomingMatches[currentMatchIndex].time}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Team B Showcase */}
+                      <div className="flex flex-col items-center gap-3 md:gap-4 order-2 w-[calc(50%-8px)] md:w-auto md:order-none flex-none md:flex-1 text-center md:items-start md:text-left">
+                        <div className="flex flex-col items-center md:items-start gap-2 md:gap-3">
+                          {/* Logo with Ink Splatter & Smoke Aura */}
+                          <div className="relative group">
+                            <TeamPaintSplatter color={upcomingMatches[currentMatchIndex].colorB} isLeft={false} />
+                            
                             <div
-                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-white/5 to-transparent border flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform duration-700"
-                              style={{ borderColor: `${upcomingMatches[currentMatchIndex].colorB}30`, boxShadow: `0 0 30px ${upcomingMatches[currentMatchIndex].colorB}05` }}
+                              className="w-24 h-24 md:w-36 md:h-36 rounded-2xl md:rounded-3xl bg-gradient-to-br from-black/80 via-[#13141C] to-black/95 border-2 flex items-center justify-center shadow-2xl relative overflow-hidden group hover:scale-105 transition-all duration-500 z-10"
+                              style={{
+                                borderColor: `${upcomingMatches[currentMatchIndex].colorB}60`,
+                                boxShadow: `0 0 35px ${upcomingMatches[currentMatchIndex].colorB}25, 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px ${upcomingMatches[currentMatchIndex].colorB}15`,
+                              }}
                             >
+                              {/* Highlight reflection */}
+                              <div
+                                className="absolute -top-10 -right-10 w-20 h-20 rounded-full blur-xl opacity-25 pointer-events-none"
+                                style={{ backgroundColor: upcomingMatches[currentMatchIndex].colorB }}
+                              />
+
                               {upcomingMatches[currentMatchIndex].logoB ? (
                                 <img
                                   src={upcomingMatches[currentMatchIndex].logoB}
                                   alt={upcomingMatches[currentMatchIndex].tagB}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-10"
                                 />
                               ) : (
                                 <span
-                                  className="text-6xl md:text-8xl font-black opacity-10 select-none transition-all duration-500 group-hover:scale-110"
-                                  style={{ color: upcomingMatches[currentMatchIndex].colorB, textShadow: `0 0 20px ${upcomingMatches[currentMatchIndex].colorB}30` }}
+                                  className="text-6xl md:text-8xl font-black opacity-20 select-none transition-all duration-500 group-hover:scale-110 relative z-10"
+                                  style={{
+                                    color: upcomingMatches[currentMatchIndex].colorB,
+                                    textShadow: `0 0 25px ${upcomingMatches[currentMatchIndex].colorB}60`,
+                                  }}
                                 >
-                                  {upcomingMatches[currentMatchIndex].tagB[1] ?? upcomingMatches[currentMatchIndex].tagB[0]}
+                                  {upcomingMatches[currentMatchIndex].tagB.replace(/^#/, '')[0]}
                                 </span>
                               )}
                             </div>
-                            <span
-                              className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter font-display leading-none transition-colors duration-500"
-                              style={{ color: upcomingMatches[currentMatchIndex].colorB }}
-                            >
-                              {upcomingMatches[currentMatchIndex].tagB}
-                            </span>
+                          </div>
+
+                          {/* Tag & Full Name */}
+                          <div className="flex flex-col items-center md:items-start">
+                            <TeamTagBadge
+                              tag={upcomingMatches[currentMatchIndex].tagB}
+                              color={upcomingMatches[currentMatchIndex].colorB}
+                            />
+                            {upcomingMatches[currentMatchIndex].nameB && upcomingMatches[currentMatchIndex].nameB !== upcomingMatches[currentMatchIndex].tagB && (
+                              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/40 mt-1 max-w-[140px] md:max-w-[180px] truncate">
+                                {upcomingMatches[currentMatchIndex].nameB}
+                              </span>
+                            )}
                           </div>
                         </div>
-
                       </div>
 
-
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Right Navigation Arrow */}
-              <button
-                onClick={handleNext}
-                className="absolute right-0 sm:right-2 md:right-4 z-30 text-white/20 hover:text-[#FFB700] hover:scale-110 active:scale-90 transition-all flex items-center justify-center py-4"
-              >
-                <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
-              </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+
+            {/* Right Navigation Arrow */}
+            <button
+              onClick={handleNext}
+              aria-label="Próximo jogo"
+              className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-white/40 hover:text-[#FFB700] hover:scale-110 active:scale-95 transition-all flex items-center justify-center backdrop-blur-sm shadow-lg group"
+            >
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+
+            {/* Match Pagination Dots / Indicators */}
+            {upcomingMatches.length > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4 relative z-20">
+                {upcomingMatches.map((m, idx) => {
+                  const isActive = idx === currentMatchIndex;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        setDirection(idx > currentMatchIndex ? 1 : -1);
+                        setCurrentMatchIndex(idx);
+                      }}
+                      aria-label={`Ver jogo ${idx + 1}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        isActive
+                          ? 'w-7 bg-[#FFB700] shadow-[0_0_8px_#FFB700]'
+                          : 'w-2 bg-white/20 hover:bg-white/40'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </section>
       )}
