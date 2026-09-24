@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
 interface TimeInfo {
@@ -25,11 +25,8 @@ export interface TransmissaoAtiva {
 export function useTransmissoesAtivas() {
   const [transmissoes, setTransmissoes] = useState<TransmissaoAtiva[]>([]);
   const [loading, setLoading] = useState(true);
-  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
     let cancelled = false;
 
     const fetchTransmissoes = async () => {
@@ -44,7 +41,7 @@ export function useTransmissoesAtivas() {
         const aindaAtivas = (txData || []).filter((tx: any) => tx.expira_em && tx.expira_em > now);
 
         if (aindaAtivas.length === 0) {
-          setTransmissoes([]);
+          setTransmissoes((prev) => (prev.length === 0 ? prev : []));
           setLoading(false);
           return;
         }
@@ -99,18 +96,24 @@ export function useTransmissoesAtivas() {
           nomecamp: tx.campeonato_id ? campsMap.get(tx.campeonato_id)?.nome : undefined
         }));
 
-        setTransmissoes(resultado);
+        if (!cancelled) {
+          setTransmissoes(resultado);
+        }
       } catch (err) {
         if (cancelled) return;
         console.error('Erro ao buscar transmissões:', err);
-        setTransmissoes([]);
+        setTransmissoes((prev) => (prev.length === 0 ? prev : []));
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
     fetchTransmissoes();
-    return () => { cancelled = true; };
+    const interval = setInterval(fetchTransmissoes, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   return { transmissoes, loading };

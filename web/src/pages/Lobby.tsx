@@ -897,128 +897,100 @@ const Home = () => {
       </section>
 
       {/* AO VIVO AGORA - LIVE STREAMS */}
-      <section className="py-6 px-4 max-w-[1400px] mx-auto">
-        <div className="space-y-8">
-          <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
-            <div className="space-y-2 text-center sm:text-left">
-              <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter flex items-center justify-center sm:justify-start gap-4">
-                <FaTwitch className="text-[#9146FF] w-8 h-8 md:w-12 md:h-12" />
-                Assista <span className="text-[#9146FF]">Agora</span>
-              </h2>
+      {!loadingLives && transmissoes.length > 0 && (
+        <section className="py-6 px-4 max-w-[1400px] mx-auto">
+          <div className="space-y-8">
+            <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
+              <div className="space-y-2 text-center sm:text-left">
+                <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter flex items-center justify-center sm:justify-start gap-4">
+                  <FaTwitch className="text-[#9146FF] w-8 h-8 md:w-12 md:h-12" />
+                  Assista <span className="text-[#9146FF]">Agora</span>
+                </h2>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-3">
+                <button
+                  onClick={() => scroll(liveScrollRef, 'left')}
+                  className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center hover:bg-[#9146FF] hover:border-[#9146FF] transition-all text-white/40 hover:text-white"
+                >
+                  <ChevronRight size={18} className="rotate-180" />
+                </button>
+                <button
+                  onClick={() => scroll(liveScrollRef, 'right')}
+                  className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center hover:bg-[#9146FF] hover:border-[#9146FF] transition-all text-white/40 hover:text-white"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="relative group/live-slider">
               <button
                 onClick={() => scroll(liveScrollRef, 'left')}
-                className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center hover:bg-[#9146FF] hover:border-[#9146FF] transition-all text-white/40 hover:text-white"
+                className="flex sm:hidden absolute left-0 top-1/2 -translate-y-[60%] -translate-x-2 z-30 w-10 h-10 items-center justify-center text-[#9146FF] active:scale-90 transition-all font-bold"
               >
-                <ChevronRight size={18} className="rotate-180" />
+                <ChevronRight className="rotate-180" size={20} />
               </button>
-              <button
-                onClick={() => scroll(liveScrollRef, 'right')}
-                className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center hover:bg-[#9146FF] hover:border-[#9146FF] transition-all text-white/40 hover:text-white"
+
+              <div
+                ref={liveScrollRef}
+                className="flex gap-6 overflow-x-auto hide-scrollbar pb-8 px-4 -mx-4 scroll-smooth snap-x snap-mandatory sm:snap-none"
               >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="relative group/live-slider">
-            <button
-              onClick={() => scroll(liveScrollRef, 'left')}
-              className="flex sm:hidden absolute left-0 top-1/2 -translate-y-[60%] -translate-x-2 z-30 w-10 h-10 items-center justify-center text-[#9146FF] active:scale-90 transition-all font-bold"
-            >
-              <ChevronRight className="rotate-180" size={20} />
-            </button>
-
-            <div
-              ref={liveScrollRef}
-              className="flex gap-6 overflow-x-auto hide-scrollbar pb-8 px-4 -mx-4 scroll-smooth snap-x snap-mandatory sm:snap-none"
-            >
-              {/* Vazio só quando não há lives NEM highlights */}
-              {!loadingLives && transmissoes.length === 0 && highlights.length === 0 && (
-                <div className="flex-none w-full py-12 text-center">
-                  <FaTwitch size={32} className="mx-auto text-purple-500/40 mb-3" />
-                  <p className="text-white/30 text-sm font-bold uppercase tracking-widest">Nenhuma live no momento — veja os destaques abaixo</p>
-                </div>
-              )}
-
-              {/* Lives ativas — sempre primeiro */}
-              {transmissoes.map((tx) => {
-                if (tx.modo === 'padrao' || (!tx.time1 && !tx.time2)) {
+                {/* Lives ativas — sempre primeiro */}
+                {transmissoes.map((tx) => {
+                  if (tx.modo === 'padrao' || (!tx.time1 && !tx.time2)) {
+                    return (
+                      <PadraoLiveCard
+                        key={tx.id}
+                        titulo={tx.titulo}
+                        streamer={tx.twitch_channel}
+                        thumbnail={tx.thumbnail_url}
+                        link={`https://twitch.tv/${tx.twitch_channel}`}
+                      />
+                    );
+                  }
                   return (
-                    <PadraoLiveCard
+                    <LiveBroadcastCard
                       key={tx.id}
+                      teamA={tx.time1?.nome || 'Time 1'}
+                      tagA={tx.time1?.tag ? `#${tx.time1.tag}` : '#T1'}
+                      logoA={tx.time1?.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e'}
+                      colorA={tx.time1?.gradient_from || '#FFB700'}
+                      teamB={tx.time2?.nome || 'Time 2'}
+                      tagB={tx.time2?.tag ? `#${tx.time2.tag}` : '#T2'}
+                      logoB={tx.time2?.logo_url || 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f'}
+                      colorB={tx.time2?.gradient_from || '#FFB700'}
                       titulo={tx.titulo}
+                      modo={tx.modo}
+                      nomecamp={tx.nomecamp || 'Campeonato'}
                       streamer={tx.twitch_channel}
-                      thumbnail={tx.thumbnail_url}
                       link={`https://twitch.tv/${tx.twitch_channel}`}
                     />
                   );
-                }
-                return (
-                  <LiveBroadcastCard
-                    key={tx.id}
-                    teamA={tx.time1?.nome || 'Time 1'}
-                    tagA={tx.time1?.tag ? `#${tx.time1.tag}` : '#T1'}
-                    logoA={tx.time1?.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e'}
-                    colorA={tx.time1?.gradient_from || '#FFB700'}
-                    teamB={tx.time2?.nome || 'Time 2'}
-                    tagB={tx.time2?.tag ? `#${tx.time2.tag}` : '#T2'}
-                    logoB={tx.time2?.logo_url || 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f'}
-                    colorB={tx.time2?.gradient_from || '#FFB700'}
-                    titulo={tx.titulo}
-                    modo={tx.modo}
-                    nomecamp={tx.nomecamp || 'Campeonato'}
-                    streamer={tx.twitch_channel}
-                    link={`https://twitch.tv/${tx.twitch_channel}`}
+                })}
+
+                {/* Highlights — aparecem sempre após as lives */}
+                {highlights.map((h) => (
+                  <HighlightCard
+                    key={h.id}
+                    titulo={h.titulo}
+                    thumbnail={h.thumbnail_url}
+                    link={h.link}
+                    categoria={h.categoria}
                   />
-                );
-              })}
+                ))}
+              </div>
 
-              {/* Aviso "não ao vivo" com Howling Abyss quando só há highlights — escondido no mobile */}
-              {!loadingLives && transmissoes.length === 0 && highlights.length > 0 && (
-                <div className="hidden sm:flex group relative flex-none w-[calc(100vw-32px)] sm:w-[300px] md:w-[340px] snap-center rounded-2xl border border-[#9146FF]/30 overflow-hidden flex-col items-center justify-center p-6 text-center min-h-[220px] shadow-2xl bg-black">
-                  <img
-                    src="/images/howling_abyss_night.webp"
-                    alt="Howling Abyss Night"
-                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/30 pointer-events-none" />
-
-                  <div className="relative z-10">
-                    <FaTwitch size={32} className="mx-auto text-[#9146FF] mb-2 drop-shadow-lg" />
-                    <p className="text-white font-black text-sm uppercase tracking-wider leading-snug drop-shadow">
-                      Não estamos<br />ao vivo no momento
-                    </p>
-                    <p className="text-white/50 text-xs font-semibold mt-2.5 leading-relaxed drop-shadow">
-                      Assista aos highlights<br />da nossa comunidade →
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Highlights — aparecem sempre após as lives */}
-              {highlights.map((h) => (
-                <HighlightCard
-                  key={h.id}
-                  titulo={h.titulo}
-                  thumbnail={h.thumbnail_url}
-                  link={h.link}
-                  categoria={h.categoria}
-                />
-              ))}
+              <button
+                onClick={() => scroll(liveScrollRef, 'right')}
+                className="flex sm:hidden absolute right-0 top-1/2 -translate-y-[60%] translate-x-2 z-30 w-10 h-10 items-center justify-center text-[#9146FF] active:scale-90 transition-all font-bold"
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
-
-            <button
-              onClick={() => scroll(liveScrollRef, 'right')}
-              className="flex sm:hidden absolute right-0 top-1/2 -translate-y-[60%] translate-x-2 z-30 w-10 h-10 items-center justify-center text-[#9146FF] active:scale-90 transition-all font-bold"
-            >
-              <ChevronRight size={20} />
-            </button>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* UPCOMING MATCHES (direto no site, sem card de fora) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
