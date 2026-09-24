@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-24T15:05:04.827Z",
+  "updatedAt": "2026-09-24T15:09:57.939Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2163,34 +2163,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-14T02:51:28.289Z",
-      "agent": "gemini",
-      "summary": "Redesign completo do chaveamento de campeonatos: correcao do zoom reto/centralizado (transformOrigin center center + flex layout m-auto), adicao de controles visuais de zoom (+, -, reset, indicador percentual), redesign esportivo dos cards de confrontos (BracketMatch) com destaque lateral para vitorias e opacidade em perdedores, estilizacao de badges de rodadas (DoubleSideBracket, UpperRound, LowerRound) e destaque visual da Grande Final/Trofeu. Deploy executado com sucesso na VPS.",
-      "touched": [
-        "web/src/components/campeonatos/BracketMatch.tsx",
-        "web/src/components/campeonatos/Chaves.tsx",
-        "web/src/components/campeonatos/DoubleEliminationBracket.tsx",
-        "web/src/components/campeonatos/DoubleSideBracket.tsx",
-        "web/src/components/campeonatos/LowerRound.tsx",
-        "web/src/components/campeonatos/UpperRound.tsx",
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/features/campeonatos/components/modals/BracketModal.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T02:58:43.788Z",
-      "agent": "gemini",
-      "summary": "Ajuste de design do chaveamento: removido degradê do vencedor e aplicada a cor primária sólida direta com tipografia em preto de alto contraste; fundo dos cards clareado para #161622 (menos preto); adicionado banner do campeonato com overlay atmosférico no fundo do chaveamento e no modal de tela cheia. Deploy ao vivo na VPS concluído com sucesso.",
-      "touched": [
-        "web/src/components/campeonatos/BracketMatch.tsx",
-        "web/src/components/campeonatos/Chaves.tsx",
-        "web/src/features/campeonatos/components/modals/BracketModal.tsx",
-        "web/src/components/campeonatos/DoubleSideBracket.tsx",
-        "web/src/components/campeonatos/UpperRound.tsx",
-        "web/src/components/campeonatos/LowerRound.tsx"
-      ]
-    },
-    {
       "at": "2026-09-14T03:06:09.622Z",
       "agent": "gemini",
       "summary": "Atualizado o background do chaveamento e do modal para usar a imagem oficial das salas e lobby (/images/fundo_elite.jpg) com os overlays originais. Build e deploy ao vivo na VPS concluidos com sucesso.",
@@ -2447,6 +2419,26 @@
       "touched": [
         "web/src/pages/Lobby.tsx",
         "web/src/hooks/useTransmissoesAtivas.ts"
+      ]
+    },
+    {
+      "at": "2026-09-24T15:09:54.668Z",
+      "agent": "gemini",
+      "summary": "Aumentado o espacamento superior da secao Proximos Jogos no Lobby (pt-12 sm:pt-16 md:pt-20 e gap-8 md:gap-12 com mb-2 md:mb-4 abaixo do banner do torneio) para afastar do banner principal e dar respiro aos blocos. Commits c3be601 enviados para o GitHub (branches main e feat/redesign-modais) e para a VPS. Container Nginx reconstruido e validado com HTTP/2 200 no ar.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/pages/campeonatos.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-24T15:09:57.935Z",
+      "agent": "gemini",
+      "summary": "Ajuste de responsividade dos Hero Banners para notebooks nas telas Lobby, Campeonatos e Jogar (escalonamento gradual de tipografia text-5xl/7xl, botoes e min-height seguro, sem subir para VPS).",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/campeonatos.tsx",
+        "web/src/pages/Jogar.tsx"
       ]
     }
   ]
