@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-24T15:51:45.124Z",
+  "updatedAt": "2026-09-24T15:56:51.691Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2163,14 +2163,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-14T04:02:46.849Z",
-      "agent": "deepseek",
-      "summary": "Sorteio de 2 novos confrontos por time (fase de grupos) nas Copas do Kraken e do Tesouro, na VPS. Estado real: cada copa tem 1 Grupo A com 8 times e todos já tinham 2 jogos (diferente da lembrança do usuário). Inseridos 8 jogos por copa (16 total) em tournament_matches: phase=group_stage, phase_label='Fase de Grupos', status='combinando', display_date='A COMBINAR', display_time='--:--' — pendentes para os capitães agendarem. Nenhum par repetido; cada time ficou com 4 jogos (2 novos). Validado por SQL (0 pares duplicados) e pela API de dev.m7arena.pro (cronograma=16, pendentes=8 em cada). Não houve mudança de schema nem de código.",
-      "touched": [
-        "tournament_matches"
-      ]
-    },
-    {
       "at": "2026-09-18T03:46:11.841Z",
       "agent": "deepseek",
       "summary": "Removida a votação da torcida da home (Lobby) e deploy na VPS. Descoberta: o Lobby.tsx do git era um redesign cut-edge NUNCA deployado; a VPS servia uma versão local 1:1 do site antigo (preservada desde 2026-09-12). Para não danificar o visual, restaurei o git para a versão que está no ar e só então removi a votação (estado, 2 useEffects, handleVote, bloco JSX 'Votação da torcida', import supabase) e a rota no-op POST /api/matches/:id/vote + api.matches.vote. Verificação: web tsc 0, api tsc 0, vite build 0; blobs git batem local/VPS (4d327408); rebuild app+nginx; m7arena.pro/ e /api/health 200; chunk Lobby-DNJrr5R8.js sem 'Vote!'/'votos_jogos' e com unsplash/rounded-2xl (design 1:1 intacto); POST .../vote agora 404. Commit 2c8e323. Pendente: validação visual do usuário. m7arena_mcp_ops segue em Restarting (pré-existente).",
@@ -2436,6 +2428,14 @@
       "touched": [
         "web/src/components/home/TopTeamsStickers.tsx",
         "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-24T15:56:51.691Z",
+      "agent": "gemini",
+      "summary": "Aplicadas molduras vetoriais em SVG estilizadas como as bordas de tela de carregamento do League of Legends nos cards dos top 3 times do Lobby (Grão-Mestre com ouro/rubi alado para o 1º, Mestre com ametista e filigranas góticas para o 2º, Diamante com safira e facetas cristalinas para o 3º). Trilhos chanfrados, joias centrais com glow mágico, pingentes inferiores e cantoneiras de armadura. Commit 9fe5315 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado ao vivo com HTTP/2 200.",
+      "touched": [
+        "web/src/components/home/TopTeamsStickers.tsx"
       ]
     }
   ]
