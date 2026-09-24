@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-24T15:09:57.939Z",
+  "updatedAt": "2026-09-24T15:42:21.382Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2163,15 +2163,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-14T03:06:09.622Z",
-      "agent": "gemini",
-      "summary": "Atualizado o background do chaveamento e do modal para usar a imagem oficial das salas e lobby (/images/fundo_elite.jpg) com os overlays originais. Build e deploy ao vivo na VPS concluidos com sucesso.",
-      "touched": [
-        "web/src/components/campeonatos/Chaves.tsx",
-        "web/src/features/campeonatos/components/modals/BracketModal.tsx"
-      ]
-    },
-    {
       "at": "2026-09-14T03:50:39.602Z",
       "agent": "gemini",
       "summary": "Ajuste completo da responsividade mobile dos cards de cronograma (MeusJogosPendentes, TodosJogosPendentes, ListaCronograma e Painel de Arbitragem) para telas pequenas (<640px e 320-400px), evitando textos encavalados, truncamento desordenado e botões sobrepostos. Build e deploy ao vivo no Nginx da VPS concluídos com sucesso.",
@@ -2439,6 +2430,14 @@
         "web/src/pages/Lobby.tsx",
         "web/src/pages/campeonatos.tsx",
         "web/src/pages/Jogar.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-24T15:42:21.382Z",
+      "agent": "gemini",
+      "summary": "Removido o icone de trofeu ao lado do titulo da copa em Proximos Jogos no Lobby, mantendo apenas o nome da copa estilizado com a tipografia Anton e a linha decorativa. Commit 76985d3 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruido com sucesso e validado ao vivo em m7arena.pro.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
       ]
     }
   ]
