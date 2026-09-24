@@ -1048,25 +1048,16 @@ const Home = () => {
                           </div>
                         )}
 
-                        {/* Nome da Copa estilizado com Anton e Ícone de Troféu */}
-                        <div className="flex items-center justify-center gap-3">
-                          <div
-                            className="w-8 h-8 sm:w-9 sm:h-9 bg-black/70 border border-[#FFB700]/30 flex items-center justify-center shadow-[0_0_14px_rgba(255,183,0,0.25)] shrink-0"
-                            style={{ clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)' }}
-                          >
-                            <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#FFB700] drop-shadow-[0_0_6px_rgba(255,183,0,0.6)]" />
-                          </div>
-
-                          <h3
-                            className="text-2xl sm:text-3xl md:text-5xl text-white uppercase tracking-wider leading-none select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
-                            style={{
-                              fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
-                              letterSpacing: '0.06em',
-                            }}
-                          >
-                            {upcomingMatches[currentMatchIndex].campTitle}
-                          </h3>
-                        </div>
+                        {/* Nome da Copa estilizado com Anton */}
+                        <h3
+                          className="text-2xl sm:text-3xl md:text-5xl text-white uppercase tracking-wider leading-none select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] text-center"
+                          style={{
+                            fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                            letterSpacing: '0.06em',
+                          }}
+                        >
+                          {upcomingMatches[currentMatchIndex].campTitle}
+                        </h3>
 
                         {/* Linha decorativa de gradiente abaixo do título */}
                         <div className="w-28 sm:w-48 h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/60 to-transparent mt-0.5" />
