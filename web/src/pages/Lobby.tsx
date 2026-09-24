@@ -13,6 +13,7 @@ import { FaDiscord, FaTwitch } from "react-icons/fa6";
 import { ImWhatsapp } from "react-icons/im";
 import { useTransmissoesAtivas } from '../hooks/useTransmissoesAtivas';
 import { api } from '../lib/api';
+import { TopTeamsStickers } from '../components/home/TopTeamsStickers';
 
 
 
@@ -1193,6 +1194,9 @@ const Home = () => {
         </div>
       </section>
       )}
+
+      {/* TOP 3 TIMES DA ARENA — FIGURINHAS COLECIONÁVEIS ESTILO COPA */}
+      <TopTeamsStickers />
 
 
       {/* ════════════════════════════════════════════════════════════════
