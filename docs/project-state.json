@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-23T03:00:41.819Z",
+  "updatedAt": "2026-09-24T15:05:04.827Z",
   "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2163,78 +2163,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-11T23:20:52.034Z",
-      "agent": "gemini",
-      "summary": "Ajuste visual do card finalizado: time vencedor posicionado na ESQUERDA (com placar verde) e time perdedor na DIREITA (com placar vermelho); o selo FINALIZADA deixou de ter corte diagonal e passou a ter cantos arredondados (rounded-full) com a cor primária do campeonato. Build e deploy no Nginx da VPS concluídos com sucesso.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-11T23:24:36.485Z",
-      "agent": "gemini",
-      "summary": "Ajuste do card finalizado: transformado em barra de largura inteira (w-full) no topo do card com a palavra FINALIZADA em tamanho grande (fonte Anton) na cor primária e data/hora na direita; abaixo fica o confronto centralizado com o vencedor na esquerda e perdedor na direita, ambos com tamanhos generosos e proporções esportivas. Deploy na VPS concluído.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T01:55:01.150Z",
-      "agent": "gemini",
-      "summary": "Design dos cards de cronograma: 1) No card de partida finalizada (ListaCronograma.tsx), substituído o separador de dois pontos por hífen ('2 - 0' em vez de '2:0'). 2) Aplicado o novo design esportivo oficial com fonte Anton, barra superior completa, tags com corte cut-edge e logos/confronto nos cards de Meus Jogos Pendentes (MeusJogosPendentes.tsx) e Todos os Jogos Pendentes (TodosJogosPendentes.tsx), preservando 100% da lógica e ações (propor/aceitar data, arbitrar e excluir). 3) Typecheck (tsc exit 0), build do Vite bem-sucedido, push para origin e deploy concluído na VPS com container nginx reconstruído (HTTP 200).",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx",
-        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
-        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T02:12:08.613Z",
-      "agent": "gemini",
-      "summary": "Ajuste de layout nos cards de Meus Jogos Pendentes e Todos os Jogos Pendentes (ADM): reposicionados os botões de ação (Arbitrar, Excluir, Responder, Propor Data, Aguardando) para a lateral direita (md:flex-row com container shrink-0 de 180px e borda divisória sutil), mantendo o novo estilo esportivo com fonte Anton, barra superior, tags chanfradas e logos. Verificado com tsc exit 0, build do Vite concluído e container nginx atualizado na VPS (HTTP 200).",
-      "touched": [
-        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
-        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T02:18:11.367Z",
-      "agent": "gemini",
-      "summary": "Refatorado o layout dos cards de jogos pendentes (MeusJogosPendentes e TodosJogosPendentes) para o padrão de 2 cards lado a lado na mesma linha (80% confronto / 20% botão de ação pintado na cor do campeonato). Validado com npx tsc e deployado com sucesso na VPS (nginx rebuildado).",
-      "touched": [
-        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
-        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T02:24:06.701Z",
-      "agent": "gemini",
-      "summary": "Removido o botão duplicado de 'Excluir Jogo' do card de arbitragem em TodosJogosPendentes, deixando o card 2 ocupado inteiramente pelo botão Arbitrar pintado na cor do campeonato. Buildado e deployado na VPS.",
-      "touched": [
-        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T02:29:36.912Z",
-      "agent": "gemini",
-      "summary": "Removida a badge de 'fase de grupos' dos cards e adicionado 'MD3' no cabeçalho na mesma fonte Anton e no mesmo tamanho do título (ex: PROPOSTA ENVIADA - MD3 / AGENDADA - MD3) em ListaCronograma, MeusJogosPendentes e TodosJogosPendentes. Buildado e deployado na VPS com sucesso.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx",
-        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
-        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-14T02:37:56.875Z",
-      "agent": "gemini",
-      "summary": "Removido o '- MD3' dos títulos dos cards. Unificado o card de jogos pendentes em um único card (ao invés de 2 cards separados), com o confronto (Time A vs Time B) 100% centralizado através de grid balanceado, e o botão de ação (Arbitrar / Responder / Propor Data) posicionado na lateral direita estilizado estritamente na cor do campeonato (campeonato.themeColor). Buildado e deployado com sucesso na VPS.",
-      "touched": [
-        "web/src/components/campeonatos/ListaCronograma.tsx",
-        "web/src/components/campeonatos/MeusJogosPendentes.tsx",
-        "web/src/components/campeonatos/TodosJogosPendentes.tsx"
-      ]
-    },
-    {
       "at": "2026-09-14T02:51:28.289Z",
       "agent": "gemini",
       "summary": "Redesign completo do chaveamento de campeonatos: correcao do zoom reto/centralizado (transformOrigin center center + flex layout m-auto), adicao de controles visuais de zoom (+, -, reset, indicador percentual), redesign esportivo dos cards de confrontos (BracketMatch) com destaque lateral para vitorias e opacidade em perdedores, estilizacao de badges de rodadas (DoubleSideBracket, UpperRound, LowerRound) e destaque visual da Grande Final/Trofeu. Deploy executado com sucesso na VPS.",
@@ -2453,6 +2381,72 @@
       "touched": [
         "web/src/pages/Lobby.tsx",
         "api/src/lib/tournament-shape.ts"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:06:11.108Z",
+      "agent": "gemini",
+      "summary": "Deploy concluído na VPS: commit 88c46ca integrado via fast-forward merge na VPS (/root/m7arena) e containers app, realtime e nginx reconstruídos e reiniciados via docker compose. https://m7arena.pro respondendo HTTP/2 200 e /api/tournaments online. Nova estilização de Próximos Jogos disponível no ar para visualização do usuário.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "api/src/lib/tournament-shape.ts"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:10:13.383Z",
+      "agent": "gemini",
+      "summary": "Remoção do card/container externo da seção Próximos Jogos no Lobby para integração 100% direta no fundo do site. Substituição do quadrado arredondado genérico pelo TeamCrest eSports (escudo com cantos chanfrados em polígono, tech corner brackets que reagem ao hover, acentos luminosos laterais e vidro dark metálico). Efeito de tinta (TeamPaintSplatter) ampliado e fumaça atmosférica fluindo livremente no background. Rebuild do container nginx concluído na VPS com HTTP/2 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:24:20.446Z",
+      "agent": "gemini",
+      "summary": "Refinamento visual em Próximos Jogos no Lobby: aplicação de pincelada de tinta acrílica (TeamBrushStroke) nas cores de cada time com cerdas dinâmicas e névoa difusa, logo estendido em object-cover ocupando o card chanfrado sem bordas cortadas, e centralização horizontal dos indicadores/bolinhas de paginação logo abaixo do confronto. Build local com Vite validado, merge e deploy do container Nginx na VPS concluído com HTTP 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:31:32.439Z",
+      "agent": "gemini",
+      "summary": "Estilização de Próximos Jogos: criação do componente TeamBrushX em formato de X estilo mapa de tesouro com cerdas secas, respingos nas 4 pontas e névoa difusa na cor do time; estilização completa do cabeçalho da copa/torneio usando a fonte Anton (mesma identidade de Partidas Finalizadas), badge chanfrado e troféu metálico com glow dourado. Build e deploy para VPS concluídos com HTTP 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:40:02.631Z",
+      "agent": "gemini",
+      "summary": "Ajustes solicitados no Lobby: remoção do título 'Próximos Jogos' (ficando apenas o banner do campeonato) e expansão da pincelada em X (TeamBrushX) para até 580px com viewBox 500x500 e duplo drop-shadow luminoso, garantindo que os 4 braços do X cruzem ampla e visivelmente para fora do escudo em cada time. Build e deploy para VPS concluídos com HTTP 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:49:40.539Z",
+      "agent": "gemini",
+      "summary": "Revertido Lobby.tsx para a versão aprovada pelo usuário no commit 24cc9f4 (restaurada a pincelada horizontal autêntica com névoa difusa, logo estendido em object-cover e indicadores centralizados). Build e deploy concluídos na VPS com HTTP 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-23T03:52:20.641Z",
+      "agent": "gemini",
+      "summary": "Ajuste exato de Próximos Jogos no Lobby: mantida a pincelada horizontal de tinta com cerdas e névoa difusa (TeamBrushStroke) nas cores de cada time e logo estendido sem corte; aplicado o cabeçalho estilizado do campeonato com a fonte Anton e troféu metálico (estilo Partidas Personalizadas / Finalizadas), e removido o título redundante 'Próximos Jogos'. Deploy concluído na VPS com HTTP 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-24T15:05:04.818Z",
+      "agent": "gemini",
+      "summary": "Seção Twitch 'Assista Agora' no Lobby condicionada para exibir apenas quando houver transmissão ativa (transmissoes.length > 0). useTransmissoesAtivas ganhou polling de 30s para atualizar automaticamente quando uma live for iniciada/finalizada. Build do Vite e container Nginx reconstruídos e validados na VPS com HTTP/2 200. Chunk servido confirmado no ar com !loadingLives && transmissoes.length > 0.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/hooks/useTransmissoesAtivas.ts"
       ]
     }
   ]
