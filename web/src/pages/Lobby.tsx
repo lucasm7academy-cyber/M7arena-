@@ -815,7 +815,7 @@ const Home = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.4/1] w-full group bg-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          className="relative p-[1px] aspect-[4/5] sm:aspect-video md:aspect-[1.8/1] lg:aspect-[2.2/1] xl:aspect-[2.4/1] min-h-[380px] sm:min-h-[400px] w-full group bg-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
           style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
         >
           <div
@@ -837,37 +837,37 @@ const Home = () => {
           </div>
 
           {/* Content Wrapper */}
-          <div className="relative z-20 flex flex-col justify-end sm:justify-center px-5 sm:px-12 md:px-20 pb-8 pt-20 sm:py-10 max-w-4xl w-full h-full">
+          <div className="relative z-20 flex flex-col justify-end sm:justify-center px-5 sm:px-10 md:px-14 lg:px-16 xl:px-20 pb-8 pt-20 sm:py-8 lg:py-8 xl:py-10 max-w-4xl w-full h-full">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="space-y-4 md:space-y-6"
+              className="space-y-3 sm:space-y-4 lg:space-y-4 xl:space-y-6"
             >
               <div className="flex items-center gap-2">
 
-                <span className="text-[#FFB700] text-[10px] md:text-sm font-black uppercase tracking-[0.3em]">
+                <span className="text-[#FFB700] text-[10px] md:text-xs xl:text-sm font-black uppercase tracking-[0.3em]">
                   M7 ARENA • Campeonatos 2026
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
                 Seu Time está <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40">
                   pronto para vencer?
                 </span>
               </h1>
 
-              <p className="text-white/40 text-[10px] sm:text-sm md:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
+              <p className="text-white/40 text-[10px] sm:text-xs md:text-sm xl:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
                 Campeonatos de LoL com premiação em Pix, ranking por PDL e
                 transmissão ao vivo — a vitrine para o seu time brilhar.
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 md:gap-3 xl:gap-4 pt-2 sm:pt-3 xl:pt-4">
                 <button
                   onClick={() => navigate('/campeonatos')}
-                  className="group relative px-6 md:px-10 py-3.5 md:py-4 bg-[#FFB700] text-black font-black text-[10px] md:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,183,0,0.3)]"
+                  className="group relative px-5 md:px-7 xl:px-10 py-3 md:py-3.5 xl:py-4 bg-[#FFB700] text-black font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,183,0,0.3)]"
                   style={{
                     clipPath: 'polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%)'
                   }}
@@ -877,7 +877,7 @@ const Home = () => {
 
                 <button
                   onClick={() => navigate('/times')}
-                  className="group relative px-6 md:px-10 py-3.5 md:py-4 border border-white/20 text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:bg-white/5 hover:border-white/40 active:scale-95 rounded-sm"
+                  className="group relative px-5 md:px-7 xl:px-10 py-3 md:py-3.5 xl:py-4 border border-white/20 text-white font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:bg-white/5 hover:border-white/40 active:scale-95 rounded-sm"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">Crie seu Time <ChevronRight size={14} /></span>
                 </button>
@@ -994,7 +994,7 @@ const Home = () => {
 
       {/* UPCOMING MATCHES (direto no site, sem card de fora) */}
       {upcomingLoaded && upcomingMatches.length > 0 && (
-      <section className="pt-6 pb-8 px-4 max-w-[1400px] mx-auto relative select-none">
+      <section className="pt-12 sm:pt-16 md:pt-20 pb-8 md:pb-12 px-4 max-w-[1400px] mx-auto relative select-none">
         <div className="space-y-6 relative">
           <div
             onMouseEnter={() => setIsHovered(true)}
@@ -1033,11 +1033,11 @@ const Home = () => {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8"
+                    className="w-full max-w-4xl flex flex-col items-center gap-8 md:gap-12"
                   >
                     {/* Tournament Showcase Header - Estilo Partidas Personalizadas com Fonte Anton */}
                     {upcomingMatches[currentMatchIndex].campTitle && (
-                      <div className="flex flex-col items-center gap-2 select-none text-center">
+                      <div className="flex flex-col items-center gap-2 select-none text-center mb-2 md:mb-4">
                         {/* Badge da Fase com corte chanfrado e dourado */}
                         {upcomingMatches[currentMatchIndex].fase && (
                           <div

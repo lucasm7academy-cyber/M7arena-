@@ -715,7 +715,7 @@ const Jogar = () => {
           style={{ clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)' }}
         >
           <div className="relative w-full h-full bg-black overflow-hidden" style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}>
-          <div className="relative w-full p-8 md:p-14 flex items-center justify-between min-h-[320px]">
+          <div className="relative w-full p-6 sm:p-8 md:p-10 xl:p-14 flex items-center justify-between min-h-[300px] sm:min-h-[320px]">
             {currentSlide.bgImage && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -737,11 +737,11 @@ const Jogar = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="z-10 max-w-2xl">
-              <h1 className="text-5xl md:text-7xl font-black text-white uppercase leading-[0.9] tracking-tighter italic mb-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black text-white uppercase leading-[0.9] tracking-tighter italic mb-3 lg:mb-4">
                 {currentSlide.title}<br />
                 <span style={{ color: currentSlide.color }}>{currentSlide.subtitle}</span>
               </h1>
-              <p className="text-lg md:text-xl text-white/70 mb-8 max-w-md font-medium leading-snug">{currentSlide.description}</p>
+              <p className="text-sm sm:text-base md:text-lg xl:text-xl text-white/70 mb-5 lg:mb-6 xl:mb-8 max-w-md font-medium leading-snug">{currentSlide.description}</p>
               {currentSlide.actionText && (
                 <button
                   type="button"
@@ -749,7 +749,7 @@ const Jogar = () => {
                     e.stopPropagation();
                     handleHeroClick();
                   }}
-                  className="px-6 py-3 rounded-xl font-black text-sm uppercase text-black transition-all group-hover:scale-105 shadow-lg flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 lg:px-6 lg:py-3 rounded-xl font-black text-xs lg:text-sm uppercase text-black transition-all group-hover:scale-105 shadow-lg flex items-center gap-2 cursor-pointer"
                   style={{ background: currentSlide.color }}
                 >
                   <span>{currentSlide.actionText}</span>

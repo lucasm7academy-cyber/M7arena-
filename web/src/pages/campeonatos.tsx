@@ -212,7 +212,7 @@ const Campeonatos = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="relative p-[1px] aspect-[4/5] sm:aspect-video lg:aspect-[2.8/1] w-full group shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          className="relative p-[1px] aspect-[4/5] sm:aspect-video md:aspect-[1.8/1] lg:aspect-[2.2/1] xl:aspect-[2.8/1] min-h-[380px] sm:min-h-[400px] w-full group shadow-[0_0_50px_rgba(0,0,0,0.5)]"
           style={{
             clipPath: CUT_FRAME,
             background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(0, 255, 65, 0.3), rgba(255, 255, 255, 0.05))',
@@ -241,33 +241,33 @@ const Campeonatos = () => {
             </div>
 
             {/* Content Wrapper */}
-            <div className="relative z-20 flex flex-col justify-end sm:justify-center px-5 sm:px-12 md:px-20 pb-8 pt-20 sm:py-10 max-w-4xl w-full h-full">
+            <div className="relative z-20 flex flex-col justify-end sm:justify-center px-5 sm:px-10 md:px-14 lg:px-16 xl:px-20 pb-8 pt-20 sm:py-8 lg:py-8 xl:py-10 max-w-4xl w-full h-full">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="space-y-4 md:space-y-6"
+                className="space-y-3 sm:space-y-4 lg:space-y-4 xl:space-y-6"
               >
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-px bg-[#00FF41]" />
-                  <span className="text-[#00FF41] text-[10px] md:text-sm font-black uppercase tracking-[0.3em]">
+                  <span className="text-[#00FF41] text-[10px] md:text-xs xl:text-sm font-black uppercase tracking-[0.3em]">
                     SEASON • 2026 
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
                   A Glória Não Espera<br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">
                   Entre e Conquiste
                   </span>
                 </h1>
 
-                <p className="text-white/40 text-[10px] sm:text-sm md:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
+                <p className="text-white/40 text-[10px] sm:text-xs md:text-sm xl:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
                    Entre para os melhores torneios de LoL, dispute premiações em Pix e suba no ranking por PDL. Do Bronze ao Desafiante, o desafio espera por você no Rift.
                 </p>
 
                 {/* Action Buttons styled after Cut-Edge */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 md:gap-3 xl:gap-4 pt-2 sm:pt-3 xl:pt-4">
                   <button 
                     onClick={() => torneiosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                     className="group relative p-[1px] transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(0,255,65,0.3)] cursor-pointer"
@@ -277,7 +277,7 @@ const Campeonatos = () => {
                     }}
                   >
                     <div
-                      className="px-6 md:px-10 py-3.5 md:py-4 bg-[#00FF41] text-black font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+                      className="px-5 md:px-7 xl:px-10 py-3 md:py-3.5 xl:py-4 bg-[#00FF41] text-black font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
                       style={{ clipPath: CUT_BUTTON_INNER }}
                     >
                       <span>Ver Torneios</span>
@@ -294,7 +294,7 @@ const Campeonatos = () => {
                     }}
                   >
                     <div
-                      className="px-6 md:px-10 py-3.5 md:py-4 bg-black/80 group-hover:bg-white/10 text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-colors"
+                      className="px-5 md:px-7 xl:px-10 py-3 md:py-3.5 xl:py-4 bg-black/80 group-hover:bg-white/10 text-white font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-colors"
                       style={{ clipPath: CUT_BUTTON_INNER }}
                     >
                       <span>Criar Time</span>
