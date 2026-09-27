@@ -31,6 +31,8 @@ export const AdminCriarJogo = () => {
             ...adminMatchData,
             timeA: "",
             timeB: "",
+            data: "",
+            hora: "",
           });
           setIsAdminMatchModalOpen(true);
         }}

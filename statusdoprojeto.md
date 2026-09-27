@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 24/09/2026 12:56 — por `gemini`
+**Última atualização:** 27/09/2026 19:36 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
@@ -807,6 +807,7 @@ _21/09/2026 23:59 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 27/09/2026 19:36 | deepseek | Copa do Tesouro: criei os 3 confrontos restantes da fase de grupos (não 1, como o usuário supunha): BKS x KRV, RMD x PHE, MDR x MOO. Inseridos direto em tournament_matches (status='combinando', 'A COMBINAR'/'--:--', best_of=3, phase_label='Fase de Grupos', score 0-0) — mesmo formato do sortear-semana.mjs (ADR-068). O script não serve aqui porque aborta rodada parcial (<4 pares). Validei no DB (INSERT 0 3, 0 pares repetidos) e pela API: 28/28 pares presentes, 3 novos pendentes aparecem em Meus Jogos Pendentes. Kraken já estava com 28/28 (grupos completos). Atualizei o histórico de docs/ROTINA_SORTEIO_COPAS.md e registrei a limitação do script. <br>_tocou: `docs/ROTINA_SORTEIO_COPAS.md`, `tournament_matches`, `copa-tesouro`_ |
 | 24/09/2026 12:56 | gemini | Aplicadas molduras vetoriais em SVG estilizadas como as bordas de tela de carregamento do League of Legends nos cards dos top 3 times do Lobby (Grão-Mestre com ouro/rubi alado para o 1º, Mestre com ametista e filigranas góticas para o 2º, Diamante com safira e facetas cristalinas para o 3º). Trilhos chanfrados, joias centrais com glow mágico, pingentes inferiores e cantoneiras de armadura. Commit 9fe5315 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado ao vivo com HTTP/2 200. <br>_tocou: `web/src/components/home/TopTeamsStickers.tsx`_ |
 | 24/09/2026 12:51 | gemini | Criado o bloco de 3 figurinhas colecionáveis dos top times da arena estilo álbum da copa (1º lugar em ouro centralizado, maior e elevado; 2º em prata e 3º em bronze menores nas laterais) logo abaixo de Próximos Jogos no Lobby. Componente TopTeamsStickers.tsx criado com molduras metálicas foil, padrões holográficos SVG, badges de ranking, PDL/WR e logo oficial dos times, com link para página do time. Commit 1331d47 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado com HTTP/2 200 no ar. <br>_tocou: `web/src/components/home/TopTeamsStickers.tsx`, `web/src/pages/Lobby.tsx`_ |
 | 24/09/2026 12:42 | gemini | Removido o icone de trofeu ao lado do titulo da copa em Proximos Jogos no Lobby, mantendo apenas o nome da copa estilizado com a tipografia Anton e a linha decorativa. Commit 76985d3 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruido com sucesso e validado ao vivo em m7arena.pro. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
@@ -821,7 +822,6 @@ _21/09/2026 23:59 — deepseek_
 | 23/09/2026 00:10 | gemini | Remoção do card/container externo da seção Próximos Jogos no Lobby para integração 100% direta no fundo do site. Substituição do quadrado arredondado genérico pelo TeamCrest eSports (escudo com cantos chanfrados em polígono, tech corner brackets que reagem ao hover, acentos luminosos laterais e vidro dark metálico). Efeito de tinta (TeamPaintSplatter) ampliado e fumaça atmosférica fluindo livremente no background. Rebuild do container nginx concluído na VPS com HTTP/2 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 23/09/2026 00:06 | gemini | Deploy concluído na VPS: commit 88c46ca integrado via fast-forward merge na VPS (/root/m7arena) e containers app, realtime e nginx reconstruídos e reiniciados via docker compose. https://m7arena.pro respondendo HTTP/2 200 e /api/tournaments online. Nova estilização de Próximos Jogos disponível no ar para visualização do usuário. <br>_tocou: `web/src/pages/Lobby.tsx`, `api/src/lib/tournament-shape.ts`_ |
 | 23/09/2026 00:00 | gemini | Estilização da seção Próximos Jogos na Home (Lobby): resolução correta da cor de cada time (colorA e colorB) via times_inscritos e api.teams.list (corrigido fallback indevido para theme_color do campeonato), efeito de marca de tinta (brush/paint splatter SVG) e aura de fumaça atmosférica na cor de cada time, card central estilizado com badge de torneio/fase, 'VS' em gradiente metálico dual e paginação por dots. <br>_tocou: `web/src/pages/Lobby.tsx`, `api/src/lib/tournament-shape.ts`_ |
-| 22/09/2026 02:09 | gemini | Removido o logotipo mobile do header em LayoutWrapper.tsx (mantendo o logotipo visível no menu suspenso/drawer lateral e no desktop), compilado localmente com tsc e vite build (exit 0) e deployado na VPS via rebuild do container nginx. Site e API respondendo HTTP 200. <br>_tocou: `web/src/components/layout/LayoutWrapper.tsx`_ |
 
 ---
 

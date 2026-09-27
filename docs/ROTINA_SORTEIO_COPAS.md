@@ -73,7 +73,11 @@ curl.exe -s "https://dev.m7arena.pro/api/tournaments/2bcef957-09ce-4224-ae17-b08
 |---|---|---|
 | 14/09/2026 | 2 | 8 jogos por copa (deepseek) — cada time ficou com 4 jogos |
 | 21/09/2026 | 3 | 8 jogos por copa (deepseek) — restaram 4 pares por copa |
-| próxima | 4 | 4 jogos por copa (1 adversário por time) — o script detecta sozinho |
+| 27/09/2026 | 4 (final) | 3 jogos (deepseek) no Tesouro: `BKSxKRV`, `RMDxPHE`, `MDRxMOO` — fase de grupos completa nas duas copas (28/28 pares) |
+
+> **Atenção:** quando restam **menos de 4 pares**, o `sortear-semana.mjs` **não grava nada**
+> (o guard `sobra.length < times.length / 2` aborta a rodada parcial). Nesse caso, inserir os
+> pares restantes direto em `tournament_matches` (mesmo formato da seção acima, `status='combinando'`).
 
 ## Se o MCP/CLI não carregar
 

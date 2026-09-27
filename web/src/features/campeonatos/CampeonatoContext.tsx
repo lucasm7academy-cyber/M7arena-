@@ -46,7 +46,7 @@ export interface CampeonatoContextType {
   editingMatchIndex: number | null;
   jogoStatusAtStart: string | null;
   editFormData: { data: string; hora: string; action: "propose" | "counter" | "accept" | "arbitrate" | "finish"; placar: string };
-  adminMatchData: { timeA: string; timeB: string; fase: string };
+  adminMatchData: { timeA: string; timeB: string; fase: string; data: string; hora: string };
   registrationData: { teamId: string; discord: string; whatsapp: string };
   isRegistered: boolean;
   isAdmin: boolean;
@@ -139,6 +139,8 @@ export function CampeonatoProvider({
     timeA: "",
     timeB: "",
     fase: "Fase de Grupos", // ajustado ao formato do campeonato quando ele carrega
+    data: "",
+    hora: "",
   });
   const [registrationData, setRegistrationData] = useState({
     teamId: "",
@@ -1150,20 +1152,28 @@ export function CampeonatoProvider({
     // merge no servidor consiga identificá-lo unicamente. Sem id, jogos
     // criados manualmente (ex: amistosos extras) ficavam vulneráveis a
     // colisão em merge subsequente.
+    //
+    // Sem horário escolhido o confronto nasce ABERTO ('combinando', sem
+    // proponente) — aparece em "Meus Jogos Pendentes" para os capitães
+    // proporem, em vez de virar uma "proposta enviada" do admin. Só vira
+    // 'proposto' quando o admin de fato define data + horário.
+    const temHorario = !!(adminMatchData.data && adminMatchData.hora);
     const newMatch = {
       id: `manual-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
-      data: "A COMBINAR",
-      hora: "--:--",
+      data: temHorario ? adminMatchData.data : "A COMBINAR",
+      hora: temHorario ? adminMatchData.hora : "--:--",
       fase: adminMatchData.fase,
       timeA: adminMatchData.timeA,
       iconeA: "ShieldCheck",
       timeB: adminMatchData.timeB,
       iconeB: "Swords",
-      status: "proposto",
-      proposedBy: isAdmin
-        ? "ADMIN"
-        : myTeams.find((t) => sameTeamRef(t.tag, adminMatchData.timeA))?.tag ||
-          adminMatchData.timeA,
+      status: temHorario ? "proposto" : "combinando",
+      proposedBy: temHorario
+        ? isAdmin
+          ? "ADMIN"
+          : myTeams.find((t) => sameTeamRef(t.tag, adminMatchData.timeA))?.tag ||
+            adminMatchData.timeA
+        : "",
     };
 
     const newCronograma = [...campeonato.cronograma, newMatch];

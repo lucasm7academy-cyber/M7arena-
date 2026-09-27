@@ -167,6 +167,39 @@ export const AdminMatchModal = ({ isOpen, onClose, campeonato, isAdmin, adminMat
                 </select>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
+                  Data e Horário (opcional)
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <input
+                    type="date"
+                    value={adminMatchData.data}
+                    onChange={(e) =>
+                      setAdminMatchData({
+                        ...adminMatchData,
+                        data: e.target.value,
+                      })
+                    }
+                    className="w-full bg-[#0c0c10] px-4 py-3 rounded-xl border border-white/10 text-white focus:outline-none transition-all font-bold appearance-none [color-scheme:dark] text-xs"
+                  />
+                  <input
+                    type="time"
+                    value={adminMatchData.hora}
+                    onChange={(e) =>
+                      setAdminMatchData({
+                        ...adminMatchData,
+                        hora: e.target.value,
+                      })
+                    }
+                    className="w-full bg-[#0c0c10] px-4 py-3 rounded-xl border border-white/10 text-white focus:outline-none transition-all font-bold appearance-none [color-scheme:dark] text-xs"
+                  />
+                </div>
+                <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-1 pt-0.5">
+                  Em branco = fica "A Combinar" para os capitães agendarem
+                </p>
+              </div>
+
               <button
                 type="submit"
                 className="w-full py-3.5 rounded-xl text-black font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 shadow-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] mt-4"

@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-24T15:56:51.691Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-09-27T22:36:43.762Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -2163,16 +2163,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-18T03:46:11.841Z",
-      "agent": "deepseek",
-      "summary": "Removida a votação da torcida da home (Lobby) e deploy na VPS. Descoberta: o Lobby.tsx do git era um redesign cut-edge NUNCA deployado; a VPS servia uma versão local 1:1 do site antigo (preservada desde 2026-09-12). Para não danificar o visual, restaurei o git para a versão que está no ar e só então removi a votação (estado, 2 useEffects, handleVote, bloco JSX 'Votação da torcida', import supabase) e a rota no-op POST /api/matches/:id/vote + api.matches.vote. Verificação: web tsc 0, api tsc 0, vite build 0; blobs git batem local/VPS (4d327408); rebuild app+nginx; m7arena.pro/ e /api/health 200; chunk Lobby-DNJrr5R8.js sem 'Vote!'/'votos_jogos' e com unsplash/rounded-2xl (design 1:1 intacto); POST .../vote agora 404. Commit 2c8e323. Pendente: validação visual do usuário. m7arena_mcp_ops segue em Restarting (pré-existente).",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/lib/api.ts",
-        "api/src/routes/matches.ts"
-      ]
-    },
-    {
       "at": "2026-09-19T19:37:45.239Z",
       "agent": "deepseek",
       "summary": "Backup manual do banco de produção solicitado pelo usuário. Gerado pg_dump (plain+gzip) do m7arena na VPS via docker exec m7arena_postgres, copiado por scp para D:\\Backups\\M7Arena\\m7arena_20260919_163708.sql.gz (755KB/772.516 bytes). Verificado: md5sum idêntico nos dois lados (556a08cfabe512ebb68bbe17595ddb13) e teste de restauração real em banco temporário m7arena_restore_test na VPS (328 users, 85 com password_hash, 42 teams, 3 tournaments, 8 match_codes) — banco de teste dropado em seguida. Dump contém hashes de senha, mantido FORA do git. Pendente: definir se haverá cópia periódica automática para o PC (a VPS só tem o container backup diário em volume local, que morre com a VPS).",
@@ -2436,6 +2426,16 @@
       "summary": "Aplicadas molduras vetoriais em SVG estilizadas como as bordas de tela de carregamento do League of Legends nos cards dos top 3 times do Lobby (Grão-Mestre com ouro/rubi alado para o 1º, Mestre com ametista e filigranas góticas para o 2º, Diamante com safira e facetas cristalinas para o 3º). Trilhos chanfrados, joias centrais com glow mágico, pingentes inferiores e cantoneiras de armadura. Commit 9fe5315 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado ao vivo com HTTP/2 200.",
       "touched": [
         "web/src/components/home/TopTeamsStickers.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-27T22:36:43.762Z",
+      "agent": "deepseek",
+      "summary": "Copa do Tesouro: criei os 3 confrontos restantes da fase de grupos (não 1, como o usuário supunha): BKS x KRV, RMD x PHE, MDR x MOO. Inseridos direto em tournament_matches (status='combinando', 'A COMBINAR'/'--:--', best_of=3, phase_label='Fase de Grupos', score 0-0) — mesmo formato do sortear-semana.mjs (ADR-068). O script não serve aqui porque aborta rodada parcial (<4 pares). Validei no DB (INSERT 0 3, 0 pares repetidos) e pela API: 28/28 pares presentes, 3 novos pendentes aparecem em Meus Jogos Pendentes. Kraken já estava com 28/28 (grupos completos). Atualizei o histórico de docs/ROTINA_SORTEIO_COPAS.md e registrei a limitação do script.",
+      "touched": [
+        "docs/ROTINA_SORTEIO_COPAS.md",
+        "tournament_matches",
+        "copa-tesouro"
       ]
     }
   ]
