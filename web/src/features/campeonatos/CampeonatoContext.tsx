@@ -1153,11 +1153,13 @@ export function CampeonatoProvider({
     // criados manualmente (ex: amistosos extras) ficavam vulneráveis a
     // colisão em merge subsequente.
     //
-    // Sem horário escolhido o confronto nasce ABERTO ('combinando', sem
-    // proponente) — aparece em "Meus Jogos Pendentes" para os capitães
-    // proporem, em vez de virar uma "proposta enviada" do admin. Só vira
-    // 'proposto' quando o admin de fato define data + horário.
+    // Jogo criado pelo ADM sem data/horário nasce ABERTO ('combinando', sem
+    // proponente) — aparece em "Meus Jogos Pendentes" como "A Agendar" para os
+    // capitães proporem, em vez de virar uma "proposta enviada". Só vira
+    // 'proposto' quando o ADM define data + horário. O "Agendar Desafio" do
+    // capitão (não-admin) continua sendo proposta do time dele.
     const temHorario = !!(adminMatchData.data && adminMatchData.hora);
+    const adminCriouAberto = isAdmin && !temHorario;
     const newMatch = {
       id: `manual-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
       data: temHorario ? adminMatchData.data : "A COMBINAR",
@@ -1167,13 +1169,13 @@ export function CampeonatoProvider({
       iconeA: "ShieldCheck",
       timeB: adminMatchData.timeB,
       iconeB: "Swords",
-      status: temHorario ? "proposto" : "combinando",
-      proposedBy: temHorario
-        ? isAdmin
+      status: adminCriouAberto ? "combinando" : "proposto",
+      proposedBy: adminCriouAberto
+        ? ""
+        : isAdmin
           ? "ADMIN"
           : myTeams.find((t) => sameTeamRef(t.tag, adminMatchData.timeA))?.tag ||
-            adminMatchData.timeA
-        : "",
+            adminMatchData.timeA,
     };
 
     const newCronograma = [...campeonato.cronograma, newMatch];
