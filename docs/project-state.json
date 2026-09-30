@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-30T00:41:54.076Z",
+  "updatedAt": "2026-09-30T01:20:47.285Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2196,14 +2196,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-19T22:28:58.941Z",
-      "agent": "deepseek",
-      "summary": "Bug real encontrado na página do time após a padronização: o container raiz da TimePage (max-w-[1400px] mx-auto) é filho direto do wrapper \"min-h-full flex flex-col\" do LayoutWrapper. Em flex-col, auto-margin no eixo cruzado impede o stretch — a página renderizava shrink-to-fit (507px medidos com Playwright headless em 1920px), por isso os cards ficavam menores que o original (que renderiza 1024). Fix: adicionado w-full nos 2 containers da TimePage (loading + main). Commit 59e3bb3 pushado e deployado (build nginx + up -d). Verificação headless pós-deploy: TIME 1400px, TIMES 1400px, JOGAR 1400px; chunk servido contém 2x \"w-full max-w-[1400px]\". Descoberta de método: comparação de largura pode ser feita com Playwright headless (sem janela), via mcp/browser-server/node_modules/playwright. Pendente: validação visual do usuário (Ctrl+F5).",
-      "touched": [
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
       "at": "2026-09-19T22:46:23.505Z",
       "agent": "gemini",
       "summary": "Ajustada a espessura da borda dos cards de times em /times (equipes.tsx) e do banner/logo em TimePage.tsx para 2px (border-2 / p-[2px]) com maior opacidade na cor do time, acompanhando o destaque da borda da logo. Validado com tsc e build.",
@@ -2478,6 +2470,14 @@
       "at": "2026-09-30T00:41:54.076Z",
       "agent": "deepseek",
       "summary": "Ajuste de UI na tela de lives (pedido do usuário): AgendaTransmissoes agora tem duas seções — 'Minhas Transmissões' (jogos que o streamer pegou, com ESTOU NO AR/Soltar/código/Encerrar) e 'Agenda de Jogos' (disponíveis; pegar migra o card para cima, soltar devolve o jogo para a agenda). Card extraído para CardJogo com contexto (meu/não-meu). Deploy: commit 787953f pushado para origin e vps; docker compose build nginx + up -d nginx. Evidência: chunk Streamers-CFgd5dvi.js servido em https://m7arena.pro/assets/ contém os textos novos ('Minhas Transmiss'/'Agenda de Jogos'); /streamers HTTP 200.",
+      "touched": [
+        "web/src/features/streams/components/AgendaTransmissoes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T01:20:47.285Z",
+      "agent": "deepseek",
+      "summary": "Ajuste de UI pedido: AgendaTransmissoes trocou os cards por listas compactas (linha com data/hora, #TAG x #TAG, campeonato, status/streamer e ações à direita), mantendo as duas seções — Minhas Transmissões e Agenda de Jogos. Deploy: commit b3a8d62 pushado origin+vps; nginx reconstruído; chunk Streamers-BpDbsl3d.js servido e /streamers HTTP 200. Obs.: antes disso, verifiquei a queixa dos jogos do Tesouro 'sumidos' — no banco estão os 28 (25 finalizado, 1 proposto BKS x KRV 30/09, 2 combinando RMD x PHE e MDR x MOO) e a API /tournaments/:id devolve os 3 pendentes; nada foi perdido, era tela/cache do usuário (ele confirmou que apareceu).",
       "touched": [
         "web/src/features/streams/components/AgendaTransmissoes.tsx"
       ]
