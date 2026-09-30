@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-30T01:20:47.285Z",
-  "updatedBy": "deepseek",
+  "updatedAt": "2026-09-30T01:50:19.466Z",
+  "updatedBy": "gemini",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -2196,15 +2196,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-19T22:46:23.505Z",
-      "agent": "gemini",
-      "summary": "Ajustada a espessura da borda dos cards de times em /times (equipes.tsx) e do banner/logo em TimePage.tsx para 2px (border-2 / p-[2px]) com maior opacidade na cor do time, acompanhando o destaque da borda da logo. Validado com tsc e build.",
-      "touched": [
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
       "at": "2026-09-19T23:00:16.119Z",
       "agent": "deepseek",
       "summary": "Fix pedido pelo usuário: os cards de /campeonatos usavam banner_url como imagem de fundo; trocados para logo_url (fallback gradiente). O banner continua só no hero do CampeonatoDetalhes (campeonato.bannerUrl, linha 178). Registrada ADR-067 (o original usava banner-primeiro — não é regressão). Verificação headless com Playwright (sem janela): 3 cards no ar, todos \"LOGO OK\" comparando o background-image computado com logo_url/banner_url da API. Commit fea3980 pushado e deployado (build nginx + up -d). Observação: durante a sessão a VPS/origin recebeu um commit de outro agente (62c6b88) — merge ff-only, sem conflito. Também nesta sessão: fix do w-full na TimePage (commit 59e3bb3) que resolveu o encolhimento da página do time (507px→1400px medido).",
@@ -2480,6 +2471,17 @@
       "summary": "Ajuste de UI pedido: AgendaTransmissoes trocou os cards por listas compactas (linha com data/hora, #TAG x #TAG, campeonato, status/streamer e ações à direita), mantendo as duas seções — Minhas Transmissões e Agenda de Jogos. Deploy: commit b3a8d62 pushado origin+vps; nginx reconstruído; chunk Streamers-BpDbsl3d.js servido e /streamers HTTP 200. Obs.: antes disso, verifiquei a queixa dos jogos do Tesouro 'sumidos' — no banco estão os 28 (25 finalizado, 1 proposto BKS x KRV 30/09, 2 combinando RMD x PHE e MDR x MOO) e a API /tournaments/:id devolve os 3 pendentes; nada foi perdido, era tela/cache do usuário (ele confirmou que apareceu).",
       "touched": [
         "web/src/features/streams/components/AgendaTransmissoes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T01:50:19.462Z",
+      "agent": "gemini",
+      "summary": "Ajustes visuais e de responsividade concluídos e deployados na VPS: 1) /streamers: removido visual de vidro/transparência adicionando fundos escuros sólidos (bg-[#0c0d12], bg-black/60) no card do painel de abrir live, nos selects/inputs, nas linhas da AgendaTransmissoes e empty states; 2) /streamers: card superior tornado 100% responsivo para mobile com quebra flex-col e botões full-width sem cortes; 3) / (Lobby): eliminada a rolagem horizontal no celular isolando o blur-[120px] com overflow-hidden, limitando a largura dos cards das figurinhas com max-w-[calc(100vw-32px)] e blindando o container raiz com overflow-x-hidden. Deploy: commit 5f2d409 pushado em origin e vps, container m7arena-nginx rebuildado com sucesso, assets Streamers-ChixHMTy.js e Lobby-DQWvqLto.js servidos com HTTP 200.",
+      "touched": [
+        "web/src/components/home/TopTeamsStickers.tsx",
+        "web/src/features/streams/components/AgendaTransmissoes.tsx",
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/Streamers.tsx"
       ]
     }
   ]

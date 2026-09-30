@@ -434,10 +434,10 @@ export default function Streamers() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative mb-12 rounded-2xl p-6 transition-all duration-500 overflow-hidden ${
+            className={`relative mb-12 rounded-2xl p-6 transition-all duration-500 overflow-hidden backdrop-blur-md ${
               userStream?.ativo
-                ? 'border-2 border-purple-500 bg-[#0c0d12] shadow-purple-500/30'
-                : 'border border-white/10 bg-[#0c0d12] shadow-2xl shadow-black/60'
+                ? 'border-2 border-purple-500 bg-[#050505]/90 shadow-purple-500/30'
+                : 'border border-white/10 bg-[#050505]/90 shadow-2xl shadow-black/80'
             }`}
           >
             {/* Background Thumbnail for active live */}
@@ -638,7 +638,7 @@ export default function Streamers() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12 border border-dashed border-white/10 bg-[#0c0d12] rounded-2xl"
+            className="text-center py-12 border border-dashed border-white/10 bg-[#050505]/90 backdrop-blur-md rounded-2xl shadow-xl"
           >
             <FaTwitch size={48} className="mx-auto text-purple-500 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Nenhum streamer ao vivo</h2>

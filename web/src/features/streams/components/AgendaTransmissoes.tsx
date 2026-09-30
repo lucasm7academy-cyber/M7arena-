@@ -42,7 +42,7 @@ function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSo
 
   return (
     <div
-      className={`flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3 rounded-xl bg-[#0c0d12] transition-all ${
+      className={`flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3 rounded-xl bg-[#050505]/90 backdrop-blur-md shadow-lg transition-all ${
         noAr ? 'border-2 border-purple-500/60 shadow-lg shadow-purple-500/10' : 'border border-white/10 hover:border-white/20'
       }`}
     >
@@ -266,7 +266,7 @@ export function AgendaTransmissoes({ isStreamer, temTwitch, onToast, onChange }:
             ))}
           </div>
         ) : (
-          <p className="text-center py-8 border border-dashed border-white/10 bg-[#0c0d12] rounded-2xl text-white/30 text-xs font-black uppercase tracking-widest">
+          <p className="text-center py-8 border border-dashed border-white/10 bg-[#050505]/90 backdrop-blur-md rounded-2xl text-white/30 text-xs font-black uppercase tracking-widest shadow-xl">
             Nenhum jogo disponível na agenda — os que você pegar aparecem em Minhas Transmissões
           </p>
         )}
