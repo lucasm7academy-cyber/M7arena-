@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-30T00:29:59.236Z",
+  "updatedAt": "2026-09-30T00:41:54.076Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2196,22 +2196,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-19T20:33:57.285Z",
-      "agent": "deepseek",
-      "summary": "Padronização de largura do conteúdo das páginas a pedido do usuário (referência: /jogar = max-w-[1400px]). Alteradas apenas as classes de largura do container externo de 9 arquivos: Lobby (8 seções 7xl→1400), TimePage (2x 5xl→1400), equipes, players, Streamers, recrutamento, QuemSomos (7xl→1400), perfil (6xl→1400), MinhasPartidas (5xl→1400). Jogar, campeonatos, CampeonatoDetalhes e ApostaIndividual já eram 1400. Verificado: tsc 0, vite build 0, commit c437d45 pushed e deployado na VPS (build nginx + up -d), chunks no ar conferidos (Lobby 8x, TimePage 2x, demais 1x), site HTTP 200. O deploy levou junto o estado do commit 2b081c4 (cores do cronograma) que já estava no git da VPS. Pendente: validação visual do usuário nas abas.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/TimePage.tsx",
-        "web/src/pages/equipes.tsx",
-        "web/src/pages/players.tsx",
-        "web/src/pages/Streamers.tsx",
-        "web/src/pages/recrutamento.tsx",
-        "web/src/pages/QuemSomos.tsx",
-        "web/src/pages/perfil.tsx",
-        "web/src/pages/MinhasPartidas.tsx"
-      ]
-    },
-    {
       "at": "2026-09-19T22:28:58.941Z",
       "agent": "deepseek",
       "summary": "Bug real encontrado na página do time após a padronização: o container raiz da TimePage (max-w-[1400px] mx-auto) é filho direto do wrapper \"min-h-full flex flex-col\" do LayoutWrapper. Em flex-col, auto-margin no eixo cruzado impede o stretch — a página renderizava shrink-to-fit (507px medidos com Playwright headless em 1920px), por isso os cards ficavam menores que o original (que renderiza 1024). Fix: adicionado w-full nos 2 containers da TimePage (loading + main). Commit 59e3bb3 pushado e deployado (build nginx + up -d). Verificação headless pós-deploy: TIME 1400px, TIMES 1400px, JOGAR 1400px; chunk servido contém 2x \"w-full max-w-[1400px]\". Descoberta de método: comparação de largura pode ser feita com Playwright headless (sem janela), via mcp/browser-server/node_modules/playwright. Pendente: validação visual do usuário (Ctrl+F5).",
@@ -2488,6 +2472,14 @@
         "web/src/features/streams/components/AgendaTransmissoes.tsx",
         "web/src/pages/Streamers.tsx",
         "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T00:41:54.076Z",
+      "agent": "deepseek",
+      "summary": "Ajuste de UI na tela de lives (pedido do usuário): AgendaTransmissoes agora tem duas seções — 'Minhas Transmissões' (jogos que o streamer pegou, com ESTOU NO AR/Soltar/código/Encerrar) e 'Agenda de Jogos' (disponíveis; pegar migra o card para cima, soltar devolve o jogo para a agenda). Card extraído para CardJogo com contexto (meu/não-meu). Deploy: commit 787953f pushado para origin e vps; docker compose build nginx + up -d nginx. Evidência: chunk Streamers-CFgd5dvi.js servido em https://m7arena.pro/assets/ contém os textos novos ('Minhas Transmiss'/'Agenda de Jogos'); /streamers HTTP 200.",
+      "touched": [
+        "web/src/features/streams/components/AgendaTransmissoes.tsx"
       ]
     }
   ]
