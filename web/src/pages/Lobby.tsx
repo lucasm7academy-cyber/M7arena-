@@ -1142,8 +1142,8 @@ const Home = () => {
                               className="mt-2.5 flex items-center gap-2 px-4 py-1.5 md:px-5 md:py-2 rounded-xl bg-[#9146FF] border border-[#9146FF] text-white shadow-lg shadow-[#9146FF]/30 hover:bg-[#772ce8] hover:border-[#772ce8] transition-all hover:scale-105 active:scale-95 group cursor-pointer"
                             >
                               <FaTwitch className="w-3.5 h-3.5 md:w-4 md:h-4 text-white flex-shrink-0" />
-                              <span className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
-                                {upcomingMatches[currentMatchIndex].streamer!.nome}
+                              <span className="text-xs md:text-sm font-black text-white tracking-wider">
+                                /{upcomingMatches[currentMatchIndex].streamer!.twitch ? upcomingMatches[currentMatchIndex].streamer!.twitch.replace(/^[@/]/, '') : upcomingMatches[currentMatchIndex].streamer!.nome}
                               </span>
                             </a>
                           )}

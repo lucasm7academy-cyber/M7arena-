@@ -69,8 +69,8 @@ function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSo
 
       <div className="shrink-0 lg:w-48 text-left lg:text-right">
         {!jogo.meu && jogo.streamer ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-purple-400 font-bold uppercase">
-            <FaTwitch className="w-3.5 h-3.5" /> {jogo.streamer.nome} vai transmitir
+          <span className="inline-flex items-center gap-1.5 text-xs text-purple-400 font-bold">
+            <FaTwitch className="w-3.5 h-3.5 shrink-0" /> /{jogo.streamer.twitch ? jogo.streamer.twitch.replace(/^[@/]/, '') : jogo.streamer.nome} vai transmitir
           </span>
         ) : jogo.meu ? (
           <span className="inline-flex items-center gap-1.5 text-xs text-purple-400 font-bold uppercase">
