@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-27T22:36:43.762Z",
+  "updatedAt": "2026-09-30T00:23:34.737Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1453,6 +1453,30 @@
       "owner": "deepseek",
       "createdAt": "2026-09-19T20:29:31.210Z",
       "updatedAt": "2026-09-19T22:28:54.611Z"
+    },
+    {
+      "id": "app.streams.agenda",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Escala de transmissões (agenda de streamers)",
+      "status": "done",
+      "notes": "Entregue: migration 0024, lib streams.ts/transmissoes.ts, rotas /streams/agenda (pegar/soltar/no-ar), vitrine e /minha com join pelo status do jogo, encerramento no motor de série e no storeCronograma (W.O.).",
+      "evidence": "npx tsx --test api/test/streams.test.ts → 11 PASS; npx tsx --test \"api/test/*.test.ts\" → 200 PASS/30 suites; drizzle-kit generate → 0024_gray_gressill.sql (duplicata da 0023 removida) aplica na cadeia 0000→0024 via PGlite; tsc -p api/tsconfig.json exit 0",
+      "owner": "deepseek",
+      "createdAt": "2026-09-30T00:14:45.316Z",
+      "updatedAt": "2026-09-30T00:23:26.827Z"
+    },
+    {
+      "id": "app.streams.agenda-ui",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "UI da agenda de transmissões (/streamers + Lobby)",
+      "status": "done",
+      "notes": "Entregue: componente AgendaTransmissoes em /streamers (pegar/estou no ar/código com copiar/encerrar), filtro de expiração para live de jogo (hook + fetchStreams), chip do streamer no carrossel do Lobby (cache v5) e painel 'Até o fim da série'. Teste interativo no browser fica com o usuário; deploy não incluso.",
+      "evidence": "npx tsc --noEmit (web) exit 0; npx vite build → built in 12.00s (dist/assets/index-CN1uyUJq.js + CampeonatoDetalhes-BUJvbMQq.js); smoke-test status-server → 23 checks ok",
+      "owner": "deepseek",
+      "createdAt": "2026-09-30T00:14:45.786Z",
+      "updatedAt": "2026-09-30T00:23:27.729Z"
     }
   ],
   "decisions": [
@@ -2094,6 +2118,15 @@
       "decision": "Imagens de exibição passam a ser convertidas para WebP redimensionado no upload (team-logos 512px, public-images 1920px, qualidade 82, \"nunca piora\") e as imagens legadas do Supabase foram migradas para o volume local via scripts/otimizar-imagens.mjs. match-prints ficam intactos (prova de resultado).",
       "rationale": "Os logos eram gravados crus (PNG de até 2 MB) renderizados em ~40–120px, e 22 dos 42 times ainda apontavam para o Supabase (TTFB medido 1,32s vs 0,25s local) — daí o card preto por ~1s. Após a migração: 0 URLs do Supabase em teams/tournaments/standings/matches; ACE 2038 KB → 42 KB, YFC 984 KB → 20 KB; total ~8 MB economizados. Também removidas as 2 URLs hardcoded do Supabase no Login.tsx (bytes idênticos conferidos por sha256). Evidência: npx tsc --noEmit 0; npx tsx --test 194/195 (única falha é o smoke test-realtime.mjs que exige servidor ao vivo).",
       "supersedes": null
+    },
+    {
+      "id": "ADR-072",
+      "date": "2026-09-30T00:23:28.625Z",
+      "author": "deepseek",
+      "title": "Escala de transmissões: vínculo live↔jogo e desligamento automático em duas camadas",
+      "decision": "Jogos confirmados formam uma agenda em /streamers; escalas_transmissao (unique match_id) garante 1 streamer por jogo; 'Estou no ar' cria transmissoes.match_id sem expira_em (janela de 30 min antes/em andamento, fuso SP) e o fim da série desliga a live em duas camadas: escrita (motor de série e storeCronograma) e leitura (vitrine/minha filtram pelo status do jogo).",
+      "rationale": "Sem API da Twitch, o clique do streamer é a ignição e o fim real da série é o desligamento. A checagem de leitura evita live fantasma se um caminho de escrita escapar. Título/campeonato/times montados no servidor, corrigindo o campeonatoId null do painel antigo. Spec: docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2162,23 +2195,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-19T19:37:45.239Z",
-      "agent": "deepseek",
-      "summary": "Backup manual do banco de produção solicitado pelo usuário. Gerado pg_dump (plain+gzip) do m7arena na VPS via docker exec m7arena_postgres, copiado por scp para D:\\Backups\\M7Arena\\m7arena_20260919_163708.sql.gz (755KB/772.516 bytes). Verificado: md5sum idêntico nos dois lados (556a08cfabe512ebb68bbe17595ddb13) e teste de restauração real em banco temporário m7arena_restore_test na VPS (328 users, 85 com password_hash, 42 teams, 3 tournaments, 8 match_codes) — banco de teste dropado em seguida. Dump contém hashes de senha, mantido FORA do git. Pendente: definir se haverá cópia periódica automática para o PC (a VPS só tem o container backup diário em volume local, que morre com a VPS).",
-      "touched": [
-        "D:\\Backups\\M7Arena\\m7arena_20260919_163708.sql.gz",
-        "/root/backups/m7arena_20260919_163708.sql.gz"
-      ]
-    },
-    {
-      "at": "2026-09-19T19:41:02.081Z",
-      "agent": "deepseek",
-      "summary": "Complemento do backup manual: além do dump do banco, copiei os uploads (imagens de logos de time, prints de partida, avatares — 26.4MB/128 arquivos) do volume infra_uploads_data via tar para D:\\Backups\\M7Arena\\uploads_20260919.tar.gz (25.57MB, md5 166d56875ef2d9187c85649d4665c2ef, conferido nos dois lados). Verificação do dump vs banco vivo: 43 tabelas no banco vivo, 43 no dump, zero diferenças (comm vazio nos dois sentidos); restore testado com contagens (328 users/85 com senha, 253 game_accounts, 203 wallets, 42 teams, 228 members, 3 tournaments, 38 matches, 1 payment, 240 sessions). Backup no PC agora cobre banco + arquivos. Pendente: definir cópia periódica automática para o PC.",
-      "touched": [
-        "D:\\Backups\\M7Arena\\uploads_20260919.tar.gz"
-      ]
-    },
     {
       "at": "2026-09-19T20:12:27.364Z",
       "agent": "gemini",
@@ -2436,6 +2452,40 @@
         "docs/ROTINA_SORTEIO_COPAS.md",
         "tournament_matches",
         "copa-tesouro"
+      ]
+    },
+    {
+      "at": "2026-09-27T22:44:18.007Z",
+      "agent": "deepseek",
+      "summary": "Fix: confronto criado pelo ADM no \"Criar Confronto\" nascia sempre com status 'proposto' (aparecia como \"proposta enviada\") mesmo sem data/horário. handleCreateAdminMatch agora: ADM sem data+hora -> status 'combinando' e proposedBy vazio (\"A Agendar\", ambos capitães propõem); ADM com data+hora -> 'proposto' por ADMIN; \"Agendar Desafio\" do capitão (não-admin) mantém proposta do time dele. AdminMatchModal ganhou inputs opcionais de data/hora que começam em branco (AdminCriarJogo limpa os campos ao abrir). Verificado: npm run lint (tsc --noEmit) exit 0 e vite build ok; commit 3672e9a + refinamento 6e91199 pushados para vps e origin; nginx reconstruído na VPS, site HTTP 200 e chunk CampeonatoDetalhes-C1vGNuis.js servindo o hint novo. Obs.: NKZ x CMS já está com proposta real do NKZ (2026-09-29 20:00), então não foi alterado.",
+      "touched": [
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "web/src/features/campeonatos/components/modals/AdminMatchModal.tsx",
+        "web/src/components/campeonatos/AdminCriarJogo.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T00:23:34.737Z",
+      "agent": "deepseek",
+      "summary": "Escala de transmissões implementada via superpowers (spec+plano 2026-09-29): migration 0024 (transmissoes.match_id + escalas_transmissao unique match_id), encerramento automático no motor de série (serie-campeonato) e no storeCronograma (W.O.) + proteção de leitura na vitrine/minha, endpoints /streams/agenda (GET público, POST pegar, DELETE soltar, POST no-ar), SDK web, componente AgendaTransmissoes em /streamers e chip do streamer no carrossel do Lobby. Evidências: streams.test.ts 11 PASS; suíte completa 200 PASS/30 suites; tsc api+web exit 0; vite build ok; smoke status-server 23 checks. ADR-072. PENDENTE DO USUÁRIO: teste interativo no browser (pegar jogo → estou no ar → finalizar série) e commit/deploy quando pedir — não commitei nada.",
+      "touched": [
+        "db/schema/conteudo.ts",
+        "db/migrations/0024_gray_gressill.sql",
+        "api/src/lib/transmissoes.ts",
+        "api/src/lib/streams.ts",
+        "api/src/lib/serie-campeonato.ts",
+        "api/src/lib/tournament-store.ts",
+        "api/src/routes/streams.ts",
+        "api/test/streams.test.ts",
+        "web/src/features/streams/types.ts",
+        "web/src/features/streams/components/AgendaTransmissoes.tsx",
+        "web/src/lib/api.ts",
+        "web/src/hooks/useTransmissoesAtivas.ts",
+        "web/src/pages/Streamers.tsx",
+        "web/src/pages/Lobby.tsx",
+        "mcp/status-server/lib/plan.js",
+        "docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md",
+        "docs/superpowers/plans/2026-09-29-escala-transmissoes.md"
       ]
     }
   ]

@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 27/09/2026 19:36 — por `deepseek`
+**Última atualização:** 29/09/2026 21:23 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`█████████████████████████░░░ 86/98` concluído
+`█████████████████████████░░░ 88/100` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 55/61 | 2 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 57/63 | 2 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 4 | — |
 
@@ -41,7 +41,7 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Aplicação (React + Vite) | ███████████░ 47/51 | 2 | 2 |
+| Aplicação (React + Vite) | ███████████░ 49/53 | 2 | 2 |
 | Design & Paridade Visual | ████████░░░░ 2/3 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 4 | — |
@@ -195,6 +195,8 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **PDL global: recálculo no servidor (paridade recalcular_pdl_global)** `app.campeonatos.pdl-global`<br>  Deployado + backfill feito. Recalculo do zero (+15/-13, clamp 0, chave não conta, ranking pdl>wins) chamado no endpoint, storeCronograma, finalização de série e exclusão de campeonato. Testes 3/3 (PGlite) + suíte 174/174.<br>  _evidência:_ `Recálculo rodado em prod: {"times":39,"jogos":16}. M7W → pdl 15, wins 1, losses 0, rank 4; BKA 0 (clamp), 1D. GET /api/teams?search=M7W → pdl=15 winrate=100 wins=1 games=1 rank=4. Históricos intactos (M7O 60, CRN/NCP 19, ZRG 15).`<br>  _concluído 10/09/2026 02:11 por deepseek_
 - `[x]` **Agendamento de jogos: contra-proposta e confirmação com horário** `app.campeonatos.agendamento`<br>  Deployado. Bug do 20:00 corrigido (painel não inventa hora; accept+alterado=contra-proposta; confirmar exige data/hora). Admin: Arbitrar agora define data/hora e confirma na hora (ação arbitrate) — sem propor e aceitar em 2 etapas. Servidor recusa (400) jogo confirmado sem horário. Falta teste visual do usuário.<br>  _evidência:_ `Deploy bac99c2 (health 200); bundle no nginx contém "Confirmar Arbitragem" (CampeonatoDetalhes-QAdaFch_.js); api/web tsc 0; vite build 0; suíte 179/179; teste agendamento 5/5.`<br>  _concluído 10/09/2026 02:24 por deepseek_
 - `[x]` **Inscrições: remover time e excluir campeonato** `app.campeonatos.inscricoes`<br>  Deployado. X de excluir candidato agora usa endpoint dedicado (remove tournament_teams + standings); delete do campeonato aceita admin/proprietário; falhas aparecem no banner em vez de sumir no console. Falta o teste visual do usuário (remover M7K da COPA DO TESOURO).<br>  _evidência:_ `Deploy ea2516a (health 200). DELETE /tournaments/:id/inscricoes/:teamId sem auth → 401 (rota montada, não 404). Bundle createCampPage-Cq62RtWp.js contém removerInscricao. Suíte 181/181, teste inscrição 2/2, tsc/build 0.`<br>  _concluído 10/09/2026 02:33 por deepseek_
+- `[x]` **Escala de transmissões (agenda de streamers)** `app.streams.agenda`<br>  Entregue: migration 0024, lib streams.ts/transmissoes.ts, rotas /streams/agenda (pegar/soltar/no-ar), vitrine e /minha com join pelo status do jogo, encerramento no motor de série e no storeCronograma (W.O.).<br>  _evidência:_ `npx tsx --test api/test/streams.test.ts → 11 PASS; npx tsx --test "api/test/*.test.ts" → 200 PASS/30 suites; drizzle-kit generate → 0024_gray_gressill.sql (duplicata da 0023 removida) aplica na cadeia 0000→0024 via PGlite; tsc -p api/tsconfig.json exit 0`<br>  _concluído 29/09/2026 21:23 por deepseek_
+- `[x]` **UI da agenda de transmissões (/streamers + Lobby)** `app.streams.agenda-ui`<br>  Entregue: componente AgendaTransmissoes em /streamers (pegar/estou no ar/código com copiar/encerrar), filtro de expiração para live de jogo (hook + fetchStreams), chip do streamer no carrossel do Lobby (cache v5) e painel 'Até o fim da série'. Teste interativo no browser fica com o usuário; deploy não incluso.<br>  _evidência:_ `npx tsc --noEmit (web) exit 0; npx vite build → built in 12.00s (dist/assets/index-CN1uyUJq.js + CampeonatoDetalhes-BUJvbMQq.js); smoke-test status-server → 23 checks ok`<br>  _concluído 29/09/2026 21:23 por deepseek_
 
 **Design & Paridade Visual**
 
@@ -797,6 +799,14 @@ _21/09/2026 23:59 — deepseek_
 
 _21/09/2026 23:59 — deepseek_
 
+### ADR-072 — Escala de transmissões: vínculo live↔jogo e desligamento automático em duas camadas
+
+**Decisão:** Jogos confirmados formam uma agenda em /streamers; escalas_transmissao (unique match_id) garante 1 streamer por jogo; 'Estou no ar' cria transmissoes.match_id sem expira_em (janela de 30 min antes/em andamento, fuso SP) e o fim da série desliga a live em duas camadas: escrita (motor de série e storeCronograma) e leitura (vitrine/minha filtram pelo status do jogo).
+
+**Por quê:** Sem API da Twitch, o clique do streamer é a ignição e o fim real da série é o desligamento. A checagem de leitura evita live fantasma se um caminho de escrita escapar. Título/campeonato/times montados no servidor, corrigindo o campeonatoId null do painel antigo. Spec: docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md.
+
+_29/09/2026 21:23 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -807,6 +817,8 @@ _21/09/2026 23:59 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 29/09/2026 21:23 | deepseek | Escala de transmissões implementada via superpowers (spec+plano 2026-09-29): migration 0024 (transmissoes.match_id + escalas_transmissao unique match_id), encerramento automático no motor de série (serie-campeonato) e no storeCronograma (W.O.) + proteção de leitura na vitrine/minha, endpoints /streams/agenda (GET público, POST pegar, DELETE soltar, POST no-ar), SDK web, componente AgendaTransmissoes em /streamers e chip do streamer no carrossel do Lobby. Evidências: streams.test.ts 11 PASS; suíte completa 200 PASS/30 suites; tsc api+web exit 0; vite build ok; smoke status-server 23 checks. ADR-072. PENDENTE DO USUÁRIO: teste interativo no browser (pegar jogo → estou no ar → finalizar série) e commit/deploy quando pedir — não commitei nada. <br>_tocou: `db/schema/conteudo.ts`, `db/migrations/0024_gray_gressill.sql`, `api/src/lib/transmissoes.ts`, `api/src/lib/streams.ts`, `api/src/lib/serie-campeonato.ts`, `api/src/lib/tournament-store.ts`, `api/src/routes/streams.ts`, `api/test/streams.test.ts`, `web/src/features/streams/types.ts`, `web/src/features/streams/components/AgendaTransmissoes.tsx`, `web/src/lib/api.ts`, `web/src/hooks/useTransmissoesAtivas.ts`, `web/src/pages/Streamers.tsx`, `web/src/pages/Lobby.tsx`, `mcp/status-server/lib/plan.js`, `docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md`, `docs/superpowers/plans/2026-09-29-escala-transmissoes.md`_ |
+| 27/09/2026 19:44 | deepseek | Fix: confronto criado pelo ADM no "Criar Confronto" nascia sempre com status 'proposto' (aparecia como "proposta enviada") mesmo sem data/horário. handleCreateAdminMatch agora: ADM sem data+hora -> status 'combinando' e proposedBy vazio ("A Agendar", ambos capitães propõem); ADM com data+hora -> 'proposto' por ADMIN; "Agendar Desafio" do capitão (não-admin) mantém proposta do time dele. AdminMatchModal ganhou inputs opcionais de data/hora que começam em branco (AdminCriarJogo limpa os campos ao abrir). Verificado: npm run lint (tsc --noEmit) exit 0 e vite build ok; commit 3672e9a + refinamento 6e91199 pushados para vps e origin; nginx reconstruído na VPS, site HTTP 200 e chunk CampeonatoDetalhes-C1vGNuis.js servindo o hint novo. Obs.: NKZ x CMS já está com proposta real do NKZ (2026-09-29 20:00), então não foi alterado. <br>_tocou: `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/AdminMatchModal.tsx`, `web/src/components/campeonatos/AdminCriarJogo.tsx`_ |
 | 27/09/2026 19:36 | deepseek | Copa do Tesouro: criei os 3 confrontos restantes da fase de grupos (não 1, como o usuário supunha): BKS x KRV, RMD x PHE, MDR x MOO. Inseridos direto em tournament_matches (status='combinando', 'A COMBINAR'/'--:--', best_of=3, phase_label='Fase de Grupos', score 0-0) — mesmo formato do sortear-semana.mjs (ADR-068). O script não serve aqui porque aborta rodada parcial (<4 pares). Validei no DB (INSERT 0 3, 0 pares repetidos) e pela API: 28/28 pares presentes, 3 novos pendentes aparecem em Meus Jogos Pendentes. Kraken já estava com 28/28 (grupos completos). Atualizei o histórico de docs/ROTINA_SORTEIO_COPAS.md e registrei a limitação do script. <br>_tocou: `docs/ROTINA_SORTEIO_COPAS.md`, `tournament_matches`, `copa-tesouro`_ |
 | 24/09/2026 12:56 | gemini | Aplicadas molduras vetoriais em SVG estilizadas como as bordas de tela de carregamento do League of Legends nos cards dos top 3 times do Lobby (Grão-Mestre com ouro/rubi alado para o 1º, Mestre com ametista e filigranas góticas para o 2º, Diamante com safira e facetas cristalinas para o 3º). Trilhos chanfrados, joias centrais com glow mágico, pingentes inferiores e cantoneiras de armadura. Commit 9fe5315 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado ao vivo com HTTP/2 200. <br>_tocou: `web/src/components/home/TopTeamsStickers.tsx`_ |
 | 24/09/2026 12:51 | gemini | Criado o bloco de 3 figurinhas colecionáveis dos top times da arena estilo álbum da copa (1º lugar em ouro centralizado, maior e elevado; 2º em prata e 3º em bronze menores nas laterais) logo abaixo de Próximos Jogos no Lobby. Componente TopTeamsStickers.tsx criado com molduras metálicas foil, padrões holográficos SVG, badges de ranking, PDL/WR e logo oficial dos times, com link para página do time. Commit 1331d47 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado com HTTP/2 200 no ar. <br>_tocou: `web/src/components/home/TopTeamsStickers.tsx`, `web/src/pages/Lobby.tsx`_ |
@@ -820,8 +832,6 @@ _21/09/2026 23:59 — deepseek_
 | 23/09/2026 00:31 | gemini | Estilização de Próximos Jogos: criação do componente TeamBrushX em formato de X estilo mapa de tesouro com cerdas secas, respingos nas 4 pontas e névoa difusa na cor do time; estilização completa do cabeçalho da copa/torneio usando a fonte Anton (mesma identidade de Partidas Finalizadas), badge chanfrado e troféu metálico com glow dourado. Build e deploy para VPS concluídos com HTTP 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 23/09/2026 00:24 | gemini | Refinamento visual em Próximos Jogos no Lobby: aplicação de pincelada de tinta acrílica (TeamBrushStroke) nas cores de cada time com cerdas dinâmicas e névoa difusa, logo estendido em object-cover ocupando o card chanfrado sem bordas cortadas, e centralização horizontal dos indicadores/bolinhas de paginação logo abaixo do confronto. Build local com Vite validado, merge e deploy do container Nginx na VPS concluído com HTTP 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 23/09/2026 00:10 | gemini | Remoção do card/container externo da seção Próximos Jogos no Lobby para integração 100% direta no fundo do site. Substituição do quadrado arredondado genérico pelo TeamCrest eSports (escudo com cantos chanfrados em polígono, tech corner brackets que reagem ao hover, acentos luminosos laterais e vidro dark metálico). Efeito de tinta (TeamPaintSplatter) ampliado e fumaça atmosférica fluindo livremente no background. Rebuild do container nginx concluído na VPS com HTTP/2 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
-| 23/09/2026 00:06 | gemini | Deploy concluído na VPS: commit 88c46ca integrado via fast-forward merge na VPS (/root/m7arena) e containers app, realtime e nginx reconstruídos e reiniciados via docker compose. https://m7arena.pro respondendo HTTP/2 200 e /api/tournaments online. Nova estilização de Próximos Jogos disponível no ar para visualização do usuário. <br>_tocou: `web/src/pages/Lobby.tsx`, `api/src/lib/tournament-shape.ts`_ |
-| 23/09/2026 00:00 | gemini | Estilização da seção Próximos Jogos na Home (Lobby): resolução correta da cor de cada time (colorA e colorB) via times_inscritos e api.teams.list (corrigido fallback indevido para theme_color do campeonato), efeito de marca de tinta (brush/paint splatter SVG) e aura de fumaça atmosférica na cor de cada time, card central estilizado com badge de torneio/fase, 'VS' em gradiente metálico dual e paginação por dots. <br>_tocou: `web/src/pages/Lobby.tsx`, `api/src/lib/tournament-shape.ts`_ |
 
 ---
 
