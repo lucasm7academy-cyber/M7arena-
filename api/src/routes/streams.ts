@@ -1,44 +1,56 @@
 // api/src/routes/streams.ts
-// Transmissões de streamer — substitui o `supabase.from('transmissoes')` do
-// Streamers.tsx (swap app.swap.conteudo). Regras: iniciar exige cargo streamer
-// (user_roles) e twitch_channel no perfil; a vitrine pública lista só as
-// ativas não expiradas, 1 por usuário. Nenhuma regra de negócio no cliente.
+// Transmissões de streamer + agenda de jogos de campeonato (spec 2026-09-29).
+// As regras vivem em lib/streams.ts; aqui só sessão/validação de cargo e o
+// mapeamento erro → HTTP.
 import { Router } from "express";
-import { and, eq, gt, isNotNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "../db.js";
 import { transmissoes } from "../../../db/schema/conteudo.js";
-import { userRoles } from "../../../db/schema/identidade.js";
 import { getAuthUser } from "../lib/match-flow.js";
+import {
+  toLegacyTransmissao,
+  listarVitrine,
+  minhaTransmissao,
+  listarAgenda,
+  pegarVaga,
+  soltarVaga,
+  entrarNoAr,
+  validarStreamer,
+} from "../lib/streams.js";
 
 export const streamsRouter = Router();
 
-/** Converte a linha do banco no shape legado que o Streamers.tsx consome. */
-function toLegacy(t: any) {
-  return {
-    id: t.id,
-    user_id: t.userId,
-    twitch_channel: t.twitchChannel,
-    titulo: t.titulo,
-    campeonato_id: t.campeonatoId,
-    duracao_horas: t.duracaoHoras,
-    ativo: t.ativo,
-    criado_em: t.criadoEm ? new Date(t.criadoEm).toISOString() : null,
-    expira_em: t.expiraEm ? new Date(t.expiraEm).toISOString() : null,
-    modo: t.modo,
-    time1_id: t.time1Id,
-    time2_id: t.time2Id,
-  };
+const HTTP_ERRO: Record<string, number> = {
+  sem_cargo_streamer: 403,
+  nao_e_o_streamer: 403,
+  sem_twitch_no_perfil: 400,
+  jogo_nao_encontrado: 404,
+  jogo_nao_confirmado: 409,
+  jogo_finalizado: 409,
+  vaga_ocupada: 409,
+  live_no_ar: 409,
+  fora_da_janela: 409,
+};
+
+function responderErro(res: any, resultado: { erro: string }) {
+  return res.status(HTTP_ERRO[resultado.erro] ?? 400).json({ erro: resultado.erro });
 }
 
-// GET /api/streams — vitrine pública: transmissoes ativas e não expiradas.
+// GET /api/streams — vitrine pública.
 streamsRouter.get("/", async (_req, res) => {
   try {
-    const now = new Date();
-    const rows = await db
-      .select()
-      .from(transmissoes)
-      .where(and(eq(transmissoes.ativo, true), isNotNull(transmissoes.expiraEm), gt(transmissoes.expiraEm, now)));
-    return res.json(rows.map(toLegacy));
+    const rows = await listarVitrine(db);
+    return res.json(rows.map(toLegacyTransmissao));
+  } catch (e: any) {
+    return res.status(500).json({ erro: e?.message || "erro_interno" });
+  }
+});
+
+// GET /api/streams/agenda — jogos agendáveis (público; enriquecido se logado).
+streamsRouter.get("/agenda", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    return res.json(await listarAgenda(db, { userId: user?.id ?? null }));
   } catch (e: any) {
     return res.status(500).json({ erro: e?.message || "erro_interno" });
   }
@@ -49,29 +61,64 @@ streamsRouter.get("/minha", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ erro: "nao_autenticado" });
-    const [row] = await db
-      .select()
-      .from(transmissoes)
-      .where(and(eq(transmissoes.userId, user.id), eq(transmissoes.ativo, true)))
-      .limit(1);
-    return res.json(row ? toLegacy(row) : null);
+    const row = await minhaTransmissao(db, user.id);
+    return res.json(row ? toLegacyTransmissao(row) : null);
   } catch (e: any) {
     return res.status(500).json({ erro: e?.message || "erro_interno" });
   }
 });
 
-// POST /api/streams — inicia uma transmissão. Requer cargo streamer + twitch.
+// POST /api/streams/agenda/:matchId — pega a vaga do jogo.
+streamsRouter.post("/agenda/:matchId", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ erro: "nao_autenticado" });
+    const v = await validarStreamer(db, user.id);
+    if (!v.ok) return responderErro(res, v);
+    const r = await pegarVaga(db, req.params.matchId, user.id);
+    if (!r.ok) return responderErro(res, r);
+    return res.status(201).json({ ok: true });
+  } catch (e: any) {
+    return res.status(500).json({ erro: e?.message || "erro_interno" });
+  }
+});
+
+// DELETE /api/streams/agenda/:matchId — solta a vaga (sem live no ar).
+streamsRouter.delete("/agenda/:matchId", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ erro: "nao_autenticado" });
+    const r = await soltarVaga(db, req.params.matchId, user.id);
+    if (!r.ok) return responderErro(res, r);
+    return res.json({ ok: true });
+  } catch (e: any) {
+    return res.status(500).json({ erro: e?.message || "erro_interno" });
+  }
+});
+
+// POST /api/streams/agenda/:matchId/no-ar — abre a live do jogo escalado.
+streamsRouter.post("/agenda/:matchId/no-ar", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ erro: "nao_autenticado" });
+    const r = await entrarNoAr(db, req.params.matchId, user.id);
+    if (!r.ok) return responderErro(res, r);
+    return res.status(201).json({
+      transmissao: toLegacyTransmissao(r.transmissao),
+      codigo_partida: r.codigo_partida,
+    });
+  } catch (e: any) {
+    return res.status(500).json({ erro: e?.message || "erro_interno" });
+  }
+});
+
+// POST /api/streams — inicia transmissão livre (fluxo atual, sem jogo).
 streamsRouter.post("/", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ erro: "nao_autenticado" });
-
-    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
-    if (!roles.some((r) => r.role === "streamer")) {
-      return res.status(403).json({ erro: "sem_cargo_streamer" });
-    }
-    const twitch = (user.socials as Record<string, string> | null)?.["twitch"] ?? "";
-    if (!twitch) return res.status(400).json({ erro: "sem_twitch_no_perfil" });
+    const v = await validarStreamer(db, user.id);
+    if (!v.ok) return responderErro(res, v);
 
     const { titulo, campeonatoId, duracaoHoras, modo, time1Id, time2Id } = req.body ?? {};
     const duracao = Number(duracaoHoras) > 0 ? Number(duracaoHoras) : 1;
@@ -81,7 +128,7 @@ streamsRouter.post("/", async (req, res) => {
       .insert(transmissoes)
       .values({
         userId: user.id,
-        twitchChannel: twitch,
+        twitchChannel: v.twitch,
         titulo: typeof titulo === "string" ? titulo : null,
         campeonatoId: campeonatoId ?? null,
         duracaoHoras: duracao,
@@ -92,7 +139,7 @@ streamsRouter.post("/", async (req, res) => {
         time2Id: time2Id ?? null,
       })
       .returning();
-    return res.status(201).json(toLegacy(row));
+    return res.status(201).json(toLegacyTransmissao(row));
   } catch (e: any) {
     return res.status(500).json({ erro: e?.message || "erro_interno" });
   }

@@ -12,6 +12,7 @@ import type {
   ApiPlayerStats,
 } from "./api-content.js";
 import { toLegacyNews, toApiNews, toLegacyHighlight, toApiHighlight } from "./api-content.js";
+import type { AgendaJogo } from "../features/streams/types";
 
 export type {
   ApiLegacyNews,
@@ -953,6 +954,15 @@ export const api = {
       api.post<{ id: string; user_id: string; twitch_channel: string; titulo: string | null; ativo: boolean }>("/streams", data),
     /** Encerra a live (só o dono). */
     parar: (id: string) => api.post<{ ok: boolean }>(`/streams/${id}/parar`),
+    /** Agenda de transmissões: jogos de campeonato agendáveis (público). */
+    agenda: () => api.get<AgendaJogo[]>("/streams/agenda"),
+    /** Pega a vaga de transmissão de um jogo (1 por jogo). */
+    pegar: (matchId: string) => api.post<{ ok: boolean }>(`/streams/agenda/${matchId}`),
+    /** Solta a vaga (bloqueado se a live está no ar). */
+    soltar: (matchId: string) => api.delete<{ ok: boolean }>(`/streams/agenda/${matchId}`),
+    /** Entra no ar no jogo escalado: cria a live vinculada e devolve o código. */
+    entrarNoAr: (matchId: string) =>
+      api.post<{ transmissao: any; codigo_partida: string | null }>(`/streams/agenda/${matchId}/no-ar`),
   },
 
   adminCargos: {

@@ -88,6 +88,10 @@ export const PLAN = {
   "app.campeonatos.agendamento": ["fase-3", "app.swap.campeonatos"],
   // Inscrições: remover time e excluir campeonato (ADR-061).
   "app.campeonatos.inscricoes": ["fase-3", "app.swap.campeonatos"],
+  // Agenda de transmissões (spec 2026-09-29): escala jogo ↔ streamer com
+  // desligamento automático no fim da série (motor + leitura).
+  "app.streams.agenda": ["fase-3", "app.swap.campeonatos", "app.swap.conteudo", "db.tournaments", "db.conteudo"],
+  "app.streams.agenda-ui": ["fase-3", "app.streams.agenda", "app.sdk", "app.port.streamers"],
   "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
   "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],

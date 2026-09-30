@@ -169,6 +169,13 @@
       "when": 1788140000000,
       "tag": "0023_bet_champion",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790727376335,
+      "tag": "0024_gray_gressill",
+      "breakpoints": true
     }
   ]
 }

@@ -316,10 +316,12 @@ interface UpcomingMatch {
   campTitle?: string;
   campColor?: string;
   fase?: string;
+  matchId?: string;
+  streamer?: { nome: string; twitch: string } | null;
 }
 
 const _UPCOMING_CACHE_TTL = 5 * 60 * 1000;
-const _UPCOMING_CACHE_VER = 4; // bump ao mudar estrutura
+const _UPCOMING_CACHE_VER = 5; // bump ao mudar estrutura
 let _upcomingCache: { data: UpcomingMatch[]; ts: number; v: number } | null = null;
 
 // Efeito dinâmico de pincelada de tinta acrílica (brush stroke) na cor do time
@@ -583,10 +585,16 @@ const Home = () => {
         return;
       }
       try {
-        const [camps, allTeams] = await Promise.all([
+        const [camps, allTeams, agenda] = await Promise.all([
           api.tournaments.list(),
           api.teams.list().catch(() => [] as any[]),
+          api.streams.agenda().catch(() => [] as any[]),
         ]);
+
+        const streamerMap = new Map<string, { nome: string; twitch: string }>();
+        for (const item of agenda as any[]) {
+          if (item.match_id && item.streamer) streamerMap.set(item.match_id, item.streamer);
+        }
 
         const teamMap = new Map<string, any>();
         if (Array.isArray(allTeams)) {
@@ -692,6 +700,8 @@ const Home = () => {
             logoB: c._tB?.logo || '',
             date: c._dateStr,
             time: match.hora || match.horario || '—',
+            matchId: match.match_id,
+            streamer: match.match_id ? streamerMap.get(match.match_id) ?? null : null,
           };
         });
 
@@ -1123,6 +1133,15 @@ const Home = () => {
                           <span className="text-2xl sm:text-3xl md:text-4xl font-black text-[#FFB700] tracking-widest font-display drop-shadow-[0_0_20px_rgba(255,183,0,0.55)]">
                             {upcomingMatches[currentMatchIndex].time}
                           </span>
+
+                          {upcomingMatches[currentMatchIndex].streamer && (
+                            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#9146FF]/10 border border-[#9146FF]/30 backdrop-blur-sm">
+                              <FaTwitch className="w-3 h-3 text-[#9146FF]" />
+                              <span className="text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-widest">
+                                {upcomingMatches[currentMatchIndex].streamer!.nome}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 

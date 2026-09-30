@@ -10,6 +10,7 @@ import { useSound } from '../hooks/useSound';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilSafe } from '../contexts/PerfilContext';
 import { Toast, ToastContainer } from '../components/Toast';
+import { AgendaTransmissoes } from '../features/streams/components/AgendaTransmissoes';
 
 interface TwitchLiveStream {
   id: string;
@@ -306,7 +307,9 @@ export default function Streamers() {
       const now = new Date().toISOString();
       const transmissoes = await api.streams.ativas();
 
-      const aindaAtivas = (transmissoes || []).filter((tx: any) => tx.expira_em && tx.expira_em > now);
+      const aindaAtivas = (transmissoes || []).filter(
+        (tx: any) => tx.match_id || (tx.expira_em && tx.expira_em > now)
+      );
 
       if (!aindaAtivas || aindaAtivas.length === 0) {
         setStreams([]);
@@ -598,7 +601,9 @@ export default function Streamers() {
                       <h3 className="text-lg font-black text-white truncate max-w-[400px] leading-tight">{userStream?.titulo || 'Transmissão ao vivo'}</h3>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono text-purple-400">twitch.tv/{userStream?.twitch_channel}</span>
-                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">• Duração: {userStream?.duracao_horas} {userStream?.duracao_horas === 1 ? 'HORA' : 'HORAS'}</span>
+                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">
+                          {userStream?.match_id ? '• Até o fim da série' : `• Duração: ${userStream?.duracao_horas} ${userStream?.duracao_horas === 1 ? 'HORA' : 'HORAS'}`}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -617,6 +622,17 @@ export default function Streamers() {
             </div>
           </motion.div>
         )}
+
+        {/* AGENDA DE TRANSMISSÕES (spec 2026-09-29) */}
+        <AgendaTransmissoes
+          isStreamer={perfil?.cargo === 'streamer'}
+          temTwitch={!!perfil?.twitch}
+          onToast={addToast}
+          onChange={() => {
+            fetchUserStream();
+            fetchStreams();
+          }}
+        />
 
         {/* Empty State */}
         {!loading && streams.length === 0 && (

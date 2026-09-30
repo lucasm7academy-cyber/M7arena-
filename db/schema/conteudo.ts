@@ -12,6 +12,7 @@ import {
   doublePrecision,
 } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
+import { tournamentMatches } from "./tournaments.js";
 
 export const news = pgTable(
   "news",
@@ -131,11 +132,33 @@ export const transmissoes = pgTable(
     modo: varchar("modo", { length: 20 }).default("padrao").notNull(), // 'padrao' | 'amistoso' | 'campeonato'
     time1Id: uuid("time1_id"),
     time2Id: uuid("time2_id"),
+    matchId: uuid("match_id").references(() => tournamentMatches.id, { onDelete: "cascade" }),
   },
   (table) => [
     index("transmissoes_ativo_idx").on(table.ativo),
     index("transmissoes_user_idx").on(table.userId),
+    index("transmissoes_match_idx").on(table.matchId),
   ]
+);
+
+// Escala de transmissões (spec 2026-09-29): 1 streamer por jogo de campeonato.
+// O UNIQUE em match_id é a trava do banco; o servidor checa antes para devolver
+// erro amigável. O vínculo da live é transmissoes.match_id; não existe
+// expira_em para live de jogo — o fim dela é o fim da série.
+export const escalasTransmissao = pgTable(
+  "escalas_transmissao",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchId: uuid("match_id")
+      .notNull()
+      .unique()
+      .references(() => tournamentMatches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [index("escalas_transmissao_user_idx").on(table.userId)]
 );
 
 export const recruitmentPosts = pgTable(

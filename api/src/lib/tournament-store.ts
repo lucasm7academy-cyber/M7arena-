@@ -24,6 +24,7 @@ import {
 import { teams } from "../../../db/schema/teams.js";
 import { matchCodes } from "../../../db/schema/matches.js";
 import { recalcularPdlGlobal } from "./tournament-pdl.js";
+import { encerrarTransmissoesDoJogo } from "./transmissoes.js";
 
 /** Resolve o id de um time por id ou tag (retorna null se não achar). */
 async function resolveTeamId(idOrTag: string | undefined, d: any = db): Promise<string | null> {
@@ -101,6 +102,7 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
   if (!Array.isArray(cronograma)) return;
   const existingMatches = await d
     .select({
+      id: tournamentMatches.id,
       key: tournamentMatches.matchKey,
       codigoPartida: tournamentMatches.codigoPartida,
       status: tournamentMatches.status,
@@ -135,6 +137,9 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
         .update(tournamentMatches)
         .set({ ...values, updatedAt: new Date() })
         .where(and(eq(tournamentMatches.tournamentId, tournamentId), eq(tournamentMatches.matchKey, key)));
+
+      // W.O. / resultado manual do ADM: desliga a live vinculada (spec 2026-09-29).
+      if (isFinalizado) await encerrarTransmissoesDoJogo(d, matchRow.id);
 
       // Se a partida foi finalizada (W.O. ou decisão manual do ADM) e tinha código de partida, libera o código no pool
       if (isFinalizado && matchRow.codigoPartida) {

@@ -38,7 +38,11 @@ export function useTransmissoesAtivas() {
 
         if (cancelled) return;
 
-        const aindaAtivas = (txData || []).filter((tx: any) => tx.expira_em && tx.expira_em > now);
+        // Live de jogo (match_id) não usa expira_em: o servidor já filtra pelo
+        // fim da série. As livres mantêm a expiração.
+        const aindaAtivas = (txData || []).filter(
+          (tx: any) => tx.match_id || (tx.expira_em && tx.expira_em > now)
+        );
 
         if (aindaAtivas.length === 0) {
           setTransmissoes((prev) => (prev.length === 0 ? prev : []));
