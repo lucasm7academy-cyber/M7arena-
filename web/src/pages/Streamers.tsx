@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
-import { motion } from 'motion/react';
-import { ExternalLink, Play, StopCircle, Copy, Check, Loader, Tv2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ExternalLink, Play, StopCircle, Copy, Check, Loader, Tv2, ChevronDown } from 'lucide-react';
 import { FaTwitch } from 'react-icons/fa';
 import { useSound } from '../hooks/useSound';
 import { useAuth } from '../contexts/AuthContext';
@@ -94,6 +94,7 @@ export default function Streamers() {
   const [toasts, setToasts] = useState<any[]>([]);
 
   // ✅ Estados para transmissão ao vivo
+  const [isAvulsaOpen, setIsAvulsaOpen] = useState(false); // Sanfona retrátil do formulário avulso
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('3'); // Default 3 Horas
   const [transmissionMode, setTransmissionMode] = useState<'padrao' | 'amistoso' | 'campeonato'>('padrao'); // Modo de transmissão
@@ -434,9 +435,9 @@ export default function Streamers() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative mb-12 rounded-2xl p-6 transition-all duration-500 overflow-hidden backdrop-blur-md ${
+            className={`relative mb-12 rounded-2xl transition-all duration-500 overflow-hidden backdrop-blur-md ${
               userStream?.ativo
-                ? 'border-2 border-purple-500 bg-[#050505]/90 shadow-purple-500/30'
+                ? 'border-2 border-purple-500 bg-[#050505]/90 shadow-purple-500/30 p-6'
                 : 'border border-white/10 bg-[#050505]/90 shadow-2xl shadow-black/80'
             }`}
           >
@@ -457,136 +458,190 @@ export default function Streamers() {
 
             <div className="relative z-10 w-full">
               {!userStream?.ativo ? (
-                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 w-full">
-                  <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full flex-1">
-                    <div className="hidden xl:flex items-center gap-3 pr-4 border-r border-white/10 shrink-0 self-stretch">
-                      <FaTwitch className="w-6 h-6 text-purple-500" />
-                      <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest self-center">LIVE</span>
-                    </div>
-
-                    {/* Input Título (apenas para PADRÃO) */}
-                    {transmissionMode === 'padrao' && (
-                      <input
-                        type="text"
-                        placeholder="Título da live..."
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full sm:w-auto sm:flex-1 sm:min-w-[180px] max-w-full sm:max-w-[280px] bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 transition-colors h-[48px] text-white placeholder-zinc-500"
-                      />
-                    )}
-
-                    {/* Select MODO */}
-                    <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
-                      <select
-                        value={transmissionMode}
-                        onChange={(e) => {
-                          setTransmissionMode(e.target.value as 'padrao' | 'amistoso' | 'campeonato');
-                          setSelectedTeams([]);
-                          setSelectedCampeonato('');
-                        }}
-                        className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
-                      >
-                        <option value="padrao" className="bg-zinc-900 font-bold uppercase">PADRÃO</option>
-                        <option value="amistoso" className="bg-zinc-900 font-bold uppercase">AMISTOSO</option>
-                        <option value="campeonato" className="bg-zinc-900 font-bold uppercase">CAMPEONATO</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
-                      </div>
-                    </div>
-
-                    {/* Select Campeonato (se CAMPEONATO) */}
-                    {transmissionMode === 'campeonato' && (
-                      <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[160px]">
-                        <select
-                          value={selectedCampeonato}
-                          onChange={(e) => setSelectedCampeonato(e.target.value)}
-                          className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
-                        >
-                          <option value="">CAMPEONATO</option>
-                          {availableCampeonatos.map(c => (
-                            <option key={c.id} value={c.id} className="bg-zinc-900">{c.titulo}</option>
-                          ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Select Time 1 (se AMISTOSO ou CAMPEONATO) */}
-                    {(transmissionMode === 'amistoso' || transmissionMode === 'campeonato') && (
-                      <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
-                        <select
-                          value={selectedTeams[0] || ''}
-                          onChange={(e) => {
-                            const newTeams = [...selectedTeams];
-                            newTeams[0] = e.target.value;
-                            setSelectedTeams(newTeams.filter(t => t));
-                          }}
-                          className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
-                        >
-                          <option value="">TIME 1</option>
-                          {availableTimes.map(t => (
-                            <option key={t.id} value={t.id} className="bg-zinc-900">{t.tag || t.nome}</option>
-                          ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Select Time 2 (se AMISTOSO ou CAMPEONATO) */}
-                    {(transmissionMode === 'amistoso' || transmissionMode === 'campeonato') && (
-                      <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
-                        <select
-                          value={selectedTeams[1] || ''}
-                          onChange={(e) => {
-                            const newTeams = [...selectedTeams];
-                            newTeams[1] = e.target.value;
-                            setSelectedTeams(newTeams.filter(t => t));
-                          }}
-                          className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
-                        >
-                          <option value="">TIME 2</option>
-                          {availableTimes.map(t => (
-                            <option key={t.id} value={t.id} className="bg-zinc-900">{t.tag || t.nome}</option>
-                          ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Select Duração */}
-                    <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[120px]">
-                      <select
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
-                      >
-                        <option value="1" className="bg-zinc-900 font-bold uppercase">1 HORA</option>
-                        {[2, 3, 4, 5, 6].map(h => (
-                          <option key={h} value={h.toString()} className="bg-zinc-900 font-bold uppercase">{h} HORAS</option>
-                        ))}
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
-                      </div>
-                    </div>
-                  </div>
-
+                <div>
+                  {/* Botão Retrátil (liga/desliga expansão) */}
                   <button
-                    onClick={handleStartLive}
-                    disabled={loadingAction || !perfil?.twitch}
-                    title={!perfil?.twitch ? 'Configure seu Twitch no perfil primeiro' : undefined}
-                    className="flex items-center justify-center gap-3 bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-600/30 h-[48px] w-full lg:w-auto shrink-0"
+                    type="button"
+                    onClick={() => {
+                      playSound('click');
+                      setIsAvulsaOpen(prev => !prev);
+                    }}
+                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-white/[0.03] transition-colors cursor-pointer text-left select-none"
                   >
-                    {loadingAction ? <Loader className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
-                    INICIAR TRANSMISSÃO
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-[#9146FF]/20 border border-[#9146FF]/40 flex items-center justify-center shrink-0">
+                        <FaTwitch className="w-5 h-5 text-[#9146FF]" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
+                            Iniciar Transmissão Avulsa
+                          </h3>
+                          <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            Ao Vivo
+                          </span>
+                        </div>
+                        <p className="text-[11px] sm:text-xs text-white/50 font-medium mt-0.5 truncate">
+                          {isAvulsaOpen ? 'Preencha os campos para iniciar sua transmissão' : 'Clique para abrir os campos e iniciar transmissão avulsa'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-white/60 hover:text-white transition-colors shrink-0 ml-3">
+                      <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:inline">
+                        {isAvulsaOpen ? 'Fechar' : 'Configurar'}
+                      </span>
+                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                        <ChevronDown
+                          className={`w-4 h-4 text-white/70 transition-transform duration-300 ${
+                            isAvulsaOpen ? 'rotate-180 text-[#9146FF]' : ''
+                          }`}
+                        />
+                      </div>
+                    </div>
                   </button>
+
+                  {/* Formulário com Animação Deslizante */}
+                  <AnimatePresence initial={false}>
+                    {isAvulsaOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-4 sm:p-6 pt-2 border-t border-white/5">
+                          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 w-full">
+                            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full flex-1">
+                              {/* Input Título (apenas para PADRÃO) */}
+                              {transmissionMode === 'padrao' && (
+                                <input
+                                  type="text"
+                                  placeholder="Título da live..."
+                                  value={title}
+                                  onChange={(e) => setTitle(e.target.value)}
+                                  className="w-full sm:w-auto sm:flex-1 sm:min-w-[180px] max-w-full sm:max-w-[280px] bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 transition-colors h-[48px] text-white placeholder-zinc-500"
+                                />
+                              )}
+
+                              {/* Select MODO */}
+                              <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
+                                <select
+                                  value={transmissionMode}
+                                  onChange={(e) => {
+                                    setTransmissionMode(e.target.value as 'padrao' | 'amistoso' | 'campeonato');
+                                    setSelectedTeams([]);
+                                    setSelectedCampeonato('');
+                                  }}
+                                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                                >
+                                  <option value="padrao" className="bg-zinc-900 font-bold uppercase">PADRÃO</option>
+                                  <option value="amistoso" className="bg-zinc-900 font-bold uppercase">AMISTOSO</option>
+                                  <option value="campeonato" className="bg-zinc-900 font-bold uppercase">CAMPEONATO</option>
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                                  <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
+                                </div>
+                              </div>
+
+                              {/* Select Campeonato (se CAMPEONATO) */}
+                              {transmissionMode === 'campeonato' && (
+                                <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[160px]">
+                                  <select
+                                    value={selectedCampeonato}
+                                    onChange={(e) => setSelectedCampeonato(e.target.value)}
+                                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                                  >
+                                    <option value="">CAMPEONATO</option>
+                                    {availableCampeonatos.map(c => (
+                                      <option key={c.id} value={c.id} className="bg-zinc-900">{c.titulo}</option>
+                                    ))}
+                                  </select>
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Select Time 1 (se AMISTOSO ou CAMPEONATO) */}
+                              {(transmissionMode === 'amistoso' || transmissionMode === 'campeonato') && (
+                                <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
+                                  <select
+                                    value={selectedTeams[0] || ''}
+                                    onChange={(e) => {
+                                      const newTeams = [...selectedTeams];
+                                      newTeams[0] = e.target.value;
+                                      setSelectedTeams(newTeams.filter(t => t));
+                                    }}
+                                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                                  >
+                                    <option value="">TIME 1</option>
+                                    {availableTimes.map(t => (
+                                      <option key={t.id} value={t.id} className="bg-zinc-900">{t.tag || t.nome}</option>
+                                    ))}
+                                  </select>
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Select Time 2 (se AMISTOSO ou CAMPEONATO) */}
+                              {(transmissionMode === 'amistoso' || transmissionMode === 'campeonato') && (
+                                <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
+                                  <select
+                                    value={selectedTeams[1] || ''}
+                                    onChange={(e) => {
+                                      const newTeams = [...selectedTeams];
+                                      newTeams[1] = e.target.value;
+                                      setSelectedTeams(newTeams.filter(t => t));
+                                    }}
+                                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                                  >
+                                    <option value="">TIME 2</option>
+                                    {availableTimes.map(t => (
+                                      <option key={t.id} value={t.id} className="bg-zinc-900">{t.tag || t.nome}</option>
+                                    ))}
+                                  </select>
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Select Duração */}
+                              <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[120px]">
+                                <select
+                                  value={duration}
+                                  onChange={(e) => setDuration(e.target.value)}
+                                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                                >
+                                  <option value="1" className="bg-zinc-900 font-bold uppercase">1 HORA</option>
+                                  {[2, 3, 4, 5, 6].map(h => (
+                                    <option key={h} value={h.toString()} className="bg-zinc-900 font-bold uppercase">{h} HORAS</option>
+                                  ))}
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                                  <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-500" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={handleStartLive}
+                              disabled={loadingAction || !perfil?.twitch}
+                              title={!perfil?.twitch ? 'Configure seu Twitch no perfil primeiro' : undefined}
+                              className="flex items-center justify-center gap-3 bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-600/30 h-[48px] w-full lg:w-auto shrink-0"
+                            >
+                              {loadingAction ? <Loader className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+                              INICIAR TRANSMISSÃO
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 w-full">
