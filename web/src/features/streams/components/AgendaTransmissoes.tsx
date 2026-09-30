@@ -1,8 +1,9 @@
 // Agenda de transmissões (spec 2026-09-29): o streamer pega um jogo confirmado,
 // entra no ar (recebendo o código da partida) e a plataforma desliga a live no
-// fim da série. Duas seções: "Minhas Transmissões" (jogos que o usuário pegou,
-// com os controles) e "Agenda de Jogos" (disponíveis para pegar). Fica em
-// componente próprio porque Streamers.tsx é herdado.
+// fim da série. Duas listas compactas: "Minhas Transmissões" (jogos que o
+// usuário pegou, com os controles) e "Agenda de Jogos" (disponíveis para pegar;
+// pegar migra para cima, soltar devolve para a agenda). Componente próprio
+// porque Streamers.tsx é herdado.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Calendar, Check, Copy, Loader, Play, StopCircle } from 'lucide-react';
 import { FaTwitch } from 'react-icons/fa';
@@ -20,7 +21,7 @@ function tagDe(time: AgendaJogo['time_a']): string {
   return time?.tag ? `#${time.tag.replace(/^#/, '')}` : 'TBD';
 }
 
-interface CardProps {
+interface LinhaProps {
   jogo: AgendaJogo;
   isStreamer: boolean;
   temTwitch: boolean;
@@ -33,136 +34,124 @@ interface CardProps {
   onCopiar: (codigo: string) => void;
 }
 
-function CardJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSoltar, onEntrarNoAr, onEncerrar, onCopiar }: CardProps) {
+const BOTAO = 'flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed';
+
+function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSoltar, onEntrarNoAr, onEncerrar, onCopiar }: LinhaProps) {
   const carregandoAcao = acaoId === jogo.match_id;
-  const noAr = !!jogo.transmissao_id;
+  const noAr = !!jogo.transmissao_id && jogo.meu;
 
   return (
     <div
-      className={`relative border-2 rounded-2xl p-5 transition-all duration-300 ${
-        jogo.meu && noAr
-          ? 'border-purple-500 shadow-purple-500/20 shadow-xl'
-          : 'border-white/5 hover:border-white/10'
+      className={`flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3 border rounded-xl bg-white/[0.02] transition-all ${
+        noAr ? 'border-purple-500/60 shadow-lg shadow-purple-500/10' : 'border-white/5 hover:border-white/10'
       }`}
     >
-      {jogo.meu && noAr && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-900/20 via-transparent to-transparent pointer-events-none" />
-      )}
+      <span className="shrink-0 self-start lg:self-center px-2 py-0.5 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest lg:w-28 text-center">
+        {(jogo.data_label || 'A COMBINAR')} • {jogo.hora || '--:--'}
+      </span>
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3">
-          <span className="px-2 py-0.5 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest">
-            {jogo.data_label || 'A COMBINAR'} • {jogo.hora || '--:--'}
-          </span>
-          {jogo.ao_vivo ? (
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-black uppercase text-white truncate">{tagDe(jogo.time_a)}</span>
+          <span className="text-white/30 font-black text-xs">x</span>
+          <span className="text-sm font-black uppercase text-white truncate">{tagDe(jogo.time_b)}</span>
+          {jogo.ao_vivo && (
             <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-red-500">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               AO VIVO
             </span>
-          ) : jogo.status === 'em_andamento' ? (
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#00FF41]">EM ANDAMENTO</span>
-          ) : null}
+          )}
         </div>
-
-        <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">
+        <p className="text-[10px] text-white/40 uppercase font-black tracking-widest truncate mt-0.5">
           {jogo.campeonato.titulo} • {jogo.fase}
         </p>
+      </div>
 
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-base font-black uppercase text-white truncate max-w-[45%]">{tagDe(jogo.time_a)}</span>
-          <span className="text-white/30 font-black">x</span>
-          <span className="text-base font-black uppercase text-white truncate max-w-[45%]">{tagDe(jogo.time_b)}</span>
-        </div>
-
-        {!jogo.meu && jogo.streamer && (
-          <p className="flex items-center gap-1.5 text-xs text-purple-400 font-bold mt-3">
+      <div className="shrink-0 lg:w-44 text-left lg:text-right">
+        {!jogo.meu && jogo.streamer ? (
+          <span className="inline-flex items-center gap-1.5 text-[10px] text-purple-400 font-bold uppercase">
             <FaTwitch className="w-3 h-3" /> {jogo.streamer.nome} vai transmitir
-          </p>
+          </span>
+        ) : jogo.meu ? null : jogo.status === 'em_andamento' ? (
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#00FF41]">Em andamento</span>
+        ) : (
+          <span className="text-[10px] text-white/25 font-black uppercase tracking-widest">Sem streamer</span>
         )}
+      </div>
 
-        {/* MINHA TRANSMISSÃO NO AR: código + encerrar */}
+      <div className="flex items-center gap-2 shrink-0 flex-wrap">
         {jogo.meu && noAr && (
-          <div className="mt-4 space-y-2">
+          <>
             {jogo.codigo_partida ? (
               <button
                 onClick={() => onCopiar(jogo.codigo_partida!)}
                 title="Copiar código da partida"
-                className="w-full flex items-center justify-between gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white/80 hover:border-purple-500/50 transition-colors"
+                className={`${BOTAO} bg-white/5 border border-white/10 text-white/80 font-mono hover:border-purple-500/50`}
               >
-                <span className="truncate">{jogo.codigo_partida}</span>
+                <span className="max-w-[160px] truncate">{jogo.codigo_partida}</span>
                 {copiado === jogo.codigo_partida ? (
-                  <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                  <Check className="w-3 h-3 text-green-400 shrink-0" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-white/50 shrink-0" />
+                  <Copy className="w-3 h-3 text-white/50 shrink-0" />
                 )}
               </button>
             ) : (
-              <p className="text-[10px] text-white/30 uppercase font-black tracking-widest text-center py-2">
+              <span className="text-[10px] text-white/30 uppercase font-black tracking-widest">
                 Aguardando o organizador iniciar a série
-              </p>
+              </span>
             )}
             <button
               onClick={() => onEncerrar(jogo)}
               disabled={carregandoAcao}
-              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-zinc-100 text-black rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+              className={`${BOTAO} bg-white hover:bg-zinc-100 text-black`}
             >
-              {carregandoAcao ? <Loader className="w-4 h-4 animate-spin" /> : <StopCircle className="w-4 h-4" />}
+              {carregandoAcao ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <StopCircle className="w-3.5 h-3.5" />}
               Encerrar
             </button>
-          </div>
+          </>
         )}
 
-        {/* MINHA TRANSMISSÃO AINDA NÃO NO AR: estou no ar + soltar */}
         {jogo.meu && !noAr && (
-          <div className="mt-4 flex gap-2">
+          <>
             <button
               onClick={() => onEntrarNoAr(jogo)}
               disabled={!jogo.pode_entrar_no_ar || carregandoAcao}
               title={jogo.pode_entrar_no_ar ? undefined : 'Disponível 30 min antes do horário'}
-              className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`${BOTAO} bg-purple-600 hover:bg-purple-500 text-white`}
             >
-              {carregandoAcao ? <Loader className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+              {carregandoAcao ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
               Estou no ar
             </button>
             <button
               onClick={() => onSoltar(jogo)}
               disabled={carregandoAcao}
-              className="px-4 py-3 rounded-xl border border-white/10 text-white/50 hover:text-white hover:border-white/30 text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              className={`${BOTAO} border border-white/10 text-white/50 hover:text-white hover:border-white/30`}
             >
               Soltar
             </button>
-          </div>
+          </>
         )}
 
-        {/* AGENDA: jogo livre ou de outro streamer */}
-        {!jogo.meu && (
-          <div className="mt-4">
-            {jogo.streamer ? (
-              jogo.ao_vivo ? (
-                <a
-                  href={`https://twitch.tv/${jogo.streamer.twitch}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#9146FF] hover:text-white transition-colors py-2"
-                >
-                  <FaTwitch className="w-3 h-3" /> Assistir agora
-                </a>
-              ) : null
-            ) : isStreamer && temTwitch && jogo.pode_assumir ? (
-              <button
-                onClick={() => onPegar(jogo)}
-                disabled={carregandoAcao}
-                className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-purple-600 border border-white/10 hover:border-purple-500 text-white rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-              >
-                {carregandoAcao ? <Loader className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                Quero transmitir
-              </button>
-            ) : (
-              <p className="text-[10px] text-white/25 uppercase font-black tracking-widest text-center py-2">
-                Sem streamer definido
-              </p>
-            )}
-          </div>
+        {!jogo.meu && jogo.streamer && jogo.ao_vivo && (
+          <a
+            href={`https://twitch.tv/${jogo.streamer.twitch}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${BOTAO} border border-[#9146FF]/40 text-[#9146FF] hover:text-white hover:border-[#9146FF]`}
+          >
+            <FaTwitch className="w-3 h-3" /> Assistir agora
+          </a>
+        )}
+
+        {!jogo.meu && !jogo.streamer && isStreamer && temTwitch && jogo.pode_assumir && (
+          <button
+            onClick={() => onPegar(jogo)}
+            disabled={carregandoAcao}
+            className={`${BOTAO} bg-white/5 border border-white/10 hover:bg-purple-600 hover:border-purple-500 text-white`}
+          >
+            {carregandoAcao ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+            Quero transmitir
+          </button>
         )}
       </div>
     </div>
@@ -221,7 +210,7 @@ export function AgendaTransmissoes({ isStreamer, temTwitch, onToast, onChange }:
   const meus = jogos.filter((j) => j.meu);
   const agenda = jogos.filter((j) => !j.meu);
 
-  const cardProps = {
+  const linhaProps = {
     isStreamer,
     temTwitch,
     acaoId,
@@ -238,7 +227,7 @@ export function AgendaTransmissoes({ isStreamer, temTwitch, onToast, onChange }:
     <div className="mb-12 space-y-10">
       {meus.length > 0 && (
         <section>
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4">
             <FaTwitch className="w-5 h-5 text-purple-500" />
             <h2 className="text-xl font-black uppercase tracking-widest">Minhas Transmissões</h2>
             <span className="text-[10px] text-white/30 uppercase font-black tracking-widest hidden sm:inline">
@@ -246,16 +235,16 @@ export function AgendaTransmissoes({ isStreamer, temTwitch, onToast, onChange }:
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="space-y-2">
             {meus.map((jogo) => (
-              <CardJogo key={jogo.match_id} jogo={jogo} {...cardProps} />
+              <LinhaJogo key={jogo.match_id} jogo={jogo} {...linhaProps} />
             ))}
           </div>
         </section>
       )}
 
       <section>
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <Calendar className="w-5 h-5 text-[#FFB700]" />
           <h2 className="text-xl font-black uppercase tracking-widest">Agenda de Jogos</h2>
           <span className="text-[10px] text-white/30 uppercase font-black tracking-widest hidden sm:inline">
@@ -264,9 +253,9 @@ export function AgendaTransmissoes({ isStreamer, temTwitch, onToast, onChange }:
         </div>
 
         {agenda.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="space-y-2">
             {agenda.map((jogo) => (
-              <CardJogo key={jogo.match_id} jogo={jogo} {...cardProps} />
+              <LinhaJogo key={jogo.match_id} jogo={jogo} {...linhaProps} />
             ))}
           </div>
         ) : (
