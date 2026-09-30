@@ -1135,12 +1135,17 @@ const Home = () => {
                           </span>
 
                           {upcomingMatches[currentMatchIndex].streamer && (
-                            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#9146FF]/10 border border-[#9146FF]/30 backdrop-blur-sm">
-                              <FaTwitch className="w-3 h-3 text-[#9146FF]" />
-                              <span className="text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-widest">
+                            <a
+                              href={upcomingMatches[currentMatchIndex].streamer!.twitch ? `https://twitch.tv/${upcomingMatches[currentMatchIndex].streamer!.twitch}` : undefined}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2.5 flex items-center gap-2 px-4 py-1.5 md:px-5 md:py-2 rounded-xl bg-[#9146FF] border border-[#9146FF] text-white shadow-lg shadow-[#9146FF]/30 hover:bg-[#772ce8] hover:border-[#772ce8] transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+                            >
+                              <FaTwitch className="w-3.5 h-3.5 md:w-4 md:h-4 text-white flex-shrink-0" />
+                              <span className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
                                 {upcomingMatches[currentMatchIndex].streamer!.nome}
                               </span>
-                            </div>
+                            </a>
                           )}
                         </div>
                       </div>
