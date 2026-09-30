@@ -126,16 +126,13 @@ function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSo
               {carregandoAcao ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
               Estou no ar
             </button>
-            <div className="flex items-center gap-1.5">
-              <span className="text-base select-none" title="Transmissão confirmada por você">✅</span>
-              <button
-                onClick={() => onSoltar(jogo)}
-                disabled={carregandoAcao}
-                className={`${BOTAO} bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600`}
-              >
-                Soltar
-              </button>
-            </div>
+            <button
+              onClick={() => onSoltar(jogo)}
+              disabled={carregandoAcao}
+              className={`${BOTAO} bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600`}
+            >
+              Soltar
+            </button>
           </>
         )}
 
