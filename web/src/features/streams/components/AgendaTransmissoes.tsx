@@ -17,8 +17,8 @@ interface Props {
   onChange: () => void;
 }
 
-function tagDe(time: AgendaJogo['time_a']): string {
-  return time?.tag ? `#${time.tag.replace(/^#/, '')}` : 'TBD';
+function nomeDe(time: AgendaJogo['time_a']): string {
+  return time?.nome || (time?.tag ? `#${time.tag.replace(/^#/, '')}` : 'TBD');
 }
 
 interface LinhaProps {
@@ -34,7 +34,7 @@ interface LinhaProps {
   onCopiar: (codigo: string) => void;
 }
 
-const BOTAO = 'flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed';
+const BOTAO = 'flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed';
 
 function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSoltar, onEntrarNoAr, onEncerrar, onCopiar }: LinhaProps) {
   const carregandoAcao = acaoId === jogo.match_id;
@@ -46,36 +46,40 @@ function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSo
         noAr ? 'border-2 border-purple-500/60 shadow-lg shadow-purple-500/10' : 'border border-white/10 hover:border-white/20'
       }`}
     >
-      <span className="shrink-0 self-start lg:self-center px-2 py-0.5 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest lg:w-28 text-center">
+      <span className="shrink-0 self-start lg:self-center px-2.5 py-1 bg-[#9146FF] text-white text-[10px] sm:text-[11px] font-black uppercase tracking-wider lg:w-32 text-center rounded-md shadow-md shadow-[#9146FF]/20">
         {(jogo.data_label || 'A COMBINAR')} • {jogo.hora || '--:--'}
       </span>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-black uppercase text-white truncate">{tagDe(jogo.time_a)}</span>
-          <span className="text-white/30 font-black text-xs">x</span>
-          <span className="text-sm font-black uppercase text-white truncate">{tagDe(jogo.time_b)}</span>
+          <span className="text-base font-black uppercase text-white truncate">{nomeDe(jogo.time_a)}</span>
+          <span className="text-white/40 font-black text-sm">x</span>
+          <span className="text-base font-black uppercase text-white truncate">{nomeDe(jogo.time_b)}</span>
           {jogo.ao_vivo && (
-            <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-red-500">
+            <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-red-500">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               AO VIVO
             </span>
           )}
         </div>
-        <p className="text-[10px] text-white/40 uppercase font-black tracking-widest truncate mt-0.5">
+        <p className="text-xs text-white/50 uppercase font-bold tracking-wider truncate mt-0.5">
           {jogo.campeonato.titulo} • {jogo.fase}
         </p>
       </div>
 
-      <div className="shrink-0 lg:w-44 text-left lg:text-right">
+      <div className="shrink-0 lg:w-48 text-left lg:text-right">
         {!jogo.meu && jogo.streamer ? (
-          <span className="inline-flex items-center gap-1.5 text-[10px] text-purple-400 font-bold uppercase">
-            <FaTwitch className="w-3 h-3" /> {jogo.streamer.nome} vai transmitir
+          <span className="inline-flex items-center gap-1.5 text-xs text-purple-400 font-bold uppercase">
+            <FaTwitch className="w-3.5 h-3.5" /> {jogo.streamer.nome} vai transmitir
           </span>
-        ) : jogo.meu ? null : jogo.status === 'em_andamento' ? (
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#00FF41]">Em andamento</span>
+        ) : jogo.meu ? (
+          <span className="inline-flex items-center gap-1.5 text-xs text-purple-400 font-bold uppercase">
+            <FaTwitch className="w-3.5 h-3.5" /> Sua transmissão
+          </span>
+        ) : jogo.status === 'em_andamento' ? (
+          <span className="text-xs font-black uppercase tracking-widest text-[#00FF41]">Em andamento</span>
         ) : (
-          <span className="text-[10px] text-white/25 font-black uppercase tracking-widest">Sem streamer</span>
+          <span className="text-xs text-white/25 font-black uppercase tracking-widest">Sem streamer</span>
         )}
       </div>
 
@@ -122,13 +126,16 @@ function LinhaJogo({ jogo, isStreamer, temTwitch, acaoId, copiado, onPegar, onSo
               {carregandoAcao ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
               Estou no ar
             </button>
-            <button
-              onClick={() => onSoltar(jogo)}
-              disabled={carregandoAcao}
-              className={`${BOTAO} border border-white/10 text-white/50 hover:text-white hover:border-white/30`}
-            >
-              Soltar
-            </button>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base select-none" title="Transmissão confirmada por você">✅</span>
+              <button
+                onClick={() => onSoltar(jogo)}
+                disabled={carregandoAcao}
+                className={`${BOTAO} bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600`}
+              >
+                Soltar
+              </button>
+            </div>
           </>
         )}
 
@@ -245,7 +252,7 @@ export function AgendaTransmissoes({ isStreamer, temTwitch, onToast, onChange }:
 
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <Calendar className="w-5 h-5 text-[#FFB700]" />
+          <Calendar className="w-5 h-5 text-[#9146FF]" />
           <h2 className="text-xl font-black uppercase tracking-widest">Agenda de Jogos</h2>
           <span className="text-[10px] text-white/30 uppercase font-black tracking-widest hidden sm:inline">
             Jogos de campeonato agendados — pegue um para transmitir
