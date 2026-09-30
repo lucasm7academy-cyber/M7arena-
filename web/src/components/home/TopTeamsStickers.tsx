@@ -309,7 +309,7 @@ const LolRankedStickerCard: React.FC<{
       transition={{ duration: 0.6, delay: rank * 0.1 }}
       whileHover={{ y: isCenter ? -14 : -8, scale: isCenter ? 1.05 : 1.03 }}
       onClick={() => navigate(`/times/${team.id}`)}
-      className={`group relative cursor-pointer select-none transition-all duration-500 ${
+      className={`group relative cursor-pointer select-none transition-all duration-500 max-w-[calc(100vw-32px)] ${
         isCenter ? 'z-20 -translate-y-2 sm:-translate-y-4 md:-translate-y-6' : 'z-10'
       }`}
       style={{
@@ -318,7 +318,7 @@ const LolRankedStickerCard: React.FC<{
     >
       {/* Dimensão do Card da Figurinha */}
       <div
-        className={`relative transition-all duration-500 ${
+        className={`relative transition-all duration-500 max-w-[calc(100vw-32px)] sm:max-w-none ${
           isCenter
             ? 'w-[280px] sm:w-[310px] md:w-[330px] h-[440px] sm:h-[470px]'
             : 'w-[245px] sm:w-[265px] md:w-[285px] h-[390px] sm:h-[420px]'
@@ -501,7 +501,7 @@ export const TopTeamsStickers: React.FC = () => {
   const team3 = topTeams[2]; // 3º Lugar (Diamante / Sapphire)
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 px-4 max-w-[1400px] mx-auto relative select-none">
+    <section className="py-12 sm:py-16 md:py-20 px-4 w-full max-w-[1400px] mx-auto relative select-none overflow-hidden">
       {/* Título e Cabeçalho da Seção */}
       <div className="text-center mb-10 sm:mb-14 space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#FFB700]/10 border border-[#FFB700]/30 rounded-full">
@@ -527,29 +527,29 @@ export const TopTeamsStickers: React.FC = () => {
       </div>
 
       {/* Pódio de Cards com Bordas LoL: 2º Lugar à Esquerda (Mestre), 1º Lugar ao Centro (Grão-Mestre), 3º Lugar à Direita (Diamante) */}
-      <div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-4 md:gap-8 lg:gap-12 pt-4 pb-8">
+      <div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-4 md:gap-8 lg:gap-12 pt-4 pb-8 w-full max-w-full overflow-hidden">
         {/* Iluminação Atmosférica de Pódio */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10 overflow-hidden">
           <div className="w-[320px] sm:w-[500px] md:w-[680px] h-[300px] rounded-full bg-[#FFB700]/10 blur-[120px] pointer-events-none" />
         </div>
 
         {/* 2º LUGAR (Mestre - Esquerda) */}
         {team2 && (
-          <div className="order-2 sm:order-1 flex justify-center">
+          <div className="order-2 sm:order-1 flex justify-center w-full max-w-full">
             <LolRankedStickerCard team={team2} rank={2} isCenter={false} />
           </div>
         )}
 
         {/* 1º LUGAR (Grão-Mestre - Centro em Destaque) */}
         {team1 && (
-          <div className="order-1 sm:order-2 flex justify-center">
+          <div className="order-1 sm:order-2 flex justify-center w-full max-w-full">
             <LolRankedStickerCard team={team1} rank={1} isCenter={true} />
           </div>
         )}
 
         {/* 3º LUGAR (Diamante - Direita) */}
         {team3 && (
-          <div className="order-3 sm:order-3 flex justify-center">
+          <div className="order-3 sm:order-3 flex justify-center w-full max-w-full">
             <LolRankedStickerCard team={team3} rank={3} isCenter={false} />
           </div>
         )}
@@ -559,10 +559,10 @@ export const TopTeamsStickers: React.FC = () => {
       <div className="text-center mt-6">
         <button
           onClick={() => navigate('/times')}
-          className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FFB700]/40 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-white/80 hover:text-[#FFB700] transition-all hover:scale-105 active:scale-95 shadow-lg group"
+          className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FFB700]/40 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-white/80 hover:text-[#FFB700] transition-all hover:scale-105 active:scale-95 shadow-lg group max-w-full"
         >
-          <span>Ver Ranking Completo de Equipes</span>
-          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          <span className="truncate">Ver Ranking Completo de Equipes</span>
+          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform shrink-0" />
         </button>
       </div>
     </section>

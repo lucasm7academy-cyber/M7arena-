@@ -816,7 +816,7 @@ const Home = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative overflow-x-hidden">
       {/* Scanline Effect */}
       <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,118,0.03))] bg-[length:100%_2px,3px_100%] z-[100] opacity-20" />
 

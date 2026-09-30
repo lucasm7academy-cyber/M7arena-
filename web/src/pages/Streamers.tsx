@@ -434,10 +434,10 @@ export default function Streamers() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative mb-12 border-2 rounded-2xl p-6 shadow-xl transition-all duration-500 overflow-hidden ${
+            className={`relative mb-12 rounded-2xl p-6 transition-all duration-500 overflow-hidden ${
               userStream?.ativo
-                ? 'border-purple-500 shadow-purple-500/30'
-                : 'border-white/5 shadow-black/40'
+                ? 'border-2 border-purple-500 bg-[#0c0d12] shadow-purple-500/30'
+                : 'border border-white/10 bg-[#0c0d12] shadow-2xl shadow-black/60'
             }`}
           >
             {/* Background Thumbnail for active live */}
@@ -455,16 +455,15 @@ export default function Streamers() {
               </div>
             )}
 
-            <div className="relative z-10 flex items-center justify-between gap-4 w-full h-full sm:flex-row flex-col">
-              <div className="flex items-center gap-6 flex-1 h-full self-center">
+            <div className="relative z-10 w-full">
               {!userStream?.ativo ? (
-                <>
-                  <div className="flex items-center gap-3 pr-4 border-r border-white/10 hidden lg:flex self-stretch">
-                    <FaTwitch className="w-6 h-6 text-purple-500" />
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest self-center">LIVE</span>
-                  </div>
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 w-full">
+                  <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full flex-1">
+                    <div className="hidden xl:flex items-center gap-3 pr-4 border-r border-white/10 shrink-0 self-stretch">
+                      <FaTwitch className="w-6 h-6 text-purple-500" />
+                      <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest self-center">LIVE</span>
+                    </div>
 
-                  <div className="flex flex-1 items-center gap-4">
                     {/* Input Título (apenas para PADRÃO) */}
                     {transmissionMode === 'padrao' && (
                       <input
@@ -472,12 +471,12 @@ export default function Streamers() {
                         placeholder="Título da live..."
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="flex-1 max-w-[280px] bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 transition-colors h-[48px]"
+                        className="w-full sm:w-auto sm:flex-1 sm:min-w-[180px] max-w-full sm:max-w-[280px] bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 transition-colors h-[48px] text-white placeholder-zinc-500"
                       />
                     )}
 
                     {/* Select MODO */}
-                    <div className="relative w-40">
+                    <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
                       <select
                         value={transmissionMode}
                         onChange={(e) => {
@@ -485,7 +484,7 @@ export default function Streamers() {
                           setSelectedTeams([]);
                           setSelectedCampeonato('');
                         }}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                        className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
                       >
                         <option value="padrao" className="bg-zinc-900 font-bold uppercase">PADRÃO</option>
                         <option value="amistoso" className="bg-zinc-900 font-bold uppercase">AMISTOSO</option>
@@ -498,11 +497,11 @@ export default function Streamers() {
 
                     {/* Select Campeonato (se CAMPEONATO) */}
                     {transmissionMode === 'campeonato' && (
-                      <div className="relative w-48">
+                      <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[160px]">
                         <select
                           value={selectedCampeonato}
                           onChange={(e) => setSelectedCampeonato(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                          className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
                         >
                           <option value="">CAMPEONATO</option>
                           {availableCampeonatos.map(c => (
@@ -517,7 +516,7 @@ export default function Streamers() {
 
                     {/* Select Time 1 (se AMISTOSO ou CAMPEONATO) */}
                     {(transmissionMode === 'amistoso' || transmissionMode === 'campeonato') && (
-                      <div className="relative w-40">
+                      <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
                         <select
                           value={selectedTeams[0] || ''}
                           onChange={(e) => {
@@ -525,7 +524,7 @@ export default function Streamers() {
                             newTeams[0] = e.target.value;
                             setSelectedTeams(newTeams.filter(t => t));
                           }}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                          className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
                         >
                           <option value="">TIME 1</option>
                           {availableTimes.map(t => (
@@ -540,7 +539,7 @@ export default function Streamers() {
 
                     {/* Select Time 2 (se AMISTOSO ou CAMPEONATO) */}
                     {(transmissionMode === 'amistoso' || transmissionMode === 'campeonato') && (
-                      <div className="relative w-40">
+                      <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[140px]">
                         <select
                           value={selectedTeams[1] || ''}
                           onChange={(e) => {
@@ -548,7 +547,7 @@ export default function Streamers() {
                             newTeams[1] = e.target.value;
                             setSelectedTeams(newTeams.filter(t => t));
                           }}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                          className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
                         >
                           <option value="">TIME 2</option>
                           {availableTimes.map(t => (
@@ -561,11 +560,12 @@ export default function Streamers() {
                       </div>
                     )}
 
-                    <div className="relative w-40">
+                    {/* Select Duração */}
+                    <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[120px]">
                       <select
                         value={duration}
                         onChange={(e) => setDuration(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
+                        className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-purple-500 appearance-none cursor-pointer text-zinc-300 uppercase font-bold pr-10 h-[48px]"
                       >
                         <option value="1" className="bg-zinc-900 font-bold uppercase">1 HORA</option>
                         {[2, 3, 4, 5, 6].map(h => (
@@ -582,24 +582,24 @@ export default function Streamers() {
                     onClick={handleStartLive}
                     disabled={loadingAction || !perfil?.twitch}
                     title={!perfil?.twitch ? 'Configure seu Twitch no perfil primeiro' : undefined}
-                    className="flex items-center gap-3 bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-600/30 h-[48px]"
+                    className="flex items-center justify-center gap-3 bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-600/30 h-[48px] w-full lg:w-auto shrink-0"
                   >
                     {loadingAction ? <Loader className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
                     INICIAR TRANSMISSÃO
                   </button>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="flex items-center gap-3 pr-4 border-r border-red-500/30 self-stretch">
-                    <div className="w-2.5 h-2.5 rounded-full animate-pulse ring-4 bg-red-500 ring-red-500/30" />
-                    <span className="text-[10px] font-black uppercase tracking-widest self-center text-red-500">🔴 AO VIVO</span>
-                  </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 w-full">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex items-center gap-3 pr-4 border-r border-red-500/30 shrink-0">
+                      <div className="w-2.5 h-2.5 rounded-full animate-pulse ring-4 bg-red-500 ring-red-500/30" />
+                      <span className="text-[10px] font-black uppercase tracking-widest self-center text-red-500">🔴 AO VIVO</span>
+                    </div>
 
-                  <div className="flex flex-1 items-center gap-4">
-                    <FaTwitch className="w-8 h-8 hidden sm:block text-purple-500" />
-                    <div className="space-y-0.5">
-                      <h3 className="text-lg font-black text-white truncate max-w-[400px] leading-tight">{userStream?.titulo || 'Transmissão ao vivo'}</h3>
-                      <div className="flex items-center gap-2">
+                    <FaTwitch className="w-8 h-8 hidden sm:block text-purple-500 shrink-0" />
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <h3 className="text-lg font-black text-white truncate max-w-full leading-tight">{userStream?.titulo || 'Transmissão ao vivo'}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-mono text-purple-400">twitch.tv/{userStream?.twitch_channel}</span>
                         <span className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">
                           {userStream?.match_id ? '• Até o fim da série' : `• Duração: ${userStream?.duracao_horas} ${userStream?.duracao_horas === 1 ? 'HORA' : 'HORAS'}`}
@@ -611,14 +611,13 @@ export default function Streamers() {
                   <button
                     onClick={handleStopLive}
                     disabled={loadingAction}
-                    className="flex items-center gap-2 bg-white hover:bg-zinc-100 text-black px-10 py-4 rounded-xl font-black text-sm transition-all active:scale-95 shadow-lg h-[48px]"
+                    className="flex items-center justify-center gap-2 bg-white hover:bg-zinc-100 text-black px-8 py-3 rounded-xl font-black text-sm transition-all active:scale-95 shadow-lg h-[48px] w-full sm:w-auto shrink-0"
                   >
                     {loadingAction ? <Loader className="w-4 h-4 animate-spin" /> : <StopCircle className="w-4 h-4" />}
                     ENCERRAR AGORA
                   </button>
-                </>
+                </div>
               )}
-              </div>
             </div>
           </motion.div>
         )}
@@ -639,7 +638,7 @@ export default function Streamers() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12 border-2 border-dashed border-surface-variant rounded-2xl"
+            className="text-center py-12 border border-dashed border-white/10 bg-[#0c0d12] rounded-2xl"
           >
             <FaTwitch size={48} className="mx-auto text-purple-500 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Nenhum streamer ao vivo</h2>
