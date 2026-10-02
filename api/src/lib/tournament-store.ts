@@ -205,17 +205,22 @@ export async function storeBracket(tournamentId: string, bracket: any, d: any = 
   const walk = (section: string, obj: any, round: string | null) => {
     if (!obj) return;
     // side.left / side.right → arrays por round
+    // O round persistido carrega o lado ('left_qf'/'right_qf') porque o índice
+    // único (tournament_id, section, round, slot) colide quando left e right
+    // usam o mesmo nome de rodada — era o erro "bracket_matches_cell_idx" ao
+    // salvar a chave da Copa (incidente 2026-10-01). 'grand_final' segue a
+    // mesma convenção do ETL (transform-campeonatos).
     if (section === "side" && obj.left) {
       Object.entries(obj.left).forEach(([r, arr]: [string, any]) => {
-        if (Array.isArray(arr)) arr.forEach((cell, slot) => pushCell("side", r, slot, cell));
+        if (Array.isArray(arr)) arr.forEach((cell, slot) => pushCell("side", `left_${r}`, slot, cell));
       });
     }
     if (section === "side" && obj.right) {
       Object.entries(obj.right).forEach(([r, arr]: [string, any]) => {
-        if (Array.isArray(arr)) arr.forEach((cell, slot) => pushCell("side", r, slot, cell));
+        if (Array.isArray(arr)) arr.forEach((cell, slot) => pushCell("side", `right_${r}`, slot, cell));
       });
     }
-    if (section === "side" && obj.grandFinal) pushCell("side", "grandFinal", 0, obj.grandFinal);
+    if (section === "side" && obj.grandFinal) pushCell("side", "grand_final", 0, obj.grandFinal);
     // upper / lower → { r64: [...], r32: [...], ... }
     if ((section === "upper" || section === "lower") && typeof obj === "object") {
       Object.entries(obj).forEach(([r, arr]: [string, any]) => {

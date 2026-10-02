@@ -250,8 +250,8 @@ export function transformCampeonatos() {
 
       // side: left/right/grandFinal. O round carrega o lado ('left_qf',
       // 'right_qf') porque o unique index (tournament_id, section, round, slot)
-      // colide entre left e right no encoding do storeBracket ('side','qf',slot).
-      // TODO(migracao): alinhar com a API quando o shape.campeonatos for tocado.
+      // colide entre left e right. A API (tournament-store/tournament-shape)
+      // usa a mesma convenção desde o fix do chaveamento (2026-10-01).
       if (b.side && typeof b.side === "object") {
         for (const side of ["left", "right"]) {
           const tree = b.side[side];

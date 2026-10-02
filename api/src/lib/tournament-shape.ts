@@ -259,9 +259,16 @@ export function buildBracket(data: NonNullable<Awaited<ReturnType<typeof loadTou
       const roundArr = br[sectionKey]?.[b.round];
       if (Array.isArray(roundArr) && roundArr[b.slot]) fillCell(roundArr[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
     } else if (b.section === "side") {
-      const sideVal = br.side?.[b.round];
-      if (Array.isArray(sideVal) && sideVal[b.slot]) fillCell(sideVal[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
-      else if (sideVal && !Array.isArray(sideVal)) fillCell(sideVal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
+      // O round persistido carrega o lado ('left_qf'/'right_qf'; 'grand_final'
+      // na decisão) — ver tournament-store.storeBracket. Decodifica de volta
+      // para a árvore side.left/side.right que o fork consome.
+      if (b.round === "grand_final" || b.round === "grandFinal") {
+        fillCell(br.side.grandFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
+      } else {
+        const m = /^(left|right)_(.+)$/.exec(b.round);
+        const roundArr = m ? br.side?.[m[1]]?.[m[2]] : undefined;
+        if (Array.isArray(roundArr) && roundArr[b.slot]) fillCell(roundArr[b.slot], b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
+      }
     } else if (b.section === "preFinal") fillCell(br.preFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
     else if (b.section === "grandFinal") fillCell(br.grandFinal, b.teamATag, b.teamBTag, b.scoreA, b.scoreB, b.winnerSide, extra);
   });
