@@ -8,6 +8,8 @@
  * código `#${String(id).padStart(6,'0')}`. O uuid de `matches.id` fica interno.
  */
 
+import { profileIconUrl } from "./ddragon.js";
+
 export const ROLES_5V5 = ["TOP", "JG", "MID", "ADC", "SUP"] as const;
 
 /** Ordem das roles no layout (mesma de SalaMod1.tsx). */
@@ -66,11 +68,12 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
     // PUUID da conta LoL vinculada — usado pelo front para cruzar os stats da
     // Riot (resultado_riot.participantes[].puuid) na partida finalizada.
     puuid: user?.__riotPuuid ?? null,
-    // Avatar: prioriza o profile icon da conta LoL vinculada (mesma URL que o
-    // front monta em buildProfileIconUrl) — é o "ícone do jogador" que o site
-    // original mostrava. Sem conta vinculada, cai no avatar do email/URL.
+    // Avatar: prioriza o profile icon da conta LoL vinculada (ddragon, mesma
+    // URL que o front monta em buildProfileIconUrl). O host antigo
+    // (raw.communitydragon.org) respondia em ~20s por imagem. Sem conta
+    // vinculada, cai no avatar do email/URL.
     avatar: user?.__riotIconId
-      ? `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${user.__riotIconId}.jpg`
+      ? profileIconUrl(user.__riotIconId)
       : user?.avatarUrl || null,
     role: p.roleSlot || "RES",
     is_time_a: p.side === "blue",

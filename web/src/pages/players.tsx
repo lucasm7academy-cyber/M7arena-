@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useSound } from '../hooks/useSound';
 import { api } from '../lib/api';
+import { getDDRVersion } from '../api/riot';
 import {
   PlayerDetailModal,
   type Jogador,
@@ -113,6 +114,9 @@ async function carregarJogadores(
   }).catch(() => []);
 
   if (!rows?.length) return { jogadores: [], totalCount: 0 };
+
+  // Garante a versão atual do ddragon antes de montar as URLs dos ícones.
+  await getDDRVersion();
 
   const totalCount = Number(rows[0]?.total_count ?? 0);
   const userIds = rows.map((r: any) => r.user_id).filter(Boolean);

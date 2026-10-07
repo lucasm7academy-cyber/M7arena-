@@ -5,8 +5,10 @@ const PLATFORM_URL = 'https://br1.api.riotgames.com';
 const REGIONAL_URL = 'https://americas.api.riotgames.com';
 const DDR_BASE = 'https://ddragon.leagueoflegends.com';
 
-let ddrVersion: string | null = null;
+const DEFAULT_DDR_VERSION = '16.20.1';
 const REQUEST_TIMEOUT = 8000;
+
+let ddrVersion: string | null = null;
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = REQUEST_TIMEOUT): Promise<Response> {
   const controller = new AbortController();
@@ -30,9 +32,9 @@ function riotError(status: number, riotId?: string): Error {
   return new Error(`Erro ${status}`);
 }
 
-// Busca a versão via proxy do servidor
-export async function getDDRVersion(): Promise<string> {
-  if (ddrVersion) return ddrVersion;
+// Busca a versão via proxy do servidor. A chamada começa no load do módulo,
+// sem bloquear a UI: enquanto não chega, as URLs usam uma versão recente.
+const ddrVersionPromise: Promise<string> = (async () => {
   try {
     const res = await fetchWithTimeout("/api/riot/version");
     if (res.ok) {
@@ -43,16 +45,23 @@ export async function getDDRVersion(): Promise<string> {
       }
     }
   } catch {}
-  ddrVersion = '15.8.1';
-  return ddrVersion;
+  return DEFAULT_DDR_VERSION;
+})();
+
+export function getDDRVersion(): Promise<string> {
+  return ddrVersionPromise;
 }
 
+// Ícone de perfil: ddragon (CDN oficial da Riot). O host antigo
+// (raw.communitydragon.org) respondia em ~20s por imagem — troca para o ddragon
+// com a versão atual faz todos os ícones carregarem rápido, inclusive os novos.
 export function buildProfileIconUrl(iconId: number, version?: string): string {
-  return `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${iconId}.jpg`;
+  const v = version ?? ddrVersion ?? DEFAULT_DDR_VERSION;
+  return `${DDR_BASE}/cdn/${v}/img/profileicon/${iconId}.png`;
 }
 
 export function buildChampionIconUrl(championKey: string, version?: string): string {
-  const v = version ?? ddrVersion ?? '15.8.1';
+  const v = version ?? ddrVersion ?? DEFAULT_DDR_VERSION;
   return `${DDR_BASE}/cdn/${v}/img/champion/${championKey}.png`;
 }
 

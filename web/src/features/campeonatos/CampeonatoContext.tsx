@@ -426,10 +426,7 @@ export function CampeonatoProvider({
   const [bracketScale, setBracketScale] = useState(0.8);
   const [modalBracketScale, setModalBracketScale] = useState(0.8);
 
-  const createDragHandlers = (
-    ref: React.RefObject<HTMLDivElement>,
-    setScale: React.Dispatch<React.SetStateAction<number>>,
-  ) => {
+  const createDragHandlers = (ref: React.RefObject<HTMLDivElement>) => {
     let isDown = false;
     let startX: number;
     let startY: number;
@@ -464,19 +461,43 @@ export function CampeonatoProvider({
         ref.current.scrollLeft = scrollLeft - walkX;
         ref.current.scrollTop = scrollTop - walkY;
       },
-      onWheel: (e: React.WheelEvent) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.05 : 0.05;
-        setScale((prev) => Math.min(Math.max(+(prev + delta).toFixed(2), 0.35), 2.0));
-      },
     };
   };
 
-  const bracketHandlers = createDragHandlers(bracketRef, setBracketScale);
-  const modalBracketHandlers = createDragHandlers(
-    modalBracketRef,
-    setModalBracketScale,
-  );
+  const bracketHandlers = createDragHandlers(bracketRef);
+  const modalBracketHandlers = createDragHandlers(modalBracketRef);
+
+  // O `onWheel` do React é registrado como passivo na raiz, então o Chrome
+  // ignora o preventDefault ("Unable to preventDefault inside passive event
+  // listener"). Um listener nativo com { passive: false } faz o zoom com
+  // scroll funcionar de verdade e impede a página de rolar junto.
+  useEffect(() => {
+    const attachZoom = (
+      el: HTMLDivElement | null,
+      setScale: React.Dispatch<React.SetStateAction<number>>,
+    ) => {
+      if (!el) return () => {};
+      const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        setScale((prev) =>
+          Math.min(Math.max(+(prev + delta).toFixed(2), 0.35), 2.0),
+        );
+      };
+      el.addEventListener("wheel", onWheel, { passive: false });
+      return () => el.removeEventListener("wheel", onWheel);
+    };
+
+    const detachBracket = attachZoom(bracketRef.current, setBracketScale);
+    const detachModal = attachZoom(
+      modalBracketRef.current,
+      setModalBracketScale,
+    );
+    return () => {
+      detachBracket();
+      detachModal();
+    };
+  }, [activeTab, isBracketModalOpen]);
 
   // Time do usuário — usa perfilMyTeam (do contexto) ou fallbackMyTeam (query direta)
   const myTeams = React.useMemo(() => {

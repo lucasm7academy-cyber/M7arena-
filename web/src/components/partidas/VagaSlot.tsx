@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { UserPlus, Check, X } from 'lucide-react';
+import { buildChampionIconUrl } from '../../api/riot';
 
 const PRIMARY_COLOR = '#FFB700';
 
@@ -26,8 +27,10 @@ interface VagaSlotProps {
     timeVencedor?: 'A' | 'B' | 'empate' | null;
 }
 
+// Fallback por id numérico (square do CDN do CommunityDragon — o host `raw`
+// respondia em ~20s por imagem). O primário é o ddragon via campeao (nome).
 const CHAMPION_ICON_URL = (id: number) =>
-    `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${id}.png`;
+    `https://cdn.communitydragon.org/latest/champion/${id}/square`;
 
 const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     ocupada,
@@ -244,14 +247,17 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                             ) : stats && (stats.championId || stats.campeao) ? (
                                 <div className="relative shrink-0">
                                     <img
-                                        src={stats.championId ? CHAMPION_ICON_URL(stats.championId) : `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`}
+                                        src={stats.campeao ? buildChampionIconUrl(stats.campeao) : CHAMPION_ICON_URL(stats.championId as number)}
                                         alt={stats.campeao || nome}
                                         title={stats.campeao || 'Campeão'}
                                         loading="lazy"
                                         className={`w-10 h-10 md:w-[5vmin] md:h-[5vmin] rounded-full object-cover border ${config.avatarBorder} transition-all`}
                                         onError={(e) => {
-                                            if (stats.campeao && !e.currentTarget.src.includes('ddragon')) {
-                                                e.currentTarget.src = `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${stats.campeao}.png`;
+                                            const el = e.currentTarget;
+                                            if (stats.campeao && !el.src.includes('ddragon')) {
+                                                el.src = buildChampionIconUrl(stats.campeao);
+                                            } else if (stats.championId && !el.src.includes('communitydragon')) {
+                                                el.src = CHAMPION_ICON_URL(stats.championId);
                                             }
                                         }}
                                     />
