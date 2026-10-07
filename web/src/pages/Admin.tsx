@@ -1355,10 +1355,28 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
   const atualizarElosAgora = async () => {
     if (!podeRevisar || atualizandoElos) return;
     setAtualizandoElos(true);
-    setMsgElos(null);
+    setMsgElos('Atualização iniciada — rodando em background, pode levar alguns minutos...');
     try {
-      const res = await api.players.refreshElos(true);
-      setMsgElos(`${res.atualizadas} conta(s) com elo atualizado · ${res.erros} erro(s).`);
+      await api.players.refreshElos(true);
+      // O refresh roda em background no servidor (pacing anti-429); aqui
+      // acompanhamos o status até concluir (teto de 40min por segurança).
+      const limite = Date.now() + 40 * 60 * 1000;
+      for (;;) {
+        await new Promise((ok) => setTimeout(ok, 5000));
+        if (Date.now() > limite) {
+          setMsgElos('Atualização ainda em andamento — abra o painel de novo em instantes para ver o resultado.');
+          break;
+        }
+        const st = await api.players.refreshElosStatus();
+        if (!st.emAndamento) {
+          setMsgElos(
+            st.resultado
+              ? `${st.resultado.atualizadas} conta(s) com elo atualizado · ${st.resultado.erros} erro(s).`
+              : 'Atualização concluída.'
+          );
+          break;
+        }
+      }
     } catch (e: any) {
       setMsgElos('Falha ao atualizar elos: ' + (e?.message ?? 'desconhecido'));
     } finally {

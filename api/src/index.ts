@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import { pool } from "./db.js";
+import { db, pool } from "./db.js";
 import { runCron } from "./cron.js";
 import { runReconciliacaoHandles } from "./lib/reconciliar-handles.js";
 import { runRefreshElos } from "./lib/atualizar-elos.js";
@@ -130,14 +130,14 @@ runReconciliacaoHandles().catch((e) => console.error("[cron-handles] erro inicia
 
 // Refresh do elo dos jogadores: 1x por semana, no "horário morto" (início do
 // dia UA no servidor). Leve por design (lote 2000 + 3 requisições Riot em
-// paralelo, grava só elo_cache no metadata — nada de tabela nova). NÃO depende
+// paralelo COM PACING — ADR-069; grava só elo_cache no metadata). NÃO depende
 // de visitante: a leitura de /players e /times/:id usa sempre o elo_cache já
 // gravado. ttlMs semanal = atualiza quem não é re-idatado há 7 dias (na prática,
 // quase todo mundo a cada rodada). O botão admin "Atualizar elos agora" usa o
-// mesmo runRefreshElos com force=true.
+// mesmo runRefreshElos com force=true — em background, com status consultável.
 const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
 setInterval(() => {
-  runRefreshElos({ force: false, ttlMs: SEMANA_MS, limit: 2000 })
+  runRefreshElos(db, { force: false, ttlMs: SEMANA_MS, limit: 2000 })
     .then((r) => {
       if (r.verificadas > 0) {
         console.log(`[cron-elo] ${r.verificadas} conta(s) verificada(s), ${r.atualizadas} atualizada(s), ${r.erros} erro(s)`);
@@ -145,4 +145,6 @@ setInterval(() => {
     })
     .catch((e) => console.error("[cron-elo] erro:", e?.message));
 }, SEMANA_MS);
-runRefreshElos({ force: false, ttlMs: SEMANA_MS }).catch((e) => console.error("[cron-elo] erro inicial:", e?.message));
+runRefreshElos(db, { force: false, ttlMs: SEMANA_MS, limit: 2000 }).catch((e) =>
+  console.error("[cron-elo] erro inicial:", e?.message)
+);

@@ -3,7 +3,7 @@ import { eq, and, gt, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "../db.js";
 import { userSessions, users, userRoles } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
-import { runRefreshElos } from "../lib/atualizar-elos.js";
+import { runRefreshElos, getRefreshElosStatus } from "../lib/atualizar-elos.js";
 
 export const playersRouter = Router();
 
@@ -182,10 +182,11 @@ playersRouter.post("/refresh-elo", async (req, res) => {
   }
 });
 
-// POST /api/players/refresh-elos — refresh SERVER-SIDE do elo_cache das contas.
-// Handler fino: toda a lógica (seleção stale, lote, concorrência, gravação)
-// vive em lib/atualizar-elos.ts. `force:true` ignora o TTL e atualiza TODAS as
-// contas com puuid (botão "Atualizar elos agora" do painel admin).
+// POST /api/players/refresh-elos — inicia o refresh SERVER-SIDE do elo_cache em
+// BACKGROUND e responde na hora (a varredura completa com pacing leva minutos —
+// acima do timeout de 120s do nginx). O progresso sai em
+// GET /players/refresh-elos/status; o front (painel admin) faz polling.
+// `force:true` ignora o TTL e atualiza TODAS as contas com puuid.
 // SO ADMIN/PROPRIETÁRIO: o refresh em massa nunca é disparado pelo público —
 // a leitura de /players e /times/:id usa sempre o elo_cache já gravado.
 playersRouter.post("/refresh-elos", async (req, res) => {
@@ -200,10 +201,37 @@ playersRouter.post("/refresh-elos", async (req, res) => {
     }
 
     const force = req.body?.force === true;
-    const result = await runRefreshElos({ force, limit: force ? 2000 : undefined });
-    return res.json({ ...result, force });
+    const status = getRefreshElosStatus();
+    if (status.emAndamento) {
+      return res.status(202).json({ started: false, emAndamento: true });
+    }
+
+    // Fire-and-forget: o handler não espera (o nginx cortaria em 120s).
+    runRefreshElos(db, { force, limit: force ? 2000 : undefined })
+      .then((r) => console.info(`[refresh-elos] concluído: ${JSON.stringify(r)}`))
+      .catch((e) => console.error("[refresh-elos] erro:", e?.message));
+
+    return res.status(202).json({ started: true, emAndamento: true });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao atualizar elos em lote" });
+  }
+});
+
+// GET /api/players/refresh-elos/status — progresso do refresh em background.
+// Admin/proprietário apenas (mesma guarda do POST).
+playersRouter.get("/refresh-elos/status", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const roles = await getRoles(user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ error: "Apenas admin/proprietário pode ver o status" });
+    }
+    return res.json(getRefreshElosStatus());
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao consultar o status" });
   }
 });
 
