@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { useSalaChat } from '../hooks/useSalaChat';
 import { VagaSlot } from '../components/partidas/VagaSlot';
+import { DraftRoom } from '../components/draft/DraftRoom';
 import {
     ModaisElegibilidade,
     ModalLoginVitrine,
@@ -103,11 +104,12 @@ export default function SalaMod1() {
 
     const {
         sala, jogadores, loading, erro,
-        timer, codigoPartida,
+        timer, timerDraft, codigoPartida,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
         atualizar,
         entrar, sair, confirmar, recusar,
+        banir, pickar,
         enviarChat,
     } = useSalaSimples(salaId, usuarioAtual, {
         onChatMessage: receberChat,
@@ -192,6 +194,24 @@ ${link}`;
                     Voltar às Salas
                 </button>
             </div>
+        );
+    }
+
+    // Draft em andamento: a tela do draft SUBSTITUI a sala (mesmo desenho do
+    // site antigo, que renderizava o DraftRoom em tela cheia no estado
+    // 'travada'). O estado do draft vem do servidor; o timer é derivado do
+    // relógio do servidor pelo hook.
+    if (sala.estado === 'draft' && sala.draft) {
+        return (
+            <DraftRoom
+                modo={sala.modo}
+                draft={sala.draft}
+                jogadores={jogadores}
+                usuarioId={usuarioAtual.id}
+                timer={timerDraft}
+                onBanir={banir}
+                onPickar={pickar}
+            />
         );
     }
 
@@ -323,6 +343,7 @@ ${link}`;
     const ESTADO_ROTULO: Record<string, string> = {
         preenchendo: 'Aguardando Jogadores',
         confirmacao: 'Confirmando Presença',
+        draft: 'Draft',
         iniciando_partida: 'Iniciando Partida',
         partida_iniciada: 'Em Jogo',
         aguardando_revisao: 'Em Análise',

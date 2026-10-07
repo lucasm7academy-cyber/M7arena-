@@ -4,6 +4,7 @@ import { matches, matchPlayers, matchCodes, salaMensagens } from "../../db/schem
 import { users } from "../../db/schema/identidade.js";
 import { tournamentMatches, bracketMatches } from "../../db/schema/tournaments.js";
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
+import { avaliarTransicoes, notifyMatchChange } from "./lib/match-flow.js";
 import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
 import { verificarSerieCampeonato } from "./lib/serie-campeonato.js";
 import { runBetsCron } from "./lib/live-bets.js";
@@ -59,6 +60,26 @@ export async function runCron(d: any = db) {
     if (r.estado === "finalizada") seriesFinalizadas++;
   }
   if (seriesFinalizadas > 0) console.log(`[cron] campeonato: ${seriesFinalizadas} série(s) finalizada(s)`);
+
+  // 2. Draft de sala: salas paradas no ban/pick (ninguém com a aba aberta para
+  //    disparar o tick preguiçoso) são resolvidas pelo MESMO avaliador — o prazo
+  //    é do servidor, então o cron fecha o turno vencido (ban vazio) ou cancela
+  //    o draft (pick vencido → volta a preenchendo). Cada transição roda na
+  //    própria transação com lock, como as ações de rota.
+  let draftsResolvidos = 0;
+  const emDraft = await d.select({ id: matches.id, salaNum: matches.salaNum }).from(matches).where(eq(matches.status, "draft"));
+  for (const sala of emDraft) {
+    const r = await d.transaction(async (tx: any) => {
+      const [m] = await tx.select().from(matches).where(eq(matches.id, sala.id)).limit(1).for("update");
+      if (!m || m.status !== "draft") return { mudou: false };
+      return avaliarTransicoes(tx, m.id);
+    });
+    if (r.mudou) {
+      draftsResolvidos++;
+      notifyMatchChange(sala.id);
+    }
+  }
+  if (draftsResolvidos > 0) console.log(`[cron] draft: ${draftsResolvidos} sala(s) avaliada(s)`);
 
   // 3. Saneamento (ajustarsala bug D): salas presas em estados mortos (ex.:
   //    'finalizacao', estado da votação removida pelo ADR-027) viram

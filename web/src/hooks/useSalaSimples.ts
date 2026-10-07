@@ -23,6 +23,8 @@ import {
     recusarPresenca,
     sairDaVaga,
     tickSala,
+    banirCampeao,
+    pickarCampeao,
     traduzirErroSala,
 } from '../api/salamod1';
 
@@ -103,6 +105,15 @@ export function useSalaSimples(
     const timerIniciandoPartida = sala?.iniciando_partida_at
         ? Math.max(0, Math.round((new Date(sala.iniciando_partida_at).getTime() + 90000 - agora) / 1000))
         : 90;
+
+    // ── TIMER DO DRAFT (apresentação) ──────────────────
+    // O prazo do turno é `draft.turn_deadline_at`, gravado pelo SERVIDOR. O
+    // restante sai do relógio corrigido (`agoraServidor()`) — inclusive para
+    // quem está em outro fuso ou com o relógio errado. Quem decide o timeout é
+    // o servidor; aqui é só o número que o jogador vê.
+    const timerDraft = sala?.draft?.turn_deadline_at
+        ? Math.max(0, Math.round((new Date(sala.draft.turn_deadline_at).getTime() - agora) / 1000))
+        : 0;
 
     // ── MENSAGEM TRANSITÓRIA ─────────────────────────
     // ⚠️ Erros de ação vão para `mostrarMensagem`, NUNCA para `erro`:
@@ -288,7 +299,10 @@ export function useSalaSimples(
 
     // ── LOOP DE RE-RENDER DOS TIMERS DERIVADOS ────────
     // ⚡ requestAnimationFrame: pausa sozinho quando a aba vai para background.
-    const estadoComTimer = sala?.estado === 'confirmacao' || sala?.estado === 'iniciando_partida';
+    const estadoComTimer =
+        sala?.estado === 'confirmacao' ||
+        sala?.estado === 'iniciando_partida' ||
+        (sala?.estado === 'draft' && sala?.draft?.status === 'ongoing');
     useEffect(() => {
         if (!estadoComTimer) return;
 
@@ -304,7 +318,7 @@ export function useSalaSimples(
         rafId = requestAnimationFrame(loop);
 
         return () => cancelAnimationFrame(rafId);
-    }, [estadoComTimer, sala?.confirmacao_expires_at, sala?.iniciando_partida_at, tabFocusTick]);
+    }, [estadoComTimer, sala?.confirmacao_expires_at, sala?.iniciando_partida_at, sala?.draft?.turn_deadline_at, sala?.draft?.current_turn, tabFocusTick]);
 
     // ── SOM DE CONFIRMAÇÃO (tick + música de fundo) ──
     // Enquanto a contagem de confirmação estiver aberta e eu ainda não
@@ -330,7 +344,7 @@ export function useSalaSimples(
     // para nós (Chrome congela WS de aba em background sem disparar onclose).
     // Antes usava `wsVivoRef` (só fica false quando o socket FECHA), o que
     // deixava o join invisível para quem já estava na sala em background.
-    const salaAtiva = !!sala && ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'].includes(sala?.estado);
+    const salaAtiva = !!sala && ['preenchendo', 'confirmacao', 'draft', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'].includes(sala?.estado);
     useEffect(() => {
         if (!salaAtiva) return;
 
@@ -359,6 +373,7 @@ export function useSalaSimples(
     // ── DISPARO DO TICK QUANDO O PRAZO VENCE ──────────
     const timerZerado = timer <= 0;
     const timerIniciandoZerado = timerIniciandoPartida <= 0;
+    const timerDraftZerado = timerDraft <= 0;
     useEffect(() => {
         if (!sala) return;
 
@@ -367,6 +382,10 @@ export function useSalaSimples(
             chave = `confirmacao:${sala.confirmacao_expires_at}`;
         } else if (sala.estado === 'iniciando_partida' && sala.iniciando_partida_at && timerIniciandoZerado) {
             chave = `iniciando_partida:${sala.iniciando_partida_at}`;
+        } else if (sala.estado === 'draft' && sala.draft?.turn_deadline_at && timerDraftZerado) {
+            // Turno do draft vencido: pede a avaliação (ban vazio / cancelamento
+            // do pick). A decisão é do servidor; o tick é só o empurrão.
+            chave = `draft:${sala.draft.turn_deadline_at}:${sala.draft.current_turn}`;
         }
         if (!chave) return;
 
@@ -381,8 +400,11 @@ export function useSalaSimples(
         sala?.estado,
         sala?.confirmacao_expires_at,
         sala?.iniciando_partida_at,
+        sala?.draft?.turn_deadline_at,
+        sala?.draft?.current_turn,
         timerZerado,
         timerIniciandoZerado,
+        timerDraftZerado,
         dispararTick,
     ]);
 
@@ -493,10 +515,10 @@ export function useSalaSimples(
                 mostrar('erro', traduzirErroSala(r.erro));
             }
             // Caso especial: o último confirmar dispara confirmacao →
-            // iniciando_partida (r.estado). Refaz o fetch da sala INTEIRA na
-            // hora para os demais verem "Preparar para a Batalha" — sem
-            // depender do WebSocket congelado em aba de background.
-            if (r.estado === 'iniciando_partida') {
+            // draft (ou direto iniciando_partida, se o draft for pulado).
+            // Refaz o fetch da sala INTEIRA na hora para os demais verem o
+            // draft — sem depender do WebSocket congelado em aba de background.
+            if (r.estado === 'draft' || r.estado === 'iniciando_partida') {
                 await sincronizarTudo('confirmar');
             } else {
                 await sincronizarJogadores();
@@ -527,13 +549,36 @@ export function useSalaSimples(
         }
     };
 
+    // ── DRAFT (ban/pick) ─────────────────────────────
+    // Só dispara a ação; quem valida turno/fase/time é o servidor. Depois da
+    // resposta, sincroniza a sala para pegar o novo turno já com o prazo do
+    // servidor (o WebSocket também avisa, mas a resposta é mais rápida).
+    const banir = async (championId: string) => {
+        const r = await banirCampeao(salaId, championId);
+        if (!r.ok) {
+            mostrar('erro', traduzirErroSala(r.erro));
+        }
+        await sincronizarTudo('draft-banir');
+        return r;
+    };
+
+    const pickar = async (championId: string) => {
+        const r = await pickarCampeao(salaId, championId);
+        if (!r.ok) {
+            mostrar('erro', traduzirErroSala(r.erro));
+        }
+        await sincronizarTudo('draft-pickar');
+        return r;
+    };
+
     return {
         sala, jogadores, loading, erro,
-        timer, timerIniciandoPartida, codigoPartida,
+        timer, timerIniciandoPartida, timerDraft, codigoPartida,
         mostrarMensagem,
         erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
         atualizar: () => sincronizarTudo('manual'),
         entrar, sair, confirmar, recusar,
+        banir, pickar,
         enviarChat: enviarChat,
     };
 }

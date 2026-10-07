@@ -9,10 +9,65 @@ import {
   getAuthUser,
   notifyMatchChange,
 } from "../lib/match-flow.js";
+import { aplicarAcaoDraft } from "../lib/draft-flow.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
 
 export const matchesActionsRouter = Router();
+
+/**
+ * Ações do DRAFT (ban/pick). O servidor é a única autoridade: valida o turno
+ * pelo `turn_deadline_at` (relógio do servidor), aplica e avança. O contrato é
+ * o mesmo das demais ações de sala `{ ok, erro, estado, mudou }` — o front
+ * traduz os códigos em ERROS_SALA.
+ *
+ * Fluxo da transação:
+ *   1. lock da linha em `matches` (serializa ticks/ações concorrentes);
+ *   2. `avaliarTransicoes` sanea prazos vencidos ANTES da ação (um ban vencido
+ *      vira ban vazio; um pick vencido cancela o draft — a ação chega tarde e
+ *      recebe estado_invalido);
+ *   3. `aplicarAcaoDraft` valida e aplica o ban/pick;
+ *   4. `avaliarTransicoes` de novo: se o draft fechou, atribui o código e leva
+ *      a sala para `iniciando_partida` na MESMA transação.
+ */
+async function executarAcaoDraft(req: any, res: any, tipo: "ban" | "pick") {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+
+    const r = await db.transaction(async (tx: any) => {
+      const [match] = await tx
+        .select()
+        .from(matches)
+        .where(eq(matches.salaNum, Number(req.params.id)))
+        .limit(1)
+        .for("update");
+      if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+
+      const trans = await avaliarTransicoes(tx, match.id);
+      if (trans.estado !== "draft") {
+        return { ok: false, erro: "estado_invalido", estado: trans.estado, mudou: trans.mudou };
+      }
+
+      const acao = await aplicarAcaoDraft(tx, match, user.id, tipo, req.body?.championId);
+      if (!acao.ok) return { ok: false, erro: acao.erro, estado: acao.estado, mudou: acao.mudou };
+
+      const trans2 = await avaliarTransicoes(tx, match.id);
+      return { ok: true, erro: null, estado: trans2.estado, mudou: true };
+    });
+
+    notifyMatchChange(String(req.params.id));
+    return res.json(r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+}
+
+// POST /api/matches/:id/draft/ban - Banir campeão (turno do time no ban)
+matchesActionsRouter.post("/:id/draft/ban", (req, res) => executarAcaoDraft(req, res, "ban"));
+
+// POST /api/matches/:id/draft/pick - Escolher campeão (turno do time no pick)
+matchesActionsRouter.post("/:id/draft/pick", (req, res) => executarAcaoDraft(req, res, "pick"));
 
 /**
  * Ações de sala montadas em `/api/matches/:id/<acao>` (id público = sala_num).
@@ -142,6 +197,11 @@ matchesActionsRouter.post("/:id/tick", async (req, res) => {
       const trans = await avaliarTransicoes(tx, match.id);
       return { ok: true, erro: null, estado: trans.estado, mudou: trans.mudou };
     });
+    // Quando o tick avança algo (turno do draft vencido, timeout de confirmação),
+    // avisa TODOS os clientes da sala — não só quem chamou o tick. Sem isso, um
+    // ban vazio aplicado pelo tick de um cliente chegava nos demais só pelo
+    // polling de 5s.
+    if (r.mudou) notifyMatchChange(String(req.params.id));
     return res.json(r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });

@@ -116,6 +116,7 @@ const modosCards = [
 const ESTADO_LABEL: Record<string, { label: string; cls: string }> = {
   preenchendo: { label: 'Aberta', cls: 'text-green-400 border-green-400/30 bg-green-400/10' },
   confirmacao: { label: 'Confirmando', cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' },
+  draft: { label: 'Draft', cls: 'text-purple-400 border-purple-400/30 bg-purple-400/10' },
   iniciando_partida: { label: 'Iniciando', cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' },
   partida_iniciada: { label: 'Em jogo', cls: 'text-orange-400 border-orange-400/30 bg-orange-400/10' },
   aguardando_revisao: { label: 'Em análise', cls: 'text-cyan-400 border-cyan-400/30 bg-cyan-400/10' },

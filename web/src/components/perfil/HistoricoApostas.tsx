@@ -14,6 +14,7 @@ import { CutCard } from '../ui/CutCard';
 const FLAG_LABEL: Record<string, string> = {
   preenchendo: 'Aberta',
   confirmacao: 'Confirmando',
+  draft: 'Draft',
   iniciando_partida: 'Iniciando',
   partida_iniciada: 'Em jogo',
   aguardando_revisao: 'Em análise',

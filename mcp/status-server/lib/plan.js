@@ -93,6 +93,9 @@ export const PLAN = {
   "app.streams.agenda": ["fase-3", "app.swap.campeonatos", "app.swap.conteudo", "db.tournaments", "db.conteudo"],
   "app.streams.agenda-ui": ["fase-3", "app.streams.agenda", "app.sdk", "app.port.streamers"],
   "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
+  // Draft de sala (ban/pick após a confirmação): estado 'draft' no lugar de
+  // iniciando_partida direto; timer no relógio do servidor (turn_deadline_at).
+  "app.sala.draft": ["fase-3", "app.swap.salas", "app.realtime", "db.matches"],
   "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],
   "app.swap.rpc": ["fase-3", "app.sdk", "app.auth.sessao"],

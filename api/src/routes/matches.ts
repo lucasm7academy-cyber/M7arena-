@@ -3,7 +3,7 @@ import { timingSafeEqual } from "crypto";
 import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userWallets, userRoles } from "../../../db/schema/identidade.js";
-import { matches, matchPlayers, matchResults, matchCodes, salaMensagens } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchResults, matchCodes, salaMensagens, matchDrafts } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
 import { platformRevenue } from "../../../db/schema/economia.js";
@@ -111,7 +111,16 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
     }
   }
 
-  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot);
+  // Draft (ban/pick): carrega a linha quando a sala está no draft ou já saiu
+  // dele (para o front poder exibir os picks depois). Uma query por sala só
+  // nesses estados — não afeta a listagem comum.
+  let draft: any = null;
+  if (m.status === "draft" || m.status === "iniciando_partida" || m.status === "partida_iniciada") {
+    const [d] = await ctx.select().from(matchDrafts).where(eq(matchDrafts.matchId, m.id)).limit(1);
+    draft = d ?? null;
+  }
+
+  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
   // Segurança (pedido 2026-08-17): o código da partida só vai para participante
   // ou staff (streamer/organizador/admin/proprietário). Quem só está olhando a
   // sala sem fazer parte não pode copiar o código e invadir o lobby do jogo.

@@ -30,7 +30,7 @@ export const matches = pgTable(
       .references(() => games.id, { onDelete: "restrict" }),
     mode: varchar("mode", { length: 50 }).notNull(), // '5v5' | 'aram' | '1v1' | 'time_vs_time'
     status: varchar("status", { length: 50 }).default("preenchendo").notNull(),
-    // 'preenchendo' | 'confirmacao' | 'iniciando_partida' | 'partida_iniciada' | 'finalizacao' | 'encerrada' | 'cancelada'
+    // 'preenchendo' | 'confirmacao' | 'draft' | 'iniciando_partida' | 'partida_iniciada' | 'finalizacao' | 'encerrada' | 'cancelada'
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
@@ -124,6 +124,28 @@ export const matchCodes = pgTable("match_codes", {
   // Quando todos já foram usados, volta ao primeiro — tempo dos anteriores terminarem.
   lastUsedAt: timestamp("last_used_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+// Draft de sala (ban/pick): uma linha por sala, criada quando todos confirmam
+// (confirmacao → draft). O servidor é a autoridade: turno, fase, time e prazo
+// vivem AQUI — o cliente só desenha e pede a ação. `turnDeadlineAt` é o
+// relógio do servidor (epoch) — o mesmo clockSync das salas corrige o skew no
+// front, então ninguém depende do relógio local.
+export const matchDrafts = pgTable("match_drafts", {
+  matchId: uuid("match_id")
+    .primaryKey()
+    .references(() => matches.id, { onDelete: "cascade" }),
+  blueBans: jsonb("blue_bans").$type<(string | null)[]>().default([]).notNull(),
+  bluePicks: jsonb("blue_picks").$type<(string | null)[]>().default([]).notNull(),
+  redBans: jsonb("red_bans").$type<(string | null)[]>().default([]).notNull(),
+  redPicks: jsonb("red_picks").$type<(string | null)[]>().default([]).notNull(),
+  currentTurn: integer("current_turn").default(0).notNull(),
+  currentPhase: varchar("current_phase", { length: 10 }).default("ban").notNull(), // 'ban' | 'pick'
+  currentTeam: varchar("current_team", { length: 10 }).default("blue").notNull(), // 'blue' | 'red'
+  turnDeadlineAt: timestamp("turn_deadline_at", { mode: "date" }).notNull(),
+  status: varchar("status", { length: 20 }).default("ongoing").notNull(), // 'ongoing' | 'finished'
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 // Chat da sala (ADR-040): conversa geral entre participantes. Mensagens são

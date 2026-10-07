@@ -19,9 +19,10 @@
 import { eq, and, gt, sql, isNull } from "drizzle-orm";
 import { db, pool } from "../db.js";
 import { users, userSessions } from "../../../db/schema/identidade.js";
-import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes, matchDrafts } from "../../../db/schema/matches.js";
 import { roleSlotToSlot } from "./match-shape.js";
 import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./escrow.js";
+import { avaliarDraft, criarDraft } from "./draft-flow.js";
 
 const TEMPO_CONFIRMACAO_MS = 75_000;
 const TEMPO_INICIO_MS = 90_000;
@@ -198,23 +199,21 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           .where(eq(matches.id, matchId));
         avancou = true;
       } else if (total > 0 && confirmados >= total) {
+        // Todos confirmaram → abre o DRAFT (ban/pick). O código da partida só
+        // é atribuído quando o draft FECHA (entrando em `iniciando_partida`),
+        // como no fluxo antigo (acaoDraftFinalizado).
         await tx
           .update(matchPlayers)
           .set({ linked: true })
           .where(eq(matchPlayers.matchId, matchId));
-        let codigo = m.codigoPartida;
-        if (!codigo || codigo === "") {
-          codigo = await atribuirCodigoPartida(tx, matchId, m.mode);
-        }
-        const agora = new Date();
+        await criarDraft(tx, matchId, m.mode);
         await tx
           .update(matches)
           .set({
-            status: "iniciando_partida",
-            iniciandoPartidaAt: agora,
+            status: "draft",
             confirmacaoExpiresAt: null,
-            codigoPartida: codigo,
-            stateDeadlineAt: new Date(agora.getTime() + TEMPO_INICIO_MS),
+            iniciandoPartidaAt: null,
+            stateDeadlineAt: null,
           })
           .where(eq(matches.id, matchId));
         avancou = true;
@@ -247,6 +246,48 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           })
           .where(eq(matches.id, matchId));
         avancou = true;
+      }
+    } else if (m.status === "draft") {
+      // Draft em andamento (ban/pick). A avaliação só usa o PRAZO DO SERVIDOR
+      // (turn_deadline_at): ban vencido vira ban vazio; pick vencido cancela o
+      // draft e a sala volta a `preenchendo`. Quando o draft fecha, o código é
+      // atribuído e a sala segue para `iniciando_partida`.
+      const d = await avaliarDraft(tx, m);
+      if (d.cancelou) {
+        await tx.delete(matchDrafts).where(eq(matchDrafts.matchId, matchId));
+        await tx
+          .update(matchPlayers)
+          .set({ confirmed: false, linked: false })
+          .where(eq(matchPlayers.matchId, matchId));
+        await tx
+          .update(matches)
+          .set({
+            status: "preenchendo",
+            confirmacaoExpiresAt: null,
+            iniciandoPartidaAt: null,
+            stateDeadlineAt: null,
+          })
+          .where(eq(matches.id, matchId));
+        avancou = true;
+      } else if (d.finalizado) {
+        let codigo = m.codigoPartida;
+        if (!codigo || codigo === "") {
+          codigo = await atribuirCodigoPartida(tx, matchId, m.mode);
+        }
+        const agora = new Date();
+        await tx
+          .update(matches)
+          .set({
+            status: "iniciando_partida",
+            iniciandoPartidaAt: agora,
+            confirmacaoExpiresAt: null,
+            codigoPartida: codigo,
+            stateDeadlineAt: new Date(agora.getTime() + TEMPO_INICIO_MS),
+          })
+          .where(eq(matches.id, matchId));
+        avancou = true;
+      } else if (d.mudou) {
+        avancou = true; // turno avançou por timeout; a linha já está no banco
       }
     } else if (m.status === "iniciando_partida") {
       if (m.iniciandoPartidaAt == null) {

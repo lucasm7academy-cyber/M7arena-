@@ -23,6 +23,7 @@ import { userAdvertencias } from "../../../db/schema/apostas.js";
 export const ESTADOS_ATIVOS = [
   "preenchendo",
   "confirmacao",
+  "draft",
   "iniciando_partida",
   "partida_iniciada",
   "aguardando_revisao",
@@ -39,6 +40,7 @@ export const ESTADOS_ATIVOS = [
 export const ESTADOS_BLOQUEIO_NOVA_APOSTA = [
   "preenchendo",
   "confirmacao",
+  "draft",
   "iniciando_partida",
   "partida_iniciada",
 ];

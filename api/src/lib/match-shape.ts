@@ -145,8 +145,10 @@ export function resumoRiot(payload: any, puuidToSide?: Map<string, "blue" | "red
  * enriquecidas com user + isVip pelo chamador. `criadorNome` vem do dono.
  * `printsRecebidos` é opcional (contagem de `match_prints` para o estado
  * `aguardando_revisao` — design v3 §6); só a rota de detalhe/painel envia.
+ * `draft` é a linha de `match_drafts` (ou null) — o estado `draft` do fork
+ * consome os arrays de ban/pick e o PRAZO DO SERVIDOR `turn_deadline_at`.
  */
-export function toLegacyMatch(m: any, players: any[], criadorNome: string, printsRecebidos = 0, resultadoRiot: any = null) {
+export function toLegacyMatch(m: any, players: any[], criadorNome: string, printsRecebidos = 0, resultadoRiot: any = null, draft: any = null) {
   const jogadores = players.map((p) =>
     toLegacyPlayer(p, p.__user, !!p.__isVip, m.salaNum)
   );
@@ -192,6 +194,23 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     prints_necessarios: 3,                // máx. 3 prints por partida (design v3 §6)
     // O fork conta jogadores em `sala.jogadores.length` na listagem.
     jogadores,
+    // Draft (ban/pick) — só existe entre `draft` e `iniciando_partida`. O
+    // `turn_deadline_at` é o prazo do turno NO RELÓGIO DO SERVIDOR; o front
+    // deriva o restante com `agoraServidor()` (clockSync), nunca com o relógio
+    // local. `null` quando a sala não tem draft.
+    draft: draft
+      ? {
+          blue_bans: draft.blueBans ?? [],
+          blue_picks: draft.bluePicks ?? [],
+          red_bans: draft.redBans ?? [],
+          red_picks: draft.redPicks ?? [],
+          current_turn: draft.currentTurn ?? 0,
+          current_phase: draft.currentPhase ?? "ban",
+          current_team: draft.currentTeam ?? "blue",
+          turn_deadline_at: draft.turnDeadlineAt ?? null,
+          status: draft.status ?? "ongoing",
+        }
+      : null,
     // Dados reais da partida puxados da Riot (matchResults.payload) — só para
     // salas encerradas que foram verificadas. `null` quando não houver.
     resultado_riot: resultadoRiot,

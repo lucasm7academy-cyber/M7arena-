@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-09-30T01:50:19.466Z",
-  "updatedBy": "gemini",
+  "updatedAt": "2026-10-07T23:28:01.470Z",
+  "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
     "m7academy.pro (Supabase+Vercel) NÃO se toca. Continua no ar, intacto, durante toda a migração.",
@@ -872,11 +872,11 @@
       "area": "app",
       "name": "Swap: campeonatos → tournaments normalizado",
       "status": "done",
-      "notes": "Swap campeonatos concluído. Schema estendido (ADR-014, 24 colunas legadas, migration 0004). API reescrita (5 rotas, shape legado, tradução status/formato, criado_por da sessão). api.tournaments no SDK. Front migrado: createCampPage (7), CampeonatoDetalhes (3), campeonatos (2), Lobby (1), Streamers (1), useTransmissoesAtivas (1). RPCs ficaram para app.swap.rpc.",
-      "evidence": "verify-swap.js campeonatos → 0 pendente (15 zeradas em 6 arquivos). api: tsc --noEmit exit 0. Migration 0004 aplica em PGlite limpo (24 colunas verificadas). web tsc: só 2 erros pré-existentes do fork. | verify-swap.js campeonatos → 0 pendente (verificado pelo servidor)",
+      "notes": "Bugfix do chaveamento visual (Kraken): storeBracket gravava side.left/side.right com o mesmo round, violando o unique index bracket_matches_cell_idx. Agora persiste left_qf/right_qf/grand_final (convenção do ETL) e buildBracket decodifica. Chave continua 100% visual e manual; nada liga cronograma às chaves.",
+      "evidence": "tsx --test test/tournament-bracket.test.ts → 1/1 pass; suíte API 201/201; tsc exit 0; no container prod: storeBracket+toLegacyTournament em transação real → 5 linhas, sem 23505, roundtrip ok, ROLLBACK (DB segue 22 linhas). Deploy e6428a2. | verify-swap.js campeonatos → 0 pendente (verificado pelo servidor)",
       "owner": "deepseek",
       "createdAt": "2026-08-02T04:22:47.388Z",
-      "updatedAt": "2026-08-02T16:16:30.462Z"
+      "updatedAt": "2026-10-02T01:40:27.950Z"
     },
     {
       "id": "app.swap.salas",
@@ -1477,6 +1477,18 @@
       "owner": "deepseek",
       "createdAt": "2026-09-30T00:14:45.786Z",
       "updatedAt": "2026-09-30T00:23:27.729Z"
+    },
+    {
+      "id": "app.sala.draft",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Draft de sala (ban/pick pós-confirmação, timer server-side)",
+      "status": "doing",
+      "notes": "Puxado do commit e4b7457 do M7AcademySite (último com draft renderizado). Estado 'draft' entre confirmacao e iniciando_partida; match_drafts; rotas draft/ban|pick; timer por turn_deadline_at do servidor (clockSync no front). DraftRoom portado 1:1 (sem HUD de stream).",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-10-07T23:28:01.467Z",
+      "updatedAt": "2026-10-07T23:28:01.470Z"
     }
   ],
   "decisions": [
@@ -2127,6 +2139,15 @@
       "decision": "Jogos confirmados formam uma agenda em /streamers; escalas_transmissao (unique match_id) garante 1 streamer por jogo; 'Estou no ar' cria transmissoes.match_id sem expira_em (janela de 30 min antes/em andamento, fuso SP) e o fim da série desliga a live em duas camadas: escrita (motor de série e storeCronograma) e leitura (vitrine/minha filtram pelo status do jogo).",
       "rationale": "Sem API da Twitch, o clique do streamer é a ignição e o fim real da série é o desligamento. A checagem de leitura evita live fantasma se um caminho de escrita escapar. Título/campeonato/times montados no servidor, corrigindo o campeonatoId null do painel antigo. Spec: docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-073",
+      "date": "2026-10-07T04:00:48.731Z",
+      "author": "deepseek",
+      "title": "Ícones Riot: ddragon com versão dinâmica em vez de raw.communitydragon.org",
+      "decision": "Profile icons (avatares) e square de campeão passam a usar ddragon.leagueoflegends.com, com a versão atual resolvida dinamicamente (front via /api/riot/version, cache 10min; API via lib ddragon.ts com refresh a cada 6h). O host antigo raw.communitydragon.org foi medido em ~19,5s TTFB por imagem (vs ~0,7s ddragon, ~0,45s cdn.communitydragon.org).",
+      "rationale": "O raw servia todas as telas com ~20s por imagem (sintoma: ícones \"carregavam todos de uma vez\" após a espera). ddragon é o CDN oficial: rápido e completo — o cdn.communitydragon.org chegou a dar 502 em ids válidos (5888/5889/5900), então não serve como fonte primária. ddragon não tem caminho sem versão (403), por isso a versão é resolvida em runtime. Fallback de campeão por id numérico fica no CDN do communitydragon (square), com onError alternando entre as duas fontes.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2195,83 +2216,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-19T23:00:16.119Z",
-      "agent": "deepseek",
-      "summary": "Fix pedido pelo usuário: os cards de /campeonatos usavam banner_url como imagem de fundo; trocados para logo_url (fallback gradiente). O banner continua só no hero do CampeonatoDetalhes (campeonato.bannerUrl, linha 178). Registrada ADR-067 (o original usava banner-primeiro — não é regressão). Verificação headless com Playwright (sem janela): 3 cards no ar, todos \"LOGO OK\" comparando o background-image computado com logo_url/banner_url da API. Commit fea3980 pushado e deployado (build nginx + up -d). Observação: durante a sessão a VPS/origin recebeu um commit de outro agente (62c6b88) — merge ff-only, sem conflito. Também nesta sessão: fix do w-full na TimePage (commit 59e3bb3) que resolveu o encolhimento da página do time (507px→1400px medido).",
-      "touched": [
-        "web/src/pages/campeonatos.tsx",
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-19T23:18:33.564Z",
-      "agent": "gemini",
-      "summary": "Na página de time (TimePage.tsx): substituído o nome do elo nos cards da lineup pelo ícone do elo (/ranks/*.png) com tooltip; e adicionados 4 slots quadrados com borda arredondada e tracejada (dashed) vazios no lado direito do banner superior para simbolizar os troféus da equipe. Build e typecheck validados com sucesso.",
-      "touched": [
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-19T23:29:13.934Z",
-      "agent": "gemini",
-      "summary": "Removido o botão de recarregar na TimePage e adicionada imagem de fundo no banner da equipe (/images/fundo fanaticaaa.webp) com gradientes escuros e z-index ajustado.",
-      "touched": [
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-19T23:38:17.782Z",
-      "agent": "gemini",
-      "summary": "Revertido o clareamento da imagem de fundo no banner da TimePage para o estado original mais escuro conforme pedido do usuario.",
-      "touched": [
-        "web/src/pages/TimePage.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-21T15:54:09.879Z",
-      "agent": "deepseek",
-      "summary": "Sorteio da 3ª semana das Copas do Kraken e do Tesouro na VPS. Estado confirmado via SQL e API: 8 times/1 Grupo A em cada copa, 16 jogos finalizados, cada time com 4 jogos, 0 pendentes. Sorteio aleatório de 2 emparelhamentos perfeitos disjuntos por copa → 8 jogos novos por copa (16 total), cada time com 2 adversários inéditos, 0 pares repetidos. Inseridos em tournament_matches via transação com validação (phase=group_stage, phase_label='Fase de Grupos', status='combinando', 'A COMBINAR'/'--:--', best_of=3, ids de time resolvidos, 0 nulos). Validado pela API: 24 jogos e 8 pendentes por copa. Restam 4 pares por copa para a próxima semana. Nenhuma mudança de código ou schema.",
-      "touched": [
-        "tournament_matches"
-      ]
-    },
-    {
-      "at": "2026-09-21T16:12:22.077Z",
-      "agent": "deepseek",
-      "summary": "Ícones/nomes desatualizados: diagnóstico + correção. Causa dupla: (1) profile_icon_id/level sem nenhum refresh automático (só o botão 'Atualizar dados' do usuário; Ironhide com sync de 10/09); (2) cron de handle (3 dias) tomava 429 em massa (304 nos logs) porque disparava ~220 chamadas sem pausa, então quase nada sincronizava. Verificado via Riot pelo PUUID: nick BKS Flint#team (banco Ironhide#BR01), ícone 7185 (banco 6297), nível 333 (banco 308). Fix em api/src/lib/reconciliar-handles.ts: lotes de 3 contas/10s (~72 req/2min, teto 100), retry 429 com Retry-After e sync de profile_icon_id/level via summoner-v4. Testes 6/6 e suíte 185/186 (única falha: smoke test-realtime.mjs, exige servidor, pré-existente). Registro do Ironhide já corrigido no banco. PENDENTE: deploy da API (aguardando OK) — boot roda a reconciliação e corrige as demais contas em ~12min.",
-      "touched": [
-        "api/src/lib/reconciliar-handles.ts",
-        "api/test/reconciliar-handles.test.ts",
-        "game_accounts"
-      ]
-    },
-    {
-      "at": "2026-09-21T16:31:55.182Z",
-      "agent": "deepseek",
-      "summary": "Deploy do fix de reconciliação Riot (commit 98eecb7) + conhecimento salvo (3de6dd0). Build app na VPS, container recriado, site/API 200. A varredura de boot rodou completa: 246 das 254 contas LoL sincronizadas (as 8 restantes não tinham mudança), 0 erros e 0 respostas 429 (antes: 304). Ironhide agora está BKS Flint#team / ícone 7185 / nível 333 no banco. Conhecimento salvo: scripts/campeonatos/sortear-semana.mjs + docs/ROTINA_SORTEIO_COPAS.md + seção 8 do AGENTS.md (sorteio semanal), ADRs 068 e 069. Cadência da reconciliação mantida em 3 dias.",
-      "touched": [
-        "api/src/lib/reconciliar-handles.ts",
-        "api/test/reconciliar-handles.test.ts",
-        "AGENTS.md",
-        "docs/ROTINA_SORTEIO_COPAS.md",
-        "scripts/campeonatos/sortear-semana.mjs"
-      ]
-    },
-    {
-      "at": "2026-09-22T02:59:15.242Z",
-      "agent": "deepseek",
-      "summary": "Os 4 pontos de performance de imagem/entrega resolvidos e deployados. (1) nginx do host: gzip_types ligado (bundle JS 710KB→208KB) e HTTP/2 nos dois proxy hosts (ALPN h2 confirmado). (2) Supabase fora do storage: 22 logos de time + 1 logo e 1 banner de campeonato migrados para o volume local; 0 URLs do Supabase em teams/tournaments/standings/matches. (3) Upload gera WebP redimensionado com sharp (team-logos 512px, public-images 1920px, qualidade 82, regra 'nunca piora'); match-prints intactos. (4) Login.tsx sem URLs hardcoded do Supabase (bytes idênticos, sha256). ~8MB economizados; ACE 2038KB→42KB, YFC 984KB→20KB, TTFB 1,3s→0,25s. Evidência: tsc 0, testes 194/195 (falha única = smoke test-realtime.mjs que exige servidor ao vivo), verificação da função compilada no container (foto 2,7MB→30KB; webp já otimizado volta intacto). Commits b4c3216, 40348ab, 3f53109. ADRs 070 e 071.",
-      "touched": [
-        "api/src/routes/upload.ts",
-        "api/test/upload-otimizacao.test.ts",
-        "scripts/otimizar-imagens.mjs",
-        "web/src/pages/Login.tsx",
-        "/etc/nginx/nginx.conf (VPS)",
-        "/etc/nginx/sites-available/m7arena-proxy.conf (VPS)",
-        "/etc/nginx/sites-available/m7arena-main-proxy.conf (VPS)"
-      ]
-    },
     {
       "at": "2026-09-22T05:09:43.800Z",
       "agent": "gemini",
@@ -2483,6 +2427,80 @@
         "web/src/pages/Lobby.tsx",
         "web/src/pages/Streamers.tsx"
       ]
+    },
+    {
+      "at": "2026-09-30T01:59:55.685Z",
+      "agent": "gemini",
+      "summary": "Ajustes visuais na tela de streamers: 1) Badge de data/hora alterado de amarelo para roxo estilo Twitch (#9146FF) com texto branco em negrito; 2) Nome dos times exibido por extenso (nomeDe) em vez de apenas a TAG; 3) Emoji de check (✅) adicionado imediatamente a frente do botao 'Soltar' quando o jogo esta selecionado pelo streamer, e o botao 'Soltar' estilizado em tom avermelhado (bg-red-600/20 text-red-400 hover:bg-red-600); 4) Todos os cards da tela de streamers e agenda ajustados para o estilo exato do menu: bg-[#050505]/90 backdrop-blur-md (preto profundo com sutis 10% de transparencia e desfoque de fundo). Deploy realizado na VPS com rebuild do container m7arena_nginx.",
+      "touched": [
+        "web/src/features/streams/components/AgendaTransmissoes.tsx",
+        "web/src/pages/Streamers.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T02:02:33.634Z",
+      "agent": "gemini",
+      "summary": "Removido o emoji de check (✅) a pedido do usuario na tela de streamers (web/src/features/streams/components/AgendaTransmissoes.tsx), mantendo o botao Soltar com estilo avermelhado. Build e deploy concluidos na VPS com HTTP 200 servindo chunk Streamers-JZlKCwes.js.",
+      "touched": [
+        "web/src/features/streams/components/AgendaTransmissoes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T02:04:55.934Z",
+      "agent": "gemini",
+      "summary": "Ajuste no card/badge do streamer abaixo do proximo jogo no Lobby (web/src/pages/Lobby.tsx): alterado para roxo solido Twitch (#9146FF) com texto branco em negrito, removida transparencia, formato menos redondo (rounded-xl em vez de rounded-full), tamanho aumentado (px-4 py-1.5 md:px-5 md:py-2, text-xs md:text-sm) e espacado mais abaixo com mt-2.5, com link clicavel para a Twitch. Build e deploy concluidos na VPS com HTTP 200 servindo chunk Lobby-DvbkT0Xs.js.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T02:10:55.179Z",
+      "agent": "gemini",
+      "summary": "Ajustes concluidos e deployados na VPS: 1) /streamers: o card de 'Iniciar Transmissao Avulsa' agora e retratil (formato sanfona/gaveta) com botao minimalista e seta discreta (ChevronDown animado), fechado por padrao para nao ocupar espaco vertical no mobile e abrindo suavemente ao clicar; 2) No Lobby e na Agenda: o canal do streamer agora e exibido no formato oficial com barra /{streamer.twitch} (ex: /onelucks_) acompanhado do emote da Twitch, preservando o casing original e link direto para a Twitch. Build e deploy no ar na VPS servindo Lobby-B6c2rZRg.js e Streamers-CTCTqoWF.js.",
+      "touched": [
+        "web/src/pages/Lobby.tsx",
+        "web/src/pages/Streamers.tsx",
+        "web/src/features/streams/components/AgendaTransmissoes.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-30T02:17:45.618Z",
+      "agent": "gemini",
+      "summary": "Ajuste de estilo no Lobby: removido o card/caixa roxa de fundo do streamer abaixo do proximo jogo e mantido apenas o icone e o texto em roxo Twitch (#9146FF) com brilho neon sutil (drop-shadow) e efeito hover. Deploy concluido na VPS servindo chunk Lobby-B10TG0oj.js com HTTP 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-02T01:40:38.448Z",
+      "agent": "deepseek",
+      "summary": "Fix do erro \"duplicate key bracket_matches_cell_idx\" ao salvar o chaveamento (Copa Kraken). Causa: storeBracket persistia side.left e side.right com o mesmo round e o unique index (tournament_id, section, round, slot) estourava; buildBracket também não decodificava a convenção do ETL, então o lado voltava vazio. Correção: round carrega o lado ('left_qf'/'right_qf', 'grand_final') e a leitura decodifica. NENHUMA automação foi criada: a chave segue apenas visual e manual, jogos só pelo cronograma. Evidência: teste novo 1/1; suíte API 201/201; tsc 0; transação real no Postgres de prod (rollback, 5 linhas sem 23505, roundtrip ok; bracket_matches intacto com 22). Commit e6428a2 deployado na VPS (build app + up -d app realtime), /api 200. Pendente: usuário testar salvar o chaveamento.",
+      "touched": [
+        "api/src/lib/tournament-store.ts",
+        "api/src/lib/tournament-shape.ts",
+        "api/test/tournament-bracket.test.ts",
+        "scripts/migrate/transform-campeonatos.js"
+      ]
+    },
+    {
+      "at": "2026-10-07T04:00:55.908Z",
+      "agent": "deepseek",
+      "summary": "Duas correções no ar (commit 2dcf3d9, deploy VPS nginx+app): (1) aviso \"Unable to preventDefault inside passive event listener\" no zoom do chaveamento — onWheel do React (passivo) virou listener nativo {passive:false} em CampeonatoContext; (2) ícones de jogador lentos (raw.communitydragon.org ~19,5s por imagem) — trocados para ddragon com versão dinâmica (web/src/api/riot.ts via /api/riot/version; players.tsx aguarda; VagaSlot campeão ddragon/CDN; API match-shape via nova lib ddragon.ts; preconnect no index.html). Evidências: tsc web/api 0; suíte API 201/201; vite build ok; chunk live index-DvEu3Ekp.js contém ddragon+profileicon; container executou profileIconUrl(5889) → ddragon .../16.20.1/img/profileicon/5889.png; site e /api/health 200. Falta: usuário testar /jogadores e o scroll do chaveamento. Obs: npm do PowerShell local está quebrado (stub 0 bytes em System32) — usar node direto.",
+      "touched": [
+        "web/src/features/campeonatos/CampeonatoContext.tsx",
+        "web/src/api/riot.ts",
+        "web/src/pages/players.tsx",
+        "web/src/components/partidas/VagaSlot.tsx",
+        "web/index.html",
+        "api/src/lib/match-shape.ts",
+        "api/src/lib/ddragon.ts"
+      ]
+    },
+    {
+      "at": "2026-10-07T22:47:07.181Z",
+      "agent": "claude",
+      "summary": "Pesquisa somente-leitura (nenhum arquivo do projeto modificado): clonei o repo antigo github.com/lucasm7academy-cyber/Projeto-Site em temp/opencode/Projeto-Site e localizei a sala antiga time vs time com logo de cada time + imagem VS no meio. Arquivo: src/pages/SalaPage.tsx (componente CentralDisplay, bloco \"Logos time_vs_time — sobreposto no centro\" com /images/vs.png 15vmin entre logos de 17vmin, e seção \"TEAM HEADERS COM VS NO MEIO\"). Linha do tempo: criado 8ea7db9 (09/04/2026); VS aparece em 49dc723 (18/04); logos no centro em 2cc6c1b (18/04); imagem vs.png adicionada em 1414cb2 (18/04, também vs1/vs2 nunca usados); última versão = be43354 (25/04/2026, = 37d91f6^); removido em 37d91f6 (25/04/2026) quando substituído por SalaMod1.tsx. vs.png ainda existe no HEAD do repo antigo. Projeto atual (M7arenaSite) não contém vs.png nem o layout — SalaMod1.tsx tem CentralDisplay vazia.",
+      "touched": []
     }
   ]
 }

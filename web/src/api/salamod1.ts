@@ -88,9 +88,28 @@ export async function tickSala(salaId: number) {
     return normalizarResultado(api.matches.tick(salaId));
 }
 
+// ── DRAFT (ban/pick) ────────────────────────────────
+// O servidor valida o turno pelo PRAZO DO SERVIDOR (turn_deadline_at) e a
+// permissão (participante confirmado do time da vez). O cliente só pede.
+
+export async function banirCampeao(salaId: number, championId: string) {
+    return normalizarResultado(api.matches.draftBan(salaId, championId));
+}
+
+export async function pickarCampeao(salaId: number, championId: string) {
+    return normalizarResultado(api.matches.draftPick(salaId, championId));
+}
+
 /** Traduz os códigos de erro das RPCs para mensagens em português. */
 const ERROS_SALA: Record<string, string> = {
     nao_autenticado: 'Você precisa estar logado para fazer isso.',
+    // ── Draft (ban/pick) ──
+    draft_indisponivel: 'O draft desta sala não está mais ativo.',
+    fora_do_turno: 'Não é o turno do seu time.',
+    fase_invalida: 'A fase do draft mudou. Tente novamente.',
+    tempo_expirado: 'O tempo deste turno acabou.',
+    campeao_invalido: 'Campeão inválido.',
+    campeao_indisponivel: 'Esse campeão já foi banido ou escolhido.',
     sala_nao_encontrada: 'Sala não encontrada.',
     estado_invalido: 'A sala mudou de estado. Tente novamente.',
     vaga_ocupada: 'Essa vaga já foi preenchida.',

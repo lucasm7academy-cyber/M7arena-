@@ -265,6 +265,25 @@ export interface ApiLegacySala {
   revisao_desde?: string | null;
   prints_recebidos?: number;
   prints_necessarios?: number;
+  /** Draft (ban/pick) — presente entre `draft` e `iniciando_partida`. */
+  draft?: ApiLegacySalaDraft | null;
+}
+
+/**
+ * Estado do draft que a API entrega (snake_case do port). `turn_deadline_at` é
+ * o prazo do turno NO RELÓGIO DO SERVIDOR — o front deriva o tempo restante com
+ * `agoraServidor()` (clockSync), nunca com o relógio local.
+ */
+export interface ApiLegacySalaDraft {
+  blue_bans: (string | null)[];
+  blue_picks: (string | null)[];
+  red_bans: (string | null)[];
+  red_picks: (string | null)[];
+  current_turn: number;
+  current_phase: 'ban' | 'pick';
+  current_team: 'blue' | 'red';
+  turn_deadline_at: string | null;
+  status: 'ongoing' | 'finished';
 }
 
 export interface ApiLegacySalaJogador {
@@ -407,6 +426,10 @@ export interface ApiMatchesSdk {
   confirm: (id: number) => Promise<ApiSalaResultado>;
   recusar: (id: number) => Promise<ApiSalaResultado>;
   tick: (id: number) => Promise<ApiSalaResultado>;
+  /** Banir campeão no draft (turno do time no ban). */
+  draftBan: (id: number, championId: string) => Promise<ApiSalaResultado>;
+  /** Escolher campeão no draft (turno do time no pick). */
+  draftPick: (id: number, championId: string) => Promise<ApiSalaResultado>;
   start: (id: number) => Promise<ApiSalaResultado>;
   /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
   excluir: (id: number | string) => Promise<{ ok: boolean; id: string; salaNum: number }>;
@@ -871,6 +894,10 @@ export const api = {
     confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),
     recusar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/recusar`),
     tick: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/tick`),
+    draftBan: (id: number, championId: string) =>
+      api.post<ApiSalaResultado>(`/matches/${id}/draft/ban`, { championId }),
+    draftPick: (id: number, championId: string) =>
+      api.post<ApiSalaResultado>(`/matches/${id}/draft/pick`, { championId }),
     /** Exclui a sala (admin/proprietário) — devolve reservas pendentes e remove tudo. */
     excluir: (id: number | string) =>
       api.delete<{ ok: boolean; id: string; salaNum: number }>(`/matches/${id}`),
