@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-11T23:37:36.115Z",
+  "updatedAt": "2026-10-11T23:54:20.637Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1508,11 +1508,11 @@
       "area": "app",
       "name": "Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)",
       "status": "doing",
-      "notes": "Passos 3-6 + TELA v1 prontos e deployados (até 97e80b0): sala automática T-10/manual; vagas/PRONTO; sorteio→lado→pick order; draft Fearless por jogo → camp_jogo; live do streamer + 'assista ao vivo'; entrada pelo cronograma (Criar Sala / Sala da Série) e tela /campeonato/sala/:id no visual da sala normal. Smoke VPS 32/32; testes 248/248; web tsc+build ok. Aguardando teste do usuário para fechar.",
+      "notes": "Passos 3-6 + tela + sala LIVRE (ADR-086) deployados (1994e98): fluxo completo no campeonato e no livre (sem campeonato, qualquer um nas vagas, código do pool no fim do draft). Tela em tela cheia sem sidebar, top bar igual à sala normal, card de time na vaga; salas listadas em 'Salas abertas' no /jogar com rota por modo; botão 'Sala Time vs Time' no /jogar. Smoke VPS 38/38; suíte 249/249; web tsc+build ok. Aguardando teste do usuário.",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.381Z",
-      "updatedAt": "2026-10-11T23:37:36.055Z"
+      "updatedAt": "2026-10-11T23:54:20.637Z"
     },
     {
       "id": "app.sala.campeonato.definicao-lado",
@@ -2328,6 +2328,15 @@
       "decision": "A sala campeonato reusa matches (mode='campeonato') com vínculo à série (tournament_match_id/bracket_match_id + índices) e fases próprias no status (camp_vagas, camp_prontos, camp_lado, camp_draft, camp_jogo, camp_finalizada). Estado por jogo em campeonato_sala_estado (jogo corrente, PRONTO azul/vermelho, sorteio/chooser, lado e first/last escolhidos). match_drafts ganha coluna jogo com PK (match_id, jogo) para o draft por jogo; Fearless derivado dos picks anteriores. 1 sala ativa por série garantida na criação.",
       "rationale": "Reusar matches herda realtime/notify, chat e o shape das salas; as fases camp_* não colidem com as salas normais (nunca usam jogo>1). Tabelas dedicadas duplicariam o encanamento sem benefício.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-086",
+      "date": "2026-10-11T23:54:11.806Z",
+      "author": "deepseek",
+      "title": "Sala Time vs Time LIVRE + visual/rota da sala normal + Salas Abertas no /jogar",
+      "decision": "A sala de times deixa de ser exclusiva do campeonato: POST /api/matches/time-vs-time cria a sala LIVRE (mode time_vs_time_livre, sem série; qualquer usuário ocupa as vagas; PRONTO/lado/draft iguais; no fim do draft recebe código do pool e segue o ciclo normal da sala). Salas de times (campeonato e livre) aparecem em \"Salas Abertas\" no /jogar, abrem em tela cheia SEM sidebar e usam o visual da sala normal; o card de time (logo + nome + vaga/PRONTO) substitui o card de vaga; botão \"Sala Time vs Time\" no /jogar cria direto.",
+      "rationale": "Pedido do usuário (2026-10-12): usar o mesmo sistema das salas de times sem precisar de campeonato, com o visual da sala normal e aparecendo nas salas abertas.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2396,15 +2405,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-24T15:05:04.818Z",
-      "agent": "gemini",
-      "summary": "Seção Twitch 'Assista Agora' no Lobby condicionada para exibir apenas quando houver transmissão ativa (transmissoes.length > 0). useTransmissoesAtivas ganhou polling de 30s para atualizar automaticamente quando uma live for iniciada/finalizada. Build do Vite e container Nginx reconstruídos e validados na VPS com HTTP/2 200. Chunk servido confirmado no ar com !loadingLives && transmissoes.length > 0.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/hooks/useTransmissoesAtivas.ts"
-      ]
-    },
     {
       "at": "2026-09-24T15:09:54.668Z",
       "agent": "gemini",
@@ -2722,6 +2722,23 @@
         "web/src/App.tsx",
         "web/src/lib/api.ts",
         "web/src/components/campeonatos/ListaCronograma.tsx",
+        "scripts/smoke-vps-sala-campeonato.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-11T23:54:11.850Z",
+      "agent": "deepseek",
+      "summary": "Sala Time vs Time LIVRE + reforma visual/entrada (1994e98). Backend: criarSalaTimeVsTime (mode time_vs_time_livre; entrada sem validação de time), draft livre fecha com código do pool + iniciando_partida, listagem 'ativas' inclui fases camp_*, rota do draft aceita os dois modos (fix pós-smoke). Front: tela em tela cheia sem sidebar (LayoutWrapper), top bar idêntica à sala normal (estado/modo/placar/compartilhar), card de time no lugar do card de vaga; botão 'Sala Time vs Time' no /jogar; cards com nome/cor próprios e rota por modo. Evidências: smoke VPS 38/38 (campeonato + livre), suíte API 249/249, web tsc 0, vite build ok, deploy app+realtime+nginx. Próximo: usuário testa o visual e dirige ajustes.",
+      "touched": [
+        "api/src/lib/sala-campeonato.ts",
+        "api/src/lib/sala-campeonato-draft.ts",
+        "api/src/routes/matches.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/test/sala-campeonato.test.ts",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx",
+        "web/src/components/layout/LayoutWrapper.tsx",
+        "web/src/pages/Jogar.tsx",
+        "web/src/App.tsx",
         "scripts/smoke-vps-sala-campeonato.mjs"
       ]
     }

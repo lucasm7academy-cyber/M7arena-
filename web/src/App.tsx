@@ -250,6 +250,8 @@ export default function App() {
               <Route path="/1v1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/time_vs_time/:id" element={<RouteWithSuspense element={<SalaTimeVsTime />} />} />
               <Route path="/campeonato/sala/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
+              {/* Sala Time vs Time LIVRE: mesmo componente, sem campeonato (ADR-086). */}
+              <Route path="/sala-time/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
               <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
               <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>
