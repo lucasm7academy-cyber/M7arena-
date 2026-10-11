@@ -22,7 +22,7 @@ import { users, userSessions } from "../../../db/schema/identidade.js";
 import { matches, matchPlayers, matchCodes, matchDrafts } from "../../../db/schema/matches.js";
 import { roleSlotToSlot } from "./match-shape.js";
 import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./escrow.js";
-import { avaliarDraft, criarDraft } from "./draft-flow.js";
+import { avaliarDraft, criarDraft, temDraft } from "./draft/index.js";
 
 const TEMPO_CONFIRMACAO_MS = 75_000;
 const TEMPO_INICIO_MS = 90_000;
@@ -137,6 +137,29 @@ export async function atribuirCodigoPartida(tx: any, matchId: string, mode: stri
   return row.code;
 }
 
+/**
+ * Coloca a sala em `iniciando_partida` com o código atribuído. Dois caminhos
+ * chegam aqui: o draft FECHOU (5v5/time_vs_time) ou o modo NÃO TEM draft
+ * (1v1/ARAM — confirmou, pulou a fase). PRÉ-CONDIÇÃO: linha travada.
+ */
+async function iniciarPartidaComCodigo(tx: any, m: any, matchId: string) {
+  let codigo = m.codigoPartida;
+  if (!codigo || codigo === "") {
+    codigo = await atribuirCodigoPartida(tx, matchId, m.mode);
+  }
+  const agora = new Date();
+  await tx
+    .update(matches)
+    .set({
+      status: "iniciando_partida",
+      iniciandoPartidaAt: agora,
+      confirmacaoExpiresAt: null,
+      codigoPartida: codigo,
+      stateDeadlineAt: new Date(agora.getTime() + TEMPO_INICIO_MS),
+    })
+    .where(eq(matches.id, matchId));
+}
+
 // ── MÁQUINA DE ESTADOS ──────────────────────────────────────────────────────
 
 /**
@@ -199,23 +222,28 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           .where(eq(matches.id, matchId));
         avancou = true;
       } else if (total > 0 && confirmados >= total) {
-        // Todos confirmaram → abre o DRAFT (ban/pick). O código da partida só
-        // é atribuído quando o draft FECHA (entrando em `iniciando_partida`),
-        // como no fluxo antigo (acaoDraftFinalizado).
         await tx
           .update(matchPlayers)
           .set({ linked: true })
           .where(eq(matchPlayers.matchId, matchId));
-        await criarDraft(tx, matchId, m.mode);
-        await tx
-          .update(matches)
-          .set({
-            status: "draft",
-            confirmacaoExpiresAt: null,
-            iniciandoPartidaAt: null,
-            stateDeadlineAt: null,
-          })
-          .where(eq(matches.id, matchId));
+        if (temDraft(m.mode)) {
+          // Modo com draft (5v5/time_vs_time): abre o ban/pick. O código da
+          // partida só é atribuído quando o draft FECHA (iniciando_partida).
+          await criarDraft(tx, matchId, m.mode);
+          await tx
+            .update(matches)
+            .set({
+              status: "draft",
+              confirmacaoExpiresAt: null,
+              iniciandoPartidaAt: null,
+              stateDeadlineAt: null,
+            })
+            .where(eq(matches.id, matchId));
+        } else {
+          // Modo sem draft (1v1/ARAM, registry api/src/lib/draft): pula a fase
+          // e vai direto para `iniciando_partida` com o código.
+          await iniciarPartidaComCodigo(tx, m, matchId);
+        }
         avancou = true;
       } else if (new Date(m.confirmacaoExpiresAt).getTime() < Date.now()) {
         // Escrow: jogadores removidos pelo timeout de confirmação NÃO podem
@@ -270,21 +298,8 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           .where(eq(matches.id, matchId));
         avancou = true;
       } else if (d.finalizado) {
-        let codigo = m.codigoPartida;
-        if (!codigo || codigo === "") {
-          codigo = await atribuirCodigoPartida(tx, matchId, m.mode);
-        }
-        const agora = new Date();
-        await tx
-          .update(matches)
-          .set({
-            status: "iniciando_partida",
-            iniciandoPartidaAt: agora,
-            confirmacaoExpiresAt: null,
-            codigoPartida: codigo,
-            stateDeadlineAt: new Date(agora.getTime() + TEMPO_INICIO_MS),
-          })
-          .where(eq(matches.id, matchId));
+        // Draft fechou: atribui o código (se ainda não tem) e inicia a partida.
+        await iniciarPartidaComCodigo(tx, m, matchId);
         avancou = true;
       } else if (d.mudou) {
         avancou = true; // turno avançou por timeout; a linha já está no banco

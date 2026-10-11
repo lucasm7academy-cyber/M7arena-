@@ -1,0 +1,1160 @@
+// src/features/sala-time-vs-time/SalaTimeVsTime.tsx
+//
+// SALA TIME VS TIME — estrutura DEDICADA (cópia verbatim de SalaMod1.tsx).
+//
+// Esta é a base para a evolução da sala de TIME vs TIME (campeonatos etc.):
+// a partir daqui o design e o comportamento DESTA sala podem mudar sem tocar
+// em /5v5, /aram ou /1v1 (que continuam em pages/SalaMod1.tsx).
+// A rota /time_vs_time/:id já aponta para este componente (App.tsx).
+//
+// Regra do projeto (AGENTS.md §3.1): a cópia nasceu 1:1 — nenhum className ou
+// layout foi alterado. As mudanças de design vêm a pedido do usuário.
+import { useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { Copy, Check, AlertTriangle, LinkIcon, Loader, X, Trash2, Share2, Trophy, ArrowLeft, Swords, Gamepad2, Zap, Shield } from 'lucide-react';
+import { GiTwoCoins } from 'react-icons/gi';
+import toast from 'react-hot-toast';
+import { useSalaSimples } from '../../hooks/useSalaSimples';
+import { useSalaChat } from '../../hooks/useSalaChat';
+import { VagaSlot } from '../../components/partidas/VagaSlot';
+import { DraftRoom } from '../../components/draft/DraftRoom';
+import {
+    ModaisElegibilidade,
+    ModalLoginVitrine,
+    ModalVincularConta,
+} from '../../components/partidas/ModaisElegibilidade';
+import ChatDaSala from '../../components/partidas/ChatDaSala';
+import { ROLE_CONFIG, type Role, traduzirErroSala } from '../../api/salamod1';
+import { api } from '../../lib/api';
+import { lerSenhaSala, limparSenhaSala } from '../../lib/salaSenhaStore';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePerfil } from '../../contexts/PerfilContext';
+
+// ── Componentes visuais ─────────────────────────────
+// Borda cortada no padrão das vagas/cards de campeonato: wrapper com
+// clipPath (frame) + conteúdo interno com clipPath um pouco menor (fill).
+const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
+const CUT_INNER = 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)';
+const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
+const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
+
+function ArcaneIndicators() {
+    return (
+        <div className="absolute inset-0 rounded-full pointer-events-none z-10">
+            {[...Array(30)].map((_, i) => (
+                <div
+                    key={`tick-${i}`}
+                    className="absolute top-1/2 left-1/2 w-[1px] bg-white/5 origin-bottom"
+                    style={{
+                        transform: `translate(-50%, -50%) rotate(${i * 12}deg) translateY(-35vmin)`,
+                        height: i % 5 === 0 ? '2.5vmin' : '1.2vmin',
+                        backgroundColor: i % 5 === 0 ? 'rgba(255, 183, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    }}
+                />
+            ))}
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 100, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-[2vmin] rounded-full border border-dashed border-white/[0.03]" />
+            <motion.div animate={{ rotate: -360 }} transition={{ duration: 150, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-[5vmin] rounded-full border border-dotted border-[#FFB700]/[0.02]" />
+        </div>
+    );
+}
+
+function CentralDisplay() {
+    return (
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key="image-step"
+                    initial={{ scale: 0.2, opacity: 0, filter: 'blur(10px)' }}
+                    animate={{ scale: 0.85, opacity: 0.8, filter: 'blur(0px)' }}
+                    exit={{ scale: 1.1, opacity: 0, filter: 'blur(5px)' }}
+                    transition={{ duration: 1.5, ease: 'easeOut' }}
+                    className="absolute inset-0 flex items-center justify-center"
+                >
+                    <img
+                        src="https://static.wikia.nocookie.net/leagueoflegends/images/9/9c/Summoner%27s_Rift_LoL_Promo_01.png/revision/latest/scale-to-width-down/1000?cb=20220817091416"
+                        alt="Summoner's Rift" loading="lazy"
+                        className="w-[90%] h-[90%] object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                        referrerPolicy="no-referrer"
+                    />
+                </motion.div>
+            </AnimatePresence>
+            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,118,0.06))] bg-[length:100%_2px,3px_100%] z-20 opacity-20" />
+        </div>
+    );
+}
+
+// ── PÁGINA ──────────────────────────────────────────
+export default function SalaTimeVsTime() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const salaId = parseInt(id ?? '0', 10);
+    const { user } = useAuth();
+    const { perfil, refetch: refetchPerfil } = usePerfil();
+
+    const usuarioAtual = perfil ? {
+        ...perfil,
+        avatar: perfil.avatar,
+    } : {
+        id: user?.id || '',
+        nome: user?.email?.split('@')[0] || 'Visitante',
+        tag: '',
+        elo: 'Sem Elo',
+        avatar: undefined,
+    };
+
+    const {
+        mensagens: mensagensChat, naoLidas: naoLidasChat,
+        receber: receberChat, carregarHistorico: carregarHistoricoChat, marcarLidas: marcarLidasChat,
+    } = useSalaChat(salaId, usuarioAtual.id);
+
+    const {
+        sala, jogadores, loading, erro,
+        timer, timerDraft, codigoPartida,
+        mostrarMensagem,
+        erroElegibilidade, fecharErroElegibilidade, aceitarTermos, mostrarSaldoFaltante,
+        atualizar,
+        entrar, sair, confirmar, recusar,
+        banir, pickar,
+        enviarChat,
+    } = useSalaSimples(salaId, usuarioAtual, {
+        onChatMessage: receberChat,
+        onChatError: (codigo) => toast.error(traduzirErroSala(codigo)),
+        onReconnect: carregarHistoricoChat,
+    });
+
+    const [codigoCopiado, setCodigoCopiado] = useState(false);
+    const codigoCopiadoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [showAvisoRiotId, setShowAvisoRiotId] = useState(false);
+    const [showAvisoLogin, setShowAvisoLogin] = useState(false);
+    const [verificandoPartida, setVerificandoPartida] = useState(false);
+
+    const copiarCodigo = () => {
+        if (codigoPartida) {
+            navigator.clipboard.writeText(codigoPartida);
+            setCodigoCopiado(true);
+            if (codigoCopiadoTimeoutRef.current) clearTimeout(codigoCopiadoTimeoutRef.current);
+            codigoCopiadoTimeoutRef.current = setTimeout(() => setCodigoCopiado(false), 2000);
+        }
+    };
+
+    const [compartilhado, setCompartilhado] = useState(false);
+    const compartilhadoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // ── COMPARTILHAR SALA ─────────────────────────────
+    // Monta uma mensagem formatada convidando para a partida e copia para a
+    // área de transferência. 100% front — não depende do crawler de embeds.
+    const compartilharSala = () => {
+        if (!sala) return;
+
+        const nick = perfil?.riotId || perfil?.nome || 'Jogador';
+        const textoModo: Record<string, string> = {
+            '5v5': "5x5 Summoner's Rift",
+            'aram': 'ARAM Howling Abyss',
+            '1v1': '1v1 Howling Abyss',
+            'time_vs_time': 'Time vs Time Summoner\'s Rift',
+        };
+        const eloLinha = sala.elo_minimo ? `Mínimo: ${sala.elo_minimo}` : 'Free Elo';
+        const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} M7Coins` : 'Casual';
+        const link = `${window.location.origin}/${sala.modo}/${sala.id}`;
+
+        const mensagem =
+`🎮 ${nick} convida você para jogar ${textoModo[sala.modo] || 'uma partida'} personalizado
+🎯 ${eloLinha}
+👥 ${jogadores.length}/${sala.max_jogadores} vagas preenchidas
+💰 ${premio}
+👇 Entre aqui
+
+${link}`;
+
+        navigator.clipboard.writeText(mensagem);
+        setCompartilhado(true);
+        if (compartilhadoTimeoutRef.current) clearTimeout(compartilhadoTimeoutRef.current);
+        compartilhadoTimeoutRef.current = setTimeout(() => setCompartilhado(false), 2000);
+        toast.success('Mensagem de convite copiada!');
+    };
+
+
+    if (loading) {
+        return (
+            <div className="flex-1 bg-[#050505] flex flex-col items-center justify-center text-white relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1a1510_0%,#050505_100%)]" />
+                <motion.div 
+                    animate={{ rotate: 360 }} 
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    className="relative z-10 w-16 h-16 rounded-full border-2 border-[#FFB700]/20 border-t-[#FFB700] shadow-[0_0_20px_rgba(255,183,0,0.2)]" 
+                />
+                <p className="mt-6 text-[#FFB700] font-black uppercase tracking-[0.5em] text-[1.4vmin] animate-pulse">Invocando Sala...</p>
+            </div>
+        );
+    }
+
+    if (erro || !sala) {
+        return (
+            <div className="flex-1 bg-[#050505] flex flex-col items-center justify-center text-white p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[#050505]" />
+                <AlertTriangle className="w-16 h-16 text-red-500/20 mb-6 relative z-10" />
+                <p className="text-white/40 font-black mb-8 relative z-10 uppercase tracking-widest">{erro ?? 'Sala não encontrada'}</p>
+                <button onClick={() => navigate('/jogar')}
+                    className="relative z-10 px-[4vmin] py-[1.5vmin] rounded-full bg-white/5 border border-white/10 text-white font-black text-[1.4vmin] uppercase tracking-widest hover:bg-white/10 transition-all">
+                    Voltar às Salas
+                </button>
+            </div>
+        );
+    }
+
+    // Draft em andamento: a tela do draft SUBSTITUI a sala (mesmo desenho do
+    // site antigo, que renderizava o DraftRoom em tela cheia no estado
+    // 'travada'). O estado do draft vem do servidor; o timer é derivado do
+    // relógio do servidor pelo hook.
+    if (sala.estado === 'draft' && sala.draft) {
+        return (
+            <DraftRoom
+                draft={sala.draft}
+                jogadores={jogadores}
+                usuarioId={usuarioAtual.id}
+                timer={timerDraft}
+                onBanir={banir}
+                onPickar={pickar}
+            />
+        );
+    }
+
+    const isX1 = sala.modo === '1v1';
+    const roles: Role[] = isX1 ? ['MID'] : ['TOP', 'JG', 'MID', 'ADC', 'SUP'];
+    const timeA = jogadores.filter((j: any) => j.is_time_a);
+    const timeB = jogadores.filter((j: any) => !j.is_time_a);
+    const jogadorAtual = jogadores.find((j: any) => j.user_id === usuarioAtual.id);
+
+    // Chat da sala (ADR-040): disponível nos estados ativos para qualquer
+    // usuário logado (na vaga ou não). Enviar exige Riot vinculado (servidor).
+    // O histórico é disparado pelo mount do ChatDaSala + onReconnect do realtime.
+    const ESTADOS_CHAT = ['preenchendo', 'confirmacao', 'iniciando_partida', 'partida_iniciada', 'aguardando_revisao'];
+    const chatHabilitado = !!sala && ESTADOS_CHAT.includes(sala.estado) && !!user;
+
+    // Stats reais da partida (resultado_riot, da Riot) por PUUID ou Nome — as vagas da
+    // sala finalizada mostram campeão + KDA + CS cruzando por este mapa.
+    const statsPorPuuid = new Map<string, any>(
+        (sala?.resultado_riot?.participantes ?? []).map((p: any) => [p.puuid, p])
+    );
+    const statsPorNome = new Map<string, any>(
+        (sala?.resultado_riot?.participantes ?? []).map((p: any) => [p.nome?.toLowerCase()?.trim(), p])
+    );
+    const statsDoJogador = (j: any) => {
+        if (!j) return null;
+        let p = j?.puuid ? statsPorPuuid.get(j.puuid) : null;
+        if (!p && j?.nome) {
+            p = statsPorNome.get(j.nome.toLowerCase().trim());
+        }
+        if (!p) return null;
+        return {
+            campeao: p.campeao,
+            championId: p.champion_id,
+            kills: p.kills,
+            deaths: p.deaths,
+            assists: p.assists,
+            cs: p.cs,
+            venceu: !!p.venceu,
+        };
+    };
+
+    // Resultado da partida finalizada (header no topo da tela, sem o círculo).
+    const vencedorSala = sala?.vencedor; // 'A' | 'B' | 'empate' | null
+    const corVencedor = vencedorSala === 'A' ? '#3b82f6' : vencedorSala === 'B' ? '#ef4444' : '#fbbf24';
+    const nomeVencedor =
+        vencedorSala === 'A' ? (sala?.time_a_nome || 'Time Azul')
+        : vencedorSala === 'B' ? (sala?.time_b_nome || 'Time Vermelho')
+        : 'Empate';
+    const duracaoFinalizada = sala?.resultado_riot?.duracao_s
+        ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}:${String(Math.round(sala.resultado_riot.duracao_s % 60)).padStart(2, '0')}`
+        : null;
+    const placarFinalizada = sala?.resultado_riot?.placar;
+
+    // ── Salas apostadas (design v3 §11): cálculo financeiro, aviso antecipado, print e regras ──
+    const apostaPorJogador = Number(sala.aposta_mc ?? sala.mpoints ?? 0);
+    const ehApostada = apostaPorJogador > 0;
+    const numJogadores = isX1 ? 2 : (sala.max_jogadores || 10);
+    const poteBruto = ehApostada ? apostaPorJogador * numJogadores : 0;
+    const taxaPct = Number(sala.taxa_pct || 8.99);
+    const poteLiquido = ehApostada ? Math.round(poteBruto * (1 - taxaPct / 100)) : 0;
+    const numVencedores = isX1 ? 1 : 5;
+    const premioPorJogador = ehApostada && numVencedores > 0 ? Math.floor(poteLiquido / numVencedores) : 0;
+    const temRiotId = !!perfil?.riotId;
+    const jogadorConfirmado = !!jogadorAtual?.confirmado;
+
+    const usuarioParticipou = !!jogadorAtual;
+    const usuarioVenceu = jogadorAtual ? (
+        (jogadorAtual.is_time_a && vencedorSala === 'A') || (!jogadorAtual.is_time_a && vencedorSala === 'B')
+    ) : false;
+
+    // Intercepta o clique na vaga: visitante sem login, sem Riot ID ou sem MC
+    // (sala apostada) avisa ANTES de tentar entrar (design v3 §11) — o servidor
+    // continua sendo a fonte da verdade.
+    const handleEntrar = (role: string, isTimeA: boolean) => {
+        if (!user) {
+            setShowAvisoLogin(true);
+            return;
+        }
+        if (ehApostada && !temRiotId) {
+            setShowAvisoRiotId(true);
+            return;
+        }
+        if (ehApostada && (perfil?.saldo ?? 0) < apostaPorJogador) {
+            mostrarSaldoFaltante(apostaPorJogador - (perfil?.saldo ?? 0));
+            return;
+        }
+        // Senha de sala privada (MORPH-001): vem do store preenchido no lobby
+        // e é validada no SERVIDOR durante o join. Limpa após o uso.
+        const senha = lerSenhaSala(salaId);
+        limparSenhaSala(salaId);
+        entrar(role, isTimeA, senha || undefined);
+    };
+
+    // Acelerador do polling: dispara a verificação automática via Riot na hora.
+    // O servidor decide quem venceu e leva a sala para `encerrada`/`cancelada`.
+    const verificarPartidaAgora = async () => {
+        if (!salaId) return;
+        setVerificandoPartida(true);
+        try {
+            const r = await api.matches.verificar(Number(salaId));
+            if (r.estado === 'encerrada') {
+                toast.success(`Partida finalizada! ${r.vencedor === 'A' ? 'Time Azul' : 'Time Vermelho'} venceu.`);
+            } else if (r.estado === 'cancelada') {
+                toast.error('Partida cancelada — os nicks não conferiram ou o jogo não foi encontrado.');
+            } else {
+                toast('Partida ainda em andamento ou não encontrada. Verificação automática continua.');
+            }
+            await atualizar();
+        } catch (e: any) {
+            toast.error(traduzirErroSala(e?.message));
+        } finally {
+            setVerificandoPartida(false);
+        }
+    };
+
+    const aceitarTermosEAtualizar = async () => {
+        await aceitarTermos();
+        refetchPerfil(); // atualiza termosAceitos no contexto
+    };
+
+    const coresModo: Record<string, string> = {
+        '1v1': 'text-red-500', 
+        'aram': 'text-blue-400', 
+        '5v5': 'text-green-400',
+    };
+
+    // Rótulo amigável do estado da sala no top bar (antes mostrava o valor cru
+    // do banco: "preenchendo", "confirmacao"...).
+    const ESTADO_ROTULO: Record<string, string> = {
+        preenchendo: 'Aguardando Jogadores',
+        confirmacao: 'Confirmando Presença',
+        draft: 'Draft',
+        iniciando_partida: 'Iniciando Partida',
+        partida_iniciada: 'Em Jogo',
+        aguardando_revisao: 'Em Análise',
+        encerrada: 'Encerrada',
+        cancelada: 'Cancelada',
+    };
+    const estadoRotulo = ESTADO_ROTULO[sala.estado] ?? sala.estado.replace('_', ' ');
+
+    const hexCoresModo: Record<string, string> = {
+        '1v1': '#ef4444',
+        'aram': '#3b82f6',
+        '5v5': '#22c55e',
+    };
+    const corModoHeader = hexCoresModo[sala.modo] || '#FFB700';
+
+    // ── Exclusão administrativa (admin/proprietário) ──
+    // Cargo vem do PerfilContext (perfil.cargo: 'proprietario'|'admin'|...). A
+    // validação REAL roda no servidor (DELETE /api/matches/:id); aqui só
+    // escondemos o botão para quem não tem cargo.
+    const ehAdminOuProprietario = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
+
+    // Staff da sala (streamer/organizador/admin/proprietário) — pode ver o
+    // código da partida e disparar a verificação mesmo sem estar na vaga
+    // (auditoria). `perfil.cargo` vem do PerfilContext (rolesToCargo).
+    const CARGO_STAFF_SALA = ['proprietario', 'admin', 'organizador', 'streamer'];
+    const ehStaffSala = CARGO_STAFF_SALA.includes(perfil?.cargo ?? '');
+
+    const excluirSala = async () => {
+        if (!ehAdminOuProprietario) return;
+        const confirmou = window.confirm(
+            `Excluir a sala "${sala.nome}" permanentemente? As reservas dos jogadores serão devolvidas.`
+        );
+        if (!confirmou) return;
+        try {
+            await api.matches.excluir(salaId);
+            toast.success('Sala excluída.');
+            navigate('/jogar');
+        } catch (e: any) {
+            toast.error(traduzirErroSala(e?.message));
+        }
+    };
+
+    return (
+        <div className="flex-1 w-full min-h-screen md:min-h-0 bg-[#050505] flex flex-col items-center justify-start md:justify-between p-0 font-sans relative overflow-x-hidden md:overflow-hidden md:h-full text-white">
+
+            {/* Background Layer */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-[#050505]" />
+                <div className="absolute inset-0">
+                    <img src="/images/fundo_elite.jpg" alt="" className="w-full h-full object-cover object-center opacity-30" />
+                </div>
+
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+            </div>
+
+            <AnimatePresence>
+                {erro && (
+                    <motion.div initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }}
+                        className="absolute top-24 left-1/2 -translate-x-1/2 z-[100]">
+                        <div className="px-6 py-3 rounded-2xl bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-100 text-[1.4vmin] font-black uppercase tracking-widest shadow-2xl">
+                            {erro}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            {/* ── TOP BAR / HEADER DE CONTROLE (v3 §11) ───────────────── */}
+            <motion.div 
+                initial={{ opacity: 0, y: -15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-20 w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
+                style={{ clipPath: CUT_FRAME }}
+            >
+                {/* Left Side: Exit Button, Mode Icon & Title */}
+                <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
+                    <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.94 }}
+                        onClick={() => navigate('/jogar')} 
+                        className="group relative p-[1px] bg-white/15 hover:bg-red-500/50 transition-colors shrink-0 shadow-lg cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                        title="Sair da sala"
+                    >
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0A0A0A] hover:bg-red-950/40 flex items-center justify-center text-white/70 hover:text-red-400 transition-colors"
+                            style={{ clipPath: CUT_BUTTON_INNER }}>
+                            <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin] transition-transform group-hover:-translate-x-0.5" />
+                        </div>
+                    </motion.button>
+
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="relative p-[1px] bg-white/15 shrink-0" style={{ clipPath: CUT_BUTTON }}>
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0d0d10] flex items-center justify-center text-[#FFB700] shadow-inner"
+                                style={{ clipPath: CUT_BUTTON_INNER }}>
+                                {sala.modo === '1v1' ? (
+                                    <Swords className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                ) : sala.modo === '5v5' ? (
+                                    <Gamepad2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                ) : sala.modo === 'aram' ? (
+                                    <Zap className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                ) : (
+                                    <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-[2vmin] md:h-[2vmin]" />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                            <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                                {sala.nome}
+                            </h1>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <div className="p-[1px] bg-[#FFB700]/30" style={{ clipPath: CUT_BADGE }}>
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono block"
+                                        style={{ clipPath: CUT_BADGE_INNER }}>
+                                        #{String(sala.id).padStart(6, '0')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Side: Status Cards & Actions */}
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.5vmin] z-10 flex-wrap sm:flex-nowrap">
+                    {/* Card Estado */}
+                    <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                            <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                Estado
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <span className={`w-1.5 h-1.5 shrink-0 ${
+                                    sala.estado === 'encerrada' ? 'bg-purple-400' :
+                                    sala.estado === 'aguardando_revisao' ? 'bg-indigo-400 animate-pulse' :
+                                    sala.estado === 'partida_iniciada' ? 'bg-cyan-400 animate-pulse' :
+                                    sala.estado === 'confirmacao' ? 'bg-amber-400 animate-ping' :
+                                    sala.estado === 'cancelada' ? 'bg-red-400' :
+                                    'bg-emerald-400 animate-pulse'
+                                }`} />
+                                <span className="text-xs md:text-[1.35vmin] font-black text-white uppercase tracking-wider leading-none">
+                                    {estadoRotulo}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card Modo */}
+                    <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                            <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                Modo
+                            </span>
+                            <span className={`text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none ${coresModo[sala.modo] || 'text-white'}`}>
+                                {sala.modo.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Card Aposta / Pote */}
+                    <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                        <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                            <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                {ehApostada ? 'Aposta / Pote' : 'Modalidade'}
+                            </span>
+                            <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
+                                {ehApostada ? (
+                                    <>
+                                        <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
+                                        <span className="text-[#FFB700]">{apostaPorJogador} MC</span>
+                                        <span className="text-white/35 text-[9.5px] md:text-[1.05vmin]">• Pote {poteBruto} MC</span>
+                                    </>
+                                ) : (
+                                    <span className="text-emerald-400 flex items-center gap-1">
+                                        <Shield className="w-3 h-3 text-emerald-400" /> Casual
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons: Compartilhar & Excluir */}
+                    <div className="flex items-center gap-2 pl-1 sm:pl-2 border-l border-white/[0.08]">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.94 }}
+                            onClick={compartilharSala}
+                            className="relative p-[1px] bg-[#FFB700]/30 hover:bg-[#FFB700]/60 transition-colors shrink-0 shadow-[0_0_15px_rgba(255,183,0,0.15)] cursor-pointer"
+                            style={{ clipPath: CUT_BUTTON }}
+                            title="Compartilhar sala"
+                        >
+                            <div className="h-8 sm:h-9 md:h-[4.4vmin] px-3 sm:px-3.5 md:px-[1.6vmin] bg-[#120e03] hover:bg-[#1a1405] flex items-center justify-center gap-1.5 text-[#FFB700] transition-colors"
+                                style={{ clipPath: CUT_BUTTON_INNER }}>
+                                {compartilhado ? (
+                                    <>
+                                        <Check className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-emerald-400" />
+                                        <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider text-emerald-400 hidden sm:inline">Copiado!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Share2 className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                                        <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">Convidar</span>
+                                    </>
+                                )}
+                            </div>
+                        </motion.button>
+
+                        {ehAdminOuProprietario && (
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.94 }}
+                                onClick={excluirSala}
+                                className="relative p-[1px] bg-red-500/30 hover:bg-red-500/60 transition-colors shrink-0 cursor-pointer"
+                                style={{ clipPath: CUT_BUTTON }}
+                                title="Excluir sala permanentemente"
+                            >
+                                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#140507] hover:bg-[#20080a] flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
+                                    style={{ clipPath: CUT_BUTTON_INNER }}>
+                                    <Trash2 className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                                </div>
+                            </motion.button>
+                        )}
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* AVISO ANTECIPADO DE RIOT ID (salas apostadas, design v3 §11) */}
+            {ehApostada && !temRiotId && (
+                <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                    className="absolute top-[13vh] left-1/2 -translate-x-1/2 z-[45] w-[min(600px,92vw)]">
+                    <div className="px-4 py-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 backdrop-blur-md flex items-center gap-3 shadow-2xl">
+                        <LinkIcon className="w-4 h-4 text-blue-400 shrink-0" />
+                        <p className="flex-1 text-blue-100 text-xs md:text-[1.4vmin] font-black uppercase tracking-wider">
+                            Vincule seu Riot ID para jogar valendo MC
+                        </p>
+                        <button onClick={() => navigate('/vincular')}
+                            className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs md:text-[1.2vmin] font-black uppercase tracking-widest hover:bg-blue-500/30 transition-all">
+                            Vincular
+                        </button>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* MAIN CENTRAL AREA */}
+            <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
+
+                {/* HEADER DE RESULTADO — estilo Liga RK: Section Titlebar com fonte Anton + Update Strip */}
+                {sala.estado === 'encerrada' && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="w-full flex flex-col items-center mb-4 md:mb-[2.5vmin] z-20 px-3 md:px-0"
+                    >
+                        {/* Section Titlebar */}
+                        <div
+                            className="w-full max-w-[min(94vw,760px)] grid grid-cols-[3.2rem_1fr_3.2rem] sm:grid-cols-[5rem_1fr_5rem] md:grid-cols-[6.5rem_1fr_6.5rem] items-center gap-2 sm:gap-4 min-h-[3.6rem] sm:min-h-[4.8rem] md:min-h-[5.4rem] px-3 sm:px-6 py-2 border shadow-2xl relative overflow-hidden"
+                            style={{
+                                background: `linear-gradient(90deg, #0c0814 0%, color-mix(in srgb, ${corVencedor} 40%, #0c0814) 45%, ${corVencedor} 88%, #ffffff 100%)`,
+                                borderColor: `color-mix(in srgb, ${corVencedor} 55%, rgba(255,255,255,0.2))`,
+                                boxShadow: `0 0 45px -10px ${corVencedor}55, inset 0 1px 0 rgba(255,255,255,0.25)`
+                            }}
+                        >
+                            <img
+                                src="/images/cropped-cropped-LOGO-M7-PNG-1 (4).png"
+                                alt="M7"
+                                className="w-8 h-8 sm:w-11 sm:h-11 md:w-13 md:h-13 object-contain justify-self-center brightness-110 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                            />
+                            <h2
+                                className="m-0 text-center uppercase tracking-tight font-normal text-white text-[1.85rem] sm:text-[2.8rem] md:text-[3.6rem] leading-[0.95] select-none truncate sm:overflow-visible"
+                                style={{
+                                    fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                                    textShadow: '0 2px 12px rgba(0,0,0,0.65), 0 0 20px rgba(0,0,0,0.4)',
+                                    color: '#f4f4f2'
+                                }}
+                            >
+                                PARTIDA FINALIZADA
+                            </h2>
+                            <img
+                                src="/images/cropped-cropped-LOGO-M7-PNG-1 (4).png"
+                                alt="M7"
+                                className="w-8 h-8 sm:w-11 sm:h-11 md:w-13 md:h-13 object-contain justify-self-center brightness-110 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                            />
+                        </div>
+
+                        {/* Update Strip (Sub-barra informativa no estilo Liga RK) */}
+                        <div
+                            className="w-max max-w-[94vw] -mt-2 sm:-mt-2.5 mx-auto px-4 sm:px-6 py-1 sm:py-1.5 border flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-center text-xs sm:text-sm md:text-[1.35rem] uppercase tracking-wider select-none z-10"
+                            style={{
+                                background: 'rgba(8, 8, 10, 0.92)',
+                                backdropFilter: 'blur(12px)',
+                                borderColor: `color-mix(in srgb, ${corVencedor} 45%, rgba(255,255,255,0.15))`,
+                                fontFamily: '"Anton", "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif',
+                                color: '#cfcfcb',
+                                boxShadow: '0 8px 25px rgba(0,0,0,0.7)'
+                            }}
+                        >
+                            <span className="font-normal flex items-center gap-1.5" style={{ color: corVencedor }}>
+                                <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" style={{ color: corVencedor }} />
+                                <span>
+                                    {vencedorSala === 'empate' ? 'EMPATE' : `${nomeVencedor} VENCEU${sala.modo === '1v1' && sala.vitoria_motivo ? ` (${sala.vitoria_motivo === 'first_blood' ? 'FIRST BLOOD' : '100 DE FARM'})` : ''}`}
+                                </span>
+                            </span>
+
+                            {placarFinalizada && (
+                                <span className="flex items-center gap-1.5 text-white/90 pl-2 sm:pl-3 border-l border-white/15">
+                                    <span className="text-blue-400">BLUE {placarFinalizada.blue.kills}</span>
+                                    <span className="text-white/40">×</span>
+                                    <span className="text-red-400">{placarFinalizada.red.kills} RED</span>
+                                </span>
+                            )}
+
+                            {duracaoFinalizada && (
+                                <span className="text-white/70 pl-2 sm:pl-3 border-l border-white/15">
+                                    {duracaoFinalizada}
+                                </span>
+                            )}
+
+                            {ehApostada && (
+                                <span className="text-[#FFB700] pl-2 sm:pl-3 border-l border-white/15 flex items-center gap-1">
+                                    <GiTwoCoins className="w-3.5 h-3.5" /> POTE {poteBruto} MC (+{premioPorJogador} MC)
+                                </span>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* SIDE GRID SECTION — mobile: empilhado vertical (time A →
+                    hub → time B); desktop: times nas laterais do hub central */}
+                <div className={`w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-0 py-2 md:py-0 ${
+                    sala.estado === 'encerrada'
+                        ? 'md:gap-[8vmin]'
+                        : isX1
+                            ? 'md:gap-[74vmin]'
+                            : 'md:gap-[70vmin]'
+                }`}>
+                    {/* BLUE SIDE — oculto apenas em aguardando_revisao (o card
+                        central mostra o lineup). Na encerrada o título Blue-Side
+                        some (só o resultado do header), mas o lineup de vagas fica. */}
+                    {sala.estado !== 'aguardando_revisao' && (
+                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
+                        {sala.estado !== 'encerrada' && (
+                        <div
+                            className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
+                            style={{
+                                backgroundColor: '#3B82F6',
+                                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                            }}
+                        >
+                            <div
+                                className="bg-[#050505] px-5 py-1"
+                                style={{
+                                    clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
+                                }}
+                            >
+                                <span className="block text-xs md:text-[1.4vmin] font-black text-[#3B82F6] uppercase tracking-[0.4em]">Blue-Side</span>
+                            </div>
+                        </div>
+                        )}
+                        <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
+                            {roles.map((role) => {
+                                const jogador = timeA.find((j: any) => j.role === role);
+                                const isAtual = jogador?.user_id === usuarioAtual.id;
+                                const avatar = isAtual ? perfil?.avatar : jogador?.avatar;
+                                const isVip = jogador?.isVip ?? false;
+                                return (
+                                    <VagaSlot key={`A-${role}`} ocupada={!!jogador}
+                                        nome={jogador?.nome} tag={jogador?.tag} icone={avatar}
+                                        isTimeA={true} role={role as any} isConfirmado={jogador?.confirmado}
+                                        aoEntrar={() => handleEntrar(role, true)}
+                                        aoSair={isAtual ? sair : undefined}
+                                        roleIconImg={ROLE_CONFIG[role].img}
+                                        vipTier={isVip ? 'vip' : 'free'}
+                                        stats={statsDoJogador(jogador)}
+                                        isFinalizada={sala.estado === 'encerrada'}
+                                        apostaMC={apostaPorJogador}
+                                        premioMC={premioPorJogador}
+                                        timeVencedor={vencedorSala}
+                                    />
+                                );
+                            })}
+                        </div>
+                    </div>
+                    )}
+
+                    {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o header
+                        de resultado no topo + lados blue/red mostram tudo) e no
+                        estado "Em análise" (o card quadrado central mostra o lineup).
+                        Desktop (md+): absoluto, no centro geométrico do MAIN entre os
+                        dois times. Mobile: entra no fluxo vertical — vagas do time A →
+                        hub → vagas do time B. */}
+                    {sala.estado !== 'encerrada' && sala.estado !== 'aguardando_revisao' && (
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
+                        {/* Outer rings */}
+                        <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
+                        <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
+
+                        {/* Main Hub Body */}
+                        <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
+                            <ArcaneIndicators />
+                            <CentralDisplay />
+
+                            {/* PARTIDA INICIADA — prompt de envio do resultado no
+                                display (fala com quem ainda não voltou da partida) */}
+                            {sala.estado === 'partida_iniciada' && (
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none">
+                                    <div
+                                        className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
+                                        <span className="text-xl md:text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
+                                            Finalizou a partida?
+                                        </span>
+                                        <span className="text-xs md:text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
+                                            Envie os resultados no botão abaixo
+                                        </span>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* HUB HUD Overlay */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
+                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[14%] md:top-[12vmin]' : 'top-8 md:top-10'}`}>
+                                    <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-1 md:mb-2" />
+                                    {ehApostada ? (
+                                        <span className="text-xs md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.4em] md:tracking-[0.5em]">
+                                            Partida Valendo!
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
+                                    )}
+                                </div>
+                                <div className="absolute bottom-8 md:bottom-10 flex flex-col items-center">
+                                    {ehApostada ? (
+                                        <>
+                                            <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                                <GiTwoCoins className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                            </span>
+                                            <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-0.5 md:mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                                                Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
+                                            </span>
+                                            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-1 md:mt-2" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
+                                            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    )}
+
+
+                    {/* RED SIDE — oculto apenas em aguardando_revisao (o card
+                        central mostra o lineup). Na encerrada o título Red-Side
+                        some (só o resultado do header), mas o lineup de vagas fica. */}
+                    {sala.estado !== 'aguardando_revisao' && (
+                    <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0">
+                        {sala.estado !== 'encerrada' && (
+                        <div
+                            className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
+                            style={{
+                                backgroundColor: '#ef4444',
+                                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+                            }}
+                        >
+                            <div
+                                className="bg-[#050505] px-5 py-1"
+                                style={{
+                                    clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)',
+                                }}
+                            >
+                                <span className="block text-xs md:text-[1.4vmin] font-black text-[#ef4444] uppercase tracking-[0.4em]">Red-Side</span>
+                            </div>
+                        </div>
+                        )}
+                        <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
+                            {roles.map((role) => {
+                                const jogador = timeB.find((j: any) => j.role === role);
+                                const isAtual = jogador?.user_id === usuarioAtual.id;
+                                const avatar = isAtual ? perfil?.avatar : jogador?.avatar;
+                                const isVip = jogador?.isVip ?? false;
+                                return (
+                                    <VagaSlot key={`B-${role}`} ocupada={!!jogador}
+                                        nome={jogador?.nome} tag={jogador?.tag} icone={avatar}
+                                        isTimeA={false} role={role as any} isConfirmado={jogador?.confirmado}
+                                        aoEntrar={() => handleEntrar(role, false)}
+                                        aoSair={isAtual ? sair : undefined}
+                                        roleIconImg={ROLE_CONFIG[role].img}
+                                        vipTier={isVip ? 'vip' : 'free'}
+                                        stats={statsDoJogador(jogador)}
+                                        isFinalizada={sala.estado === 'encerrada'}
+                                        apostaMC={apostaPorJogador}
+                                        premioMC={premioPorJogador}
+                                        timeVencedor={vencedorSala}
+                                    />
+                                );
+                            })}
+                        </div>
+                    </div>
+                    )}
+                </div>
+
+                {/* OVERLAYS (CONFIRMATION / VOTING/ ETC IN THE MIDDLE) */}
+
+                <AnimatePresence>
+                    {/* CONFIRMAÇÃO */}
+                    {sala.estado === 'confirmacao' && (
+                        <motion.div 
+                            key="overlay-confirmacao"
+                            initial={{ opacity: 0, scale: 1.1 }} 
+                            animate={{ opacity: 1, scale: 1 }} 
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 md:p-[5vmin] border border-[#FFB700]/20"
+                        >
+                            <motion.span 
+                                initial={{ y: 20, opacity: 0 }} 
+                                animate={{ y: 0, opacity: 1 }}
+                                className="text-6xl md:text-[15vmin] font-black text-white tabular-nums leading-none drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                            >
+                                {timer ?? 0}
+                            </motion.span>
+                            <motion.div 
+                                initial={{ y: 20, opacity: 0 }} 
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="flex flex-col items-center gap-2 md:gap-4 mt-2 md:mt-4"
+                            >
+                                <span className="text-xs md:text-[1.8vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] md:tracking-[1em]">CONFIRME AGORA</span>
+                                <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/50 uppercase tracking-[0.2em] text-center max-w-[280px] md:max-w-[40vmin]">
+                                    Confiram os nicks — quem jogar no lugar do dono da vaga cancela a partida
+                                </span>
+                                <div className="w-24 md:w-[12vmin] h-[4px] bg-white/10 rounded-full overflow-hidden">
+                                    <motion.div 
+                                        className="h-full bg-[#FFB700]" 
+                                        initial={{ width: '100%' }}
+                                        animate={{ width: `${Math.min(100, (timer / 60) * 100)}%` }}
+                                        transition={{ duration: 1, ease: 'linear' }}
+                                    />
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+
+                    {/* PARTIDA CONFIRMADA */}
+                    {sala.estado === 'iniciando_partida' && jogadorAtual && (
+                        <motion.div 
+                            key="overlay-partida-confirmada"
+                            initial={{ opacity: 0, filter: 'blur(10px)' }} 
+                            animate={{ opacity: 1, filter: 'blur(0px)' }}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full overflow-hidden bg-black/70 backdrop-blur-md z-[60] flex flex-col items-center justify-center border border-[#FFB700]/20"
+                        >
+                            {/* Tutorial de como colar o código — dentro do display, sem textos */}
+                            <motion.img
+                                initial={{ scale: 0.85, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.6 }}
+                                src="/images/tutorial-codigo.webp"
+                                alt="Como entrar na partida personalizada"
+                                className="w-[85%] h-[85%] object-contain rounded-full select-none pointer-events-none drop-shadow-[0_0_30px_rgba(255,183,0,0.35)]"
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* MENSAGEM DE TIMEOUT/ERRO */}
+                    {mostrarMensagem && (
+                        <motion.div
+                            key="overlay-mensagem"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.08 }}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col items-center justify-center"
+                        >
+                            <div className="w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-red-600 border-2 border-red-400 flex flex-col items-center justify-center p-4 md:p-[5vmin] shadow-[0_0_60px_rgba(239,68,68,0.4)]">
+                                <div className="text-6xl md:text-[12vmin] font-black text-white mb-2 md:mb-[2vmin]">
+                                    ✕
+                                </div>
+                                <p className="text-xs md:text-[2vmin] font-black text-white uppercase tracking-[0.2em] text-center max-w-[260px] md:max-w-[40vmin]">
+                                    {mostrarMensagem.texto}
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* ESTADO PÓS-PRINT (LEGADO) — nenhuma sala nova entra em
+                    aguardando_revisao desde a verificação automática via Riot
+                    (Tasks 3-10). Se uma sala antiga em voo ainda estiver nesse
+                    estado, mostra um card simples em vez do fluxo de print. */}
+                {sala.estado === 'aguardando_revisao' && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[65]"
+                    >
+                        <div className="bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center">
+                            <p className="text-white/60 text-xs uppercase tracking-widest font-bold">
+                                Partida em análise — aguarde o admin
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* PARTIDA FINALIZADA — o resultado fica direto na tela: lados
+                    blue/red visíveis com campeão + KDA + CS e o hub central
+                    mostrando vencedor + placar + duração (ResultadoDisplay). */}
+            </div>
+
+            {/* ACTION FOOTER */}
+            <div className="w-full min-h-[80px] md:h-[15vh] flex flex-col items-center justify-center z-[70] pt-4 pb-8 md:pb-[5vh] pointer-events-none shrink-0">
+                <AnimatePresence>
+                    {/* ✅ BOTÃO DE CONFIRMAR - Aparece apenas se NÃO confirmou ainda */}
+                    {sala.estado === 'confirmacao' && jogadorAtual && !jogadorAtual.confirmado && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
+                            className="flex items-center gap-3 md:gap-[2vmin]">
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={confirmar}
+                                className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
+                                style={{ clipPath: CUT_FRAME }}
+                            >
+                                <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 transition-colors relative z-10"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    Confirmar Presença
+                                </span>
+                            </motion.button>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={recusar}
+                                className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors"
+                                style={{ clipPath: CUT_FRAME }}
+                            >
+                                <span className="block bg-red-500 px-6 py-3.5 md:px-[6vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-sm md:text-[1.4vmin] text-white hover:bg-red-600 transition-colors relative z-10"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    Recusar
+                                </span>
+                            </motion.button>
+                        </motion.div>
+                    )}
+
+                    {/* ✅ ESTADO CONFIRMADO - Mostra após usuário confirmar */}
+                    {sala.estado === 'confirmacao' && jogadorAtual && jogadorAtual.confirmado && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
+                            <motion.div
+                                className="pointer-events-auto relative p-[1.5px] bg-black"
+                                style={{ clipPath: CUT_FRAME }}
+                            >
+                                <span className="block bg-green-500 px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black flex items-center gap-2 md:gap-[1.5vmin]"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    <Check className="w-5 h-5 md:w-[2.5vmin] md:h-[2.5vmin]" />
+                                    Confirmado
+                                </span>
+                            </motion.div>
+                        </motion.div>
+                    )}
+
+                    {/* PARTIDA CONFIRMADA — copiar código (mesmo lugar dos botões
+                        de confirmar presença / enviar print) */}
+                    {sala.estado === 'iniciando_partida' && codigoPartida && (jogadorAtual || ehStaffSala) && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
+                            className="flex flex-col items-center gap-2 md:gap-[1.5vmin]">
+                            <p className="text-xs md:text-[1.4vmin] font-black text-white uppercase tracking-[0.4em] md:tracking-[0.5em]">Prepare-se para a batalha</p>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={copiarCodigo}
+                                className="pointer-events-auto relative p-[1.5px] bg-black"
+                                style={{ clipPath: CUT_FRAME }}
+                            >
+                                <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.5vmin] transition-colors"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    {codigoCopiado ? (
+                                        <Check className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                                    ) : (
+                                        <Copy className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                                    )}
+                                    {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
+                                </span>
+                            </motion.button>
+                        </motion.div>
+                    )}
+
+                    {/* PARTIDA INICIADA — verificação automática via Riot (acelerador
+                        do polling) substitui o envio de print nesta etapa; o print
+                        existe só na contestação em ResultadoPartida */}
+                    {sala.estado === 'partida_iniciada' && (jogadorAtual || ehStaffSala) && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={verificarPartidaAgora}
+                                disabled={verificandoPartida}
+                                className="pointer-events-auto relative p-[1.5px] bg-black disabled:opacity-50"
+                                style={{ clipPath: CUT_FRAME }}
+                            >
+                                <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.5vmin] transition-colors"
+                                    style={{ clipPath: CUT_INNER }}>
+                                    {verificandoPartida ? <Loader className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin] animate-spin" /> : <Check className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />}
+                                    {verificandoPartida ? 'Verificando...' : 'Verificar Partida'}
+                                </span>
+                            </motion.button>
+                        </motion.div>
+                    )}
+
+                    {/* PARTIDA FINALIZADA — status financeiro pessoal e botões de ação */}
+                    {sala.estado === 'encerrada' && (
+                        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
+                            className="flex flex-col items-center gap-3 md:gap-[1.5vmin] z-30 w-full px-3 md:px-0">
+                            {ehApostada && usuarioParticipou && (
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className={`px-4 py-2 md:px-[3.5vmin] md:py-[1vmin] rounded-full border backdrop-blur-md flex items-center gap-2 md:gap-[1vmin] text-center ${
+                                        usuarioVenceu 
+                                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
+                                            : 'bg-white/5 border-white/10 text-white/60'
+                                    }`}>
+                                    {usuarioVenceu ? (
+                                        <>
+                                            <GiTwoCoins className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
+                                            <span className="text-xs md:text-[1.3vmin] font-black uppercase tracking-wider">
+                                                Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} MC</strong> nesta partida!
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-[11px] md:text-[1.2vmin] font-bold uppercase tracking-wider text-white/50">
+                                            Partida finalizada • Débito da entrada: -{apostaPorJogador} MC
+                                        </span>
+                                    )}
+                                </motion.div>
+                            )}
+
+                            <div className="flex flex-wrap items-center justify-center gap-3 md:gap-[2vmin] w-full max-w-[440px]">
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => navigate('/jogar')}
+                                    className="pointer-events-auto relative p-[1.5px] bg-black hover:bg-black transition-colors flex-1 sm:flex-initial"
+                                    style={{ clipPath: CUT_FRAME }}
+                                >
+                                    <span className="block bg-[#FFB700] px-8 py-3.5 md:px-[7vmin] md:py-[1.8vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-sm md:text-[1.4vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1vmin] transition-colors shadow-[0_0_25px_rgba(255,183,0,0.35)]"
+                                        style={{ clipPath: CUT_INNER }}>
+                                        Voltar ao Lobby
+                                    </span>
+                                </motion.button>
+
+                                {ehApostada && (
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => navigate('/perfil')}
+                                        className="pointer-events-auto relative p-[1.5px] bg-white/20 hover:bg-white/40 transition-colors flex-1 sm:flex-initial"
+                                        style={{ clipPath: CUT_FRAME }}
+                                    >
+                                        <span className="block bg-[#0A0A0A] px-6 py-3.5 md:px-[4vmin] md:py-[1.8vmin] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs sm:text-sm md:text-[1.3vmin] text-white hover:text-[#FFB700] flex items-center justify-center gap-2 md:gap-[1vmin] transition-colors"
+                                            style={{ clipPath: CUT_INNER }}>
+                                            <GiTwoCoins className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-[#FFB700]" />
+                                            Minha Carteira
+                                        </span>
+                                    </motion.button>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+            </div>
+
+            {/* MODAIS DE ELEGIBILIDADE (saldo, outra sala, Riot ID, termos, suspensão) */}
+            <ModaisElegibilidade
+                erro={erroElegibilidade}
+                onClose={fecharErroElegibilidade}
+                onAceitarTermos={aceitarTermosEAtualizar}
+            />
+
+            {/* AVISO ANTECIPADO DE RIOT ID AO CLICAR NA VAGA */}
+            <AnimatePresence>
+                {showAvisoRiotId && (
+                    <ModalVincularConta
+                        onClose={() => setShowAvisoRiotId(false)}
+                        motivo="Esta sala vale MC. Vincule seu Riot ID (Nick #TAG) para jogar — é ele que valida sua elegibilidade e amarra o resultado oficial ao seu perfil."
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* AVISO DE LOGIN AO CLICAR NA VAGA SEM ESTAR LOGADO */}
+            <AnimatePresence>
+                {showAvisoLogin && (
+                    <ModalLoginVitrine onClose={() => setShowAvisoLogin(false)} />
+                )}
+            </AnimatePresence>
+
+            {/* CHAT DA SALA (ADR-040) — widget flutuante no canto inferior
+                esquerdo, só em estados ativos e para usuários logados. */}
+            {chatHabilitado && (
+                <ChatDaSala
+                    mensagens={mensagensChat}
+                    naoLidas={naoLidasChat}
+                    onMarcarLidas={marcarLidasChat}
+                    enviarChat={enviarChat}
+                    carregarHistorico={carregarHistoricoChat}
+                />
+            )}
+
+            {/* Edge Fog */}
+            <div className="absolute inset-y-0 left-0 w-[15vw] bg-gradient-to-r from-black via-black/40 to-transparent z-[5] pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-[15vw] bg-gradient-to-l from-black via-black/40 to-transparent z-[5] pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 h-[30vh] bg-gradient-to-t from-black via-black/40 to-transparent z-[5] pointer-events-none" />
+        </div>
+    );
+}

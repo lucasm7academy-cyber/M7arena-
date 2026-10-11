@@ -272,7 +272,8 @@ export interface ApiLegacySala {
 /**
  * Estado do draft que a API entrega (snake_case do port). `turn_deadline_at` é
  * o prazo do turno NO RELÓGIO DO SERVIDOR — o front deriva o tempo restante com
- * `agoraServidor()` (clockSync), nunca com o relógio local.
+ * `agoraServidor()` (clockSync), nunca com o relógio local. `regras` é o
+ * subconjunto de apresentação do registry por modo (api/src/lib/draft/).
  */
 export interface ApiLegacySalaDraft {
   blue_bans: (string | null)[];
@@ -284,6 +285,13 @@ export interface ApiLegacySalaDraft {
   current_team: 'blue' | 'red';
   turn_deadline_at: string | null;
   status: 'ongoing' | 'finished';
+  duracao_turno_ms: number;
+  regras: {
+    max_bans_por_lado: number;
+    max_picks_por_lado: number;
+    esconder_picks_adversario: boolean;
+    role_controladora: string;
+  };
 }
 
 export interface ApiLegacySalaJogador {

@@ -1,5 +1,5 @@
 /**
- * draft-flow.ts — ban/pick da sala (estado `draft`), 100% server-authoritative.
+ * flow.ts — motor do ban/pick da sala (estado `draft`), 100% server-authoritative.
  *
  * Portado do sistema antigo (M7AcademySite, commit e4b7457 — último com o draft
  * renderizado), corrigindo a causa raiz dos problemas de timer: no site antigo
@@ -8,8 +8,12 @@
  * `turn_deadline_at` — timestamp do SERVIDOR. O front deriva o restante com o
  * clockSync (`agoraServidor()`), igual às salas (ajustarsala F2).
  *
- * Regras (todas decididas aqui, nunca no cliente):
- *  - Turno/fase/time vêm da TURN_ORDER do modo; o cliente só desenha.
+ * O QUE muda de modo para modo vem de `./regras.js` (registry por modo — ver
+ * `modos/*.ts`). Sem draft (`ativo: false`, ex.: 1v1/ARAM), o motor nem é
+ * chamado: `match-flow.avaliarTransicoes` pula a fase direto para o código.
+ *
+ * Regras GERAIS (imutáveis, decididas aqui, nunca no cliente):
+ *  - Turno/fase/time vêm da turnOrder do modo; o cliente só desenha.
  *  - Só participante CONFIRMADO do time da vez age; campeão repetido é recusado.
  *  - Ban vencido → ban vazio (null) e avança (mesmo comportamento do antigo).
  *  - Pick vencido → cancela o draft e a sala volta para `preenchendo` (o AFK
@@ -24,7 +28,8 @@
  */
 
 import { eq, and } from "drizzle-orm";
-import { matchDrafts, matchPlayers } from "../../../db/schema/matches.js";
+import { matchDrafts, matchPlayers } from "../../../../db/schema/matches.js";
+import { getDraftRules, getTurnOrder } from "./regras.js";
 
 /** Duração de um turno (o que o cliente mostra). */
 export const DRAFT_TURN_MS = 30_000;
@@ -34,59 +39,20 @@ export const DRAFT_TURN_MS = 30_000;
  */
 export const DRAFT_GRACE_MS = 2_000;
 
-type DraftTeam = "blue" | "red";
-type DraftPhase = "ban" | "pick";
-export interface TurnInfo {
-  team: DraftTeam;
-  phase: DraftPhase;
-}
-
-// ─── Draft tournament 5v5 / time_vs_time (20 turnos) ─────────────────────────
-// Fase 1 bans (6) → Fase 1 picks (6) → Fase 2 bans (4) → Fase 2 picks (4).
-export const TURN_ORDER_5V5: TurnInfo[] = [
-  { team: "blue", phase: "ban" }, // 0
-  { team: "red", phase: "ban" }, // 1
-  { team: "blue", phase: "ban" }, // 2
-  { team: "red", phase: "ban" }, // 3
-  { team: "blue", phase: "ban" }, // 4
-  { team: "red", phase: "ban" }, // 5
-  { team: "blue", phase: "pick" }, // 6
-  { team: "red", phase: "pick" }, // 7
-  { team: "red", phase: "pick" }, // 8
-  { team: "blue", phase: "pick" }, // 9
-  { team: "blue", phase: "pick" }, // 10
-  { team: "red", phase: "pick" }, // 11
-  { team: "red", phase: "ban" }, // 12
-  { team: "blue", phase: "ban" }, // 13
-  { team: "red", phase: "ban" }, // 14
-  { team: "blue", phase: "ban" }, // 15
-  { team: "red", phase: "pick" }, // 16
-  { team: "blue", phase: "pick" }, // 17
-  { team: "blue", phase: "pick" }, // 18
-  { team: "red", phase: "pick" }, // 19
-];
-
-// ─── Draft 1v1 / ARAM (4 turnos) ─────────────────────────────────────────────
-// 1 ban por lado + 1 pick por lado.
-export const TURN_ORDER_1V1: TurnInfo[] = [
-  { team: "blue", phase: "ban" }, // 0
-  { team: "red", phase: "ban" }, // 1
-  { team: "blue", phase: "pick" }, // 2
-  { team: "red", phase: "pick" }, // 3
-];
-
-export function getTurnOrder(mode: string): TurnInfo[] {
-  return mode === "1v1" || mode === "aram" ? TURN_ORDER_1V1 : TURN_ORDER_5V5;
-}
-
 /**
  * Cria o draft da sala (limpa qualquer sobra antes — igual ao criarDraft antigo,
  * que garantia reset completo). PRÉ-CONDIÇÃO: linha de `matches` travada.
+ *
+ * Só é chamado para modo com draft (`temDraft`); o guard abaixo é a rede de
+ * segurança contra chamada indevida (modo sem ordem de turnos).
  */
 export async function criarDraft(tx: any, matchId: string, mode: string) {
+  const regras = getDraftRules(mode);
+  if (!regras.ativo || regras.turnOrder.length === 0) {
+    throw new Error(`criarDraft: modo sem draft (${mode})`);
+  }
   await tx.delete(matchDrafts).where(eq(matchDrafts.matchId, matchId));
-  const ordem = getTurnOrder(mode);
-  const primeiro = ordem[0];
+  const primeiro = regras.turnOrder[0];
   const [row] = await tx
     .insert(matchDrafts)
     .values({

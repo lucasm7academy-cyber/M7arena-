@@ -9,7 +9,7 @@ import {
   getAuthUser,
   notifyMatchChange,
 } from "../lib/match-flow.js";
-import { aplicarAcaoDraft } from "../lib/draft-flow.js";
+import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
 

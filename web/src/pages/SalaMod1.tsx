@@ -204,7 +204,6 @@ ${link}`;
     if (sala.estado === 'draft' && sala.draft) {
         return (
             <DraftRoom
-                modo={sala.modo}
                 draft={sala.draft}
                 jogadores={jogadores}
                 usuarioId={usuarioAtual.id}

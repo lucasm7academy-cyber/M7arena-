@@ -9,6 +9,7 @@
  */
 
 import { profileIconUrl } from "./ddragon.js";
+import { DRAFT_TURN_MS, regrasDraftParaShape } from "./draft/index.js";
 
 export const ROLES_5V5 = ["TOP", "JG", "MID", "ADC", "SUP"] as const;
 
@@ -197,7 +198,11 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     // Draft (ban/pick) — só existe entre `draft` e `iniciando_partida`. O
     // `turn_deadline_at` é o prazo do turno NO RELÓGIO DO SERVIDOR; o front
     // deriva o restante com `agoraServidor()` (clockSync), nunca com o relógio
-    // local. `null` quando a sala não tem draft.
+    // local. `null` quando a sala não tem draft (1v1/ARAM pulam a fase).
+    //
+    // `regras` é o subconjunto de APRESENTAÇÃO do registry por modo
+    // (api/src/lib/draft/regras.ts): o DraftRoom não decide mais nada por
+    // `modo` — slots, visibilidade do pick e role "em turno" vêm daqui.
     draft: draft
       ? {
           blue_bans: draft.blueBans ?? [],
@@ -209,6 +214,9 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
           current_team: draft.currentTeam ?? "blue",
           turn_deadline_at: draft.turnDeadlineAt ?? null,
           status: draft.status ?? "ongoing",
+          // Regra geral (imutável) publicada para a barra de tempo do front.
+          duracao_turno_ms: DRAFT_TURN_MS,
+          regras: regrasDraftParaShape(m.mode),
         }
       : null,
     // Dados reais da partida puxados da Riot (matchResults.payload) — só para

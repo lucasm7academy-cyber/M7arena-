@@ -4,7 +4,11 @@
 //
 //  - O ESTADO vem do servidor (`sala.draft`, shape legado) — o cliente não
 //    guarda turno/fase/time nem decide timeout. O que era lógica local virou
-//    validação em api/src/lib/draft-flow.ts (invariante: regra no servidor).
+//    validação em api/src/lib/draft/flow.ts (invariante: regra no servidor).
+//  - As REGRAS DO MODO (slots de ban/pick, esconder pick do adversário, role
+//    "em turno") também vêm do servidor via `draft.regras` — registry único em
+//    api/src/lib/draft/modos/. Não existe `if (modo === ...)` aqui: o
+//    componente é 100% burro.
 //  - O TIMER é derivado do relógio do servidor (`turn_deadline_at`), com o
 //    clockSync das salas — o bug de fuso/relógio local do site antigo não
 //    existe mais. Quando o número chega a 0, o hook dispara o tick e o
@@ -22,7 +26,6 @@ import { traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
 
 interface DraftRoomProps {
-  modo: string;
   draft: SalaDraft;
   jogadores: any[];
   usuarioId: string;
@@ -175,7 +178,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome }: {
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
-  modo, draft, jogadores, usuarioId, timer, onBanir, onPickar,
+  draft, jogadores, usuarioId, timer, onBanir, onPickar,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -210,8 +213,10 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const fase = draft.current_phase;
   const isMeuTurno = possoJogar && emTurno && meuTime === draft.current_team;
 
-  // Nome exibido do jogador "em turno" (JG no 5v5, MID no 1v1) — igual ao antigo.
-  const roleEmTurno = modo === '1v1' || modo === 'aram' ? 'MID' : 'JG';
+  // Nome exibido do jogador "em turno" (JG no 5v5, MID quando houver) — a role
+  // vem das regras do modo publicadas pelo servidor; é só vitrine (qualquer
+  // participante confirmado do lado da vez pode agir — quem valida é o servidor).
+  const roleEmTurno = draft.regras.role_controladora;
   const formatarNome = (p: any, padrao: string) => {
     if (!p) return padrao;
     const tag = (p.tag || '').replace('#', '');
@@ -224,10 +229,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     draft.blue_bans.includes(champId) || draft.red_bans.includes(champId) ||
     draft.blue_picks.includes(champId) || draft.red_picks.includes(champId);
 
-  // 1v1: oculta os picks do time ADVERSÁRIO enquanto o draft está em andamento
-  // (mesma regra do site antigo — nada de espiar o pick do oponente).
+  // Esconde os picks do time ADVERSÁRIO enquanto o draft está em andamento —
+  // ligado só nos modos cujo registry marca `esconder_picks_adversario` (nada
+  // de espiar o pick do oponente).
   const esconderPickAdversario = (lado: 'blue' | 'red', championId: string | null) =>
-    modo === '1v1' && draft.status === 'ongoing' && !!championId && lado !== meuTime;
+    draft.regras.esconder_picks_adversario && draft.status === 'ongoing' && !!championId && lado !== meuTime;
 
   const filteredChampions = useMemo(() => {
     return (Object.values(champions) as Champion[])
@@ -235,11 +241,10 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [champions, searchTerm]);
 
-  // Quantidade de slots por lado: 5 bans/5 picks no 5v5/time_vs_time;
-  // 1 ban/1 pick no 1v1/ARAM (mesma TURN_ORDER do servidor).
-  const isDuo = modo === '1v1' || modo === 'aram';
-  const maxBans = isDuo ? 1 : 5;
-  const maxPicks = isDuo ? 1 : 5;
+  // Quantidade de slots por lado — vem das regras do modo (5/5 no 5v5 e
+  // time_vs_time; o modo com draft define), nunca de um if no componente.
+  const maxBans = draft.regras.max_bans_por_lado;
+  const maxPicks = draft.regras.max_picks_por_lado;
 
   const handleChampionClick = (champ: Champion) => {
     if (!isMeuTurno || enviando) return;
@@ -264,7 +269,10 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     }
   };
 
-  const segundos = Math.max(0, Math.min(timer, 30));
+  // Barra de tempo do turno: duração publicada pelo servidor (regra geral do
+  // motor), nunca um 30 hardcoded aqui.
+  const duracaoSeg = Math.max(1, Math.round((draft.duracao_turno_ms ?? 30_000) / 1000));
+  const segundos = Math.max(0, Math.min(timer, duracaoSeg));
 
   return (
     <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
@@ -285,7 +293,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-[#c89b3c] to-transparent"
             initial={{ scaleX: 1 }}
-            animate={{ scaleX: segundos / 30 }}
+            animate={{ scaleX: segundos / duracaoSeg }}
             transition={{ duration: 1, ease: 'linear' }}
             style={{ originX: 0.5 }}
           />

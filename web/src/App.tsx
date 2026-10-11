@@ -42,6 +42,9 @@ const Jogar = lazyWithRetry(() => import("./pages/Jogar"));
 const ApostaIndividualPage = lazyWithRetry(() => import("./pages/ApostaIndividualPage"));
 
 const SalaMod1 = lazyWithRetry(() => import("./pages/SalaMod1"));
+// Sala de TIME vs TIME — estrutura dedicada (features/sala-time-vs-time).
+// Cópia 1:1 de SalaMod1; o design dela evolui separado dos demais modos.
+const SalaTimeVsTime = lazyWithRetry(() => import("./features/sala-time-vs-time/SalaTimeVsTime"));
 const Vincular = lazyWithRetry(() => import("./pages/Vincular"));
 const DiscordCallback = lazyWithRetry(() => import("./pages/DiscordCallback"));
 const Perfil = lazyWithRetry(() => import("./pages/perfil"));
@@ -242,7 +245,7 @@ export default function App() {
               <Route path="/5v5/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/aram/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/1v1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
-              <Route path="/time_vs_time/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
+              <Route path="/time_vs_time/:id" element={<RouteWithSuspense element={<SalaTimeVsTime />} />} />
               <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
               <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>

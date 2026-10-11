@@ -1,0 +1,98 @@
+import { test, describe } from "node:test";
+import assert from "node:assert/strict";
+import {
+  DRAFT_RULES,
+  getDraftRules,
+  temDraft,
+  getTurnOrder,
+  DRAFT_TURN_MS,
+} from "../src/lib/draft/index.js";
+import { toLegacyMatch } from "../src/lib/match-shape.js";
+
+describe("draft: registry de regras por modo", () => {
+  test("5v5 e time_vs_time: draft de 20 turnos, 5 slots por lado, tudo visível, vitrine JG", () => {
+    for (const modo of ["5v5", "time_vs_time"]) {
+      const r = getDraftRules(modo);
+      assert.equal(r.ativo, true, `${modo}: tem draft`);
+      assert.equal(r.turnOrder.length, 20, `${modo}: 20 turnos`);
+      assert.equal(r.maxBansPorLado, 5, `${modo}: 5 bans por lado`);
+      assert.equal(r.maxPicksPorLado, 5, `${modo}: 5 picks por lado`);
+      assert.equal(r.esconderPicksAdversario, false, `${modo}: tudo visível`);
+      assert.equal(r.roleControladora, "JG", `${modo}: vitrine do JG`);
+      assert.equal(temDraft(modo), true, modo);
+      assert.equal(getTurnOrder(modo), r.turnOrder, `${modo}: ordem vem do registry`);
+    }
+  });
+
+  test("1v1 e aram: SEM draft (ativo=false, ordem vazia)", () => {
+    for (const modo of ["1v1", "aram"]) {
+      const r = getDraftRules(modo);
+      assert.equal(r.ativo, false, `${modo}: pula a fase`);
+      assert.deepEqual(r.turnOrder, [], `${modo}: sem turnos`);
+      assert.equal(r.maxBansPorLado, 0, modo);
+      assert.equal(r.maxPicksPorLado, 0, modo);
+      assert.equal(temDraft(modo), false, modo);
+    }
+  });
+
+  test("a ordem dos turnos bate com os slots declarados (ban/pick por lado)", () => {
+    for (const modo of Object.keys(DRAFT_RULES)) {
+      const r = DRAFT_RULES[modo];
+      if (!r.ativo) continue;
+      const contar = (team: "blue" | "red", phase: "ban" | "pick") =>
+        r.turnOrder.filter((t) => t.team === team && t.phase === phase).length;
+
+      assert.equal(contar("blue", "ban"), r.maxBansPorLado, `${modo}: bans azuis`);
+      assert.equal(contar("red", "ban"), r.maxBansPorLado, `${modo}: bans vermelhos`);
+      assert.equal(contar("blue", "pick"), r.maxPicksPorLado, `${modo}: picks azuis`);
+      assert.equal(contar("red", "pick"), r.maxPicksPorLado, `${modo}: picks vermelhos`);
+      assert.equal(r.turnOrder.length, (r.maxBansPorLado + r.maxPicksPorLado) * 2, `${modo}: total de turnos`);
+    }
+  });
+
+  test("modo desconhecido cai no fallback 5v5 (comportamento histórico)", () => {
+    assert.equal(getDraftRules("3v3"), DRAFT_RULES["5v5"]);
+  });
+});
+
+describe("draft: shape publica as regras do modo (o front não decide)", () => {
+  const draftRow = {
+    blueBans: [],
+    bluePicks: [],
+    redBans: [],
+    redPicks: [],
+    currentTurn: 0,
+    currentPhase: "ban",
+    currentTeam: "blue",
+    turnDeadlineAt: new Date(),
+    status: "ongoing",
+  };
+
+  test("sala 5v5 em draft → regras snake_case + duração do turno", () => {
+    const shape = toLegacyMatch(
+      { mode: "5v5", salaNum: 1, status: "draft", createdAt: new Date() },
+      [],
+      "Dono",
+      0,
+      null,
+      draftRow
+    );
+    assert.ok(shape.draft, "shape traz o draft");
+    assert.equal(shape.draft.duracao_turno_ms, DRAFT_TURN_MS);
+    assert.deepEqual(shape.draft.regras, {
+      max_bans_por_lado: 5,
+      max_picks_por_lado: 5,
+      esconder_picks_adversario: false,
+      role_controladora: "JG",
+    });
+  });
+
+  test("sala sem draft → shape.draft null (1v1/ARAM e estados fora do draft)", () => {
+    const shape = toLegacyMatch(
+      { mode: "1v1", salaNum: 2, status: "iniciando_partida", createdAt: new Date() },
+      [],
+      "Dono"
+    );
+    assert.equal(shape.draft, null);
+  });
+});
