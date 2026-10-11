@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-11T23:27:49.030Z",
+  "updatedAt": "2026-10-11T23:37:36.115Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1508,35 +1508,35 @@
       "area": "app",
       "name": "Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)",
       "status": "doing",
-      "notes": "Passos 3-5 concluídos e deployados (até dc9d00d): criação T-10/manual; vagas + PRONTO; lado → first/last pick; draft FEARLESS por jogo (ordem pelos papéis first/last, ban vencido vazio, pick vencido trava) → camp_jogo com código ativo. Smoke VPS 29/29; testes 17/17 (sala + draft); suíte 247/247. Próximo: passo 6 (live do streamer na sala) e a TELA da sala (design).",
+      "notes": "Passos 3-6 + TELA v1 prontos e deployados (até 97e80b0): sala automática T-10/manual; vagas/PRONTO; sorteio→lado→pick order; draft Fearless por jogo → camp_jogo; live do streamer + 'assista ao vivo'; entrada pelo cronograma (Criar Sala / Sala da Série) e tela /campeonato/sala/:id no visual da sala normal. Smoke VPS 32/32; testes 248/248; web tsc+build ok. Aguardando teste do usuário para fechar.",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.381Z",
-      "updatedAt": "2026-10-11T23:27:49.002Z"
+      "updatedAt": "2026-10-11T23:37:36.055Z"
     },
     {
       "id": "app.sala.campeonato.definicao-lado",
       "phase": "fase-3",
       "area": "app",
       "name": "Definicao de lado estilo CBLOL (sorteio + lado vs first/last pick)",
-      "status": "todo",
-      "notes": "Sorteio server-side decide quem escolhe no jogo 1: o sorteado escolhe o lado (red/blue); o outro escolhe first pick ou last pick — a sala aplica lado + ordem no draft. Jogos 2+: o perdedor do jogo anterior escolhe o lado (ADR-081). Estado visível a todos ('TIME X ESTÁ ESCOLHENDO O LADO') via WebSocket + fallback 5s (ADR-082). Sem timeout na V1 (ADR-083): adm resolve se travar.",
+      "status": "doing",
+      "notes": "Implementado e deployado (97e80b0): rotas /sala-campeonato/lado e /pick-order com validação de vez (fora_da_vez/nao_e_do_time); estado escolha_time/lado/pick persistido; conclusão → camp_draft. Smoke VPS 32/32. Aguardando teste visual na tela nova.",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.400Z",
-      "updatedAt": "2026-10-11T21:58:46.955Z"
+      "updatedAt": "2026-10-11T23:37:36.083Z"
     },
     {
       "id": "app.draft.campeonato",
       "phase": "fase-3",
       "area": "app",
       "name": "Draft do modo campeonato (regras proprias + ordem first/last pick)",
-      "status": "todo",
-      "notes": "Novo modo no registry de draft (api/src/lib/draft/modos/campeonato.ts, ADR-074): regras básicas + particulares do campeonato. FEARLESS (ADR-081): picks de jogos anteriores da série ficam indisponíveis nos jogos seguintes; um draft por jogo, com PRONTO/lado antes de cada um. Ordem ban/pick derivada do first/last pick (ADR-079). Ban vencido = vazio; pick vencido trava o draft — nunca cancela (ADR-083). Design definido depois.",
+      "status": "doing",
+      "notes": "Implementado e deployado (dc9d00d/97e80b0): motor FEARLESS por jogo (ordem por papéis first/last, ban vencido vira vazio, pick vencido trava), rotas ban/pick, shape campeonato.draft + campeoes_travados + primeiro_pick. Smoke VPS 32/32 (20 turnos via HTTP). Aguardando teste visual na tela nova.",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.411Z",
-      "updatedAt": "2026-10-11T21:58:46.970Z"
+      "updatedAt": "2026-10-11T23:37:36.099Z"
     },
     {
       "id": "sec.codigo-campeonato",
@@ -2397,14 +2397,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-23T03:52:20.641Z",
-      "agent": "gemini",
-      "summary": "Ajuste exato de Próximos Jogos no Lobby: mantida a pincelada horizontal de tinta com cerdas e névoa difusa (TeamBrushStroke) nas cores de cada time e logo estendido sem corte; aplicado o cabeçalho estilizado do campeonato com a fonte Anton e troféu metálico (estilo Partidas Personalizadas / Finalizadas), e removido o título redundante 'Próximos Jogos'. Deploy concluído na VPS com HTTP 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
       "at": "2026-09-24T15:05:04.818Z",
       "agent": "gemini",
       "summary": "Seção Twitch 'Assista Agora' no Lobby condicionada para exibir apenas quando houver transmissão ativa (transmissoes.length > 0). useTransmissoesAtivas ganhou polling de 30s para atualizar automaticamente quando uma live for iniciada/finalizada. Build do Vite e container Nginx reconstruídos e validados na VPS com HTTP/2 200. Chunk servido confirmado no ar com !loadingLives && transmissoes.length > 0.",
@@ -2714,6 +2706,22 @@
         "api/src/routes/matches-actions.ts",
         "api/src/cron.ts",
         "api/test/sala-campeonato-draft.test.ts",
+        "scripts/smoke-vps-sala-campeonato.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-11T23:37:36.115Z",
+      "agent": "deepseek",
+      "summary": "Passo 6 (live do streamer) + TELA v1 da sala campeonato concluídos e deployados (97e80b0). Live: POST /sala-campeonato/live (só streamer com Twitch; encerra lives anteriores; abre a do jogo com times da série; shape expõe campeonato.live). Cronograma: shape ganha sala_num por jogo; card vira 'Criar Sala' (idempotente) / 'Sala da Série' e navega para a rota nova. Tela web/src/features/sala-campeonato/SalaCampeonato.tsx (rota /campeonato/sala/:id): visual da sala normal (fundo_elite, cut-edge), 2 vagas de time com logos, PRONTO, sorteio/lado/first-last, DraftRoom reusado para o draft Fearless, código com copiar, botão de live/'assista ao vivo', realtime WS + polling 5s. Evidências: smoke VPS 32/32; suíte API 248/248; web tsc 0 + vite build ok; chunk SalaCampeonato servido no nginx; rota 200. Próximo: usuário testa e dirige ajustes de design/UX.",
+      "touched": [
+        "api/src/lib/sala-campeonato.ts",
+        "api/src/lib/tournament-shape.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/test/sala-campeonato.test.ts",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx",
+        "web/src/App.tsx",
+        "web/src/lib/api.ts",
+        "web/src/components/campeonatos/ListaCronograma.tsx",
         "scripts/smoke-vps-sala-campeonato.mjs"
       ]
     }
