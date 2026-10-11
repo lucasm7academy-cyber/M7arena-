@@ -1,12 +1,13 @@
 import { and, eq, lt, inArray, isNull, not } from "drizzle-orm";
 import { db } from "./db.js";
-import { matches, matchPlayers, matchCodes, salaMensagens } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes, salaMensagens, campeonatoSalaEstado } from "../../db/schema/matches.js";
 import { users } from "../../db/schema/identidade.js";
 import { tournamentMatches, bracketMatches } from "../../db/schema/tournaments.js";
 import { ESTADOS_ATIVOS } from "./lib/elegibilidade.js";
 import { avaliarTransicoes, notifyMatchChange } from "./lib/match-flow.js";
 import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
 import { verificarSerieCampeonato } from "./lib/serie-campeonato.js";
+import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato } from "./lib/sala-campeonato-draft.js";
 import { runBetsCron } from "./lib/live-bets.js";
 
 /**
@@ -80,6 +81,33 @@ export async function runCron(d: any = db) {
     }
   }
   if (draftsResolvidos > 0) console.log(`[cron] draft: ${draftsResolvidos} sala(s) avaliada(s)`);
+
+  // 2b. Draft da SALA CAMPEONATO (passo 5, ADR-081/083): ban vencido vira ban
+  //     vazio; pick vencido TRAVA (nunca cancela — o adm destrava se precisar).
+  let campeonatoDraftsResolvidos = 0;
+  const emDraftCampeonato = await d
+    .select({ id: matches.id, salaNum: matches.salaNum })
+    .from(matches)
+    .where(eq(matches.status, "camp_draft"));
+  for (const sala of emDraftCampeonato) {
+    const r = await d.transaction(async (tx: any) => {
+      const [m] = await tx.select().from(matches).where(eq(matches.id, sala.id)).limit(1).for("update");
+      if (!m || m.status !== "camp_draft") return { mudou: false };
+      const [estado] = await tx
+        .select()
+        .from(campeonatoSalaEstado)
+        .where(eq(campeonatoSalaEstado.matchId, m.id))
+        .limit(1);
+      if (!estado) return { mudou: false };
+      await garantirDraftSalaCampeonato(tx, m, estado);
+      return avaliarDraftSalaCampeonato(tx, m);
+    });
+    if (r.mudou) {
+      campeonatoDraftsResolvidos++;
+      notifyMatchChange(String(sala.salaNum));
+    }
+  }
+  if (campeonatoDraftsResolvidos > 0) console.log(`[cron] sala-campeonato: ${campeonatoDraftsResolvidos} draft(s) avaliado(s)`);
 
   // 3. Saneamento (ajustarsala bug D): salas presas em estados mortos (ex.:
   //    'finalizacao', estado da votação removida pelo ADR-027) viram

@@ -14,7 +14,7 @@
  * Sem timer em V1 (ADR-083): o adm destrava se precisar.
  */
 import { and, eq, inArray } from "drizzle-orm";
-import { matches, matchPlayers, campeonatoSalaEstado } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import { tournaments, tournamentMatches, bracketMatches, tournamentTeams, tournamentSeriesGames } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
 import { userRoles } from "../../../db/schema/identidade.js";
@@ -23,6 +23,13 @@ import { findUserTeamMemberships } from "./team-membership.js";
 import { instanteJogo } from "./streams.js";
 import { notifyMatchChange } from "./match-flow.js";
 import { getRoles, eStaffSala } from "./acesso-sala.js";
+import {
+  garantirDraftSalaCampeonato,
+  campeoesTravados,
+  ladoPrimeiroPick,
+  REGRAS_SHAPE_CAMPEONATO,
+  DRAFT_TURNO_MS_CAMPEONATO,
+} from "./sala-campeonato-draft.js";
 
 /** Fases "vivas" da sala campeonato (fora delas, a sala não é mais a ativa). */
 export const FASES_ATIVAS_CAMPEONATO = ["camp_vagas", "camp_prontos", "camp_lado", "camp_draft", "camp_jogo"];
@@ -98,7 +105,7 @@ async function usuarioNoTime(d: any, userId: string, teamId: string): Promise<bo
 }
 
 /** Lado (vaga) do usuário na sala: 'blue' (time A), 'red' (time B) ou null. */
-async function ladoDoUsuarioNaSala(d: any, sala: any, userId: string): Promise<"blue" | "red" | null> {
+export async function ladoDoUsuarioNaSala(d: any, sala: any, userId: string): Promise<"blue" | "red" | null> {
   const serie = await carregarSerieDaSala(d, sala);
   if (!serie) return null;
   const { teamAId, teamBId } = await resolverTimesDaSerie(d, serie);
@@ -463,6 +470,16 @@ export async function escolherPickOrder(
       .set({ pickOrderEscolhido: opts.ordem, updatedAt: new Date() })
       .where(eq(campeonatoSalaEstado.matchId, sala.id));
     await tx.update(matches).set({ status: "camp_draft", updatedAt: new Date() }).where(eq(matches.id, sala.id));
+
+    // Passo 5: o draft do jogo nasce junto com a fase — vai no shape da mesma
+    // resposta e as ações de ban/pick já encontram a linha.
+    const [estadoAtual] = await tx
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, sala.id))
+      .limit(1);
+    await garantirDraftSalaCampeonato(tx, sala, estadoAtual);
+
     return { ok: true, estado: "camp_draft" };
   });
 
@@ -561,6 +578,37 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
       .limit(1);
     camp = { id: t?.id ?? null, titulo: t?.nome ?? null };
   }
+
+  // Draft do jogo (passo 5): shape compatível com o DraftRoom (mesmos campos do
+  // draft das salas) + extras do campeonato (Fearless e quem tem o first pick).
+  let draft: any = null;
+  if (sala.status === "camp_draft" || sala.status === "camp_jogo") {
+    const [dr] = await d
+      .select()
+      .from(matchDrafts)
+      .where(and(eq(matchDrafts.matchId, sala.id), eq(matchDrafts.jogo, estado?.jogo ?? 1)))
+      .limit(1);
+    if (dr) {
+      draft = {
+        blue_bans: dr.blueBans ?? [],
+        blue_picks: dr.bluePicks ?? [],
+        red_bans: dr.redBans ?? [],
+        red_picks: dr.redPicks ?? [],
+        current_turn: dr.currentTurn,
+        current_phase: dr.currentPhase,
+        current_team: dr.currentTeam,
+        turn_deadline_at: dr.turnDeadlineAt ?? null,
+        status: dr.status,
+        duracao_turno_ms: DRAFT_TURNO_MS_CAMPEONATO,
+        regras: REGRAS_SHAPE_CAMPEONATO,
+        // Fearless: campeões travados por jogos anteriores (o front grelha) e
+        // qual lado tem o first pick (a ordem não é do azul por definição).
+        campeoes_travados: await campeoesTravados(d, sala.id, dr.jogo),
+        primeiro_pick: ladoPrimeiroPick(estado),
+      };
+    }
+  }
+
   return {
     jogo: estado?.jogo ?? 1,
     pronto_blue: estado?.prontoBlue ?? false,
@@ -581,5 +629,6 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
           campeonato_titulo: camp?.titulo ?? null,
         }
       : null,
+    draft,
   };
 }

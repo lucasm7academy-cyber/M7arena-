@@ -182,6 +182,60 @@ async function main() {
     JSON.stringify(estadoPos)
   );
 
+  // ── 3c) Draft do campeonato (passo 5): 20 turnos via HTTP ────────────────
+  const cookieDoSide = (s) => (s === "blue" ? membA.cookie : membB.cookie);
+  const detIni = (await api(`/api/matches/${salaNum}`, {}, membA.cookie)).body;
+  const draftIni = detIni?.campeonato?.draft;
+  check(
+    !!draftIni && draftIni.current_turn === 0 && draftIni.current_phase === "ban",
+    "draft: criado na entrada de camp_draft",
+    JSON.stringify({ turn: draftIni?.current_turn, phase: draftIni?.current_phase, team: draftIni?.current_team })
+  );
+
+  let turnos = 0;
+  const usados = [];
+  let erroLadoTestado = false;
+  let repetidoTestado = false;
+  for (let i = 0; i < 20; i++) {
+    const d = (await api(`/api/matches/${salaNum}`, {}, membA.cookie)).body?.campeonato?.draft;
+    if (!d || d.status !== "ongoing") break;
+    if (!erroLadoTestado) {
+      const outro = cookieDoSide(d.current_team === "blue" ? "red" : "blue");
+      const er = await api(
+        `/api/matches/${salaNum}/sala-campeonato/${d.current_phase}`,
+        { method: "POST", body: JSON.stringify({ championId: `XX${i}` }) },
+        outro
+      );
+      check(er.body?.erro === "fora_do_turno", "draft: ação do lado errado recusada", er.body?.erro);
+      erroLadoTestado = true;
+    }
+    if (!repetidoTestado && usados.length >= 2) {
+      const rep = await api(
+        `/api/matches/${salaNum}/sala-campeonato/${d.current_phase}`,
+        { method: "POST", body: JSON.stringify({ championId: usados[0] }) },
+        cookieDoSide(d.current_team)
+      );
+      check(rep.body?.erro === "campeao_indisponivel", "draft: campeão repetido recusado", rep.body?.erro);
+      repetidoTestado = true;
+    }
+    const champ = `SmkD${i}`;
+    const r = await api(
+      `/api/matches/${salaNum}/sala-campeonato/${d.current_phase}`,
+      { method: "POST", body: JSON.stringify({ championId: champ }) },
+      cookieDoSide(d.current_team)
+    );
+    if (r.body?.ok !== true) {
+      check(false, `draft: turno ${i} falhou`, r.body?.erro);
+      break;
+    }
+    usados.push(champ);
+    turnos++;
+  }
+  check(turnos === 20, "draft: 20 turnos completados via HTTP", String(turnos));
+  const detFim = (await api(`/api/matches/${salaNum}`, {}, membA.cookie)).body;
+  check(detFim?.campeonato?.draft?.status === "finished", "draft: finished", detFim?.campeonato?.draft?.status);
+  check(detFim?.estado === "camp_jogo", "draft: sala → camp_jogo", detFim?.estado);
+
   // ── 4) Shape: bloco campeonato + código redigido para anônimo ────────────
   const detAnon = await api(`/api/matches/${salaNum}`);
   check(!!detAnon.body?.campeonato, "shape: bloco campeonato presente");

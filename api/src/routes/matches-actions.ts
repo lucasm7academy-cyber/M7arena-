@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers, matchCodes } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes, campeonatoSalaEstado } from "../../../db/schema/matches.js";
 import {
   avaliarTransicoes,
   reembolsarSeNecessario,
@@ -13,6 +13,7 @@ import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
 import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder } from "../lib/sala-campeonato.js";
+import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato, aplicarAcaoSalaCampeonato } from "../lib/sala-campeonato-draft.js";
 
 export const matchesActionsRouter = Router();
 
@@ -148,6 +149,48 @@ matchesActionsRouter.post("/:id/sala-campeonato/pick-order", async (req, res) =>
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
   }
 });
+
+/**
+ * Passo 5 — Draft da sala campeonato: ban/pick com a vez pelo LADO do time e
+ * FEARLESS (picks de jogos anteriores travados). Fluxo da transação: lock da
+ * sala → garante o draft do jogo → catch-up de bans vencidos → aplica a ação.
+ * Pick vencido CONTINUA valendo (o draft trava em vez de cancelar — ADR-083).
+ */
+async function executarAcaoDraftCampeonato(req: any, res: any, tipo: "ban" | "pick") {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+
+    const r = await db.transaction(async (tx: any) => {
+      const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
+      if (!sala) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+      if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato", estado: null, mudou: false };
+      if (sala.status !== "camp_draft") return { ok: false, erro: "estado_invalido", estado: sala.status, mudou: false };
+
+      const [estado] = await tx
+        .select()
+        .from(campeonatoSalaEstado)
+        .where(eq(campeonatoSalaEstado.matchId, sala.id))
+        .limit(1);
+      if (!estado) return { ok: false, erro: "estado_ausente", estado: sala.status, mudou: false };
+
+      await garantirDraftSalaCampeonato(tx, sala, estado);
+      await avaliarDraftSalaCampeonato(tx, sala);
+
+      const acao = await aplicarAcaoSalaCampeonato(tx, sala, user.id, tipo, req.body?.championId);
+      if (!acao.ok) return { ok: false, erro: acao.erro, estado: "camp_draft", mudou: false };
+      return { ok: true, erro: null, estado: acao.finalizado ? "camp_jogo" : "camp_draft", mudou: true };
+    });
+
+    notifyMatchChange(String(req.params.id));
+    return res.json(r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+}
+
+matchesActionsRouter.post("/:id/sala-campeonato/ban", (req, res) => executarAcaoDraftCampeonato(req, res, "ban"));
+matchesActionsRouter.post("/:id/sala-campeonato/pick", (req, res) => executarAcaoDraftCampeonato(req, res, "pick"));
 
 /**
  * Ações de sala montadas em `/api/matches/:id/<acao>` (id público = sala_num).
