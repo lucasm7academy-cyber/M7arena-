@@ -16,6 +16,7 @@ import {
 import { sql } from "drizzle-orm";
 import { users } from "./identidade.js";
 import { games } from "./games.js";
+import { tournamentMatches, bracketMatches } from "./tournaments.js";
 
 export const matches = pgTable(
   "matches",
@@ -59,6 +60,11 @@ export const matches = pgTable(
     confirmacaoExpiresAt: timestamp("confirmacao_expires_at", { mode: "date" }),
     iniciandoPartidaAt: timestamp("iniciando_partida_at", { mode: "date" }),
     stateDeadlineAt: timestamp("state_deadline_at", { mode: "date" }),
+    // ── Sala Campeonato V1 (ADR-085): vínculo com a SÉRIE do campeonato
+    //    (cronograma ou chave). As fases camp_* vivem em `status`; o estado por
+    //    jogo fica em campeonato_sala_estado. No máximo UM dos dois vínculos.
+    tournamentMatchId: uuid("tournament_match_id").references(() => tournamentMatches.id, { onDelete: "cascade" }),
+    bracketMatchId: uuid("bracket_match_id").references(() => bracketMatches.id, { onDelete: "cascade" }),
     // ── Salas apostadas (ADR-019 / design v3 §5) ──
     apostaMc: integer("aposta_mc").default(0).notNull(),   // 0 = casual
     taxaPct: numeric("taxa_pct", { precision: 5, scale: 2 }).default("8.99").notNull(),
@@ -76,6 +82,11 @@ export const matches = pgTable(
     index("matches_status_idx").on(table.status),
     index("matches_game_idx").on(table.gameId),
     index("matches_created_by_idx").on(table.createdBy),
+    // Sala campeonato: buscar a sala pela série (criação T-10 / shape).
+    index("matches_tournament_match_idx").on(table.tournamentMatchId),
+    index("matches_bracket_match_idx").on(table.bracketMatchId),
+    // A sala aponta para UMA série (cronograma OU chave), nunca as duas.
+    check("matches_campeonato_link_unico", sql`${table.tournamentMatchId} is null or ${table.bracketMatchId} is null`),
   ]
 );
 
@@ -131,19 +142,52 @@ export const matchCodes = pgTable("match_codes", {
 // vivem AQUI — o cliente só desenha e pede a ação. `turnDeadlineAt` é o
 // relógio do servidor (epoch) — o mesmo clockSync das salas corrige o skew no
 // front, então ninguém depende do relógio local.
-export const matchDrafts = pgTable("match_drafts", {
+export const matchDrafts = pgTable(
+  "match_drafts",
+  {
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    // Draft por jogo da série (ADR-085): salas normais usam jogo=1; a sala
+    // campeonato guarda uma linha por jogo. O Fearless é derivado dos picks
+    // das linhas com jogo < atual — sem tabela extra.
+    jogo: integer("jogo").default(1).notNull(),
+    blueBans: jsonb("blue_bans").$type<(string | null)[]>().default([]).notNull(),
+    bluePicks: jsonb("blue_picks").$type<(string | null)[]>().default([]).notNull(),
+    redBans: jsonb("red_bans").$type<(string | null)[]>().default([]).notNull(),
+    redPicks: jsonb("red_picks").$type<(string | null)[]>().default([]).notNull(),
+    currentTurn: integer("current_turn").default(0).notNull(),
+    currentPhase: varchar("current_phase", { length: 10 }).default("ban").notNull(), // 'ban' | 'pick'
+    currentTeam: varchar("current_team", { length: 10 }).default("blue").notNull(), // 'blue' | 'red'
+    turnDeadlineAt: timestamp("turn_deadline_at", { mode: "date" }).notNull(),
+    status: varchar("status", { length: 20 }).default("ongoing").notNull(), // 'ongoing' | 'finished'
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.matchId, table.jogo] })]
+);
+
+/**
+ * Estado por jogo da Sala Campeonato (ADR-085): uma linha por sala. O `jogo`
+ * corrente avança junto com a série; PRONTO e as escolhas de lado são
+ * SERVIDOR-AUTORITATIVOS (o front só desenha). Sem timer em V1 (ADR-083):
+ * o adm destrava se precisar.
+ */
+export const campeonatoSalaEstado = pgTable("campeonato_sala_estado", {
   matchId: uuid("match_id")
     .primaryKey()
     .references(() => matches.id, { onDelete: "cascade" }),
-  blueBans: jsonb("blue_bans").$type<(string | null)[]>().default([]).notNull(),
-  bluePicks: jsonb("blue_picks").$type<(string | null)[]>().default([]).notNull(),
-  redBans: jsonb("red_bans").$type<(string | null)[]>().default([]).notNull(),
-  redPicks: jsonb("red_picks").$type<(string | null)[]>().default([]).notNull(),
-  currentTurn: integer("current_turn").default(0).notNull(),
-  currentPhase: varchar("current_phase", { length: 10 }).default("ban").notNull(), // 'ban' | 'pick'
-  currentTeam: varchar("current_team", { length: 10 }).default("blue").notNull(), // 'blue' | 'red'
-  turnDeadlineAt: timestamp("turn_deadline_at", { mode: "date" }).notNull(),
-  status: varchar("status", { length: 20 }).default("ongoing").notNull(), // 'ongoing' | 'finished'
+  jogo: integer("jogo").default(1).notNull(),
+  // PRONTO do jogo corrente, repetido a cada jogo (ADR-081).
+  prontoBlue: boolean("pronto_blue").default(false).notNull(),
+  prontoRed: boolean("pronto_red").default(false).notNull(),
+  // Jogo 1: sorteio decide quem escolhe primeiro. Jogos 2+: o perdedor do jogo
+  // anterior escolhe o lado (derivado do motor de série).
+  sorteioVencedor: varchar("sorteio_vencedor", { length: 10 }), // 'blue' | 'red'
+  // Quem está escolhendo AGORA (exibido a todos: "TIME X ESTÁ ESCOLHENDO...").
+  escolhaTime: varchar("escolha_time", { length: 10 }), // 'blue' | 'red'
+  ladoEscolhido: varchar("lado_escolhido", { length: 10 }), // 'blue' | 'red'
+  pickOrderEscolhido: varchar("pick_order_escolhido", { length: 10 }), // 'first' | 'last'
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
