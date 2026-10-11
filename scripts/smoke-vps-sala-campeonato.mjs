@@ -236,6 +236,18 @@ async function main() {
   check(detFim?.campeonato?.draft?.status === "finished", "draft: finished", detFim?.campeonato?.draft?.status);
   check(detFim?.estado === "camp_jogo", "draft: sala → camp_jogo", detFim?.estado);
 
+  // ── 3d) Live do streamer (passo 6) ───────────────────────────────────────
+  const streamer = await registrar(`salacstr${sufixo}@teste.com`);
+  usuarios.push(streamer.id);
+  const semCargo = await api(`/api/matches/${salaNum}/sala-campeonato/live`, { method: "POST", body: "{}" }, streamer.cookie);
+  check(semCargo.body?.erro === "sem_cargo_streamer", "live: sem cargo recusado", semCargo.body?.erro);
+  await psql(`INSERT INTO user_roles (user_id, role) VALUES ('${streamer.id}','streamer')`);
+  await psql(`UPDATE users SET socials = '{"twitch":"smoke_canal"}'::jsonb WHERE id='${streamer.id}'`);
+  const live = await api(`/api/matches/${salaNum}/sala-campeonato/live`, { method: "POST", body: "{}" }, streamer.cookie);
+  check(live.body?.ok === true && live.body?.twitch === "smoke_canal", "live: streamer abre a live do jogo", JSON.stringify(live.body));
+  const detLive = (await api(`/api/matches/${salaNum}`)).body;
+  check(detLive?.campeonato?.live?.twitch === "smoke_canal", "live: shape expõe 'assista ao vivo'", JSON.stringify(detLive?.campeonato?.live));
+
   // ── 4) Shape: bloco campeonato + código redigido para anônimo ────────────
   const detAnon = await api(`/api/matches/${salaNum}`);
   check(!!detAnon.body?.campeonato, "shape: bloco campeonato presente");

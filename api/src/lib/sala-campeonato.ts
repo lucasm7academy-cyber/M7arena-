@@ -17,10 +17,11 @@ import { and, eq, inArray } from "drizzle-orm";
 import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import { tournaments, tournamentMatches, bracketMatches, tournamentTeams, tournamentSeriesGames } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
-import { userRoles } from "../../../db/schema/identidade.js";
+import { users, userRoles } from "../../../db/schema/identidade.js";
+import { transmissoes } from "../../../db/schema/conteudo.js";
 import { atribuirCodigoSerie } from "./serie-campeonato.js";
 import { findUserTeamMemberships } from "./team-membership.js";
-import { instanteJogo } from "./streams.js";
+import { instanteJogo, validarStreamer, montarTituloJogo } from "./streams.js";
 import { notifyMatchChange } from "./match-flow.js";
 import { getRoles, eStaffSala } from "./acesso-sala.js";
 import {
@@ -488,6 +489,78 @@ export async function escolherPickOrder(
 }
 
 /**
+ * Botão "Iniciar live" da sala (ADR-080): só streamer (cargo + Twitch no
+ * perfil). Encerra qualquer live ativa do usuário e abre a live DO JOGO (modo
+ * campeonato, times da série, sem expiração — o fim vem com a série pelo motor).
+ * Idempotente para a mesma série.
+ */
+export async function iniciarLiveDaSala(
+  d: any,
+  opts: { salaNum: number; userId: string }
+): Promise<Resultado<{ transmissao: any; twitch: string }>> {
+  const [sala] = await d.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1);
+  if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
+  if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+  if (!FASES_ATIVAS_CAMPEONATO.includes(sala.status)) return { ok: false, erro: "estado_invalido" };
+
+  const serie = await carregarSerieDaSala(d, sala);
+  if (!serie) return { ok: false, erro: "serie_nao_encontrada" };
+  if (STATUS_FINAIS_SERIE.includes(serie.status)) return { ok: false, erro: "serie_finalizada" };
+
+  const v = await validarStreamer(d, opts.userId);
+  if (!v.ok) return v;
+
+  const [jaAtiva] = await d
+    .select()
+    .from(transmissoes)
+    .where(and(eq(transmissoes.matchId, serie.id), eq(transmissoes.userId, opts.userId), eq(transmissoes.ativo, true)))
+    .limit(1);
+  if (jaAtiva) return { ok: true, transmissao: jaAtiva, twitch: v.twitch };
+
+  // Uma live por usuário: encerra as anteriores antes de abrir a do jogo.
+  await d
+    .update(transmissoes)
+    .set({ ativo: false })
+    .where(and(eq(transmissoes.userId, opts.userId), eq(transmissoes.ativo, true)));
+
+  const [torneio] = await d
+    .select({ nome: tournaments.name })
+    .from(tournaments)
+    .where(eq(tournaments.id, serie.tournamentId))
+    .limit(1);
+
+  const [row] = await d
+    .insert(transmissoes)
+    .values({
+      userId: opts.userId,
+      twitchChannel: v.twitch,
+      titulo: montarTituloJogo(torneio?.nome, serie.teamATag, serie.teamBTag),
+      campeonatoId: serie.tournamentId,
+      duracaoHoras: 1,
+      ativo: true,
+      expiraEm: null,
+      modo: "campeonato",
+      time1Id: serie.teamAId ?? null,
+      time2Id: serie.teamBId ?? null,
+      matchId: serie.id,
+    })
+    .returning();
+  return { ok: true, transmissao: row, twitch: v.twitch };
+}
+
+/**
+ * Lado em jogo do TIME A depois das escolhas: S (quem escolheu o lado) é o
+ * outro de `escolhaTime` (que fica com quem escolheu o pick order);
+ * `lado_escolhido` é o lado de S. Time A = vaga azul.
+ */
+function ladoEmJogoTimeA(estado: any): "blue" | "red" | null {
+  if (!estado?.ladoEscolhido || !estado?.escolhaTime) return null;
+  const sVaga = estado.escolhaTime === "blue" ? "red" : "blue";
+  const oposto = estado.ladoEscolhido === "blue" ? "red" : "blue";
+  return sVaga === "blue" ? estado.ladoEscolhido : oposto;
+}
+
+/**
  * Gancho do motor de série: jogada registrada → a sala volta a `camp_prontos`
  * com o jogo avançado (os dois marcam PRONTO de novo — ADR-081). Idempotente:
  * só avança se a sala ainda estiver atrás do contador de jogadas da série.
@@ -579,6 +652,21 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
     camp = { id: t?.id ?? null, titulo: t?.nome ?? null };
   }
 
+  // Passo 6: live ativa do jogo (botão "Iniciar live" / "Assista ao vivo").
+  let live: any = null;
+  if (serie) {
+    const [tr] = await d
+      .select({ twitch: transmissoes.twitchChannel, userId: transmissoes.userId })
+      .from(transmissoes)
+      .where(and(eq(transmissoes.matchId, serie.id), eq(transmissoes.ativo, true)))
+      .limit(1);
+    if (tr) {
+      const [u] = await d.select({ nome: users.displayName }).from(users).where(eq(users.id, tr.userId)).limit(1);
+      live = { twitch: tr.twitch, streamer: u?.nome ?? null };
+    }
+  }
+  const times = serie ? await resolverTimesDaSerie(d, serie) : { teamAId: null, teamBId: null };
+
   // Draft do jogo (passo 5): shape compatível com o DraftRoom (mesmos campos do
   // draft das salas) + extras do campeonato (Fearless e quem tem o first pick).
   let draft: any = null;
@@ -627,8 +715,12 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
           status: serie.status ?? null,
           campeonato_id: camp?.id ?? null,
           campeonato_titulo: camp?.titulo ?? null,
+          time_a_id: times.teamAId,
+          time_b_id: times.teamBId,
         }
       : null,
+    live,
+    lado_time_a: ladoEmJogoTimeA(estado),
     draft,
   };
 }

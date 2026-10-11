@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   Calendar,
@@ -52,21 +53,28 @@ export const ListaCronograma = () => {
     refetchCampeonato,
   } = useCampeonato();
 
+  const navigate = useNavigate();
   const [startingMatchId, setStartingMatchId] = useState<string | null>(null);
   const [verifyingMatchId, setVerifyingMatchId] = useState<string | null>(null);
   const [copiedMatchId, setCopiedMatchId] = useState<string | null>(null);
 
-  const handleStartSeries = async (jogo: any) => {
+  // ADR-084: o card abre a SALA da série. Sem sala ainda (ex.: "A COMBINAR"),
+  // cria na hora (idempotente no servidor) e navega.
+  const handleAbrirSala = async (jogo: any) => {
     const matchId = jogo.match_id || jogo.id;
     if (!matchId) return;
+    if (jogo.sala_num) {
+      navigate(`/campeonato/sala/${jogo.sala_num}`);
+      return;
+    }
     setStartingMatchId(matchId);
     try {
-      await api.tournaments.gerarCodigo(campeonato.id, matchId);
-      toast.success("Série iniciada! Código Riot gerado com sucesso.");
-      await refetchCampeonato();
+      const res = await api.tournaments.criarSala(campeonato.id, matchId);
+      toast.success("Sala criada! Os times já podem entrar e marcar PRONTO.");
+      navigate(`/campeonato/sala/${res.sala_num}`);
     } catch (err: any) {
-      console.error("Erro ao iniciar série:", err);
-      toast.error(err?.message || "Não foi possível iniciar a série.");
+      console.error("Erro ao criar sala:", err);
+      toast.error(err?.message || "Não foi possível criar a sala.");
     } finally {
       setStartingMatchId(null);
     }
@@ -509,6 +517,25 @@ export const ListaCronograma = () => {
                     <div className="w-full flex items-center justify-center gap-2 sm:gap-3 px-4 py-2 sm:py-2.5 border-t border-white/10 bg-black/40">
                       {canAccessSeries ? (
                         <>
+                          {jogo.sala_num && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/campeonato/sala/${jogo.sala_num}`);
+                              }}
+                              className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 border rounded-lg cursor-pointer"
+                              style={{
+                                background: 'rgba(255, 183, 0, 0.12)',
+                                borderColor: 'rgba(255, 183, 0, 0.45)',
+                                color: '#FFB700',
+                              }}
+                              title="Abrir a Sala Campeonato desta série"
+                            >
+                              <Swords className="w-3.5 h-3.5" />
+                              <span>Sala da Série</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => {
@@ -569,7 +596,7 @@ export const ListaCronograma = () => {
                         disabled={startingMatchId === (jogo.match_id || jogo.id)}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStartSeries(jogo);
+                          handleAbrirSala(jogo);
                         }}
                         className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 text-black rounded-lg shadow-lg cursor-pointer"
                         style={{
@@ -579,12 +606,12 @@ export const ListaCronograma = () => {
                         {startingMatchId === (jogo.match_id || jogo.id) ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Iniciando Série...</span>
+                            <span>Criando Sala...</span>
                           </>
                         ) : (
                           <>
                             <Swords className="w-3.5 h-3.5" />
-                            <span>Iniciar Série</span>
+                            <span>Criar Sala</span>
                           </>
                         )}
                       </button>

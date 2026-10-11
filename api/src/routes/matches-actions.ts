@@ -12,7 +12,7 @@ import {
 import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
-import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder } from "../lib/sala-campeonato.js";
+import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder, iniciarLiveDaSala } from "../lib/sala-campeonato.js";
 import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato, aplicarAcaoSalaCampeonato } from "../lib/sala-campeonato-draft.js";
 
 export const matchesActionsRouter = Router();
@@ -191,6 +191,27 @@ async function executarAcaoDraftCampeonato(req: any, res: any, tipo: "ban" | "pi
 
 matchesActionsRouter.post("/:id/sala-campeonato/ban", (req, res) => executarAcaoDraftCampeonato(req, res, "ban"));
 matchesActionsRouter.post("/:id/sala-campeonato/pick", (req, res) => executarAcaoDraftCampeonato(req, res, "pick"));
+
+// POST /api/matches/:id/sala-campeonato/live — botão "Iniciar live" (só streamer)
+matchesActionsRouter.post("/:id/sala-campeonato/live", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const r = await iniciarLiveDaSala(db, { salaNum: Number(req.params.id), userId: user.id });
+    if (!r.ok) return res.status(400).json({ ok: false, erro: r.erro, estado: null, mudou: false });
+    await notifyMatchChange(String(req.params.id));
+    return res.json({
+      ok: true,
+      erro: null,
+      estado: "live",
+      mudou: true,
+      twitch: r.twitch,
+      transmissao_id: r.transmissao.id,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
 
 /**
  * Ações de sala montadas em `/api/matches/:id/<acao>` (id público = sala_num).

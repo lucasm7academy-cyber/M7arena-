@@ -797,6 +797,11 @@ export const api = {
       api.post<{ ok: boolean }>(`/tournaments/${id}/recalcular-pdl`),
     gerarCodigo: (id: string, matchId: string) =>
       api.post<ApiLegacyTournament>(`/tournaments/${id}/jogo/${matchId}/gerar-codigo`),
+    criarSala: (id: string, matchId: string) =>
+      api.post<{ ok: boolean; criada: boolean; sala_num: number; sala_id: string }>(
+        `/tournaments/${id}/jogo/${matchId}/sala`,
+        {}
+      ),
     verificarSerie: (id: string, matchId: string) =>
       api.post<{
         ok: boolean;

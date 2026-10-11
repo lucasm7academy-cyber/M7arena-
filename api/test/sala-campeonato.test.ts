@@ -1,11 +1,12 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { users, userRoles } from "../../db/schema/identidade.js";
 import { games } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { tournaments, tournamentMatches, tournamentSeriesGames } from "../../db/schema/tournaments.js";
 import { matches, matchPlayers, matchCodes, campeonatoSalaEstado } from "../../db/schema/matches.js";
+import { transmissoes } from "../../db/schema/conteudo.js";
 import { setupDb } from "./helpers.js";
 import {
   criarSalaCampeonato,
@@ -15,9 +16,11 @@ import {
   marcarPronto,
   escolherLado,
   escolherPickOrder,
+  iniciarLiveDaSala,
   podeVerCodigoSalaCampeonato,
   avancarSalaCampeonatoAposJogada,
   encerrarSalaCampeonato,
+  shapeSalaCampeonato,
 } from "../src/lib/sala-campeonato.js";
 
 const U = (n: number) => `aaaaaaad-0000-0000-0000-00000000000${n}`;
@@ -461,5 +464,56 @@ describe("escolha de lado (passo 4)", () => {
 
     const lado: any = await escolherLado(ctx.db, { salaNum, userId: U(2), lado: "red" });
     assert.equal(lado.ok, true);
+  });
+});
+
+describe("live do streamer na sala (passo 6)", () => {
+  let ctx: any;
+  beforeEach(async () => {
+    ctx = await setupDb();
+    ctx.seed = await seed(ctx.db);
+  });
+  afterEach(async () => {
+    await ctx.client.close();
+  });
+
+  test("sem cargo / sem twitch recusam; streamer abre a live do jogo e o shape expõe", async () => {
+    const { torneio, serie } = ctx.seed;
+    const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
+    const salaNum = r.sala.salaNum;
+
+    const semCargo: any = await iniciarLiveDaSala(ctx.db, { salaNum, userId: U(2) });
+    assert.equal(semCargo.erro, "sem_cargo_streamer");
+
+    await ctx.db.insert(userRoles).values({ userId: U(2), role: "streamer" });
+    const semTwitch: any = await iniciarLiveDaSala(ctx.db, { salaNum, userId: U(2) });
+    assert.equal(semTwitch.erro, "sem_twitch_no_perfil");
+
+    await ctx.db.update(users).set({ socials: { twitch: "canal_do_smoke" } }).where(eq(users.id, U(2)));
+
+    // Live anterior do mesmo usuário é encerrada ao abrir a do jogo.
+    await ctx.db.insert(transmissoes).values({ userId: U(2), twitchChannel: "canal_do_smoke", modo: "padrao", ativo: true });
+    const ok: any = await iniciarLiveDaSala(ctx.db, { salaNum, userId: U(2) });
+    assert.equal(ok.ok, true);
+    assert.equal(ok.twitch, "canal_do_smoke");
+    assert.equal(ok.transmissao.matchId, serie.id);
+    assert.equal(ok.transmissao.modo, "campeonato");
+    assert.equal(ok.transmissao.time1Id, T(1));
+    assert.equal(ok.transmissao.time2Id, T(2));
+    assert.equal(ok.transmissao.expiraEm, null);
+
+    const [anterior] = await ctx.db
+      .select()
+      .from(transmissoes)
+      .where(and(eq(transmissoes.userId, U(2)), eq(transmissoes.modo, "padrao")));
+    assert.equal(anterior.ativo, false, "live anterior encerrada");
+
+    const denovo: any = await iniciarLiveDaSala(ctx.db, { salaNum, userId: U(2) });
+    assert.equal(denovo.ok, true);
+    assert.equal(denovo.transmissao.id, ok.transmissao.id, "idempotente para a mesma série");
+
+    const shape = await shapeSalaCampeonato(ctx.db, r.sala);
+    assert.equal(shape.live?.twitch, "canal_do_smoke");
+    assert.equal(shape.live?.streamer, "Membro A");
   });
 });

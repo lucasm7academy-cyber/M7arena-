@@ -13,6 +13,7 @@
  */
 import { eq, inArray, count } from "drizzle-orm";
 import { db } from "../db.js";
+import { matches as salasTable } from "../../../db/schema/matches.js";
 import {
   tournaments,
   tournamentTeams,
@@ -22,6 +23,9 @@ import {
   tournamentStandings,
 } from "../../../db/schema/tournaments.js";
 import { teams } from "../../../db/schema/teams.js";
+
+// Fases vivas da Sala Campeonato (espelha FASES_ATIVAS_CAMPEONATO de sala-campeonato.ts).
+const SALA_CAMPEONATO_ATIVA = ["camp_vagas", "camp_prontos", "camp_lado", "camp_draft", "camp_jogo"];
 
 // Vocabulário legado <-> novo (mesma tradução da rota)
 const NEW_TO_LEGACY_STATUS: Record<string, string> = {
@@ -80,7 +84,19 @@ export async function loadTournamentData(id: string, d: typeof db = db as any) {
   const brackets = await d.select().from(bracketMatches).where(eq(bracketMatches.tournamentId, id));
   const standings = await d.select().from(tournamentStandings).where(eq(tournamentStandings.tournamentId, id));
 
-  return { t, teamRows, groups, matches, brackets, standings };
+  // Sala Campeonato ativa por série (o cronograma mostra "Entrar na Sala").
+  const salas = matches.length
+    ? await d
+        .select({ matchId: salasTable.tournamentMatchId, salaNum: salasTable.salaNum, status: salasTable.status })
+        .from(salasTable)
+        .where(inArray(salasTable.tournamentMatchId, matches.map((m: any) => m.id)))
+    : [];
+  const salasMap = new Map<string, number>();
+  for (const s of salas) {
+    if (s.matchId && SALA_CAMPEONATO_ATIVA.includes(s.status)) salasMap.set(s.matchId, s.salaNum);
+  }
+
+  return { t, teamRows, groups, matches, brackets, standings, salasMap };
 }
 
 /** `times_inscritos` — array de TeamRegistration (id, name, tag, status, paid, discord, whatsapp, logo). */
@@ -121,6 +137,8 @@ export function buildCronograma(data: NonNullable<Awaited<ReturnType<typeof load
     // Identificadores internos para o motor (a série vive em tournament_matches).
     match_id: m.id,
     best_of: m.bestOf ?? 3,
+    // Sala Campeonato da série (ADR-084): o card vira "Entrar na Sala".
+    sala_num: data.salasMap?.get(m.id) ?? null,
   }));
 }
 
