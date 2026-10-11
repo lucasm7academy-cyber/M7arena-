@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-11T23:18:34.370Z",
+  "updatedAt": "2026-10-11T23:27:49.030Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1508,11 +1508,11 @@
       "area": "app",
       "name": "Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)",
       "status": "doing",
-      "notes": "Passos 3 e 4 concluídos e deployados (até a6a5850): criação T-10 automática + manual; vagas/PRONTO; escolha de lado (sorteado no jogo 1 / perdedor nos 2+) → first/last pick do adversário → camp_draft com escolhas persistidas (escolha_time fica com quem escolheu o pick order, base do draft). Smoke VPS 23/23; testes 12/12; suíte 242/242. Próximo: passo 5 (draft Fearless do modo campeonato) e 6 (streamer).",
+      "notes": "Passos 3-5 concluídos e deployados (até dc9d00d): criação T-10/manual; vagas + PRONTO; lado → first/last pick; draft FEARLESS por jogo (ordem pelos papéis first/last, ban vencido vazio, pick vencido trava) → camp_jogo com código ativo. Smoke VPS 29/29; testes 17/17 (sala + draft); suíte 247/247. Próximo: passo 6 (live do streamer na sala) e a TELA da sala (design).",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.381Z",
-      "updatedAt": "2026-10-11T23:18:34.317Z"
+      "updatedAt": "2026-10-11T23:27:49.002Z"
     },
     {
       "id": "app.sala.campeonato.definicao-lado",
@@ -2397,14 +2397,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-23T03:49:40.539Z",
-      "agent": "gemini",
-      "summary": "Revertido Lobby.tsx para a versão aprovada pelo usuário no commit 24cc9f4 (restaurada a pincelada horizontal autêntica com névoa difusa, logo estendido em object-cover e indicadores centralizados). Build e deploy concluídos na VPS com HTTP 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
       "at": "2026-09-23T03:52:20.641Z",
       "agent": "gemini",
       "summary": "Ajuste exato de Próximos Jogos no Lobby: mantida a pincelada horizontal de tinta com cerdas e névoa difusa (TeamBrushStroke) nas cores de cada time e logo estendido sem corte; aplicado o cabeçalho estilizado do campeonato com a fonte Anton e troféu metálico (estilo Partidas Personalizadas / Finalizadas), e removido o título redundante 'Próximos Jogos'. Deploy concluído na VPS com HTTP 200.",
@@ -2709,6 +2701,19 @@
         "api/src/lib/sala-campeonato.ts",
         "api/src/routes/matches-actions.ts",
         "api/test/sala-campeonato.test.ts",
+        "scripts/smoke-vps-sala-campeonato.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-11T23:27:49.030Z",
+      "agent": "deepseek",
+      "summary": "Passo 5 (draft Fearless do campeonato) concluído e deployado (dc9d00d). Novo motor api/src/lib/sala-campeonato-draft.ts: template ban/pick em papéis first/last pick mapeados para o lado de cada time; um draft POR JOGO (match_drafts.jogo); FEARLESS com picks de jogos anteriores travados; ban vencido vira vazio e pick vencido TRAVA (ADR-083). O draft nasce na entrada de camp_draft; rotas /sala-campeonato/ban|pick com lock+catch-up; shape ganha campeonato.draft (regras + campeoes_travados + primeiro_pick); cron saneia bans vencidos. Evidências: smoke VPS 29/29 (fluxo completo até 20 turnos e camp_jogo), testes do draft 5/5, testes da sala 12/12, suíte 247/247, tsc 0. Próximo: passo 6 (botão de live do streamer na sala + 'assistir ao vivo') e depois a TELA da sala campeonato (design, dirigido pelo usuário).",
+      "touched": [
+        "api/src/lib/sala-campeonato-draft.ts",
+        "api/src/lib/sala-campeonato.ts",
+        "api/src/routes/matches-actions.ts",
+        "api/src/cron.ts",
+        "api/test/sala-campeonato-draft.test.ts",
         "scripts/smoke-vps-sala-campeonato.mjs"
       ]
     }
