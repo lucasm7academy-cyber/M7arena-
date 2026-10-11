@@ -97,6 +97,16 @@ async function usuarioNoTime(d: any, userId: string, teamId: string): Promise<bo
   return ms.length > 0;
 }
 
+/** Lado (vaga) do usuário na sala: 'blue' (time A), 'red' (time B) ou null. */
+async function ladoDoUsuarioNaSala(d: any, sala: any, userId: string): Promise<"blue" | "red" | null> {
+  const serie = await carregarSerieDaSala(d, sala);
+  if (!serie) return null;
+  const { teamAId, teamBId } = await resolverTimesDaSerie(d, serie);
+  if (teamAId && (await usuarioNoTime(d, userId, teamAId))) return "blue";
+  if (teamBId && (await usuarioNoTime(d, userId, teamBId))) return "red";
+  return null;
+}
+
 /**
  * Cria (ou devolve a existente) a Sala Campeonato da série. Equivale ao
  * "Iniciar Série": código atribuído + série em_andamento. O lock da série
@@ -375,6 +385,85 @@ export async function marcarPronto(
 
     await tx.update(campeonatoSalaEstado).set(set).where(eq(campeonatoSalaEstado.matchId, sala.id));
     return { ok: true, estado: sala.status, avancou: false };
+  });
+
+  if (r?.ok) await notifyMatchChange(String(opts.salaNum));
+  return r;
+}
+
+/**
+ * Escolha de LADO (ADR-079): só o time da vez (`escolha_time`) escolhe, e a vez
+ * passa para o adversário escolher o first/last pick. `lado_escolhido` é o lado
+ * que o time ESCOLHEDOR joga; o adversário fica com o outro.
+ */
+export async function escolherLado(
+  d: any,
+  opts: { salaNum: number; userId: string; lado: "blue" | "red" }
+): Promise<Resultado<{ estado: string }>> {
+  const r: any = await d.transaction(async (tx: any) => {
+    const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
+    if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
+    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (sala.status !== "camp_lado") return { ok: false, erro: "estado_invalido" };
+
+    const [estado] = await tx
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, sala.id))
+      .limit(1);
+    if (!estado?.escolhaTime) return { ok: false, erro: "estado_invalido" };
+    if (estado.ladoEscolhido) return { ok: false, erro: "lado_ja_escolhido" };
+
+    const meuLado = await ladoDoUsuarioNaSala(tx, sala, opts.userId);
+    if (!meuLado) return { ok: false, erro: "nao_e_do_time" };
+    if (meuLado !== estado.escolhaTime) return { ok: false, erro: "fora_da_vez" };
+
+    const outro = estado.escolhaTime === "blue" ? "red" : "blue";
+    await tx
+      .update(campeonatoSalaEstado)
+      .set({ ladoEscolhido: opts.lado, escolhaTime: outro, updatedAt: new Date() })
+      .where(eq(campeonatoSalaEstado.matchId, sala.id));
+    return { ok: true, estado: "camp_lado" };
+  });
+
+  if (r?.ok) await notifyMatchChange(String(opts.salaNum));
+  return r;
+}
+
+/**
+ * Escolha do FIRST/LAST PICK: só o adversário do escolhedor (a vez atual). Ao
+ * concluir, a sala vai para `camp_draft`. `escolha_time` fica com o time que
+ * escolheu o pick order — o draft (passo 5) usa isso para montar a ordem.
+ */
+export async function escolherPickOrder(
+  d: any,
+  opts: { salaNum: number; userId: string; ordem: "first" | "last" }
+): Promise<Resultado<{ estado: string }>> {
+  const r: any = await d.transaction(async (tx: any) => {
+    const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
+    if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
+    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (sala.status !== "camp_lado") return { ok: false, erro: "estado_invalido" };
+
+    const [estado] = await tx
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, sala.id))
+      .limit(1);
+    if (!estado?.escolhaTime || !estado.ladoEscolhido || estado.pickOrderEscolhido) {
+      return { ok: false, erro: "estado_invalido" };
+    }
+
+    const meuLado = await ladoDoUsuarioNaSala(tx, sala, opts.userId);
+    if (!meuLado) return { ok: false, erro: "nao_e_do_time" };
+    if (meuLado !== estado.escolhaTime) return { ok: false, erro: "fora_da_vez" };
+
+    await tx
+      .update(campeonatoSalaEstado)
+      .set({ pickOrderEscolhido: opts.ordem, updatedAt: new Date() })
+      .where(eq(campeonatoSalaEstado.matchId, sala.id));
+    await tx.update(matches).set({ status: "camp_draft", updatedAt: new Date() }).where(eq(matches.id, sala.id));
+    return { ok: true, estado: "camp_draft" };
   });
 
   if (r?.ok) await notifyMatchChange(String(opts.salaNum));

@@ -147,6 +147,41 @@ async function main() {
     estado ? `${estado.sorteio_vencedor} → ${estado.escolha_time}` : "sem estado"
   );
 
+  // ── 3b) Escolha de lado → first/last pick (passo 4) ─────────────────────
+  const cookieDoLado = (lado) => (lado === "blue" ? membA.cookie : membB.cookie);
+  const ladoSorteado = estado?.escolha_time;
+  const ladoOutro = ladoSorteado === "blue" ? "red" : "blue";
+  const foraDaVez = await api(
+    `/api/matches/${salaNum}/sala-campeonato/lado`,
+    { method: "POST", body: JSON.stringify({ lado: "blue" }) },
+    cookieDoLado(ladoOutro)
+  );
+  check(foraDaVez.body?.erro === "fora_da_vez", "lado: fora da vez recusado", foraDaVez.body?.erro);
+  const escolheuLado = await api(
+    `/api/matches/${salaNum}/sala-campeonato/lado`,
+    { method: "POST", body: JSON.stringify({ lado: "red" }) },
+    cookieDoLado(ladoSorteado)
+  );
+  check(escolheuLado.body?.ok === true, "lado: sorteado escolheu (red)", JSON.stringify(escolheuLado.body));
+  const pickOrder = await api(
+    `/api/matches/${salaNum}/sala-campeonato/pick-order`,
+    { method: "POST", body: JSON.stringify({ ordem: "first" }) },
+    cookieDoLado(ladoOutro)
+  );
+  check(
+    pickOrder.body?.ok === true && pickOrder.body?.estado === "camp_draft",
+    "pick order: adversário escolheu first → camp_draft",
+    JSON.stringify(pickOrder.body)
+  );
+  const estadoPos = await q1(
+    `SELECT lado_escolhido, pick_order_escolhido, escolha_time FROM campeonato_sala_estado WHERE match_id='${salaId}'`
+  );
+  check(
+    estadoPos?.lado_escolhido === "red" && estadoPos?.pick_order_escolhido === "first" && estadoPos?.escolha_time === ladoOutro,
+    "estado: lado + pick order persistidos",
+    JSON.stringify(estadoPos)
+  );
+
   // ── 4) Shape: bloco campeonato + código redigido para anônimo ────────────
   const detAnon = await api(`/api/matches/${salaNum}`);
   check(!!detAnon.body?.campeonato, "shape: bloco campeonato presente");

@@ -12,7 +12,7 @@ import {
 import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
-import { entrarNaVaga, sairDaVaga, marcarPronto } from "../lib/sala-campeonato.js";
+import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder } from "../lib/sala-campeonato.js";
 
 export const matchesActionsRouter = Router();
 
@@ -115,6 +115,34 @@ matchesActionsRouter.post("/:id/sala-campeonato/pronto", async (req, res) => {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
     const r = await marcarPronto(db, { salaNum: Number(req.params.id), userId: user.id });
+    return responderSalaCampeonato(res, r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+// POST /api/matches/:id/sala-campeonato/lado  { lado: 'blue' | 'red' }
+matchesActionsRouter.post("/:id/sala-campeonato/lado", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const lado = req.body?.lado === "red" ? "red" : req.body?.lado === "blue" ? "blue" : null;
+    if (!lado) return res.status(400).json({ ok: false, erro: "lado_invalido", estado: null, mudou: false });
+    const r = await escolherLado(db, { salaNum: Number(req.params.id), userId: user.id, lado });
+    return responderSalaCampeonato(res, r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+// POST /api/matches/:id/sala-campeonato/pick-order  { ordem: 'first' | 'last' }
+matchesActionsRouter.post("/:id/sala-campeonato/pick-order", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const ordem = req.body?.ordem === "last" ? "last" : req.body?.ordem === "first" ? "first" : null;
+    if (!ordem) return res.status(400).json({ ok: false, erro: "ordem_invalida", estado: null, mudou: false });
+    const r = await escolherPickOrder(db, { salaNum: Number(req.params.id), userId: user.id, ordem });
     return responderSalaCampeonato(res, r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });

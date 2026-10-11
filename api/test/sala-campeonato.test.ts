@@ -13,6 +13,8 @@ import {
   entrarNaVaga,
   sairDaVaga,
   marcarPronto,
+  escolherLado,
+  escolherPickOrder,
   podeVerCodigoSalaCampeonato,
   avancarSalaCampeonatoAposJogada,
   encerrarSalaCampeonato,
@@ -338,5 +340,126 @@ describe("sala-campeonato (ADR-076..085)", () => {
 
     await ctx.db.insert(userRoles).values({ userId: U(5), role: "streamer" });
     assert.equal(await podeVerCodigoSalaCampeonato(ctx.db, U(5), sala), true, "streamer (staff de sala)");
+  });
+});
+
+describe("escolha de lado (passo 4)", () => {
+  let ctx: any;
+  beforeEach(async () => {
+    ctx = await setupDb();
+    ctx.seed = await seed(ctx.db);
+  });
+  afterEach(async () => {
+    await ctx.client.close();
+  });
+
+  /** Deixa a sala em camp_lado (2 vagas + 2 PRONTOs) e devolve quem escolhe. */
+  async function salaAteOLado() {
+    const { torneio, serie } = ctx.seed;
+    const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
+    const salaNum = r.sala.salaNum;
+    await preencherVagas(ctx, salaNum);
+    await marcarPronto(ctx.db, { salaNum, userId: U(2) });
+    await marcarPronto(ctx.db, { salaNum, userId: U(4) });
+    const [estado] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, r.sala.id));
+    const usuarioDoLado = (lado: string) => (lado === "blue" ? U(2) : U(4));
+    return { salaNum, salaId: r.sala.id, estado, usuarioDoLado };
+  }
+
+  test("fluxo: sorteado escolhe o lado → adversário escolhe first/last → camp_draft", async () => {
+    const { salaNum, salaId, estado, usuarioDoLado } = await salaAteOLado();
+    const sorteado = estado.escolhaTime as string;
+    const outro = sorteado === "blue" ? "red" : "blue";
+
+    const estranho: any = await escolherLado(ctx.db, { salaNum, userId: U(5), lado: "blue" });
+    assert.equal(estranho.erro, "nao_e_do_time");
+
+    const foraDaVez: any = await escolherLado(ctx.db, { salaNum, userId: usuarioDoLado(outro), lado: "blue" });
+    assert.equal(foraDaVez.erro, "fora_da_vez", "quem não é a vez não escolhe o lado");
+
+    const lado: any = await escolherLado(ctx.db, { salaNum, userId: usuarioDoLado(sorteado), lado: "red" });
+    assert.equal(lado.ok, true);
+
+    const [e2] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, salaId));
+    assert.equal(e2.ladoEscolhido, "red");
+    assert.equal(e2.escolhaTime, outro, "a vez passa para o adversário escolher o pick order");
+
+    const repetido: any = await escolherLado(ctx.db, { salaNum, userId: usuarioDoLado(sorteado), lado: "blue" });
+    assert.equal(repetido.erro, "lado_ja_escolhido");
+
+    const foraDaVez2: any = await escolherPickOrder(ctx.db, { salaNum, userId: usuarioDoLado(sorteado), ordem: "first" });
+    assert.equal(foraDaVez2.erro, "fora_da_vez");
+
+    const pick: any = await escolherPickOrder(ctx.db, { salaNum, userId: usuarioDoLado(outro), ordem: "first" });
+    assert.equal(pick.ok, true);
+    assert.equal(pick.estado, "camp_draft");
+
+    const [e3] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, salaId));
+    assert.equal(e3.pickOrderEscolhido, "first");
+    assert.equal(e3.escolhaTime, outro, "escolha_time fica com quem escolheu o pick order (base do draft)");
+
+    const [salaDb] = await ctx.db.select().from(matches).where(eq(matches.id, salaId));
+    assert.equal(salaDb.status, "camp_draft");
+  });
+
+  test("fora de camp_lado não aceita escolha e pick order exige lado escolhido", async () => {
+    const { torneio, serie } = ctx.seed;
+    const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
+    const salaNum = r.sala.salaNum;
+    await preencherVagas(ctx, salaNum); // camp_prontos
+
+    const cedo: any = await escolherLado(ctx.db, { salaNum, userId: U(2), lado: "blue" });
+    assert.equal(cedo.erro, "estado_invalido", "antes dos PRONTOs não escolhe lado");
+
+    await marcarPronto(ctx.db, { salaNum, userId: U(2) });
+    await marcarPronto(ctx.db, { salaNum, userId: U(4) });
+    const [estado] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, r.sala.id));
+    const outro = estado.escolhaTime === "blue" ? "red" : "blue";
+    const usuarioDoLado = (lado: string) => (lado === "blue" ? U(2) : U(4));
+
+    const pickCedo: any = await escolherPickOrder(ctx.db, { salaNum, userId: usuarioDoLado(outro), ordem: "last" });
+    assert.equal(pickCedo.erro, "estado_invalido", "pick order antes do lado não vale");
+  });
+
+  test("jogo 2+: o perdedor do jogo anterior é quem escolhe o lado", async () => {
+    const { torneio, serie } = ctx.seed;
+    const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
+    const salaNum = r.sala.salaNum;
+    await preencherVagas(ctx, salaNum);
+    await ctx.db
+      .update(campeonatoSalaEstado)
+      .set({ jogo: 2 })
+      .where(eq(campeonatoSalaEstado.matchId, r.sala.id));
+    await ctx.db.insert(tournamentSeriesGames).values({
+      matchId: serie.id,
+      tournamentId: torneio.id,
+      gameNumber: 1,
+      winnerSide: "b",
+      matchIdRiot: "BR1_TESTE_P4",
+    });
+
+    await marcarPronto(ctx.db, { salaNum, userId: U(2) });
+    await marcarPronto(ctx.db, { salaNum, userId: U(4) });
+
+    const [estado] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, r.sala.id));
+    assert.equal(estado.escolhaTime, "blue", "perdedor do jogo 1 (b) = azul escolhe");
+
+    const lado: any = await escolherLado(ctx.db, { salaNum, userId: U(2), lado: "red" });
+    assert.equal(lado.ok, true);
   });
 });
