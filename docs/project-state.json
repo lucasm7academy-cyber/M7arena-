@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-11T23:12:45.040Z",
+  "updatedAt": "2026-10-11T23:18:34.370Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1508,11 +1508,11 @@
       "area": "app",
       "name": "Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)",
       "status": "doing",
-      "notes": "Passo 3 concluído e deployado (50f93d6): criação automática T-10 (varredura de 1 min) + manual A COMBINAR; vagas com roster (dono/membro/coach/convidado); PRONTO por jogo → sorteio no jogo 1 / perdedor nos 2+ (camp_lado); gancho no motor de série (avança jogo / encerra sala); shape com bloco campeonato + código visível a membros/staff. Smoke VPS 19/19; testes 9/9; suíte 239/239. Próximo: passo 4 (rotas da escolha de lado) e 5 (draft Fearless).",
+      "notes": "Passos 3 e 4 concluídos e deployados (até a6a5850): criação T-10 automática + manual; vagas/PRONTO; escolha de lado (sorteado no jogo 1 / perdedor nos 2+) → first/last pick do adversário → camp_draft com escolhas persistidas (escolha_time fica com quem escolheu o pick order, base do draft). Smoke VPS 23/23; testes 12/12; suíte 242/242. Próximo: passo 5 (draft Fearless do modo campeonato) e 6 (streamer).",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.381Z",
-      "updatedAt": "2026-10-11T23:12:45.010Z"
+      "updatedAt": "2026-10-11T23:18:34.317Z"
     },
     {
       "id": "app.sala.campeonato.definicao-lado",
@@ -2397,14 +2397,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-23T03:40:02.631Z",
-      "agent": "gemini",
-      "summary": "Ajustes solicitados no Lobby: remoção do título 'Próximos Jogos' (ficando apenas o banner do campeonato) e expansão da pincelada em X (TeamBrushX) para até 580px com viewBox 500x500 e duplo drop-shadow luminoso, garantindo que os 4 braços do X cruzem ampla e visivelmente para fora do escudo em cada time. Build e deploy para VPS concluídos com HTTP 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
       "at": "2026-09-23T03:49:40.539Z",
       "agent": "gemini",
       "summary": "Revertido Lobby.tsx para a versão aprovada pelo usuário no commit 24cc9f4 (restaurada a pincelada horizontal autêntica com névoa difusa, logo estendido em object-cover e indicadores centralizados). Build e deploy concluídos na VPS com HTTP 200.",
@@ -2705,6 +2697,17 @@
         "api/src/index.ts",
         "api/src/lib/serie-campeonato.ts",
         "api/src/lib/tournament-store.ts",
+        "api/test/sala-campeonato.test.ts",
+        "scripts/smoke-vps-sala-campeonato.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-11T23:18:34.370Z",
+      "agent": "deepseek",
+      "summary": "Passo 4 (escolha de lado) concluído e deployado (a6a5850). Lib: escolherLado/escolherPickOrder com lock e validação de vez (nao_e_do_time / fora_da_vez / lado_ja_escolhido); a escolha do lado passa a vez ao adversário escolher first/last pick; ao concluir, a sala vai para camp_draft e escolha_time fica com quem escolheu o pick order (base da ordem do draft). Rotas POST /api/matches/:id/sala-campeonato/lado e /pick-order. Evidências: smoke VPS 23/23 (ação automática + manual + vaga + PRONTO + sorteio + lado + pick order + shape + redação), testes 12/12, suíte 242/242, tsc 0. Próximo: passo 5 (draft Fearless do campeonato: engine por jogo com regras próprias e trava dos picks anteriores) e 6 (botão de live/assistir).",
+      "touched": [
+        "api/src/lib/sala-campeonato.ts",
+        "api/src/routes/matches-actions.ts",
         "api/test/sala-campeonato.test.ts",
         "scripts/smoke-vps-sala-campeonato.mjs"
       ]
