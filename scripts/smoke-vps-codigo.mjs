@@ -1,7 +1,7 @@
 // scripts/smoke-vps-codigo.mjs — E2E do sec.codigo-campeonato na VPS. Roda
-// DENTRO do container:
-//   docker cp scripts/smoke-vps-codigo.mjs m7arena_app:/tmp/smoke-codigo.mjs
-//   docker exec -w /app m7arena_app node /tmp/smoke-codigo.mjs
+// DENTRO do container (o script vive em /app para o ESM resolver o pacote `pg`):
+//   docker cp scripts/smoke-vps-codigo.mjs m7arena_app:/app/smoke-codigo.mjs
+//   docker exec -w /app m7arena_app node smoke-codigo.mjs
 //
 // Cobre: codigo_partida redigido para anônimo e para não-participante (detalhe
 // + lista), verificar sem sessão = 401 e como estranho = 403. Cria um usuário

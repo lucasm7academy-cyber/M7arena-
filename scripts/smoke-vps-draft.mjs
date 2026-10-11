@@ -1,7 +1,7 @@
 // scripts/smoke-vps-draft.mjs — E2E do draft POR MODO na VPS. Roda DENTRO do
-// container:
-//   docker cp scripts/smoke-vps-draft.mjs m7arena_app:/tmp/smoke-draft.mjs
-//   docker exec -w /app m7arena_app node /tmp/smoke-draft.mjs
+// container (o script vive em /app para o ESM resolver o pacote `pg`):
+//   docker cp scripts/smoke-vps-draft.mjs m7arena_app:/app/smoke-draft.mjs
+//   docker exec -w /app m7arena_app node smoke-draft.mjs
 //
 // Cobre: 1v1 e ARAM pulam a fase (confirmou → iniciando_partida com código),
 // 5v5 com draft de 20 turnos completo e timeouts (ban vazio/catch-up + pick

@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/10/2026 20:28 — por `deepseek`
+**Última atualização:** 11/10/2026 19:21 — por `deepseek`
 
 **Objetivo:** Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.
 
 ## Panorama
 
-`████████████████████████░░░░ 88/101` concluído
+`████████████████████████░░░░ 90/107` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 6/6 | — | — |
 | Fase 1 — Schema do banco | ████████████ 13/13 | — | — |
 | Fase 2 — Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ███████████░ 57/64 | 3 | 3 |
+| Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados) | ██████████░░ 59/70 | 3 | 3 |
 | Fase 4 — MCP de operações da VPS | ████████████ 2/2 | — | — |
 | Fase 5 — Migração de dados e cutover | ███░░░░░░░░░ 2/7 | 4 | — |
 
@@ -41,11 +41,11 @@
 | Governança & Agentes | ████████████ 6/6 | — | — |
 | Banco de Dados | ████████████ 14/14 | — | — |
 | Infraestrutura (Docker/VPS) | ███████████░ 8/9 | — | 1 |
-| Aplicação (React + Vite) | ███████████░ 49/54 | 3 | 2 |
+| Aplicação (React + Vite) | ██████████░░ 50/58 | 3 | 2 |
 | Design & Paridade Visual | ████████░░░░ 2/3 | — | 1 |
 | MCP de Operações | ████████████ 2/2 | — | — |
 | Migração de Dados | ██░░░░░░░░░░ 1/6 | 4 | — |
-| Segurança | ██████████░░ 6/7 | — | — |
+| Segurança | █████████░░░ 7/9 | — | — |
 
 </details>
 
@@ -54,6 +54,10 @@
 Componentes com todas as dependências satisfeitas. Marque como `doing` antes de começar.
 
 - `mig.verify` **verify-migration.sql** — Fase 5 — Migração de dados e cutover
+- `app.sala.campeonato` **Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)** — Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
+- `app.sala.campeonato.definicao-lado` **Definicao de lado estilo CBLOL (sorteio + lado vs first/last pick)** — Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
+- `app.draft.campeonato` **Draft do modo campeonato (regras proprias + ordem first/last pick)** — Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
+- `sec.campeonato-permissoes` **Permissoes das rotas de escrita do campeonato (achado 2026-10-11)** — Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)
 
 ## ⚠️ Bloqueios abertos
 
@@ -74,7 +78,7 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
 - `mig.cutover` **Cutover: re-sync + DNS + TLS** — deepseek · Cutover de produção em execução: DNS m7arena.pro apontado para a VPS real 179.198.120.11 (o IP 187.127.6.136 do CUTOVER_CHECKLIST estava desatualizado — VPS foi trocada). Cert emitido via certbot para m7arena.pro + www.m7arena.pro, proxy host nginx criado e recarregado. Site servindo HTTPS 200 com cert válido (CN=m7arena.pro, expira 2026-11-30).
 - `app.saque` **Saque de MC via PIX (withdrawals + admin decide)** — deepseek · Fluxo de saque implementado e testado. Backend commitado por outro agente (3062c68: migration 0012, lib/routes/testes/SDK). Front (Tasks 5-6: DepositTab/SaqueTab/SaquesPix/Admin) escrito e buildando, AINDA NÃO COMMITADO nem deployado. Falta: commit do front + aplicar migration 0012 na VPS + deploy.
 - `app.chat.mensagens` **Chat de sala via WebSocket (envio + histórico + purge)** — deepseek · Deployado na VPS (dev.m7arena.pro): app+realtime+nginx recriados com o código do chat, site HTTP 200, realtime ouvindo matches_channel, cron limpo (bug de destructuring do purge corrigido e redeployado). Falta: teste manual com 2 contas (envio/recebimento em tempo real, autoexclusão 5min, ban/Riot).
-- `app.sala.draft` **Draft de sala (ban/pick pós-confirmação, timer server-side)** — deepseek · Puxado do commit e4b7457 do M7AcademySite (último com draft renderizado). Estado 'draft' entre confirmacao e iniciando_partida; match_drafts; rotas draft/ban|pick; timer por turn_deadline_at do servidor (clockSync no front). DraftRoom portado 1:1 (sem HUD de stream).
+- `app.sala.time-vs-time` **Sala Time vs Time (base dedicada para redesign)** — deepseek · Base dedicada deployada (f92b338): /time_vs_time/:id renderiza features/sala-time-vs-time/SalaTimeVsTime (cópia 1:1 de SalaMod1). O redesign dirigido pelo usuário segue no escopo app.sala.campeonato (ADRs 076-084) — fechar/deprecar quando a sala campeonato substituir esta base.
 
 ## Componentes
 
@@ -198,7 +202,11 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **Inscrições: remover time e excluir campeonato** `app.campeonatos.inscricoes`<br>  Deployado. X de excluir candidato agora usa endpoint dedicado (remove tournament_teams + standings); delete do campeonato aceita admin/proprietário; falhas aparecem no banner em vez de sumir no console. Falta o teste visual do usuário (remover M7K da COPA DO TESOURO).<br>  _evidência:_ `Deploy ea2516a (health 200). DELETE /tournaments/:id/inscricoes/:teamId sem auth → 401 (rota montada, não 404). Bundle createCampPage-Cq62RtWp.js contém removerInscricao. Suíte 181/181, teste inscrição 2/2, tsc/build 0.`<br>  _concluído 10/09/2026 02:33 por deepseek_
 - `[x]` **Escala de transmissões (agenda de streamers)** `app.streams.agenda`<br>  Entregue: migration 0024, lib streams.ts/transmissoes.ts, rotas /streams/agenda (pegar/soltar/no-ar), vitrine e /minha com join pelo status do jogo, encerramento no motor de série e no storeCronograma (W.O.).<br>  _evidência:_ `npx tsx --test api/test/streams.test.ts → 11 PASS; npx tsx --test "api/test/*.test.ts" → 200 PASS/30 suites; drizzle-kit generate → 0024_gray_gressill.sql (duplicata da 0023 removida) aplica na cadeia 0000→0024 via PGlite; tsc -p api/tsconfig.json exit 0`<br>  _concluído 29/09/2026 21:23 por deepseek_
 - `[x]` **UI da agenda de transmissões (/streamers + Lobby)** `app.streams.agenda-ui`<br>  Entregue: componente AgendaTransmissoes em /streamers (pegar/estou no ar/código com copiar/encerrar), filtro de expiração para live de jogo (hook + fetchStreams), chip do streamer no carrossel do Lobby (cache v5) e painel 'Até o fim da série'. Teste interativo no browser fica com o usuário; deploy não incluso.<br>  _evidência:_ `npx tsc --noEmit (web) exit 0; npx vite build → built in 12.00s (dist/assets/index-CN1uyUJq.js + CampeonatoDetalhes-BUJvbMQq.js); smoke-test status-server → 23 checks ok`<br>  _concluído 29/09/2026 21:23 por deepseek_
-- `[~]` **Draft de sala (ban/pick pós-confirmação, timer server-side)** `app.sala.draft`<br>  Puxado do commit e4b7457 do M7AcademySite (último com draft renderizado). Estado 'draft' entre confirmacao e iniciando_partida; match_drafts; rotas draft/ban|pick; timer por turn_deadline_at do servidor (clockSync no front). DraftRoom portado 1:1 (sem HUD de stream).
+- `[x]` **Draft de sala (ban/pick pós-confirmação, timer server-side)** `app.sala.draft`<br>  Deployado na VPS (f92b338). Registry por modo (ADR-074): 1v1/ARAM pulam a fase; 5v5/time_vs_time 20 turnos; shape publica draft.regras + duracao_turno_ms. No smoke: 2 códigos 1v1 estavam PRESOS no pool (used=true sem match_id desde 08/10 — salas x1 sem código) e foram liberados.<br>  _evidência:_ `docker exec m7arena_app node smoke-draft.mjs → 34 PASS / 0 FAIL; suíte API local 226/226; tsc exit 0; deploy f92b338.`<br>  _concluído 11/10/2026 19:21 por deepseek_
+- `[~]` **Sala Time vs Time (base dedicada para redesign)** `app.sala.time-vs-time`<br>  Base dedicada deployada (f92b338): /time_vs_time/:id renderiza features/sala-time-vs-time/SalaTimeVsTime (cópia 1:1 de SalaMod1). O redesign dirigido pelo usuário segue no escopo app.sala.campeonato (ADRs 076-084) — fechar/deprecar quando a sala campeonato substituir esta base.
+- `[ ]` **Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)** `app.sala.campeonato`<br>  Substitui o 'Iniciar Série': a sala da série (LoL) nasce automaticamente 10 min antes do horário (ADR-084); no cronograma o botão vira 'Criar Sala' (A COMBINAR). 2 vagas (1 por time); qualquer membro entra (coach a reserva). PRONTO sem timer a cada jogo (ADR-081) → lado → draft Fearless (picks travam; bans não) → jogo. Acompanha a série toda (placar 1-0/1-1/2-1); código Riot visível até o fim (capitão/membros/staff). Streamer: 'Iniciar live'; demais, 'Assista ao vivo'.
+- `[ ]` **Definicao de lado estilo CBLOL (sorteio + lado vs first/last pick)** `app.sala.campeonato.definicao-lado`<br>  Sorteio server-side decide quem escolhe no jogo 1: o sorteado escolhe o lado (red/blue); o outro escolhe first pick ou last pick — a sala aplica lado + ordem no draft. Jogos 2+: o perdedor do jogo anterior escolhe o lado (ADR-081). Estado visível a todos ('TIME X ESTÁ ESCOLHENDO O LADO') via WebSocket + fallback 5s (ADR-082). Sem timeout na V1 (ADR-083): adm resolve se travar.
+- `[ ]` **Draft do modo campeonato (regras proprias + ordem first/last pick)** `app.draft.campeonato`<br>  Novo modo no registry de draft (api/src/lib/draft/modos/campeonato.ts, ADR-074): regras básicas + particulares do campeonato. FEARLESS (ADR-081): picks de jogos anteriores da série ficam indisponíveis nos jogos seguintes; um draft por jogo, com PRONTO/lado antes de cada um. Ordem ban/pick derivada do first/last pick (ADR-079). Ban vencido = vazio; pick vencido trava o draft — nunca cancela (ADR-083). Design definido depois.
 
 **Design & Paridade Visual**
 
@@ -218,6 +226,8 @@ Route /times: 7.69 kB, /times/[id]: 4.09 kB`
 - `[x]` **Upload restrito por dono** `sec.upload`<br>  Revalidado de ponta a ponta. Correções: team-logos agora exige path=teamId e valida dono/capitão (upload.ts:153-191,403); public-images restrito a admin/organizador; Nginx bloqueia acesso direto a /uploads/match-prints (privacy v3 §6). Front: equipes.tsx:298 e TimePage.tsx:133 passam o id do time. Teste novo api/test/upload-permissao.test.ts.<br>  _evidência:_ `verify-swap.js storage → OK 0; api npx tsc --noEmit exit 0; npx tsx --test 56/57 (falha pré-existente test-realtime.mjs, exige WS+env) com suite nova upload-permissao 4/4; web tsc só 2 erros pré-existentes. HTTP e2e não rodou: Docker daemon down.`<br>  _concluído 05/08/2026 02:45 por deepseek_
 - `[x]` **Auditar as 19 ocorrências de import.meta.env** `app.env`<br>  Auditoria de variáveis de ambiente concluída. Único segredo (VITE_RIOT_API_KEY) mapeado para proxy backend.<br>  _evidência:_ `Auditadas 19 ocorrências: 13 DEV (flags dev), 3 VITE_SUPABASE_URL (URL pública), 1 VITE_DISCORD_CLIENT_ID (client_id público), 1 VITE_RIOT_API_KEY (src/api/riot.ts:5 - segredo identificado para mover p/ proxy no servidor em sec.riot-key).`<br>  _concluído 02/08/2026 01:41 por gemini_
 - `[x]` **Auditoria Morpheus do fluxo de salas — findings de segurança** `sec.salas-auditoria`<br>  4 findings corrigidos e no ar: MORPH-001 senha validada no servidor (join, timingSafeEqual, shape sem senha); MORPH-002 clamp aposta/taxa/maxJogadores + allowlist modo + guarda no calcularPayout; MORPH-003 CORS allowlist fixa (validado na VPS); MORPH-004 coberto pelo clamp. Commit e73f7a2.<br>  _evidência:_ `Deploy na VPS validado: health 200, CORS nao ecoa origem arbitraria (evil.example.com sem Access-Control-Allow-Origin). tsc api exit 0, testes escrow+estados+cron+elegibilidade+revisao 36/36, build web ok.`<br>  _concluído 04/08/2026 03:17 por morpheus_
+- `[x]` **Redigir codigo_partida do campeonato para nao-participantes** `sec.codigo-campeonato`<br>  Redação no servidor (espelha ADR-043): GET lista/detalhe e TODAS as respostas do shape entregam codigo_partida só para staff do campeonato ou time da SÉRIE (dono/membro aceito/convidado por PUUID). POST /:id/jogo/:matchId/verificar agora exige staff ou time da série (antes qualquer logado). Lib api/src/lib/tournament-access.ts.<br>  _evidência:_ `docker exec m7arena_app node smoke-codigo.mjs → 8 PASS / 0 FAIL; tsx --test tournament-access → 8/8; suíte API 226/226; tsc exit 0; deploy 5f5719e.`<br>  _concluído 11/10/2026 19:21 por deepseek_
+- `[ ]` **Permissoes das rotas de escrita do campeonato (achado 2026-10-11)** `sec.campeonato-permissoes`<br>  Achado 2026-10-11 (durante sec.codigo-campeonato): rotas de escrita do campeonato que só exigem login — qualquer usuário autenticado altera pela API: PUT /:id, /cronograma, /cronograma/merge, /reabrir, /recalcular-pdl, /inscricoes, /inscricoes/:teamId/aprovar. Só os DELETE têm checagem. Regra por rota: aprovar/reabrir/PUT/recalcular = staff; merge e inscrições têm uso por participantes (agendamento/inscrição) — decidir antes.
 
 ### Fase 4 — MCP de operações da VPS
 
@@ -817,6 +827,94 @@ _29/09/2026 21:23 — deepseek_
 
 _07/10/2026 01:00 — deepseek_
 
+### ADR-074 — Draft por modo: registry em api/src/lib/draft/modos; 1v1 e ARAM pulam a fase
+
+**Decisão:** Todo diferencial de draft por modo vive em api/src/lib/draft/modos/{5v5,time-vs-time,1v1,aram}.ts, amarrado pelo registry DRAFT_RULES (regras.ts). Regras gerais imutáveis ficam no motor (flow.ts): timer 30s + 2s graça, ban vencido = ban vazio, pick vencido cancela. 1v1 e ARAM têm ativo=false: ao confirmar, pulam o draft e vão direto para iniciando_partida com o código. 5v5 e time_vs_time mantêm 20 turnos (5 bans+5 picks/lado, vitrine JG, tudo visível). O shape publica draft.regras + duracao_turno_ms; o DraftRoom não tem mais if (modo === ...).
+
+**Por quê:** O "1v1/ARAM são diferentes" estava duplicado em engine e JSX, sem fonte única — e o front decidia visibilidade, ferindo o invariante de regra no servidor. Registry + shape publicando a apresentação elimina a duplicação; modo novo = 1 entrada. Testes: draft-rules.test.ts (tabela por modo, consistência ordem×slots, shape) e draft.test.ts reescrito. ADR-074.
+
+_08/10/2026 19:56 — deepseek_
+
+### ADR-075 — Sala TIME vs TIME com estrutura dedicada (cópia 1:1 de SalaMod1)
+
+**Decisão:** A sala de TIME vs TIME ganhou estrutura dedicada: web/src/features/sala-time-vs-time/SalaTimeVsTime.tsx é cópia verbatim de pages/SalaMod1.tsx e a rota /time_vs_time/:id passa a renderizá-la (App.tsx). 5v5/aram/1v1 continuam na SalaMod1 compartilhada, intocada. O T vs T evolui (design/campeonato) sem risco de regressão nos demais modos; subcomponentes novos entram na mesma pasta.
+
+**Por quê:** Usuário vai redesenhar a sala T vs T para uso em campeonato ("como se fosse essa aqui") e não quer que a mudança derrube os outros modos. Cópia verbatim preserva a paridade visual atual (build gera chunk SalaTimeVsTime idêntico ao SalaMod1); a separação permite recortes/extensões futuros sem tocar no compartilhado. ADR-075.
+
+_08/10/2026 19:56 — deepseek_
+
+### ADR-076 — Sala Campeonato V1 substitui o 'Iniciar Serie' no cronograma (LoL)
+
+**Decisão:** No cronograma do campeonato, o fluxo 'Iniciar Série' passa a criar a 'Sala Campeonato': a série é jogada a partir de uma sala própria (com logos dos 2 times e placar da série), não mais pelo card do cronograma. Escopo LoL (jogo padrão); outros jogos depois. A sala é vinculada à série (tournament_matches/bracket_matches) e o código Riot segue sendo o mecanismo de verificação da série (ADR-047/048/058).
+
+**Por quê:** O card do cronograma não dá controle de vagas, lado, draft nem streamer, e o código fica escondido nele. A sala concentra o fluxo de jogo usando o mesmo motor de verificação que já funciona.
+
+_11/10/2026 18:50 — deepseek_
+
+### ADR-077 — Sala Campeonato: 2 vagas (1 por time), PRONTO sem timer, so no inicio
+
+**Decisão:** A sala campeonato tem exatamente 2 vagas, 1 por time rival. Qualquer membro do roster pode ocupar (do coach à reserva). A vaga fecha com o botão PRONTO (substitui o time+confirmar das salas normais) e NÃO há timer de cancelamento nessa fase. Com as 2 vagas prontas, a sala avança para a definição de lado e o draft; o PRONTO só aparece no início da série.
+
+**Por quê:** Campeonato não pode cancelar sala por tempo — W.O. é decisão manual do adm. O pronto manual é o gatilho, sem pressa.
+
+_11/10/2026 18:50 — deepseek_
+
+### ADR-078 — Sala campeonato fica aberta ate o fim da serie; codigo visivel ate la
+
+**Decisão:** A sala não fecha por jogo: permanece aberta com o placar da série (1-0, 1-1, 2-1…) até o fim do MD3/MD5, quando o motor de série (inalterado) finaliza. O código da partida fica visível na sala do início ao fim para capitão/membros e staff (streamer/adm), sempre copiável — não some após alguns instantes. A sala é o lugar fixo do código durante a série.
+
+**Por quê:** Streamer e adm precisam do código durante toda a série; hoje ele sai do card quando a série fecha e não há lugar fixo para copiar.
+
+_11/10/2026 18:50 — deepseek_
+
+### ADR-079 — Definicao de lado estilo CBLOL: sorteio + lado vs first/last pick
+
+**Decisão:** A plataforma sorteia (server-side) qual time decide primeiro. O sorteado escolhe o lado (red/blue); o adversário escolhe first pick ou last pick. As escolhas são estado no servidor visível a todos ('TIME X ESTÁ ESCOLHENDO O LADO') e, ao concluir, a sala aplica o lado e a ordem de pick no draft. Regra dos jogos 2+ da série ainda em aberto.
+
+**Por quê:** Replica o modelo do CBLOL: uma escolha compensa a outra. No servidor para não haver regra no cliente e o estado ser único para todos na sala.
+
+_11/10/2026 18:50 — deepseek_
+
+### ADR-080 — Live do streamer criada de dentro da sala campeonato
+
+**Decisão:** Quem tem cargo de streamer vê na sala o botão 'Iniciar live' (só ele). Ao clicar: encerra qualquer live ativa dele e cria a live do jogo no formato campeonato (times da série, campeonato, match_id, sem expiração — termina com o fim da série), reusando o caminho do 'Estou no ar' (app.streams.agenda). Não-streamers veem 'Assista esse Jogo ao Vivo!' com link para a Twitch.
+
+**Por quê:** Hoje a live é montada manualmente na /streamers e o campeonato nem é persistido. Na sala o streamer já está no contexto certo; a automação elimina erro operacional.
+
+_11/10/2026 18:50 — deepseek_
+
+### ADR-081 — Sala campeonato: fluxo por jogo (PRONTO + lado + draft Fearless)
+
+**Decisão:** Cada jogo da série repete o fluxo na mesma sala: os dois times marcam PRONTO de novo → definição de lado → draft → jogo. O draft é FEARLESS: campeão escolhido (pick) em jogo anterior da série fica indisponível nos jogos seguintes. Jogo 1: sorteio define quem escolhe o lado; jogos 2+: o perdedor do jogo anterior escolhe o lado e o adversário escolhe first/last pick. Ajusta a ADR-077 — o PRONTO não é só no início, se repete a cada jogo.
+
+**Por quê:** Cada jogo tem draft próprio (e o Fearless muda o pool de campeões), então cada jogo precisa da mesma preparação: pronto, lado e draft. Sem repetir, o jogo 2 ficaria sem escolha de lado registrada e sem a trava de campeões da série.
+
+_11/10/2026 18:58 — deepseek_
+
+### ADR-082 — Estados da sala campeonato: WebSocket existente + fallback de 5s
+
+**Decisão:** PRONTO, escolha de lado e draft atualizam pelo WebSocket que as salas já usam (pg_notify + aviso + refetch com jitter) e mantêm o polling de 5s como fallback quando o socket está quieto. Nada de infra nova; o estado vive no servidor.
+
+**Por quê:** Decidido com o usuário (2026-10-11): não pesar o site e não criar mecanismo paralelo — o caminho realtime das salas já está em produção e provou funcionar.
+
+_11/10/2026 18:58 — deepseek_
+
+### ADR-083 — Timeouts da sala campeonato: lado sem timeout; draft ban vazio/pick trava
+
+**Decisão:** Se o time sorteado não escolher o lado, a sala espera indefinidamente na V1 — o adm resolve se travar (sem escolha automática). No draft: ban vencido vira ban vazio (como nas salas); pick vencido segura o draft até alguém escolher — o timeout NUNCA cancela a sala campeonato.
+
+**Por quê:** Campeonato não pode ser cancelado por relógio; escolha de lado automática poderia virar vantagem indevida. O adm tem ferramentas manuais para destravar.
+
+_11/10/2026 18:58 — deepseek_
+
+### ADR-084 — Sala campeonato criada automaticamente 10 min antes do jogo
+
+**Decisão:** A sala da série é criada AUTOMATICAMENTE pelo servidor 10 minutos antes do horário agendado, sem depender de botão. No cronograma, o lugar do 'Iniciar Série' vira 'Criar Sala'/'Entrar na Sala': jogos 'A COMBINAR' (sem horário) e imprevistos mantêm o caminho manual, com a mesma permissão de hoje (participante do confronto ou staff). A criação equivale ao 'Iniciar Série' atual: atribui o código Riot, marca em_andamento e registra o início da série.
+
+**Por quê:** Decisão do usuário (2026-10-11): ninguém precisa clicar; 10 min dão margem para os times entrarem e o streamer se preparar. O fallback manual cobre jogos sem horário.
+
+_11/10/2026 19:09 — deepseek_
+
 ## Bloqueios resolvidos
 
 - ~~**BLK-002** — SCHEMA SEM DESTINO PARA LANE. profiles.lane_primaria e lane_secundaria não existem no schema novo (grep 'lane' em db/schema: zero), mas a UI exibe os dois no card do jogador. Idem profile_icon_id e level de contas_riot. Decidir antes de app.swap.identidade: guardar em gameAccounts.metadata (é conceito de LoL, combina com o multi-jogo do ADR-004) ou criar colunas em users.~~ → Decidido pelo usuário: colunas próprias em users, sem jsonb. Adicionados users.lanePrimary e users.laneSecondary (varchar 20) em db/schema/identidade.ts, com migration 0001_robust_the_phantom.sql gerada por drizzle-kit. Motivo: lane é preferência do usuário, não do jogo — ele escolhe rota mesmo sem conta da Riot. O PerfilContext lê daí. Falta o ETL carregar profiles.lane_primaria/lane_secundaria para essas colunas.
@@ -827,6 +925,10 @@ _07/10/2026 01:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 11/10/2026 19:21 | deepseek | Passo 1 da ordem da Sala Campeonato fechado. (1) sec.codigo-campeonato implementado e deployado (5f5719e): codigo_partida redigido no servidor para quem não é staff nem time da série; verificar agora exige staff/time; testes 8/8, suíte 226/226, smoke VPS 8/8. (2) Draft por modo deployado (f92b338): smoke VPS 34/34; no smoke achei 2 códigos 1v1 PRESOS no pool (used=true sem match_id desde 08/10 — x1 sem código) e liberei. (3) Achado registrado como sec.campeonato-permissoes (rotas de escrita só exigem login). Obs: container m7arena_mcp_ops em restart-loop (89935) — provável stdio server como daemon; não afeta o site. Próximo: schema da sala campeonato (vínculo sala↔série + estados + draft por jogo/Fearless). <br>_tocou: `api/src/lib/tournament-access.ts`, `api/src/routes/tournaments.ts`, `api/test/tournament-access.test.ts`, `scripts/smoke-vps-codigo.mjs`, `scripts/smoke-vps-draft.mjs`, `mcp/status-server/lib/plan.js`_ |
+| 11/10/2026 18:58 | deepseek | Sala Campeonato V1 — decisões fechadas com o usuário e registradas: ADR-081 (fluxo por jogo: PRONTO + definição de lado + draft FEARLESS a cada jogo; jogo 1 por sorteio, jogos 2+ perdedor escolhe o lado; ajusta ADR-077), ADR-082 (estado via WebSocket existente + fallback 5s), ADR-083 (lado sem timeout; no draft ban vencido = vazio e pick vencido trava — nunca cancela). Notas dos componentes atualizadas (app.sala.campeonato, .definicao-lado, app.draft.campeonato) e comentário do plan.js atualizado. Falta confirmar com o usuário: quem cria a sala (default proposto: mesmas regras do Iniciar Série) e a regra exata de quem escolhe o lado nos jogos 2+. <br>_tocou: `mcp/status-server/lib/plan.js`_ |
+| 11/10/2026 18:51 | deepseek | Sala Campeonato V1: brainstorm com o usuário + registro no MCP (nenhum código de produção alterado). Registrei os componentes app.sala.campeonato, app.sala.campeonato.definicao-lado, app.draft.campeonato e sec.codigo-campeonato (+ deps no plan.js) e as ADRs 076-080: sala substitui 'Iniciar Série'; 2 vagas (1 por time) com PRONTO sem timer; sala vive a série toda e o código fica visível até o fim; definição de lado estilo CBLOL (sorteio + lado vs first/last pick); live do streamer dentro da sala. Achados: codigo_partida do campeonato vaza no GET público (só o front esconde); código 'sumir' = toast 2,5s + liberação ao finalizar série (suspeita de save stale do cronograma — investigar). Pendente com o usuário: jogos 2+, polling x WS, timeouts e quem cria a sala. <br>_tocou: `mcp/status-server/lib/plan.js`_ |
+| 08/10/2026 19:57 | deepseek | 1) Draft por modo (ADR-074): novo módulo api/src/lib/draft/ (modos/5v5, modos/time-vs-time hoje idêntico ao 5v5, modos/1v1 e modos/aram ativo=false, regras.ts com DRAFT_RULES, flow.ts com o motor, index.ts); draft-flow.ts removido. match-flow pula a fase para 1v1/ARAM (confirmou → iniciando_partida com código) via helper iniciarPartidaComCodigo; shape publica draft.regras + duracao_turno_ms; DraftRoom sem if (modo). Evidência: 12/12 testes draft, suíte 218/218, tsc api/web 0, vite build ok. Smokes reescritos mas NÃO executados (rebuild local abortado; nada deployado). 2) Sala TIME vs TIME (ADR-075): features/sala-time-vs-time/SalaTimeVsTime.tsx (cópia verbatim de SalaMod1) e rota /time_vs_time/:id apontada para ela; demais modos seguem na SalaMod1 intocada. Componente app.sala.time-vs-time (doing). tsc web 0 + build com chunks idênticos. PRÓXIMO: usuário dirige o redesign; deploy do draft quando pedido. <br>_tocou: `api/src/lib/draft/`, `api/src/lib/match-flow.ts`, `api/src/lib/match-shape.ts`, `api/src/routes/matches-actions.ts`, `web/src/components/draft/DraftRoom.tsx`, `web/src/components/draft/draftTypes.ts`, `web/src/lib/api.ts`, `web/src/pages/SalaMod1.tsx`, `web/src/features/sala-time-vs-time/SalaTimeVsTime.tsx`, `web/src/App.tsx`, `api/test/draft.test.ts`, `api/test/draft-rules.test.ts`, `scripts/smoke-draft.mjs`, `scripts/smoke-vps-draft.mjs`, `mcp/status-server/lib/plan.js`_ |
 | 07/10/2026 19:47 | claude | Pesquisa somente-leitura (nenhum arquivo do projeto modificado): clonei o repo antigo github.com/lucasm7academy-cyber/Projeto-Site em temp/opencode/Projeto-Site e localizei a sala antiga time vs time com logo de cada time + imagem VS no meio. Arquivo: src/pages/SalaPage.tsx (componente CentralDisplay, bloco "Logos time_vs_time — sobreposto no centro" com /images/vs.png 15vmin entre logos de 17vmin, e seção "TEAM HEADERS COM VS NO MEIO"). Linha do tempo: criado 8ea7db9 (09/04/2026); VS aparece em 49dc723 (18/04); logos no centro em 2cc6c1b (18/04); imagem vs.png adicionada em 1414cb2 (18/04, também vs1/vs2 nunca usados); última versão = be43354 (25/04/2026, = 37d91f6^); removido em 37d91f6 (25/04/2026) quando substituído por SalaMod1.tsx. vs.png ainda existe no HEAD do repo antigo. Projeto atual (M7arenaSite) não contém vs.png nem o layout — SalaMod1.tsx tem CentralDisplay vazia. |
 | 07/10/2026 01:00 | deepseek | Duas correções no ar (commit 2dcf3d9, deploy VPS nginx+app): (1) aviso "Unable to preventDefault inside passive event listener" no zoom do chaveamento — onWheel do React (passivo) virou listener nativo {passive:false} em CampeonatoContext; (2) ícones de jogador lentos (raw.communitydragon.org ~19,5s por imagem) — trocados para ddragon com versão dinâmica (web/src/api/riot.ts via /api/riot/version; players.tsx aguarda; VagaSlot campeão ddragon/CDN; API match-shape via nova lib ddragon.ts; preconnect no index.html). Evidências: tsc web/api 0; suíte API 201/201; vite build ok; chunk live index-DvEu3Ekp.js contém ddragon+profileicon; container executou profileIconUrl(5889) → ddragon .../16.20.1/img/profileicon/5889.png; site e /api/health 200. Falta: usuário testar /jogadores e o scroll do chaveamento. Obs: npm do PowerShell local está quebrado (stub 0 bytes em System32) — usar node direto. <br>_tocou: `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/api/riot.ts`, `web/src/pages/players.tsx`, `web/src/components/partidas/VagaSlot.tsx`, `web/index.html`, `api/src/lib/match-shape.ts`, `api/src/lib/ddragon.ts`_ |
 | 01/10/2026 22:40 | deepseek | Fix do erro "duplicate key bracket_matches_cell_idx" ao salvar o chaveamento (Copa Kraken). Causa: storeBracket persistia side.left e side.right com o mesmo round e o unique index (tournament_id, section, round, slot) estourava; buildBracket também não decodificava a convenção do ETL, então o lado voltava vazio. Correção: round carrega o lado ('left_qf'/'right_qf', 'grand_final') e a leitura decodifica. NENHUMA automação foi criada: a chave segue apenas visual e manual, jogos só pelo cronograma. Evidência: teste novo 1/1; suíte API 201/201; tsc 0; transação real no Postgres de prod (rollback, 5 linhas sem 23505, roundtrip ok; bracket_matches intacto com 22). Commit e6428a2 deployado na VPS (build app + up -d app realtime), /api 200. Pendente: usuário testar salvar o chaveamento. <br>_tocou: `api/src/lib/tournament-store.ts`, `api/src/lib/tournament-shape.ts`, `api/test/tournament-bracket.test.ts`, `scripts/migrate/transform-campeonatos.js`_ |
@@ -838,10 +940,6 @@ _07/10/2026 01:00 — deepseek_
 | 29/09/2026 22:50 | gemini | Ajustes visuais e de responsividade concluídos e deployados na VPS: 1) /streamers: removido visual de vidro/transparência adicionando fundos escuros sólidos (bg-[#0c0d12], bg-black/60) no card do painel de abrir live, nos selects/inputs, nas linhas da AgendaTransmissoes e empty states; 2) /streamers: card superior tornado 100% responsivo para mobile com quebra flex-col e botões full-width sem cortes; 3) / (Lobby): eliminada a rolagem horizontal no celular isolando o blur-[120px] com overflow-hidden, limitando a largura dos cards das figurinhas com max-w-[calc(100vw-32px)] e blindando o container raiz com overflow-x-hidden. Deploy: commit 5f2d409 pushado em origin e vps, container m7arena-nginx rebuildado com sucesso, assets Streamers-ChixHMTy.js e Lobby-DQWvqLto.js servidos com HTTP 200. <br>_tocou: `web/src/components/home/TopTeamsStickers.tsx`, `web/src/features/streams/components/AgendaTransmissoes.tsx`, `web/src/pages/Lobby.tsx`, `web/src/pages/Streamers.tsx`_ |
 | 29/09/2026 22:20 | deepseek | Ajuste de UI pedido: AgendaTransmissoes trocou os cards por listas compactas (linha com data/hora, #TAG x #TAG, campeonato, status/streamer e ações à direita), mantendo as duas seções — Minhas Transmissões e Agenda de Jogos. Deploy: commit b3a8d62 pushado origin+vps; nginx reconstruído; chunk Streamers-BpDbsl3d.js servido e /streamers HTTP 200. Obs.: antes disso, verifiquei a queixa dos jogos do Tesouro 'sumidos' — no banco estão os 28 (25 finalizado, 1 proposto BKS x KRV 30/09, 2 combinando RMD x PHE e MDR x MOO) e a API /tournaments/:id devolve os 3 pendentes; nada foi perdido, era tela/cache do usuário (ele confirmou que apareceu). <br>_tocou: `web/src/features/streams/components/AgendaTransmissoes.tsx`_ |
 | 29/09/2026 21:41 | deepseek | Ajuste de UI na tela de lives (pedido do usuário): AgendaTransmissoes agora tem duas seções — 'Minhas Transmissões' (jogos que o streamer pegou, com ESTOU NO AR/Soltar/código/Encerrar) e 'Agenda de Jogos' (disponíveis; pegar migra o card para cima, soltar devolve o jogo para a agenda). Card extraído para CardJogo com contexto (meu/não-meu). Deploy: commit 787953f pushado para origin e vps; docker compose build nginx + up -d nginx. Evidência: chunk Streamers-CFgd5dvi.js servido em https://m7arena.pro/assets/ contém os textos novos ('Minhas Transmiss'/'Agenda de Jogos'); /streamers HTTP 200. <br>_tocou: `web/src/features/streams/components/AgendaTransmissoes.tsx`_ |
-| 29/09/2026 21:29 | deepseek | Deploy da escala de transmissões na VPS concluído: commits e6ee0e9 (feature) + 0a659b8 (docs) pushados para origin e vps; migration 0024 aplicada via psql no m7arena_postgres (CREATE TABLE escalas_transmissao + ALTER transmissoes.match_id + FKs + indexes, ON_ERROR_STOP=1, sem erro); docker compose build app nginx + up -d app/realtime/nginx (containers recriados). Evidência viva: GET https://m7arena.pro/api/streams/agenda → HTTP 200 com os 3 jogos confirmados da COPA DO KRAKEN (M7W x NKZA 30/09 20:00 'AMANHÃ', BKA x AES 30/09 21:10, LDL x BKT 01/10 20:00 '01 OUT') — label no fuso SP correto, streamer null, pode_assumir false (sem sessão). Site /streamers HTTP 200 e vitrine /api/streams HTTP 200 []. Falta: teste interativo do usuário com conta streamer (pegar jogo → estou no ar → código → finalizar série desliga sozinho). <br>_tocou: `db/migrations/0024_gray_gressill.sql`, `api/src/lib/streams.ts`, `api/src/routes/streams.ts`, `web/src/features/streams/components/AgendaTransmissoes.tsx`, `web/src/pages/Streamers.tsx`, `web/src/pages/Lobby.tsx`_ |
-| 29/09/2026 21:23 | deepseek | Escala de transmissões implementada via superpowers (spec+plano 2026-09-29): migration 0024 (transmissoes.match_id + escalas_transmissao unique match_id), encerramento automático no motor de série (serie-campeonato) e no storeCronograma (W.O.) + proteção de leitura na vitrine/minha, endpoints /streams/agenda (GET público, POST pegar, DELETE soltar, POST no-ar), SDK web, componente AgendaTransmissoes em /streamers e chip do streamer no carrossel do Lobby. Evidências: streams.test.ts 11 PASS; suíte completa 200 PASS/30 suites; tsc api+web exit 0; vite build ok; smoke status-server 23 checks. ADR-072. PENDENTE DO USUÁRIO: teste interativo no browser (pegar jogo → estou no ar → finalizar série) e commit/deploy quando pedir — não commitei nada. <br>_tocou: `db/schema/conteudo.ts`, `db/migrations/0024_gray_gressill.sql`, `api/src/lib/transmissoes.ts`, `api/src/lib/streams.ts`, `api/src/lib/serie-campeonato.ts`, `api/src/lib/tournament-store.ts`, `api/src/routes/streams.ts`, `api/test/streams.test.ts`, `web/src/features/streams/types.ts`, `web/src/features/streams/components/AgendaTransmissoes.tsx`, `web/src/lib/api.ts`, `web/src/hooks/useTransmissoesAtivas.ts`, `web/src/pages/Streamers.tsx`, `web/src/pages/Lobby.tsx`, `mcp/status-server/lib/plan.js`, `docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md`, `docs/superpowers/plans/2026-09-29-escala-transmissoes.md`_ |
-| 27/09/2026 19:44 | deepseek | Fix: confronto criado pelo ADM no "Criar Confronto" nascia sempre com status 'proposto' (aparecia como "proposta enviada") mesmo sem data/horário. handleCreateAdminMatch agora: ADM sem data+hora -> status 'combinando' e proposedBy vazio ("A Agendar", ambos capitães propõem); ADM com data+hora -> 'proposto' por ADMIN; "Agendar Desafio" do capitão (não-admin) mantém proposta do time dele. AdminMatchModal ganhou inputs opcionais de data/hora que começam em branco (AdminCriarJogo limpa os campos ao abrir). Verificado: npm run lint (tsc --noEmit) exit 0 e vite build ok; commit 3672e9a + refinamento 6e91199 pushados para vps e origin; nginx reconstruído na VPS, site HTTP 200 e chunk CampeonatoDetalhes-C1vGNuis.js servindo o hint novo. Obs.: NKZ x CMS já está com proposta real do NKZ (2026-09-29 20:00), então não foi alterado. <br>_tocou: `web/src/features/campeonatos/CampeonatoContext.tsx`, `web/src/features/campeonatos/components/modals/AdminMatchModal.tsx`, `web/src/components/campeonatos/AdminCriarJogo.tsx`_ |
-| 27/09/2026 19:36 | deepseek | Copa do Tesouro: criei os 3 confrontos restantes da fase de grupos (não 1, como o usuário supunha): BKS x KRV, RMD x PHE, MDR x MOO. Inseridos direto em tournament_matches (status='combinando', 'A COMBINAR'/'--:--', best_of=3, phase_label='Fase de Grupos', score 0-0) — mesmo formato do sortear-semana.mjs (ADR-068). O script não serve aqui porque aborta rodada parcial (<4 pares). Validei no DB (INSERT 0 3, 0 pares repetidos) e pela API: 28/28 pares presentes, 3 novos pendentes aparecem em Meus Jogos Pendentes. Kraken já estava com 28/28 (grupos completos). Atualizei o histórico de docs/ROTINA_SORTEIO_COPAS.md e registrei a limitação do script. <br>_tocou: `docs/ROTINA_SORTEIO_COPAS.md`, `tournament_matches`, `copa-tesouro`_ |
 
 ---
 

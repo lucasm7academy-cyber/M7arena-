@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-07T23:28:01.470Z",
+  "updatedAt": "2026-10-11T22:21:19.841Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1483,12 +1483,84 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Draft de sala (ban/pick pós-confirmação, timer server-side)",
-      "status": "doing",
-      "notes": "Puxado do commit e4b7457 do M7AcademySite (último com draft renderizado). Estado 'draft' entre confirmacao e iniciando_partida; match_drafts; rotas draft/ban|pick; timer por turn_deadline_at do servidor (clockSync no front). DraftRoom portado 1:1 (sem HUD de stream).",
-      "evidence": "",
+      "status": "done",
+      "notes": "Deployado na VPS (f92b338). Registry por modo (ADR-074): 1v1/ARAM pulam a fase; 5v5/time_vs_time 20 turnos; shape publica draft.regras + duracao_turno_ms. No smoke: 2 códigos 1v1 estavam PRESOS no pool (used=true sem match_id desde 08/10 — salas x1 sem código) e foram liberados.",
+      "evidence": "docker exec m7arena_app node smoke-draft.mjs → 34 PASS / 0 FAIL; suíte API local 226/226; tsc exit 0; deploy f92b338.",
       "owner": "deepseek",
       "createdAt": "2026-10-07T23:28:01.467Z",
-      "updatedAt": "2026-10-07T23:28:01.470Z"
+      "updatedAt": "2026-10-11T22:21:19.817Z"
+    },
+    {
+      "id": "app.sala.time-vs-time",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Sala Time vs Time (base dedicada para redesign)",
+      "status": "doing",
+      "notes": "Base dedicada deployada (f92b338): /time_vs_time/:id renderiza features/sala-time-vs-time/SalaTimeVsTime (cópia 1:1 de SalaMod1). O redesign dirigido pelo usuário segue no escopo app.sala.campeonato (ADRs 076-084) — fechar/deprecar quando a sala campeonato substituir esta base.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-10-08T22:56:24.887Z",
+      "updatedAt": "2026-10-11T22:21:19.828Z"
+    },
+    {
+      "id": "app.sala.campeonato",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)",
+      "status": "todo",
+      "notes": "Substitui o 'Iniciar Série': a sala da série (LoL) nasce automaticamente 10 min antes do horário (ADR-084); no cronograma o botão vira 'Criar Sala' (A COMBINAR). 2 vagas (1 por time); qualquer membro entra (coach a reserva). PRONTO sem timer a cada jogo (ADR-081) → lado → draft Fearless (picks travam; bans não) → jogo. Acompanha a série toda (placar 1-0/1-1/2-1); código Riot visível até o fim (capitão/membros/staff). Streamer: 'Iniciar live'; demais, 'Assista ao vivo'.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-10-11T21:50:57.381Z",
+      "updatedAt": "2026-10-11T22:09:50.129Z"
+    },
+    {
+      "id": "app.sala.campeonato.definicao-lado",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Definicao de lado estilo CBLOL (sorteio + lado vs first/last pick)",
+      "status": "todo",
+      "notes": "Sorteio server-side decide quem escolhe no jogo 1: o sorteado escolhe o lado (red/blue); o outro escolhe first pick ou last pick — a sala aplica lado + ordem no draft. Jogos 2+: o perdedor do jogo anterior escolhe o lado (ADR-081). Estado visível a todos ('TIME X ESTÁ ESCOLHENDO O LADO') via WebSocket + fallback 5s (ADR-082). Sem timeout na V1 (ADR-083): adm resolve se travar.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-10-11T21:50:57.400Z",
+      "updatedAt": "2026-10-11T21:58:46.955Z"
+    },
+    {
+      "id": "app.draft.campeonato",
+      "phase": "fase-3",
+      "area": "app",
+      "name": "Draft do modo campeonato (regras proprias + ordem first/last pick)",
+      "status": "todo",
+      "notes": "Novo modo no registry de draft (api/src/lib/draft/modos/campeonato.ts, ADR-074): regras básicas + particulares do campeonato. FEARLESS (ADR-081): picks de jogos anteriores da série ficam indisponíveis nos jogos seguintes; um draft por jogo, com PRONTO/lado antes de cada um. Ordem ban/pick derivada do first/last pick (ADR-079). Ban vencido = vazio; pick vencido trava o draft — nunca cancela (ADR-083). Design definido depois.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-10-11T21:50:57.411Z",
+      "updatedAt": "2026-10-11T21:58:46.970Z"
+    },
+    {
+      "id": "sec.codigo-campeonato",
+      "phase": "fase-3",
+      "area": "seguranca",
+      "name": "Redigir codigo_partida do campeonato para nao-participantes",
+      "status": "done",
+      "notes": "Redação no servidor (espelha ADR-043): GET lista/detalhe e TODAS as respostas do shape entregam codigo_partida só para staff do campeonato ou time da SÉRIE (dono/membro aceito/convidado por PUUID). POST /:id/jogo/:matchId/verificar agora exige staff ou time da série (antes qualquer logado). Lib api/src/lib/tournament-access.ts.",
+      "evidence": "docker exec m7arena_app node smoke-codigo.mjs → 8 PASS / 0 FAIL; tsx --test tournament-access → 8/8; suíte API 226/226; tsc exit 0; deploy 5f5719e.",
+      "owner": "deepseek",
+      "createdAt": "2026-10-11T21:50:57.422Z",
+      "updatedAt": "2026-10-11T22:21:19.806Z"
+    },
+    {
+      "id": "sec.campeonato-permissoes",
+      "phase": "fase-3",
+      "area": "seguranca",
+      "name": "Permissoes das rotas de escrita do campeonato (achado 2026-10-11)",
+      "status": "todo",
+      "notes": "Achado 2026-10-11 (durante sec.codigo-campeonato): rotas de escrita do campeonato que só exigem login — qualquer usuário autenticado altera pela API: PUT /:id, /cronograma, /cronograma/merge, /reabrir, /recalcular-pdl, /inscricoes, /inscricoes/:teamId/aprovar. Só os DELETE têm checagem. Regra por rota: aprovar/reabrir/PUT/recalcular = staff; merge e inscrições têm uso por participantes (agendamento/inscrição) — decidir antes.",
+      "evidence": "",
+      "owner": "deepseek",
+      "createdAt": "2026-10-11T22:21:19.788Z",
+      "updatedAt": "2026-10-11T22:21:19.788Z"
     }
   ],
   "decisions": [
@@ -2148,6 +2220,105 @@
       "decision": "Profile icons (avatares) e square de campeão passam a usar ddragon.leagueoflegends.com, com a versão atual resolvida dinamicamente (front via /api/riot/version, cache 10min; API via lib ddragon.ts com refresh a cada 6h). O host antigo raw.communitydragon.org foi medido em ~19,5s TTFB por imagem (vs ~0,7s ddragon, ~0,45s cdn.communitydragon.org).",
       "rationale": "O raw servia todas as telas com ~20s por imagem (sintoma: ícones \"carregavam todos de uma vez\" após a espera). ddragon é o CDN oficial: rápido e completo — o cdn.communitydragon.org chegou a dar 502 em ids válidos (5888/5889/5900), então não serve como fonte primária. ddragon não tem caminho sem versão (403), por isso a versão é resolvida em runtime. Fallback de campeão por id numérico fica no CDN do communitydragon (square), com onError alternando entre as duas fontes.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-074",
+      "date": "2026-10-08T22:56:37.181Z",
+      "author": "deepseek",
+      "title": "Draft por modo: registry em api/src/lib/draft/modos; 1v1 e ARAM pulam a fase",
+      "decision": "Todo diferencial de draft por modo vive em api/src/lib/draft/modos/{5v5,time-vs-time,1v1,aram}.ts, amarrado pelo registry DRAFT_RULES (regras.ts). Regras gerais imutáveis ficam no motor (flow.ts): timer 30s + 2s graça, ban vencido = ban vazio, pick vencido cancela. 1v1 e ARAM têm ativo=false: ao confirmar, pulam o draft e vão direto para iniciando_partida com o código. 5v5 e time_vs_time mantêm 20 turnos (5 bans+5 picks/lado, vitrine JG, tudo visível). O shape publica draft.regras + duracao_turno_ms; o DraftRoom não tem mais if (modo === ...).",
+      "rationale": "O \"1v1/ARAM são diferentes\" estava duplicado em engine e JSX, sem fonte única — e o front decidia visibilidade, ferindo o invariante de regra no servidor. Registry + shape publicando a apresentação elimina a duplicação; modo novo = 1 entrada. Testes: draft-rules.test.ts (tabela por modo, consistência ordem×slots, shape) e draft.test.ts reescrito. ADR-074.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-075",
+      "date": "2026-10-08T22:56:42.304Z",
+      "author": "deepseek",
+      "title": "Sala TIME vs TIME com estrutura dedicada (cópia 1:1 de SalaMod1)",
+      "decision": "A sala de TIME vs TIME ganhou estrutura dedicada: web/src/features/sala-time-vs-time/SalaTimeVsTime.tsx é cópia verbatim de pages/SalaMod1.tsx e a rota /time_vs_time/:id passa a renderizá-la (App.tsx). 5v5/aram/1v1 continuam na SalaMod1 compartilhada, intocada. O T vs T evolui (design/campeonato) sem risco de regressão nos demais modos; subcomponentes novos entram na mesma pasta.",
+      "rationale": "Usuário vai redesenhar a sala T vs T para uso em campeonato (\"como se fosse essa aqui\") e não quer que a mudança derrube os outros modos. Cópia verbatim preserva a paridade visual atual (build gera chunk SalaTimeVsTime idêntico ao SalaMod1); a separação permite recortes/extensões futuros sem tocar no compartilhado. ADR-075.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-076",
+      "date": "2026-10-11T21:50:57.440Z",
+      "author": "deepseek",
+      "title": "Sala Campeonato V1 substitui o 'Iniciar Serie' no cronograma (LoL)",
+      "decision": "No cronograma do campeonato, o fluxo 'Iniciar Série' passa a criar a 'Sala Campeonato': a série é jogada a partir de uma sala própria (com logos dos 2 times e placar da série), não mais pelo card do cronograma. Escopo LoL (jogo padrão); outros jogos depois. A sala é vinculada à série (tournament_matches/bracket_matches) e o código Riot segue sendo o mecanismo de verificação da série (ADR-047/048/058).",
+      "rationale": "O card do cronograma não dá controle de vagas, lado, draft nem streamer, e o código fica escondido nele. A sala concentra o fluxo de jogo usando o mesmo motor de verificação que já funciona.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-077",
+      "date": "2026-10-11T21:50:57.450Z",
+      "author": "deepseek",
+      "title": "Sala Campeonato: 2 vagas (1 por time), PRONTO sem timer, so no inicio",
+      "decision": "A sala campeonato tem exatamente 2 vagas, 1 por time rival. Qualquer membro do roster pode ocupar (do coach à reserva). A vaga fecha com o botão PRONTO (substitui o time+confirmar das salas normais) e NÃO há timer de cancelamento nessa fase. Com as 2 vagas prontas, a sala avança para a definição de lado e o draft; o PRONTO só aparece no início da série.",
+      "rationale": "Campeonato não pode cancelar sala por tempo — W.O. é decisão manual do adm. O pronto manual é o gatilho, sem pressa.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-078",
+      "date": "2026-10-11T21:50:57.460Z",
+      "author": "deepseek",
+      "title": "Sala campeonato fica aberta ate o fim da serie; codigo visivel ate la",
+      "decision": "A sala não fecha por jogo: permanece aberta com o placar da série (1-0, 1-1, 2-1…) até o fim do MD3/MD5, quando o motor de série (inalterado) finaliza. O código da partida fica visível na sala do início ao fim para capitão/membros e staff (streamer/adm), sempre copiável — não some após alguns instantes. A sala é o lugar fixo do código durante a série.",
+      "rationale": "Streamer e adm precisam do código durante toda a série; hoje ele sai do card quando a série fecha e não há lugar fixo para copiar.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-079",
+      "date": "2026-10-11T21:50:57.470Z",
+      "author": "deepseek",
+      "title": "Definicao de lado estilo CBLOL: sorteio + lado vs first/last pick",
+      "decision": "A plataforma sorteia (server-side) qual time decide primeiro. O sorteado escolhe o lado (red/blue); o adversário escolhe first pick ou last pick. As escolhas são estado no servidor visível a todos ('TIME X ESTÁ ESCOLHENDO O LADO') e, ao concluir, a sala aplica o lado e a ordem de pick no draft. Regra dos jogos 2+ da série ainda em aberto.",
+      "rationale": "Replica o modelo do CBLOL: uma escolha compensa a outra. No servidor para não haver regra no cliente e o estado ser único para todos na sala.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-080",
+      "date": "2026-10-11T21:50:57.479Z",
+      "author": "deepseek",
+      "title": "Live do streamer criada de dentro da sala campeonato",
+      "decision": "Quem tem cargo de streamer vê na sala o botão 'Iniciar live' (só ele). Ao clicar: encerra qualquer live ativa dele e cria a live do jogo no formato campeonato (times da série, campeonato, match_id, sem expiração — termina com o fim da série), reusando o caminho do 'Estou no ar' (app.streams.agenda). Não-streamers veem 'Assista esse Jogo ao Vivo!' com link para a Twitch.",
+      "rationale": "Hoje a live é montada manualmente na /streamers e o campeonato nem é persistido. Na sala o streamer já está no contexto certo; a automação elimina erro operacional.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-081",
+      "date": "2026-10-11T21:58:46.907Z",
+      "author": "deepseek",
+      "title": "Sala campeonato: fluxo por jogo (PRONTO + lado + draft Fearless)",
+      "decision": "Cada jogo da série repete o fluxo na mesma sala: os dois times marcam PRONTO de novo → definição de lado → draft → jogo. O draft é FEARLESS: campeão escolhido (pick) em jogo anterior da série fica indisponível nos jogos seguintes. Jogo 1: sorteio define quem escolhe o lado; jogos 2+: o perdedor do jogo anterior escolhe o lado e o adversário escolhe first/last pick. Ajusta a ADR-077 — o PRONTO não é só no início, se repete a cada jogo.",
+      "rationale": "Cada jogo tem draft próprio (e o Fearless muda o pool de campeões), então cada jogo precisa da mesma preparação: pronto, lado e draft. Sem repetir, o jogo 2 ficaria sem escolha de lado registrada e sem a trava de campeões da série.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-082",
+      "date": "2026-10-11T21:58:46.919Z",
+      "author": "deepseek",
+      "title": "Estados da sala campeonato: WebSocket existente + fallback de 5s",
+      "decision": "PRONTO, escolha de lado e draft atualizam pelo WebSocket que as salas já usam (pg_notify + aviso + refetch com jitter) e mantêm o polling de 5s como fallback quando o socket está quieto. Nada de infra nova; o estado vive no servidor.",
+      "rationale": "Decidido com o usuário (2026-10-11): não pesar o site e não criar mecanismo paralelo — o caminho realtime das salas já está em produção e provou funcionar.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-083",
+      "date": "2026-10-11T21:58:46.933Z",
+      "author": "deepseek",
+      "title": "Timeouts da sala campeonato: lado sem timeout; draft ban vazio/pick trava",
+      "decision": "Se o time sorteado não escolher o lado, a sala espera indefinidamente na V1 — o adm resolve se travar (sem escolha automática). No draft: ban vencido vira ban vazio (como nas salas); pick vencido segura o draft até alguém escolher — o timeout NUNCA cancela a sala campeonato.",
+      "rationale": "Campeonato não pode ser cancelado por relógio; escolha de lado automática poderia virar vantagem indevida. O adm tem ferramentas manuais para destravar.",
+      "supersedes": null
+    },
+    {
+      "id": "ADR-084",
+      "date": "2026-10-11T22:09:50.109Z",
+      "author": "deepseek",
+      "title": "Sala campeonato criada automaticamente 10 min antes do jogo",
+      "decision": "A sala da série é criada AUTOMATICAMENTE pelo servidor 10 minutos antes do horário agendado, sem depender de botão. No cronograma, o lugar do 'Iniciar Série' vira 'Criar Sala'/'Entrar na Sala': jogos 'A COMBINAR' (sem horário) e imprevistos mantêm o caminho manual, com a mesma permissão de hoje (participante do confronto ou staff). A criação equivale ao 'Iniciar Série' atual: atribui o código Riot, marca em_andamento e registra o início da série.",
+      "rationale": "Decisão do usuário (2026-10-11): ninguém precisa clicar; 10 min dão margem para os times entrarem e o streamer se preparar. O fallback manual cobre jogos sem horário.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2216,40 +2387,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-22T05:09:43.800Z",
-      "agent": "gemini",
-      "summary": "Removido o logotipo mobile do header em LayoutWrapper.tsx (mantendo o logotipo visível no menu suspenso/drawer lateral e no desktop), compilado localmente com tsc e vite build (exit 0) e deployado na VPS via rebuild do container nginx. Site e API respondendo HTTP 200.",
-      "touched": [
-        "web/src/components/layout/LayoutWrapper.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-23T03:00:41.817Z",
-      "agent": "gemini",
-      "summary": "Estilização da seção Próximos Jogos na Home (Lobby): resolução correta da cor de cada time (colorA e colorB) via times_inscritos e api.teams.list (corrigido fallback indevido para theme_color do campeonato), efeito de marca de tinta (brush/paint splatter SVG) e aura de fumaça atmosférica na cor de cada time, card central estilizado com badge de torneio/fase, 'VS' em gradiente metálico dual e paginação por dots.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "api/src/lib/tournament-shape.ts"
-      ]
-    },
-    {
-      "at": "2026-09-23T03:06:11.108Z",
-      "agent": "gemini",
-      "summary": "Deploy concluído na VPS: commit 88c46ca integrado via fast-forward merge na VPS (/root/m7arena) e containers app, realtime e nginx reconstruídos e reiniciados via docker compose. https://m7arena.pro respondendo HTTP/2 200 e /api/tournaments online. Nova estilização de Próximos Jogos disponível no ar para visualização do usuário.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "api/src/lib/tournament-shape.ts"
-      ]
-    },
-    {
-      "at": "2026-09-23T03:10:13.383Z",
-      "agent": "gemini",
-      "summary": "Remoção do card/container externo da seção Próximos Jogos no Lobby para integração 100% direta no fundo do site. Substituição do quadrado arredondado genérico pelo TeamCrest eSports (escudo com cantos chanfrados em polígono, tech corner brackets que reagem ao hover, acentos luminosos laterais e vidro dark metálico). Efeito de tinta (TeamPaintSplatter) ampliado e fumaça atmosférica fluindo livremente no background. Rebuild do container nginx concluído na VPS com HTTP/2 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
     {
       "at": "2026-09-23T03:24:20.446Z",
       "agent": "gemini",
@@ -2501,6 +2638,57 @@
       "agent": "claude",
       "summary": "Pesquisa somente-leitura (nenhum arquivo do projeto modificado): clonei o repo antigo github.com/lucasm7academy-cyber/Projeto-Site em temp/opencode/Projeto-Site e localizei a sala antiga time vs time com logo de cada time + imagem VS no meio. Arquivo: src/pages/SalaPage.tsx (componente CentralDisplay, bloco \"Logos time_vs_time — sobreposto no centro\" com /images/vs.png 15vmin entre logos de 17vmin, e seção \"TEAM HEADERS COM VS NO MEIO\"). Linha do tempo: criado 8ea7db9 (09/04/2026); VS aparece em 49dc723 (18/04); logos no centro em 2cc6c1b (18/04); imagem vs.png adicionada em 1414cb2 (18/04, também vs1/vs2 nunca usados); última versão = be43354 (25/04/2026, = 37d91f6^); removido em 37d91f6 (25/04/2026) quando substituído por SalaMod1.tsx. vs.png ainda existe no HEAD do repo antigo. Projeto atual (M7arenaSite) não contém vs.png nem o layout — SalaMod1.tsx tem CentralDisplay vazia.",
       "touched": []
+    },
+    {
+      "at": "2026-10-08T22:57:13.326Z",
+      "agent": "deepseek",
+      "summary": "1) Draft por modo (ADR-074): novo módulo api/src/lib/draft/ (modos/5v5, modos/time-vs-time hoje idêntico ao 5v5, modos/1v1 e modos/aram ativo=false, regras.ts com DRAFT_RULES, flow.ts com o motor, index.ts); draft-flow.ts removido. match-flow pula a fase para 1v1/ARAM (confirmou → iniciando_partida com código) via helper iniciarPartidaComCodigo; shape publica draft.regras + duracao_turno_ms; DraftRoom sem if (modo). Evidência: 12/12 testes draft, suíte 218/218, tsc api/web 0, vite build ok. Smokes reescritos mas NÃO executados (rebuild local abortado; nada deployado). 2) Sala TIME vs TIME (ADR-075): features/sala-time-vs-time/SalaTimeVsTime.tsx (cópia verbatim de SalaMod1) e rota /time_vs_time/:id apontada para ela; demais modos seguem na SalaMod1 intocada. Componente app.sala.time-vs-time (doing). tsc web 0 + build com chunks idênticos. PRÓXIMO: usuário dirige o redesign; deploy do draft quando pedido.",
+      "touched": [
+        "api/src/lib/draft/",
+        "api/src/lib/match-flow.ts",
+        "api/src/lib/match-shape.ts",
+        "api/src/routes/matches-actions.ts",
+        "web/src/components/draft/DraftRoom.tsx",
+        "web/src/components/draft/draftTypes.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/SalaMod1.tsx",
+        "web/src/features/sala-time-vs-time/SalaTimeVsTime.tsx",
+        "web/src/App.tsx",
+        "api/test/draft.test.ts",
+        "api/test/draft-rules.test.ts",
+        "scripts/smoke-draft.mjs",
+        "scripts/smoke-vps-draft.mjs",
+        "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-10-11T21:51:40.002Z",
+      "agent": "deepseek",
+      "summary": "Sala Campeonato V1: brainstorm com o usuário + registro no MCP (nenhum código de produção alterado). Registrei os componentes app.sala.campeonato, app.sala.campeonato.definicao-lado, app.draft.campeonato e sec.codigo-campeonato (+ deps no plan.js) e as ADRs 076-080: sala substitui 'Iniciar Série'; 2 vagas (1 por time) com PRONTO sem timer; sala vive a série toda e o código fica visível até o fim; definição de lado estilo CBLOL (sorteio + lado vs first/last pick); live do streamer dentro da sala. Achados: codigo_partida do campeonato vaza no GET público (só o front esconde); código 'sumir' = toast 2,5s + liberação ao finalizar série (suspeita de save stale do cronograma — investigar). Pendente com o usuário: jogos 2+, polling x WS, timeouts e quem cria a sala.",
+      "touched": [
+        "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-10-11T21:58:46.980Z",
+      "agent": "deepseek",
+      "summary": "Sala Campeonato V1 — decisões fechadas com o usuário e registradas: ADR-081 (fluxo por jogo: PRONTO + definição de lado + draft FEARLESS a cada jogo; jogo 1 por sorteio, jogos 2+ perdedor escolhe o lado; ajusta ADR-077), ADR-082 (estado via WebSocket existente + fallback 5s), ADR-083 (lado sem timeout; no draft ban vencido = vazio e pick vencido trava — nunca cancela). Notas dos componentes atualizadas (app.sala.campeonato, .definicao-lado, app.draft.campeonato) e comentário do plan.js atualizado. Falta confirmar com o usuário: quem cria a sala (default proposto: mesmas regras do Iniciar Série) e a regra exata de quem escolhe o lado nos jogos 2+.",
+      "touched": [
+        "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-10-11T22:21:19.841Z",
+      "agent": "deepseek",
+      "summary": "Passo 1 da ordem da Sala Campeonato fechado. (1) sec.codigo-campeonato implementado e deployado (5f5719e): codigo_partida redigido no servidor para quem não é staff nem time da série; verificar agora exige staff/time; testes 8/8, suíte 226/226, smoke VPS 8/8. (2) Draft por modo deployado (f92b338): smoke VPS 34/34; no smoke achei 2 códigos 1v1 PRESOS no pool (used=true sem match_id desde 08/10 — x1 sem código) e liberei. (3) Achado registrado como sec.campeonato-permissoes (rotas de escrita só exigem login). Obs: container m7arena_mcp_ops em restart-loop (89935) — provável stdio server como daemon; não afeta o site. Próximo: schema da sala campeonato (vínculo sala↔série + estados + draft por jogo/Fearless).",
+      "touched": [
+        "api/src/lib/tournament-access.ts",
+        "api/src/routes/tournaments.ts",
+        "api/test/tournament-access.test.ts",
+        "scripts/smoke-vps-codigo.mjs",
+        "scripts/smoke-vps-draft.mjs",
+        "mcp/status-server/lib/plan.js"
+      ]
     }
   ]
 }

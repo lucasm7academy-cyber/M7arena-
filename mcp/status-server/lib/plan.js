@@ -95,7 +95,24 @@ export const PLAN = {
   "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
   // Draft de sala (ban/pick após a confirmação): estado 'draft' no lugar de
   // iniciando_partida direto; timer no relógio do servidor (turn_deadline_at).
+  // Registry por modo (ADR-074): 1v1/ARAM pulam a fase; 5v5/time_vs_time têm draft.
   "app.sala.draft": ["fase-3", "app.swap.salas", "app.realtime", "db.matches"],
+  // Sala de TIME vs TIME com estrutura DEDICADA (cópia 1:1 de SalaMod1 em
+  // features/sala-time-vs-time) para o redesign/uso em campeonato. A rota
+  // /time_vs_time/:id aponta para ela desde 2026-10-08.
+  "app.sala.time-vs-time": ["fase-3", "app.swap.salas", "db.matches", "app.sala.draft"],
+  // Sala Campeonato V1 (spec do usuário, 2026-10-11): a sala da série substitui o
+  // "Iniciar Série" — 2 vagas (1 por time), PRONTO sem timer, definição de lado
+  // CBLOL, draft do modo campeonato, placar da série e código visível até o fim.
+  // Evolui a base app.sala.time-vs-time. Decidido em 2026-10-11: fluxo por jogo
+  // (PRONTO + definição de lado + draft FEARLESS a cada jogo) e estado via
+  // WebSocket existente + fallback de 5s; lado sem timeout; draft nunca cancela.
+  "app.sala.campeonato": ["fase-3", "app.sala.draft", "app.campeonatos.verificacao-serie", "app.streams.agenda", "app.realtime", "db.tournaments", "db.matches"],
+  // Sorteio + escolha de lado/first-last pick antes do draft (estado no servidor).
+  "app.sala.campeonato.definicao-lado": ["fase-3", "app.sala.campeonato", "app.realtime"],
+  // Draft do modo campeonato: regras próprias no registry (ADR-074), ordem derivada
+  // do first/last pick.
+  "app.draft.campeonato": ["fase-3", "app.sala.draft", "app.sala.campeonato.definicao-lado"],
   "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],
   "app.swap.rpc": ["fase-3", "app.sdk", "app.auth.sessao"],
@@ -117,6 +134,12 @@ export const PLAN = {
   "sec.pix": ["fase-3", "app.swap.carteira", "app.edge-functions"],
   "sec.regras-servidor": ["fase-3", "app.swap.carteira", "app.swap.salas"],
   "sec.upload": ["fase-3", "app.storage.uploads"],
+  // O código da série de campeonato vaza no shape público (só o front esconde —
+  // achado 2026-10-11). Redigir no servidor, como as salas fazem (ADR-043).
+  "sec.codigo-campeonato": ["fase-3", "app.swap.campeonatos"],
+  // Rotas de escrita do campeonato sem checagem além do login (achado 2026-10-11,
+  // durante sec.codigo-campeonato): PUT/reabrir/aprovar/recalcular/merge/inscrições.
+  "sec.campeonato-permissoes": ["fase-3", "app.swap.campeonatos"],
 
   // ---- Salas apostadas (ADR-019, design v3) — P1: escrow + máquina de estados
   "app.apostas.schema": ["fase-3", "db.matches", "db.economia", "db.identidade"],
