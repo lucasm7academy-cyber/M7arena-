@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-11T22:21:19.841Z",
+  "updatedAt": "2026-10-11T22:55:42.989Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -1507,12 +1507,12 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Sala Campeonato V1 (2 vagas, PRONTO, placar da serie, logos)",
-      "status": "todo",
-      "notes": "Substitui o 'Iniciar Série': a sala da série (LoL) nasce automaticamente 10 min antes do horário (ADR-084); no cronograma o botão vira 'Criar Sala' (A COMBINAR). 2 vagas (1 por time); qualquer membro entra (coach a reserva). PRONTO sem timer a cada jogo (ADR-081) → lado → draft Fearless (picks travam; bans não) → jogo. Acompanha a série toda (placar 1-0/1-1/2-1); código Riot visível até o fim (capitão/membros/staff). Streamer: 'Iniciar live'; demais, 'Assista ao vivo'.",
+      "status": "doing",
+      "notes": "Passo 2 (schema) concluído e aplicado na VPS (0026/d90fdb7): matches.tournament_match_id/bracket_match_id + check de vínculo único; campeonato_sala_estado (jogo, PRONTO, sorteio/escolhas); match_drafts.jogo com PK (match_id,jogo) — Fearless derivado dos picks anteriores. Testes 4/4, suíte 230/230, tsc 0. Próximo: criação automática T-10, rotas de vaga/PRONTO e shape da sala.",
       "evidence": "",
       "owner": "deepseek",
       "createdAt": "2026-10-11T21:50:57.381Z",
-      "updatedAt": "2026-10-11T22:09:50.129Z"
+      "updatedAt": "2026-10-11T22:55:42.959Z"
     },
     {
       "id": "app.sala.campeonato.definicao-lado",
@@ -2319,6 +2319,15 @@
       "decision": "A sala da série é criada AUTOMATICAMENTE pelo servidor 10 minutos antes do horário agendado, sem depender de botão. No cronograma, o lugar do 'Iniciar Série' vira 'Criar Sala'/'Entrar na Sala': jogos 'A COMBINAR' (sem horário) e imprevistos mantêm o caminho manual, com a mesma permissão de hoje (participante do confronto ou staff). A criação equivale ao 'Iniciar Série' atual: atribui o código Riot, marca em_andamento e registra o início da série.",
       "rationale": "Decisão do usuário (2026-10-11): ninguém precisa clicar; 10 min dão margem para os times entrarem e o streamer se preparar. O fallback manual cobre jogos sem horário.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-085",
+      "date": "2026-10-11T22:48:02.472Z",
+      "author": "deepseek",
+      "title": "Schema da sala campeonato: matches + estado por jogo + drafts por jogo",
+      "decision": "A sala campeonato reusa matches (mode='campeonato') com vínculo à série (tournament_match_id/bracket_match_id + índices) e fases próprias no status (camp_vagas, camp_prontos, camp_lado, camp_draft, camp_jogo, camp_finalizada). Estado por jogo em campeonato_sala_estado (jogo corrente, PRONTO azul/vermelho, sorteio/chooser, lado e first/last escolhidos). match_drafts ganha coluna jogo com PK (match_id, jogo) para o draft por jogo; Fearless derivado dos picks anteriores. 1 sala ativa por série garantida na criação.",
+      "rationale": "Reusar matches herda realtime/notify, chat e o shape das salas; as fases camp_* não colidem com as salas normais (nunca usam jogo>1). Tabelas dedicadas duplicariam o encanamento sem benefício.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2387,14 +2396,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-23T03:24:20.446Z",
-      "agent": "gemini",
-      "summary": "Refinamento visual em Próximos Jogos no Lobby: aplicação de pincelada de tinta acrílica (TeamBrushStroke) nas cores de cada time com cerdas dinâmicas e névoa difusa, logo estendido em object-cover ocupando o card chanfrado sem bordas cortadas, e centralização horizontal dos indicadores/bolinhas de paginação logo abaixo do confronto. Build local com Vite validado, merge e deploy do container Nginx na VPS concluído com HTTP 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
     {
       "at": "2026-09-23T03:31:32.439Z",
       "agent": "gemini",
@@ -2688,6 +2689,16 @@
         "scripts/smoke-vps-codigo.mjs",
         "scripts/smoke-vps-draft.mjs",
         "mcp/status-server/lib/plan.js"
+      ]
+    },
+    {
+      "at": "2026-10-11T22:55:42.989Z",
+      "agent": "deepseek",
+      "summary": "Passo 2 (schema da sala campeonato) concluído: ADR-085 + migration 0026 aplicada na VPS (12 statements OK, \\d confere). matches.tournament_match_id/bracket_match_id (FK cascade, check de vínculo único, índices); campeonato_sala_estado (jogo, PRONTO, sorteio/escolhas, sem timer); match_drafts ganha jogo com PK (match_id, jogo) para draft por jogo (Fearless = picks de jogos anteriores). Migration 0026 corrigida à mão (ordem do ADD COLUMN antes do PK e DROP do match_drafts_pkey — drizzle-kit não nomeia o PK antigo). Evidência: teste schema 4/4, suíte 230/230, tsc 0, drizzle-kit generate idempotente, psql prod confere. Commit d90fdb7. Próximo passo 3: criação automática T-10 (cron + lazy) + rotas da vaga/PRONTO + shape da sala.",
+      "touched": [
+        "db/schema/matches.ts",
+        "db/migrations/0026_amused_king_cobra.sql",
+        "api/test/sala-campeonato-schema.test.ts"
       ]
     }
   ]
