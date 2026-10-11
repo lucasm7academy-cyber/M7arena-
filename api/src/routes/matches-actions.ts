@@ -164,7 +164,9 @@ async function executarAcaoDraftCampeonato(req: any, res: any, tipo: "ban" | "pi
     const r = await db.transaction(async (tx: any) => {
       const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!sala) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
-      if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato", estado: null, mudou: false };
+      if (sala.mode !== "campeonato" && sala.mode !== "time_vs_time_livre") {
+        return { ok: false, erro: "nao_e_sala_campeonato", estado: null, mudou: false };
+      }
       if (sala.status !== "camp_draft") return { ok: false, erro: "estado_invalido", estado: sala.status, mudou: false };
 
       const [estado] = await tx
