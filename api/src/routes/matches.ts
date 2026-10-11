@@ -21,6 +21,7 @@ import {
 } from "../lib/match-flow.js";
 import { reservarEntrada, devolverEntrada } from "../lib/escrow.js";
 import { getRoles, eParticipante, eStaffSala } from "../lib/acesso-sala.js";
+import { shapeSalaCampeonato, podeVerCodigoSalaCampeonato } from "../lib/sala-campeonato.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -121,6 +122,11 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   }
 
   const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
+  // Sala Campeonato (ADR-085): o estado por jogo (PRONTO, sorteio, escolhas) e
+  // a série entram no shape para o front desenhar a sala.
+  if (m.mode === "campeonato") {
+    (legacy as any).campeonato = await shapeSalaCampeonato(ctx, m);
+  }
   // Segurança (pedido 2026-08-17): o código da partida só vai para participante
   // ou staff (streamer/organizador/admin/proprietário). Quem só está olhando a
   // sala sem fazer parte não pode copiar o código e invadir o lobby do jogo.
@@ -170,6 +176,11 @@ matchesRouter.get("/:id", async (req, res) => {
     if (user) {
       const roles = await getRoles(db, user.id);
       podeVerCodigo = eStaffSala(roles) || (await eParticipante(db, user.id, match.id));
+      // Sala campeonato: membros/donos dos DOIS times e staff do campeonato
+      // também enxergam o código (ADR-078) — a vaga não é pré-requisito.
+      if (!podeVerCodigo && match.mode === "campeonato") {
+        podeVerCodigo = await podeVerCodigoSalaCampeonato(db, user.id, match);
+      }
     }
 
     return res.json(await shapeSala(match, db, podeVerCodigo));

@@ -34,6 +34,7 @@ import { riotRaw } from "../routes/riot.js";
 import { RiotMatch, QUEUE_SUMMONERS_RIFT, QUEUE_HOWLING_ABYSS } from "./verificar-partida.js";
 import { recalcularPdlGlobal } from "./tournament-pdl.js";
 import { encerrarTransmissoesDoJogo } from "./transmissoes.js";
+import { avancarSalaCampeonatoAposJogada, encerrarSalaCampeonato } from "./sala-campeonato.js";
 
 /** Peso de cada jogada em número de vitórias (usado para a fileira de melhor-de). */
 export function bestOfToWins(bestOf: number): number {
@@ -538,6 +539,20 @@ async function verificarSerieMatch(
       .where(eq(tournamentMatches.id, serie.id));
   }
 
+  // Sala Campeonato (ADR-085): jogada registrada avança o jogo (os dois marcam
+  // PRONTO de novo); série fechada encerra a sala. Idempotente pelo contador.
+  const jogadas = (
+    await tx
+      .select({ id: tournamentSeriesGames.id })
+      .from(tournamentSeriesGames)
+      .where(eq(tournamentSeriesGames.matchId, serie.id))
+  ).length;
+  if (r.estado === "finalizada") {
+    await encerrarSalaCampeonato(tx, { serieId: serie.id, isBracket: false });
+  } else if (r.estado === "em_andamento" && jogadas > 0) {
+    await avancarSalaCampeonatoAposJogada(tx, { serieId: serie.id, isBracket: false, jogadas });
+  }
+
   return r;
 }
 
@@ -620,6 +635,19 @@ async function verificarSerieBracket(
       .update(bracketMatches)
       .set({ scoreA: r.scoreA, scoreB: r.scoreB, irregular: r.irregular, updatedAt: new Date() })
       .where(eq(bracketMatches.id, serie.id));
+  }
+
+  // Sala Campeonato (ADR-085): mesma transição do cronograma, pela chave.
+  const jogadas = (
+    await tx
+      .select({ id: tournamentSeriesGames.id })
+      .from(tournamentSeriesGames)
+      .where(eq(tournamentSeriesGames.bracketMatchId, serie.id))
+  ).length;
+  if (r.estado === "finalizada") {
+    await encerrarSalaCampeonato(tx, { serieId: serie.id, isBracket: true });
+  } else if (r.estado === "em_andamento" && jogadas > 0) {
+    await avancarSalaCampeonatoAposJogada(tx, { serieId: serie.id, isBracket: true, jogadas });
   }
 
   return r;

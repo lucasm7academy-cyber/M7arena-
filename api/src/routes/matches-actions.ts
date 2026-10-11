@@ -12,6 +12,7 @@ import {
 import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
+import { entrarNaVaga, sairDaVaga, marcarPronto } from "../lib/sala-campeonato.js";
 
 export const matchesActionsRouter = Router();
 
@@ -68,6 +69,57 @@ matchesActionsRouter.post("/:id/draft/ban", (req, res) => executarAcaoDraft(req,
 
 // POST /api/matches/:id/draft/pick - Escolher campeão (turno do time no pick)
 matchesActionsRouter.post("/:id/draft/pick", (req, res) => executarAcaoDraft(req, res, "pick"));
+
+/**
+ * Sala Campeonato (ADR-085): vaga e PRONTO. Sem timer (ADR-083) — o servidor
+ * decide as transições de fase; o front só desenha. Contrato `{ ok, erro, estado, mudou }`.
+ */
+function responderSalaCampeonato(res: any, r: any) {
+  return res.json({
+    ok: !!r?.ok,
+    erro: r?.ok ? null : r?.erro ?? "rpc_falhou",
+    estado: r?.estado ?? null,
+    mudou: !!r?.ok,
+  });
+}
+
+// POST /api/matches/:id/sala-campeonato/entrar  { side: 'blue' | 'red' }
+matchesActionsRouter.post("/:id/sala-campeonato/entrar", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const side = req.body?.side === "red" ? "red" : req.body?.side === "blue" ? "blue" : null;
+    if (!side) return res.status(400).json({ ok: false, erro: "lado_invalido", estado: null, mudou: false });
+    const r = await entrarNaVaga(db, { salaNum: Number(req.params.id), userId: user.id, side });
+    return responderSalaCampeonato(res, r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+// POST /api/matches/:id/sala-campeonato/sair
+matchesActionsRouter.post("/:id/sala-campeonato/sair", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const r = await sairDaVaga(db, { salaNum: Number(req.params.id), userId: user.id });
+    return responderSalaCampeonato(res, r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+// POST /api/matches/:id/sala-campeonato/pronto
+matchesActionsRouter.post("/:id/sala-campeonato/pronto", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const r = await marcarPronto(db, { salaNum: Number(req.params.id), userId: user.id });
+    return responderSalaCampeonato(res, r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
 
 /**
  * Ações de sala montadas em `/api/matches/:id/<acao>` (id público = sala_num).

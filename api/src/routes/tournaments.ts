@@ -9,6 +9,7 @@ import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
 import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie } from "../lib/tournament-access.js";
 import { recalcularPdlGlobal } from "../lib/tournament-pdl.js";
+import { criarSalaCampeonato } from "../lib/sala-campeonato.js";
 
 export const tournamentsRouter = Router();
 
@@ -546,5 +547,39 @@ tournamentsRouter.post("/:id/jogo/:matchId/verificar", async (req, res) => {
     return res.json({ ...r, tournament: await shapeComAcesso(req, id) });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao verificar série" });
+  }
+});
+
+// ── Sala Campeonato: criação manual (A COMBINAR / imprevisto) — ADR-084 ─────
+// Jogos com horário ganham sala sozinhos (T-10min); este endpoint cobre o resto
+// e devolve a sala existente se já houver (idempotente para o front).
+tournamentsRouter.post("/:id/jogo/:matchId/sala", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const { id, matchId } = req.params;
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+    if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    const encontrada = await encontrarSerie(id, matchId);
+    if (!encontrada) return res.status(404).json({ error: "Jogo não encontrado" });
+
+    const { isStaff, isParticipant } = await resolverPermissaoSerie(db, {
+      userId: user.id,
+      organizerId: t.organizerId,
+      tournamentId: id,
+      serie: encontrada.serie,
+    });
+    if (!isStaff && !isParticipant) {
+      return res.status(403).json({
+        error: "Sem permissão. Apenas capitães/jogadores da partida ou organizadores podem criar a sala.",
+      });
+    }
+
+    const r = await criarSalaCampeonato(db, { torneio: t, serie: encontrada.serie, isBracket: encontrada.isBracket });
+    if (!r.ok) return res.status(r.erro === "sem_codigo" ? 409 : 400).json({ error: r.erro });
+    return res.json({ ok: true, criada: r.criada, sala_num: r.sala.salaNum, sala_id: r.sala.id });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao criar sala" });
   }
 });

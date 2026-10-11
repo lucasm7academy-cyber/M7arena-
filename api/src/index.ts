@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { db, pool } from "./db.js";
 import { runCron } from "./cron.js";
 import { runReconciliacaoHandles } from "./lib/reconciliar-handles.js";
+import { criarSalasCampeonatoPendentes } from "./lib/sala-campeonato.js";
 import { runRefreshElos } from "./lib/atualizar-elos.js";
 import { authRouter, termsRouter } from "./routes/auth.js";
 import { googleAuthRouter } from "./routes/auth-google.js";
@@ -117,6 +118,19 @@ setInterval(() => {
   runCron().catch((e) => console.error("[cron] erro:", e?.message));
 }, 10 * 60 * 1000);
 runCron().catch((e) => console.error("[cron] erro inicial:", e?.message));
+
+// Sala Campeonato (ADR-084): a sala da série nasce sozinha 10 min antes do
+// horário. Varredura de 1 min (barata: uma query indexada em tournament_matches
+// confirmados) — 10 min de cron deixariam a criação chegar tarde. Boot junto.
+setInterval(() => {
+  criarSalasCampeonatoPendentes(db)
+    .then((r) => {
+      if (r.criadas) console.log(`[sala-campeonato] ${r.criadas} sala(s) criada(s)`);
+      if (r.erros.length) console.error("[sala-campeonato] erros:", r.erros.join(" | "));
+    })
+    .catch((e) => console.error("[sala-campeonato] erro:", e?.message));
+}, 60 * 1000);
+criarSalasCampeonatoPendentes(db).catch((e) => console.error("[sala-campeonato] erro inicial:", e?.message));
 
 // Reconciliação do Riot ID (spec 2026-08-17): atualiza game_accounts.handle +
 // users.riot_id com o nome atual do LoL a cada 3 dias. Timer próprio — o

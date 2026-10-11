@@ -25,6 +25,7 @@ import { teams } from "../../../db/schema/teams.js";
 import { matchCodes } from "../../../db/schema/matches.js";
 import { recalcularPdlGlobal } from "./tournament-pdl.js";
 import { encerrarTransmissoesDoJogo } from "./transmissoes.js";
+import { encerrarSalaCampeonato } from "./sala-campeonato.js";
 
 /** Resolve o id de um time por id ou tag (retorna null se não achar). */
 async function resolveTeamId(idOrTag: string | undefined, d: any = db): Promise<string | null> {
@@ -147,6 +148,11 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
           .update(matchCodes)
           .set({ used: false, matchId: null, lastUsedAt: new Date() })
           .where(eq(matchCodes.code, matchRow.codigoPartida));
+      }
+
+      // Sala Campeonato da série encerra junto (ADR-078) — W.O./decisão manual.
+      if (isFinalizado) {
+        await encerrarSalaCampeonato(d, { serieId: matchRow.id, isBracket: false });
       }
     } else {
       await d.insert(tournamentMatches).values({ tournamentId, phase: "group_stage", round: 0, ...values });
