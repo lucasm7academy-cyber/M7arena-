@@ -448,6 +448,7 @@ const Jogar = () => {
   
   // Modais
   const [showCriarModal, setShowCriarModal] = useState(false);
+  const [criandoSalaTimes, setCriandoSalaTimes] = useState(false);
   const [showVincularModal, setShowVincularModal] = useState(false);
   const [modoSelecionado, setModoSelecionado] = useState<ModoJogo>('5v5');
   const [showSenhaModal, setShowSenhaModal] = useState<{ salaId: number; nome: string } | null>(null);
@@ -607,7 +608,7 @@ const Jogar = () => {
     if (user && sala.temSenha && senha) {
       guardarSenhaSala(sala.id, senha);
     }
-    navigate(`/${sala.modo}/${sala.id}`);
+    navigate(rotaDaSala(sala));
     setShowSenhaModal(null);
     setErroSenha('');
   };
@@ -652,6 +653,48 @@ const Jogar = () => {
     setModoSelecionado(modo);
     setShowCriarModal(true);
   };
+
+  // Sala TIME vs TIME LIVRE (ADR-086): cria direto no fluxo novo (2 vagas de
+  // time, PRONTO, sorteio de lado e draft) e abre a sala — sem campeonato.
+  const criarSalaTimes = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    setCriandoSalaTimes(true);
+    try {
+      const r = await fetch('/api/matches/time-vs-time', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const j = await r.json().catch(() => null);
+      if (!j?.ok) {
+        toast.error(traduzirErroSala(j?.erro) ?? 'Não foi possível criar a sala.');
+        return;
+      }
+      navigate(`/sala-time/${j.sala_num}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Falha de rede.');
+    } finally {
+      setCriandoSalaTimes(false);
+    }
+  };
+
+  // Sala de TIMES (campeonato/livre): card próprio e rota própria no /jogar.
+  const rotaDaSala = (sala: any) =>
+    sala.modo === 'campeonato'
+      ? `/campeonato/sala/${sala.id}`
+      : sala.modo === 'time_vs_time_livre'
+        ? `/sala-time/${sala.id}`
+        : `/${sala.modo}/${sala.id}`;
+  const modoInfoDaSala = (modo: string) =>
+    modo === 'campeonato'
+      ? { nome: 'Sala Campeonato', cor: '#FFB700', icone: <Trophy className="w-5 h-5" />, bgImage: '/images/fundoCardTime.webp' }
+      : modo === 'time_vs_time_livre'
+        ? { nome: 'Time vs Time', cor: '#00F0FF', icone: <Trophy className="w-5 h-5" />, bgImage: '/images/fundoCardTime.webp' }
+        : getModoInfo(modo);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -771,6 +814,15 @@ const Jogar = () => {
               <Trophy className="w-4 h-4 text-[#FFB700]" />
             </div>
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Escolha seu Modo de Jogo</h2>
+            <button
+              onClick={criarSalaTimes}
+              disabled={criandoSalaTimes}
+              className="ml-auto px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black disabled:opacity-50 cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #FFB700, #FFE082)', clipPath: CUT_BUTTON }}
+              title="Cria uma sala de TIME vs TIME no fluxo novo (2 vagas, PRONTO, escolha de lado e draft) — sem campeonato"
+            >
+              {criandoSalaTimes ? 'Criando...' : 'Sala Time vs Time'}
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -1080,7 +1132,7 @@ const Jogar = () => {
                 </div>
               ) : (
                 salasFinalizadasFiltradas.map((sala) => {
-                  const modoInfo = getModoInfo(sala.modo);
+                  const modoInfo = modoInfoDaSala(sala.modo);
                   const mpInfo = getMPointsInfo(sala.mpoints);
                   const vencedorInfo =
                     sala.vencedor === 'A'

@@ -12,7 +12,7 @@ import {
 import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
-import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder, iniciarLiveDaSala } from "../lib/sala-campeonato.js";
+import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder, iniciarLiveDaSala, criarSalaTimeVsTime } from "../lib/sala-campeonato.js";
 import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato, aplicarAcaoSalaCampeonato } from "../lib/sala-campeonato-draft.js";
 
 export const matchesActionsRouter = Router();
@@ -207,6 +207,28 @@ matchesActionsRouter.post("/:id/sala-campeonato/live", async (req, res) => {
       mudou: true,
       twitch: r.twitch,
       transmissao_id: r.transmissao.id,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+// POST /api/matches/time-vs-time — cria a sala TIME vs TIME LIVRE (ADR-086): o
+// mesmo fluxo da sala de campeonato, sem campeonato — 2 vagas, PRONTO, lado e
+// draft; no fim o código sai do pool e a sala segue o ciclo normal.
+matchesActionsRouter.post("/time-vs-time", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const r = await criarSalaTimeVsTime(db, { userId: user.id });
+    if (!r.ok) return res.status(400).json({ ok: false, erro: r.erro, estado: null, mudou: false });
+    return res.json({
+      ok: true,
+      erro: null,
+      estado: r.sala.status,
+      mudou: true,
+      sala_num: r.sala.salaNum,
+      sala_id: r.sala.id,
     });
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });

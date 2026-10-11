@@ -32,8 +32,13 @@ import {
   DRAFT_TURNO_MS_CAMPEONATO,
 } from "./sala-campeonato-draft.js";
 
-/** Fases "vivas" da sala campeonato (fora delas, a sala não é mais a ativa). */
+/** Fases "vivas" da sala (campeonato OU livre): fora delas, não é mais a ativa. */
 export const FASES_ATIVAS_CAMPEONATO = ["camp_vagas", "camp_prontos", "camp_lado", "camp_draft", "camp_jogo"];
+
+/** Modos que usam o fluxo de TIME vs TIME (2 vagas de time + PRONTO + draft). */
+export function eSalaDeTimes(sala: any): boolean {
+  return sala?.mode === "campeonato" || sala?.mode === "time_vs_time_livre";
+}
 
 /** Criação automática: sala nasce 10 min antes do horário agendado (ADR-084). */
 export const JANELA_CRIACAO_MS = 10 * 60 * 1000;
@@ -107,6 +112,15 @@ async function usuarioNoTime(d: any, userId: string, teamId: string): Promise<bo
 
 /** Lado (vaga) do usuário na sala: 'blue' (time A), 'red' (time B) ou null. */
 export async function ladoDoUsuarioNaSala(d: any, sala: any, userId: string): Promise<"blue" | "red" | null> {
+  // Vaga ocupada na sala vale para os dois fluxos (campeonato e livre).
+  const [vaga] = await d
+    .select({ side: matchPlayers.side })
+    .from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, sala.id), eq(matchPlayers.userId, userId)))
+    .limit(1);
+  if (vaga?.side) return vaga.side as "blue" | "red";
+
+  // Sem vaga: no campeonato ainda vale ser do roster do time (ADR-056).
   const serie = await carregarSerieDaSala(d, sala);
   if (!serie) return null;
   const { teamAId, teamBId } = await resolverTimesDaSerie(d, serie);
@@ -242,7 +256,28 @@ export async function criarSalasCampeonatoPendentes(d: any, agora: Date = new Da
   return { criadas, erros };
 }
 
-/** Entrar na vaga do seu time (time A = azul, time B = vermelho). */
+/** Cria a sala TIME vs TIME LIVRE — mesmo fluxo, sem campeonato (ADR-086). */
+export async function criarSalaTimeVsTime(d: any, opts: { userId: string }): Promise<Resultado<{ sala: any }>> {
+  const out: any = await d.transaction(async (tx: any) => {
+    const [sala] = await tx
+      .insert(matches)
+      .values({
+        gameId: "lol",
+        mode: "time_vs_time_livre",
+        status: "camp_vagas",
+        createdBy: opts.userId,
+        maxJogadores: 2,
+        nome: "Time vs Time",
+      })
+      .returning();
+    await tx.insert(campeonatoSalaEstado).values({ matchId: sala.id });
+    return { ok: true, sala };
+  });
+  if (out?.ok) await notifyMatchChange(String(out.sala.salaNum));
+  return out;
+}
+
+/** Entrar na vaga (campeonato: só o time do lado; livre: qualquer usuário). */
 export async function entrarNaVaga(
   d: any,
   opts: { salaNum: number; userId: string; side: "blue" | "red" }
@@ -250,15 +285,18 @@ export async function entrarNaVaga(
   const r: any = await d.transaction(async (tx: any) => {
     const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
     if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
-    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (!eSalaDeTimes(sala)) return { ok: false, erro: "nao_e_sala_campeonato" };
     if (sala.status !== "camp_vagas") return { ok: false, erro: "estado_invalido" };
 
+    // Campenato: a vaga é do time da série (dono/membro aceito/convidado).
+    // Sala LIVRE (sem série): qualquer usuário logado ocupa a vaga do lado.
     const serie = await carregarSerieDaSala(tx, sala);
-    if (!serie) return { ok: false, erro: "serie_nao_encontrada" };
-    const { teamAId, teamBId } = await resolverTimesDaSerie(tx, serie);
-    const teamId = opts.side === "blue" ? teamAId : teamBId;
-    if (!teamId) return { ok: false, erro: "times_incompletos" };
-    if (!(await usuarioNoTime(tx, opts.userId, teamId))) return { ok: false, erro: "nao_e_do_time" };
+    if (serie) {
+      const { teamAId, teamBId } = await resolverTimesDaSerie(tx, serie);
+      const teamId = opts.side === "blue" ? teamAId : teamBId;
+      if (!teamId) return { ok: false, erro: "times_incompletos" };
+      if (!(await usuarioNoTime(tx, opts.userId, teamId))) return { ok: false, erro: "nao_e_do_time" };
+    }
 
     const [naVaga] = await tx
       .select()
@@ -302,7 +340,7 @@ export async function sairDaVaga(d: any, opts: { salaNum: number; userId: string
   const r: any = await d.transaction(async (tx: any) => {
     const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
     if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
-    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (!eSalaDeTimes(sala)) return { ok: false, erro: "nao_e_sala_campeonato" };
     if (!["camp_vagas", "camp_prontos"].includes(sala.status)) return { ok: false, erro: "estado_invalido" };
 
     const [jogador] = await tx
@@ -340,7 +378,7 @@ export async function marcarPronto(
   const r: any = await d.transaction(async (tx: any) => {
     const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
     if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
-    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (!eSalaDeTimes(sala)) return { ok: false, erro: "nao_e_sala_campeonato" };
     if (sala.status !== "camp_prontos") return { ok: false, erro: "estado_invalido" };
 
     const [estado] = await tx
@@ -411,7 +449,7 @@ export async function escolherLado(
   const r: any = await d.transaction(async (tx: any) => {
     const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
     if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
-    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (!eSalaDeTimes(sala)) return { ok: false, erro: "nao_e_sala_campeonato" };
     if (sala.status !== "camp_lado") return { ok: false, erro: "estado_invalido" };
 
     const [estado] = await tx
@@ -450,7 +488,7 @@ export async function escolherPickOrder(
   const r: any = await d.transaction(async (tx: any) => {
     const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1).for("update");
     if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
-    if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+    if (!eSalaDeTimes(sala)) return { ok: false, erro: "nao_e_sala_campeonato" };
     if (sala.status !== "camp_lado") return { ok: false, erro: "estado_invalido" };
 
     const [estado] = await tx

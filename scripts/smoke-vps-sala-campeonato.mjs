@@ -66,6 +66,7 @@ function daquiMinSP(min) {
 
 const usuarios = [];
 let torneioId = null;
+let salaLivreNum = null;
 
 async function main() {
   console.log(`\n=== SMOKE VPS: SALA CAMPEONATO ===\n`);
@@ -248,6 +249,63 @@ async function main() {
   const detLive = (await api(`/api/matches/${salaNum}`)).body;
   check(detLive?.campeonato?.live?.twitch === "smoke_canal", "live: shape expõe 'assista ao vivo'", JSON.stringify(detLive?.campeonato?.live));
 
+  // ── 3e) Sala TIME vs TIME LIVRE (ADR-086, sem campeonato) ───────────────
+  const livre = await api("/api/matches/time-vs-time", { method: "POST", body: "{}" }, membA.cookie);
+  check(livre.body?.ok === true && !!livre.body?.sala_num, "livre: sala criada sem campeonato", JSON.stringify(livre.body));
+  salaLivreNum = livre.body?.sala_num ?? null;
+  const cookieDoLivre = (l) => (l === "blue" ? membB.cookie : streamer.cookie);
+  const ljA = await api(`/api/matches/${salaLivreNum}/sala-campeonato/entrar`, { method: "POST", body: JSON.stringify({ side: "blue" }) }, membB.cookie);
+  const ljB = await api(`/api/matches/${salaLivreNum}/sala-campeonato/entrar`, { method: "POST", body: JSON.stringify({ side: "red" }) }, streamer.cookie);
+  check(
+    ljA.body?.ok === true && ljB.body?.ok === true && ljB.body?.estado === "camp_prontos",
+    "livre: qualquer usuário ocupa as vagas",
+    JSON.stringify({ a: ljA.body?.estado, b: ljB.body?.estado })
+  );
+  await api(`/api/matches/${salaLivreNum}/sala-campeonato/pronto`, { method: "POST", body: "{}" }, membB.cookie);
+  const lp2 = await api(`/api/matches/${salaLivreNum}/sala-campeonato/pronto`, { method: "POST", body: "{}" }, streamer.cookie);
+  check(lp2.body?.estado === "camp_lado", "livre: PRONTOs -> sorteio", JSON.stringify(lp2.body));
+  const estL = await q1(
+    `SELECT escolha_time FROM campeonato_sala_estado WHERE match_id=(SELECT id FROM matches WHERE sala_num=${salaLivreNum})`
+  );
+  const ladoL = await api(
+    `/api/matches/${salaLivreNum}/sala-campeonato/lado`,
+    { method: "POST", body: JSON.stringify({ lado: "blue" }) },
+    cookieDoLivre(estL?.escolha_time)
+  );
+  const outroL = estL?.escolha_time === "blue" ? "red" : "blue";
+  const pickL = await api(
+    `/api/matches/${salaLivreNum}/sala-campeonato/pick-order`,
+    { method: "POST", body: JSON.stringify({ ordem: "first" }) },
+    cookieDoLivre(outroL)
+  );
+  check(
+    ladoL.body?.ok === true && pickL.body?.estado === "camp_draft",
+    "livre: lado + pick order -> camp_draft",
+    JSON.stringify({ lado: ladoL.body?.estado, pick: pickL.body?.estado })
+  );
+  let turnosL = 0;
+  for (let i = 0; i < 20; i++) {
+    const d = (await api(`/api/matches/${salaLivreNum}`, {}, membA.cookie)).body?.campeonato?.draft;
+    if (!d || d.status !== "ongoing") break;
+    const r = await api(
+      `/api/matches/${salaLivreNum}/sala-campeonato/${d.current_phase}`,
+      { method: "POST", body: JSON.stringify({ championId: `LvD${i}` }) },
+      cookieDoLivre(d.current_team)
+    );
+    if (r.body?.ok !== true) {
+      check(false, `livre: turno ${i} falhou`, r.body?.erro);
+      break;
+    }
+    turnosL++;
+  }
+  check(turnosL === 20, "livre: 20 turnos de draft via HTTP", String(turnosL));
+  const livreFim = await q1(`SELECT status, codigo_partida FROM matches WHERE sala_num=${salaLivreNum}`);
+  check(
+    livreFim?.status === "iniciando_partida" && !!livreFim?.codigo_partida && livreFim.codigo_partida !== "SEM-CODIGO-AGUARDE",
+    "livre: draft fechou com código do pool e partida pronta",
+    JSON.stringify(livreFim)
+  );
+
   // ── 4) Shape: bloco campeonato + código redigido para anônimo ────────────
   const detAnon = await api(`/api/matches/${salaNum}`);
   check(!!detAnon.body?.campeonato, "shape: bloco campeonato presente");
@@ -257,6 +315,11 @@ async function main() {
   check(typeof detMembro.body?.codigo_partida === "string" && detMembro.body.codigo_partida.length > 0, "shape: membro do time vê o código");
 
   // ── Limpeza ──────────────────────────────────────────────────────────────
+  // Sala LIVRE do teste (sem torneio): libera o código e apaga a sala.
+  if (salaLivreNum) {
+    await psql(`UPDATE match_codes SET used=false, match_id=NULL WHERE match_id = (SELECT id FROM matches WHERE sala_num=${salaLivreNum})`);
+    await psql(`DELETE FROM matches WHERE sala_num=${salaLivreNum}`);
+  }
   await psql(`UPDATE match_codes SET used=false, match_id=NULL WHERE code LIKE 'BR-SMOKE-SALA-${sufixo}'`);
   if (torneioId) await psql(`DELETE FROM tournaments WHERE id='${torneioId}'`); // cascata: séries + salas + estado
   await psql(`DELETE FROM team_members WHERE team_id IN ('${t1.id}','${t2.id}')`);

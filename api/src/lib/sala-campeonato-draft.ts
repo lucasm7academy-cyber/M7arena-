@@ -13,7 +13,8 @@
  */
 import { and, eq, lt } from "drizzle-orm";
 import { matches, matchDrafts, campeonatoSalaEstado } from "../../../db/schema/matches.js";
-import { ladoDoUsuarioNaSala } from "./sala-campeonato.js";
+import { ladoDoUsuarioNaSala, carregarSerieDaSala } from "./sala-campeonato.js";
+import { atribuirCodigoPartida } from "./match-flow.js";
 
 /** Duração de um turno (mesmo relógio do servidor do draft das salas). */
 export const DRAFT_TURNO_MS_CAMPEONATO = 30_000;
@@ -145,7 +146,27 @@ async function aplicarEAvancar(tx: any, draft: any, estado: any, valor: string |
 }
 
 async function aoFinalizar(tx: any, sala: any) {
-  await tx.update(matches).set({ status: "camp_jogo", updatedAt: new Date() }).where(eq(matches.id, sala.id));
+  const serie = await carregarSerieDaSala(tx, sala);
+  const agora = new Date();
+  if (serie) {
+    await tx.update(matches).set({ status: "camp_jogo", updatedAt: agora }).where(eq(matches.id, sala.id));
+    return;
+  }
+  // Sala LIVRE (sem campeonato): ciclo normal da sala — código do pool +
+  // iniciando_partida (daqui o motor de verificação da Riot assume).
+  let codigo = sala.codigoPartida ?? null;
+  if (!codigo) codigo = await atribuirCodigoPartida(tx, sala.id, sala.mode);
+  await tx
+    .update(matches)
+    .set({
+      status: "iniciando_partida",
+      codigoPartida: codigo,
+      iniciandoPartidaAt: agora,
+      confirmacaoExpiresAt: null,
+      stateDeadlineAt: new Date(agora.getTime() + 90_000),
+      updatedAt: agora,
+    })
+    .where(eq(matches.id, sala.id));
 }
 
 /**

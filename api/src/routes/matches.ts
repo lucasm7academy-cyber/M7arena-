@@ -21,7 +21,7 @@ import {
 } from "../lib/match-flow.js";
 import { reservarEntrada, devolverEntrada } from "../lib/escrow.js";
 import { getRoles, eParticipante, eStaffSala } from "../lib/acesso-sala.js";
-import { shapeSalaCampeonato, podeVerCodigoSalaCampeonato } from "../lib/sala-campeonato.js";
+import { shapeSalaCampeonato, podeVerCodigoSalaCampeonato, FASES_ATIVAS_CAMPEONATO } from "../lib/sala-campeonato.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -122,9 +122,9 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   }
 
   const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
-  // Sala Campeonato (ADR-085): o estado por jogo (PRONTO, sorteio, escolhas) e
-  // a série entram no shape para o front desenhar a sala.
-  if (m.mode === "campeonato") {
+  // Sala de TIMES (ADR-085/086): o estado por jogo (PRONTO, sorteio, escolhas)
+  // e a série (quando é campeonato) entram no shape para o front desenhar.
+  if (m.mode === "campeonato" || m.mode === "time_vs_time_livre") {
     (legacy as any).campeonato = await shapeSalaCampeonato(ctx, m);
   }
   // Segurança (pedido 2026-08-17): o código da partida só vai para participante
@@ -149,7 +149,7 @@ matchesRouter.get("/", async (req, res) => {
       rows = await db
         .select()
         .from(matches)
-        .where(inArray(matches.status, ESTADOS_ATIVOS))
+        .where(inArray(matches.status, [...ESTADOS_ATIVOS, ...FASES_ATIVAS_CAMPEONATO]))
         .orderBy(desc(matches.createdAt))
         .limit(limit);
     }

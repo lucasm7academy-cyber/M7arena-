@@ -1,12 +1,13 @@
 // src/features/sala-campeonato/SalaCampeonato.tsx
-// Sala Campeonato V1 (ADRs 076-085): mesmo visual/estrutura da sala normal,
-// com as funcionalidades novas — 2 vagas (1 por time, do coach à reserva),
-// PRONTO por jogo, sorteio → lado → first/last pick, draft Fearless, código da
-// série visível até o fim e live do streamer. 100% dirigida pelo shape:
-// o servidor é a autoridade; esta tela só desenha e pede ações.
+// Sala de TIMES (Campeonato ADR-085 e Time vs Time LIVRE ADR-086): mesma
+// experiência da sala normal — tela cheia (LayoutWrapper esconde sidebar),
+// fundo oficial, barra superior com estado/modo/modalidade — com o card de time
+// (1 vaga por lado, PRONTO, sorteio → lado → first/last pick, draft Fearless,
+// código e live). O servidor é a autoridade; esta tela só desenha e pede ações.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Copy, Loader2, Radio, Swords, Trophy } from 'lucide-react';
+import { motion } from 'motion/react';
+import { ArrowLeft, Check, Copy, Loader2, Radio, Share2, Shield, Swords, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DraftRoom } from '../../components/draft/DraftRoom';
 import { useSalaRealtime } from '../../hooks/useSalaRealtime';
@@ -18,6 +19,8 @@ const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 1
 const CUT_INNER = 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)';
 const CUT_BUTTON = 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
 const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)';
+const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
 
 const ERROS: Record<string, string> = {
   vaga_ocupada: 'Essa vaga já está ocupada.',
@@ -48,6 +51,7 @@ export default function SalaCampeonato() {
   const [erro, setErro] = useState<string | null>(null);
   const [meusTimes, setMeusTimes] = useState<string[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [compartilhado, setCompartilhado] = useState(false);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -61,6 +65,16 @@ export default function SalaCampeonato() {
       registrarServerTime(j?.server_time);
       setSala(j);
       setErro(null);
+      // Tick preguiçoso (sala livre: iniciando_partida → partida_iniciada).
+      // O servidor decide; a chamada é idempotente.
+      if (j?.estado === 'iniciando_partida') {
+        fetch(`/api/matches/${id}/tick`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        }).catch(() => {});
+      }
     } catch {
       setErro('Não foi possível carregar a sala.');
     }
@@ -81,7 +95,7 @@ export default function SalaCampeonato() {
     carregar();
   }, [carregar]);
 
-  // Times do usuário (para saber o lado dele na série).
+  // Times do usuário (para saber o lado dele na série de campeonato).
   useEffect(() => {
     const uid = perfil?.id;
     if (!uid) return;
@@ -132,12 +146,27 @@ export default function SalaCampeonato() {
     }
   };
 
+  const compartilhar = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCompartilhado(true);
+      toast.success('Link da sala copiado!');
+      setTimeout(() => setCompartilhado(false), 2500);
+    } catch {
+      toast.error('Não foi possível copiar o link.');
+    }
+  };
+
   if (erro) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
+      <div className="flex-1 w-full min-h-screen bg-[#050505] flex items-center justify-center text-white">
         <div className="text-center space-y-4">
           <p className="text-white/70">{erro}</p>
-          <button onClick={() => navigate(-1)} className="px-4 py-2 bg-white/10 border border-white/15 text-xs font-black uppercase tracking-wider">
+          <button
+            onClick={() => navigate('/jogar')}
+            className="px-4 py-2 bg-white/10 border border-white/15 text-xs font-black uppercase tracking-wider cursor-pointer"
+            style={{ clipPath: CUT_BUTTON }}
+          >
             Voltar
           </button>
         </div>
@@ -146,7 +175,7 @@ export default function SalaCampeonato() {
   }
   if (!sala) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white/60">
+      <div className="flex-1 w-full min-h-screen bg-[#050505] flex items-center justify-center text-white/60">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
@@ -156,16 +185,43 @@ export default function SalaCampeonato() {
   const eu = perfil?.id ?? '';
   const jogadorBlue = jogadorDoLado('blue');
   const jogadorRed = jogadorDoLado('red');
-  const meuJogador = jogadorBlue?.id === eu || jogadorBlue?.user_id === eu ? jogadorBlue : jogadorRed?.id === eu || jogadorRed?.user_id === eu ? jogadorRed : null;
-  const meuPronto = meuLado === 'blue' ? camp?.pronto_blue : meuLado === 'red' ? camp?.pronto_red : false;
+  const meuJogador =
+    jogadorBlue?.id === eu || jogadorBlue?.user_id === eu
+      ? jogadorBlue
+      : jogadorRed?.id === eu || jogadorRed?.user_id === eu
+        ? jogadorRed
+        : null;
+  // Lado efetivo: a vaga ocupada manda (vale também para a sala LIVRE, sem time).
+  const meuLadoEfetivo: 'blue' | 'red' | null = (meuJogador?.side as 'blue' | 'red' | undefined) ?? meuLado;
+  const meuPronto = meuLadoEfetivo === 'blue' ? camp?.pronto_blue : meuLadoEfetivo === 'red' ? camp?.pronto_red : false;
   const escolhendo = camp?.escolha_time as 'blue' | 'red' | null;
-  const tagDoLado = (lado?: 'blue' | 'red' | null) => (lado === 'blue' ? sala.time_a_tag : lado === 'red' ? sala.time_b_tag : '');
-  const nomeDoLado = (lado?: 'blue' | 'red' | null) => (lado === 'blue' ? sala.time_a_nome : lado === 'red' ? sala.time_b_nome : '');
+  const tagDoLado = (lado?: 'blue' | 'red' | null) =>
+    lado === 'blue' ? sala.time_a_tag || 'AZUL' : lado === 'red' ? sala.time_b_tag || 'VERMELHO' : '';
+  const nomeDoLado = (lado?: 'blue' | 'red' | null) =>
+    lado === 'blue' ? sala.time_a_nome || 'Time Azul' : lado === 'red' ? sala.time_b_nome || 'Time Vermelho' : '';
   const timerDraft = (() => {
     const dl = camp?.draft?.turn_deadline_at;
     if (!dl) return 30;
     return Math.max(0, Math.ceil((new Date(dl).getTime() - agoraServidor()) / 1000));
   })();
+  const estadoRotulo =
+    estado === 'camp_vagas'
+      ? 'Aguardando Times'
+      : estado === 'camp_prontos'
+        ? 'Falta PRONTO'
+        : estado === 'camp_lado'
+          ? 'Escolha de Lado'
+          : estado === 'camp_draft'
+            ? 'Draft'
+            : estado === 'camp_jogo'
+              ? 'Em Série'
+              : estado === 'iniciando_partida'
+                ? 'Iniciando'
+                : estado === 'partida_iniciada'
+                  ? 'Em Andamento'
+                  : estado === 'camp_finalizada' || estado === 'encerrada'
+                    ? 'Finalizada'
+                    : estado;
 
   const acaoDraft = async (tipo: 'ban' | 'pick', championId: string) => {
     const r = await chamar(`/sala-campeonato/${tipo}`, { championId });
@@ -173,63 +229,199 @@ export default function SalaCampeonato() {
   };
 
   return (
-    <div className="relative min-h-screen pb-20">
-      <img src="/images/fundo_elite.jpg" alt="" className="fixed inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none" />
-      <div className="relative z-10 max-w-[1400px] mx-auto px-3 sm:px-6 pt-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/campeonatos')}
-            className="p-2 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10"
+    <div className="flex-1 w-full min-h-screen md:min-h-0 bg-[#050505] flex flex-col items-center justify-start p-0 font-sans relative overflow-x-hidden md:overflow-hidden md:h-full text-white">
+      {/* Background Layer (igual às salas) */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-[#050505]" />
+        <div className="absolute inset-0">
+          <img src="/images/fundo_elite.jpg" alt="" className="w-full h-full object-cover object-center opacity-30" />
+        </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+      </div>
+
+      {/* ── TOP BAR (mesmo padrão da sala normal) ─────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-20 w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
+        style={{ clipPath: CUT_FRAME }}
+      >
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => navigate('/jogar')}
+            className="group relative p-[1px] bg-white/15 hover:bg-red-500/50 transition-colors shrink-0 shadow-lg cursor-pointer"
             style={{ clipPath: CUT_BUTTON }}
-            title="Voltar"
+            title="Sair da sala"
           >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_FRAME }}>
-            <div className="px-4 py-2 bg-[#0b0a0e] flex items-center gap-3" style={{ clipPath: CUT_INNER }}>
-              <Trophy className="w-4 h-4" style={{ color: '#FFB700' }} />
-              <div className="leading-tight">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                  {camp?.serie?.campeonato_titulo ?? 'Sala Campeonato'}
-                </p>
-                <p className="text-sm font-black uppercase tracking-wide text-white">
-                  {sala.time_a_tag} <span className="text-white/40">x</span> {sala.time_b_tag}
-                  <span className="ml-3 text-[#FFB700]">JOGO {camp?.jogo ?? 1}</span>
-                  <span className="ml-2 text-white/50 text-xs">MD{serie?.best_of ?? 3}</span>
-                  <span className="ml-3 text-white">
-                    {serie ? `${serie.placar_a} - ${serie.placar_b}` : ''}
+            <div
+              className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0A0A0A] hover:bg-red-950/40 flex items-center justify-center text-white/70 hover:text-red-400 transition-colors"
+              style={{ clipPath: CUT_BUTTON_INNER }}
+            >
+              <ArrowLeft className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
+            </div>
+          </motion.button>
+
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="relative p-[1px] bg-white/15 shrink-0" style={{ clipPath: CUT_BUTTON }}>
+              <div
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0d0d10] flex items-center justify-center text-[#FFB700] shadow-inner"
+                style={{ clipPath: CUT_BUTTON_INNER }}
+              >
+                <Trophy className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                {sala.nome || (serie ? `${sala.time_a_tag} x ${sala.time_b_tag}` : 'Time vs Time')}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <div className="p-[1px] bg-[#FFB700]/30" style={{ clipPath: CUT_BADGE }}>
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 text-[10px] md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono block"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    #{String(sala.id).padStart(6, '0')}
                   </span>
-                </p>
+                </div>
+                {serie && (
+                  <div className="p-[1px] bg-white/10" style={{ clipPath: CUT_BADGE }}>
+                    <span
+                      className="px-1.5 py-0.5 bg-[#0b0a0e] text-[10px] md:text-[1.2vmin] font-black text-white/70 tracking-widest leading-none block"
+                      style={{ clipPath: CUT_BADGE_INNER }}
+                    >
+                      JOGO {camp?.jogo ?? 1} · MD{serie.best_of ?? 3}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Times + vagas */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-[1.5vmin] z-10 flex-wrap sm:flex-nowrap">
+          {/* Card Estado */}
+          <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+            <div className="px-3 py-1.5 md:px-3.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+              <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                Estado
+              </span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span
+                  className={`w-1.5 h-1.5 shrink-0 ${
+                    estado === 'camp_finalizada' || estado === 'encerrada'
+                      ? 'bg-purple-400'
+                      : estado === 'partida_iniciada' || estado === 'camp_jogo'
+                        ? 'bg-cyan-400 animate-pulse'
+                        : estado === 'camp_draft' || estado === 'camp_lado'
+                          ? 'bg-amber-400 animate-pulse'
+                          : 'bg-emerald-400 animate-pulse'
+                  }`}
+                />
+                <span className="text-xs md:text-[1.35vmin] font-black text-white uppercase tracking-wider leading-none">
+                  {estadoRotulo}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Modo */}
+          <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+            <div className="px-3 py-1.5 md:px-3.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+              <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                Modo
+              </span>
+              <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none text-[#FFB700]">
+                {serie ? 'CAMPEONATO' : 'TIME VS TIME'}
+              </span>
+            </div>
+          </div>
+
+          {/* Card Placar/Modalidade */}
+          <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+            <div className="px-3 py-1.5 md:px-3.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+              <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                {serie ? 'Placar da Série' : 'Modalidade'}
+              </span>
+              <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
+                {serie ? (
+                  <span className="text-white">
+                    {serie.placar_a} - {serie.placar_b}
+                  </span>
+                ) : (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <Shield className="w-3 h-3 text-emerald-400" /> Casual
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+
+          {/* Compartilhar */}
+          <div className="flex items-center gap-2 pl-1 sm:pl-2 border-l border-white/[0.08]">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={compartilhar}
+              className="relative p-[1px] bg-[#FFB700]/30 hover:bg-[#FFB700]/60 transition-colors shrink-0 cursor-pointer"
+              style={{ clipPath: CUT_BUTTON }}
+              title="Compartilhar sala"
+            >
+              <div
+                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#120e03] hover:bg-[#1a1405] flex items-center justify-center gap-1.5 text-[#FFB700] transition-colors"
+                style={{ clipPath: CUT_BUTTON_INNER }}
+              >
+                {compartilhado ? (
+                  <>
+                    <Check className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-emerald-400" />
+                    <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider text-emerald-400 hidden sm:inline">
+                      Copiado!
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                    <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                      Convidar
+                    </span>
+                  </>
+                )}
+              </div>
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── CONTEÚDO ───────────────────────────────────────────────────────── */}
+      <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 py-4 space-y-4 flex flex-col">
+        {/* Times + hub central */}
         <div className="grid gap-3 lg:grid-cols-[1fr_minmax(260px,360px)_1fr] items-stretch">
           {(['blue', 'red'] as const).map((lado) => {
             const jogador = lado === 'blue' ? jogadorBlue : jogadorRed;
             const pronto = lado === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
-            const ehMinha = !!meuJogador && meuJogador.side === lado;
             const valorVaga = !!jogador && (jogador.id === eu || jogador.user_id === eu);
             return (
-              <div key={lado} className={`p-[1px] ${lado === 'blue' ? 'bg-[#00F0FF]/40' : 'bg-[#FF4655]/40'}`} style={{ clipPath: CUT_FRAME }}>
-                <div className="h-full bg-[#0a0a0c] p-4 flex flex-col gap-3" style={{ clipPath: CUT_INNER }}>
+              <div
+                key={lado}
+                className={`p-[1px] ${lado === 'blue' ? 'bg-[#00F0FF]/40' : 'bg-[#FF4655]/40'}`}
+                style={{ clipPath: CUT_FRAME }}
+              >
+                <div className="h-full bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col gap-3" style={{ clipPath: CUT_INNER }}>
                   <div className="flex items-center gap-3">
                     {sala[`time_${lado === 'blue' ? 'a' : 'b'}_logo`] ? (
-                      <img
-                        src={sala[`time_${lado === 'blue' ? 'a' : 'b'}_logo`]}
-                        alt=""
-                        className="w-14 h-14 object-contain"
-                      />
+                      <img src={sala[`time_${lado === 'blue' ? 'a' : 'b'}_logo`]} alt="" className="w-16 h-16 object-contain" />
                     ) : (
-                      <div className="w-14 h-14 bg-white/5 border border-white/10 flex items-center justify-center font-black text-white/40">
+                      <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center font-black text-white/40 text-lg">
                         {tagDoLado(lado)?.slice(0, 2)}
                       </div>
                     )}
                     <div className="leading-tight">
-                      <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: lado === 'blue' ? '#00F0FF' : '#FF4655' }}>
+                      <p
+                        className="text-[10px] font-black uppercase tracking-widest"
+                        style={{ color: lado === 'blue' ? '#00F0FF' : '#FF4655' }}
+                      >
                         {lado === 'blue' ? 'AZUL' : 'VERMELHO'} · TIME {lado === 'blue' ? 'A' : 'B'}
                       </p>
                       <p className="text-lg font-black uppercase text-white">{nomeDoLado(lado)}</p>
@@ -240,10 +432,19 @@ export default function SalaCampeonato() {
                   <div className="flex-1 flex flex-col justify-center gap-2 border-t border-white/10 pt-3">
                     {jogador ? (
                       <>
-                        <p className="text-sm font-bold text-white">
-                          {jogador.nome} <span className="text-white/40 text-xs">#{jogador.tag}</span>
-                          {valorVaga && <span className="ml-2 text-[10px] text-[#00FF41] font-black uppercase">você</span>}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          {jogador.avatar ? (
+                            <img src={jogador.avatar} alt="" className="w-8 h-8 rounded-full border border-white/20" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15" />
+                          )}
+                          <p className="text-sm font-bold text-white">
+                            {jogador.nome} <span className="text-white/40 text-xs">#{jogador.tag}</span>
+                            {valorVaga && (
+                              <span className="ml-2 text-[10px] text-[#00FF41] font-black uppercase">você</span>
+                            )}
+                          </p>
+                        </div>
                         {pronto && estado === 'camp_prontos' && (
                           <p className="text-[11px] font-black uppercase text-[#00FF41] flex items-center gap-1">
                             <Check className="w-3.5 h-3.5" /> Pronto
@@ -255,11 +456,11 @@ export default function SalaCampeonato() {
                     )}
 
                     <div className="flex flex-wrap gap-2">
-                      {estado === 'camp_vagas' && !jogador && meuLado === lado && (
+                      {estado === 'camp_vagas' && !jogador && (!serie || meuLado === lado) && (
                         <button
                           disabled={!!ocupado}
                           onClick={() => chamar('/sala-campeonato/entrar', { side: lado })}
-                          className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-black disabled:opacity-50"
+                          className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-black disabled:opacity-50 cursor-pointer"
                           style={{ background: lado === 'blue' ? '#00F0FF' : '#FF4655', clipPath: CUT_BUTTON }}
                         >
                           Entrar na vaga
@@ -269,7 +470,7 @@ export default function SalaCampeonato() {
                         <button
                           disabled={!!ocupado}
                           onClick={() => chamar('/sala-campeonato/sair')}
-                          className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white/80 border border-white/15 bg-white/5 disabled:opacity-50"
+                          className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white/80 border border-white/15 bg-white/5 disabled:opacity-50 cursor-pointer"
                           style={{ clipPath: CUT_BUTTON }}
                         >
                           Sair da vaga
@@ -279,7 +480,7 @@ export default function SalaCampeonato() {
                         <button
                           disabled={!!ocupado}
                           onClick={() => chamar('/sala-campeonato/pronto')}
-                          className="px-5 py-2 text-[11px] font-black uppercase tracking-wider text-black bg-[#00FF41] disabled:opacity-50"
+                          className="px-5 py-2 text-[11px] font-black uppercase tracking-wider text-black bg-[#00FF41] disabled:opacity-50 cursor-pointer"
                           style={{ clipPath: CUT_BUTTON }}
                         >
                           Pronto
@@ -299,7 +500,10 @@ export default function SalaCampeonato() {
 
           {/* Hub central */}
           <div className="p-[1px] bg-white/15 lg:order-none order-first" style={{ clipPath: CUT_FRAME }}>
-            <div className="h-full bg-[#0a0a0c] p-4 flex flex-col items-center justify-center gap-3 text-center" style={{ clipPath: CUT_INNER }}>
+            <div
+              className="h-full bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col items-center justify-center gap-3 text-center"
+              style={{ clipPath: CUT_INNER }}
+            >
               {estado === 'camp_vagas' && (
                 <>
                   <Swords className="w-7 h-7 text-white/40" />
@@ -314,8 +518,8 @@ export default function SalaCampeonato() {
                     Os dois times precisam marcar PRONTO
                   </p>
                   <p className="text-xs text-white/50">
-                    {camp?.pronto_blue ? `${sala.time_a_tag} pronto` : `${sala.time_a_tag} aguardando`} ·{' '}
-                    {camp?.pronto_red ? `${sala.time_b_tag} pronto` : `${sala.time_b_tag} aguardando`}
+                    {camp?.pronto_blue ? `${tagDoLado('blue')} pronto` : `${tagDoLado('blue')} aguardando`} ·{' '}
+                    {camp?.pronto_red ? `${tagDoLado('red')} pronto` : `${tagDoLado('red')} aguardando`}
                   </p>
                 </>
               )}
@@ -326,12 +530,12 @@ export default function SalaCampeonato() {
                       ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO`
                       : `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK`}
                   </p>
-                  {!camp?.lado_escolhido && escolhendo && escolhendo === meuLado && (
+                  {!camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && (
                     <div className="flex gap-2">
                       <button
                         disabled={!!ocupado}
                         onClick={() => chamar('/sala-campeonato/lado', { lado: 'blue' })}
-                        className="px-4 py-2 text-[11px] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50"
+                        className="px-4 py-2 text-[11px] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50 cursor-pointer"
                         style={{ clipPath: CUT_BUTTON }}
                       >
                         Escolher Azul
@@ -339,19 +543,19 @@ export default function SalaCampeonato() {
                       <button
                         disabled={!!ocupado}
                         onClick={() => chamar('/sala-campeonato/lado', { lado: 'red' })}
-                        className="px-4 py-2 text-[11px] font-black uppercase text-white bg-[#FF4655] disabled:opacity-50"
+                        className="px-4 py-2 text-[11px] font-black uppercase text-white bg-[#FF4655] disabled:opacity-50 cursor-pointer"
                         style={{ clipPath: CUT_BUTTON }}
                       >
                         Escolher Vermelho
                       </button>
                     </div>
                   )}
-                  {camp?.lado_escolhido && escolhendo && escolhendo === meuLado && !camp?.pick_order_escolhido && (
+                  {camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && !camp?.pick_order_escolhido && (
                     <div className="flex gap-2">
                       <button
                         disabled={!!ocupado}
                         onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'first' })}
-                        className="px-4 py-2 text-[11px] font-black uppercase text-black bg-[#FFB700] disabled:opacity-50"
+                        className="px-4 py-2 text-[11px] font-black uppercase text-black bg-[#FFB700] disabled:opacity-50 cursor-pointer"
                         style={{ clipPath: CUT_BUTTON }}
                       >
                         First Pick
@@ -359,7 +563,7 @@ export default function SalaCampeonato() {
                       <button
                         disabled={!!ocupado}
                         onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'last' })}
-                        className="px-4 py-2 text-[11px] font-black uppercase text-white border border-white/20 bg-white/10 disabled:opacity-50"
+                        className="px-4 py-2 text-[11px] font-black uppercase text-white border border-white/20 bg-white/10 disabled:opacity-50 cursor-pointer"
                         style={{ clipPath: CUT_BUTTON }}
                       >
                         Last Pick
@@ -377,18 +581,28 @@ export default function SalaCampeonato() {
                 <>
                   <p className="text-[11px] font-black uppercase tracking-widest text-white/60">Draft em andamento</p>
                   <p className="text-xs text-white/50">
-                        {camp?.primeiro_pick === 'blue' ? sala.time_a_tag : sala.time_b_tag} tem o first pick
+                    {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
                   </p>
                 </>
               )}
-              {(estado === 'camp_jogo' || estado === 'camp_finalizada') && (
+              {['camp_jogo', 'camp_finalizada', 'iniciando_partida', 'partida_iniciada', 'encerrada'].includes(estado) && (
                 <>
                   <p className="text-[11px] font-black uppercase tracking-widest text-[#00FF41]">
-                    {estado === 'camp_jogo' ? 'Série em andamento' : 'Série finalizada'}
+                    {estado === 'camp_jogo'
+                      ? 'Série em andamento'
+                      : estado === 'camp_finalizada'
+                        ? 'Série finalizada'
+                        : estado === 'iniciando_partida'
+                          ? 'Partida pronta — prepare o cliente do LoL!'
+                          : estado === 'partida_iniciada'
+                            ? 'Partida em andamento'
+                            : 'Partida encerrada'}
                   </p>
-                  <p className="text-3xl font-black text-white">
-                    {serie ? `${serie.placar_a} - ${serie.placar_b}` : ''}
-                  </p>
+                  {serie && (
+                    <p className="text-3xl font-black text-white">
+                      {serie.placar_a} - {serie.placar_b}
+                    </p>
+                  )}
                   {camp?.lado_time_a && (
                     <p className="text-xs text-white/50">
                       {sala.time_a_tag} de {camp.lado_time_a === 'blue' ? 'azul' : 'vermelho'} · {sala.time_b_tag} de{' '}
@@ -401,7 +615,7 @@ export default function SalaCampeonato() {
           </div>
         </div>
 
-        {/* Draft (tela cheia como na sala normal) */}
+        {/* Draft (mesma tela do draft das salas) */}
         {estado === 'camp_draft' && camp?.draft && (
           <div className="w-full">
             <DraftRoom
@@ -418,7 +632,7 @@ export default function SalaCampeonato() {
         {/* Código + live */}
         <div className="grid gap-3 md:grid-cols-2">
           <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_FRAME }}>
-            <div className="bg-[#0a0a0c] p-4 flex flex-col gap-2" style={{ clipPath: CUT_INNER }}>
+            <div className="bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col gap-2" style={{ clipPath: CUT_INNER }}>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Código da partida</p>
               {sala.codigo_partida ? (
                 <div className="flex items-center gap-2">
@@ -434,7 +648,7 @@ export default function SalaCampeonato() {
                         toast.error('Não foi possível copiar.');
                       }
                     }}
-                    className="p-2.5 text-black bg-[#00F0FF]"
+                    className="p-2.5 text-black bg-[#00F0FF] cursor-pointer"
                     style={{ clipPath: CUT_BUTTON }}
                     title="Copiar código"
                   >
@@ -450,7 +664,7 @@ export default function SalaCampeonato() {
           </div>
 
           <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_FRAME }}>
-            <div className="bg-[#0a0a0c] p-4 flex flex-col gap-2" style={{ clipPath: CUT_INNER }}>
+            <div className="bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col gap-2" style={{ clipPath: CUT_INNER }}>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Transmissão</p>
               {camp?.live ? (
                 <a
@@ -463,14 +677,14 @@ export default function SalaCampeonato() {
                   ASSISTA ESSE JOGO AO VIVO!
                   <span className="text-white/50 text-xs normal-case ml-1">@{camp.live.twitch}</span>
                 </a>
-              ) : perfil?.cargo === 'streamer' ? (
+              ) : perfil?.cargo === 'streamer' && !!serie ? (
                 <button
                   disabled={!!ocupado}
                   onClick={async () => {
                     const r = await chamar('/sala-campeonato/live');
                     if (r?.ok) toast.success('Live criada! Ela aparece no site em "Assista Agora".');
                   }}
-                  className="self-start px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white bg-[#9146FF] disabled:opacity-50"
+                  className="self-start px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white bg-[#9146FF] disabled:opacity-50 cursor-pointer"
                   style={{ clipPath: CUT_BUTTON }}
                 >
                   <span className="inline-flex items-center gap-2">

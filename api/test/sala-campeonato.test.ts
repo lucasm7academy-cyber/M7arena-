@@ -5,12 +5,13 @@ import { users, userRoles } from "../../db/schema/identidade.js";
 import { games } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { tournaments, tournamentMatches, tournamentSeriesGames } from "../../db/schema/tournaments.js";
-import { matches, matchPlayers, matchCodes, campeonatoSalaEstado } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes, campeonatoSalaEstado, matchDrafts } from "../../db/schema/matches.js";
 import { transmissoes } from "../../db/schema/conteudo.js";
 import { setupDb } from "./helpers.js";
 import {
   criarSalaCampeonato,
   criarSalasCampeonatoPendentes,
+  criarSalaTimeVsTime,
   entrarNaVaga,
   sairDaVaga,
   marcarPronto,
@@ -22,6 +23,11 @@ import {
   encerrarSalaCampeonato,
   shapeSalaCampeonato,
 } from "../src/lib/sala-campeonato.js";
+import {
+  garantirDraftSalaCampeonato,
+  avaliarDraftSalaCampeonato,
+  aplicarAcaoSalaCampeonato,
+} from "../src/lib/sala-campeonato-draft.js";
 
 const U = (n: number) => `aaaaaaad-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbbd-0000-0000-0000-00000000000${n}`;
@@ -515,5 +521,71 @@ describe("live do streamer na sala (passo 6)", () => {
     const shape = await shapeSalaCampeonato(ctx.db, r.sala);
     assert.equal(shape.live?.twitch, "canal_do_smoke");
     assert.equal(shape.live?.streamer, "Membro A");
+  });
+});
+
+describe("sala time vs time livre (ADR-086, sem campeonato)", () => {
+  let ctx: any;
+  beforeEach(async () => {
+    ctx = await setupDb();
+    ctx.seed = await seed(ctx.db);
+  });
+  afterEach(async () => {
+    await ctx.client.close();
+  });
+
+  test("qualquer usuário ocupa as vagas e o draft fecha com código do pool", async () => {
+    const r: any = await criarSalaTimeVsTime(ctx.db, { userId: U(1) });
+    assert.equal(r.ok, true);
+    assert.equal(r.sala.mode, "time_vs_time_livre");
+    assert.equal(r.sala.status, "camp_vagas");
+    const sala = r.sala;
+
+    // U(5) (fora de qualquer time do seed) entra no azul; U(1) no vermelho.
+    const la: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(5), side: "blue" });
+    const lb: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(1), side: "red" });
+    assert.equal(la.ok, true, "estranho entra no azul (sem validação de time)");
+    assert.equal(lb.ok, true);
+    assert.equal(lb.estado, "camp_prontos");
+
+    await marcarPronto(ctx.db, { salaNum: sala.salaNum, userId: U(5) });
+    const p2: any = await marcarPronto(ctx.db, { salaNum: sala.salaNum, userId: U(1) });
+    assert.equal(p2.estado, "camp_lado");
+
+    const [estado] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, sala.id));
+    const usuarioDoLado = (l: string) => (l === "blue" ? U(5) : U(1));
+    const sorteado = estado.escolhaTime as string;
+    const outro = sorteado === "blue" ? "red" : "blue";
+    assert.equal((await escolherLado(ctx.db, { salaNum: sala.salaNum, userId: usuarioDoLado(sorteado), lado: "red" })).ok, true);
+    const po: any = await escolherPickOrder(ctx.db, { salaNum: sala.salaNum, userId: usuarioDoLado(outro), ordem: "first" });
+    assert.equal(po.ok, true);
+    assert.equal(po.estado, "camp_draft");
+
+    for (let i = 0; i < 20; i++) {
+      const rows = await ctx.db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+      const d = rows.find((x: any) => x.jogo === 1);
+      if (!d || d.status !== "ongoing") break;
+      const r2 = await ctx.db.transaction(async (tx: any) => {
+        const [m] = await tx.select().from(matches).where(eq(matches.id, sala.id)).limit(1).for("update");
+        const [est] = await tx
+          .select()
+          .from(campeonatoSalaEstado)
+          .where(eq(campeonatoSalaEstado.matchId, sala.id))
+          .limit(1);
+        await garantirDraftSalaCampeonato(tx, m, est);
+        await avaliarDraftSalaCampeonato(tx, m);
+        return aplicarAcaoSalaCampeonato(tx, m, usuarioDoLado(d.currentTeam), d.currentPhase as any, `Lv${i}`);
+      });
+      assert.equal(r2.ok, true, `turno ${i}: ${r2.erro ?? ""}`);
+    }
+
+    const [salaDb] = await ctx.db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(salaDb.status, "iniciando_partida", "sala livre segue o ciclo normal da sala");
+    assert.ok(salaDb.codigoPartida && salaDb.codigoPartida !== "SEM-CODIGO-AGUARDE", "código do pool atribuído");
+    const rowsFim = await ctx.db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(rowsFim.find((x: any) => x.jogo === 1).status, "finished");
   });
 });
