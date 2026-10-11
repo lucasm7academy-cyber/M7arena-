@@ -3,12 +3,11 @@ import { eq, and, gt, asc, desc, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
 import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
-import { teams } from "../../../db/schema/teams.js";
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario, removerInscricao } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
-import { findUserTeamMemberships } from "../lib/team-membership.js";
+import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie } from "../lib/tournament-access.js";
 import { recalcularPdlGlobal } from "../lib/tournament-pdl.js";
 
 export const tournamentsRouter = Router();
@@ -26,6 +25,39 @@ async function getAuthUser(req: any) {
   if (!session) return null;
   const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
   return user || null;
+}
+
+/**
+ * Shape do campeonato com o código da série redigido para quem não joga nem
+ * administra (sec.codigo-campeonato). Usado em TODA resposta que devolve a
+ * linha legada — inclusive as de escrita — para o código nunca sair da API
+ * para espectador ou estranho (espelha a ADR-043 das salas).
+ */
+async function shapeComAcesso(req: any, id: string) {
+  const legacy = await toLegacyTournament(id);
+  if (!legacy) return null;
+  const user = await getAuthUser(req);
+  const ident = user ? await identidadeAcessoCampeonato(db, user.id) : null;
+  const acesso = acessoNoCampeonato(ident, { userId: user?.id, organizerId: (legacy as any).criado_por });
+  return redigirCodigosDaSerie(legacy, acesso);
+}
+
+/** Acha a série (cronograma ou chave) pelo matchId, escopada ao campeonato. */
+async function encontrarSerie(tournamentId: string, matchId: string) {
+  const [m] = await db
+    .select()
+    .from(tournamentMatches)
+    .where(and(eq(tournamentMatches.id, matchId), eq(tournamentMatches.tournamentId, tournamentId)))
+    .limit(1);
+  if (m) return { serie: m as any, isBracket: false };
+
+  const [b] = await db
+    .select()
+    .from(bracketMatches)
+    .where(and(eq(bracketMatches.id, matchId), eq(bracketMatches.tournamentId, tournamentId)))
+    .limit(1);
+  if (b) return { serie: b as any, isBracket: true };
+  return null;
 }
 
 /** Gera slug único a partir do título — padrão legado, com sufixo anti-colisão. */async function generateSlug(titulo: string) {
@@ -127,9 +159,14 @@ tournamentsRouter.get("/", async (req, res) => {
     if (!rows.length) return res.json([]);
 
     const counts = await toLegacyTournamentList(rows.map((r) => r.id));
+    const user = await getAuthUser(req);
+    const ident = user ? await identidadeAcessoCampeonato(db, user.id) : null;
     const items: any[] = [];
     for (const r of rows) {
-      items.push(await toLegacyTournament(r.id, counts[r.id] ?? 0));
+      const legacy = await toLegacyTournament(r.id, counts[r.id] ?? 0);
+      if (!legacy) continue;
+      const acesso = acessoNoCampeonato(ident, { userId: user?.id, organizerId: r.organizerId });
+      items.push(redigirCodigosDaSerie(legacy, acesso));
     }
     return res.json(items);
   } catch (error: any) {
@@ -141,7 +178,7 @@ tournamentsRouter.get("/", async (req, res) => {
 tournamentsRouter.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const legacy = await toLegacyTournament(id);
+    const legacy = await shapeComAcesso(req, id);
     if (!legacy) {
       return res.status(404).json({ error: "Campeonato não encontrado" });
     }
@@ -182,7 +219,7 @@ tournamentsRouter.post("/", async (req, res) => {
     // Persiste os blocos legados nas tabelas
     await storeLegacyWrites(created.id, body);
 
-    return res.status(201).json(await toLegacyTournament(created.id));
+    return res.status(201).json(await shapeComAcesso(req, created.id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao criar campeonato" });
   }
@@ -210,7 +247,7 @@ tournamentsRouter.put("/:id", async (req, res) => {
 
     await storeLegacyWrites(id, body);
 
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao atualizar campeonato" });
   }
@@ -259,7 +296,7 @@ tournamentsRouter.post("/:id/inscricoes", async (req, res) => {
 
     const teamEntry = req.body || {};
     await storeTimesInscritos(id, [teamEntry]);
-    return res.status(201).json(await toLegacyTournament(id));
+    return res.status(201).json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao inscrever time" });
   }
@@ -280,7 +317,7 @@ tournamentsRouter.post("/:id/inscricoes/:teamId/aprovar", async (req, res) => {
       .set({ status: aprovar ? "approved" : "rejected" })
       .where(and(eq(tournamentTeams.tournamentId, id), eq(tournamentTeams.teamId, teamId)));
 
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao aprovar time" });
   }
@@ -306,7 +343,7 @@ tournamentsRouter.delete("/:id/inscricoes/:teamId", async (req, res) => {
     }
 
     await removerInscricao(id, teamId);
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao remover inscrição" });
   }
@@ -323,7 +360,7 @@ tournamentsRouter.post("/:id/reabrir", async (req, res) => {
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
     await db.update(tournaments).set({ status: "open", updatedAt: new Date() }).where(eq(tournaments.id, id));
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao reabrir campeonato" });
   }
@@ -341,7 +378,7 @@ tournamentsRouter.put("/:id/cronograma", async (req, res) => {
 
     await storeCronograma(id, req.body?.cronograma || [], false);
     await applyAutoTiebreakers(id, req.body?.cronograma || []);
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao atualizar cronograma" });
   }
@@ -367,7 +404,7 @@ tournamentsRouter.put("/:id/cronograma/merge", async (req, res) => {
 
     await storeCronograma(id, jogos, true);
     await applyAutoTiebreakers(id, jogos);
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao mesclar cronograma" });
   }
@@ -408,85 +445,18 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
-    // Encontra o jogo tanto em tournament_matches quanto em bracket_matches
-    let isBracket = false;
-    let [serie] = await db
-      .select()
-      .from(tournamentMatches)
-      .where(and(eq(tournamentMatches.id, matchId), eq(tournamentMatches.tournamentId, id)))
-      .limit(1);
+    const encontrada = await encontrarSerie(id, matchId);
+    if (!encontrada) return res.status(404).json({ error: "Jogo não encontrado" });
+    const { serie, isBracket } = encontrada;
 
-    if (!serie) {
-      const [bSerie] = await db
-        .select()
-        .from(bracketMatches)
-        .where(and(eq(bracketMatches.id, matchId), eq(bracketMatches.tournamentId, id)))
-        .limit(1);
-      if (bSerie) {
-        serie = bSerie as any;
-        isBracket = true;
-      }
-    }
-
-    if (!serie) return res.status(404).json({ error: "Jogo não encontrado" });
-
-    // Permissão: Staff (admin, proprietário, moderador ou criador do campeonato)
-    const userRoleRows = await db
-      .select({ role: userRoles.role })
-      .from(userRoles)
-      .where(eq(userRoles.userId, user.id));
-    const roles = userRoleRows.map((r) => r.role);
-    const isStaff =
-      t.organizerId === user.id ||
-      roles.some((r) => ["admin", "proprietario", "moderador", "organizer"].includes(r));
-
-    let isParticipant = false;
-
-    // Resolve IDs dos times da partida (se não estiverem preenchidos, tenta pelas tags)
-    let teamAId = serie.teamAId;
-    let teamBId = serie.teamBId;
-
-    if (!teamAId || !teamBId) {
-      const teamRows = await db
-        .select({ id: teams.id, tag: teams.tag })
-        .from(teams)
-        .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
-        .where(eq(tournamentTeams.tournamentId, id));
-
-      if (!teamAId && serie.teamATag) {
-        teamAId =
-          teamRows.find((r) => r.tag.toLowerCase() === serie.teamATag?.toLowerCase())?.id ?? null;
-      }
-      if (!teamBId && serie.teamBTag) {
-        teamBId =
-          teamRows.find((r) => r.tag.toLowerCase() === serie.teamBTag?.toLowerCase())?.id ?? null;
-      }
-    }
-
-    const relevantTeamIds = [teamAId, teamBId].filter(Boolean) as string[];
-    if (relevantTeamIds.length > 0) {
-      // É dono/capitão de um dos times?
-      const [owned] = await db
-        .select({ id: teams.id })
-        .from(teams)
-        .where(and(inArray(teams.id, relevantTeamIds), eq(teams.ownerId, user.id)))
-        .limit(1);
-
-      if (owned) {
-        isParticipant = true;
-      } else {
-        // É membro aceito do time? Vale também para vaga de convidado
-        // reconhecida pelo vínculo Riot da conta (ADR-056).
-        const memberships = await findUserTeamMemberships(db, user.id, {
-          teamIds: relevantTeamIds,
-          onlyAccepted: true,
-        });
-
-        if (memberships.length > 0) {
-          isParticipant = true;
-        }
-      }
-    }
+    // Permissão: staff do campeonato OU time da série (dono/membro aceito,
+    // incluindo convidado reconhecido pelo vínculo Riot — ADR-056).
+    const { isStaff, isParticipant } = await resolverPermissaoSerie(db, {
+      userId: user.id,
+      organizerId: t.organizerId,
+      tournamentId: id,
+      serie,
+    });
 
     if (!isStaff && !isParticipant) {
       return res.status(403).json({
@@ -537,7 +507,7 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
       }
     }
 
-    return res.json(await toLegacyTournament(id));
+    return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao gerar código" });
   }
@@ -556,8 +526,24 @@ tournamentsRouter.post("/:id/jogo/:matchId/verificar", async (req, res) => {
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
+    // Acelerar a verificação é tão sensível quanto iniciar a série: exige staff
+    // do campeonato ou time da série (antes, qualquer usuário logado disparava).
+    const encontrada = await encontrarSerie(id, matchId);
+    if (!encontrada) return res.status(404).json({ error: "Jogo não encontrado" });
+    const { isStaff, isParticipant } = await resolverPermissaoSerie(db, {
+      userId: user.id,
+      organizerId: t.organizerId,
+      tournamentId: id,
+      serie: encontrada.serie,
+    });
+    if (!isStaff && !isParticipant) {
+      return res.status(403).json({
+        error: "Sem permissão. Apenas capitães/jogadores da partida ou organizadores podem verificar a série.",
+      });
+    }
+
     const r = await verificarSerieCampeonato(db, { matchId });
-    return res.json({ ...r, tournament: await toLegacyTournament(id) });
+    return res.json({ ...r, tournament: await shapeComAcesso(req, id) });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao verificar série" });
   }
