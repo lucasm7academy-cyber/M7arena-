@@ -449,6 +449,25 @@ describe("escolha de lado (passo 4)", () => {
     assert.equal(pickDaVez.estado, "camp_lado", "a vez passa para o outro escolher o lado");
   });
 
+  test("sorteio_forcado: no jogo 1, o time marcado sai como sorteado (ex.: M7W)", async () => {
+    const { torneio, serie } = ctx.seed;
+    await ctx.db
+      .update(tournamentMatches)
+      .set({ sorteioForcado: "b" })
+      .where(eq(tournamentMatches.id, serie.id));
+    const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
+    const salaNum = r.sala.salaNum;
+    await preencherVagas(ctx, salaNum);
+    await marcarPronto(ctx.db, { salaNum, userId: U(2) });
+    await marcarPronto(ctx.db, { salaNum, userId: U(4) });
+    const [estado] = await ctx.db
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, r.sala.id));
+    assert.equal(estado.sorteioVencedor, "red", "forçado 'b' = vaga vermelha (time B)");
+    assert.equal(estado.escolhaTime, "red", "o time B (forçado) escolhe primeiro");
+  });
+
   test("jogo 2+: o perdedor do jogo anterior é quem escolhe o lado", async () => {
     const { torneio, serie } = ctx.seed;
     const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });

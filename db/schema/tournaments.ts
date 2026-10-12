@@ -140,6 +140,11 @@ export const tournamentMatches = pgTable(
     serieIniciadaAt: timestamp("serie_iniciada_at", { mode: "date" }),
     irregular: boolean("irregular").default(false).notNull(),
     resultadoRiot: jsonb("resultado_riot").$type<Record<string, unknown>>() ,
+    // Sorteio de lado FORÇADO do jogo 1 (operação pontual, ex.: LDL x M7 WHITE
+    // 12/10): 'a' | 'b' marca o time da série que DEVE sair como sorteado
+    // (escolhe primeiro — lado ou pick). NULL = sorteio aleatório normal.
+    // Só afeta o jogo 1; do jogo 2 em diante o perdedor escolhe como sempre.
+    sorteioForcado: varchar("sorteio_forcado", { length: 1 }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   },

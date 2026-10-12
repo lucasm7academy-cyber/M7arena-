@@ -405,8 +405,13 @@ export async function marcarPronto(
     if (prontoBlue && prontoRed) {
       let escolhaTime: string;
       if ((estado.jogo ?? 1) <= 1) {
-        // Jogo 1: a plataforma sorteia quem escolhe primeiro (ADR-079).
-        const sorteio = Math.random() < 0.5 ? "blue" : "red";
+        // Jogo 1: a plataforma sorteia quem escolhe primeiro (ADR-079) — exceto
+        // quando a série tem `sorteio_forcado` ('a'|'b': o time da série que
+        // DEVE ser o sorteado; operação pontual combinada com os times).
+        const serie = await carregarSerieDaSala(tx, sala);
+        const forcado = serie?.sorteioForcado;
+        const sorteio: "blue" | "red" =
+          forcado === "a" ? "blue" : forcado === "b" ? "red" : Math.random() < 0.5 ? "blue" : "red";
         set.sorteioVencedor = sorteio;
         escolhaTime = sorteio;
       } else {

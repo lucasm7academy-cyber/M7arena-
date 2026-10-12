@@ -190,6 +190,20 @@
       "when": 1791758927733,
       "tag": "0026_amused_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791824165702,
+      "tag": "0027_quick_mesmero",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791827100000,
+      "tag": "0028_sorteio_forcado",
+      "breakpoints": true
     }
   ]
 }
