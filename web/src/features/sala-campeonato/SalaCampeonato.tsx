@@ -160,6 +160,21 @@ export default function SalaCampeonato() {
     carregar();
   }, [carregar]);
 
+  // Agenda o fim da animação de "Troca de Lados" (uma vez por jogo). Hook no
+  // TOPO de propósito: precisa rodar em toda renderização (regra dos hooks).
+  useEffect(() => {
+    const estadoAtual: string = sala?.estado ?? '';
+    const campAtual = sala?.campeonato;
+    const key = sala ? `${sala.id}-${campAtual?.jogo ?? 1}` : null;
+    if (!key || estadoAtual !== 'camp_draft' || campAtual?.lado_time_a !== 'red') return;
+    if (animacaoFeita.current === key) return;
+    const t = setTimeout(() => {
+      animacaoFeita.current = key;
+      setTick((x) => x + 1);
+    }, 2600);
+    return () => clearTimeout(t);
+  }, [sala]);
+
   // Times do usuário (para saber o lado dele na série de campeonato).
   useEffect(() => {
     const uid = perfil?.id;
@@ -333,14 +348,6 @@ export default function SalaCampeonato() {
   const animKey = `${sala.id}-${camp?.jogo ?? 1}`;
   const deveAnimarTroca =
     estado === 'camp_draft' && camp?.lado_time_a === 'red' && animacaoFeita.current !== animKey;
-  useEffect(() => {
-    if (!deveAnimarTroca) return;
-    const t = setTimeout(() => {
-      animacaoFeita.current = animKey;
-      setTick((x) => x + 1);
-    }, 2600);
-    return () => clearTimeout(t);
-  }, [deveAnimarTroca, animKey]);
 
   if (deveAnimarTroca) {
     return (
