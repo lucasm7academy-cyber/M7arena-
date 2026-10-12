@@ -452,7 +452,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
       {/* CENTER - CHAMPION GRID */}
       <div className="absolute top-[12vmin] left-1/2 -translate-x-1/2 w-full max-w-[85vmin] flex flex-col gap-[1vmin] z-40">
-        <div className="flex items-center justify-end gap-[1vmin] mb-[0.5vmin]">
+        <div className="flex items-center justify-between gap-[1vmin] mb-[0.5vmin]">
           {/* Filtro de rota (igual ao client do LoL) — ícones do ROLE_CONFIG
               (/perfil). Clicar filtra; clicar de novo limpa o filtro. */}
           <div className="flex items-center gap-[0.5vmin]">
