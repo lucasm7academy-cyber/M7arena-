@@ -44,6 +44,10 @@ interface DraftRoomProps {
    * mostra o time A no lado vermelho e o B no azul (painéis, bans e picks).
    */
   ladoDoTimeA?: 'blue' | 'red' | null;
+  /** Visão de transmissão (telespectador): times grandes + placar da série. */
+  timeA?: { nome?: string | null; logo?: string | null } | null;
+  timeB?: { nome?: string | null; logo?: string | null } | null;
+  placar?: { a: number; b: number } | null;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -200,6 +204,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, previe
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
+  timeA, timeB, placar,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -409,9 +414,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           <div className="absolute left-1/2 top-0 h-full w-[1px] bg-white/40 -translate-x-1/2" />
         </div>
 
-        <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
-          {segundos}
-        </div>
+        {/* Números do timer: só para quem JOGA — o telespectador fica apenas
+            com a barra (o número não diz nada pra quem não vai agir). */}
+        {possoJogar && (
+          <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
+            {segundos}
+          </div>
+        )}
       </div>
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
@@ -529,6 +538,41 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       </div>
       )}
 
+      {/* CENTRO — VISÃO DE TRANSMISSÃO (telespectador): Time A X Time B grande
+          + placar da série embaixo (o grid de escolha não existe aqui). */}
+      {!possoJogar && (timeA || timeB || placar) && (
+        <div className="absolute top-[14vmin] left-1/2 -translate-x-1/2 w-full max-w-[110vmin] flex flex-col items-center gap-[2.5vmin] z-40 pointer-events-none">
+          <div className="flex items-center justify-center gap-[6vmin] w-full">
+            <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">
+              {timeA?.logo ? (
+                <img src={timeA.logo} alt="" className="w-[18vmin] h-[18vmin] object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]" />
+              ) : (
+                <div className="w-[18vmin] h-[18vmin] bg-white/5 border border-white/10" />
+              )}
+              <span className="text-[2.2vmin] font-black uppercase tracking-[0.25em] text-white/90 truncate max-w-full px-[1vmin]">
+                {timeA?.nome ?? ''}
+              </span>
+            </div>
+            <span className="text-[7vmin] font-black text-white/60 leading-none drop-shadow-lg">X</span>
+            <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">
+              {timeB?.logo ? (
+                <img src={timeB.logo} alt="" className="w-[18vmin] h-[18vmin] object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]" />
+              ) : (
+                <div className="w-[18vmin] h-[18vmin] bg-white/5 border border-white/10" />
+              )}
+              <span className="text-[2.2vmin] font-black uppercase tracking-[0.25em] text-white/90 truncate max-w-full px-[1vmin]">
+                {timeB?.nome ?? ''}
+              </span>
+            </div>
+          </div>
+          {placar && (
+            <div className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.3)]">
+              {placar.a} <span className="text-white/40">-</span> {placar.b}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* FOOTER PICKS & ACTION BUTTON */}
       <div className="absolute bottom-[2vmin] left-0 right-0 flex items-end justify-between px-[4vmin] z-50">
         {colunaPicks(equipeEsquerda, false)}
@@ -559,6 +603,29 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             </span>
           </button>
         </div>
+        )}
+
+        {/* PATROCINADORES (telespectador): no lugar do botão de confirmar —
+            linha fina, selo "PATROCINADORES" e os logos centralizados. */}
+        {!possoJogar && (
+          <div className="mb-[1vmin] flex flex-col items-center gap-[0.8vmin] pointer-events-none">
+            <div className="w-[42vmin] h-[1px] bg-gradient-to-r from-transparent via-[#c89b3c]/70 to-transparent" />
+            <span className="text-[1.1vmin] font-bold uppercase tracking-[0.5em] text-white/45">Patrocinadores</span>
+            <div className="flex items-center justify-center gap-[7vmin] mt-[0.6vmin]">
+              <img
+                src="/images/patrocinadores/m7-arena.png"
+                alt="M7 Arena"
+                className="h-[6vmin] object-contain opacity-95"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+              <img
+                src="/images/patrocinadores/mobyle-store.png"
+                alt="Mobyle Store"
+                className="h-[6vmin] object-contain opacity-95"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+          </div>
         )}
 
         {colunaPicks(equipeDireita, true)}
