@@ -119,13 +119,18 @@ function PickSlot({ champion, active, hidden, champions, version }: {
 
 // ── Painel do time (círculo central de cada lado) ───────────────────────────
 
-function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, preview }: {
-  lado: 'blue' | 'red'; emTurno: boolean; fase: 'ban' | 'pick';
+function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNome, preview, logoTime }: {
+  lado: 'blue' | 'red'; ladoJogo: 'blue' | 'red'; emTurno: boolean; fase: 'ban' | 'pick';
   selected: Champion | null; meuTime: 'blue' | 'red' | null; jogadorNome: string;
   /** Prévia recebida de outro jogador deste lado (escolha ainda não confirmada). */
   preview?: Champion | null;
+  /** Logo do time do lado — vira fundo da bola quando ela está vazia. */
+  logoTime?: string | null;
 }) {
-  const corTurno = fase === 'ban' ? 'border-red-500' : 'border-[#FFD700]';
+  // A cor da VEZ é a cor do LADO (azul/vermelho) — nunca mais por fase.
+  const corLado = ladoJogo === 'blue' ? '#3B82F6' : '#ef4444';
+  const corLadoClaro = ladoJogo === 'blue' ? '#60A5FA' : '#f87171';
+  const corLadoRgb = ladoJogo === 'blue' ? '59,130,246' : '239,68,68';
   const estaSelecionando = selected && emTurno && meuTime === lado;
   // O que aparece DENTRO da bola: minha própria seleção (normal) ou a prévia
   // recebida de outro jogador da sala (mostra em que campeão ele está pensando).
@@ -142,20 +147,31 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, previe
       <div className="relative">
         <motion.div
           initial={false}
-          animate={emTurno ? (
-            fase === 'ban' ? {
-              boxShadow: ['0 0 20px rgba(239,68,68,0.3)', '0 0 30px rgba(239,68,68,0.9)', '0 0 15px rgba(239,68,68,0.3)'],
-              borderColor: ['#ef4444', '#f87171', '#ef4444'],
-            } : {
-              boxShadow: ['0 0 10px rgba(255,215,0,0.5)', '0 0 10px rgba(255,215,0,0.95)', '0 0 10px rgba(255,215,0,0.5)'],
-              borderColor: ['#FFD700', '#FFC300', '#FFD700'],
-            }
-          ) : { boxShadow: '0 0 0px rgba(0,0,0,0)', borderColor: 'rgba(255,255,255,0.1)' }}
+          animate={emTurno ? {
+            boxShadow: [
+              `0 0 15px rgba(${corLadoRgb},0.3)`,
+              `0 0 32px rgba(${corLadoRgb},0.9)`,
+              `0 0 15px rgba(${corLadoRgb},0.3)`,
+            ],
+            borderColor: [corLado, corLadoClaro, corLado],
+          } : { boxShadow: '0 0 0px rgba(0,0,0,0)', borderColor: 'rgba(255,255,255,0.1)' }}
           transition={emTurno ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
-          className={`w-[18vmin] h-[18vmin] rounded-full border-[0.6vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? corTurno : 'border-white/10'}`}
+          className={`relative w-[18vmin] h-[18vmin] rounded-full border-[0.6vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? '' : 'border-white/10'}`}
+          style={emTurno ? { borderColor: corLado } : undefined}
         >
+          {/* Fundo com a LOGO DO TIME quando a bola está VAZIA (sem campeão e
+              sem prévia) — vale no "Aguardando" e no "Banir/Escolher". */}
+          {!champNaBola && logoTime ? (
+            <img
+              src={logoTime}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+              referrerPolicy="no-referrer"
+            />
+          ) : null}
+
           {!emTurno && !champNaBola && (
-            <div className="w-full h-full relative flex items-center justify-center bg-black/60">
+            <div className="w-full h-full relative flex items-center justify-center bg-black/40">
               <div className="relative flex flex-col items-center justify-center gap-[1vmin] z-10">
                 <div className="flex gap-[0.8vmin]">
                   <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className="w-[1.2vmin] h-[1.2vmin] bg-white/60 rounded-full" />
@@ -177,13 +193,25 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, previe
           ) : null}
 
           {emTurno && !champNaBola && (
-            <div className={`w-full h-full flex flex-col items-center justify-center gap-[1vmin] relative z-10 ${fase === 'ban' ? 'bg-red-600/10' : 'bg-[#FFD700]/10'}`}>
+            <div
+              className="w-full h-full flex flex-col items-center justify-center gap-[1vmin] relative z-10"
+              style={{ backgroundColor: `rgba(${corLadoRgb},0.12)` }}
+            >
               <div className="flex gap-[0.8vmin]">
-                <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className={`w-[1.2vmin] h-[1.2vmin] rounded-full ${fase === 'ban' ? 'bg-red-500' : 'bg-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.8)]'}`} />
-                <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} className={`w-[1.2vmin] h-[1.2vmin] rounded-full ${fase === 'ban' ? 'bg-red-500' : 'bg-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.8)]'}`} />
-                <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} className={`w-[1.2vmin] h-[1.2vmin] rounded-full ${fase === 'ban' ? 'bg-red-500' : 'bg-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.8)]'}`} />
+                {[0, 0.2, 0.4].map((d) => (
+                  <motion.div
+                    key={d}
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: d }}
+                    className="w-[1.2vmin] h-[1.2vmin] rounded-full"
+                    style={{ backgroundColor: corLado, boxShadow: `0 0 10px rgba(${corLadoRgb},0.8)` }}
+                  />
+                ))}
               </div>
-              <p className={`text-[1.8vmin] font-bold uppercase tracking-widest text-center px-2 drop-shadow-md ${fase === 'ban' ? 'text-red-500' : 'text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]'}`}>
+              <p
+                className="text-[1.8vmin] font-bold uppercase tracking-widest text-center px-2 drop-shadow-md"
+                style={{ color: corLado }}
+              >
                 {fase === 'ban' ? 'Banir' : 'Escolher'}
               </p>
             </div>
@@ -259,12 +287,17 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // equipe no lado que ELA ESCOLHEU — painéis, bans e picks seguem esse lado.
   const ladoEquipeA: 'blue' | 'red' = ladoDoTimeA === 'red' ? 'red' : 'blue';
   const ladoEquipeB: 'blue' | 'red' = ladoEquipeA === 'blue' ? 'red' : 'blue';
-  const labelEquipeA = nomeA.startsWith('BLUE-SIDE') || nomeA.startsWith('RED-SIDE')
+  // Em cima da bola: NOME DO TIME daquele lado (sala de campeonato/livre usa
+  // os nomes dos times; salas normais caem no rótulo antigo — jogador/role ou
+  // BLUE-SIDE/RED-SIDE).
+  const nomeTimeA = (timeA?.nome ?? '').trim();
+  const nomeTimeB = (timeB?.nome ?? '').trim();
+  const labelEquipeA = nomeTimeA || (nomeA.startsWith('BLUE-SIDE') || nomeA.startsWith('RED-SIDE')
     ? (ladoEquipeA === 'blue' ? 'BLUE-SIDE' : 'RED-SIDE')
-    : nomeA;
-  const labelEquipeB = nomeB.startsWith('BLUE-SIDE') || nomeB.startsWith('RED-SIDE')
+    : nomeA);
+  const labelEquipeB = nomeTimeB || (nomeB.startsWith('BLUE-SIDE') || nomeB.startsWith('RED-SIDE')
     ? (ladoEquipeB === 'blue' ? 'BLUE-SIDE' : 'RED-SIDE')
-    : nomeB;
+    : nomeB);
   // Coluna da esquerda = equipe que joga de AZUL; da direita = de VERMELHO.
   const equipeEsquerda: 'A' | 'B' = ladoEquipeA === 'blue' ? 'A' : 'B';
   const equipeDireita: 'A' | 'B' = equipeEsquerda === 'A' ? 'B' : 'A';
@@ -451,10 +484,12 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           const dataSide = ehA ? 'blue' : 'red';
           return (
             <TeamPanel key={equipe} lado={dataSide}
+              ladoJogo={ehA ? ladoEquipeA : ladoEquipeB}
               emTurno={emTurno && draft.current_team === dataSide} fase={fase}
               selected={selectedChamp} meuTime={meuTime}
               jogadorNome={ehA ? labelEquipeA : labelEquipeB}
-              preview={ehA ? previewBlue : previewRed} />
+              preview={ehA ? previewBlue : previewRed}
+              logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)} />
           );
         })}
       </div>
