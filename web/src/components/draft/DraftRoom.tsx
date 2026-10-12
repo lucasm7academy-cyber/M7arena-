@@ -450,7 +450,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         })}
       </div>
 
-      {/* CENTER - CHAMPION GRID */}
+      {/* CENTER - CHAMPION GRID — SÓ para quem está na sala como JOGADOR. O
+          telespectador não escolhe nada: fica sem grid, sem busca e sem o
+          botão de confirmar (fase + timer + picks/bans continuam visíveis).
+          O espaço liberado é o lugar natural da visão de transmissão. */}
+      {possoJogar && (
       <div className="absolute top-[12vmin] left-1/2 -translate-x-1/2 w-full max-w-[85vmin] flex flex-col gap-[1vmin] z-40">
         <div className="flex items-center justify-between gap-[1vmin] mb-[0.5vmin]">
           {/* Filtro de rota (igual ao client do LoL) — ícones do ROLE_CONFIG
@@ -523,11 +527,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           })}
         </div>
       </div>
+      )}
 
       {/* FOOTER PICKS & ACTION BUTTON */}
       <div className="absolute bottom-[2vmin] left-0 right-0 flex items-end justify-between px-[4vmin] z-50">
         {colunaPicks(equipeEsquerda, false)}
 
+        {possoJogar && (
         <div className="mb-[2vmin] relative">
           <button
             disabled={!selectedChamp || !isMeuTurno || enviando}
@@ -553,6 +559,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             </span>
           </button>
         </div>
+        )}
 
         {colunaPicks(equipeDireita, true)}
       </div>
