@@ -442,7 +442,7 @@ export async function marcarPronto(
 }
 
 /**
- * Escolha de LADO (ADR-091, ajusta a ADR-079): o time da vez (`escolha_time`)
+ * Escolha de LADO (ADR-092, ajusta a ADR-079): o time da vez (`escolha_time`)
  * pode escolher o LADO agora — ou o pick order primeiro (ver escolherPickOrder);
  * o adversário completa o que sobrar. `lado_escolhido` é o lado que o time
  * ESCOLHEDOR joga; o adversário fica com o outro. Se o pick order JÁ tiver sido
@@ -500,7 +500,7 @@ export async function escolherLado(
 }
 
 /**
- * Escolha do FIRST/LAST PICK (ADR-091, ajusta a ADR-079): o time da vez pode
+ * Escolha do FIRST/LAST PICK (ADR-092, ajusta a ADR-079): o time da vez pode
  * escolher o pick order AGORA — ou o lado primeiro (ver escolherLado); o
  * adversário completa o que sobrar. Se o lado JÁ estiver escolhido, esta escolha
  * FECHA o par e a sala vai para `camp_draft`. `escolha_time` fica com quem fez
@@ -623,7 +623,7 @@ export async function iniciarLiveDaSala(
 }
 
 /**
- * Lado em jogo do TIME A depois das escolhas (ADR-091). `escolha_time` fica com
+ * Lado em jogo do TIME A depois das escolhas (ADR-092). `escolha_time` fica com
  * quem fez a ÚLTIMA escolha; quem escolheu o LADO depende da ORDEM:
  *  - primeiraEscolha = 'lado' (ou null, fluxo antigo): o lado veio primeiro →
  *    quem escolheu o lado é o OUTRO de escolha_time;

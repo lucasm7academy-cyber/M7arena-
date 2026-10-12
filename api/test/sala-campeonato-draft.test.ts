@@ -267,7 +267,7 @@ describe("draft da sala campeonato (passo 5)", () => {
     assert.equal(novo.ok, true, "campeão inédito passa");
   });
 
-  test("ADR-091: escolhedor pode começar pelo PICK; adversário escolhe o lado e a ordem segue correta", async () => {
+  test("ADR-092: escolhedor pode começar pelo PICK; adversário escolhe o lado e a ordem segue correta", async () => {
     const { torneio, serie } = ctx.seed;
     const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
     const sala = r.sala;

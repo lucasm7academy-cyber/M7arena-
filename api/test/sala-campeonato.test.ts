@@ -420,7 +420,7 @@ describe("escolha de lado (passo 4)", () => {
     assert.equal(salaDb.status, "camp_draft");
   });
 
-  test("fora de camp_lado não aceita escolha; pick order pode vir primeiro (ADR-091)", async () => {
+  test("fora de camp_lado não aceita escolha; pick order pode vir primeiro (ADR-092)", async () => {
     const { torneio, serie } = ctx.seed;
     const r: any = await criarSalaCampeonato(ctx.db, { torneio, serie, isBracket: false });
     const salaNum = r.sala.salaNum;
@@ -438,11 +438,11 @@ describe("escolha de lado (passo 4)", () => {
     const outro = estado.escolhaTime === "blue" ? "red" : "blue";
     const usuarioDoLado = (lado: string) => (lado === "blue" ? U(2) : U(4));
 
-    // ADR-091: quem NÃO é da vez não escolhe nada (nem pick order).
+    // ADR-092: quem NÃO é da vez não escolhe nada (nem pick order).
     const pickForaDaVez: any = await escolherPickOrder(ctx.db, { salaNum, userId: usuarioDoLado(outro), ordem: "last" });
     assert.equal(pickForaDaVez.erro, "fora_da_vez", "pick order só pela vez atual");
 
-    // ADR-091: o escolhedor PODE começar pelo pick order — o adversário
+    // ADR-092: o escolhedor PODE começar pelo pick order — o adversário
     // completa escolhendo o lado.
     const pickDaVez: any = await escolherPickOrder(ctx.db, { salaNum, userId: usuarioDoLado(estado.escolhaTime), ordem: "last" });
     assert.equal(pickDaVez.ok, true, "o escolhedor pode começar pelo pick order");

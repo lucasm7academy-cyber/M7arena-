@@ -54,7 +54,7 @@ const TURN_TEMPLATE: { papel: "F" | "L"; phase: "ban" | "pick" }[] = [
 ];
 
 /**
- * Lado que tem o FIRST PICK (ADR-091). `escolha_time` fica com quem fez a
+ * Lado que tem o FIRST PICK (ADR-092). `escolha_time` fica com quem fez a
  * ÚLTIMA escolha; o dono do pick order depende da ORDEM:
  *  - primeiraEscolha = 'lado' (ou null, fluxo antigo): o pick veio por último →
  *    o dono é o próprio escolha_time;

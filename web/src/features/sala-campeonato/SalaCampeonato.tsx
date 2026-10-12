@@ -371,7 +371,7 @@ export default function SalaCampeonato() {
     if (!dl) return 30;
     return Math.max(0, Math.ceil((new Date(dl).getTime() - agoraServidor()) / 1000));
   })();
-  // Escolha de lado/pick (ADR-091): o que ainda falta escolher neste jogo.
+  // Escolha de lado/pick (ADR-092): o que ainda falta escolher neste jogo.
   const faltaLado = !camp?.lado_escolhido;
   const faltaPick = !camp?.pick_order_escolhido;
   const estadoRotulo =
@@ -954,7 +954,7 @@ export default function SalaCampeonato() {
                         : 'ESCOLHAS CONCLUÍDAS'}
                 </span>
 
-                {/* Escolhedor com as DUAS opções abertas (ADR-091): linha de
+                {/* Escolhedor com as DUAS opções abertas (ADR-092): linha de
                     cima = LADO (vermelho/azul); linha de baixo = PICK
                     (first/last). Ele escolhe UMA — o adversário completa o que
                     sobrar. */}
