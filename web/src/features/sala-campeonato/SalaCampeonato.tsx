@@ -229,6 +229,26 @@ export default function SalaCampeonato() {
     }
   };
 
+  // Encerrar a própria live (botão branco no menu, ao lado de Convidar).
+  const encerrarLive = async () => {
+    if (!camp?.live?.id) return;
+    setOcupado('live-parar');
+    try {
+      const r = await fetch(`/api/streams/${camp.live.id}/parar`, { method: 'POST', credentials: 'include' });
+      const j = await r.json().catch(() => null);
+      if (!j?.ok) {
+        toast.error(j?.erro === 'sem_permissao' ? 'Só quem iniciou a live pode encerrá-la.' : 'Não foi possível encerrar a live.');
+        return;
+      }
+      toast.success('Live encerrada.');
+      await carregar();
+    } catch {
+      toast.error('Falha de rede.');
+    } finally {
+      setOcupado(null);
+    }
+  };
+
   if (erro) {
     return (
       <div className="flex-1 w-full min-h-screen bg-[#050505] flex items-center justify-center text-white">
@@ -711,6 +731,33 @@ export default function SalaCampeonato() {
                 </div>
               </motion.button>
             )}
+
+            {/* Encerrar Live (SÓ o streamer dono da live ativa): branca */}
+            {perfil?.cargo === 'streamer' &&
+              !!serie &&
+              camp?.live?.id &&
+              !!(perfil as any)?.twitch &&
+              String((perfil as any).twitch).toLowerCase() === String(camp.live.twitch).toLowerCase() && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.94 }}
+                  disabled={!!ocupado}
+                  onClick={encerrarLive}
+                  className="relative p-[1px] bg-white/70 hover:bg-white transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                  style={{ clipPath: CUT_BUTTON }}
+                  title="Encerrar sua live"
+                >
+                  <div
+                    className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-white hover:bg-white/95 flex items-center justify-center gap-1.5 text-black transition-colors"
+                    style={{ clipPath: CUT_BUTTON_INNER }}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse shrink-0" />
+                    <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                      Encerrar Live
+                    </span>
+                  </div>
+                </motion.button>
+              )}
           </div>
         </div>
       </motion.div>

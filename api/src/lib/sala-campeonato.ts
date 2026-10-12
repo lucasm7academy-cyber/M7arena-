@@ -694,13 +694,13 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
   let live: any = null;
   if (serie) {
     const [tr] = await d
-      .select({ twitch: transmissoes.twitchChannel, userId: transmissoes.userId })
+      .select({ id: transmissoes.id, twitch: transmissoes.twitchChannel, userId: transmissoes.userId })
       .from(transmissoes)
       .where(and(eq(transmissoes.matchId, serie.id), eq(transmissoes.ativo, true)))
       .limit(1);
     if (tr) {
       const [u] = await d.select({ nome: users.displayName }).from(users).where(eq(users.id, tr.userId)).limit(1);
-      live = { twitch: tr.twitch, streamer: u?.nome ?? null };
+      live = { id: tr.id, twitch: tr.twitch, streamer: u?.nome ?? null };
     }
   }
   const times = serie ? await resolverTimesDaSerie(d, serie) : { teamAId: null, teamBId: null };
