@@ -108,12 +108,18 @@ function PickSlot({ champion, active, hidden, champions, version }: {
 
 // ── Painel do time (círculo central de cada lado) ───────────────────────────
 
-function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome }: {
+function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, preview }: {
   lado: 'blue' | 'red'; emTurno: boolean; fase: 'ban' | 'pick';
   selected: Champion | null; meuTime: 'blue' | 'red' | null; jogadorNome: string;
+  /** Prévia recebida de outro jogador deste lado (escolha ainda não confirmada). */
+  preview?: Champion | null;
 }) {
   const corTurno = fase === 'ban' ? 'border-red-500' : 'border-[#FFD700]';
   const estaSelecionando = selected && emTurno && meuTime === lado;
+  // O que aparece DENTRO da bola: minha própria seleção (normal) ou a prévia
+  // recebida de outro jogador da sala (mostra em que campeão ele está pensando).
+  const propria = !!estaSelecionando;
+  const champNaBola: Champion | null = propria ? (selected as Champion) : preview ?? null;
   return (
     <div className="w-[25vmin] flex flex-col items-center gap-[1.5vmin] pointer-events-auto">
       <div className="text-center w-full truncate px-[1vmin]">
@@ -137,7 +143,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome }: {
           transition={emTurno ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
           className={`w-[18vmin] h-[18vmin] rounded-full border-[0.6vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? corTurno : 'border-white/10'}`}
         >
-          {!emTurno && (
+          {!emTurno && !champNaBola && (
             <div className="w-full h-full relative flex items-center justify-center bg-black/60">
               <div className="relative flex flex-col items-center justify-center gap-[1vmin] z-10">
                 <div className="flex gap-[0.8vmin]">
@@ -150,12 +156,16 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome }: {
             </div>
           )}
 
-          {estaSelecionando ? (
-            <img src={buildChampionIconUrl(selected!.id)} alt={selected!.name}
-              className="w-full h-full object-cover scale-125 relative z-10" referrerPolicy="no-referrer" />
+          {champNaBola ? (
+            <img
+              src={buildChampionIconUrl(champNaBola.id)}
+              alt={champNaBola.name}
+              className={`w-full h-full object-cover scale-125 relative z-10 ${propria ? '' : 'opacity-80'}`}
+              referrerPolicy="no-referrer"
+            />
           ) : null}
 
-          {emTurno && !estaSelecionando && (
+          {emTurno && !champNaBola && (
             <div className={`w-full h-full flex flex-col items-center justify-center gap-[1vmin] relative z-10 ${fase === 'ban' ? 'bg-red-600/10' : 'bg-[#FFD700]/10'}`}>
               <div className="flex gap-[0.8vmin]">
                 <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className={`w-[1.2vmin] h-[1.2vmin] rounded-full ${fase === 'ban' ? 'bg-red-500' : 'bg-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.8)]'}`} />
@@ -172,7 +182,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome }: {
 
       <div className="text-center min-h-[3.5vmin]">
         <h2 className="text-[2.5vmin] font-bold text-white uppercase tracking-tighter mb-[0.5vmin]">
-          {estaSelecionando ? selected!.name : ''}
+          {champNaBola ? (propria ? champNaBola.name : `${champNaBola.name} (prévia)`) : ''}
         </h2>
       </div>
     </div>
@@ -232,6 +242,16 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const jaUsado = (champId: string) =>
     draft.blue_bans.includes(champId) || draft.red_bans.includes(champId) ||
     draft.blue_picks.includes(champId) || draft.red_picks.includes(champId);
+
+  // Prévia recebida de outro jogador (WebSocket): vira a imagem DENTRO da bola
+  // do lado dele quando a sala ainda aguarda confirmação e o campeão não foi usado.
+  const champDoPreview = (lado: 'blue' | 'red'): Champion | null => {
+    if (!previewExterno?.championId || previewExterno.side !== lado) return null;
+    if (draft.status !== 'ongoing' || jaUsado(previewExterno.championId)) return null;
+    return champions[previewExterno.championId] ?? ({ id: previewExterno.championId, name: previewExterno.championId } as Champion);
+  };
+  const previewBlue = champDoPreview('blue');
+  const previewRed = champDoPreview('red');
 
   // Esconde os picks do time ADVERSÁRIO enquanto o draft está em andamento —
   // ligado só nos modos cujo registry marca `esconder_picks_adversario` (nada
@@ -296,26 +316,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
         </h1>
 
-        {/* PRÉVIA DA SALA — o que o jogador em turno está considerando (recebido
-            pelo WebSocket; some quando o campeão é confirmado/fica usado) */}
-        {previewExterno?.championId &&
-          previewExterno.side === draft.current_team &&
-          draft.status === 'ongoing' &&
-          !selectedChamp &&
-          !jaUsado(previewExterno.championId) && (
-            <div className="mt-[0.8vmin] px-[1.6vmin] py-[0.5vmin] flex items-center gap-[1vmin] border border-[#c89b3c]/40 bg-black/60">
-              <img
-                src={buildChampionIconUrl(previewExterno.championId, version)}
-                alt=""
-                className="w-[4vmin] h-[4vmin] object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <span className="text-[1.3vmin] font-bold text-[#c89b3c] uppercase tracking-widest">
-                {(draft.current_team === 'blue' ? nomeBlue : nomeRed)} pré-selecionou{' '}
-                {champions[previewExterno.championId]?.name ?? previewExterno.championId}
-              </span>
-            </div>
-          )}
+        {/* (A prévia agora aparece DENTRO da bola do time — ver TeamPanel) */}
 
         <div className="relative w-[60vmin] h-[0.5vmin] bg-white/10 mt-[1vmin] overflow-hidden">
           <motion.div
@@ -359,9 +360,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       {/* MAIN CONTENT AREA */}
       <div className="absolute inset-0 flex items-center justify-between px-[4vmin] pointer-events-none z-30">
         <TeamPanel lado="blue" emTurno={emTurno && draft.current_team === 'blue'} fase={fase}
-          selected={selectedChamp} meuTime={meuTime} jogadorNome={nomeBlue} />
+          selected={selectedChamp} meuTime={meuTime} jogadorNome={nomeBlue} preview={previewBlue} />
         <TeamPanel lado="red" emTurno={emTurno && draft.current_team === 'red'} fase={fase}
-          selected={selectedChamp} meuTime={meuTime} jogadorNome={nomeRed} />
+          selected={selectedChamp} meuTime={meuTime} jogadorNome={nomeRed} preview={previewRed} />
       </div>
 
       {/* CENTER - CHAMPION GRID */}
