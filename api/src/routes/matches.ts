@@ -22,6 +22,7 @@ import {
 import { reservarEntrada, devolverEntrada } from "../lib/escrow.js";
 import { getRoles, eParticipante, eStaffSala } from "../lib/acesso-sala.js";
 import { shapeSalaCampeonato, podeVerCodigoSalaCampeonato, FASES_ATIVAS_CAMPEONATO } from "../lib/sala-campeonato.js";
+import { tickDraftSalaCampeonato } from "../lib/sala-campeonato-draft.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -125,6 +126,14 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   // Sala de TIMES (ADR-085/086): o estado por jogo (PRONTO, sorteio, escolhas)
   // e a série (quando é campeonato) entram no shape para o front desenhar.
   if (m.mode === "campeonato" || m.mode === "time_vs_time_livre") {
+    // Tick preguiçoso do draft de times (mesmo padrão do tick da sala normal):
+    // BAN vencido vira ban VAZIO e o turno passa na hora — qualquer leitura do
+    // shape (o polling de 5s de qualquer aba aberta) resolve; PICK vencido NÃO
+    // anda (trava — ADR-083). Sem isso a sala só destravava no cron de 10 min.
+    if (m.status === "camp_draft") {
+      const mudou = await tickDraftSalaCampeonato(m.id);
+      if (mudou) notifyMatchChange(String(m.salaNum));
+    }
     (legacy as any).campeonato = await shapeSalaCampeonato(ctx, m);
   }
   // Segurança (pedido 2026-08-17): o código da partida só vai para participante

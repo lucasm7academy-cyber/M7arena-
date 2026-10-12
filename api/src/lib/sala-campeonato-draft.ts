@@ -13,6 +13,7 @@
  */
 import { and, eq, lt } from "drizzle-orm";
 import { matches, matchDrafts, campeonatoSalaEstado } from "../../../db/schema/matches.js";
+import { db } from "../db.js";
 import { ladoDoUsuarioNaSala, carregarSerieDaSala } from "./sala-campeonato.js";
 import { atribuirCodigoPartida } from "./match-flow.js";
 
@@ -218,6 +219,30 @@ export async function avaliarDraftSalaCampeonato(tx: any, sala: any): Promise<{ 
     return { mudou, finalizado: true };
   }
   return { mudou, finalizado: false };
+}
+
+/**
+ * Tick preguiçoso do draft de times: chamado em toda LEITURA do shape da sala
+ * (o polling de 5s de qualquer aba cai aqui). Resolve o turno VENCIDO na hora:
+ * ban vencido vira ban VAZIO e passa a vez automaticamente; pick vencido NÃO
+ * anda (trava até alguém escolher — ADR-083). Sem isso a sala só destravava no
+ * cron de 10 min. Abre a própria transação com lock — nunca chamar de dentro
+ * de outra transação. Idempotente: sem turno vencido, é no-op.
+ */
+export async function tickDraftSalaCampeonato(salaId: string): Promise<boolean> {
+  return db.transaction(async (tx: any) => {
+    const [m] = await tx.select().from(matches).where(eq(matches.id, salaId)).limit(1).for("update");
+    if (!m || m.status !== "camp_draft") return false;
+    const [estado] = await tx
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, m.id))
+      .limit(1);
+    if (!estado) return false;
+    await garantirDraftSalaCampeonato(tx, m, estado);
+    const r = await avaliarDraftSalaCampeonato(tx, m);
+    return r.mudou;
+  });
 }
 
 /**
