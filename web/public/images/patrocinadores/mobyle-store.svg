@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 340">
+  <!-- Recriação vetorial do logo "mobyle Store" (fundo transparente, para o
+       rodapé escuro da transmissão). O "o" é o símbolo de power laranja. -->
+  <g font-family="'Century Gothic','Questrial','Futura','Trebuchet MS','Arial',sans-serif"
+     font-weight="300" font-size="150" fill="none" stroke="#ededed" stroke-width="2.4">
+    <text x="30" y="228">m</text>
+    <text x="286" y="228">b</text>
+    <text x="398" y="228">y</text>
+    <text x="498" y="228">l</text>
+    <text x="536" y="228">e</text>
+  </g>
+
+  <g font-family="'Century Gothic','Questrial','Futura','Trebuchet MS','Arial',sans-serif"
+     font-weight="300" font-size="62" fill="none" stroke="#ededed" stroke-width="1.6" letter-spacing="1">
+    <text x="392" y="316">Store</text>
+  </g>
+
+  <!-- Power "o" (anel laranja com a barra) -->
+  <g>
+    <path d="M 215.2 223.9 A 47 47 0 1 1 234.8 223.9"
+          fill="none" stroke="#DE6B31" stroke-width="17" />
+    <rect x="216.5" y="98" width="17" height="64" rx="8.5" fill="#DE6B31" />
+  </g>
+</svg>

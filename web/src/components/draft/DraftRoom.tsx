@@ -378,6 +378,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           ? 'radial-gradient(circle at center, rgba(127,29,29,0.4) 0%, #000 70%)'
           : 'radial-gradient(circle at center, rgba(30,58,138,0.4) 0%, #000 70%)',
       }} />
+      {/* Fundo padrão das salas/lobby (mesma imagem), como nas salas normais */}
+      <img src="/images/fundo_elite.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none" />
 
       {/* HEADER SECTION - TIMER + FASE */}
       <div className="relative pt-[2vmin] flex flex-col items-center z-40">
@@ -541,7 +543,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       {/* CENTRO — VISÃO DE TRANSMISSÃO (telespectador): Time A X Time B grande
           + placar da série embaixo (o grid de escolha não existe aqui). */}
       {!possoJogar && (timeA || timeB || placar) && (
-        <div className="absolute top-[14vmin] left-1/2 -translate-x-1/2 w-full max-w-[110vmin] flex flex-col items-center gap-[2.5vmin] z-40 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[110vmin] flex flex-col items-center gap-[2.5vmin] z-40 pointer-events-none">
           <div className="flex items-center justify-center gap-[6vmin] w-full">
             <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">
               {timeA?.logo ? (
@@ -619,7 +621,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
               />
               <img
-                src="/images/patrocinadores/mobyle-store.png"
+                src="/images/patrocinadores/mobyle-store.svg"
                 alt="Mobyle Store"
                 className="h-[6vmin] object-contain opacity-95"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
