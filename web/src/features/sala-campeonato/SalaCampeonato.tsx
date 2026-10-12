@@ -1,18 +1,19 @@
 // src/features/sala-campeonato/SalaCampeonato.tsx
-// Sala de TIMES (Campeonato ADR-085 e Time vs Time LIVRE ADR-086): MESMO modelo
-// da sala normal — tela cheia (LayoutWrapper esconde sidebar), barra superior e
-// display redondo central (ArcaneIndicators + CentralDisplay). A única troca é
-// o card de vaga: em vez do slot de jogador, o CARD DO TIME (logo + nome) com a
-// vaga/PRONTO. O servidor é a autoridade; esta tela só desenha e pede ações.
+// Sala de TIMES (Campeonato ADR-085 e Time vs Time LIVRE ADR-086): MESMO VISUAL
+// da sala normal — display redondo (anéis + hub + HUD), vagas usando o próprio
+// componente VagaSlot (com a foto do time no lugar do ícone de rota) e top bar
+// idêntica. O servidor é a autoridade; esta tela só desenha e pede ações.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Check, Copy, Loader2, Radio, Share2, Shield, Swords, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Loader2, Radio, Share2, Shield, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DraftRoom } from '../../components/draft/DraftRoom';
+import { VagaSlot } from '../../components/partidas/VagaSlot';
 import { useSalaRealtime } from '../../hooks/useSalaRealtime';
 import { usePerfil } from '../../contexts/PerfilContext';
 import { agoraServidor, registrarServerTime } from '../../lib/clockSync';
+import { ROLE_CONFIG } from '../../api/salamod1';
 
 // Borda cortada no padrão das vagas/cards (mesmos cortes da sala normal).
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
@@ -255,6 +256,7 @@ export default function SalaCampeonato() {
     lado === 'blue' ? sala.time_a_tag || 'AZUL' : lado === 'red' ? sala.time_b_tag || 'VERMELHO' : '';
   const nomeDoLado = (lado?: 'blue' | 'red' | null) =>
     lado === 'blue' ? sala.time_a_nome || 'Time Azul' : lado === 'red' ? sala.time_b_nome || 'Time Vermelho' : '';
+  const logoDoLado = (lado: 'blue' | 'red') => sala[`time_${lado === 'blue' ? 'a' : 'b'}_logo`] ?? null;
   const timerDraft = (() => {
     const dl = camp?.draft?.turn_deadline_at;
     if (!dl) return 30;
@@ -284,20 +286,22 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
-  // ── CARD DO TIME (substitui o card de vaga da sala normal) ──────────────
-  const renderTimeCard = (lado: 'blue' | 'red') => {
+  // ── LATERAIS: etiqueta + nome do time + VAGA (componente VagaSlot, idêntico
+  //    ao da sala normal; a foto do time entra no lugar do ícone de rota) ────
+  const renderTimeColumn = (lado: 'blue' | 'red') => {
     const jogador = lado === 'blue' ? jogadorBlue : jogadorRed;
     const pronto = lado === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
     const valorVaga = !!jogador && (jogador.id === eu || jogador.user_id === eu);
-    const cor = lado === 'blue' ? '#3B82F6' : '#EF4444';
+    const cor = lado === 'blue' ? '#3B82F6' : '#ef4444';
+    const podeEntrar = estado === 'camp_vagas' && (!serie || meuLado === lado);
     return (
       <div
         key={lado}
-        className="flex flex-col gap-2 items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
+        className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
       >
         {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) */}
         <div
-          className="relative mb-1 p-[1.5px] overflow-hidden self-center"
+          className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
           style={{
             backgroundColor: cor,
             clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
@@ -313,207 +317,188 @@ export default function SalaCampeonato() {
           </div>
         </div>
 
-        <div className={`w-full p-[1px] ${lado === 'blue' ? 'bg-[#00F0FF]/40' : 'bg-[#FF4655]/40'}`} style={{ clipPath: CUT_FRAME }}>
-          <div className="h-full bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col gap-3" style={{ clipPath: CUT_INNER }}>
-            <div className="flex items-center gap-3">
-              {sala[`time_${lado === 'blue' ? 'a' : 'b'}_logo`] ? (
-                <img src={sala[`time_${lado === 'blue' ? 'a' : 'b'}_logo`]} alt="" className="w-16 h-16 object-contain" />
-              ) : (
-                <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center font-black text-white/40 text-lg">
-                  {tagDoLado(lado)?.slice(0, 2)}
-                </div>
-              )}
-              <div className="leading-tight">
-                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: lado === 'blue' ? '#00F0FF' : '#FF4655' }}>
-                  TIME {lado === 'blue' ? 'A' : 'B'}
-                </p>
-                <p className="text-lg font-black uppercase text-white">{nomeDoLado(lado)}</p>
-              </div>
+        {/* Nome/foto do time */}
+        <div className="flex items-center gap-2.5 self-center -mt-1 md:-mt-[0.5vmin]">
+          {logoDoLado(lado) ? (
+            <img src={logoDoLado(lado)} alt="" className="w-8 h-8 md:w-[3.6vmin] md:h-[3.6vmin] object-contain" />
+          ) : (
+            <div
+              className="w-8 h-8 md:w-[3.6vmin] md:h-[3.6vmin] bg-white/5 border border-white/10 flex items-center justify-center font-black text-white/40 text-[10px]"
+            >
+              {tagDoLado(lado)?.slice(0, 2)}
             </div>
-
-            {/* Vaga */}
-            <div className="flex-1 flex flex-col justify-center gap-2 border-t border-white/10 pt-3">
-              {jogador ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    {jogador.avatar ? (
-                      <img src={jogador.avatar} alt="" className="w-8 h-8 rounded-full border border-white/20" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15" />
-                    )}
-                    <p className="text-sm font-bold text-white">
-                      {jogador.nome} <span className="text-white/40 text-xs">#{jogador.tag}</span>
-                      {valorVaga && <span className="ml-2 text-[10px] text-[#00FF41] font-black uppercase">você</span>}
-                    </p>
-                  </div>
-                  {pronto && estado === 'camp_prontos' && (
-                    <p className="text-[11px] font-black uppercase text-[#00FF41] flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" /> Pronto
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-xs text-white/40 font-bold uppercase tracking-wider">Vaga aberta</p>
-              )}
-
-              <div className="flex flex-wrap gap-2">
-                {estado === 'camp_vagas' && !jogador && (!serie || meuLado === lado) && (
-                  <button
-                    disabled={!!ocupado}
-                    onClick={() => chamar('/sala-campeonato/entrar', { side: lado })}
-                    className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-black disabled:opacity-50 cursor-pointer"
-                    style={{ background: lado === 'blue' ? '#00F0FF' : '#FF4655', clipPath: CUT_BUTTON }}
-                  >
-                    Entrar na vaga
-                  </button>
-                )}
-                {estado === 'camp_vagas' && jogador && valorVaga && (
-                  <button
-                    disabled={!!ocupado}
-                    onClick={() => chamar('/sala-campeonato/sair')}
-                    className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white/80 border border-white/15 bg-white/5 disabled:opacity-50 cursor-pointer"
-                    style={{ clipPath: CUT_BUTTON }}
-                  >
-                    Sair da vaga
-                  </button>
-                )}
-                {estado === 'camp_prontos' && jogador && valorVaga && !meuPronto && (
-                  <button
-                    disabled={!!ocupado}
-                    onClick={() => chamar('/sala-campeonato/pronto')}
-                    className="px-5 py-2 text-[11px] font-black uppercase tracking-wider text-black bg-[#00FF41] disabled:opacity-50 cursor-pointer"
-                    style={{ clipPath: CUT_BUTTON }}
-                  >
-                    Pronto
-                  </button>
-                )}
-                {estado === 'camp_prontos' && jogador && valorVaga && meuPronto && (
-                  <span className="px-4 py-2 text-[11px] font-black uppercase tracking-wider text-[#00FF41] border border-[#00FF41]/40 bg-[#00FF41]/10">
-                    Pronto!
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+          )}
+          <span className="text-sm md:text-[1.7vmin] font-black uppercase tracking-wide text-white">
+            {nomeDoLado(lado)}
+          </span>
         </div>
+
+        {/* VAGA — visual idêntico ao da sala normal (foto do time no ícone) */}
+        <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
+          <VagaSlot
+            ocupada={!!jogador}
+            nome={jogador?.nome}
+            tag={jogador?.tag}
+            icone={jogador?.avatar}
+            isTimeA={lado === 'blue'}
+            role={tagDoLado(lado) || (lado === 'blue' ? 'TIME A' : 'TIME B')}
+            isConfirmado={!!pronto && estado === 'camp_prontos'}
+            aoEntrar={() => {
+              if (!perfil?.id) {
+                toast.error('Entre na sua conta para ocupar a vaga.');
+                navigate('/login');
+                return;
+              }
+              if (!podeEntrar) {
+                toast.error(serie ? 'Essa vaga é do outro time.' : 'A sala não está aceitando entradas agora.');
+                return;
+              }
+              chamar('/sala-campeonato/entrar', { side: lado });
+            }}
+            aoSair={valorVaga && estado === 'camp_vagas' ? () => chamar('/sala-campeonato/sair') : undefined}
+            roleIconImg={logoDoLado(lado) ?? ROLE_CONFIG.MID.img}
+            vipTier="free"
+            isFinalizada={estado === 'camp_finalizada' || estado === 'encerrada'}
+          />
+        </div>
+
+        {/* PRONTO do lado (a sala normal tem os botões de confirmação abaixo) */}
+        {estado === 'camp_prontos' && valorVaga && !meuPronto && (
+          <button
+            disabled={!!ocupado}
+            onClick={() => chamar('/sala-campeonato/pronto')}
+            className="w-full py-2 text-[11px] md:text-[1.3vmin] font-black uppercase tracking-widest text-black bg-[#00FF41] disabled:opacity-50 cursor-pointer"
+            style={{ clipPath: CUT_BUTTON }}
+          >
+            Pronto
+          </button>
+        )}
+        {estado === 'camp_prontos' && valorVaga && meuPronto && (
+          <span className="w-full py-2 text-center text-[11px] md:text-[1.3vmin] font-black uppercase tracking-widest text-[#00FF41] border border-[#00FF41]/40 bg-[#00FF41]/10">
+            Pronto!
+          </span>
+        )}
       </div>
     );
   };
 
-  // ── HUB REDONDO CENTRAL (mesma arte; conteúdo do estado da sala) ────────
+  // ── HUB REDONDO CENTRAL (estrutura EXATA da sala normal) ────────────────
   const renderHub = () => (
     <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
-      <ArcaneIndicators />
-      <CentralDisplay />
-      <div className="absolute inset-0 rounded-full bg-black/55 backdrop-blur-md z-[60] flex flex-col items-center justify-center gap-2 p-5 md:p-[4vmin] border border-[#FFB700]/20 text-center">
+      {/* Outer rings */}
+      <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
+      <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
+
+      {/* Main Hub Body */}
+      <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
+        <ArcaneIndicators />
+        <CentralDisplay />
+
+        {/* Nosso estado — mesmo padrão do overlay da sala (z-[35] sem interação) */}
         {estado === 'camp_vagas' && (
-          <>
-            <Swords className="w-6 h-6 text-white/40" />
-            <p className="text-[11px] font-black uppercase tracking-widest text-white/70 leading-tight">
-              Aguardando os times preencherem as vagas
-            </p>
-          </>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
+          >
+            <div className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
+              <span className="text-xl md:text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)] leading-tight">
+                Aguardando os Times
+              </span>
+              <span className="text-xs md:text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
+                Cada lado ocupa a sua vaga
+              </span>
+            </div>
+          </motion.div>
         )}
         {estado === 'camp_prontos' && (
-          <>
-            <p className="text-[11px] font-black uppercase tracking-widest text-[#00FF41] leading-tight">
-              Os dois times precisam marcar PRONTO
-            </p>
-            <p className="text-[11px] text-white/60 leading-tight">
-              {camp?.pronto_blue ? `${tagDoLado('blue')} pronto` : `${tagDoLado('blue')} aguardando`}
-              <br />
-              {camp?.pronto_red ? `${tagDoLado('red')} pronto` : `${tagDoLado('red')} aguardando`}
-            </p>
-          </>
-        )}
-        {estado === 'camp_lado' && (
-          <>
-            <p className="text-[11px] font-black uppercase tracking-widest text-[#FFB700] leading-tight">
-              {!camp?.lado_escolhido
-                ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO`
-                : `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK`}
-            </p>
-            {!camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && (
-              <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  disabled={!!ocupado}
-                  onClick={() => chamar('/sala-campeonato/lado', { lado: 'blue' })}
-                  className="px-3 py-1.5 text-[10px] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                >
-                  Azul
-                </button>
-                <button
-                  disabled={!!ocupado}
-                  onClick={() => chamar('/sala-campeonato/lado', { lado: 'red' })}
-                  className="px-3 py-1.5 text-[10px] font-black uppercase text-white bg-[#FF4655] disabled:opacity-50 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                >
-                  Vermelho
-                </button>
-              </div>
-            )}
-            {camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && !camp?.pick_order_escolhido && (
-              <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  disabled={!!ocupado}
-                  onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'first' })}
-                  className="px-3 py-1.5 text-[10px] font-black uppercase text-black bg-[#FFB700] disabled:opacity-50 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                >
-                  First Pick
-                </button>
-                <button
-                  disabled={!!ocupado}
-                  onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'last' })}
-                  className="px-3 py-1.5 text-[10px] font-black uppercase text-white border border-white/20 bg-white/10 disabled:opacity-50 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                >
-                  Last Pick
-                </button>
-              </div>
-            )}
-            {camp?.lado_escolhido && (
-              <p className="text-[11px] text-white/60 leading-tight">
-                {nomeDoLado(camp.lado_escolhido)} joga de {camp.lado_escolhido === 'blue' ? 'azul' : 'vermelho'}
-              </p>
-            )}
-          </>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
+          >
+            <div className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
+              <span className="text-xl md:text-[2.6vmin] font-black text-[#00FF41] uppercase tracking-[0.25em] leading-tight">
+                Marquem PRONTO
+              </span>
+              <span className="text-xs md:text-[1.2vmin] font-bold text-white/70 uppercase tracking-[0.25em] leading-relaxed">
+                {tagDoLado('blue')}: {camp?.pronto_blue ? 'PRONTO' : 'aguardando'}
+                <br />
+                {tagDoLado('red')}: {camp?.pronto_red ? 'PRONTO' : 'aguardando'}
+              </span>
+            </div>
+          </motion.div>
         )}
         {estado === 'camp_draft' && (
-          <>
-            <p className="text-[11px] font-black uppercase tracking-widest text-white/70 leading-tight">Draft em andamento</p>
-            <p className="text-[11px] text-white/60 leading-tight">
-              {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
-            </p>
-          </>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
+          >
+            <div className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
+              <span className="text-xl md:text-[2.6vmin] font-black text-white uppercase tracking-[0.25em] leading-tight">
+                Draft em Andamento
+              </span>
+              <span className="text-xs md:text-[1.2vmin] font-bold text-white/70 uppercase tracking-[0.25em]">
+                {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
+              </span>
+            </div>
+          </motion.div>
         )}
         {['camp_jogo', 'camp_finalizada', 'iniciando_partida', 'partida_iniciada', 'encerrada'].includes(estado) && (
-          <>
-            <p className="text-[11px] font-black uppercase tracking-widest text-[#00FF41] leading-tight">
-              {estado === 'camp_jogo'
-                ? 'Série em andamento'
-                : estado === 'camp_finalizada'
-                  ? 'Série finalizada'
-                  : estado === 'iniciando_partida'
-                    ? 'Partida pronta — prepare o LoL!'
-                    : estado === 'partida_iniciada'
-                      ? 'Partida em andamento'
-                      : 'Partida encerrada'}
-            </p>
-            {serie && (
-              <p className="text-2xl font-black text-white">
-                {serie.placar_a} - {serie.placar_b}
-              </p>
-            )}
-            {camp?.lado_time_a && (
-              <p className="text-[11px] text-white/60 leading-tight">
-                {sala.time_a_tag} de {camp.lado_time_a === 'blue' ? 'azul' : 'vermelho'} · {sala.time_b_tag} de{' '}
-                {camp.lado_time_a === 'blue' ? 'vermelho' : 'azul'}
-              </p>
-            )}
-          </>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
+          >
+            <div className="flex flex-col items-center gap-1.5 md:gap-[1.6vmin]">
+              <span className="text-lg md:text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em] leading-tight">
+                {estado === 'camp_jogo'
+                  ? 'Série em Andamento'
+                  : estado === 'camp_finalizada'
+                    ? 'Série Finalizada'
+                    : estado === 'iniciando_partida'
+                      ? 'Partida Pronta!'
+                      : estado === 'partida_iniciada'
+                        ? 'Partida em Andamento'
+                        : 'Partida Encerrada'}
+              </span>
+              {serie && (
+                <span className="text-2xl md:text-[4vmin] font-black text-white tabular-nums leading-none">
+                  {serie.placar_a} - {serie.placar_b}
+                </span>
+              )}
+              {camp?.lado_time_a && serie && (
+                <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em] leading-relaxed">
+                  {sala.time_a_tag} de {camp.lado_time_a === 'blue' ? 'azul' : 'vermelho'} · {sala.time_b_tag} de{' '}
+                  {camp.lado_time_a === 'blue' ? 'vermelho' : 'azul'}
+                </span>
+              )}
+              {!serie && estado === 'iniciando_partida' && (
+                <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em]">
+                  Código no painel abaixo
+                </span>
+              )}
+            </div>
+          </motion.div>
         )}
+
+        {/* HUB HUD Overlay (igual à sala normal) */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
+          <div className="absolute top-8 md:top-10 flex flex-col items-center">
+            <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-1 md:mb-2" />
+            <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
+              Summoner's Rift
+            </span>
+          </div>
+          <div className="absolute bottom-8 md:bottom-10 flex flex-col items-center">
+            <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">
+              FASE BETA V1
+            </span>
+            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -688,10 +673,75 @@ export default function SalaCampeonato() {
       <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 flex flex-col gap-4">
         <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
           <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[70vmin] py-2 md:py-0">
-            {renderTimeCard('blue')}
+            {renderTimeColumn('blue')}
             {renderHub()}
-            {renderTimeCard('red')}
+            {renderTimeColumn('red')}
           </div>
+
+          {/* ESCOLHA DE LADO — overlay interativo (mesmo padrão do overlay de
+              confirmação da sala: z-[60], círculo central) */}
+          <AnimatePresence>
+            {estado === 'camp_lado' && (
+              <motion.div
+                key="overlay-lado"
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 md:p-[5vmin] border border-[#FFB700]/20"
+              >
+                <span className="text-base md:text-[2.2vmin] font-black text-[#FFB700] uppercase tracking-[0.25em] text-center leading-tight">
+                  {!camp?.lado_escolhido
+                    ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO`
+                    : `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK`}
+                </span>
+                {!camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && (
+                  <div className="flex flex-wrap justify-center gap-2 mt-3 md:mt-[2vmin]">
+                    <button
+                      disabled={!!ocupado}
+                      onClick={() => chamar('/sala-campeonato/lado', { lado: 'blue' })}
+                      className="px-4 py-2 text-[11px] md:text-[1.3vmin] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50 cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      Escolher Azul
+                    </button>
+                    <button
+                      disabled={!!ocupado}
+                      onClick={() => chamar('/sala-campeonato/lado', { lado: 'red' })}
+                      className="px-4 py-2 text-[11px] md:text-[1.3vmin] font-black uppercase text-white bg-[#FF4655] disabled:opacity-50 cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      Escolher Vermelho
+                    </button>
+                  </div>
+                )}
+                {camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && !camp?.pick_order_escolhido && (
+                  <div className="flex flex-wrap justify-center gap-2 mt-3 md:mt-[2vmin]">
+                    <button
+                      disabled={!!ocupado}
+                      onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'first' })}
+                      className="px-4 py-2 text-[11px] md:text-[1.3vmin] font-black uppercase text-black bg-[#FFB700] disabled:opacity-50 cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      First Pick
+                    </button>
+                    <button
+                      disabled={!!ocupado}
+                      onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'last' })}
+                      className="px-4 py-2 text-[11px] md:text-[1.3vmin] font-black uppercase text-white border border-white/20 bg-white/10 disabled:opacity-50 cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      Last Pick
+                    </button>
+                  </div>
+                )}
+                {camp?.lado_escolhido && (
+                  <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em] mt-3 md:mt-[2vmin] text-center">
+                    {nomeDoLado(camp.lado_escolhido)} joga de {camp.lado_escolhido === 'blue' ? 'azul' : 'vermelho'}
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Draft (mesma tela do draft das salas) */}
