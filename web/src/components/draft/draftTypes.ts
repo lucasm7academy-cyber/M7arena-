@@ -42,4 +42,9 @@ export interface SalaDraft {
   duracao_turno_ms: number;
   /** Regras do modo publicadas pelo servidor (registry por modo). */
   regras: SalaDraftRegras;
+  /**
+   * FEARLESS (sala campeonato): picks de jogos anteriores da série — travados.
+   * Publicado pelo servidor; o grid mostra esses campeões apagados.
+   */
+  campeoes_travados?: string[];
 }

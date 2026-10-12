@@ -260,16 +260,24 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // Coluna da esquerda = equipe que joga de AZUL; da direita = de VERMELHO.
   const equipeEsquerda: 'A' | 'B' = ladoEquipeA === 'blue' ? 'A' : 'B';
   const equipeDireita: 'A' | 'B' = equipeEsquerda === 'A' ? 'B' : 'A';
+  // Lado (em jogo) que está agindo agora — governa a barra de turno do topo.
+  const ladoEmTurno: 'blue' | 'red' = draft.current_team === 'blue' ? ladoEquipeA : ladoEquipeB;
 
   const jaUsado = (champId: string) =>
     draft.blue_bans.includes(champId) || draft.red_bans.includes(champId) ||
     draft.blue_picks.includes(champId) || draft.red_picks.includes(champId);
 
+  // FEARLESS: os picks dos jogos anteriores da série também estão travados (o
+  // servidor publica a lista em draft.campeoes_travados). O grid mostra esses
+  // campeões apagados, igual aos já usados — o clique nem chega no servidor.
+  const travados: string[] = draft.campeoes_travados ?? [];
+  const indisponivel = (champId: string) => jaUsado(champId) || travados.includes(champId);
+
   // Prévia recebida de outro jogador (WebSocket): vira a imagem DENTRO da bola
   // do lado dele quando a sala ainda aguarda confirmação e o campeão não foi usado.
   const champDoPreview = (lado: 'blue' | 'red'): Champion | null => {
     if (!previewExterno?.championId || previewExterno.side !== lado) return null;
-    if (draft.status !== 'ongoing' || jaUsado(previewExterno.championId)) return null;
+    if (draft.status !== 'ongoing' || indisponivel(previewExterno.championId)) return null;
     return champions[previewExterno.championId] ?? ({ id: previewExterno.championId, name: previewExterno.championId } as Champion);
   };
   const previewBlue = champDoPreview('blue');
@@ -294,7 +302,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
   const handleChampionClick = (champ: Champion) => {
     if (!isMeuTurno || enviando) return;
-    if (jaUsado(champ.id)) return;
+    if (indisponivel(champ.id)) return;
     setSelectedChamp(champ);
     // Prévia para a sala: quem assiste vê o que está sendo considerado.
     onPreview?.(champ.id);
@@ -370,14 +378,31 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
         {/* (A prévia agora aparece DENTRO da bola do time — ver TeamPanel) */}
 
-        <div className="relative w-[60vmin] h-[0.5vmin] bg-white/10 mt-[1vmin] overflow-hidden">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#c89b3c] to-transparent"
-            initial={{ scaleX: 1 }}
-            animate={{ scaleX: segundos / duracaoSeg }}
-            transition={{ duration: 1, ease: 'linear' }}
-            style={{ originX: 0.5 }}
-          />
+        {/* BARRA DE TURNO: metade azul (esquerda) / metade vermelha (direita).
+            O lado que está agindo preenche a metade dele com a cor do lado, e
+            o preenchimento recua do lado (borda externa) para o CENTRO
+            conforme o tempo passa — o tick vai do lado da ação até o centro. */}
+        <div className="relative w-[60vmin] h-[1.1vmin] mt-[1vmin] flex">
+          {/* Metade azul — preenchimento ancorado no centro, recua p/ ele */}
+          <div className="relative flex-1 bg-[#3B82F6]/15 overflow-hidden">
+            <motion.div
+              className="absolute top-0 right-0 h-full bg-[#3B82F6]"
+              initial={false}
+              animate={{ width: emTurno && ladoEmTurno === 'blue' ? `${(segundos / duracaoSeg) * 100}%` : '0%' }}
+              transition={{ duration: 1, ease: 'linear' }}
+            />
+          </div>
+          {/* Metade vermelha — espelho */}
+          <div className="relative flex-1 bg-[#ef4444]/15 overflow-hidden">
+            <motion.div
+              className="absolute top-0 left-0 h-full bg-[#ef4444]"
+              initial={false}
+              animate={{ width: emTurno && ladoEmTurno === 'red' ? `${(segundos / duracaoSeg) * 100}%` : '0%' }}
+              transition={{ duration: 1, ease: 'linear' }}
+            />
+          </div>
+          {/* Divisória central */}
+          <div className="absolute left-1/2 top-0 h-full w-[1px] bg-white/40 -translate-x-1/2" />
         </div>
 
         <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
@@ -438,7 +463,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
         <div className="grid grid-cols-6 gap-x-[0.8vmin] gap-y-[1.2vmin] max-h-[58vmin] overflow-y-auto custom-scrollbar pr-[1vmin]">
           {filteredChampions.map(champ => {
-            const usado = jaUsado(champ.id);
+            const usado = indisponivel(champ.id);
             const selecionado = selectedChamp?.id === champ.id;
             return (
               <div
