@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { db, pool } from "./db.js";
-import { runCron } from "./cron.js";
+import { runCron, verificarSeriesPendentes } from "./cron.js";
 import { runReconciliacaoHandles } from "./lib/reconciliar-handles.js";
 import { criarSalasCampeonatoPendentes } from "./lib/sala-campeonato.js";
 import { runRefreshElos } from "./lib/atualizar-elos.js";
@@ -131,6 +131,17 @@ setInterval(() => {
     .catch((e) => console.error("[sala-campeonato] erro:", e?.message));
 }, 60 * 1000);
 criarSalasCampeonatoPendentes(db).catch((e) => console.error("[sala-campeonato] erro inicial:", e?.message));
+
+// Sala Campeonato: RESULTADO da série conferido na Riot a cada 3 min (pedido do
+// usuário) — as salas normais continuam no runCron de 10 min. Só séries em
+// andamento com código; quando não há nenhuma, é uma query indexada barata.
+setInterval(() => {
+  verificarSeriesPendentes()
+    .then((n) => {
+      if (n > 0) console.log(`[cron-series] ${n} série(s) finalizada(s)`);
+    })
+    .catch((e) => console.error("[cron-series] erro:", e?.message));
+}, 3 * 60 * 1000);
 
 // Reconciliação do Riot ID (spec 2026-08-17): atualiza game_accounts.handle +
 // users.riot_id com o nome atual do LoL a cada 3 dias. Timer próprio — o

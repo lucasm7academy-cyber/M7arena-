@@ -18,6 +18,34 @@ import { runBetsCron } from "./lib/live-bets.js";
  * Nunca escreve estado por fora da máquina — cada ação reusa a lógica com
  * FOR UPDATE.
  */
+/**
+ * Varredura de SÉRIES de campeonato em andamento com código (grupos + chave):
+ * confere na Riot e o motor de série decide jogada a jogada, fechando no bestOf.
+ * EXPORTADA porque a Sala Campeonato roda ela a cada 3 min (resultado mais
+ * rápido que o runCron de 10 min — pedido do usuário 2026-10-12). Idempotente;
+ * sem séries em andamento, é uma query indexada barata.
+ */
+export async function verificarSeriesPendentes(d: any = db): Promise<number> {
+  let finalizadas = 0;
+  const emAndamentoSeries = await d
+    .select({ id: tournamentMatches.id })
+    .from(tournamentMatches)
+    .where(and(eq(tournamentMatches.status, "em_andamento"), not(isNull(tournamentMatches.codigoPartida))));
+  for (const s of emAndamentoSeries) {
+    const r = await verificarSerieCampeonato(d, { matchId: s.id });
+    if (r.estado === "finalizada") finalizadas++;
+  }
+  const emAndamentoBrackets = await d
+    .select({ id: bracketMatches.id })
+    .from(bracketMatches)
+    .where(and(isNull(bracketMatches.winnerSide), not(isNull(bracketMatches.codigoPartida))));
+  for (const s of emAndamentoBrackets) {
+    const r = await verificarSerieCampeonato(d, { bracketMatchId: s.id });
+    if (r.estado === "finalizada") finalizadas++;
+  }
+  return finalizadas;
+}
+
 export async function runCron(d: any = db) {
   const agora = new Date();
 
@@ -39,27 +67,10 @@ export async function runCron(d: any = db) {
     }
   }
 
-  // 2. Verificação de SÉRIES de campeonato (ADR-047): jogos de campeonato em
-  //    'em_andamento' com código de partida são verificados pela Riot. O motor
-  //    de série decide o vencedor por jogada (roster dos times) e, ao fechar em
-  //    bestOf (MD3/MD5), marca o jogo como finalizada e libera o código.
-  let seriesFinalizadas = 0;
-  const emAndamentoSeries = await d
-    .select({ id: tournamentMatches.id })
-    .from(tournamentMatches)
-    .where(and(eq(tournamentMatches.status, "em_andamento"), not(isNull(tournamentMatches.codigoPartida))));
-  for (const s of emAndamentoSeries) {
-    const r = await verificarSerieCampeonato(d, { matchId: s.id });
-    if (r.estado === "finalizada") seriesFinalizadas++;
-  }
-  const emAndamentoBrackets = await d
-    .select({ id: bracketMatches.id })
-    .from(bracketMatches)
-    .where(and(isNull(bracketMatches.winnerSide), not(isNull(bracketMatches.codigoPartida))));
-  for (const s of emAndamentoBrackets) {
-    const r = await verificarSerieCampeonato(d, { bracketMatchId: s.id });
-    if (r.estado === "finalizada") seriesFinalizadas++;
-  }
+  // 2. Verificação de SÉRIES de campeonato (ADR-047): a MESMA varredura que o
+  //    timer de 3 min da Sala Campeonato roda (verificarSeriesPendentes) —
+  //    uma implementação só; aqui fica como rede de segurança de 10 min.
+  const seriesFinalizadas = await verificarSeriesPendentes(d);
   if (seriesFinalizadas > 0) console.log(`[cron] campeonato: ${seriesFinalizadas} série(s) finalizada(s)`);
 
   // 2. Draft de sala: salas paradas no ban/pick (ninguém com a aba aberta para

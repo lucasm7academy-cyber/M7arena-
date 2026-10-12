@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Check, Copy, Loader2, Radio, Share2, Shield, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, Share2, Shield, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DraftRoom } from '../../components/draft/DraftRoom';
 import { VagaSlot } from '../../components/partidas/VagaSlot';
@@ -266,6 +266,44 @@ export default function SalaCampeonato() {
     }
   };
 
+  // Atualizar Resultado (campeonato): dispara a verificação da SÉRIE na Riot
+  // agora — é o mesmo botão do cronograma. Serve para quando o jogo acabou e a
+  // sala não computou sozinha (o servidor também confere a cada 3 min). Quem
+  // pode: staff do campeonato ou time da série (o servidor valida).
+  const atualizarResultado = async () => {
+    if (!camp?.serie?.id || !camp?.serie?.campeonato_id) return;
+    setOcupado('verificar-serie');
+    try {
+      const r = await fetch(`/api/tournaments/${camp.serie.campeonato_id}/jogo/${camp.serie.id}/verificar`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) {
+        toast.error(j?.error ?? 'Não foi possível atualizar o resultado.');
+        return;
+      }
+      if (j?.motivo === 'riot_indisponivel') {
+        toast.error('Não foi possível consultar a Riot agora. Tente de novo em instantes.');
+      } else if (j?.estado === 'finalizada') {
+        toast.success(`Série finalizada! Placar: ${j.scoreA} - ${j.scoreB}`);
+      } else if (j?.estado === 'em_andamento') {
+        toast(`Série em andamento: ${j.scoreA} - ${j.scoreB}`, { icon: '⚔️' });
+      } else if (j?.motivo === 'sem_codigo') {
+        toast.error('Série ainda não possui código de torneio.');
+      } else {
+        toast('Nenhuma partida nova detectada na Riot ainda.', { icon: 'ℹ️' });
+      }
+      await carregar();
+    } catch {
+      toast.error('Falha de rede.');
+    } finally {
+      setOcupado(null);
+    }
+  };
+
   if (erro) {
     return (
       <div className="flex-1 w-full min-h-screen bg-[#050505] flex items-center justify-center text-white">
@@ -308,6 +346,9 @@ export default function SalaCampeonato() {
 
   const estado: string = sala.estado ?? '';
   const eu = perfil?.id ?? '';
+  // Staff do campeonato: pode forçar a verificação da SÉRIE (mesma regra da
+  // rota do cronograma — staff do campeonato OU time da série).
+  const ehStaffCampeonato = ['admin', 'proprietario', 'organizador'].includes((perfil as any)?.cargo ?? '');
   const jogadorBlue = jogadorDoLado('blue');
   const jogadorRed = jogadorDoLado('red');
   const meuJogador =
@@ -774,6 +815,32 @@ export default function SalaCampeonato() {
                 )}
               </div>
             </motion.button>
+
+            {/* Atualizar Resultado (campeonato): mesmo botão do cronograma —
+                força a verificação da série na Riot AGORA. Visível para staff
+                do campeonato e para os times da série (o servidor valida); o
+                servidor também confere sozinho a cada 3 min. */}
+            {!!serie && (ehStaffCampeonato || !!meuLado) && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                disabled={!!ocupado}
+                onClick={atualizarResultado}
+                className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                style={{ clipPath: CUT_BUTTON }}
+                title="Atualizar resultado — verifica a série na Riot agora"
+              >
+                <div
+                  className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
+                  <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                    Atualizar Resultado
+                  </span>
+                </div>
+              </motion.button>
+            )}
 
             {/* Iniciar Live (streamer): roxa estilo Twitch, ao lado de Convidar */}
             {perfil?.cargo === 'streamer' && !!serie && !camp?.live && (
