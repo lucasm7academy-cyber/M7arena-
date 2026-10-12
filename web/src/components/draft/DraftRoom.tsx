@@ -33,6 +33,10 @@ interface DraftRoomProps {
   timer: number;
   onBanir: (championId: string) => Promise<ResultadoSalaRpc>;
   onPickar: (championId: string) => Promise<ResultadoSalaRpc>;
+  /** Prévia: dispara a seleção local (hover/click) para a sala — opcional. */
+  onPreview?: (championId: string | null) => void;
+  /** Prévia recebida de outro jogador da sala (selecionado, ainda não confirmado). */
+  previewExterno?: { championId: string | null; side: 'blue' | 'red' | null } | null;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -178,7 +182,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome }: {
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
-  draft, jogadores, usuarioId, timer, onBanir, onPickar,
+  draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -250,6 +254,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     if (!isMeuTurno || enviando) return;
     if (jaUsado(champ.id)) return;
     setSelectedChamp(champ);
+    // Prévia para a sala: quem assiste vê o que está sendo considerado.
+    onPreview?.(champ.id);
   };
 
   const confirmarAcao = async () => {
@@ -264,6 +270,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         return;
       }
       setSelectedChamp(null);
+      onPreview?.(null);
     } finally {
       setEnviando(false);
     }
@@ -288,6 +295,27 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <h1 className="text-[3.5vmin] font-bold tracking-[0.2em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">
           {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
         </h1>
+
+        {/* PRÉVIA DA SALA — o que o jogador em turno está considerando (recebido
+            pelo WebSocket; some quando o campeão é confirmado/fica usado) */}
+        {previewExterno?.championId &&
+          previewExterno.side === draft.current_team &&
+          draft.status === 'ongoing' &&
+          !selectedChamp &&
+          !jaUsado(previewExterno.championId) && (
+            <div className="mt-[0.8vmin] px-[1.6vmin] py-[0.5vmin] flex items-center gap-[1vmin] border border-[#c89b3c]/40 bg-black/60">
+              <img
+                src={buildChampionIconUrl(previewExterno.championId, version)}
+                alt=""
+                className="w-[4vmin] h-[4vmin] object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-[1.3vmin] font-bold text-[#c89b3c] uppercase tracking-widest">
+                {(draft.current_team === 'blue' ? nomeBlue : nomeRed)} pré-selecionou{' '}
+                {champions[previewExterno.championId]?.name ?? previewExterno.championId}
+              </span>
+            </div>
+          )}
 
         <div className="relative w-[60vmin] h-[0.5vmin] bg-white/10 mt-[1vmin] overflow-hidden">
           <motion.div

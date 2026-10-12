@@ -110,6 +110,7 @@ export default function SalaCampeonato() {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [compartilhado, setCompartilhado] = useState(false);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
+  const [previewDraft, setPreviewDraft] = useState<{ championId: string | null; side: 'blue' | 'red' | null } | null>(null);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -138,8 +139,13 @@ export default function SalaCampeonato() {
     }
   }, [id]);
 
-  // Realtime (WebSocket) + fallback de polling de 5s (ADR-082).
-  useSalaRealtime(Number(id) || 0, { onUpdate: () => carregar(), onReconnect: () => carregar() });
+  // Realtime (WebSocket) + fallback de polling de 5s (ADR-082). A prévia do
+  // draft chega pelo socket (em memória, sem banco) — a tela só desenha.
+  const { enviarPreview } = useSalaRealtime(Number(id) || 0, {
+    onUpdate: () => carregar(),
+    onReconnect: () => carregar(),
+    onDraftPreview: (p) => setPreviewDraft(p),
+  });
   useEffect(() => {
     const t = setInterval(() => carregar(), 5000);
     return () => clearInterval(t);
@@ -333,6 +339,8 @@ export default function SalaCampeonato() {
         timer={timerDraft}
         onBanir={(champ: string) => acaoDraft('ban', champ)}
         onPickar={(champ: string) => acaoDraft('pick', champ)}
+        onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
+        previewExterno={previewDraft}
       />
     );
   }

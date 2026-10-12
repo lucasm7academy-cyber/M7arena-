@@ -127,6 +127,7 @@ function enviar(ws: WebSocket, payload: unknown) {
 
 function removerDaSala(ws: WebSocket) {
   socketMatchId.delete(ws);
+  previewTimestamps.delete(ws);
   const salaNum = socketRoom.get(ws);
   if (salaNum === undefined) return;
   socketRoom.delete(ws);
@@ -167,6 +168,8 @@ async function tratarMensagem(ws: WebSocket, raw: RawData) {
     await assinarSala(ws, msg);
   } else if (msg?.type === "chat_send") {
     await enviarChat(ws, msg);
+  } else if (msg?.type === "draft_preview") {
+    enviarPreview(ws, msg);
   }
 }
 
@@ -296,6 +299,32 @@ async function enviarChat(ws: WebSocket, msg: any) {
   } catch (err: any) {
     console.error(`[m7arena-realtime] Erro no chat: ${err?.message}`);
     enviar(ws, { type: "chat_error", error: "erro_interno" });
+  }
+}
+
+// ── PRÉVIA DO DRAFT (hover/seleção) ───────────────
+// Mapa do último envio por socket (throttle) e repasse em MEMÓRIA: a prévia é
+// UI efêmera — sem banco, sem refetch e sem tocar nas regras (a ação real
+// continua no ban/pick HTTP). Se a mensagem se perder, nada quebra.
+const PREVIEW_MIN_INTERVALO_MS = 150;
+const previewTimestamps = new Map<WebSocket, number>();
+
+function enviarPreview(ws: WebSocket, msg: any) {
+  const salaNum = socketRoom.get(ws);
+  if (salaNum === undefined) return;
+  const agora = Date.now();
+  const ultimo = previewTimestamps.get(ws) ?? 0;
+  if (agora - ultimo < PREVIEW_MIN_INTERVALO_MS) return; // throttle silencioso
+  previewTimestamps.set(ws, agora);
+
+  const championId = typeof msg?.championId === "string" ? msg.championId.trim().slice(0, 50) : "";
+  const side = msg?.side === "red" ? "red" : msg?.side === "blue" ? "blue" : null;
+  const payload = JSON.stringify({ type: "draft_preview", matchId: salaNum, championId: championId || null, side });
+
+  const room = rooms.get(salaNum);
+  if (!room) return;
+  for (const cliente of room) {
+    if (cliente !== ws && cliente.readyState === WebSocket.OPEN) cliente.send(payload);
   }
 }
 

@@ -38,12 +38,14 @@ export interface UseSalaRealtimeOptions {
   onChatMessage?: (msg: ApiSalaChatMensagem) => void;
   /** Chat (ADR-040): erro de envio (body_invalido, rate_limited, ...). */
   onChatError?: (codigo: string) => void;
+  /** Prévia do draft (hover/seleção) recebida de outro jogador da sala. */
+  onDraftPreview?: (preview: { championId: string | null; side: 'blue' | 'red' | null }) => void;
   /** Pausa a conexão quando false (default true). */
   enabled?: boolean;
 }
 
 export function useSalaRealtime(matchId: string | number, options: UseSalaRealtimeOptions) {
-  const { onUpdate, onReconnect, onStatusChange, onChatMessage, onChatError, enabled = true } = options;
+  const { onUpdate, onReconnect, onStatusChange, onChatMessage, onChatError, onDraftPreview, enabled = true } = options;
 
   const wsRef = useRef<WebSocket | null>(null);
   const debounceRef = useRef<number | null>(null);
@@ -57,12 +59,14 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
   const onStatusChangeRef = useRef(onStatusChange);
   const onChatMessageRef = useRef(onChatMessage);
   const onChatErrorRef = useRef(onChatError);
+  const onDraftPreviewRef = useRef(onDraftPreview);
   const matchIdRef = useRef(matchId);
   onUpdateRef.current = onUpdate;
   onReconnectRef.current = onReconnect;
   onStatusChangeRef.current = onStatusChange;
   onChatMessageRef.current = onChatMessage;
   onChatErrorRef.current = onChatError;
+  onDraftPreviewRef.current = onDraftPreview;
   matchIdRef.current = matchId;
 
   useEffect(() => {
@@ -107,6 +111,11 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
           onChatMessageRef.current?.(dados.msg);
         } else if (dados?.type === "chat_error") {
           onChatErrorRef.current?.(dados.error);
+        } else if (dados?.type === "draft_preview") {
+          onDraftPreviewRef.current?.({
+            championId: dados.championId ?? null,
+            side: dados.side === 'red' ? 'red' : dados.side === 'blue' ? 'blue' : null,
+          });
         }
       };
 
@@ -150,5 +159,13 @@ export function useSalaRealtime(matchId: string | number, options: UseSalaRealti
     ws.send(JSON.stringify({ type: "chat_send", matchId: matchIdRef.current, body }));
   }, []);
 
-  return { enviarChat };
+  // Prévia do draft: dispara a seleção local para a sala (o envio é throttled
+  // no servidor de realtime; falha silenciosa quando o socket está fora).
+  const enviarPreview = useCallback((championId: string | null, side: 'blue' | 'red' | null) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({ type: "draft_preview", matchId: matchIdRef.current, championId, side }));
+  }, []);
+
+  return { enviarChat, enviarPreview };
 }
