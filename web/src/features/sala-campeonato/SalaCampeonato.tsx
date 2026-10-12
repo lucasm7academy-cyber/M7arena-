@@ -3,7 +3,7 @@
 // da sala normal — display redondo (anéis + hub + HUD), vagas usando o próprio
 // componente VagaSlot (com a foto do time no lugar do ícone de rota) e top bar
 // idêntica. O servidor é a autoridade; esta tela só desenha e pede ações.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Radio, Share2, Shield, Trophy } from 'lucide-react';
@@ -112,7 +112,7 @@ export default function SalaCampeonato() {
   const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<{ championId: string | null; side: 'blue' | 'red' | null } | null>(null);
   const [bannerTroca, setBannerTroca] = useState(false);
-  const trocaFeita = useRef<string | null>(null);
+  const [ladoVisto, setLadoVisto] = useState<{ chave: string; lado: 'blue' | 'red' } | null>(null);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -161,20 +161,14 @@ export default function SalaCampeonato() {
     carregar();
   }, [carregar]);
 
-  // TROCA DE LADOS NA SALA: quando o time da vaga azul escolhe jogar de
-  // vermelho, as colunas deslizam devagar (≈3s) para os lados novos — todos na
-  // sala veem (estado vem pelo shape/WS/polling). Uma vez por jogo; o banner
-  // aparece junto. Hook no TOPO de propósito (regra dos hooks).
+  // TROCA DE LADOS NA SALA: o banner aparece junto com o deslize das colunas
+  // e some sozinho (~3s). A detecção da troca é feita em tempo de render, mais
+  // abaixo (só o render da troca ganha a animação).
   useEffect(() => {
-    const key = sala ? `${sala.id}-${sala?.campeonato?.jogo ?? 1}` : null;
-    if (!key) return;
-    const trocou = sala?.campeonato?.lado_time_a === 'red' && !!sala?.campeonato?.lado_escolhido;
-    if (!trocou || trocaFeita.current === key) return;
-    trocaFeita.current = key;
-    setBannerTroca(true);
+    if (!bannerTroca) return;
     const t = setTimeout(() => setBannerTroca(false), 3200);
     return () => clearTimeout(t);
-  }, [sala]);
+  }, [bannerTroca]);
 
   // Times do usuário (para saber o lado dele na série de campeonato).
   useEffect(() => {
@@ -296,6 +290,22 @@ export default function SalaCampeonato() {
     );
   }
 
+  // ── TROCA DE LADOS NA SALA (detecção em tempo de render) ─────────────────
+  // Padrão React de ajustar estado durante o render: no momento EXATO em que o
+  // lado em jogo muda (shape novo pelo WS/polling), este render é descartado e
+  // o re-render imediato já sai com banner + animação ligados — é o ÚNICO
+  // render que anima (~3s). Qualquer outro reflow depois é instantâneo; quem
+  // recarrega a página já vê os times no lado certo, sem animação. A chave é
+  // por jogo: cada jogo novo começa sincronizado e parado.
+  const ladoAtual: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
+  const chaveLado = `${sala.id}:${camp?.jogo ?? 1}`;
+  if (ladoVisto && ladoVisto.chave === chaveLado && ladoVisto.lado !== ladoAtual) {
+    setLadoVisto({ chave: chaveLado, lado: ladoAtual });
+    setBannerTroca(true);
+  } else if (!ladoVisto || ladoVisto.chave !== chaveLado) {
+    setLadoVisto({ chave: chaveLado, lado: ladoAtual });
+  }
+
   const estado: string = sala.estado ?? '';
   const eu = perfil?.id ?? '';
   const jogadorBlue = jogadorDoLado('blue');
@@ -344,8 +354,6 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
-  // TROCA DE LADOS: a animação acontece NA SALA (colunas deslizando, ver
-  // useState acima) — nada de tela cheia antes do draft.
   // Draft em TELA CHEIA (igual à sala normal): durante o draft a sala não fica
   // junto na página — o DraftRoom ocupa a tela e, quando fecha, a sala volta
   // sozinha (o estado muda para camp_jogo e o polling/WS atualizam sem reload).
@@ -387,8 +395,8 @@ export default function SalaCampeonato() {
     return (
       <motion.div
         key={lado}
-        layout
-        transition={{ duration: 3, ease: 'easeInOut' }}
+        layout="position"
+        transition={{ duration: bannerTroca ? 3 : 0, ease: 'easeInOut' }}
         className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
       >
         {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) */}
