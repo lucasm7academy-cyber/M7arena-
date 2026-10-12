@@ -153,7 +153,7 @@ matchesActionsRouter.post("/:id/sala-campeonato/pick-order", async (req, res) =>
 /**
  * Passo 5 — Draft da sala campeonato: ban/pick com a vez pelo LADO do time e
  * FEARLESS (picks de jogos anteriores travados). Fluxo da transação: lock da
- * sala → garante o draft do jogo → catch-up de bans vencidos → aplica a ação.
+ * sala → garante o draft do jogo → sanidade do draft (bookkeeping) → aplica a ação.
  * Pick vencido CONTINUA valendo (o draft trava em vez de cancelar — ADR-083).
  */
 async function executarAcaoDraftCampeonato(req: any, res: any, tipo: "ban" | "pick") {

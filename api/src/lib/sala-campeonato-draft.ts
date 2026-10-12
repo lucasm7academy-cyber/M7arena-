@@ -7,8 +7,9 @@
  *    cada papel é mapeado para o LADO (blue/red) do time que o escolheu;
  *  - FEARLESS: campeão PICKADO em jogo anterior da série fica indisponível nos
  *    jogos seguintes (bans NÃO carregam — decisão do usuário 2026-10-11);
- *  - timeout: ban vencido vira ban vazio; pick vencido TRAVA o draft até alguém
- *    escolher (nunca cancela a sala — ADR-083);
+ *  - timeout: ban E pick vencidos TRAVAM o draft até alguém agir — nada de ban
+ *    vazio nem cancelamento (ajuste pedido durante a live, 2026-10-12; a ação
+ *    atrasada continua valendo);
  *  - um draft POR JOGO (match_drafts jogo = estado.jogo).
  */
 import { and, eq, lt } from "drizzle-orm";
@@ -19,7 +20,6 @@ import { atribuirCodigoPartida } from "./match-flow.js";
 
 /** Duração de um turno (mesmo relógio do servidor do draft das salas). */
 export const DRAFT_TURNO_MS_CAMPEONATO = 30_000;
-const DRAFT_GRACE_MS = 2_000;
 
 /** Regras publicadas no shape (o front desenha a partir daqui). */
 export const REGRAS_SHAPE_CAMPEONATO = {
@@ -177,8 +177,12 @@ async function aoFinalizar(tx: any, sala: any) {
 }
 
 /**
- * Saneia os prazos do draft do campeonato (catch-up). Ban vencido → ban vazio e
- * avança; pick vencido → TRAVA (break). PRÉ-CONDIÇÃO: linha de `matches` travada.
+ * Saneia o draft do campeonato. Turno VENCIDO (ban OU pick) agora TRAVA: nada
+ * é aplicado automaticamente — o draft espera alguém agir, e a ação atrasada
+ * continua valendo (ver `aplicarAcaoSalaCampeonato`). Este avaliador segue
+ * existindo para o bookkeeping do draft que já fechou (ex.: fechou numa ação e
+ * a transição da sala ainda não rodou) e como ponto único chamado pelo cron,
+ * pelo tick do shape e pelas rotas. PRÉ-CONDIÇÃO: linha de `matches` travada.
  */
 export async function avaliarDraftSalaCampeonato(tx: any, sala: any): Promise<{ mudou: boolean; finalizado: boolean }> {
   const [estado] = await tx
@@ -198,27 +202,9 @@ export async function avaliarDraftSalaCampeonato(tx: any, sala: any): Promise<{ 
   if (draft.status === "finished") return { mudou: false, finalizado: true };
 
   let mudou = false;
-  // Teto = total de turnos: cobre o catch-up completo de uma sala largada.
-  for (let i = 0; i <= TURN_TEMPLATE.length; i++) {
-    if (!draft || draft.status !== "ongoing") break;
-    const limite = new Date(draft.turnDeadlineAt).getTime() + DRAFT_GRACE_MS;
-    if (Date.now() <= limite) break;
-    // PICK VENCIDO TRAVA (ADR-083): espera alguém escolher; nunca cancela.
-    if (draft.currentPhase === "pick") break;
-
-    const proximoDeadline = new Date(new Date(draft.turnDeadlineAt).getTime() + DRAFT_TURNO_MS_CAMPEONATO);
-    const r = await aplicarEAvancar(tx, draft, estado, null, proximoDeadline);
-    mudou = true;
-    if (r.finalizado) {
-      await aoFinalizar(tx, sala);
-      return { mudou, finalizado: true };
-    }
-    [draft] = await tx
-      .select()
-      .from(matchDrafts)
-      .where(and(eq(matchDrafts.matchId, sala.id), eq(matchDrafts.jogo, estado.jogo)))
-      .limit(1);
-  }
+  // Turno vencido TRAVA o draft (ban e pick): nada é aplicado automaticamente
+  // — o draft espera alguém agir; a ação atrasada continua valendo (ver
+  // aplicarAcaoSalaCampeonato). Só resta aqui o bookkeeping do draft fechado.
 
   if (draft?.status === "finished") {
     await aoFinalizar(tx, sala);
@@ -229,11 +215,10 @@ export async function avaliarDraftSalaCampeonato(tx: any, sala: any): Promise<{ 
 
 /**
  * Tick preguiçoso do draft de times: chamado em toda LEITURA do shape da sala
- * (o polling de 5s de qualquer aba cai aqui). Resolve o turno VENCIDO na hora:
- * ban vencido vira ban VAZIO e passa a vez automaticamente; pick vencido NÃO
- * anda (trava até alguém escolher — ADR-083). Sem isso a sala só destravava no
- * cron de 10 min. Abre a própria transação com lock — nunca chamar de dentro
- * de outra transação. Idempotente: sem turno vencido, é no-op.
+ * (o polling de 5s de qualquer aba cai aqui). Turno vencido (ban OU pick) TRAVA
+ * no jogo — nada anda sozinho; o tick garante o bookkeeping do draft que já
+ * fechou. Abre a própria transação com lock — nunca chamar de dentro de outra
+ * transação. Idempotente: no-op quando não há nada a fazer.
  */
 export async function tickDraftSalaCampeonato(salaId: string): Promise<boolean> {
   return db.transaction(async (tx: any) => {
@@ -284,11 +269,8 @@ export async function aplicarAcaoSalaCampeonato(
   if (!meuLado) return { ok: false, erro: "nao_e_do_time" };
   if (meuLado !== draft.currentTeam) return { ok: false, erro: "fora_do_turno" };
 
-  // Ban vencido: quem sanea é o avaliador (chamado ANTES da ação); se ainda
-  // assim venceu, a ação chegou tarde. Pick vencido: TRAVA — aceita.
-  if (draft.currentPhase === "ban" && Date.now() > new Date(draft.turnDeadlineAt).getTime() + DRAFT_GRACE_MS) {
-    return { ok: false, erro: "tempo_expirado" };
-  }
+  // Ban vencido agora também VALE (travou até alguém agir — igual ao pick):
+  // a ação atrasada é aceita normalmente; não há mais `tempo_expirado` aqui.
 
   const champ = typeof championId === "string" ? championId.trim() : "";
   if (!champ || champ.length > 50) return { ok: false, erro: "campeao_invalido" };

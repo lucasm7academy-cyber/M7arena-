@@ -126,10 +126,9 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   // Sala de TIMES (ADR-085/086): o estado por jogo (PRONTO, sorteio, escolhas)
   // e a série (quando é campeonato) entram no shape para o front desenhar.
   if (m.mode === "campeonato" || m.mode === "time_vs_time_livre") {
-    // Tick preguiçoso do draft de times (mesmo padrão do tick da sala normal):
-    // BAN vencido vira ban VAZIO e o turno passa na hora — qualquer leitura do
-    // shape (o polling de 5s de qualquer aba aberta) resolve; PICK vencido NÃO
-    // anda (trava — ADR-083). Sem isso a sala só destravava no cron de 10 min.
+    // Tick preguiçoso do draft de times: turno vencido (ban OU pick) TRAVA no
+    // jogo — nada anda sozinho; o tick garante o bookkeeping do draft fechado
+    // a cada leitura do shape (o polling de 5s de qualquer aba cai aqui).
     if (m.status === "camp_draft") {
       const mudou = await tickDraftSalaCampeonato(m.id);
       if (mudou) notifyMatchChange(String(m.salaNum));

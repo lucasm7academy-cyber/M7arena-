@@ -93,8 +93,9 @@ export async function runCron(d: any = db) {
   }
   if (draftsResolvidos > 0) console.log(`[cron] draft: ${draftsResolvidos} sala(s) avaliada(s)`);
 
-  // 2b. Draft da SALA CAMPEONATO (passo 5, ADR-081/083): ban vencido vira ban
-  //     vazio; pick vencido TRAVA (nunca cancela — o adm destrava se precisar).
+  // 2b. Draft da SALA CAMPEONATO (passo 5, ADR-081): turno vencido (ban OU
+  //     pick) TRAVA no jogo — espera alguém agir; nunca cancela (o adm
+  //     destrava se precisar). O cron mantém o bookkeeping do draft fechado.
   let campeonatoDraftsResolvidos = 0;
   const emDraftCampeonato = await d
     .select({ id: matches.id, salaNum: matches.salaNum })

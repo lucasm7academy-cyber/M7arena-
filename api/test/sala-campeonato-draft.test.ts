@@ -182,7 +182,7 @@ describe("draft da sala campeonato (passo 5)", () => {
     assert.equal(bans.length, 10, "5 bans por lado");
   });
 
-  test("ban vencido vira ban vazio e avança (catch-up)", async () => {
+  test("ban vencido TRAVA igual ao pick: não avança sozinho; ban atrasado continua valendo", async () => {
     const { sala } = await paraCampDraft(ctx);
     await ctx.db
       .update(matchDrafts)
@@ -192,11 +192,16 @@ describe("draft da sala campeonato (passo 5)", () => {
       const [m] = await tx.select().from(matches).where(eq(matches.id, sala.id)).limit(1).for("update");
       await avaliarDraftSalaCampeonato(tx, m);
     });
-    const draft = await lerDraft(ctx, sala.id, 1);
-    const vazios = [...draft!.blueBans, ...draft!.redBans].filter((c: any) => c === null);
-    assert.ok(vazios.length >= 1, "ban vencido registrado como vazio");
-    assert.ok(draft!.currentTurn >= 2, `catch-up avançou (turno ${draft!.currentTurn})`);
-    assert.equal(draft!.status, "ongoing");
+    const travado = await lerDraft(ctx, sala.id, 1);
+    assert.equal(travado!.currentTurn, 0, "ban vencido NÃO avança (trava)");
+    assert.equal(travado!.status, "ongoing");
+    const vazios = [...travado!.blueBans, ...travado!.redBans].filter((c: any) => c === null);
+    assert.equal(vazios.length, 0, "nenhum ban vazio aplicado");
+
+    const tarde = await acaoDraft(ctx, sala, "ban", usuarioDoLado(travado!.currentTeam), "Zed");
+    assert.equal(tarde.ok, true, "ban atrasado é aceito");
+    const depois = await lerDraft(ctx, sala.id, 1);
+    assert.equal(depois!.currentTurn, 1);
   });
 
   test("pick vencido TRAVA: não avança e a escolha atrasada continua valendo", async () => {
