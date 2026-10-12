@@ -298,6 +298,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const labelEquipeB = nomeTimeB || (nomeB.startsWith('BLUE-SIDE') || nomeB.startsWith('RED-SIDE')
     ? (ladoEquipeB === 'blue' ? 'BLUE-SIDE' : 'RED-SIDE')
     : nomeB);
+  // Visão de transmissão (telespectador): o time que JOGA DE AZUL fica à
+  // ESQUERDA e o de VERMELHO à direita — seguindo a escolha de lado, igual às
+  // bolas do draft (antes as logos grandes ficavam fixas A X B).
+  const timeNaEsquerda = ladoEquipeA === 'blue' ? timeA : timeB;
+  const timeNaDireita = ladoEquipeA === 'blue' ? timeB : timeA;
   // Coluna da esquerda = equipe que joga de AZUL; da direita = de VERMELHO.
   const equipeEsquerda: 'A' | 'B' = ladoEquipeA === 'blue' ? 'A' : 'B';
   const equipeDireita: 'A' | 'B' = equipeEsquerda === 'A' ? 'B' : 'A';
@@ -579,24 +584,24 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[110vmin] flex flex-col items-center gap-[2.5vmin] z-40 pointer-events-none">
           <div className="flex items-center justify-center gap-[6vmin] w-full">
             <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">
-              {timeA?.logo ? (
-                <img src={timeA.logo} alt="" className="w-[18vmin] h-[18vmin] object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]" />
+              {timeNaEsquerda?.logo ? (
+                <img src={timeNaEsquerda.logo} alt="" className="w-[18vmin] h-[18vmin] object-contain drop-shadow-[0_0_30px_rgba(59,130,246,0.35)]" />
               ) : (
                 <div className="w-[18vmin] h-[18vmin] bg-white/5 border border-white/10" />
               )}
               <span className="text-[2.2vmin] font-black uppercase tracking-[0.25em] text-white/90 truncate max-w-full px-[1vmin]">
-                {timeA?.nome ?? ''}
+                {timeNaEsquerda?.nome ?? ''}
               </span>
             </div>
             <span className="text-[7vmin] font-black text-white/60 leading-none drop-shadow-lg">X</span>
             <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">
-              {timeB?.logo ? (
-                <img src={timeB.logo} alt="" className="w-[18vmin] h-[18vmin] object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]" />
+              {timeNaDireita?.logo ? (
+                <img src={timeNaDireita.logo} alt="" className="w-[18vmin] h-[18vmin] object-contain drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" />
               ) : (
                 <div className="w-[18vmin] h-[18vmin] bg-white/5 border border-white/10" />
               )}
               <span className="text-[2.2vmin] font-black uppercase tracking-[0.25em] text-white/90 truncate max-w-full px-[1vmin]">
-                {timeB?.nome ?? ''}
+                {timeNaDireita?.nome ?? ''}
               </span>
             </div>
           </div>
