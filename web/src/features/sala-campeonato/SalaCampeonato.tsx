@@ -157,9 +157,11 @@ export default function SalaCampeonato() {
     const uid = perfil?.id;
     if (!uid) return;
     fetch(`/api/teams/by-user/${uid}`, { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rows) => {
-        const ids = (Array.isArray(rows) ? rows : [])
+      .then((r) => (r.ok ? r.json() : null))
+      .then((resp) => {
+        // A rota devolve { memberships: [...], teams: [...] } (não um array).
+        const arr = Array.isArray(resp) ? resp : resp?.memberships ?? [];
+        const ids = (Array.isArray(arr) ? arr : [])
           .map((t: any) => t?.time_id ?? t?.team_id ?? t?.id)
           .filter(Boolean);
         setMeusTimes(ids);
@@ -293,7 +295,6 @@ export default function SalaCampeonato() {
     const pronto = lado === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
     const valorVaga = !!jogador && (jogador.id === eu || jogador.user_id === eu);
     const cor = lado === 'blue' ? '#3B82F6' : '#ef4444';
-    const podeEntrar = estado === 'camp_vagas' && (!serie || meuLado === lado);
     return (
       <div
         key={lado}
@@ -349,8 +350,14 @@ export default function SalaCampeonato() {
                 navigate('/login');
                 return;
               }
-              if (!podeEntrar) {
-                toast.error(serie ? 'Essa vaga é do outro time.' : 'A sala não está aceitando entradas agora.');
+              if (estado !== 'camp_vagas') {
+                toast.error('A sala não está aceitando entradas agora.');
+                return;
+              }
+              // Bloqueio local SÓ quando temos certeza de que a vaga é de outro
+              // time; na dúvida (dados ainda carregando), quem decide é o servidor.
+              if (serie && meuLado && meuLado !== lado) {
+                toast.error('Essa vaga é do outro time.');
                 return;
               }
               chamar('/sala-campeonato/entrar', { side: lado });
