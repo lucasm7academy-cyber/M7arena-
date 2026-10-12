@@ -18,12 +18,13 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, Ban, Check } from 'lucide-react';
+import { Search, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FiShieldOff } from 'react-icons/fi';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
-import { traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
+import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
+import { CHAMPION_POSITIONS, type RoleFiltro } from './championPositions';
 
 interface DraftRoomProps {
   draft: SalaDraft;
@@ -204,6 +205,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const [version, setVersion] = useState('16.20.1');
   const [selectedChamp, setSelectedChamp] = useState<Champion | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  // Filtro de rota (como no client do LoL): null = todos; clicar de novo limpa.
+  const [roleFiltro, setRoleFiltro] = useState<RoleFiltro | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
@@ -292,8 +295,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const filteredChampions = useMemo(() => {
     return (Object.values(champions) as Champion[])
       .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(c => !roleFiltro || (CHAMPION_POSITIONS[c.key] ?? []).includes(roleFiltro))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [champions, searchTerm]);
+  }, [champions, searchTerm, roleFiltro]);
 
   // Quantidade de slots por lado — vem das regras do modo (5/5 no 5v5 e
   // time_vs_time; o modo com draft define), nunca de um if no componente.
@@ -448,7 +452,34 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
       {/* CENTER - CHAMPION GRID */}
       <div className="absolute top-[12vmin] left-1/2 -translate-x-1/2 w-full max-w-[85vmin] flex flex-col gap-[1vmin] z-40">
-        <div className="flex justify-end mb-[0.5vmin]">
+        <div className="flex items-center justify-end gap-[1vmin] mb-[0.5vmin]">
+          {/* Filtro de rota (igual ao client do LoL) — ícones do ROLE_CONFIG
+              (/perfil). Clicar filtra; clicar de novo limpa o filtro. */}
+          <div className="flex items-center gap-[0.5vmin]">
+            {(['TOP', 'JG', 'MID', 'ADC', 'SUP'] as const).map((r) => {
+              const ativo = roleFiltro === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRoleFiltro(ativo ? null : r)}
+                  title={`Filtrar por ${ROLE_CONFIG[r].label}`}
+                  className={`group flex items-center gap-[0.6vmin] px-[1vmin] py-[0.7vmin] border transition-colors cursor-pointer ${
+                    ativo ? 'border-[#c89b3c] bg-[#c89b3c]/15' : 'border-white/10 bg-black/70 hover:border-white/30'
+                  }`}
+                >
+                  <img
+                    src={ROLE_CONFIG[r].img}
+                    alt={ROLE_CONFIG[r].label}
+                    className={`w-[2.4vmin] h-[2.4vmin] object-contain ${ativo ? '' : 'opacity-60 group-hover:opacity-90'}`}
+                  />
+                  <span className={`text-[1.1vmin] font-bold uppercase tracking-wider ${ativo ? 'text-[#c89b3c]' : 'text-white/55 group-hover:text-white/80'}`}>
+                    {ROLE_CONFIG[r].label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
           <div className="relative w-[30vmin]">
             <Search className="absolute left-[1vmin] top-1/2 -translate-y-1/2 w-[1.8vmin] h-[1.8vmin] text-[#c89b3c]" />
             <input
@@ -525,21 +556,6 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
         {colunaPicks(equipeDireita, true)}
       </div>
-
-      {/* AVISO DE ESPECTADOR (GLOBAL) */}
-      {!possoJogar && (
-        <div className="absolute bottom-[12vmin] left-1/2 -translate-x-1/2 px-[3vmin] py-[0.8vmin] bg-yellow-500/10 border border-yellow-500/20 rounded-full z-50">
-          <p className="text-yellow-400 text-[1.2vmin] font-bold">👁 Você está como espectador</p>
-        </div>
-      )}
-
-      {/* Selo de pronto */}
-      {isMeuTurno && selectedChamp && (
-        <div className="absolute top-[16vmin] left-1/2 -translate-x-1/2 z-50 flex items-center gap-[1vmin] px-[2vmin] py-[0.8vmin] bg-[#c89b3c]/10 border border-[#c89b3c]/30 rounded-full">
-          <Check className="w-[1.6vmin] h-[1.6vmin] text-[#c89b3c]" />
-          <span className="text-[1.2vmin] font-bold text-[#c89b3c] uppercase tracking-widest">Confirme sua escolha</span>
-        </div>
-      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
