@@ -378,8 +378,12 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           ? 'radial-gradient(circle at center, rgba(127,29,29,0.4) 0%, #000 70%)'
           : 'radial-gradient(circle at center, rgba(30,58,138,0.4) 0%, #000 70%)',
       }} />
-      {/* Fundo padrão das salas/lobby (mesma imagem), como nas salas normais */}
+      {/* Fundo padrão das salas/lobby — MESMA composição do LayoutWrapper
+          (imagem + fade radial pro preto + sombra em gradiente na base),
+          igual ao fundo do /lobby */}
       <img src="/images/fundo_elite.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
 
       {/* HEADER SECTION - TIMER + FASE */}
       <div className="relative pt-[2vmin] flex flex-col items-center z-40">
@@ -416,13 +420,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           <div className="absolute left-1/2 top-0 h-full w-[1px] bg-white/40 -translate-x-1/2" />
         </div>
 
-        {/* Números do timer: só para quem JOGA — o telespectador fica apenas
-            com a barra (o número não diz nada pra quem não vai agir). */}
-        {possoJogar && (
-          <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
-            {segundos}
-          </div>
-        )}
+        {/* Números do timer — visíveis para TODOS, telespectador incluído
+            (pedido do usuário 2026-10-12). */}
+        <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
+          {segundos}
+        </div>
       </div>
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
