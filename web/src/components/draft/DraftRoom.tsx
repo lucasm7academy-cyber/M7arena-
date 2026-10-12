@@ -372,12 +372,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
   return (
     <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
-      {/* DYNAMIC BACKGROUND */}
-      <div className="absolute inset-0" style={{
-        background: fase === 'ban'
-          ? 'radial-gradient(circle at center, rgba(127,29,29,0.4) 0%, #000 70%)'
-          : 'radial-gradient(circle at center, rgba(30,58,138,0.4) 0%, #000 70%)',
-      }} />
+      {/* (O brilho azul/vermelho por fase foi removido — pedido do usuário:
+          fundo agora é o padrão das salas/lobby, sem tint de cor) */}
       {/* Fundo padrão das salas/lobby — MESMA composição do LayoutWrapper
           (imagem + fade radial pro preto + sombra em gradiente na base),
           igual ao fundo do /lobby */}
