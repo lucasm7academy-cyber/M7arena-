@@ -37,6 +37,12 @@ interface DraftRoomProps {
   onPreview?: (championId: string | null) => void;
   /** Prévia recebida de outro jogador da sala (selecionado, ainda não confirmado). */
   previewExterno?: { championId: string | null; side: 'blue' | 'red' | null } | null;
+  /**
+   * Lado EM JOGO do time A (sala de campeonato: vem das escolhas da sala).
+   * `undefined`/`blue` = sem troca (A joga de azul). 'red' = trocou: a tela
+   * mostra o time A no lado vermelho e o B no azul (painéis, bans e picks).
+   */
+  ladoDoTimeA?: 'blue' | 'red' | null;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -182,7 +188,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, previe
 
       <div className="text-center min-h-[3.5vmin]">
         <h2 className="text-[2.5vmin] font-bold text-white uppercase tracking-tighter mb-[0.5vmin]">
-          {champNaBola ? (propria ? champNaBola.name : `${champNaBola.name} (prévia)`) : ''}
+          {champNaBola ? champNaBola.name : ''}
         </h2>
       </div>
     </div>
@@ -192,7 +198,7 @@ function TeamPanel({ lado, emTurno, fase, selected, meuTime, jogadorNome, previe
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
-  draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno,
+  draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -236,8 +242,24 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     const tag = (p.tag || '').replace('#', '');
     return tag ? `${p.nome}#${tag}` : p.nome;
   };
-  const nomeBlue = formatarNome(jogadores.find((j: any) => j.is_time_a && j.role === roleEmTurno), 'BLUE-SIDE');
-  const nomeRed = formatarNome(jogadores.find((j: any) => !j.is_time_a && j.role === roleEmTurno), 'RED-SIDE');
+  const nomeA = formatarNome(jogadores.find((j: any) => j.is_time_a && j.role === roleEmTurno), 'BLUE-SIDE');
+  const nomeB = formatarNome(jogadores.find((j: any) => !j.is_time_a && j.role === roleEmTurno), 'RED-SIDE');
+
+  // Lado EM JOGO de cada EQUIPE (os arrays do draft são por equipe: blue_* =
+  // time A, red_* = time B). Na sala de campeonato o lado vem das escolhas;
+  // nas salas normais sem escolha fica A=azul / B=vermelho. A tela mostra cada
+  // equipe no lado que ELA ESCOLHEU — painéis, bans e picks seguem esse lado.
+  const ladoEquipeA: 'blue' | 'red' = ladoDoTimeA === 'red' ? 'red' : 'blue';
+  const ladoEquipeB: 'blue' | 'red' = ladoEquipeA === 'blue' ? 'red' : 'blue';
+  const labelEquipeA = nomeA.startsWith('BLUE-SIDE') || nomeA.startsWith('RED-SIDE')
+    ? (ladoEquipeA === 'blue' ? 'BLUE-SIDE' : 'RED-SIDE')
+    : nomeA;
+  const labelEquipeB = nomeB.startsWith('BLUE-SIDE') || nomeB.startsWith('RED-SIDE')
+    ? (ladoEquipeB === 'blue' ? 'BLUE-SIDE' : 'RED-SIDE')
+    : nomeB;
+  // Coluna da esquerda = equipe que joga de AZUL; da direita = de VERMELHO.
+  const equipeEsquerda: 'A' | 'B' = ladoEquipeA === 'blue' ? 'A' : 'B';
+  const equipeDireita: 'A' | 'B' = equipeEsquerda === 'A' ? 'B' : 'A';
 
   const jaUsado = (champId: string) =>
     draft.blue_bans.includes(champId) || draft.red_bans.includes(champId) ||
@@ -301,6 +323,36 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const duracaoSeg = Math.max(1, Math.round((draft.duracao_turno_ms ?? 30_000) / 1000));
   const segundos = Math.max(0, Math.min(timer, duracaoSeg));
 
+  // Coluna de picks de uma EQUIPE, rotulada pelo lado EM JOGO dela.
+  const colunaPicks = (equipe: 'A' | 'B', direita: boolean) => {
+    const ehA = equipe === 'A';
+    const lado = ehA ? ladoEquipeA : ladoEquipeB;
+    const picks = ehA ? draft.blue_picks : draft.red_picks;
+    return (
+      <div className={`flex flex-col gap-[1vmin] ${direita ? 'items-end' : ''}`}>
+        <span
+          className={`text-[1.2vmin] font-bold uppercase tracking-[0.3em] ${
+            lado === 'blue' ? 'text-[#0000FF]/60 ml-[0.5vmin]' : 'text-[#FF0000]/60 mr-[0.5vmin]'
+          }`}
+        >
+          PICKS {lado.toUpperCase()}
+        </span>
+        <div className="flex gap-[0.8vmin]">
+          {[...Array(maxPicks)].map((_, i) => (
+            <PickSlot
+              key={`${equipe}-${i}`}
+              champion={picks[i] ?? null}
+              active={emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick'}
+              hidden={esconderPickAdversario(ehA ? 'blue' : 'red', picks[i] ?? null)}
+              champions={champions}
+              version={version}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
       {/* DYNAMIC BACKGROUND */}
@@ -333,36 +385,40 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         </div>
       </div>
 
-      {/* BANS SECTION */}
+      {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
       <div className="absolute top-[5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
-        <div className="flex flex-col gap-[0.5vmin] items-start">
-          <span className="text-[1vmin] font-bold text-white/20 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
-          <div className="flex flex-row gap-[1vmin]">
-            {[...Array(maxBans)].map((_, i) => (
-              <BanSlot key={`B-${i}`} champion={draft.blue_bans[i] ?? null}
-                active={emTurno && draft.current_team === 'blue' && fase === 'ban'}
-                jaBaniu={i < draft.blue_bans.length} champions={champions} version={version} />
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col gap-[0.5vmin] items-start">
-          <span className="text-[1vmin] font-bold text-white/20 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
-          <div className="flex flex-row gap-[1vmin]">
-            {[...Array(maxBans)].map((_, i) => (
-              <BanSlot key={`R-${i}`} champion={draft.red_bans[i] ?? null}
-                active={emTurno && draft.current_team === 'red' && fase === 'ban'}
-                jaBaniu={i < draft.red_bans.length} champions={champions} version={version} />
-            ))}
-          </div>
-        </div>
+        {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
+            const ehA = equipe === 'A';
+            const dataSide = ehA ? 'blue' : 'red';
+            const bans = ehA ? draft.blue_bans : draft.red_bans;
+            return (
+              <div key={equipe} className="flex flex-col gap-[0.5vmin] items-start">
+                <span className="text-[1vmin] font-bold text-white/20 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
+                <div className="flex flex-row gap-[1vmin]">
+                  {[...Array(maxBans)].map((_, i) => (
+                    <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
+                      active={emTurno && draft.current_team === dataSide && fase === 'ban'}
+                      jaBaniu={i < bans.length} champions={champions} version={version} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
       </div>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA — painéis no lado em jogo de cada equipe */}
       <div className="absolute inset-0 flex items-center justify-between px-[4vmin] pointer-events-none z-30">
-        <TeamPanel lado="blue" emTurno={emTurno && draft.current_team === 'blue'} fase={fase}
-          selected={selectedChamp} meuTime={meuTime} jogadorNome={nomeBlue} preview={previewBlue} />
-        <TeamPanel lado="red" emTurno={emTurno && draft.current_team === 'red'} fase={fase}
-          selected={selectedChamp} meuTime={meuTime} jogadorNome={nomeRed} preview={previewRed} />
+        {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
+          const ehA = equipe === 'A';
+          const dataSide = ehA ? 'blue' : 'red';
+          return (
+            <TeamPanel key={equipe} lado={dataSide}
+              emTurno={emTurno && draft.current_team === dataSide} fase={fase}
+              selected={selectedChamp} meuTime={meuTime}
+              jogadorNome={ehA ? labelEquipeA : labelEquipeB}
+              preview={ehA ? previewBlue : previewRed} />
+          );
+        })}
       </div>
 
       {/* CENTER - CHAMPION GRID */}
@@ -414,17 +470,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
       {/* FOOTER PICKS & ACTION BUTTON */}
       <div className="absolute bottom-[2vmin] left-0 right-0 flex items-end justify-between px-[4vmin] z-50">
-        <div className="flex flex-col gap-[1vmin]">
-          <span className="text-[1.2vmin] font-bold text-[#0000FF]/60 uppercase tracking-[0.3em] ml-[0.5vmin]">PICKS AZUL</span>
-          <div className="flex gap-[0.8vmin]">
-            {[...Array(maxPicks)].map((_, i) => (
-              <PickSlot key={`BP-${i}`} champion={draft.blue_picks[i] ?? null}
-                active={emTurno && draft.current_team === 'blue' && fase === 'pick'}
-                hidden={esconderPickAdversario('blue', draft.blue_picks[i] ?? null)}
-                champions={champions} version={version} />
-            ))}
-          </div>
-        </div>
+        {colunaPicks(equipeEsquerda, false)}
 
         <div className="mb-[2vmin] relative">
           <button
@@ -452,17 +498,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           </button>
         </div>
 
-        <div className="flex flex-col gap-[1vmin] items-end">
-          <span className="text-[1.2vmin] font-bold text-[#FF0000]/60 uppercase tracking-[0.3em] mr-[0.5vmin]">PICKS VERMELHO</span>
-          <div className="flex gap-[0.8vmin]">
-            {[...Array(maxPicks)].map((_, i) => (
-              <PickSlot key={`RP-${i}`} champion={draft.red_picks[i] ?? null}
-                active={emTurno && draft.current_team === 'red' && fase === 'pick'}
-                hidden={esconderPickAdversario('red', draft.red_picks[i] ?? null)}
-                champions={champions} version={version} />
-            ))}
-          </div>
-        </div>
+        {colunaPicks(equipeDireita, true)}
       </div>
 
       {/* AVISO DE ESPECTADOR (GLOBAL) */}

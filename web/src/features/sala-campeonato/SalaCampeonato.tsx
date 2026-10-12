@@ -3,7 +3,7 @@
 // da sala normal — display redondo (anéis + hub + HUD), vagas usando o próprio
 // componente VagaSlot (com a foto do time no lugar do ícone de rota) e top bar
 // idêntica. O servidor é a autoridade; esta tela só desenha e pede ações.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Radio, Share2, Shield, Trophy } from 'lucide-react';
@@ -111,6 +111,7 @@ export default function SalaCampeonato() {
   const [compartilhado, setCompartilhado] = useState(false);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<{ championId: string | null; side: 'blue' | 'red' | null } | null>(null);
+  const animacaoFeita = useRef<string | null>(null);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -327,6 +328,66 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
+  // ANIMAÇÃO DE TROCA DE LADOS: quando o time A escolheu jogar de VERMELHO,
+  // mostramos os times trocando de lado antes do draft (uma vez por jogo).
+  const animKey = `${sala.id}-${camp?.jogo ?? 1}`;
+  const deveAnimarTroca =
+    estado === 'camp_draft' && camp?.lado_time_a === 'red' && animacaoFeita.current !== animKey;
+  useEffect(() => {
+    if (!deveAnimarTroca) return;
+    const t = setTimeout(() => {
+      animacaoFeita.current = animKey;
+      setTick((x) => x + 1);
+    }, 2600);
+    return () => clearTimeout(t);
+  }, [deveAnimarTroca, animKey]);
+
+  if (deveAnimarTroca) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-[#050505] flex flex-col items-center justify-center overflow-hidden text-white">
+        <img src="/images/fundo_elite.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
+        <div className="absolute inset-x-[8vw] top-[10vh] flex justify-between text-[11px] md:text-[1.4vmin] font-black uppercase tracking-[0.4em]">
+          <span className="text-[#3B82F6]">Blue-Side</span>
+          <span className="text-[#ef4444]">Red-Side</span>
+        </div>
+
+        <div className="relative w-full h-[30vh]">
+          {/* Time A (vaga azul) escolheu o vermelho: desliza da esquerda p/ direita */}
+          <motion.div
+            initial={{ left: '18%', x: '-50%' }}
+            animate={{ left: '82%', x: '-50%' }}
+            transition={{ duration: 1.6, ease: 'easeInOut' }}
+            className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+          >
+            {sala.time_a_logo ? <img src={sala.time_a_logo} alt="" className="w-20 h-20 md:w-[12vmin] md:h-[12vmin] object-contain" /> : null}
+            <span className="text-lg md:text-[2.4vmin] font-black uppercase tracking-wide">{sala.time_a_nome || 'Time A'}</span>
+          </motion.div>
+          <motion.div
+            initial={{ left: '82%', x: '-50%' }}
+            animate={{ left: '18%', x: '-50%' }}
+            transition={{ duration: 1.6, ease: 'easeInOut' }}
+            className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+          >
+            {sala.time_b_logo ? <img src={sala.time_b_logo} alt="" className="w-20 h-20 md:w-[12vmin] md:h-[12vmin] object-contain" /> : null}
+            <span className="text-lg md:text-[2.4vmin] font-black uppercase tracking-wide">{sala.time_b_nome || 'Time B'}</span>
+          </motion.div>
+        </div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-[4vh] text-[#FFB700] text-xl md:text-[3vmin] font-black uppercase tracking-[0.5em]"
+        >
+          Troca de Lados
+        </motion.p>
+        <p className="mt-2 text-white/50 text-xs md:text-[1.2vmin] font-bold uppercase tracking-[0.3em] text-center px-4">
+          {sala.time_a_tag} joga de vermelho · {sala.time_b_tag} joga de azul
+        </p>
+      </div>
+    );
+  }
+
   // Draft em TELA CHEIA (igual à sala normal): durante o draft a sala não fica
   // junto na página — o DraftRoom ocupa a tela e, quando fecha, a sala volta
   // sozinha (o estado muda para camp_jogo e o polling/WS atualizam sem reload).
@@ -341,6 +402,7 @@ export default function SalaCampeonato() {
         onPickar={(champ: string) => acaoDraft('pick', champ)}
         onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
         previewExterno={previewDraft}
+        ladoDoTimeA={camp?.lado_time_a ?? null}
       />
     );
   }
