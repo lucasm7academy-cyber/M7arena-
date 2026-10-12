@@ -109,6 +109,7 @@ export default function SalaCampeonato() {
   const [meusTimes, setMeusTimes] = useState<string[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [compartilhado, setCompartilhado] = useState(false);
+  const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -213,6 +214,18 @@ export default function SalaCampeonato() {
       setTimeout(() => setCompartilhado(false), 2500);
     } catch {
       toast.error('Não foi possível copiar o link.');
+    }
+  };
+
+  // Botão de copiar centralizado, estilo da sala normal.
+  const copiarCodigo = async () => {
+    try {
+      await navigator.clipboard.writeText(sala?.codigo_partida ?? '');
+      setCodigoCopiado(true);
+      toast.success('Código copiado! Cole no LoL em Jogar > Torneios > Código de Torneio.');
+      setTimeout(() => setCodigoCopiado(false), 2500);
+    } catch {
+      toast.error('Não foi possível copiar.');
     }
   };
 
@@ -672,6 +685,32 @@ export default function SalaCampeonato() {
                 )}
               </div>
             </motion.button>
+
+            {/* Iniciar Live (streamer): roxa estilo Twitch, ao lado de Convidar */}
+            {perfil?.cargo === 'streamer' && !!serie && !camp?.live && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                disabled={!!ocupado}
+                onClick={async () => {
+                  const r = await chamar('/sala-campeonato/live');
+                  if (r?.ok) toast.success('Live criada! Os jogadores já recebem o aviso de assistir.');
+                }}
+                className="relative p-[1px] bg-[#9146FF]/70 hover:bg-[#9146FF] transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                style={{ clipPath: CUT_BUTTON }}
+                title="Iniciar live na Twitch"
+              >
+                <div
+                  className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#9146FF] hover:bg-[#a866ff] flex items-center justify-center gap-1.5 text-white transition-colors"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <Radio className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                  <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                    Iniciar Live
+                  </span>
+                </div>
+              </motion.button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -766,72 +805,58 @@ export default function SalaCampeonato() {
         )}
 
         {/* Código + live */}
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_FRAME }}>
-            <div className="bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col gap-2" style={{ clipPath: CUT_INNER }}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Código da partida</p>
-              {sala.codigo_partida ? (
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs sm:text-sm text-[#00F0FF] break-all bg-black/40 border border-white/10 px-3 py-2">
-                    {sala.codigo_partida}
-                  </code>
-                  <button
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(sala.codigo_partida);
-                        toast.success('Código copiado! Cole no LoL em Jogar > Torneios > Código de Torneio.');
-                      } catch {
-                        toast.error('Não foi possível copiar.');
-                      }
-                    }}
-                    className="p-2.5 text-black bg-[#00F0FF] cursor-pointer"
-                    style={{ clipPath: CUT_BUTTON }}
-                    title="Copiar código"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <p className="text-xs text-white/40">
-                  O código fica visível para os jogadores das duas equipes e para a organização até o fim da série.
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col items-center gap-3">
+          {sala.codigo_partida && (
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="flex flex-col items-center gap-2 md:gap-[1.5vmin] pb-4"
+            >
+              <p className="text-xs md:text-[1.4vmin] font-black text-white uppercase tracking-[0.4em] md:tracking-[0.5em]">
+                Prepare-se para a batalha
+              </p>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={copiarCodigo}
+                className="relative p-[1.5px] bg-black cursor-pointer"
+                style={{ clipPath: CUT_FRAME }}
+              >
+                <span
+                  className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.5vmin] transition-colors"
+                  style={{ clipPath: CUT_INNER }}
+                >
+                  {codigoCopiado ? (
+                    <Check className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                  ) : (
+                    <Copy className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                  )}
+                  {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
+                </span>
+              </motion.button>
+            </motion.div>
+          )}
 
-          <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_FRAME }}>
-            <div className="bg-[#0a0a0c]/90 backdrop-blur-sm p-4 flex flex-col gap-2" style={{ clipPath: CUT_INNER }}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Transmissão</p>
-              {camp?.live ? (
-                <a
-                  href={`https://twitch.tv/${camp.live.twitch}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 text-sm font-black uppercase text-[#9146FF] hover:brightness-125"
-                >
-                  <Radio className="w-4 h-4 animate-pulse" />
-                  ASSISTA ESSE JOGO AO VIVO!
-                  <span className="text-white/50 text-xs normal-case ml-1">@{camp.live.twitch}</span>
-                </a>
-              ) : perfil?.cargo === 'streamer' && !!serie ? (
-                <button
-                  disabled={!!ocupado}
-                  onClick={async () => {
-                    const r = await chamar('/sala-campeonato/live');
-                    if (r?.ok) toast.success('Live criada! Ela aparece no site em "Assista Agora".');
-                  }}
-                  className="self-start px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white bg-[#9146FF] disabled:opacity-50 cursor-pointer"
-                  style={{ clipPath: CUT_BUTTON }}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Radio className="w-4 h-4" /> Iniciar live
-                  </span>
-                </button>
-              ) : (
-                <p className="text-xs text-white/40">Sem transmissão no momento.</p>
-              )}
-            </div>
-          </div>
+          {/* NOTIFICAÇÃO "ASSISTA AO VIVO" — canto esquerdo inferior, branca,
+              atualiza sozinha pelo polling/WS quando a live do jogo sobe */}
+          {camp?.live && (
+            <a
+              href={`https://twitch.tv/${camp.live.twitch}`}
+              target="_blank"
+              rel="noreferrer"
+              className="fixed left-3 bottom-3 sm:left-5 sm:bottom-5 z-[80] bg-white text-black shadow-2xl px-4 py-3 flex items-center gap-3 hover:scale-[1.03] transition-transform"
+              style={{ clipPath: CUT_BUTTON }}
+              title="Assistir na Twitch"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shrink-0" />
+              <span className="flex flex-col leading-tight">
+                <span className="text-sm font-black uppercase tracking-wide">Assista ao vivo</span>
+                <span className="text-[11px] font-bold text-[#9146FF]">@{camp.live.twitch}</span>
+              </span>
+            </a>
+          )}
+
+          {/* (Transmissão migrou para o menu — botão Iniciar Live — e para a
+              notificação fixa "Assista ao vivo") */}
         </div>
       </div>
     </div>
