@@ -111,7 +111,8 @@ export default function SalaCampeonato() {
   const [compartilhado, setCompartilhado] = useState(false);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<{ championId: string | null; side: 'blue' | 'red' | null } | null>(null);
-  const animacaoFeita = useRef<string | null>(null);
+  const [bannerTroca, setBannerTroca] = useState(false);
+  const trocaFeita = useRef<string | null>(null);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -160,18 +161,18 @@ export default function SalaCampeonato() {
     carregar();
   }, [carregar]);
 
-  // Agenda o fim da animação de "Troca de Lados" (uma vez por jogo). Hook no
-  // TOPO de propósito: precisa rodar em toda renderização (regra dos hooks).
+  // TROCA DE LADOS NA SALA: quando o time da vaga azul escolhe jogar de
+  // vermelho, as colunas deslizam devagar (≈3s) para os lados novos — todos na
+  // sala veem (estado vem pelo shape/WS/polling). Uma vez por jogo; o banner
+  // aparece junto. Hook no TOPO de propósito (regra dos hooks).
   useEffect(() => {
-    const estadoAtual: string = sala?.estado ?? '';
-    const campAtual = sala?.campeonato;
-    const key = sala ? `${sala.id}-${campAtual?.jogo ?? 1}` : null;
-    if (!key || estadoAtual !== 'camp_draft' || campAtual?.lado_time_a !== 'red') return;
-    if (animacaoFeita.current === key) return;
-    const t = setTimeout(() => {
-      animacaoFeita.current = key;
-      setTick((x) => x + 1);
-    }, 2600);
+    const key = sala ? `${sala.id}-${sala?.campeonato?.jogo ?? 1}` : null;
+    if (!key) return;
+    const trocou = sala?.campeonato?.lado_time_a === 'red' && !!sala?.campeonato?.lado_escolhido;
+    if (!trocou || trocaFeita.current === key) return;
+    trocaFeita.current = key;
+    setBannerTroca(true);
+    const t = setTimeout(() => setBannerTroca(false), 3200);
     return () => clearTimeout(t);
   }, [sala]);
 
@@ -343,58 +344,8 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
-  // ANIMAÇÃO DE TROCA DE LADOS: quando o time A escolheu jogar de VERMELHO,
-  // mostramos os times trocando de lado antes do draft (uma vez por jogo).
-  const animKey = `${sala.id}-${camp?.jogo ?? 1}`;
-  const deveAnimarTroca =
-    estado === 'camp_draft' && camp?.lado_time_a === 'red' && animacaoFeita.current !== animKey;
-
-  if (deveAnimarTroca) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-[#050505] flex flex-col items-center justify-center overflow-hidden text-white">
-        <img src="/images/fundo_elite.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
-        <div className="absolute inset-x-[8vw] top-[10vh] flex justify-between text-[11px] md:text-[1.4vmin] font-black uppercase tracking-[0.4em]">
-          <span className="text-[#3B82F6]">Blue-Side</span>
-          <span className="text-[#ef4444]">Red-Side</span>
-        </div>
-
-        <div className="relative w-full h-[30vh]">
-          {/* Time A (vaga azul) escolheu o vermelho: desliza da esquerda p/ direita */}
-          <motion.div
-            initial={{ left: '18%', x: '-50%' }}
-            animate={{ left: '82%', x: '-50%' }}
-            transition={{ duration: 1.6, ease: 'easeInOut' }}
-            className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
-          >
-            {sala.time_a_logo ? <img src={sala.time_a_logo} alt="" className="w-20 h-20 md:w-[12vmin] md:h-[12vmin] object-contain" /> : null}
-            <span className="text-lg md:text-[2.4vmin] font-black uppercase tracking-wide">{sala.time_a_nome || 'Time A'}</span>
-          </motion.div>
-          <motion.div
-            initial={{ left: '82%', x: '-50%' }}
-            animate={{ left: '18%', x: '-50%' }}
-            transition={{ duration: 1.6, ease: 'easeInOut' }}
-            className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
-          >
-            {sala.time_b_logo ? <img src={sala.time_b_logo} alt="" className="w-20 h-20 md:w-[12vmin] md:h-[12vmin] object-contain" /> : null}
-            <span className="text-lg md:text-[2.4vmin] font-black uppercase tracking-wide">{sala.time_b_nome || 'Time B'}</span>
-          </motion.div>
-        </div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-[4vh] text-[#FFB700] text-xl md:text-[3vmin] font-black uppercase tracking-[0.5em]"
-        >
-          Troca de Lados
-        </motion.p>
-        <p className="mt-2 text-white/50 text-xs md:text-[1.2vmin] font-bold uppercase tracking-[0.3em] text-center px-4">
-          {sala.time_a_tag} joga de vermelho · {sala.time_b_tag} joga de azul
-        </p>
-      </div>
-    );
-  }
-
+  // TROCA DE LADOS: a animação acontece NA SALA (colunas deslizando, ver
+  // useState acima) — nada de tela cheia antes do draft.
   // Draft em TELA CHEIA (igual à sala normal): durante o draft a sala não fica
   // junto na página — o DraftRoom ocupa a tela e, quando fecha, a sala volta
   // sozinha (o estado muda para camp_jogo e o polling/WS atualizam sem reload).
@@ -416,14 +367,28 @@ export default function SalaCampeonato() {
 
   // ── LATERAIS: etiqueta + nome do time + VAGA (componente VagaSlot, idêntico
   //    ao da sala normal; a foto do time entra no lugar do ícone de rota) ────
-  const renderTimeColumn = (lado: 'blue' | 'red') => {
+  //
+  // TROCA DE LADOS NA SALA: as colunas são posicionais (esquerda = lado azul,
+  // direita = lado vermelho) e o TIME de cada lado vem das escolhas. Quando o
+  // time da vaga azul escolhe jogar de vermelho, as colunas deslizam devagar
+  // (~3s via framer layout) — todos na sala veem, porque o estado chega pelo
+  // shape (WebSocket + polling).
+  const ladoJogoA: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
+  const equipeNoLado = (posicao: 'blue' | 'red'): 'blue' | 'red' =>
+    (ladoJogoA === posicao ? 'blue' : 'red');
+
+  const renderTimeColumn = (lado: 'blue' | 'red', posicao: 'blue' | 'red') => {
     const jogador = lado === 'blue' ? jogadorBlue : jogadorRed;
     const pronto = lado === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
     const valorVaga = !!jogador && (jogador.id === eu || jogador.user_id === eu);
-    const cor = lado === 'blue' ? '#3B82F6' : '#ef4444';
+    // Cor pelo lado EM JOGO (posição na sala), não pela vaga: é o que mostra a
+    // troca acontecendo para todo mundo.
+    const cor = posicao === 'blue' ? '#3B82F6' : '#ef4444';
     return (
-      <div
+      <motion.div
         key={lado}
+        layout
+        transition={{ duration: 3, ease: 'easeInOut' }}
         className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
       >
         {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) */}
@@ -439,7 +404,7 @@ export default function SalaCampeonato() {
             style={{ clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)' }}
           >
             <span className="block text-xs md:text-[1.4vmin] font-black uppercase tracking-[0.4em]" style={{ color: cor }}>
-              {lado === 'blue' ? 'Blue-Side' : 'Red-Side'}
+              {posicao === 'blue' ? 'Blue-Side' : 'Red-Side'}
             </span>
           </div>
         </div>
@@ -467,7 +432,7 @@ export default function SalaCampeonato() {
             nome={jogador?.nome}
             tag={jogador?.tag}
             icone={jogador?.avatar}
-            isTimeA={lado === 'blue'}
+            isTimeA={posicao === 'blue'}
             role={tagDoLado(lado) || (lado === 'blue' ? 'TIME A' : 'TIME B')}
             isConfirmado={!!pronto && estado === 'camp_prontos'}
             aoEntrar={() => {
@@ -511,7 +476,7 @@ export default function SalaCampeonato() {
             Pronto!
           </span>
         )}
-      </div>
+      </motion.div>
     );
   };
 
@@ -859,10 +824,33 @@ export default function SalaCampeonato() {
       <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 flex flex-col gap-4">
         <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
           <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[70vmin] py-2 md:py-0">
-            {renderTimeColumn('blue')}
+            {renderTimeColumn(equipeNoLado('blue'), 'blue')}
             {renderHub()}
-            {renderTimeColumn('red')}
+            {renderTimeColumn(equipeNoLado('red'), 'red')}
           </div>
+
+          {/* Banner da troca de lados — aparece junto com o deslize das
+              colunas e some sozinho (~3s). pointer-events-none: não bloqueia. */}
+          <AnimatePresence>
+            {bannerTroca && (
+              <motion.div
+                key="banner-troca"
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="absolute top-1 md:top-[2vmin] left-1/2 -translate-x-1/2 z-[55] pointer-events-none"
+              >
+                <div className="px-5 py-2 md:px-[2.5vmin] md:py-[1.4vmin] bg-black/80 backdrop-blur-md border border-[#FFB700]/40 text-center whitespace-nowrap">
+                  <p className="text-base md:text-[2.2vmin] font-black uppercase tracking-[0.35em] text-[#FFB700]">
+                    Troca de Lados
+                  </p>
+                  <p className="mt-0.5 text-[9px] md:text-[1.1vmin] font-bold uppercase tracking-[0.2em] text-white/70">
+                    {tagDoLado('blue')} joga de {ladoJogoA === 'blue' ? 'azul' : 'vermelho'} · {tagDoLado('red')} joga de {ladoJogoA === 'blue' ? 'vermelho' : 'azul'}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ESCOLHA DE LADO — overlay interativo (mesmo padrão do overlay de
               confirmação da sala: z-[60], círculo central) */}
