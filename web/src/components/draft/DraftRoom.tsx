@@ -455,7 +455,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <div className="flex items-center justify-between gap-[1vmin] mb-[0.5vmin]">
           {/* Filtro de rota (igual ao client do LoL) — ícones do ROLE_CONFIG
               (/perfil). Clicar filtra; clicar de novo limpa o filtro. */}
-          <div className="flex items-center gap-[0.5vmin]">
+          <div className="flex items-center gap-[0.35vmin]">
             {(['TOP', 'JG', 'MID', 'ADC', 'SUP'] as const).map((r) => {
               const ativo = roleFiltro === r;
               return (
@@ -464,16 +464,16 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
                   type="button"
                   onClick={() => setRoleFiltro(ativo ? null : r)}
                   title={`Filtrar por ${ROLE_CONFIG[r].label}`}
-                  className={`group flex items-center gap-[0.6vmin] px-[1vmin] py-[0.7vmin] border transition-colors cursor-pointer ${
+                  className={`group flex items-center gap-[0.4vmin] px-[0.6vmin] py-[0.45vmin] border transition-colors cursor-pointer ${
                     ativo ? 'border-[#c89b3c] bg-[#c89b3c]/15' : 'border-white/10 bg-black/70 hover:border-white/30'
                   }`}
                 >
                   <img
                     src={ROLE_CONFIG[r].img}
                     alt={ROLE_CONFIG[r].label}
-                    className={`w-[2.4vmin] h-[2.4vmin] object-contain ${ativo ? '' : 'opacity-60 group-hover:opacity-90'}`}
+                    className={`w-[1.8vmin] h-[1.8vmin] object-contain ${ativo ? '' : 'opacity-60 group-hover:opacity-90'}`}
                   />
-                  <span className={`text-[1.1vmin] font-bold uppercase tracking-wider ${ativo ? 'text-[#c89b3c]' : 'text-white/55 group-hover:text-white/80'}`}>
+                  <span className={`text-[1vmin] font-bold uppercase tracking-wide ${ativo ? 'text-[#c89b3c]' : 'text-white/55 group-hover:text-white/80'}`}>
                     {ROLE_CONFIG[r].label}
                   </span>
                 </button>
