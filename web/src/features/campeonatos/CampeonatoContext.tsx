@@ -46,7 +46,7 @@ export interface CampeonatoContextType {
   editingMatchIndex: number | null;
   jogoStatusAtStart: string | null;
   editFormData: { data: string; hora: string; action: "propose" | "counter" | "accept" | "arbitrate" | "finish"; placar: string };
-  adminMatchData: { timeA: string; timeB: string; fase: string; data: string; hora: string };
+  adminMatchData: { timeA: string; timeB: string; fase: string; data: string; hora: string; bestOf: number };
   registrationData: { teamId: string; discord: string; whatsapp: string };
   isRegistered: boolean;
   isAdmin: boolean;
@@ -94,6 +94,7 @@ export interface CampeonatoContextType {
   handleBracketScoreChange: (type: string, side: string, round: string, index: number, teamSlot: "s1" | "s2" | "winner" | "t1" | "t2", delta: any) => void;
   handleUpdateSchedule: (e: React.FormEvent) => void;
   handleCreateAdminMatch: (e: React.FormEvent) => void;
+  handleSetSeriesFormat: (jogo: any, bestOf: number) => void;
   handleUpdateThemeColor: (color: string) => void;
   handleAbrirChaveamento: () => void;
   handleSortearGrupos: () => void;
@@ -141,6 +142,7 @@ export function CampeonatoProvider({
     fase: "Fase de Grupos", // ajustado ao formato do campeonato quando ele carrega
     data: "",
     hora: "",
+    bestOf: 3, // MD1=1 / MD3=3 / MD5=5 — formato da série escolhido no painel
   });
   const [registrationData, setRegistrationData] = useState({
     teamId: "",
@@ -1181,6 +1183,10 @@ export function CampeonatoProvider({
     // capitão (não-admin) continua sendo proposta do time dele.
     const temHorario = !!(adminMatchData.data && adminMatchData.hora);
     const adminCriouAberto = isAdmin && !temHorario;
+    // Formato da série escolhido no painel (MD1/MD3/MD5); inválido/ausente = MD3.
+    const bestOfCriado = [1, 3, 5].includes(Number(adminMatchData.bestOf))
+      ? Number(adminMatchData.bestOf)
+      : 3;
     const newMatch = {
       id: `manual-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
       data: temHorario ? adminMatchData.data : "A COMBINAR",
@@ -1191,6 +1197,8 @@ export function CampeonatoProvider({
       timeB: adminMatchData.timeB,
       iconeB: "Swords",
       status: adminCriouAberto ? "combinando" : "proposto",
+      // A série (código Riot/sala/MD) usa este formato: MD3 é o default.
+      best_of: bestOfCriado,
       proposedBy: adminCriouAberto
         ? ""
         : isAdmin
@@ -1211,6 +1219,34 @@ export function CampeonatoProvider({
       });
 
     setIsAdminMatchModalOpen(false);
+  };
+
+  // Formato da série (MD1/MD3/MD5) de um jogo JÁ existente: o admin troca no
+  // modal de gerenciar e o valor grava na hora pelo merge atômico — trocar o
+  // formato não toca status/placar, então não depende do submit do modal.
+  const handleSetSeriesFormat = (jogo: any, bestOf: number) => {
+    if (!isAdmin || !jogo) return;
+    const valor = Number(bestOf);
+    if (![1, 3, 5].includes(valor)) return;
+    if (Number(jogo.best_of ?? 3) === valor) return;
+
+    const updated = { ...jogo, best_of: valor };
+    const newCronograma = (campeonato.cronograma || []).map((c: any) =>
+      c === jogo ? updated : c,
+    );
+    setCampeonato({ ...campeonato, cronograma: newCronograma });
+
+    // `best_of` (shape legado) e `bestOf` (camel) são aceitos pelo servidor.
+    api.tournaments.mergeCronograma(id, [{ ...updated, bestOf: valor }])
+      .then(() => {
+        toast.success(`Formato da série definido: MD${valor}`);
+      })
+      .catch((error: any) => {
+        console.error("Erro ao salvar formato da série:", error.message);
+        alert(
+          `Falha ao salvar o formato da série. Recarregue a página.\n\nDetalhe: ${error.message}`,
+        );
+      });
   };
 
   const dateOptions = [
@@ -1432,6 +1468,7 @@ export function CampeonatoProvider({
     handleBracketScoreChange,
     handleUpdateSchedule,
     handleCreateAdminMatch,
+    handleSetSeriesFormat,
     handleUpdateThemeColor,
     handleAbrirChaveamento,
     handleSortearGrupos,

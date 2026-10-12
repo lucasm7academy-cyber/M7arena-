@@ -19,7 +19,7 @@ import { tournaments, tournamentMatches, bracketMatches, tournamentTeams, tourna
 import { teams } from "../../../db/schema/teams.js";
 import { users, userRoles } from "../../../db/schema/identidade.js";
 import { transmissoes } from "../../../db/schema/conteudo.js";
-import { atribuirCodigoSerie } from "./serie-campeonato.js";
+import { atribuirCodigoSerie, normalizarBestOf } from "./serie-campeonato.js";
 import { findUserTeamMemberships } from "./team-membership.js";
 import { instanteJogo, validarStreamer, montarTituloJogo } from "./streams.js";
 import { notifyMatchChange } from "./match-flow.js";
@@ -175,7 +175,10 @@ export async function criarSalaCampeonato(
       codigo = await atribuirCodigoSerie(tx, "5v5");
       if (codigo === "SEM-CODIGO-AGUARDE") return { ok: false, erro: "sem_codigo" };
     }
-    const bestOf = serie.phase === "finals" ? 5 : 3;
+    // Formato da série: `best_of` gravado na criação do jogo (MD1/MD3/MD5 no
+    // Painel de Arbitragem). Sem valor válido → MD3. Não é mais heurística de
+    // fase (phase não existe em bracket e é sempre group_stage no cronograma).
+    const bestOf = normalizarBestOf(serie.bestOf) ?? 3;
 
     if (isBracket) {
       await tx

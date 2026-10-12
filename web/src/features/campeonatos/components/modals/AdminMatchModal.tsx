@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { X, Swords, Check, Layers } from "lucide-react";
+import { X, Swords, Check, Layers, Trophy } from "lucide-react";
 
 export const AdminMatchModal = ({ isOpen, onClose, campeonato, isAdmin, adminMatchData, setAdminMatchData, onSubmit, myTeams }: any) => {
   // Só oferece escolha de fase em campeonatos com grupos (liga); no mata-mata
@@ -122,6 +122,35 @@ export const AdminMatchModal = ({ isOpen, onClose, campeonato, isAdmin, adminMat
                 </option>
                 <option value="Mata-Mata" className="bg-[#0A0A0A]">
                   Mata-Mata (não soma nos grupos)
+                </option>
+              </select>
+            </div>
+          )}
+
+          {isAdmin && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                <Trophy className="w-3 h-3" />
+                Formato da Série
+              </label>
+              <select
+                value={adminMatchData.bestOf ?? 3}
+                onChange={(e) =>
+                  setAdminMatchData({
+                    ...adminMatchData,
+                    bestOf: Number(e.target.value),
+                  })
+                }
+                className="w-full bg-[#0c0c10] px-4 py-3 rounded-xl border border-white/10 text-white focus:outline-none transition-all font-black text-xs cursor-pointer"
+              >
+                <option value={1} className="bg-[#0A0A0A]">
+                  MD1 — jogo único
+                </option>
+                <option value={3} className="bg-[#0A0A0A]">
+                  MD3 — melhor de 3 (padrão)
+                </option>
+                <option value={5} className="bg-[#0A0A0A]">
+                  MD5 — melhor de 5 (final)
                 </option>
               </select>
             </div>

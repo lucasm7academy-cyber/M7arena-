@@ -17,6 +17,7 @@ import {
   ladoVencedorDaJogada,
   killsPorLado,
   bestOfToWins,
+  normalizarBestOf,
   buscaIdsPorCodigo,
 } from "../src/lib/serie-campeonato.js";
 
@@ -49,6 +50,18 @@ describe("serie-campeonato (motor de série)", () => {
     assert.equal(bestOfToWins(3), 2);
     assert.equal(bestOfToWins(5), 3);
     assert.equal(bestOfToWins(1), 1);
+  });
+
+  test("normalizarBestOf: 1/3/5 válidos; qualquer outro → null (default MD3)", () => {
+    assert.equal(normalizarBestOf(1), 1);
+    assert.equal(normalizarBestOf(3), 3);
+    assert.equal(normalizarBestOf(5), 5);
+    assert.equal(normalizarBestOf("5"), 5);
+    assert.equal(normalizarBestOf(0), null);
+    assert.equal(normalizarBestOf(2), null);
+    assert.equal(normalizarBestOf(4), null);
+    assert.equal(normalizarBestOf(undefined), null);
+    assert.equal(normalizarBestOf(null), null);
   });
 
   test("ladoVencedorDaJogada decide pelo roster, não pelo teamId (lados invertidos)", () => {
@@ -174,10 +187,11 @@ describe("serie-campeonato (motor de série)", () => {
     assert.equal(r.winnerSide, null);
   });
 
-  test("bestOf=1 no banco não fecha a série no 1-0 (piso MD3)", async () => {
+  test("bestOf=1 (MD1 escolhido) fecha a série na primeira vitória", async () => {
     const db = ctx.db;
-    // Incidente Tesouro/Kraken 2026-09-11: jogos criados com best_of=1 faziam o
-    // motor fechar a série na primeira vitória. O motor deve tratar como MD3.
+    // MD1 é uma escolha explícita do admin (Painel de Arbitragem). O piso
+    // antigo de MD3 existia quando best_of=1 era dado corrompido (incidente
+    // Tesouro/Kraken 2026-09-11) — agora só valores inválidos caem no MD3.
     const alvo = {
       id: "aaa-serie-md1",
       modo: "groups",
@@ -200,10 +214,87 @@ describe("serie-campeonato (motor de série)", () => {
       rostA: new Set(["PA1"]),
       rostB: new Set(["PB1"]),
     });
-    assert.equal(r.estado, "em_andamento");
+    assert.equal(r.estado, "finalizada");
     assert.equal(r.scoreA, 1);
     assert.equal(r.scoreB, 0);
+    assert.equal(r.winnerSide, "a");
+  });
+
+  test("bestOf inválido no banco (ex.: 4) cai no default MD3 e não fecha no 1-0", async () => {
+    const db = ctx.db;
+    const alvo = {
+      id: "aaa-serie-invalido",
+      modo: "groups",
+      matchId: "aaa-serie-invalido",
+      bracketMatchId: null,
+      codigoPartida: "BR-CAMP-COD-INV",
+      bestOf: 4,
+      teamAId: null,
+      teamBId: null,
+      status: "em_andamento",
+      scoreA: 0,
+      scoreB: 0,
+    };
+    const r = await resolverSerie(db, alvo, {
+      buscarIds: async () => ["M1"],
+      buscarMatch: async () => partidaRiot([
+        { puuid: "PA1", teamId: 100, win: true },
+        { puuid: "PB1", teamId: 200, win: false },
+      ]),
+      rostA: new Set(["PA1"]),
+      rostB: new Set(["PB1"]),
+    });
+    assert.equal(r.estado, "em_andamento");
+    assert.equal(r.scoreA, 1);
     assert.equal(r.winnerSide, null);
+  });
+
+  test("MD5 (bestOf=5) não fecha com 2 vitórias; fecha com 3", async () => {
+    const db = ctx.db;
+    const alvo = {
+      id: "aaa-serie-md5",
+      modo: "groups",
+      matchId: "aaa-serie-md5",
+      bracketMatchId: null,
+      codigoPartida: "BR-CAMP-COD-MD5",
+      bestOf: 5,
+      teamAId: null,
+      teamBId: null,
+      status: "em_andamento",
+      scoreA: 0,
+      scoreB: 0,
+    };
+    const vitoriaA = () => partidaRiot([
+      { puuid: "PA1", teamId: 100, win: true },
+      { puuid: "PB1", teamId: 200, win: false },
+    ]);
+    const vitoriaB = () => partidaRiot([
+      { puuid: "PA1", teamId: 100, win: false },
+      { puuid: "PB1", teamId: 200, win: true },
+    ]);
+    const jogos = [vitoriaA(), vitoriaA(), vitoriaB()];
+
+    // 2x1: ainda não fecha um MD5 (faltam 3 vitórias).
+    const r1 = await resolverSerie(db, alvo, {
+      buscarIds: async () => ["M1", "M2", "M3"],
+      buscarMatch: async (id: string) => (id === "M1" ? jogos[0] : id === "M2" ? jogos[1] : jogos[2]),
+      rostA: new Set(["PA1"]),
+      rostB: new Set(["PB1"]),
+    });
+    assert.equal(r1.estado, "em_andamento");
+    assert.equal(r1.scoreA, 2);
+    assert.equal(r1.scoreB, 1);
+
+    // 3x1: fecha.
+    const r2 = await resolverSerie(db, alvo, {
+      buscarIds: async () => ["M1", "M2", "M3", "M4"],
+      buscarMatch: async (id: string) => (id === "M1" ? jogos[0] : id === "M2" ? jogos[1] : id === "M3" ? jogos[2] : vitoriaA()),
+      rostA: new Set(["PA1"]),
+      rostB: new Set(["PB1"]),
+    });
+    assert.equal(r2.estado, "finalizada");
+    assert.equal(r2.scoreA, 3);
+    assert.equal(r2.winnerSide, "a");
   });
 
   test("recontagem ignora o placar salvo e não infla (bug do 3x0)", async () => {
@@ -588,5 +679,49 @@ describe("serie-campeonato (persistência no banco)", () => {
     const jogo = leg.cronograma.find((j: any) => j.id === serie.matchKey);
     assert.equal(jogo.status, "finalizado");
     assert.equal(jogo.placar, "2 - 0");
+  });
+
+  test("storeCronograma grava best_of (MD1/MD3/MD5) e merge sem o campo não zera", async () => {
+    const { db, torneio, serie } = await criaCenario();
+    const { storeCronograma } = await import("../src/lib/tournament-store.js");
+
+    const jogo = (extra: any = {}) => ({
+      id: serie.matchKey,
+      fase: serie.phaseLabel,
+      timeA: serie.teamATag,
+      timeB: serie.teamBTag,
+      status: "confirmado",
+      data: serie.displayDate,
+      hora: serie.displayTime,
+      placar: serie.scoreDisplay,
+      ...extra,
+    });
+
+    // Criação com MD5 escolhido → grava.
+    await storeCronograma(torneio.id, [jogo({ best_of: 5 })], true, db);
+    let [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(m.bestOf, 5);
+
+    // Merge do mesmo jogo SEM o campo não pode zerar o formato (edição de
+    // horário/placar não deve perder o MD escolhido).
+    await storeCronograma(torneio.id, [jogo()], true, db);
+    [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(m.bestOf, 5);
+
+    // Valor inválido é ignorado (mantém o gravado).
+    await storeCronograma(torneio.id, [jogo({ best_of: 4 })], true, db);
+    [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(m.bestOf, 5);
+
+    // MD1 explícito grava 1.
+    await storeCronograma(torneio.id, [jogo({ best_of: 1 })], true, db);
+    [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, serie.id));
+    assert.equal(m.bestOf, 1);
+
+    // O shape que o front consome devolve o formato escolhido.
+    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const leg = await toLegacyTournament(torneio.id, db);
+    const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
+    assert.equal(jogoLeg?.best_of, 1);
   });
 });

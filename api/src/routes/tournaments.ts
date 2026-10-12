@@ -6,7 +6,7 @@ import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tourna
 import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario, removerInscricao } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
-import { atribuirCodigoSerie, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
+import { atribuirCodigoSerie, normalizarBestOf, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
 import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie } from "../lib/tournament-access.js";
 import { recalcularPdlGlobal } from "../lib/tournament-pdl.js";
 import { criarSalaCampeonato } from "../lib/sala-campeonato.js";
@@ -471,10 +471,11 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
       const modo = t.gameId === "lol" ? "5v5" : "5v5";
       codigo = await atribuirCodigoSerie(db, modo);
       if (codigo === "SEM-CODIGO-AGUARDE") return res.status(409).json({ error: "Sem código disponível no momento" });
-      // Final (phase='finals') é MD5 (best_of 5); as demais fases são MD3.
-      // Nunca herdar bestOf do banco: dado legado com 1 fechava a série na
-      // primeira vitória (incidente Tesouro/Kraken, 2026-09-11).
-      const bestOf = serie.phase === "finals" ? 5 : 3;
+      // Formato da série: `best_of` gravado na criação do jogo (MD1/MD3/MD5 no
+      // Painel de Arbitragem). Sem valor válido → MD3. A heurística antiga
+      // (final→MD5) nunca disparava: phase não existe em bracket e no
+      // cronograma é sempre group_stage.
+      const bestOf = normalizarBestOf(serie.bestOf) ?? 3;
 
       if (isBracket) {
         await db

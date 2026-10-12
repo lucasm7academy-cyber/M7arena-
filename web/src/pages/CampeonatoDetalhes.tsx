@@ -93,6 +93,7 @@ const CampeonatoDetalhesInner = ({
     handleBracketScoreChange,
     handleUpdateSchedule,
     handleCreateAdminMatch,
+    handleSetSeriesFormat,
     handleRegisterSubmit,
     handleUpdateThemeColor,
     handleAbrirChaveamento,
@@ -402,7 +403,7 @@ const CampeonatoDetalhesInner = ({
               )}
             </AnimatePresence>
 
-            <AgendamentoModal isOpen={isScheduleEditModalOpen} onClose={() => setIsScheduleEditModalOpen(false)} campeonato={campeonato} editFormData={editFormData} setEditFormData={setEditFormData} jogoStatusAtStart={jogoStatusAtStart} editingMatchIndex={editingMatchIndex} onSubmit={handleUpdateSchedule} onDelete={handleDeleteMatch} myTeams={myTeams} isAdmin={isAdmin} id={id} setCampeonato={setCampeonato} />
+            <AgendamentoModal isOpen={isScheduleEditModalOpen} onClose={() => setIsScheduleEditModalOpen(false)} campeonato={campeonato} editFormData={editFormData} setEditFormData={setEditFormData} jogoStatusAtStart={jogoStatusAtStart} editingMatchIndex={editingMatchIndex} onSubmit={handleUpdateSchedule} onDelete={handleDeleteMatch} myTeams={myTeams} isAdmin={isAdmin} id={id} setCampeonato={setCampeonato} onSetBestOf={handleSetSeriesFormat} />
 
             <AdminMatchModal isOpen={isAdminMatchModalOpen} onClose={() => setIsAdminMatchModalOpen(false)} campeonato={campeonato} isAdmin={isAdmin} adminMatchData={adminMatchData} setAdminMatchData={setAdminMatchData} onSubmit={handleCreateAdminMatch} myTeams={myTeams} />
           </div>

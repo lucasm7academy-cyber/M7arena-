@@ -42,6 +42,17 @@ export function bestOfToWins(bestOf: number): number {
 }
 
 /**
+ * Normaliza o formato de série escolhido pelo admin: MD1=1, MD3=3, MD5=5.
+ * Qualquer outro valor (dado legado/corrompido) devolve null e o chamador
+ * decide o default (3). O formato é gravado em `best_of` na criação do jogo
+ * (Painel de Arbitragem) — deixou de ser heurística de fase (ADR-062).
+ */
+export function normalizarBestOf(v: unknown): number | null {
+  const n = Number(v);
+  return n === 1 || n === 3 || n === 5 ? n : null;
+}
+
+/**
  * Atribui um código de partida livre do pool para uma SÉRIE de campeonato
  * (ADR-047). Reproduz o rodízio LRU de `atribuirCodigoPartida` (salas), mas
  * sem gravar `match_id` (a FK de `match_codes.match_id` aponta para `matches`,
@@ -315,11 +326,12 @@ export async function resolverSerie(
     rostApuuids = rostApuuids ?? a.puuids;
     rostBpuuids = rostBpuuids ?? b.puuids;
   }
-  // Piso de MD3: série de campeonato é MD3/MD5 (ADR-047). bestOf < 3 no banco
-  // (ex.: 1) fecharia a série na primeira vitória — incidente COPA DO TESOURO
-  // e COPA DO KRAKEN em 2026-09-11, em que jogos criados com best_of=1 foram
-  // "finalizados" no 1-0 com o jogo 2 ainda rolando.
-  const winsNeeded = bestOfToWins(Math.max(3, alvo.bestOf || 3));
+  // Formato da série vem do `best_of` gravado no jogo (MD1/MD3/MD5), escolhido
+  // pelo admin na criação (Painel de Arbitragem). Sem valor válido → MD3.
+  // O piso antigo de MD3 (incidente Tesouro/Kraken 2026-09-11) existia quando
+  // o formato era heurística de fase e best_of=1 no banco era dado corrompido;
+  // agora 1 é escolha explícita (MD1) e valor inválido cai no 3.
+  const winsNeeded = bestOfToWins(normalizarBestOf(alvo.bestOf) ?? 3);
 
   // Janela: do início da série até agora. A lista por PUUID não traz o código,
   // então o filtro final é no detalhe da partida (info.tournamentCode).

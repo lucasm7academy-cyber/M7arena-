@@ -33,6 +33,7 @@ export const AdminCriarJogo = () => {
             timeB: "",
             data: "",
             hora: "",
+            bestOf: 3, // reabre com MD3 pré-selecionado (padrão do painel)
           });
           setIsAdminMatchModalOpen(true);
         }}

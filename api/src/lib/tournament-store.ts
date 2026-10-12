@@ -24,6 +24,7 @@ import {
 import { teams } from "../../../db/schema/teams.js";
 import { matchCodes } from "../../../db/schema/matches.js";
 import { recalcularPdlGlobal } from "./tournament-pdl.js";
+import { normalizarBestOf } from "./serie-campeonato.js";
 import { encerrarTransmissoesDoJogo } from "./transmissoes.js";
 import { encerrarSalaCampeonato } from "./sala-campeonato.js";
 
@@ -117,6 +118,9 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
     const teamAId = await resolveTeamId(j.timeA, d);
     const teamBId = await resolveTeamId(j.timeB, d);
     const isFinalizado = j.status === "finalizado" || j.status === "finalizada";
+    // Formato da série (MD1/MD3/MD5) escolhido na criação do jogo. Só grava
+    // quando veio um valor válido — merge sem o campo não zera o formato.
+    const bestOf = normalizarBestOf(j.best_of ?? j.bestOf);
     const values = {
       matchKey: key,
       phaseLabel: j.fase ?? j.phaseLabel ?? "Grupo A",
@@ -131,6 +135,7 @@ export async function storeCronograma(tournamentId: string, cronograma: any[], m
       displayTime: j.hora ?? "--:--",
       proposedBy: j.proposedBy ?? "",
       status: j.status ?? "combinando",
+      ...(bestOf !== null ? { bestOf } : {}),
     };
     const matchRow = existingMatches.find((e: any) => e.key === key);
     if (matchRow) {
@@ -255,6 +260,11 @@ export async function storeBracket(tournamentId: string, bracket: any, d: any = 
       codigosParaLiberar.add(prev.codigoPartida);
     }
 
+    // Formato da série (MD1/MD3/MD5): a célula manda quando válida; senão
+    // preserva o que já havia; senão o default da posição — grande final é
+    // MD5 (é o que o card "Grande Final (MD5)" anuncia), demais rodadas MD3.
+    const ehGrandeFinal =
+      round === "grand_final" || section === "preFinal" || section === "grandFinal";
     rows.push({
       tournamentId,
       section,
@@ -268,7 +278,10 @@ export async function storeBracket(tournamentId: string, bracket: any, d: any = 
       scoreB: cell.s2 || 0,
       winnerSide: cell.winner ?? null,
       codigoPartida,
-      bestOf: prev?.bestOf ?? 3,
+      bestOf:
+        normalizarBestOf(cell.best_of) ??
+        normalizarBestOf(prev?.bestOf) ??
+        (ehGrandeFinal ? 5 : 3),
     });
   };
 

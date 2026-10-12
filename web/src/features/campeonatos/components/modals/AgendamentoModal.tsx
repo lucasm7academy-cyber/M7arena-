@@ -1,7 +1,7 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
 import { X, Clock, Minus, Plus } from "lucide-react";
 
-export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, setEditFormData, jogoStatusAtStart, editingMatchIndex, onSubmit, onDelete, isAdmin }: any) => {
+export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, setEditFormData, jogoStatusAtStart, editingMatchIndex, onSubmit, onDelete, isAdmin, onSetBestOf }: any) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -257,6 +257,46 @@ export const AgendamentoModal = ({ isOpen, onClose, campeonato, editFormData, se
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {isAdmin && editingMatchIndex !== null && (
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">
+                    Formato da Série
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[1, 3, 5].map((v) => {
+                      const atual = Number(
+                        (campeonato.cronograma[editingMatchIndex!] as any)?.best_of ?? 3,
+                      );
+                      const ativo = atual === v;
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() =>
+                            onSetBestOf(campeonato.cronograma[editingMatchIndex!], v)
+                          }
+                          className={`py-2.5 rounded-xl border font-black uppercase tracking-widest text-[10px] transition-all cursor-pointer ${
+                            ativo
+                              ? "text-black border-transparent shadow-lg"
+                              : "text-white/60 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white"
+                          }`}
+                          style={
+                            ativo
+                              ? { backgroundColor: campeonato.themeColor || "#FFB700" }
+                              : undefined
+                          }
+                        >
+                          MD{v}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-1 pt-0.5">
+                    Aplica na hora — a verificação e a sala usam este formato
+                  </p>
                 </div>
               )}
 
