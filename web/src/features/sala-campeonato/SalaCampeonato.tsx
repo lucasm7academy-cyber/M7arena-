@@ -321,6 +321,22 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
+  // Draft em TELA CHEIA (igual à sala normal): durante o draft a sala não fica
+  // junto na página — o DraftRoom ocupa a tela e, quando fecha, a sala volta
+  // sozinha (o estado muda para camp_jogo e o polling/WS atualizam sem reload).
+  if (estado === 'camp_draft' && camp?.draft) {
+    return (
+      <DraftRoom
+        draft={camp.draft}
+        jogadores={sala.jogadores ?? []}
+        usuarioId={eu}
+        timer={timerDraft}
+        onBanir={(champ: string) => acaoDraft('ban', champ)}
+        onPickar={(champ: string) => acaoDraft('pick', champ)}
+      />
+    );
+  }
+
   // ── LATERAIS: etiqueta + nome do time + VAGA (componente VagaSlot, idêntico
   //    ao da sala normal; a foto do time entra no lugar do ícone de rota) ────
   const renderTimeColumn = (lado: 'blue' | 'red') => {
@@ -837,19 +853,8 @@ export default function SalaCampeonato() {
           </AnimatePresence>
         </div>
 
-        {/* Draft (mesma tela do draft das salas) */}
-        {estado === 'camp_draft' && camp?.draft && (
-          <div className="w-full">
-            <DraftRoom
-              draft={camp.draft}
-              jogadores={sala.jogadores ?? []}
-              usuarioId={eu}
-              timer={timerDraft}
-              onBanir={(champ: string) => acaoDraft('ban', champ)}
-              onPickar={(champ: string) => acaoDraft('pick', champ)}
-            />
-          </div>
-        )}
+        {/* (O draft roda em tela cheia — early return acima; a sala volta
+            sozinha quando o draft fecha) */}
 
         {/* Código + live */}
         <div className="flex flex-col items-center gap-3">
