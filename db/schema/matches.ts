@@ -188,6 +188,10 @@ export const campeonatoSalaEstado = pgTable("campeonato_sala_estado", {
   escolhaTime: varchar("escolha_time", { length: 10 }), // 'blue' | 'red'
   ladoEscolhido: varchar("lado_escolhido", { length: 10 }), // 'blue' | 'red'
   pickOrderEscolhido: varchar("pick_order_escolhido", { length: 10 }), // 'first' | 'last'
+  // O que o PRIMEIRO escolhedor escolheu ('lado' | 'pick'): o sorteado (jogo 1)
+  // ou o perdedor (jogos 2+) escolhe lado OU pick order, e o adversário completa
+  // o que sobrar. NULL = fluxo antigo (lado vinha primeiro sempre).
+  primeiraEscolha: varchar("primeira_escolha", { length: 10 }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });

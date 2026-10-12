@@ -54,14 +54,20 @@ const TURN_TEMPLATE: { papel: "F" | "L"; phase: "ban" | "pick" }[] = [
 ];
 
 /**
- * Lado que tem o FIRST PICK: quem escolheu o pick order é `escolha_time`
- * (persistido ao fim de camp_lado); 'first' = ele mesmo, 'last' = o outro.
+ * Lado que tem o FIRST PICK (ADR-091). `escolha_time` fica com quem fez a
+ * ÚLTIMA escolha; o dono do pick order depende da ORDEM:
+ *  - primeiraEscolha = 'lado' (ou null, fluxo antigo): o pick veio por último →
+ *    o dono é o próprio escolha_time;
+ *  - primeiraEscolha = 'pick': o pick veio primeiro → o dono é o OUTRO.
+ * 'first' = o dono mesmo; 'last' = o outro.
  */
 export function ladoPrimeiroPick(estado: any): "blue" | "red" {
   if (!estado?.escolhaTime || !estado?.pickOrderEscolhido) return "blue";
   const o = estado.escolhaTime as "blue" | "red";
   const s = o === "blue" ? "red" : "blue";
-  return estado.pickOrderEscolhido === "first" ? o : s;
+  const dono = (estado.primeiraEscolha ?? "lado") === "lado" ? o : s;
+  const outro = dono === "blue" ? "red" : "blue";
+  return estado.pickOrderEscolhido === "first" ? dono : outro;
 }
 
 function ladoDoPapel(papel: "F" | "L", estado: any): "blue" | "red" {

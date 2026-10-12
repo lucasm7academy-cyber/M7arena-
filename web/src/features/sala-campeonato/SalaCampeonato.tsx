@@ -371,6 +371,9 @@ export default function SalaCampeonato() {
     if (!dl) return 30;
     return Math.max(0, Math.ceil((new Date(dl).getTime() - agoraServidor()) / 1000));
   })();
+  // Escolha de lado/pick (ADR-091): o que ainda falta escolher neste jogo.
+  const faltaLado = !camp?.lado_escolhido;
+  const faltaPick = !camp?.pick_order_escolhido;
   const estadoRotulo =
     estado === 'camp_vagas'
       ? 'Aguardando Times'
@@ -942,20 +945,69 @@ export default function SalaCampeonato() {
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full bg-black/60 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 md:p-[5vmin] border border-[#FFB700]/20"
               >
                 <span className="text-base md:text-[2.2vmin] font-black text-[#FFB700] uppercase tracking-[0.25em] text-center leading-tight">
-                  {!camp?.lado_escolhido
-                    ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO`
-                    : `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK`}
+                  {faltaLado && faltaPick
+                    ? `${tagDoLado(escolhendo)} ESCOLHE LADO OU PICK`
+                    : faltaLado
+                      ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO`
+                      : faltaPick
+                        ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK`
+                        : 'ESCOLHAS CONCLUÍDAS'}
                 </span>
-                {!camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && (
+
+                {/* Escolhedor com as DUAS opções abertas (ADR-091): linha de
+                    cima = LADO (vermelho/azul); linha de baixo = PICK
+                    (first/last). Ele escolhe UMA — o adversário completa o que
+                    sobrar. */}
+                {escolhendo && escolhendo === meuLadoEfetivo && faltaLado && faltaPick && (
+                  <div className="flex flex-col items-center gap-2 md:gap-[1.4vmin] mt-3 md:mt-[2vmin]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] md:text-[1.05vmin] font-black text-white/50 uppercase tracking-[0.25em] w-[6vmin] text-right">
+                        Lado
+                      </span>
+                      <button
+                        disabled={!!ocupado}
+                        onClick={() => chamar('/sala-campeonato/lado', { lado: 'red' })}
+                        className="px-3 py-1.5 text-[10.5px] md:text-[1.25vmin] font-black uppercase text-white bg-[#FF4655] disabled:opacity-50 cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        Vermelho
+                      </button>
+                      <button
+                        disabled={!!ocupado}
+                        onClick={() => chamar('/sala-campeonato/lado', { lado: 'blue' })}
+                        className="px-3 py-1.5 text-[10.5px] md:text-[1.25vmin] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50 cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        Azul
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] md:text-[1.05vmin] font-black text-white/50 uppercase tracking-[0.25em] w-[6vmin] text-right">
+                        Pick
+                      </span>
+                      <button
+                        disabled={!!ocupado}
+                        onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'first' })}
+                        className="px-3 py-1.5 text-[10.5px] md:text-[1.25vmin] font-black uppercase text-black bg-[#FFB700] disabled:opacity-50 cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        First
+                      </button>
+                      <button
+                        disabled={!!ocupado}
+                        onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'last' })}
+                        className="px-3 py-1.5 text-[10.5px] md:text-[1.25vmin] font-black uppercase text-white border border-white/20 bg-white/10 disabled:opacity-50 cursor-pointer"
+                        style={{ clipPath: CUT_BUTTON }}
+                      >
+                        Last
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Só falta o LADO (o adversário escolheu o pick primeiro) */}
+                {escolhendo && escolhendo === meuLadoEfetivo && faltaLado && !faltaPick && (
                   <div className="flex flex-wrap justify-center gap-2 mt-3 md:mt-[2vmin]">
-                    <button
-                      disabled={!!ocupado}
-                      onClick={() => chamar('/sala-campeonato/lado', { lado: 'blue' })}
-                      className="px-4 py-2 text-[11px] md:text-[1.3vmin] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50 cursor-pointer"
-                      style={{ clipPath: CUT_BUTTON }}
-                    >
-                      Escolher Azul
-                    </button>
                     <button
                       disabled={!!ocupado}
                       onClick={() => chamar('/sala-campeonato/lado', { lado: 'red' })}
@@ -964,9 +1016,19 @@ export default function SalaCampeonato() {
                     >
                       Escolher Vermelho
                     </button>
+                    <button
+                      disabled={!!ocupado}
+                      onClick={() => chamar('/sala-campeonato/lado', { lado: 'blue' })}
+                      className="px-4 py-2 text-[11px] md:text-[1.3vmin] font-black uppercase text-black bg-[#00F0FF] disabled:opacity-50 cursor-pointer"
+                      style={{ clipPath: CUT_BUTTON }}
+                    >
+                      Escolher Azul
+                    </button>
                   </div>
                 )}
-                {camp?.lado_escolhido && escolhendo && escolhendo === meuLadoEfetivo && !camp?.pick_order_escolhido && (
+
+                {/* Só falta o PICK (o adversário escolheu o lado primeiro) */}
+                {escolhendo && escolhendo === meuLadoEfetivo && !faltaLado && faltaPick && (
                   <div className="flex flex-wrap justify-center gap-2 mt-3 md:mt-[2vmin]">
                     <button
                       disabled={!!ocupado}
@@ -986,9 +1048,17 @@ export default function SalaCampeonato() {
                     </button>
                   </div>
                 )}
+
+                {/* Resumo do que já foi decidido */}
                 {camp?.lado_escolhido && (
                   <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em] mt-3 md:mt-[2vmin] text-center">
                     {nomeDoLado(camp.lado_escolhido)} joga de {camp.lado_escolhido === 'blue' ? 'azul' : 'vermelho'}
+                    {camp?.pick_order_escolhido ? ` · ${camp.pick_order_escolhido === 'first' ? 'First' : 'Last'} pick` : ''}
+                  </span>
+                )}
+                {!camp?.lado_escolhido && camp?.pick_order_escolhido && (
+                  <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em] mt-3 md:mt-[2vmin] text-center">
+                    {camp.pick_order_escolhido === 'first' ? 'First' : 'Last'} pick já escolhido
                   </span>
                 )}
               </motion.div>

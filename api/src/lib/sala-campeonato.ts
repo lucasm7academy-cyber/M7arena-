@@ -427,6 +427,7 @@ export async function marcarPronto(
       set.escolhaTime = escolhaTime;
       set.ladoEscolhido = null;
       set.pickOrderEscolhido = null;
+      set.primeiraEscolha = null;
       await tx.update(campeonatoSalaEstado).set(set).where(eq(campeonatoSalaEstado.matchId, sala.id));
       await tx.update(matches).set({ status: "camp_lado", updatedAt: new Date() }).where(eq(matches.id, sala.id));
       return { ok: true, estado: "camp_lado", avancou: true };
@@ -441,9 +442,11 @@ export async function marcarPronto(
 }
 
 /**
- * Escolha de LADO (ADR-079): só o time da vez (`escolha_time`) escolhe, e a vez
- * passa para o adversário escolher o first/last pick. `lado_escolhido` é o lado
- * que o time ESCOLHEDOR joga; o adversário fica com o outro.
+ * Escolha de LADO (ADR-091, ajusta a ADR-079): o time da vez (`escolha_time`)
+ * pode escolher o LADO agora — ou o pick order primeiro (ver escolherPickOrder);
+ * o adversário completa o que sobrar. `lado_escolhido` é o lado que o time
+ * ESCOLHEDOR joga; o adversário fica com o outro. Se o pick order JÁ tiver sido
+ * escolhido, esta escolha FECHA o par e a sala vai para o draft.
  */
 export async function escolherLado(
   d: any,
@@ -468,11 +471,28 @@ export async function escolherLado(
     if (meuLado !== estado.escolhaTime) return { ok: false, erro: "fora_da_vez" };
 
     const outro = estado.escolhaTime === "blue" ? "red" : "blue";
+    if (!estado.pickOrderEscolhido) {
+      // Escolheu o LADO primeiro: o adversário ainda escolhe o pick order.
+      await tx
+        .update(campeonatoSalaEstado)
+        .set({ ladoEscolhido: opts.lado, primeiraEscolha: "lado", escolhaTime: outro, updatedAt: new Date() })
+        .where(eq(campeonatoSalaEstado.matchId, sala.id));
+      return { ok: true, estado: "camp_lado" };
+    }
+
+    // O pick order já estava escolhido: esta escolha de lado FECHA o par.
     await tx
       .update(campeonatoSalaEstado)
-      .set({ ladoEscolhido: opts.lado, escolhaTime: outro, updatedAt: new Date() })
+      .set({ ladoEscolhido: opts.lado, updatedAt: new Date() })
       .where(eq(campeonatoSalaEstado.matchId, sala.id));
-    return { ok: true, estado: "camp_lado" };
+    await tx.update(matches).set({ status: "camp_draft", updatedAt: new Date() }).where(eq(matches.id, sala.id));
+    const [estadoAtual] = await tx
+      .select()
+      .from(campeonatoSalaEstado)
+      .where(eq(campeonatoSalaEstado.matchId, sala.id))
+      .limit(1);
+    await garantirDraftSalaCampeonato(tx, sala, estadoAtual);
+    return { ok: true, estado: "camp_draft" };
   });
 
   if (r?.ok) await notifyMatchChange(String(opts.salaNum));
@@ -480,9 +500,11 @@ export async function escolherLado(
 }
 
 /**
- * Escolha do FIRST/LAST PICK: só o adversário do escolhedor (a vez atual). Ao
- * concluir, a sala vai para `camp_draft`. `escolha_time` fica com o time que
- * escolheu o pick order — o draft (passo 5) usa isso para montar a ordem.
+ * Escolha do FIRST/LAST PICK (ADR-091, ajusta a ADR-079): o time da vez pode
+ * escolher o pick order AGORA — ou o lado primeiro (ver escolherLado); o
+ * adversário completa o que sobrar. Se o lado JÁ estiver escolhido, esta escolha
+ * FECHA o par e a sala vai para `camp_draft`. `escolha_time` fica com quem fez
+ * a última escolha — o draft usa isso + `primeira_escolha` para a ordem.
  */
 export async function escolherPickOrder(
   d: any,
@@ -499,7 +521,7 @@ export async function escolherPickOrder(
       .from(campeonatoSalaEstado)
       .where(eq(campeonatoSalaEstado.matchId, sala.id))
       .limit(1);
-    if (!estado?.escolhaTime || !estado.ladoEscolhido || estado.pickOrderEscolhido) {
+    if (!estado?.escolhaTime || estado.pickOrderEscolhido) {
       return { ok: false, erro: "estado_invalido" };
     }
 
@@ -507,6 +529,17 @@ export async function escolherPickOrder(
     if (!meuLado) return { ok: false, erro: "nao_e_do_time" };
     if (meuLado !== estado.escolhaTime) return { ok: false, erro: "fora_da_vez" };
 
+    const outro = estado.escolhaTime === "blue" ? "red" : "blue";
+    if (!estado.ladoEscolhido) {
+      // Escolheu o PICK primeiro: o adversário ainda escolhe o LADO.
+      await tx
+        .update(campeonatoSalaEstado)
+        .set({ pickOrderEscolhido: opts.ordem, primeiraEscolha: "pick", escolhaTime: outro, updatedAt: new Date() })
+        .where(eq(campeonatoSalaEstado.matchId, sala.id));
+      return { ok: true, estado: "camp_lado" };
+    }
+
+    // O lado já estava escolhido: esta escolha FECHA o par → draft.
     await tx
       .update(campeonatoSalaEstado)
       .set({ pickOrderEscolhido: opts.ordem, updatedAt: new Date() })
@@ -590,15 +623,21 @@ export async function iniciarLiveDaSala(
 }
 
 /**
- * Lado em jogo do TIME A depois das escolhas: S (quem escolheu o lado) é o
- * outro de `escolhaTime` (que fica com quem escolheu o pick order);
- * `lado_escolhido` é o lado de S. Time A = vaga azul.
+ * Lado em jogo do TIME A depois das escolhas (ADR-091). `escolha_time` fica com
+ * quem fez a ÚLTIMA escolha; quem escolheu o LADO depende da ORDEM:
+ *  - primeiraEscolha = 'lado' (ou null, fluxo antigo): o lado veio primeiro →
+ *    quem escolheu o lado é o OUTRO de escolha_time;
+ *  - primeiraEscolha = 'pick': o pick veio primeiro → o lado foi escolhido por
+ *    último, o próprio escolha_time.
+ * `lado_escolhido` é o lado de quem escolheu o lado. Time A = vaga azul.
  */
 function ladoEmJogoTimeA(estado: any): "blue" | "red" | null {
   if (!estado?.ladoEscolhido || !estado?.escolhaTime) return null;
-  const sVaga = estado.escolhaTime === "blue" ? "red" : "blue";
-  const oposto = estado.ladoEscolhido === "blue" ? "red" : "blue";
-  return sVaga === "blue" ? estado.ladoEscolhido : oposto;
+  const oposto = (l: string) => (l === "blue" ? "red" : "blue");
+  const sVaga = (estado.primeiraEscolha ?? "lado") === "lado"
+    ? oposto(estado.escolhaTime)
+    : estado.escolhaTime;
+  return sVaga === "blue" ? estado.ladoEscolhido : oposto(estado.ladoEscolhido);
 }
 
 /**
