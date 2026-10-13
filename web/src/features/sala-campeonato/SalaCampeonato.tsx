@@ -761,12 +761,31 @@ export default function SalaCampeonato() {
             ))}
           </div>
 
-          {/* VAGA do jogador (chip) */}
-          <div className="flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin] bg-white/5 border border-white/10">
+          {/* VAGA do jogador — mesmo tamanho do chip, MAS com a aparência do
+              card da sala (fundo sólido, borda/brilho na cor do lado, avatar
+              com anel e canto recortado) */}
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin] bg-[#050505] border-2 ${
+              posicao === 'blue'
+                ? 'border-blue-500/60 shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+                : 'border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
+            }`}
+            style={{ clipPath: CUT_BUTTON }}
+          >
             {jogador?.avatar ? (
-              <img src={jogador.avatar} alt="" className="w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full object-cover border border-white/20" />
+              <img
+                src={jogador.avatar}
+                alt=""
+                className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full object-cover border ${
+                  posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
+                }`}
+              />
             ) : (
-              <div className="w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full bg-white/10 border border-white/15" />
+              <div
+                className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full bg-white/10 border ${
+                  posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
+                }`}
+              />
             )}
             <span className="text-[11px] md:text-[1.4vmin] font-black uppercase tracking-wide text-white/90">
               {jogador?.nome ?? 'VAGA ABERTA'}
