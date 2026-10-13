@@ -725,73 +725,51 @@ ${link}`;
                     </div>
                     )}
 
-                    {/* CÍRCULO CENTRAL HUB — oculto na partida finalizada (o header
-                        de resultado no topo + lados blue/red mostram tudo) e no
-                        estado "Em análise" (o card quadrado central mostra o lineup).
-                        Desktop (md+): absoluto, no centro geométrico do MAIN entre os
-                        dois times. Mobile: entra no fluxo vertical — vagas do time A →
-                        hub → vagas do time B. */}
+                    {/* CENTRO NO ESTILO TRANSMISSÃO — sem o display redondo
+                        (pedido do usuário). Mantém TUDO que o hub mostrava:
+                        modo/modo apostado, selo de aposta (pote + prêmio) e o
+                        prompt de envio de resultado. Desktop: absoluto no
+                        centro; Mobile: entra no fluxo vertical. */}
                     {sala.estado !== 'encerrada' && sala.estado !== 'aguardando_revisao' && (
-                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
-                        {/* Outer rings */}
-                        <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
-                        <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
+                    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
+                        <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent" />
+                        {ehApostada ? (
+                            <span className="text-xs md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.4em] md:tracking-[0.5em]">
+                                Partida Valendo!
+                            </span>
+                        ) : (
+                            <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
+                                {sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}
+                            </span>
+                        )}
 
-                        {/* Main Hub Body */}
-                        <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
-                            <ArcaneIndicators />
-                            <CentralDisplay />
+                        {sala.estado === 'partida_iniciada' && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex flex-col items-center gap-1 md:gap-[1vmin] mt-1 md:mt-[1.5vmin]"
+                            >
+                                <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
+                                    Finalizou a partida?
+                                </span>
+                                <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
+                                    Envie os resultados no botão abaixo
+                                </span>
+                            </motion.div>
+                        )}
 
-                            {/* PARTIDA INICIADA — prompt de envio do resultado no
-                                display (fala com quem ainda não voltou da partida) */}
-                            {sala.estado === 'partida_iniciada' && (
-                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none">
-                                    <div
-                                        className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
-                                        <span className="text-xl md:text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)]">
-                                            Finalizou a partida?
-                                        </span>
-                                        <span className="text-xs md:text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
-                                            Envie os resultados no botão abaixo
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* HUB HUD Overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
-                                <div className={`absolute flex flex-col items-center ${ehApostada ? 'top-[14%] md:top-[12vmin]' : 'top-8 md:top-10'}`}>
-                                    <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-1 md:mb-2" />
-                                    {ehApostada ? (
-                                        <span className="text-xs md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.4em] md:tracking-[0.5em]">
-                                            Partida Valendo!
-                                        </span>
-                                    ) : (
-                                        <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">{sala.modo === 'aram' ? 'Howling Abyss' : "Summoner's Rift"}</span>
-                                    )}
-                                </div>
-                                <div className="absolute bottom-8 md:bottom-10 flex flex-col items-center">
-                                    {ehApostada ? (
-                                        <>
-                                            <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                                <GiTwoCoins className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
-                                            </span>
-                                            <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-0.5 md:mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
-                                                Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
-                                            </span>
-                                            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-1 md:mt-2" />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
-                                            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                        {ehApostada ? (
+                            <>
+                                <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
+                                    <GiTwoCoins className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                </span>
+                                <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+                                    Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">FASE BETA V1</span>
+                        )}
                     </div>
                     )}
 
