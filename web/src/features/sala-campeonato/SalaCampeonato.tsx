@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, Share2, Shield, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, RotateCcw, Share2, Shield, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DraftRoom } from '../../components/draft/DraftRoom';
 import { VagaSlot } from '../../components/partidas/VagaSlot';
@@ -327,8 +327,16 @@ export default function SalaCampeonato() {
     }
   };
 
-  if (erro) {
-    return (
+  // TEMPORÁRIO (admin): reseta a sala para o PRONTO do mesmo jogo — prontos
+  // zerados, escolhas limpas e o draft do jogo atual apagado. Botão sai quando
+  // o fluxo estiver 100% (pedido do usuário 13/10).
+  const resetarSala = async () => {
+    if (!window.confirm('Resetar a sala para o PRONTO? (zera os prontos, as escolhas e o draft deste jogo)')) return;
+    const r = await chamar('/sala-campeonato/resetar');
+    if (r?.ok) toast.success('Sala resetada para o PRONTO!');
+  };
+
+  if (erro) {    return (
       <div className="flex-1 w-full min-h-screen bg-[#050505] flex items-center justify-center text-white">
         <div className="text-center space-y-4">
           <p className="text-white/70">{erro}</p>
@@ -372,6 +380,8 @@ export default function SalaCampeonato() {
   // Staff do campeonato: pode forçar a verificação da SÉRIE (mesma regra da
   // rota do cronograma — staff do campeonato OU time da série).
   const ehStaffCampeonato = ['admin', 'proprietario', 'organizador'].includes((perfil as any)?.cargo ?? '');
+  // Admin/proprietário: enxerga o botão TEMPORÁRIO de resetar a sala (pedido 13/10).
+  const ehAdm = ['admin', 'proprietario'].includes((perfil as any)?.cargo ?? '');
   const jogadorBlue = jogadorDoLado('blue');
   const jogadorRed = jogadorDoLado('red');
   const meuJogador =
@@ -872,6 +882,30 @@ export default function SalaCampeonato() {
                   <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
                   <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
                     Atualizar Resultado
+                  </span>
+                </div>
+              </motion.button>
+            )}
+
+            {/* TEMPORÁRIO (admin): resetar a sala pro PRONTO — sai quando o
+                fluxo estiver 100% (pedido do usuário 13/10). */}
+            {ehAdm && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                disabled={!!ocupado}
+                onClick={resetarSala}
+                className="relative p-[1px] bg-[#ef4444]/50 hover:bg-[#ef4444] transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                style={{ clipPath: CUT_BUTTON }}
+                title="Temporário: reseta a sala para o PRONTO (prontos, escolhas e draft)"
+              >
+                <div
+                  className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#1a0505] hover:bg-[#2a0808] flex items-center justify-center gap-1.5 text-[#ff8a8a] transition-colors"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <RotateCcw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${String(ocupado ?? '').includes('resetar') ? 'animate-spin' : ''}`} />
+                  <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                    Resetar Sala
                   </span>
                 </div>
               </motion.button>

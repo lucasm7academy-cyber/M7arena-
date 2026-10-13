@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers, matchCodes, campeonatoSalaEstado } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchCodes, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import {
   avaliarTransicoes,
   reembolsarSeNecessario,
@@ -193,6 +193,60 @@ async function executarAcaoDraftCampeonato(req: any, res: any, tipo: "ban" | "pi
 
 matchesActionsRouter.post("/:id/sala-campeonato/ban", (req, res) => executarAcaoDraftCampeonato(req, res, "ban"));
 matchesActionsRouter.post("/:id/sala-campeonato/pick", (req, res) => executarAcaoDraftCampeonato(req, res, "pick"));
+
+/**
+ * POST /api/matches/:id/sala-campeonato/resetar — **TEMPORÁRIO** (admin/
+ * proprietário): volta a sala de times para o PRONTO do MESMO jogo — prontos
+ * zerados, escolhas (sorteio/lado/pick/primeira) limpas e o draft do jogo atual
+ * apagado. Existe para o usuário corrigir a sala enquanto o fluxo novo está em
+ * ajuste; remover quando os fluxos estiverem 100% (pedido 13/10).
+ */
+matchesActionsRouter.post("/:id/sala-campeonato/resetar", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const roles = await getRoles(db, user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ ok: false, erro: "sem_permissao", estado: null, mudou: false });
+    }
+
+    const r: any = await db.transaction(async (tx: any) => {
+      const [sala] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
+      if (!sala) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+      if (sala.mode !== "campeonato" && sala.mode !== "time_vs_time_livre") {
+        return { ok: false, erro: "nao_e_sala_campeonato", estado: null, mudou: false };
+      }
+      const [estado] = await tx
+        .select()
+        .from(campeonatoSalaEstado)
+        .where(eq(campeonatoSalaEstado.matchId, sala.id))
+        .limit(1);
+      if (!estado) return { ok: false, erro: "estado_ausente", estado: null, mudou: false };
+
+      await tx
+        .update(campeonatoSalaEstado)
+        .set({
+          prontoBlue: false,
+          prontoRed: false,
+          sorteioVencedor: null,
+          escolhaTime: null,
+          ladoEscolhido: null,
+          pickOrderEscolhido: null,
+          primeiraEscolha: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(campeonatoSalaEstado.matchId, sala.id));
+      await tx.delete(matchDrafts).where(and(eq(matchDrafts.matchId, sala.id), eq(matchDrafts.jogo, estado.jogo)));
+      await tx.update(matches).set({ status: "camp_prontos", updatedAt: new Date() }).where(eq(matches.id, sala.id));
+      return { ok: true, erro: null, estado: "camp_prontos", mudou: true, jogo: estado.jogo };
+    });
+
+    if (r?.ok) await notifyMatchChange(String(req.params.id));
+    return res.json(r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
 
 // POST /api/matches/:id/sala-campeonato/live — botão "Iniciar live" (só streamer)
 matchesActionsRouter.post("/:id/sala-campeonato/live", async (req, res) => {
