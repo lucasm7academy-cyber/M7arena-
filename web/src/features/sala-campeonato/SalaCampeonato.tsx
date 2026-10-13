@@ -1143,9 +1143,16 @@ export default function SalaCampeonato() {
                 initial={{ opacity: 0, scale: 1.06 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                className="absolute top-[58%] md:top-[66%] left-1/2 -translate-x-1/2 z-[60] w-[86vw] max-w-[400px] md:w-[52vmin] md:max-w-[52vmin] bg-black/80 backdrop-blur-md border border-[#FFB700]/20 flex flex-col items-center gap-3 md:gap-[1.8vmin] p-4 md:p-[3vmin]"
-                style={{ clipPath: CUT_FRAME }}
+                className="absolute top-[58%] md:top-[66%] left-1/2 -translate-x-1/2 z-[60] w-[86vw] max-w-[400px] md:w-[52vmin] md:max-w-[52vmin]"
               >
+                {/* Card SÓLIDO (sem transparência preta) com a BORDA INTEIRA nos
+                    cantos recortados — via CutCard (a borda segue o corte). */}
+                <CutCard
+                  borderColor="#FFB700"
+                  background="#0A0A0A"
+                  className="w-full"
+                  contentClassName="flex flex-col items-center gap-3 md:gap-[1.8vmin] p-4 md:p-[3vmin]"
+                >
                 <span className="text-base md:text-[2.2vmin] font-black text-[#FFB700] uppercase tracking-[0.25em] text-center leading-tight">
                   {faltaLado && faltaPick
                     ? `${tagDoLado(escolhendo)} ESCOLHE LADO OU PICK`
@@ -1274,6 +1281,7 @@ export default function SalaCampeonato() {
                     {camp.pick_order_escolhido === 'first' ? 'First' : 'Last'} pick já escolhido
                   </span>
                 )}
+                </CutCard>
               </motion.div>
             )}
           </AnimatePresence>
