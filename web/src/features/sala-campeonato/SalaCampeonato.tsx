@@ -523,26 +523,21 @@ export default function SalaCampeonato() {
         transition={{ duration: bannerTroca ? 3 : 0, ease: 'easeInOut' }}
         className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
       >
-        {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) */}
-        <div
-          className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
-          style={{
-            backgroundColor: cor,
-            clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
-          }}
-        >
-          <div
-            className="bg-[#050505] px-5 py-1"
-            style={{ clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)' }}
-          >
-            <span className="block text-xs md:text-[1.4vmin] font-black uppercase tracking-[0.4em]" style={{ color: cor }}>
-              {posicao === 'blue' ? 'Blue-Side' : 'Red-Side'}
-            </span>
-          </div>
+        {/* Logo + nome do TIME no topo da coluna (no lugar da etiqueta
+            Blue-Side/Red-Side) — fica em cima da vaga, antes dos picks. */}
+        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] self-center">
+          {logoDoLado(lado) ? (
+            <img src={logoDoLado(lado)} alt="" className="w-12 h-12 md:w-[9vmin] md:h-[9vmin] object-contain" />
+          ) : (
+            <div className="w-12 h-12 md:w-[9vmin] md:h-[9vmin] bg-white/5 border border-white/10 flex items-center justify-center font-black text-white/40 text-xs">
+              {tagDoLado(lado)?.slice(0, 2)}
+            </div>
+          )}
+          <div className="w-10 md:w-[8vmin] h-[2px]" style={{ backgroundColor: cor }} />
+          <span className="text-sm md:text-[1.7vmin] font-black uppercase tracking-[0.2em] text-white truncate max-w-full">
+            {nomeDoLado(lado)}
+          </span>
         </div>
-
-        {/* (Nome/logo do time saíram daqui — a identidade dos times fica no
-            centro, estilo resumo; a coluna fica só com o lado + a vaga) */}
 
         {/* VAGA — visual idêntico ao da sala normal (foto do time no ícone) */}
         <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
@@ -631,93 +626,10 @@ export default function SalaCampeonato() {
   //    estado continuam aqui, no formato limpo. Desktop: absoluto no meio;
   //    Mobile: entra no fluxo vertical.
   const renderHub = () => (
-    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
-      <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent" />
-      <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
-        Summoner's Rift
+    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
+      <span className="text-5xl md:text-[11vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]">
+        {serie?.placar_a ?? 0} <span className="text-white/40">-</span> {serie?.placar_b ?? 0}
       </span>
-
-      {/* Logos + nomes dos times e placar da série (estilo resumo pós-draft) */}
-      <div className="flex items-center justify-center gap-3 md:gap-[3vmin] mt-1 md:mt-[0.5vmin]">
-        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-          {sala.time_a_logo ? (
-            <img
-              src={sala.time_a_logo}
-              alt=""
-              className="w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
-            />
-          ) : (
-            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
-          )}
-          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-full">
-            {sala.time_a_nome ?? ''}
-          </span>
-        </div>
-        <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
-        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-          {sala.time_b_logo ? (
-            <img
-              src={sala.time_b_logo}
-              alt=""
-              className="w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
-            />
-          ) : (
-            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
-          )}
-          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-full">
-            {sala.time_b_nome ?? ''}
-          </span>
-        </div>
-      </div>
-      {serie && (
-        <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-          {serie.placar_a} <span className="text-white/40">-</span> {serie.placar_b}
-        </span>
-      )}
-
-      {/* Estado da sala — mesmos avisos de antes, no estilo limpo */}
-      {estado === 'camp_vagas' && (
-        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
-          <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em]">Aguardando os Times</span>
-          <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.3em]">Cada lado ocupa a sua vaga</span>
-        </div>
-      )}
-      {/* (O aviso "Marquem PRONTO" saiu do centro — pedido do usuário; o
-          estado já aparece no topo da sala e nos botões de PRONTO) */}
-      {estado === 'camp_draft' && (
-        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
-          <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em]">Draft em Andamento</span>
-          <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.25em]">
-            {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
-          </span>
-        </div>
-      )}
-      {['camp_jogo', 'camp_finalizada', 'iniciando_partida', 'partida_iniciada', 'encerrada'].includes(estado) && (
-        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
-          <span className="text-lg md:text-[2.2vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
-            {estado === 'camp_jogo'
-              ? 'Série em Andamento'
-              : estado === 'camp_finalizada'
-                ? 'Série Finalizada'
-                : estado === 'iniciando_partida'
-                  ? 'Partida Pronta!'
-                  : estado === 'partida_iniciada'
-                    ? 'Partida em Andamento'
-                    : 'Partida Encerrada'}
-          </span>
-          {camp?.lado_time_a && serie && (
-            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/60 uppercase tracking-[0.2em] leading-relaxed">
-              {sala.time_a_tag} de {camp.lado_time_a === 'blue' ? 'azul' : 'vermelho'} · {sala.time_b_tag} de{' '}
-              {camp.lado_time_a === 'blue' ? 'vermelho' : 'azul'}
-            </span>
-          )}
-          {!serie && estado === 'iniciando_partida' && (
-            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/60 uppercase tracking-[0.2em]">
-              Código no painel abaixo
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 
