@@ -15,6 +15,7 @@ import { usePerfil } from '../../contexts/PerfilContext';
 import { agoraServidor, registrarServerTime } from '../../lib/clockSync';
 import { ROLE_CONFIG } from '../../api/salamod1';
 import { buildChampionIconUrl, getDDRVersion } from '../../api/riot';
+import { CutCard } from '../../components/ui/CutCard';
 
 // Borda cortada no padrão das vagas/cards (mesmos cortes da sala normal).
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
@@ -765,36 +766,46 @@ export default function SalaCampeonato() {
               card da sala (fundo sólido, borda/brilho na cor do lado, avatar
               com anel e canto recortado) */}
           <div
-            className={`flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin] bg-[#050505] border-2 ${
-              posicao === 'blue'
-                ? 'border-blue-500/60 shadow-[0_0_15px_rgba(59,130,246,0.4)]'
-                : 'border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
-            }`}
-            style={{ clipPath: CUT_BUTTON }}
+            style={{
+              filter:
+                posicao === 'blue'
+                  ? 'drop-shadow(0 0 10px rgba(59,130,246,0.45))'
+                  : 'drop-shadow(0 0 10px rgba(239,68,68,0.45))',
+            }}
           >
-            {jogador?.avatar ? (
-              <img
-                src={jogador.avatar}
-                alt=""
-                className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full object-cover border ${
-                  posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
-                }`}
-              />
-            ) : (
-              <div
-                className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full bg-white/10 border ${
-                  posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
-                }`}
-              />
-            )}
-            <span className="text-[11px] md:text-[1.4vmin] font-black uppercase tracking-wide text-white/90">
-              {jogador?.nome ?? 'VAGA ABERTA'}
-            </span>
-            {!!jogador?.tag && (
-              <span className="text-[10px] md:text-[1.2vmin] font-bold text-white/50">
-                #{String(jogador.tag).replace('#', '')}
+            <CutCard
+              borderColor={posicao === 'blue' ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'}
+              thickness={2}
+              background="#050505"
+              outerClip={CUT_BUTTON}
+              innerClip={CUT_BUTTON_INNER}
+              className="w-full"
+              innerClassName="flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin]"
+            >
+              {jogador?.avatar ? (
+                <img
+                  src={jogador.avatar}
+                  alt=""
+                  className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full object-cover border ${
+                    posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
+                  }`}
+                />
+              ) : (
+                <div
+                  className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full bg-white/10 border ${
+                    posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
+                  }`}
+                />
+              )}
+              <span className="text-[11px] md:text-[1.4vmin] font-black uppercase tracking-wide text-white/90">
+                {jogador?.nome ?? 'VAGA ABERTA'}
               </span>
-            )}
+              {!!jogador?.tag && (
+                <span className="text-[10px] md:text-[1.2vmin] font-bold text-white/50">
+                  #{String(jogador.tag).replace('#', '')}
+                </span>
+              )}
+            </CutCard>
           </div>
         </div>
       );
@@ -1189,10 +1200,18 @@ export default function SalaCampeonato() {
                       <button
                         disabled={!!ocupado}
                         onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'last' })}
-                        className="h-11 md:h-[7vmin] w-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white border border-white/20 bg-white/10 hover:bg-white/20 disabled:opacity-50 cursor-pointer"
-                        style={{ clipPath: CUT_BUTTON }}
+                        className="w-full disabled:opacity-50 cursor-pointer group"
                       >
-                        Last
+                        <CutCard
+                          borderColor="rgba(255,255,255,0.2)"
+                          background="rgba(255,255,255,0.10)"
+                          outerClip={CUT_BUTTON}
+                          innerClip={CUT_BUTTON_INNER}
+                          className="h-11 md:h-[7vmin] w-full"
+                          innerClassName="flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
+                        >
+                          Last
+                        </CutCard>
                       </button>
                     </div>
                   </div>
@@ -1234,10 +1253,18 @@ export default function SalaCampeonato() {
                     <button
                       disabled={!!ocupado}
                       onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'last' })}
-                      className="h-11 md:h-[7vmin] w-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white border border-white/20 bg-white/10 hover:bg-white/20 disabled:opacity-50 cursor-pointer"
-                      style={{ clipPath: CUT_BUTTON }}
+                      className="w-full disabled:opacity-50 cursor-pointer group"
                     >
-                      Last Pick
+                      <CutCard
+                        borderColor="rgba(255,255,255,0.2)"
+                        background="rgba(255,255,255,0.10)"
+                        outerClip={CUT_BUTTON}
+                        innerClip={CUT_BUTTON_INNER}
+                        className="h-11 md:h-[7vmin] w-full"
+                        innerClassName="flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
+                      >
+                        Last Pick
+                      </CutCard>
                     </button>
                   </div>
                 )}
