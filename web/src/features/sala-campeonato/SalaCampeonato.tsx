@@ -599,124 +599,94 @@ export default function SalaCampeonato() {
     );
   };
 
-  // ── HUB REDONDO CENTRAL (estrutura EXATA da sala normal) ────────────────
+  // ── CENTRO NO ESTILO TRANSMISSÃO (pós-draft): logos dos times X placar da
+  //    série — SEM o display redondo (pedido do usuário). Todos os avisos de
+  //    estado continuam aqui, no formato limpo. Desktop: absoluto no meio;
+  //    Mobile: entra no fluxo vertical.
   const renderHub = () => (
-    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-[84vw] h-[84vw] max-w-[340px] max-h-[340px] md:w-[55vmin] md:h-[55vmin] md:max-w-none md:max-h-none rounded-full z-10 flex items-center justify-center shrink-0 my-4 md:my-0">
-      {/* Outer rings */}
-      <div className="absolute inset-[-8vmin] rounded-full border border-white/[0.02] border-dashed animate-[spin_100s_linear_infinite]" />
-      <div className="absolute inset-[-4vmin] rounded-full border-t-4 border-l-2 border-[#FFB700]/10 opacity-30 animate-[spin_60s_linear_infinite]" />
+    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
+      <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent" />
+      <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
+        Summoner's Rift
+      </span>
 
-      {/* Main Hub Body */}
-      <div className="relative w-full h-full rounded-full bg-black shadow-[0_0_100px_rgba(0,0,0,1)] border-[6px] border-white/5 flex flex-col items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(40,30,20,0.6)_0%,transparent_100%)] opacity-50" />
-        <ArcaneIndicators />
-        <CentralDisplay />
-
-        {/* Nosso estado — mesmo padrão do overlay da sala (z-[35] sem interação) */}
-        {estado === 'camp_vagas' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
-          >
-            <div className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
-              <span className="text-xl md:text-[3vmin] font-black text-white uppercase tracking-[0.25em] drop-shadow-[0_0_20px_rgba(255,183,0,0.4)] leading-tight">
-                Aguardando os Times
-              </span>
-              <span className="text-xs md:text-[1.3vmin] font-bold text-white/70 uppercase tracking-[0.3em]">
-                Cada lado ocupa a sua vaga
-              </span>
-            </div>
-          </motion.div>
-        )}
-        {estado === 'camp_prontos' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
-          >
-            <div className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
-              <span className="text-xl md:text-[2.6vmin] font-black text-[#00FF41] uppercase tracking-[0.25em] leading-tight">
-                Marquem PRONTO
-              </span>
-              <span className="text-xs md:text-[1.2vmin] font-bold text-white/70 uppercase tracking-[0.25em] leading-relaxed">
-                {tagDoLado('blue')}: {camp?.pronto_blue ? 'PRONTO' : 'aguardando'}
-                <br />
-                {tagDoLado('red')}: {camp?.pronto_red ? 'PRONTO' : 'aguardando'}
-              </span>
-            </div>
-          </motion.div>
-        )}
-        {estado === 'camp_draft' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
-          >
-            <div className="flex flex-col items-center gap-2 md:gap-[2.5vmin]">
-              <span className="text-xl md:text-[2.6vmin] font-black text-white uppercase tracking-[0.25em] leading-tight">
-                Draft em Andamento
-              </span>
-              <span className="text-xs md:text-[1.2vmin] font-bold text-white/70 uppercase tracking-[0.25em]">
-                {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
-              </span>
-            </div>
-          </motion.div>
-        )}
-        {['camp_jogo', 'camp_finalizada', 'iniciando_partida', 'partida_iniciada', 'encerrada'].includes(estado) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 z-[35] bg-black/55 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 md:p-[6vmin] text-center pointer-events-none"
-          >
-            <div className="flex flex-col items-center gap-1.5 md:gap-[1.6vmin]">
-              <span className="text-lg md:text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em] leading-tight">
-                {estado === 'camp_jogo'
-                  ? 'Série em Andamento'
-                  : estado === 'camp_finalizada'
-                    ? 'Série Finalizada'
-                    : estado === 'iniciando_partida'
-                      ? 'Partida Pronta!'
-                      : estado === 'partida_iniciada'
-                        ? 'Partida em Andamento'
-                        : 'Partida Encerrada'}
-              </span>
-              {serie && (
-                <span className="text-2xl md:text-[4vmin] font-black text-white tabular-nums leading-none">
-                  {serie.placar_a} - {serie.placar_b}
-                </span>
-              )}
-              {camp?.lado_time_a && serie && (
-                <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em] leading-relaxed">
-                  {sala.time_a_tag} de {camp.lado_time_a === 'blue' ? 'azul' : 'vermelho'} · {sala.time_b_tag} de{' '}
-                  {camp.lado_time_a === 'blue' ? 'vermelho' : 'azul'}
-                </span>
-              )}
-              {!serie && estado === 'iniciando_partida' && (
-                <span className="text-[11px] md:text-[1.15vmin] font-bold text-white/60 uppercase tracking-[0.2em]">
-                  Código no painel abaixo
-                </span>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* HUB HUD Overlay (igual à sala normal) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
-          <div className="absolute top-8 md:top-10 flex flex-col items-center">
-            <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mb-1 md:mb-2" />
-            <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
-              Summoner's Rift
-            </span>
-          </div>
-          <div className="absolute bottom-8 md:bottom-10 flex flex-col items-center">
-            <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em]">
-              FASE BETA V1
-            </span>
-            <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent mt-2" />
-          </div>
-        </div>
+      {/* Logos dos times + placar da série (estilo transmissão) */}
+      <div className="flex items-center justify-center gap-3 md:gap-[2vmin] mt-1 md:mt-[0.5vmin]">
+        {sala.time_a_logo ? (
+          <img
+            src={sala.time_a_logo}
+            alt=""
+            className="w-14 h-14 md:w-[10vmin] md:h-[10vmin] object-contain drop-shadow-[0_0_25px_rgba(59,130,246,0.35)]"
+          />
+        ) : null}
+        <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
+        {sala.time_b_logo ? (
+          <img
+            src={sala.time_b_logo}
+            alt=""
+            className="w-14 h-14 md:w-[10vmin] md:h-[10vmin] object-contain drop-shadow-[0_0_25px_rgba(239,68,68,0.35)]"
+          />
+        ) : null}
       </div>
+      {serie && (
+        <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
+          {serie.placar_a} <span className="text-white/40">-</span> {serie.placar_b}
+        </span>
+      )}
+
+      {/* Estado da sala — mesmos avisos de antes, no estilo limpo */}
+      {estado === 'camp_vagas' && (
+        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
+          <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em]">Aguardando os Times</span>
+          <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.3em]">Cada lado ocupa a sua vaga</span>
+        </div>
+      )}
+      {estado === 'camp_prontos' && (
+        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
+          <span className="text-lg md:text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">Marquem PRONTO</span>
+          <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.25em] leading-relaxed">
+            {tagDoLado('blue')}: {camp?.pronto_blue ? 'PRONTO' : 'aguardando'} · {tagDoLado('red')}: {camp?.pronto_red ? 'PRONTO' : 'aguardando'}
+          </span>
+        </div>
+      )}
+      {estado === 'camp_draft' && (
+        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
+          <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em]">Draft em Andamento</span>
+          <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.25em]">
+            {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
+          </span>
+        </div>
+      )}
+      {['camp_jogo', 'camp_finalizada', 'iniciando_partida', 'partida_iniciada', 'encerrada'].includes(estado) && (
+        <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
+          <span className="text-lg md:text-[2.2vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
+            {estado === 'camp_jogo'
+              ? 'Série em Andamento'
+              : estado === 'camp_finalizada'
+                ? 'Série Finalizada'
+                : estado === 'iniciando_partida'
+                  ? 'Partida Pronta!'
+                  : estado === 'partida_iniciada'
+                    ? 'Partida em Andamento'
+                    : 'Partida Encerrada'}
+          </span>
+          {camp?.lado_time_a && serie && (
+            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/60 uppercase tracking-[0.2em] leading-relaxed">
+              {sala.time_a_tag} de {camp.lado_time_a === 'blue' ? 'azul' : 'vermelho'} · {sala.time_b_tag} de{' '}
+              {camp.lado_time_a === 'blue' ? 'vermelho' : 'azul'}
+            </span>
+          )}
+          {!serie && estado === 'iniciando_partida' && (
+            <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/60 uppercase tracking-[0.2em]">
+              Código no painel abaixo
+            </span>
+          )}
+        </div>
+      )}
+
+      <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em] mt-1 md:mt-[0.6vmin]">
+        FASE BETA V1
+      </span>
     </div>
   );
 
