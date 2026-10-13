@@ -619,6 +619,16 @@ const Jogar = () => {
       return;
     }
 
+    // TIME vs TIME agora é a sala LIVRE nova (ADR-086): vagas ocupadas COM o
+    // TIME do jogador e o ciclo PRONTO/lado/draft na mesma tela da sala de
+    // campeonato. O modo antigo (`time_vs_time`) criava a sala de 10 vagas
+    // estilo 5v5 — redirecionado para o fluxo novo (pedido do usuário 13/10).
+    if (dados?.modo === 'time_vs_time') {
+      setShowCriarModal(false);
+      await criarSalaTimes();
+      return;
+    }
+
     try {
       const nova = await criarSala(dados, usuarioAtual);
       if (nova) {
