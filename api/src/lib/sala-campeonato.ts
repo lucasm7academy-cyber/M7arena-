@@ -13,10 +13,10 @@
  * campeonato_sala_estado — o SERVIDOR é a única autoridade; o front só desenha.
  * Sem timer em V1 (ADR-083): o adm destrava se precisar.
  */
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import { tournaments, tournamentMatches, bracketMatches, tournamentTeams, tournamentSeriesGames } from "../../../db/schema/tournaments.js";
-import { teams } from "../../../db/schema/teams.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { users, userRoles } from "../../../db/schema/identidade.js";
 import { transmissoes } from "../../../db/schema/conteudo.js";
 import { atribuirCodigoSerie, normalizarBestOf } from "./serie-campeonato.js";
@@ -307,12 +307,18 @@ export async function entrarNaVaga(
       const [dono] = await tx.select(cols).from(teams).where(eq(teams.ownerId, opts.userId)).limit(1);
       let meuTime: { id: string; name: string; tag: string | null; logoUrl: string | null } | null = dono ?? null;
       if (!meuTime) {
-        const ms = await findUserTeamMemberships(tx, opts.userId, { onlyAccepted: true });
-        const tId = ms[0]?.teamId ?? null;
-        if (tId) {
-          const [t] = await tx.select(cols).from(teams).where(eq(teams.id, tId)).limit(1);
-          meuTime = t ?? null;
-        }
+        // Só vínculo REAL (user_id, aceito) e o MAIS RECENTE — nada de casar
+        // por Riot ID/PUUID: vínculo de convidado antigo (ou linha que sobrou
+        // depois de sair do time) puxava time errado, ex.: logo de um time que
+        // o jogador já saiu (report do usuário 13/10).
+        const [t] = await tx
+          .select(cols)
+          .from(teamMembers)
+          .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+          .where(and(eq(teamMembers.userId, opts.userId), eq(teamMembers.status, "accepted")))
+          .orderBy(desc(teamMembers.createdAt))
+          .limit(1);
+        meuTime = t ?? null;
       }
       if (!meuTime) return { ok: false, erro: "sem_time" };
       const outraTag = opts.side === "blue" ? sala.timeBTag : sala.timeATag;
