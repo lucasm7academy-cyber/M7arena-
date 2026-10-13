@@ -48,6 +48,11 @@ interface DraftRoomProps {
   timeA?: { nome?: string | null; logo?: string | null } | null;
   timeB?: { nome?: string | null; logo?: string | null } | null;
   placar?: { a: number; b: number } | null;
+  /**
+   * Modo RESUMO: mostra o confronto com os CAMPEÕES ESCOLHIDOS (usado nos
+   * ~10s após a última escolha, antes de voltar para a sala).
+   */
+  recap?: boolean;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -228,11 +233,53 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
   );
 }
 
+// ── Resumo pós-draft (10s): time + campeões escolhidos ───────────────────────
+
+function TimeRecap({ time, picks, lado, champions, version }: {
+  time?: { nome?: string | null; logo?: string | null } | null;
+  picks: string[];
+  lado: 'blue' | 'red';
+  champions: Record<string, Champion>;
+  version: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-[1.2vmin] w-[44vmin]">
+      {time?.logo ? (
+        <img
+          src={time.logo}
+          alt=""
+          className={`w-[12vmin] h-[12vmin] object-contain ${
+            lado === 'blue' ? 'drop-shadow-[0_0_30px_rgba(59,130,246,0.4)]' : 'drop-shadow-[0_0_30px_rgba(239,68,68,0.4)]'
+          }`}
+        />
+      ) : null}
+      <span className={`text-[2.2vmin] font-black uppercase tracking-[0.25em] truncate max-w-full ${lado === 'blue' ? 'text-[#60A5FA]' : 'text-[#f87171]'}`}>
+        {time?.nome ?? ''}
+      </span>
+      <div className="flex items-center justify-center gap-[1vmin] mt-[0.4vmin]">
+        {picks.map((c, i) => (
+          <div key={`${c}-${i}`} className="flex flex-col items-center gap-[0.4vmin]">
+            <img
+              src={buildChampionIconUrl(c, version)}
+              alt={c}
+              className="w-[10vmin] h-[10vmin] object-cover border border-white/15"
+              referrerPolicy="no-referrer"
+            />
+            <span className="text-[1.1vmin] font-bold text-white/70 uppercase text-center leading-tight max-w-[10vmin] truncate">
+              {champions[c]?.name ?? c}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar,
+  timeA, timeB, placar, recap,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -407,6 +454,57 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       </div>
     );
   };
+
+  // ── RESUMO (10s após a última escolha): times + campeões escolhidos ────────
+  if (recap) {
+    const picksEsq = (ladoEquipeA === 'blue' ? draft.blue_picks : draft.red_picks).filter(Boolean) as string[];
+    const picksDir = (ladoEquipeA === 'blue' ? draft.red_picks : draft.blue_picks).filter(Boolean) as string[];
+    return (
+      <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
+        <img src="/images/fundo_elite.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="relative z-10 h-full flex flex-col items-center justify-center gap-[4vmin] px-[3vmin]"
+        >
+          <span className="text-[2vmin] font-black uppercase tracking-[0.5em] text-[#FFB700] text-center">
+            Escolhas concluídas
+          </span>
+
+          <div className="flex items-center justify-center gap-[5vmin] w-full">
+            <TimeRecap
+              time={timeNaEsquerda}
+              picks={picksEsq}
+              lado={ladoEquipeA === 'blue' ? 'blue' : 'red'}
+              champions={champions}
+              version={version}
+            />
+            <span className="text-[6vmin] font-black text-white/60 leading-none drop-shadow-lg">X</span>
+            <TimeRecap
+              time={timeNaDireita}
+              picks={picksDir}
+              lado={ladoEquipeA === 'blue' ? 'red' : 'blue'}
+              champions={champions}
+              version={version}
+            />
+          </div>
+
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-[1.3vmin] font-bold uppercase tracking-[0.35em] text-white/50"
+          >
+            Voltando para a sala…
+          </motion.span>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">

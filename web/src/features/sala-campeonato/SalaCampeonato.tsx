@@ -3,7 +3,7 @@
 // da sala normal — display redondo (anéis + hub + HUD), vagas usando o próprio
 // componente VagaSlot (com a foto do time no lugar do ícone de rota) e top bar
 // idêntica. O servidor é a autoridade; esta tela só desenha e pede ações.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, Share2, Shield, Trophy } from 'lucide-react';
@@ -14,6 +14,7 @@ import { useSalaRealtime } from '../../hooks/useSalaRealtime';
 import { usePerfil } from '../../contexts/PerfilContext';
 import { agoraServidor, registrarServerTime } from '../../lib/clockSync';
 import { ROLE_CONFIG } from '../../api/salamod1';
+import { buildChampionIconUrl } from '../../api/riot';
 
 // Borda cortada no padrão das vagas/cards (mesmos cortes da sala normal).
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
@@ -113,6 +114,10 @@ export default function SalaCampeonato() {
   const [previewDraft, setPreviewDraft] = useState<{ championId: string | null; side: 'blue' | 'red' | null } | null>(null);
   const [bannerTroca, setBannerTroca] = useState(false);
   const [ladoVisto, setLadoVisto] = useState<{ chave: string; lado: 'blue' | 'red' } | null>(null);
+  // Resumo pós-draft: mostra os campeões escolhidos por ~10s antes de voltar.
+  const [mostrarRecap, setMostrarRecap] = useState(false);
+  const draftStatusRef = useRef<string | null>(null);
+  const recapJogoRef = useRef<string | null>(null);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -169,6 +174,24 @@ export default function SalaCampeonato() {
     const t = setTimeout(() => setBannerTroca(false), 3200);
     return () => clearTimeout(t);
   }, [bannerTroca]);
+
+  // RESUMO PÓS-DRAFT (10s): quando a ÚLTIMA escolha fecha o draft (transição
+  // observada AO VIVO: ongoing → finished), segura uma tela com os campeões de
+  // cada time antes de voltar para a sala. Nunca dispara em load/refresh (não
+  // houve transição). O timeout NÃO tem cleanup de propósito: o polling troca
+  // o objeto `sala` a cada 5s e um cleanup cancelaria a volta pra sala.
+  useEffect(() => {
+    const st: string | null = sala?.campeonato?.draft?.status ?? null;
+    const key = sala ? `${sala.id}:${sala?.campeonato?.jogo ?? 1}` : null;
+    const anterior = draftStatusRef.current;
+    draftStatusRef.current = st;
+    if (!key) return;
+    if (anterior === 'ongoing' && st === 'finished' && recapJogoRef.current !== key) {
+      recapJogoRef.current = key;
+      setMostrarRecap(true);
+      setTimeout(() => setMostrarRecap(false), 10000);
+    }
+  }, [sala]);
 
   // Times do usuário (para saber o lado dele na série de campeonato).
   useEffect(() => {
@@ -398,6 +421,28 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
+  // RESUMO pós-draft (~10s): mostra os campeões escolhidos no confronto antes
+  // de voltar para a sala (mesmas props do draft + recap).
+  if (mostrarRecap && camp?.draft?.status === 'finished') {
+    return (
+      <DraftRoom
+        draft={camp.draft}
+        jogadores={sala.jogadores ?? []}
+        usuarioId={eu}
+        timer={timerDraft}
+        onBanir={(champ: string) => acaoDraft('ban', champ)}
+        onPickar={(champ: string) => acaoDraft('pick', champ)}
+        onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
+        previewExterno={previewDraft}
+        ladoDoTimeA={camp?.lado_time_a ?? null}
+        timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
+        timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
+        placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
+        recap
+      />
+    );
+  }
+
   // Draft em TELA CHEIA (igual à sala normal): durante o draft a sala não fica
   // junto na página — o DraftRoom ocupa a tela e, quando fecha, a sala volta
   // sozinha (o estado muda para camp_jogo e o polling/WS atualizam sem reload).
@@ -514,6 +559,25 @@ export default function SalaCampeonato() {
             isFinalizada={estado === 'camp_finalizada' || estado === 'encerrada'}
           />
         </div>
+
+        {/* Campeões escolhidos para ESTE confronto (picks do draft do jogo
+            atual) — aparecem na sala depois que o draft fecha. */}
+        {camp?.draft?.status === 'finished' && (
+          <div className="flex items-center justify-center gap-1 md:gap-[0.6vmin] mt-1 md:mt-[0.6vmin]">
+            {(lado === 'blue' ? camp.draft.blue_picks : camp.draft.red_picks)
+              .filter(Boolean)
+              .map((c: string, i: number) => (
+                <img
+                  key={`${c}-${i}`}
+                  src={buildChampionIconUrl(c)}
+                  alt={c}
+                  title={c}
+                  className="w-8 h-8 md:w-[4vmin] md:h-[4vmin] object-cover border border-white/15"
+                  referrerPolicy="no-referrer"
+                />
+              ))}
+          </div>
+        )}
 
         {/* PRONTO do lado (a sala normal tem os botões de confirmação abaixo) */}
         {estado === 'camp_prontos' && valorVaga && !meuPronto && (
