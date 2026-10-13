@@ -1150,7 +1150,7 @@ export default function SalaCampeonato() {
                 initial={{ opacity: 0, scale: 1.06 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                className="absolute top-[58%] md:top-[66%] left-1/2 -translate-x-1/2 z-[60] w-[86vw] max-w-[400px] md:w-[52vmin] md:max-w-[52vmin]"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] w-[86vw] max-w-[400px] md:w-[52vmin] md:max-w-[52vmin]"
               >
                 {/* Card SÓLIDO (sem transparência preta) com a BORDA INTEIRA nos
                     cantos recortados — via CutCard (a borda segue o corte). */}
