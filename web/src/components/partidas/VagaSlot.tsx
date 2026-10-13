@@ -12,6 +12,11 @@ interface VagaSlotProps {
     icone?: string;
     isTimeA: boolean;
     role: string;
+    /**
+     * Esconde o ícone de rota dentro da vaga (salas sem rota definida, ex.:
+     * sala campeonato — qualquer membro do time pode ocupar).
+     */
+    semRoleIcon?: boolean;
     isConfirmado?: boolean;
     aoEntrar: () => void;
     aoSair?: () => void;
@@ -39,6 +44,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     icone,
     isTimeA,
     role,
+    semRoleIcon,
     isConfirmado,
     aoEntrar,
     aoSair,
@@ -232,12 +238,14 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         )}
 
                         <div className={`flex items-center gap-2.5 md:gap-[2vmin] flex-1 overflow-hidden ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
-                            {/* Ícone da Rota */}
+                            {/* Ícone da Rota (oculto quando a sala não tem rota) */}
+                            {!semRoleIcon && (
                             <img
                                 src={roleIconImg}
                                 alt={role}
                                 className={`w-8 h-8 md:w-[4.8vmin] md:h-[4.8vmin] object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity shrink-0 ${isDesistente ? 'grayscale opacity-30' : ''}`}
                             />
+                            )}
 
                             {/* Ícone: Desistente (avatar em P&B), Campeão se finalizada, Avatar se normal */}
                             {isDesistente ? (

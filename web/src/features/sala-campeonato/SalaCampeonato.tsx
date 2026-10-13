@@ -509,21 +509,8 @@ export default function SalaCampeonato() {
           </div>
         </div>
 
-        {/* Nome/foto do time */}
-        <div className="flex items-center gap-2.5 self-center -mt-1 md:-mt-[0.5vmin]">
-          {logoDoLado(lado) ? (
-            <img src={logoDoLado(lado)} alt="" className="w-8 h-8 md:w-[3.6vmin] md:h-[3.6vmin] object-contain" />
-          ) : (
-            <div
-              className="w-8 h-8 md:w-[3.6vmin] md:h-[3.6vmin] bg-white/5 border border-white/10 flex items-center justify-center font-black text-white/40 text-[10px]"
-            >
-              {tagDoLado(lado)?.slice(0, 2)}
-            </div>
-          )}
-          <span className="text-sm md:text-[1.7vmin] font-black uppercase tracking-wide text-white">
-            {nomeDoLado(lado)}
-          </span>
-        </div>
+        {/* (Nome/logo do time saíram daqui — a identidade dos times fica no
+            centro, estilo resumo; a coluna fica só com o lado + a vaga) */}
 
         {/* VAGA — visual idêntico ao da sala normal (foto do time no ícone) */}
         <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
@@ -534,6 +521,7 @@ export default function SalaCampeonato() {
             icone={jogador?.avatar}
             isTimeA={posicao === 'blue'}
             role={tagDoLado(lado) || (lado === 'blue' ? 'TIME A' : 'TIME B')}
+            semRoleIcon
             isConfirmado={!!pronto && estado === 'camp_prontos'}
             aoEntrar={() => {
               if (!perfil?.id) {
@@ -572,7 +560,7 @@ export default function SalaCampeonato() {
                   src={buildChampionIconUrl(c)}
                   alt={c}
                   title={c}
-                  className="w-8 h-8 md:w-[4vmin] md:h-[4vmin] object-cover border border-white/15"
+                  className="w-10 h-10 md:w-[6vmin] md:h-[6vmin] object-cover border border-white/15"
                   referrerPolicy="no-referrer"
                 />
               ))}
@@ -610,23 +598,37 @@ export default function SalaCampeonato() {
         Summoner's Rift
       </span>
 
-      {/* Logos dos times + placar da série (estilo transmissão) */}
-      <div className="flex items-center justify-center gap-3 md:gap-[2vmin] mt-1 md:mt-[0.5vmin]">
-        {sala.time_a_logo ? (
-          <img
-            src={sala.time_a_logo}
-            alt=""
-            className="w-14 h-14 md:w-[10vmin] md:h-[10vmin] object-contain drop-shadow-[0_0_25px_rgba(59,130,246,0.35)]"
-          />
-        ) : null}
+      {/* Logos + nomes dos times e placar da série (estilo resumo pós-draft) */}
+      <div className="flex items-center justify-center gap-3 md:gap-[3vmin] mt-1 md:mt-[0.5vmin]">
+        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
+          {sala.time_a_logo ? (
+            <img
+              src={sala.time_a_logo}
+              alt=""
+              className="w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
+            />
+          ) : (
+            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
+          )}
+          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-full">
+            {sala.time_a_nome ?? ''}
+          </span>
+        </div>
         <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
-        {sala.time_b_logo ? (
-          <img
-            src={sala.time_b_logo}
-            alt=""
-            className="w-14 h-14 md:w-[10vmin] md:h-[10vmin] object-contain drop-shadow-[0_0_25px_rgba(239,68,68,0.35)]"
-          />
-        ) : null}
+        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
+          {sala.time_b_logo ? (
+            <img
+              src={sala.time_b_logo}
+              alt=""
+              className="w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
+            />
+          ) : (
+            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
+          )}
+          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-full">
+            {sala.time_b_nome ?? ''}
+          </span>
+        </div>
       </div>
       {serie && (
         <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
@@ -683,10 +685,6 @@ export default function SalaCampeonato() {
           )}
         </div>
       )}
-
-      <span className="text-[10px] md:text-[0.9vmin] font-black text-white/20 uppercase tracking-[0.5em] mt-1 md:mt-[0.6vmin]">
-        FASE BETA V1
-      </span>
     </div>
   );
 
