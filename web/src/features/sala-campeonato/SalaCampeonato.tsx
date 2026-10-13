@@ -573,7 +573,14 @@ export default function SalaCampeonato() {
               }
               chamar('/sala-campeonato/entrar', { side: lado });
             }}
-            aoSair={valorVaga && estado === 'camp_vagas' ? () => chamar('/sala-campeonato/sair') : undefined}
+            aoSair={
+              // Sair da vaga: antes do PRONTO e durante camp_prontos (o servidor
+              // reseta os prontos e a sala volta a camp_vagas) — igual à sala
+              // normal, para outro membro do time poder assumir a vaga.
+              valorVaga && (estado === 'camp_vagas' || estado === 'camp_prontos')
+                ? () => chamar('/sala-campeonato/sair')
+                : undefined
+            }
             roleIconImg={logoDoLado(lado) ?? ROLE_CONFIG.MID.img}
             vipTier="free"
             isFinalizada={estado === 'camp_finalizada' || estado === 'encerrada'}
