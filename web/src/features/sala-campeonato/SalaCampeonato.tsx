@@ -1003,7 +1003,7 @@ export default function SalaCampeonato() {
                 initial={{ opacity: 0, scale: 1.06 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] w-[86vw] max-w-[400px] md:w-[52vmin] md:max-w-[52vmin] bg-black/80 backdrop-blur-md border border-[#FFB700]/20 flex flex-col items-center gap-3 md:gap-[1.8vmin] p-4 md:p-[3vmin]"
+                className="absolute top-[58%] md:top-[66%] left-1/2 -translate-x-1/2 z-[60] w-[86vw] max-w-[400px] md:w-[52vmin] md:max-w-[52vmin] bg-black/80 backdrop-blur-md border border-[#FFB700]/20 flex flex-col items-center gap-3 md:gap-[1.8vmin] p-4 md:p-[3vmin]"
                 style={{ clipPath: CUT_FRAME }}
               >
                 <span className="text-base md:text-[2.2vmin] font-black text-[#FFB700] uppercase tracking-[0.25em] text-center leading-tight">
@@ -1148,13 +1148,13 @@ export default function SalaCampeonato() {
                 style={{ clipPath: CUT_FRAME }}
               >
                 <span
-                  className="block bg-[#FFB700] px-8 py-3.5 md:px-[12vmin] md:py-[2.5vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-sm md:text-[1.8vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.5vmin] transition-colors"
+                  className="block bg-[#FFB700] px-6 py-2.5 md:px-[8vmin] md:py-[1.6vmin] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-[11px] md:text-[1.5vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-2 md:gap-[1.2vmin] transition-colors"
                   style={{ clipPath: CUT_INNER }}
                 >
                   {codigoCopiado ? (
-                    <Check className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                    <Check className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
                   ) : (
-                    <Copy className="w-5 h-5 md:w-[2.2vmin] md:h-[2.2vmin]" />
+                    <Copy className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
                   )}
                   {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
                 </span>
