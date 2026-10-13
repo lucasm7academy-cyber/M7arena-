@@ -775,12 +775,9 @@ export default function SalaCampeonato() {
           >
             <CutCard
               borderColor={posicao === 'blue' ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'}
-              thickness={2}
               background="#050505"
-              outerClip={CUT_BUTTON}
-              innerClip={CUT_BUTTON_INNER}
               className="w-full"
-              innerClassName="flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin]"
+              contentClassName="flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin]"
             >
               {jogador?.avatar ? (
                 <img
@@ -1205,10 +1202,8 @@ export default function SalaCampeonato() {
                         <CutCard
                           borderColor="rgba(255,255,255,0.2)"
                           background="rgba(255,255,255,0.10)"
-                          outerClip={CUT_BUTTON}
-                          innerClip={CUT_BUTTON_INNER}
                           className="h-11 md:h-[7vmin] w-full"
-                          innerClassName="flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
+                          contentClassName="h-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
                         >
                           Last
                         </CutCard>
@@ -1258,10 +1253,8 @@ export default function SalaCampeonato() {
                       <CutCard
                         borderColor="rgba(255,255,255,0.2)"
                         background="rgba(255,255,255,0.10)"
-                        outerClip={CUT_BUTTON}
-                        innerClip={CUT_BUTTON_INNER}
                         className="h-11 md:h-[7vmin] w-full"
-                        innerClassName="flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
+                        contentClassName="h-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
                       >
                         Last Pick
                       </CutCard>

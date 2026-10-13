@@ -1,56 +1,37 @@
 // src/components/ui/CutCard.tsx
-// Borda com cantos RECORTADOS sem o bug clássico: `clipPath` corta a borda do
-// PRÓPRIO elemento junto com o canto — aí a borda some nas arestas diagonais.
-//
-// Solução (padrão do projeto): o WRAPPER recortado pinta a "borda" (backgroundColor
-// = cor da borda) e o conteúdo entra num FILHO com o clip INTERNO (corte menor),
-// deixando a espessura visível em TODAS as arestas, inclusive as diagonais.
-//
-// USE SEMPRE ESTE COMPONENTE quando precisar de borda + canto recortado.
-// Não use `border` direto em elemento com `clipPath` — é exatamente o bug.
-//
-// Os pares de clip do projeto vêm de componentes/draft (CUT_BUTTON +
-// CUT_BUTTON_INNER, CUT_FRAME + CUT_FRAME_INNER, etc.). Para o brilho (glow),
-// aplique `filter: drop-shadow(...)` num wrapper SEM clip — o drop-shadow segue
-// o recorte; box-shadow seria cortado junto.
-import type { CSSProperties, ReactNode } from 'react';
+// Card com borda "cortada" (clip-path 12px), mesmo padrão dos cards de
+// campeonato e vagas de sala. O fundo é uma camada absoluta clipada (frame
+// da borda + fill opaco da cor do card); o conteúdo flui por cima sem clip,
+// permitindo que elementos vazem (ex.: dropdowns) quando o container não
+// tiver overflow-hidden. O fill precisa ser opaco para a cor do frame não
+// atravessar o card.
+import { motion } from 'motion/react';
+
+export const CUT_OUTER = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
+export const CUT_INNER = 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)';
 
 interface CutCardProps {
-  /** Cor da "borda" (pinta o wrapper recortado). Pode ser rgba. */
-  borderColor: string;
-  /** Espessura da borda em px. @default 1.5 */
-  thickness?: number;
-  /** Polygon externo (maior) — ex.: CUT_BUTTON. */
-  outerClip: string;
-  /** Polygon interno (corte menor) — ex.: CUT_BUTTON_INNER. */
-  innerClip: string;
-  /** Fundo do conteúdo. @default 'transparent' */
-  background?: string;
-  /** Classes do wrapper (borda). */
   className?: string;
-  /** Classes do conteúdo (filho). */
-  innerClassName?: string;
-  /** Estilos extras do wrapper. */
-  style?: CSSProperties;
-  children: ReactNode;
+  contentClassName?: string;
+  background?: string;
+  borderColor?: string;
+  children: React.ReactNode;
+  [key: string]: any;
 }
 
 export function CutCard({
-  borderColor,
-  thickness = 1.5,
-  outerClip,
-  innerClip,
-  background = 'transparent',
   className = '',
-  innerClassName = '',
-  style,
+  contentClassName = '',
+  background = '#0A0A0A',
+  borderColor = 'rgba(255,255,255,0.1)',
   children,
+  ...rest
 }: CutCardProps) {
   return (
-    <div className={className} style={{ padding: `${thickness}px`, backgroundColor: borderColor, clipPath: outerClip, ...style }}>
-      <div className={`w-full h-full ${innerClassName}`} style={{ backgroundColor: background, clipPath: innerClip }}>
-        {children}
-      </div>
-    </div>
+    <motion.div {...rest} className={`relative ${className}`}>
+      <div className="absolute inset-0" style={{ backgroundColor: borderColor, clipPath: CUT_OUTER }} />
+      <div className="absolute inset-[1px]" style={{ backgroundColor: background, clipPath: CUT_INNER }} />
+      <div className={`relative ${contentClassName}`}>{children}</div>
+    </motion.div>
   );
 }
