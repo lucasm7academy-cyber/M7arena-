@@ -36,6 +36,9 @@ const ERROS: Record<string, string> = {
   campeao_indisponivel: 'Campeão indisponível (já usado ou travado pelo Fearless).',
   fase_invalida: 'Essa ação não é da fase atual.',
   tempo_expirado: 'O tempo do turno acabou.',
+  // Sala LIVRE (personalizada): a vaga é ocupada COM o time do jogador.
+  sem_time: 'Você precisa criar ou entrar em um time para ocupar esta vaga.',
+  mesmo_time: 'Esse time já está na outra vaga.',
   sem_cargo_streamer: 'Só quem tem o cargo de streamer pode iniciar a live.',
   sem_twitch_no_perfil: 'Cadastre sua Twitch no perfil antes de iniciar a live.',
   sem_codigo: 'Sem código Riot disponível no momento.',

@@ -299,6 +299,33 @@ export async function entrarNaVaga(
       const teamId = opts.side === "blue" ? teamAId : teamBId;
       if (!teamId) return { ok: false, erro: "times_incompletos" };
       if (!(await usuarioNoTime(tx, opts.userId, teamId))) return { ok: false, erro: "nao_e_do_time" };
+    } else {
+      // Sala LIVRE (personalizada): o jogador entra COM O TIME DELE — dono ou
+      // membro aceito. Sem time → `sem_time` (o front mostra "crie ou entre em
+      // um time"). O mesmo time nunca ocupa os dois lados.
+      const cols = { id: teams.id, name: teams.name, tag: teams.tag, logoUrl: teams.logoUrl } as const;
+      const [dono] = await tx.select(cols).from(teams).where(eq(teams.ownerId, opts.userId)).limit(1);
+      let meuTime: { id: string; name: string; tag: string | null; logoUrl: string | null } | null = dono ?? null;
+      if (!meuTime) {
+        const ms = await findUserTeamMemberships(tx, opts.userId, { onlyAccepted: true });
+        const tId = ms[0]?.teamId ?? null;
+        if (tId) {
+          const [t] = await tx.select(cols).from(teams).where(eq(teams.id, tId)).limit(1);
+          meuTime = t ?? null;
+        }
+      }
+      if (!meuTime) return { ok: false, erro: "sem_time" };
+      const outraTag = opts.side === "blue" ? sala.timeBTag : sala.timeATag;
+      if (outraTag && meuTime.tag && outraTag === meuTime.tag) return { ok: false, erro: "mesmo_time" };
+
+      await tx
+        .update(matches)
+        .set(
+          opts.side === "blue"
+            ? { timeANome: meuTime.name, timeATag: meuTime.tag, timeALogo: meuTime.logoUrl, updatedAt: new Date() }
+            : { timeBNome: meuTime.name, timeBTag: meuTime.tag, timeBLogo: meuTime.logoUrl, updatedAt: new Date() }
+        )
+        .where(eq(matches.id, sala.id));
     }
 
     const [naVaga] = await tx
@@ -354,6 +381,19 @@ export async function sairDaVaga(d: any, opts: { salaNum: number; userId: string
     if (!jogador) return { ok: false, erro: "nao_esta_na_sala" };
 
     await tx.delete(matchPlayers).where(and(eq(matchPlayers.matchId, sala.id), eq(matchPlayers.userId, opts.userId)));
+
+    // Sala LIVRE: o TIME sai junto com o jogador — a vaga reabre pra outro time.
+    // (No campeonato o time é da série e não sai da sala.)
+    if (!sala.tournamentMatchId && !sala.bracketMatchId) {
+      await tx
+        .update(matches)
+        .set(
+          jogador.side === "blue"
+            ? { timeANome: null, timeATag: null, timeALogo: null, updatedAt: new Date() }
+            : { timeBNome: null, timeBTag: null, timeBLogo: null, updatedAt: new Date() }
+        )
+        .where(eq(matches.id, sala.id));
+    }
     await tx
       .update(campeonatoSalaEstado)
       .set({ prontoBlue: false, prontoRed: false, updatedAt: new Date() })
