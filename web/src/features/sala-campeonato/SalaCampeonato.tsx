@@ -14,7 +14,7 @@ import { useSalaRealtime } from '../../hooks/useSalaRealtime';
 import { usePerfil } from '../../contexts/PerfilContext';
 import { agoraServidor, registrarServerTime } from '../../lib/clockSync';
 import { ROLE_CONFIG } from '../../api/salamod1';
-import { buildChampionIconUrl } from '../../api/riot';
+import { buildChampionIconUrl, getDDRVersion } from '../../api/riot';
 
 // Borda cortada no padrão das vagas/cards (mesmos cortes da sala normal).
 const CUT_FRAME = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
@@ -118,6 +118,27 @@ export default function SalaCampeonato() {
   const [mostrarRecap, setMostrarRecap] = useState(false);
   const draftStatusRef = useRef<string | null>(null);
   const recapJogoRef = useRef<string | null>(null);
+  // Nomes dos campeões (pt-BR) para o layout pós-draft — uma busca só (CDN).
+  const [nomesCampeoes, setNomesCampeoes] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const v = await getDDRVersion();
+        const r = await fetch(`https://ddragon.leagueoflegends.com/cdn/${v}/data/pt_BR/champion.json`);
+        const j = await r.json();
+        if (!vivo) return;
+        const mapa: Record<string, string> = {};
+        for (const c of Object.values(j?.data ?? {}) as any[]) mapa[c.id] = c.name;
+        setNomesCampeoes(mapa);
+      } catch {
+        // Sem os nomes, o layout cai no id do campeão — nada trava.
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
   const [, setTick] = useState(0);
 
   const carregar = useCallback(async () => {
@@ -692,6 +713,92 @@ export default function SalaCampeonato() {
     </div>
   );
 
+  // ── SÉRIE EM ANDAMENTO (camp_jogo): layout estilo "Escolhas concluídas" —
+  //    logos grandes X, campeões do confronto e as VAGAS em chips logo abaixo
+  //    de cada time (o botão de copiar código fica embaixo, como está).
+  const renderPosDraft = () => {
+    const ladoA: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
+    const bloco = (posicao: 'blue' | 'red') => {
+      const vaga: 'blue' | 'red' = ladoA === posicao ? 'blue' : 'red';
+      const isA = vaga === 'blue';
+      const jogador = isA ? jogadorBlue : jogadorRed;
+      const picks = ((isA ? camp?.draft?.blue_picks : camp?.draft?.red_picks) ?? []).filter(Boolean) as string[];
+      const logo = isA ? sala.time_a_logo : sala.time_b_logo;
+      const nome = isA ? sala.time_a_nome : sala.time_b_nome;
+      const cor = posicao === 'blue' ? '#3B82F6' : '#ef4444';
+      return (
+        <div className="flex flex-col items-center gap-2 md:gap-[1.6vmin] w-[46vmin] max-w-full">
+          {logo ? (
+            <img
+              src={logo}
+              alt=""
+              className={`w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain ${
+                posicao === 'blue' ? 'drop-shadow-[0_0_30px_rgba(59,130,246,0.35)]' : 'drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]'
+              }`}
+            />
+          ) : (
+            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
+          )}
+          <span className="text-[11px] md:text-[1.6vmin] font-black uppercase tracking-[0.25em] truncate max-w-full" style={{ color: cor }}>
+            {nome ?? ''}
+          </span>
+
+          {/* Campeões escolhidos neste confronto */}
+          <div className="flex items-center justify-center gap-1 md:gap-[0.8vmin]">
+            {picks.map((c, i) => (
+              <div key={`${c}-${i}`} className="flex flex-col items-center gap-[0.3vmin]">
+                <img
+                  src={buildChampionIconUrl(c)}
+                  alt={c}
+                  title={c}
+                  className="w-10 h-10 md:w-[9vmin] md:h-[9vmin] object-cover border border-white/15"
+                  referrerPolicy="no-referrer"
+                />
+                <span className="text-[9px] md:text-[1vmin] font-bold text-white/70 uppercase truncate max-w-[9vmin]">
+                  {nomesCampeoes[c] ?? c}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* VAGA do jogador (chip) */}
+          <div className="flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin] bg-white/5 border border-white/10">
+            {jogador?.avatar ? (
+              <img src={jogador.avatar} alt="" className="w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full object-cover border border-white/20" />
+            ) : (
+              <div className="w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full bg-white/10 border border-white/15" />
+            )}
+            <span className="text-[11px] md:text-[1.4vmin] font-black uppercase tracking-wide text-white/90">
+              {jogador?.nome ?? 'VAGA ABERTA'}
+            </span>
+            {!!jogador?.tag && (
+              <span className="text-[10px] md:text-[1.2vmin] font-bold text-white/50">
+                #{String(jogador.tag).replace('#', '')}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    };
+    return (
+      <div className="w-full flex flex-col items-center gap-3 md:gap-[2.5vmin] py-4">
+        <div className="w-full flex items-center justify-center gap-3 md:gap-[6vmin]">
+          {bloco('blue')}
+          <span className="text-3xl md:text-[5vmin] font-black text-white/50 leading-none drop-shadow-lg">X</span>
+          {bloco('red')}
+        </div>
+        {serie && (
+          <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
+            {serie.placar_a} <span className="text-white/40">-</span> {serie.placar_b}
+          </span>
+        )}
+        <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] text-[#00FF41]">
+          Série em Andamento
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 w-full min-h-screen md:min-h-0 bg-[#050505] flex flex-col items-center justify-start p-0 font-sans relative overflow-x-hidden md:overflow-hidden md:h-full text-white">
       {/* Background Layer (igual às salas) */}
@@ -964,11 +1071,17 @@ export default function SalaCampeonato() {
       {/* ── ARENA (mesma estrutura da sala: times nas laterais + hub redondo) ─ */}
       <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 flex flex-col gap-4">
         <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
+          {estado === 'camp_jogo' ? (
+            <div className="w-full flex items-center justify-center z-20 py-2 md:py-0">
+              {renderPosDraft()}
+            </div>
+          ) : (
           <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[70vmin] py-2 md:py-0">
             {renderTimeColumn(equipeNoLado('blue'), 'blue')}
             {renderHub()}
             {renderTimeColumn(equipeNoLado('red'), 'red')}
           </div>
+          )}
 
           {/* Banner da troca de lados — aparece junto com o deslize das
               colunas e some sozinho (~3s). pointer-events-none: não bloqueia. */}
