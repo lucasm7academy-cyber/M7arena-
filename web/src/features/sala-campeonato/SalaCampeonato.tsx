@@ -429,6 +429,9 @@ export default function SalaCampeonato() {
   // Escolha de lado/pick (ADR-092): o que ainda falta escolher neste jogo.
   const faltaLado = !camp?.lado_escolhido;
   const faltaPick = !camp?.pick_order_escolhido;
+  // É a MINHA vez de escolher? (os botões aparecem para todos; quem não é da
+  // vez vê tudo apagado/travado — claro que só o sorteado escolhe)
+  const ehMinhaVez = !!escolhendo && escolhendo === meuLadoEfetivo;
   const estadoRotulo =
     estado === 'camp_vagas'
       ? 'Aguardando Times'
@@ -1173,8 +1176,8 @@ export default function SalaCampeonato() {
                 {/* Escolhedor com as DUAS opções abertas: linha de cima = LADO
                     (vermelho/azul); linha de baixo = PICK (first/last) — 4
                     botões UNIFORMES (mesmo tamanho) em grid de 2 colunas. */}
-                {escolhendo && escolhendo === meuLadoEfetivo && faltaLado && faltaPick && (
-                  <div className="w-full flex flex-col gap-2 md:gap-[1.4vmin]">
+                {faltaLado && faltaPick && (
+                  <div className={`w-full flex flex-col gap-2 md:gap-[1.4vmin] ${ehMinhaVez ? '' : 'opacity-40 pointer-events-none'}`}>
                     <span className="text-[9px] md:text-[1.05vmin] font-black text-white/40 uppercase tracking-[0.3em] text-center">
                       Lado
                     </span>
@@ -1203,7 +1206,7 @@ export default function SalaCampeonato() {
                       <button
                         disabled={!!ocupado}
                         onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'first' })}
-                        className="h-11 md:h-[7vmin] w-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-black bg-[#FFB700] hover:brightness-110 disabled:opacity-50 cursor-pointer"
+                        className="h-11 md:h-[7vmin] w-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-black bg-[#00FF41] hover:brightness-110 disabled:opacity-50 cursor-pointer"
                         style={{ clipPath: CUT_BUTTON }}
                       >
                         First
@@ -1214,10 +1217,10 @@ export default function SalaCampeonato() {
                         className="w-full disabled:opacity-50 cursor-pointer group"
                       >
                         <CutCard
-                          borderColor="rgba(255,255,255,0.2)"
-                          background="rgba(255,255,255,0.10)"
+                          borderColor="#FFC400"
+                          background="#FFB700"
                           className="h-11 md:h-[7vmin] w-full"
-                          contentClassName="h-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
+                          contentClassName="h-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-black transition-[filter] group-hover:brightness-110"
                         >
                           Last
                         </CutCard>
@@ -1227,8 +1230,8 @@ export default function SalaCampeonato() {
                 )}
 
                 {/* Só falta o LADO (o adversário escolheu o pick primeiro) */}
-                {escolhendo && escolhendo === meuLadoEfetivo && faltaLado && !faltaPick && (
-                  <div className="w-full grid grid-cols-2 gap-2 md:gap-[1.4vmin]">
+                {faltaLado && !faltaPick && (
+                  <div className={`w-full grid grid-cols-2 gap-2 md:gap-[1.4vmin] ${ehMinhaVez ? '' : 'opacity-40 pointer-events-none'}`}>
                     <button
                       disabled={!!ocupado}
                       onClick={() => chamar('/sala-campeonato/lado', { lado: 'red' })}
@@ -1249,12 +1252,12 @@ export default function SalaCampeonato() {
                 )}
 
                 {/* Só falta o PICK (o adversário escolheu o lado primeiro) */}
-                {escolhendo && escolhendo === meuLadoEfetivo && !faltaLado && faltaPick && (
-                  <div className="w-full grid grid-cols-2 gap-2 md:gap-[1.4vmin]">
+                {!faltaLado && faltaPick && (
+                  <div className={`w-full grid grid-cols-2 gap-2 md:gap-[1.4vmin] ${ehMinhaVez ? '' : 'opacity-40 pointer-events-none'}`}>
                     <button
                       disabled={!!ocupado}
                       onClick={() => chamar('/sala-campeonato/pick-order', { ordem: 'first' })}
-                      className="h-11 md:h-[7vmin] w-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-black bg-[#FFB700] hover:brightness-110 disabled:opacity-50 cursor-pointer"
+                      className="h-11 md:h-[7vmin] w-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-black bg-[#00FF41] hover:brightness-110 disabled:opacity-50 cursor-pointer"
                       style={{ clipPath: CUT_BUTTON }}
                     >
                       First Pick
@@ -1265,10 +1268,10 @@ export default function SalaCampeonato() {
                       className="w-full disabled:opacity-50 cursor-pointer group"
                     >
                       <CutCard
-                        borderColor="rgba(255,255,255,0.2)"
-                        background="rgba(255,255,255,0.10)"
+                        borderColor="#FFC400"
+                        background="#FFB700"
                         className="h-11 md:h-[7vmin] w-full"
-                        contentClassName="h-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-white transition-[filter] group-hover:brightness-125"
+                        contentClassName="h-full flex items-center justify-center text-[11px] md:text-[1.5vmin] font-black uppercase text-black transition-[filter] group-hover:brightness-110"
                       >
                         Last Pick
                       </CutCard>
