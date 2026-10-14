@@ -449,6 +449,8 @@ const Jogar = () => {
   // Modais
   const [showCriarModal, setShowCriarModal] = useState(false);
   const [criandoSalaTimes, setCriandoSalaTimes] = useState(false);
+  // Formato da série da sala TIME vs TIME (md3 presetado — pedido 14/10).
+  const [formatoSerie, setFormatoSerie] = useState<'md1' | 'md3' | 'md5'>('md3');
   const [showVincularModal, setShowVincularModal] = useState(false);
   const [modoSelecionado, setModoSelecionado] = useState<ModoJogo>('5v5');
   const [showSenhaModal, setShowSenhaModal] = useState<{ salaId: number; nome: string } | null>(null);
@@ -666,7 +668,7 @@ const Jogar = () => {
 
   // Sala TIME vs TIME LIVRE (ADR-086): cria direto no fluxo novo (2 vagas de
   // time, PRONTO, sorteio de lado e draft) e abre a sala — sem campeonato.
-  const criarSalaTimes = async () => {
+  const criarSalaTimes = async (formato?: 'md1' | 'md3' | 'md5') => {
     if (!user) {
       setShowLoginModal(true);
       return;
@@ -677,7 +679,7 @@ const Jogar = () => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: '{}',
+        body: JSON.stringify({ formato: formato ?? formatoSerie }),
       });
       const j = await r.json().catch(() => null);
       if (!j?.ok) {
@@ -824,6 +826,26 @@ const Jogar = () => {
               <Trophy className="w-4 h-4 text-[#FFB700]" />
             </div>
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Escolha seu Modo de Jogo</h2>
+            {/* Série do TIME vs TIME (a sala nova): MD3 presetado (pedido 14/10) */}
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 hidden sm:inline">Série</span>
+              {(['md1', 'md3', 'md5'] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFormatoSerie(f)}
+                  title={`Melhor de ${f === 'md1' ? 1 : f === 'md3' ? 3 : 5}`}
+                  className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
+                    formatoSerie === f
+                      ? 'bg-[#FFB700] text-black border-[#FFB700]'
+                      : 'bg-white/5 text-white/60 border-white/15 hover:text-white'
+                  }`}
+                  style={{ clipPath: CUT_BADGE }}
+                >
+                  {f.toUpperCase()}
+                </button>
+              ))}
+            </div>
             <button
               onClick={criarSalaTimes}
               disabled={criandoSalaTimes}

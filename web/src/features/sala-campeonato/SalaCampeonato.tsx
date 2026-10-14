@@ -690,6 +690,11 @@ export default function SalaCampeonato() {
           {serie.placar_a} <span className="text-white/40">-</span> {serie.placar_b}
         </span>
       )}
+      {!serie && camp?.formato && (
+        <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] text-white/50 mt-1 md:mt-[0.6vmin]">
+          Série {String(camp.formato).toUpperCase()}
+        </span>
+      )}
 
       {/* Estado da sala — mesmos avisos de antes, no estilo limpo */}
       {estado === 'camp_vagas' && (

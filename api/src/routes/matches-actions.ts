@@ -276,7 +276,7 @@ matchesActionsRouter.post("/time-vs-time", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
-    const r = await criarSalaTimeVsTime(db, { userId: user.id });
+    const r = await criarSalaTimeVsTime(db, { userId: user.id, formato: req.body?.formato });
     if (!r.ok) return res.status(400).json({ ok: false, erro: r.erro, estado: null, mudou: false });
     return res.json({
       ok: true,

@@ -192,6 +192,9 @@ export const campeonatoSalaEstado = pgTable("campeonato_sala_estado", {
   // ou o perdedor (jogos 2+) escolhe lado OU pick order, e o adversário completa
   // o que sobrar. NULL = fluxo antigo (lado vinha primeiro sempre).
   primeiraEscolha: varchar("primeira_escolha", { length: 10 }),
+  // Formato da SÉRIE da sala LIVRE (time_vs_time_livre): 'md1' | 'md3' | 'md5'
+  // (md3 presetado). No campeonato o formato vem do bestOf da série.
+  formato: varchar("formato", { length: 4 }).default("md3").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });

@@ -259,8 +259,10 @@ export async function criarSalasCampeonatoPendentes(d: any, agora: Date = new Da
   return { criadas, erros };
 }
 
-/** Cria a sala TIME vs TIME LIVRE — mesmo fluxo, sem campeonato (ADR-086). */
-export async function criarSalaTimeVsTime(d: any, opts: { userId: string }): Promise<Resultado<{ sala: any }>> {
+/** Cria a sala TIME vs TIME LIVRE — mesmo fluxo, sem campeonato (ADR-086).
+ *  `formato` = série da sala: md1 | md3 (padrão) | md5. */
+export async function criarSalaTimeVsTime(d: any, opts: { userId: string; formato?: string }): Promise<Resultado<{ sala: any }>> {
+  const formato = ["md1", "md3", "md5"].includes(String(opts.formato)) ? String(opts.formato) : "md3";
   const out: any = await d.transaction(async (tx: any) => {
     const [sala] = await tx
       .insert(matches)
@@ -273,7 +275,7 @@ export async function criarSalaTimeVsTime(d: any, opts: { userId: string }): Pro
         nome: "Time vs Time",
       })
       .returning();
-    await tx.insert(campeonatoSalaEstado).values({ matchId: sala.id });
+    await tx.insert(campeonatoSalaEstado).values({ matchId: sala.id, formato });
     return { ok: true, sala };
   });
   if (out?.ok) await notifyMatchChange(String(out.sala.salaNum));
@@ -796,7 +798,7 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
   // Draft do jogo (passo 5): shape compatível com o DraftRoom (mesmos campos do
   // draft das salas) + extras do campeonato (Fearless e quem tem o first pick).
   let draft: any = null;
-  if (sala.status === "camp_draft" || sala.status === "camp_jogo") {
+  if (sala.status === "camp_draft" || sala.status === "camp_jogo" || sala.status === "iniciando_partida" || sala.status === "partida_iniciada") {
     const [dr] = await d
       .select()
       .from(matchDrafts)
@@ -825,6 +827,9 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
 
   return {
     jogo: estado?.jogo ?? 1,
+    // Formato da série: sala livre tem o dela (md1/md3/md5); no campeonato o
+    // placar/melhor-de vem da série — aqui serve pro front mostrar o rótulo.
+    formato: estado?.formato ?? null,
     pronto_blue: estado?.prontoBlue ?? false,
     pronto_red: estado?.prontoRed ?? false,
     sorteio_vencedor: estado?.sorteioVencedor ?? null,
