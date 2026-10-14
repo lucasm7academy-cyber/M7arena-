@@ -304,22 +304,17 @@ export async function entrarNaVaga(
       // membro aceito. Sem time → `sem_time` (o front mostra "crie ou entre em
       // um time"). O mesmo time nunca ocupa os dois lados.
       const cols = { id: teams.id, name: teams.name, tag: teams.tag, logoUrl: teams.logoUrl } as const;
-      const [dono] = await tx.select(cols).from(teams).where(eq(teams.ownerId, opts.userId)).limit(1);
-      let meuTime: { id: string; name: string; tag: string | null; logoUrl: string | null } | null = dono ?? null;
-      if (!meuTime) {
-        // Só vínculo REAL (user_id, aceito) e o MAIS RECENTE — nada de casar
-        // por Riot ID/PUUID: vínculo de convidado antigo (ou linha que sobrou
-        // depois de sair do time) puxava time errado, ex.: logo de um time que
-        // o jogador já saiu (report do usuário 13/10).
-        const [t] = await tx
-          .select(cols)
-          .from(teamMembers)
-          .innerJoin(teams, eq(teams.id, teamMembers.teamId))
-          .where(and(eq(teamMembers.userId, opts.userId), eq(teamMembers.status, "accepted")))
-          .orderBy(desc(teamMembers.createdAt))
-          .limit(1);
-        meuTime = t ?? null;
-      }
+      // Só MEMBERSHIP aceita (user_id), a mais recente — o MESMO critério da
+      // página de time. Ser DONO sem vínculo de membro NÃO conta (caso real:
+      // dono antigo que "saiu" e o time ainda era puxado na vaga — 13/10).
+      const [t] = await tx
+        .select(cols)
+        .from(teamMembers)
+        .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+        .where(and(eq(teamMembers.userId, opts.userId), eq(teamMembers.status, "accepted")))
+        .orderBy(desc(teamMembers.createdAt))
+        .limit(1);
+      const meuTime = t ?? null;
       if (!meuTime) return { ok: false, erro: "sem_time" };
       const outraTag = opts.side === "blue" ? sala.timeBTag : sala.timeATag;
       if (outraTag && meuTime.tag && outraTag === meuTime.tag) return { ok: false, erro: "mesmo_time" };
