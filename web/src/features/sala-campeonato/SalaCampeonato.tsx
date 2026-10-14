@@ -415,8 +415,18 @@ export default function SalaCampeonato() {
       : jogadorRed?.id === eu || jogadorRed?.user_id === eu
         ? jogadorRed
         : null;
-  // Lado efetivo: a vaga ocupada manda (vale também para a sala LIVRE, sem time).
-  const meuLadoEfetivo: 'blue' | 'red' | null = (meuJogador?.side as 'blue' | 'red' | undefined) ?? meuLado;
+  // Lado efetivo: a vaga ocupada manda (vale para campeonato E sala livre).
+  // O shape legado pode mandar `side` VAZIO em algumas salas — normaliza com o
+  // fallback por `is_time_a` (senão ninguém é "da vez" e os botões ficam presos).
+  const ladoVaga: 'blue' | 'red' | null =
+    meuJogador?.side === 'blue' || meuJogador?.side === 'red'
+      ? (meuJogador.side as 'blue' | 'red')
+      : meuJogador
+        ? meuJogador.is_time_a
+          ? 'blue'
+          : 'red'
+        : null;
+  const meuLadoEfetivo: 'blue' | 'red' | null = ladoVaga ?? meuLado;
   const meuPronto = meuLadoEfetivo === 'blue' ? camp?.pronto_blue : meuLadoEfetivo === 'red' ? camp?.pronto_red : false;
   const escolhendo = camp?.escolha_time as 'blue' | 'red' | null;
   const tagDoLado = (lado?: 'blue' | 'red' | null) =>
