@@ -120,6 +120,8 @@ export default function SalaCampeonato() {
   const [ladoVisto, setLadoVisto] = useState<{ chave: string; lado: 'blue' | 'red' } | null>(null);
   // Resumo pós-draft: mostra os campeões escolhidos por ~10s antes de voltar.
   const [mostrarRecap, setMostrarRecap] = useState(false);
+  // Contagem (dentro do draft) até voltar pra sala — pedido do usuário 14/10.
+  const [recapSegundos, setRecapSegundos] = useState(10);
   const draftStatusRef = useRef<string | null>(null);
   const recapJogoRef = useRef<string | null>(null);
   // Nomes dos campeões (pt-BR) para o layout pós-draft — uma busca só (CDN).
@@ -214,7 +216,17 @@ export default function SalaCampeonato() {
     if (anterior === 'ongoing' && st === 'finished' && recapJogoRef.current !== key) {
       recapJogoRef.current = key;
       setMostrarRecap(true);
-      setTimeout(() => setMostrarRecap(false), 10000);
+      setRecapSegundos(10);
+      const t = setInterval(() => {
+        setRecapSegundos((s) => {
+          if (s <= 1) {
+            clearInterval(t);
+            setMostrarRecap(false);
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
     }
   }, [sala]);
 
@@ -469,8 +481,8 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
-  // RESUMO pós-draft (~10s): mostra os campeões escolhidos no confronto antes
-  // de voltar para a sala (mesmas props do draft + recap).
+  // PÓS-DRAFT (~10s): permanece NO PRÓPRIO DRAFT contando o timer até voltar
+  // para a sala — sem tela separada (pedido do usuário 14/10).
   if (mostrarRecap && camp?.draft?.status === 'finished') {
     return (
       <DraftRoom
@@ -487,7 +499,7 @@ export default function SalaCampeonato() {
         timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
         timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
-        recap
+        fechandoEm={recapSegundos}
       />
     );
   }

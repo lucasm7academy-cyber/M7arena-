@@ -20,7 +20,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Search, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { FiShieldOff } from 'react-icons/fi';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
@@ -53,6 +52,8 @@ interface DraftRoomProps {
    * ~10s após a última escolha, antes de voltar para a sala).
    */
   recap?: boolean;
+  /** Segundos para VOLTAR PRA SALA (mostra a contagem DENTRO do draft). */
+  fechandoEm?: number | null;
   /**
    * Modo NÃO-campeonato (ex.: Time vs Time livre): o espectador vê o grid de
    * campeões igual a quem picka (apenas assistindo — sem botão de confirmar).
@@ -119,12 +120,29 @@ function PickSlot({ champion, active, hidden, champions, version }: {
             </div>
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center opacity-15">
-            <FiShieldOff size="5vmin" />
+          <div className="w-full h-full flex items-center justify-center opacity-50 text-white/30">
+            <HelmetIcon className="w-[6vmin] h-[6vmin]" />
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Capacete genérico para slot VAZIO — **arte própria do M7Arena** (redesenhada;
+ * o Drafter.lol usa um parecido e é arte de terceiros — não copiar o path
+ * deles; o layout slot escuro + risco diagonal é CSS puro e pode).
+ */
+function HelmetIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 130 142" fill="currentColor" className={className} aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M65 6C35 6 20 30 20 60v20c0 22 5 42 14 56h16c-6-14-9-30-9-48v-8h48v8c0 18-3 34-9 48h16c9-14 14-34 14-56V60C110 30 95 6 65 6Zm-18 46h36v14H47V52Z"
+      />
+    </svg>
   );
 }
 
@@ -285,7 +303,7 @@ function TimeRecap({ time, picks, lado, champions, version }: {
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar, recap, espectadorCompleto,
+  timeA, timeB, placar, recap, espectadorCompleto, fechandoEm,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -566,6 +584,19 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           {segundos}
         </div>
       </div>
+
+      {/* CONTAGEM PÓS-DRAFT: fica DENTRO do draft antes de voltar pra sala */}
+      {typeof fechandoEm === 'number' && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-[13vmin] left-1/2 -translate-x-1/2 z-50 px-[2.5vmin] py-[1vmin] bg-black/75 backdrop-blur-md border border-[#FFB700]/40 whitespace-nowrap"
+        >
+          <span className="text-[1.4vmin] font-black uppercase tracking-[0.35em] text-[#FFB700]">
+            Voltando para a sala em {fechandoEm}s
+          </span>
+        </motion.div>
+      )}
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
       <div className="absolute top-[5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
