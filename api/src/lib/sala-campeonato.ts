@@ -35,6 +35,19 @@ import {
 /** Fases "vivas" da sala (campeonato OU livre): fora delas, não é mais a ativa. */
 export const FASES_ATIVAS_CAMPEONATO = ["camp_vagas", "camp_prontos", "camp_lado", "camp_draft", "camp_jogo"];
 
+/**
+ * Fases em que a live pode ser aberta/encerrada: QUALQUER uma com a sala
+ * funcionando (pedido do usuário 14/10) — antes o streamer só conseguia abrir
+ * a live nas fases camp_* e o jogo em si (iniciando/partida) caía em
+ * "estado_invalido" ("A sala mudou de fase"). A série também pode estar viva.
+ */
+export const FASES_COM_LIVE = [
+  ...FASES_ATIVAS_CAMPEONATO,
+  "iniciando_partida",
+  "partida_iniciada",
+  "aguardando_revisao",
+];
+
 /** Modos que usam o fluxo de TIME vs TIME (2 vagas de time + PRONTO + draft). */
 export function eSalaDeTimes(sala: any): boolean {
   return sala?.mode === "campeonato" || sala?.mode === "time_vs_time_livre";
@@ -631,7 +644,7 @@ export async function iniciarLiveDaSala(
   if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
   const ehLivre = sala.mode === "time_vs_time_livre";
   if (sala.mode !== "campeonato" && !ehLivre) return { ok: false, erro: "nao_e_sala_campeonato" };
-  if (!FASES_ATIVAS_CAMPEONATO.includes(sala.status)) return { ok: false, erro: "estado_invalido" };
+  if (!FASES_COM_LIVE.includes(sala.status)) return { ok: false, erro: "estado_invalido" };
 
   // Campeonato: a live ancora na SÉRIE. Scrim (livre): ancora na PRÓPRIA SALA
   // (não tem série; o `match_id` é FK de séries — por isso a coluna `sala_id`).
@@ -868,6 +881,9 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
         current_team: dr.currentTeam,
         turn_deadline_at: dr.turnDeadlineAt ?? null,
         status: dr.status,
+        // Quando o draft fechou — o front usa pra contagem de 10s pós-draft
+        // mesmo se a transição (ongoing → finished) se perder num poll/refresh.
+        finalizado_em: dr.updatedAt ?? null,
         duracao_turno_ms: DRAFT_TURNO_MS_CAMPEONATO,
         regras: REGRAS_SHAPE_CAMPEONATO,
         // Fearless: campeões travados por jogos anteriores (o front grelha) e

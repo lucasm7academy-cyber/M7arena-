@@ -202,18 +202,25 @@ export default function SalaCampeonato() {
     return () => clearTimeout(t);
   }, [bannerTroca]);
 
-  // RESUMO PÓS-DRAFT (10s): quando a ÚLTIMA escolha fecha o draft (transição
-  // observada AO VIVO: ongoing → finished), segura uma tela com os campeões de
-  // cada time antes de voltar para a sala. Nunca dispara em load/refresh (não
-  // houve transição). O timeout NÃO tem cleanup de propósito: o polling troca
-  // o objeto `sala` a cada 5s e um cleanup cancelaria a volta pra sala.
+  // PÓS-DRAFT (10s): quando a ÚLTIMA escolha fecha o draft, segura o próprio
+  // draft com o cronômetro contando 10s antes de voltar para a sala. Dispara
+  // por DUAS leituras (a primeira que chegar vale), pra não se perder num
+  // poll/WS fora de ordem ou refresh:
+  //  - transição observada ao vivo: ongoing → finished;
+  //  - draft já `finished` e FECHOU AGORA (janela de 45s pelo `finalizado_em`
+  //    que o shape publica — cobre a leitura que chegou depois do fechamento).
+  // O timeout NÃO tem cleanup de propósito: o polling troca o objeto `sala`
+  // a cada 5s e um cleanup cancelaria a volta pra sala.
   useEffect(() => {
-    const st: string | null = sala?.campeonato?.draft?.status ?? null;
+    const draftNaSala = sala?.campeonato?.draft;
+    const st: string | null = draftNaSala?.status ?? null;
     const key = sala ? `${sala.id}:${sala?.campeonato?.jogo ?? 1}` : null;
     const anterior = draftStatusRef.current;
     draftStatusRef.current = st;
-    if (!key) return;
-    if (anterior === 'ongoing' && st === 'finished' && recapJogoRef.current !== key) {
+    if (!key || recapJogoRef.current === key) return;
+    const finalizadoEm = draftNaSala?.finalizado_em ? Date.parse(draftNaSala.finalizado_em) : 0;
+    const acabouAgora = st === 'finished' && finalizadoEm > 0 && Date.now() - finalizadoEm < 45_000;
+    if ((anterior === 'ongoing' && st === 'finished') || acabouAgora) {
       recapJogoRef.current = key;
       setMostrarRecap(true);
       setRecapSegundos(10);
