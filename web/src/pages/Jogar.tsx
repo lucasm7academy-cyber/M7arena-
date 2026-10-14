@@ -346,6 +346,32 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
               </div>
             </div>
 
+            {/* Formato da SÉRIE — só no card de criar a sala TIME vs TIME
+                (MD3 presetado; pedido 14/10) */}
+            {modo === 'time_vs_time' && (
+              <div className="space-y-1.5">
+                <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Formato da Série</label>
+                <div className="flex items-center gap-1.5">
+                  {(['md1', 'md3', 'md5'] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setFormatoSerie(f)}
+                      title={`Melhor de ${f === 'md1' ? 1 : f === 'md3' ? 3 : 5}`}
+                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
+                        formatoSerie === f
+                          ? 'bg-[#FFB700] text-black border-[#FFB700]'
+                          : 'bg-white/5 text-white/60 border-white/15 hover:text-white'
+                      }`}
+                      style={{ clipPath: CUT_BADGE }}
+                    >
+                      {f.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">ELO Mínimo</label>
@@ -826,26 +852,6 @@ const Jogar = () => {
               <Trophy className="w-4 h-4 text-[#FFB700]" />
             </div>
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Escolha seu Modo de Jogo</h2>
-            {/* Série do TIME vs TIME (a sala nova): MD3 presetado (pedido 14/10) */}
-            <div className="flex items-center gap-1.5 ml-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 hidden sm:inline">Série</span>
-              {(['md1', 'md3', 'md5'] as const).map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => setFormatoSerie(f)}
-                  title={`Melhor de ${f === 'md1' ? 1 : f === 'md3' ? 3 : 5}`}
-                  className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
-                    formatoSerie === f
-                      ? 'bg-[#FFB700] text-black border-[#FFB700]'
-                      : 'bg-white/5 text-white/60 border-white/15 hover:text-white'
-                  }`}
-                  style={{ clipPath: CUT_BADGE }}
-                >
-                  {f.toUpperCase()}
-                </button>
-              ))}
-            </div>
             <button
               onClick={criarSalaTimes}
               disabled={criandoSalaTimes}
