@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
 import { tournamentMatches } from "./tournaments.js";
+import { matches } from "./matches.js";
 
 export const news = pgTable(
   "news",
@@ -133,6 +134,9 @@ export const transmissoes = pgTable(
     time1Id: uuid("time1_id"),
     time2Id: uuid("time2_id"),
     matchId: uuid("match_id").references(() => tournamentMatches.id, { onDelete: "cascade" }),
+    // Sala de origem quando a live é de uma SALA (scrim TIME vs TIME livre —
+    // sem série/campeonato). O `match_id` fica reservado às séries.
+    salaId: uuid("sala_id").references(() => matches.id, { onDelete: "cascade" }),
   },
   (table) => [
     index("transmissoes_ativo_idx").on(table.ativo),

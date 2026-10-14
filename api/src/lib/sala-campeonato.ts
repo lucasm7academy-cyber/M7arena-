@@ -629,12 +629,18 @@ export async function iniciarLiveDaSala(
 ): Promise<Resultado<{ transmissao: any; twitch: string }>> {
   const [sala] = await d.select().from(matches).where(eq(matches.salaNum, opts.salaNum)).limit(1);
   if (!sala) return { ok: false, erro: "sala_nao_encontrada" };
-  if (sala.mode !== "campeonato") return { ok: false, erro: "nao_e_sala_campeonato" };
+  const ehLivre = sala.mode === "time_vs_time_livre";
+  if (sala.mode !== "campeonato" && !ehLivre) return { ok: false, erro: "nao_e_sala_campeonato" };
   if (!FASES_ATIVAS_CAMPEONATO.includes(sala.status)) return { ok: false, erro: "estado_invalido" };
 
-  const serie = await carregarSerieDaSala(d, sala);
-  if (!serie) return { ok: false, erro: "serie_nao_encontrada" };
-  if (STATUS_FINAIS_SERIE.includes(serie.status)) return { ok: false, erro: "serie_finalizada" };
+  // Campeonato: a live ancora na SÉRIE. Scrim (livre): ancora na PRÓPRIA SALA
+  // (não tem série; o `match_id` é FK de séries — por isso a coluna `sala_id`).
+  let serie: any = null;
+  if (!ehLivre) {
+    serie = await carregarSerieDaSala(d, sala);
+    if (!serie) return { ok: false, erro: "serie_nao_encontrada" };
+    if (STATUS_FINAIS_SERIE.includes(serie.status)) return { ok: false, erro: "serie_finalizada" };
+  }
 
   const v = await validarStreamer(d, opts.userId);
   if (!v.ok) return v;
@@ -642,7 +648,13 @@ export async function iniciarLiveDaSala(
   const [jaAtiva] = await d
     .select()
     .from(transmissoes)
-    .where(and(eq(transmissoes.matchId, serie.id), eq(transmissoes.userId, opts.userId), eq(transmissoes.ativo, true)))
+    .where(
+      and(
+        ehLivre ? eq(transmissoes.salaId, sala.id) : eq(transmissoes.matchId, serie.id),
+        eq(transmissoes.userId, opts.userId),
+        eq(transmissoes.ativo, true)
+      )
+    )
     .limit(1);
   if (jaAtiva) return { ok: true, transmissao: jaAtiva, twitch: v.twitch };
 
@@ -651,6 +663,28 @@ export async function iniciarLiveDaSala(
     .update(transmissoes)
     .set({ ativo: false })
     .where(and(eq(transmissoes.userId, opts.userId), eq(transmissoes.ativo, true)));
+
+  if (ehLivre) {
+    // SCRIM: sem campeonato — o card sai como "TAGA x TAGB — Scrim".
+    const [row] = await d
+      .insert(transmissoes)
+      .values({
+        userId: opts.userId,
+        twitchChannel: v.twitch,
+        titulo: `${sala.timeATag ?? "TIME A"} x ${sala.timeBTag ?? "TIME B"} — Scrim`,
+        campeonatoId: null,
+        duracaoHoras: 1,
+        ativo: true,
+        expiraEm: null,
+        modo: "time_vs_time_livre",
+        time1Id: null,
+        time2Id: null,
+        matchId: null,
+        salaId: sala.id,
+      })
+      .returning();
+    return { ok: true, transmissao: row, twitch: v.twitch };
+  }
 
   const [torneio] = await d
     .select({ nome: tournaments.name })
@@ -789,11 +823,16 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
 
   // Passo 6: live ativa do jogo (botão "Iniciar live" / "Assista ao vivo").
   let live: any = null;
-  if (serie) {
+  if (serie || sala.mode === "time_vs_time_livre") {
     const [tr] = await d
       .select({ id: transmissoes.id, twitch: transmissoes.twitchChannel, userId: transmissoes.userId })
       .from(transmissoes)
-      .where(and(eq(transmissoes.matchId, serie.id), eq(transmissoes.ativo, true)))
+      .where(
+        and(
+          serie ? eq(transmissoes.matchId, serie.id) : eq(transmissoes.salaId, sala.id),
+          eq(transmissoes.ativo, true)
+        )
+      )
       .limit(1);
     if (tr) {
       const [u] = await d.select({ nome: users.displayName }).from(users).where(eq(users.id, tr.userId)).limit(1);

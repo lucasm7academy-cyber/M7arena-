@@ -1085,8 +1085,9 @@ export default function SalaCampeonato() {
               </motion.button>
             )}
 
-            {/* Iniciar Live (streamer): roxa estilo Twitch, ao lado de Convidar */}
-            {perfil?.cargo === 'streamer' && !!serie && !camp?.live && (
+            {/* Iniciar Live (streamer): roxa estilo Twitch, ao lado de Convidar.
+                Vale pra campeonato E scrim (T vs T livre). */}
+            {perfil?.cargo === 'streamer' && !camp?.live && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.94 }}
@@ -1113,7 +1114,6 @@ export default function SalaCampeonato() {
 
             {/* Encerrar Live (SÓ o streamer dono da live ativa): branca */}
             {perfil?.cargo === 'streamer' &&
-              !!serie &&
               camp?.live?.id &&
               !!(perfil as any)?.twitch &&
               String((perfil as any).twitch).toLowerCase() === String(camp.live.twitch).toLowerCase() && (

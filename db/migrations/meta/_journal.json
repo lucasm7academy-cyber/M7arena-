@@ -218,6 +218,13 @@
       "when": 1791960000000,
       "tag": "0030_serie_livre_placar",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792010000000,
+      "tag": "0031_live_sala_id",
+      "breakpoints": true
     }
   ]
 }
