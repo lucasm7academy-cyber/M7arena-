@@ -137,6 +137,8 @@ const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(
 
 const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial }: any) => {
   const [modo, setModo] = useState<ModoJogo>(modoInicial || '5v5');
+  // Formato da SÉRIE (só no modo Time vs Time): MD3 presetado (pedido 14/10).
+  const [formatoSerie, setFormatoSerie] = useState<'md1' | 'md3' | 'md5'>('md3');
   const [mpoints, setMpoints] = useState(0);
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -168,6 +170,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
       senha: temSenha ? senha : undefined,
       maxJogadores,
       eloMinimo: eloMinimo || undefined,
+      formato: modo === 'time_vs_time' ? formatoSerie : undefined,
     };
 
     await onCreate(dados);
@@ -653,7 +656,7 @@ const Jogar = () => {
     // estilo 5v5 — redirecionado para o fluxo novo (pedido do usuário 13/10).
     if (dados?.modo === 'time_vs_time') {
       setShowCriarModal(false);
-      await criarSalaTimes();
+      await criarSalaTimes(dados?.formato);
       return;
     }
 
@@ -852,15 +855,6 @@ const Jogar = () => {
               <Trophy className="w-4 h-4 text-[#FFB700]" />
             </div>
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Escolha seu Modo de Jogo</h2>
-            <button
-              onClick={criarSalaTimes}
-              disabled={criandoSalaTimes}
-              className="ml-auto px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black disabled:opacity-50 cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #FFB700, #FFE082)', clipPath: CUT_BUTTON }}
-              title="Cria uma sala de TIME vs TIME no fluxo novo (2 vagas, PRONTO, escolha de lado e draft) — sem campeonato"
-            >
-              {criandoSalaTimes ? 'Criando...' : 'Sala Time vs Time'}
-            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
