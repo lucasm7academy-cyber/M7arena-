@@ -506,7 +506,10 @@ teamsRouter.post("/:id/leave", async (req, res) => {
       .from(teamMembers)
       .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id)))
       .limit(1);
-    if (!my) {
+    // DONO sem vínculo de membro também pode "sair" (dado legado: saiu da
+    // equipe e a posse ficou presa — ex.: Neon Eclipse). Só barra quem não é
+    // nem dono nem membro.
+    if (!my && team.ownerId !== user.id) {
       return res.status(400).json({ error: "Você não é membro deste time" });
     }
 
@@ -523,13 +526,20 @@ teamsRouter.post("/:id/leave", async (req, res) => {
       return res.json({ ok: true, deleted: true });
     }
 
-    const isLeader = Boolean(my.isCaptain) || team.ownerId === user.id;
+    const isOwner = team.ownerId === user.id;
+    const isLeader = Boolean(my?.isCaptain) || isOwner;
     if (isLeader) {
       const proximo = restantes.find((m) => !m.isCaptain) || restantes[0];
       await db
         .update(teamMembers)
         .set({ isCaptain: true })
         .where(eq(teamMembers.id, proximo.id));
+      // A COROA ANDA JUNTO: se quem sai é o DONO, `teams.owner_id` passa pro
+      // próximo de verdade — antes só o capitão mudava e a posse ficava presa
+      // com quem saiu (bug real: time continuava sendo "do" ex-membro).
+      if (isOwner && proximo.userId) {
+        await db.update(teams).set({ ownerId: proximo.userId, updatedAt: new Date() }).where(eq(teams.id, id));
+      }
     }
 
     const aposPromocao = await db
@@ -544,10 +554,43 @@ teamsRouter.post("/:id/leave", async (req, res) => {
         .where(eq(teamMembers.id, aposPromocao[0].id));
     }
 
-    await db.delete(teamMembers).where(eq(teamMembers.id, my.id));
-    return res.json({ ok: true });
-  } catch (error: any) {
+    if (my) await db.delete(teamMembers).where(eq(teamMembers.id, my.id));
+    return res.json({ ok: true });  } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao sair do time" });
+  }
+});
+
+// ── POST /api/teams/:id/transferir-dono — "passar a coroa" pra um membro ────
+// Só o dono atual chama; o alvo precisa ser MEMBRO ACEITO do time. O novo dono
+// vira dono de verdade (`teams.owner_id`) e capitão. Se o dono apenas SAIR, a
+// coroa anda sozinha (ver /leave) — e sem ninguém, o time é apagado.
+teamsRouter.post("/:id/transferir-dono", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const { id } = req.params;
+    const targetUserId = typeof req.body?.userId === "string" ? req.body.userId : null;
+    if (!targetUserId) return res.status(400).json({ error: "userId_obrigatorio" });
+
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) return res.status(404).json({ error: "Time não encontrado" });
+    if (team.ownerId !== user.id) return res.status(403).json({ error: "Só o dono pode passar a coroa" });
+    if (targetUserId === user.id) return res.status(400).json({ error: "escolha_outro_membro" });
+
+    const [alvo] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, targetUserId), eq(teamMembers.status, "accepted")))
+      .limit(1);
+    if (!alvo) return res.status(400).json({ error: "O novo dono precisa ser membro aceito do time" });
+
+    await db.transaction(async (tx: any) => {
+      await tx.update(teams).set({ ownerId: targetUserId, updatedAt: new Date() }).where(eq(teams.id, id));
+      await tx.update(teamMembers).set({ isCaptain: true }).where(eq(teamMembers.id, alvo.id));
+    });
+    return res.json({ ok: true, dono_id: targetUserId });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao transferir a coroa" });
   }
 });
 
