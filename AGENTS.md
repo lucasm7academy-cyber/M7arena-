@@ -245,6 +245,7 @@ M7arenaSite/
 - **TypeScript com `strict: true`.** (O projeto antigo não tinha nenhuma flag de strictness — não repita.)
 - Componentes `PascalCase.tsx`, hooks `useCamelCase.ts`, constantes `SCREAMING_SNAKE_CASE`.
 - Um domínio por pasta em `src/features/`, com `domain/` (regras puras, sem React), `server/` (acesso a dados), `components/` e `hooks/`.
+- **Cantos recortados COM borda: SEMPRE o componente `CutCard`** (`web/src/components/ui/CutCard.tsx`). `border` + `clipPath` no mesmo elemento **corta a borda** nas diagonais — bug recorrente no projeto (já mordeu botão Last, vaga do pós-draft e as pills MD1/MD3/MD5). Regra completa com exemplos: `docs/CANTOS_RECORTADOS.md`.
 - **Nunca engula erro.** `catch {}` vazio é proibido. O site atual tem 17 deles, e por causa disso falhas de escrita são invisíveis.
 - Textos de interface em português do Brasil.
 - Comentários explicam **por quê**, não o quê.

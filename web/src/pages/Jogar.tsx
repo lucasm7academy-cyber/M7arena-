@@ -13,6 +13,7 @@ import {
   getMaxJogadoresPorModo, type ModoJogo, type Sala,
 } from '../api/salamod1';
 import { criarSala, traduzirErroSala } from '../api/salamod1';
+import { CutCard } from '../components/ui/CutCard';
 import { api } from '../lib/api';
 import { guardarSenhaSala } from '../lib/salaSenhaStore';
 import toast from 'react-hot-toast';
@@ -355,22 +356,32 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
               <div className="space-y-1.5">
                 <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Formato da Série</label>
                 <div className="flex items-center gap-1.5">
-                  {(['md1', 'md3', 'md5'] as const).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setFormatoSerie(f)}
-                      title={`Melhor de ${f === 'md1' ? 1 : f === 'md3' ? 3 : 5}`}
-                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider border transition-colors cursor-pointer ${
-                        formatoSerie === f
-                          ? 'bg-[#FFB700] text-black border-[#FFB700]'
-                          : 'bg-white/5 text-white/60 border-white/15 hover:text-white'
-                      }`}
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      {f.toUpperCase()}
-                    </button>
-                  ))}
+                  {(['md1', 'md3', 'md5'] as const).map((f) => {
+                    const ativo = formatoSerie === f;
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setFormatoSerie(f)}
+                        title={`Melhor de ${f === 'md1' ? 1 : f === 'md3' ? 3 : 5}`}
+                        className="cursor-pointer group"
+                      >
+                        {/* CutCard: a borda ACOMPANHA o corte (regra do projeto —
+                            ver docs/CANTOS_RECORTADOS.md; border + clipPath no
+                            mesmo elemento corta a borda e fica falho). */}
+                        <CutCard
+                          borderColor={ativo ? '#FFB700' : 'rgba(255,255,255,0.15)'}
+                          background={ativo ? '#FFB700' : '#0E0E12'}
+                          className="transition-colors"
+                          contentClassName={`px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-colors ${
+                            ativo ? 'text-black' : 'text-white/60 group-hover:text-white'
+                          }`}
+                        >
+                          {f.toUpperCase()}
+                        </CutCard>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
