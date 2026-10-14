@@ -338,18 +338,6 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Descrição</label>
-              <div className="relative p-[1px] w-full" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.15)' }}>
-                <textarea
-                  value={descricao} onChange={(e) => setDescricao(e.target.value)}
-                  placeholder="Ex: Duo mid, jogamos todos os dias às 20h"
-                  className="w-full bg-[#111116] p-3 text-zinc-200 text-xs resize-none h-16 focus:outline-none font-bold"
-                  style={{ clipPath: CUT_BADGE_INNER }}
-                />
-              </div>
-            </div>
-
             {/* Formato da SÉRIE — só no card de criar a sala TIME vs TIME
                 (MD3 presetado; pedido 14/10) */}
             {modo === 'time_vs_time' && (
