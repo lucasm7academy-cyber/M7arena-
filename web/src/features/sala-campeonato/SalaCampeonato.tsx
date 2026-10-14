@@ -1190,11 +1190,11 @@ export default function SalaCampeonato() {
                 >
                 <span className="text-base md:text-[2.2vmin] font-black text-[#FFB700] uppercase tracking-[0.25em] text-center leading-tight">
                   {faltaLado && faltaPick
-                    ? `${tagDoLado(escolhendo)} ESCOLHE LADO OU PICK`
+                    ? `#${tagDoLado(escolhendo)} ESCOLHE LADO OU PICK:`
                     : faltaLado
-                      ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO`
+                      ? `#${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO O LADO:`
                       : faltaPick
-                        ? `${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK`
+                        ? `#${tagDoLado(escolhendo)} ESTÁ ESCOLHENDO FIRST OU LAST PICK:`
                         : 'ESCOLHAS CONCLUÍDAS'}
                 </span>
 
