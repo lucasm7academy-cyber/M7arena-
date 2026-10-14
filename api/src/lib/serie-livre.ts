@@ -10,7 +10,7 @@
  * fluxo normal de encerramento assume).
  */
 import { eq } from "drizzle-orm";
-import { matches, campeonatoSalaEstado } from "../../db/schema/matches.js";
+import { matches, campeonatoSalaEstado } from "../../../db/schema/matches.js";
 
 /** Vitórias necessárias pelo formato da sala (md3 é o padrão). */
 export function alvoVitorias(formato: string | null | undefined): number {

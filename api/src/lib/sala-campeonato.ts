@@ -805,7 +805,14 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
   // Draft do jogo (passo 5): shape compatível com o DraftRoom (mesmos campos do
   // draft das salas) + extras do campeonato (Fearless e quem tem o first pick).
   let draft: any = null;
-  if (sala.status === "camp_draft" || sala.status === "camp_jogo" || sala.status === "iniciando_partida" || sala.status === "partida_iniciada") {
+  if (
+    sala.status === "camp_draft" ||
+    sala.status === "camp_jogo" ||
+    sala.status === "iniciando_partida" ||
+    sala.status === "partida_iniciada" ||
+    sala.status === "aguardando_revisao" ||
+    sala.status === "encerrada"
+  ) {
     const [dr] = await d
       .select()
       .from(matchDrafts)

@@ -42,6 +42,9 @@ export const QUEUE_HOWLING_ABYSS = 3200;
 export type ResultadoVerificacao =
   | { ok: true; estado: "encerrada"; winnerSide: "blue" | "red"; matchIdRiot: string }
   | { ok: true; estado: "cancelada"; motivo: "nick_nao_bate" | "nao_encontrada"; matchIdRiot?: string }
+  // Sala LIVRE com série (scrim MD1/MD3/MD5): o jogo fechou e a sala volta pro
+  // PRONTO do próximo jogo (isolado em time_vs_time_livre — ver serie-livre.ts).
+  | { ok: true; estado: "camp_prontos"; motivo: "serie_avancou"; matchIdRiot: string }
   | { ok: false; estado: "partida_iniciada"; motivo: "ainda_em_jogo" | "nao_encontrada"; matchIdRiot?: string };
 
 /** Busca real na Riot (match v5) filtrando pelo queue do mapa (3130 SR / 3200 ARAM). */
