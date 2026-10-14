@@ -99,7 +99,7 @@ function PickSlot({ champion, active, hidden, champions, version }: {
   return (
     <div className="flex flex-col items-center gap-[0.3vmin]">
       <div className={`
-        w-[10vmin] h-[11vmin] border bg-black/50 overflow-hidden shadow-inner relative group transition-all duration-300
+        w-[11vmin] h-[11vmin] border bg-black/50 overflow-hidden shadow-inner relative group transition-all duration-300
         ${champ ? 'border-white/20' : 'border-white/10'}
         ${active ? 'border-[#c89b3c] shadow-[0_0_12px_rgba(200,155,60,0.5)]' : ''}
       `}>
