@@ -458,19 +458,26 @@ export async function marcarPronto(
         set.sorteioVencedor = sorteio;
         escolhaTime = sorteio;
       } else {
-        // Jogos 2+: o perdedor do jogo anterior escolhe o lado.
+        // Jogos 2+: o perdedor do jogo anterior escolhe primeiro.
         const serie = await carregarSerieDaSala(tx, sala);
-        if (!serie) return { ok: false, erro: "serie_nao_encontrada" };
-        const cond = serie.isBracket
-          ? eq(tournamentSeriesGames.bracketMatchId, serie.id)
-          : eq(tournamentSeriesGames.matchId, serie.id);
-        const [anterior] = await tx
-          .select()
-          .from(tournamentSeriesGames)
-          .where(and(cond, eq(tournamentSeriesGames.gameNumber, (estado.jogo ?? 1) - 1)))
-          .limit(1);
-        if (!anterior) return { ok: false, erro: "resultado_anterior_pendente" };
-        escolhaTime = anterior.winnerSide === "a" ? "red" : "blue";
+        if (serie) {
+          const cond = serie.isBracket
+            ? eq(tournamentSeriesGames.bracketMatchId, serie.id)
+            : eq(tournamentSeriesGames.matchId, serie.id);
+          const [anterior] = await tx
+            .select()
+            .from(tournamentSeriesGames)
+            .where(and(cond, eq(tournamentSeriesGames.gameNumber, (estado.jogo ?? 1) - 1)))
+            .limit(1);
+          if (!anterior) return { ok: false, erro: "resultado_anterior_pendente" };
+          escolhaTime = anterior.winnerSide === "a" ? "red" : "blue";
+        } else {
+          // Sala LIVRE (scrim MD1/MD3/MD5): o vencedor do jogo anterior fica no
+          // estado LOCAL da sala (ultimo_vencedor) — o perdedor escolhe primeiro.
+          const vencedor = estado.ultimoVencedor as "a" | "b" | null;
+          if (!vencedor) return { ok: false, erro: "resultado_anterior_pendente" };
+          escolhaTime = vencedor === "a" ? "red" : "blue";
+        }
       }
       set.escolhaTime = escolhaTime;
       set.ladoEscolhido = null;
@@ -830,6 +837,9 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
     // Formato da série: sala livre tem o dela (md1/md3/md5); no campeonato o
     // placar/melhor-de vem da série — aqui serve pro front mostrar o rótulo.
     formato: estado?.formato ?? null,
+    // Placar LOCAL da série da sala LIVRE (scrim). No campeonato o placar é da série.
+    placar_a: estado?.placarA ?? 0,
+    placar_b: estado?.placarB ?? 0,
     pronto_blue: estado?.prontoBlue ?? false,
     pronto_red: estado?.prontoRed ?? false,
     sorteio_vencedor: estado?.sorteioVencedor ?? null,

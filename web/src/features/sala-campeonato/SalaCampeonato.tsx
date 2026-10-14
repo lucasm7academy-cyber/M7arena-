@@ -691,9 +691,14 @@ export default function SalaCampeonato() {
         </span>
       )}
       {!serie && camp?.formato && (
-        <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] text-white/50 mt-1 md:mt-[0.6vmin]">
-          Série {String(camp.formato).toUpperCase()}
-        </span>
+        <>
+          <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
+            {camp.placar_a ?? 0} <span className="text-white/40">-</span> {camp.placar_b ?? 0}
+          </span>
+          <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] text-white/50 mt-1 md:mt-[0.6vmin]">
+            Série {String(camp.formato).toUpperCase()}
+          </span>
+        </>
       )}
 
       {/* Estado da sala — mesmos avisos de antes, no estilo limpo */}

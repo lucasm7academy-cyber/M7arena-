@@ -195,6 +195,12 @@ export const campeonatoSalaEstado = pgTable("campeonato_sala_estado", {
   // Formato da SÉRIE da sala LIVRE (time_vs_time_livre): 'md1' | 'md3' | 'md5'
   // (md3 presetado). No campeonato o formato vem do bestOf da série.
   formato: varchar("formato", { length: 4 }).default("md3").notNull(),
+  // SÉRIE LOCAL da sala LIVRE (scrim MD1/MD3/MD5): placar próprio por jogo e
+  // quem venceu o jogo anterior ('a'|'b' — vaga do time) pro perdedor escolher
+  // o lado nos jogos 2+. No campeonato o placar/vencedor vêm da série.
+  placarA: integer("placar_a").default(0).notNull(),
+  placarB: integer("placar_b").default(0).notNull(),
+  ultimoVencedor: varchar("ultimo_vencedor", { length: 1 }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
