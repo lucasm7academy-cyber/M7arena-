@@ -53,6 +53,12 @@ interface DraftRoomProps {
    * ~10s após a última escolha, antes de voltar para a sala).
    */
   recap?: boolean;
+  /**
+   * Modo NÃO-campeonato (ex.: Time vs Time livre): o espectador vê o grid de
+   * campeões igual a quem picka (apenas assistindo — sem botão de confirmar).
+   * No campeonato fica `false` (visão de transmissão).
+   */
+  espectadorCompleto?: boolean;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -279,7 +285,7 @@ function TimeRecap({ time, picks, lado, champions, version }: {
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar, recap,
+  timeA, timeB, placar, recap, espectadorCompleto,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -311,6 +317,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const meuJogador = jogadores.find((j: any) => j.user_id === usuarioId);
   const meuTime: 'blue' | 'red' | null = meuJogador ? (meuJogador.is_time_a ? 'blue' : 'red') : null;
   const possoJogar = !!meuJogador;
+  // Espectador do Time vs Time vê o grid (mesma visão de quem picka).
+  const mostraGrid = possoJogar || !!espectadorCompleto;
 
   const emTurno = draft.status === 'ongoing';
   const fase = draft.current_phase;
@@ -601,7 +609,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           telespectador não escolhe nada: fica sem grid, sem busca e sem o
           botão de confirmar (fase + timer + picks/bans continuam visíveis).
           O espaço liberado é o lugar natural da visão de transmissão. */}
-      {possoJogar && (
+      {mostraGrid && (
       <div className="absolute top-[12vmin] left-1/2 -translate-x-1/2 w-full max-w-[85vmin] flex flex-col gap-[1vmin] z-40">
         <div className="flex items-center justify-between gap-[1vmin] mb-[0.5vmin]">
           {/* Filtro de rota (igual ao client do LoL) — ícones do ROLE_CONFIG
@@ -678,7 +686,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
       {/* CENTRO — VISÃO DE TRANSMISSÃO (telespectador): Time A X Time B grande
           + placar da série embaixo (o grid de escolha não existe aqui). */}
-      {!possoJogar && (timeA || timeB || placar) && (
+      {!possoJogar && !espectadorCompleto && (timeA || timeB || placar) && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[110vmin] flex flex-col items-center gap-[2.5vmin] z-40 pointer-events-none">
           <div className="flex items-center justify-center gap-[6vmin] w-full">
             <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">

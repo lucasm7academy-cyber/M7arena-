@@ -483,6 +483,7 @@ export default function SalaCampeonato() {
         onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
         previewExterno={previewDraft}
         ladoDoTimeA={camp?.lado_time_a ?? null}
+        espectadorCompleto={!serie}
         timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
         timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
@@ -506,6 +507,7 @@ export default function SalaCampeonato() {
         onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
         previewExterno={previewDraft}
         ladoDoTimeA={camp?.lado_time_a ?? null}
+        espectadorCompleto={!serie}
         timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
         timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
