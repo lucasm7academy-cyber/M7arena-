@@ -721,8 +721,10 @@ export default function SalaCampeonato() {
         </>
       )}
 
-      {/* Estado da sala — mesmos avisos de antes, no estilo limpo */}
-      {estado === 'camp_vagas' && (
+      {/* Estado da sala — mesmos avisos de antes, no estilo limpo.
+          O aviso "Aguardando os Times" saiu da sala LIVRE (T vs T) — pedido
+          do usuário; no campeonato ele continua (o par é definido pela série). */}
+      {estado === 'camp_vagas' && serie && (
         <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
           <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em]">Aguardando os Times</span>
           <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.3em]">Cada lado ocupa a sua vaga</span>
