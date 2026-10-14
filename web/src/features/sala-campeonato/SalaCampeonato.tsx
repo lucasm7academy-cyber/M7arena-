@@ -489,7 +489,7 @@ export default function SalaCampeonato() {
         draft={camp.draft}
         jogadores={sala.jogadores ?? []}
         usuarioId={eu}
-        timer={timerDraft}
+        timer={recapSegundos}
         onBanir={(champ: string) => acaoDraft('ban', champ)}
         onPickar={(champ: string) => acaoDraft('pick', champ)}
         onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
@@ -499,7 +499,6 @@ export default function SalaCampeonato() {
         timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
         timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
-        fechandoEm={recapSegundos}
       />
     );
   }

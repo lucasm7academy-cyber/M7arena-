@@ -53,8 +53,6 @@ interface DraftRoomProps {
    * ~10s após a última escolha, antes de voltar para a sala).
    */
   recap?: boolean;
-  /** Segundos para VOLTAR PRA SALA (mostra a contagem DENTRO do draft). */
-  fechandoEm?: number | null;
   /**
    * Modo NÃO-campeonato (ex.: Time vs Time livre): o espectador vê o grid de
    * campeões igual a quem picka (apenas assistindo — sem botão de confirmar).
@@ -287,7 +285,7 @@ function TimeRecap({ time, picks, lado, champions, version }: {
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar, recap, espectadorCompleto, fechandoEm,
+  timeA, timeB, placar, recap, espectadorCompleto,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -568,19 +566,6 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           {segundos}
         </div>
       </div>
-
-      {/* CONTAGEM PÓS-DRAFT: fica DENTRO do draft antes de voltar pra sala */}
-      {typeof fechandoEm === 'number' && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-[13vmin] left-1/2 -translate-x-1/2 z-50 px-[2.5vmin] py-[1vmin] bg-black/75 backdrop-blur-md border border-[#FFB700]/40 whitespace-nowrap"
-        >
-          <span className="text-[1.4vmin] font-black uppercase tracking-[0.35em] text-[#FFB700]">
-            Voltando para a sala em {fechandoEm}s
-          </span>
-        </motion.div>
-      )}
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
       <div className="absolute top-[5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
