@@ -20,7 +20,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Search, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { GiChestArmor } from 'react-icons/gi';
+import { FaShieldAlt } from 'react-icons/fa';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
@@ -122,7 +122,7 @@ function PickSlot({ champion, active, hidden, champions, version }: {
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center opacity-50 text-white/30">
-            <GiChestArmor className="w-[6vmin] h-[6vmin]" />
+            <FaShieldAlt className="w-[6vmin] h-[6vmin]" />
           </div>
         )}
       </div>
