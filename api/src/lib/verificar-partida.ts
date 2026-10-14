@@ -3,6 +3,7 @@ import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/sch
 import { gameAccounts } from "../../../db/schema/games.js";
 import { pagarPremio, pagarCancelamento } from "./escrow.js";
 import { notifyMatchChange } from "./match-flow.js";
+import { avancarSerieLivre } from "./serie-livre.js";
 import { riotRaw } from "../routes/riot.js";
 
 export const FANTASMA_MS = 3 * 60 * 60 * 1000;
@@ -150,6 +151,15 @@ export async function verificarPartida(
       .filter((p) => p.teamId === teamVencedor?.teamId)
       .map((p) => p.puuid);
     const winnerSide = ladoPorPuuids(puuidsVencedores, puuidToSide, fallback);
+    // SÉRIE DA SALA LIVRE (scrim MD1/MD3/MD5, isolada em time_vs_time_livre):
+    // grava o jogo e volta pro PRONTO quando ainda há jogo; só quando o alvo é
+    // atingido o encerramento normal below assume.
+    if (m.mode === "time_vs_time_livre") {
+      const continua = await avancarSerieLivre(d, m.id, winnerSide);
+      if (continua) {
+        return { ok: true, estado: "camp_prontos", motivo: "serie_avancou", matchIdRiot: matchRiot.metadata.matchId };
+      }
+    }
     return aplica(d, m, () => aplicarEncerramento(d, m, players, winnerSide, matchRiot));
   }
 
