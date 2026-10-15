@@ -772,8 +772,31 @@ export default function SalaCampeonato() {
   // ── SÉRIE EM ANDAMENTO (camp_jogo): layout estilo "Escolhas concluídas" —
   //    logos grandes X, campeões do confronto e as VAGAS em chips logo abaixo
   //    de cada time (o botão de copiar código fica embaixo, como está).
-  const renderPosDraft = () => {
+  //    `finalizada` = PARTIDA FINALIZADA da sala LIVRE (T vs T): mesmo layout
+  //    com faixa de título, vencedor dourado e o placar da série local — pedido
+  //    do usuário (a sala não puxava a partida finalizada).
+  const renderPosDraft = (finalizada = false) => {
     const ladoA: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
+    const placarA = serie ? (serie.placar_a ?? 0) : (camp?.placar_a ?? 0);
+    const placarB = serie ? (serie.placar_b ?? 0) : (camp?.placar_b ?? 0);
+    // Vencedor: `vencedor` legado ('A' | 'B') — o último jogo foi o que fechou
+    // a série. Sem ele, cai para a comparação do placar.
+    const vencedorSerie: 'A' | 'B' | null =
+      sala.vencedor === 'A' || sala.vencedor === 'B'
+        ? sala.vencedor
+        : placarA === placarB
+          ? null
+          : placarA > placarB
+            ? 'A'
+            : 'B';
+    const nomeVencedor =
+      vencedorSerie === 'A' ? sala.time_a_nome : vencedorSerie === 'B' ? sala.time_b_nome : null;
+    const duracao =
+      finalizada && sala.resultado_riot?.duracao_s
+        ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}:${String(
+            Math.round(sala.resultado_riot.duracao_s % 60)
+          ).padStart(2, '0')}`
+        : null;
     const bloco = (posicao: 'blue' | 'red') => {
       const vaga: 'blue' | 'red' = ladoA === posicao ? 'blue' : 'red';
       const isA = vaga === 'blue';
@@ -782,19 +805,31 @@ export default function SalaCampeonato() {
       const logo = isA ? sala.time_a_logo : sala.time_b_logo;
       const nome = isA ? sala.time_a_nome : sala.time_b_nome;
       const cor = posicao === 'blue' ? '#3B82F6' : '#ef4444';
+      const venceu = finalizada && ((isA && vencedorSerie === 'A') || (!isA && vencedorSerie === 'B'));
       return (
         <div className="flex flex-col items-center gap-2 md:gap-[1.6vmin] w-[46vmin] max-w-full">
-          {logo ? (
-            <img
-              src={logo}
-              alt=""
-              className={`w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain ${
-                posicao === 'blue' ? 'drop-shadow-[0_0_30px_rgba(59,130,246,0.35)]' : 'drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]'
-              }`}
-            />
-          ) : (
-            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
-          )}
+          <div className="relative">
+            {logo ? (
+              <img
+                src={logo}
+                alt=""
+                className={`w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain ${
+                  venceu
+                    ? 'drop-shadow-[0_0_45px_rgba(255,183,0,0.6)]'
+                    : posicao === 'blue'
+                      ? 'drop-shadow-[0_0_30px_rgba(59,130,246,0.35)]'
+                      : 'drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]'
+                }`}
+              />
+            ) : (
+              <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
+            )}
+            {venceu && (
+              <span className="absolute -top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 md:px-[1vmin] md:py-[0.3vmin] bg-[#FFB700] text-black text-[9px] md:text-[1.05vmin] font-black uppercase tracking-[0.25em] whitespace-nowrap shadow-[0_0_18px_rgba(255,183,0,0.5)]">
+                Vencedor
+              </span>
+            )}
+          </div>
           <span className="text-[11px] md:text-[1.6vmin] font-black uppercase tracking-[0.25em] truncate max-w-full" style={{ color: cor }}>
             {nome ?? ''}
           </span>
@@ -864,18 +899,36 @@ export default function SalaCampeonato() {
     };
     return (
       <div className="w-full flex flex-col items-center gap-3 md:gap-[2.5vmin] py-4">
+        {/* PARTIDA FINALIZADA (sala livre T vs T): faixa de título + vencedor
+            + duração do último jogo — mesmo espírito das outras salas. */}
+        {finalizada && (
+          <div className="flex flex-col items-center gap-1 md:gap-[0.9vmin]">
+            <span className="px-4 py-1.5 md:px-[2.4vmin] md:py-[1vmin] bg-[#FFB700] text-black text-sm md:text-[2.1vmin] font-black uppercase tracking-[0.35em] shadow-[0_0_30px_rgba(255,183,0,0.35)]">
+              Partida Finalizada
+            </span>
+            <span className="text-[10px] md:text-[1.35vmin] font-bold uppercase tracking-[0.25em] text-white/75 text-center">
+              {nomeVencedor ? `${nomeVencedor} venceu` : 'Empate'}
+              {` · série ${String(camp?.formato ?? 'md3').toUpperCase()}`}
+              {duracao ? ` · último jogo ${duracao}` : ''}
+            </span>
+          </div>
+        )}
         <div className="w-full flex items-center justify-center gap-3 md:gap-[6vmin]">
           {bloco('blue')}
           <span className="text-3xl md:text-[5vmin] font-black text-white/50 leading-none drop-shadow-lg">X</span>
           {bloco('red')}
         </div>
-        {serie && (
+        {(serie || finalizada) && (
           <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-            {serie.placar_a} <span className="text-white/40">-</span> {serie.placar_b}
+            {placarA} <span className="text-white/40">-</span> {placarB}
           </span>
         )}
-        <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] text-[#00FF41]">
-          Série em Andamento
+        <span
+          className={`text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] ${
+            finalizada ? 'text-[#FFB700]' : 'text-[#00FF41]'
+          }`}
+        >
+          {finalizada ? 'Série Finalizada' : 'Série em Andamento'}
         </span>
       </div>
     );
@@ -1153,9 +1206,9 @@ export default function SalaCampeonato() {
       {/* ── ARENA (mesma estrutura da sala: times nas laterais + hub redondo) ─ */}
       <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 flex flex-col gap-4">
         <div className="w-full relative flex flex-col items-center justify-start md:justify-center md:flex-1 overflow-visible py-4 md:py-[2vmin]">
-          {estado === 'camp_jogo' ? (
+          {estado === 'camp_jogo' || (!serie && estado === 'encerrada') ? (
             <div className="w-full flex items-center justify-center z-20 py-2 md:py-0">
-              {renderPosDraft()}
+              {renderPosDraft(!serie && estado === 'encerrada')}
             </div>
           ) : (
           <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[70vmin] py-2 md:py-0">
