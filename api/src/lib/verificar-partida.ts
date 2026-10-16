@@ -1,9 +1,11 @@
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { pagarPremio, pagarCancelamento } from "./escrow.js";
 import { notifyMatchChange } from "./match-flow.js";
 import { avancarSerieLivre } from "./serie-livre.js";
+import { resolverRosterPuuids, ladoVencedorDaJogada } from "./serie-campeonato.js";
 import { riotRaw } from "../routes/riot.js";
 
 export const FANTASMA_MS = 3 * 60 * 60 * 1000;
@@ -59,6 +61,30 @@ async function buscaMatchRiot(matchId: string): Promise<RiotMatch | null> {
 }
 
 /**
+ * Time de uma VAGA da sala de TIMES (TIME vs TIME livre): o ocupante da vaga é
+ * membro do time — mesma regra da entrada na vaga (membership aceita mais
+ * recente), com a TAG do snapshot da sala desempatando (o jogador pode ter
+ * trocado de time depois).
+ */
+async function timeDaVaga(d: any, m: any, lado: "blue" | "red"): Promise<string | null> {
+  const [vaga] = await d
+    .select()
+    .from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, m.id), eq(matchPlayers.side, lado)))
+    .limit(1);
+  if (!vaga?.userId) return null;
+  const tag = (lado === "blue" ? m.timeATag : m.timeBTag) ?? null;
+  const montadas = await d
+    .select({ teamId: teams.id, tag: teams.tag })
+    .from(teamMembers)
+    .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+    .where(and(eq(teamMembers.userId, vaga.userId), eq(teamMembers.status, "accepted")))
+    .orderBy(desc(teamMembers.createdAt));
+  const porTag = tag ? montadas.find((x: any) => x.tag === tag) : null;
+  return (porTag ?? montadas[0])?.teamId ?? null;
+}
+
+/**
  * Resolve o resultado de uma sala em `partida_iniciada` (spec
  * verificacao-partida-riot). A Riot é a fonte da verdade: acha a partida pelo
  * tournamentCode no histórico dos jogadores, confere os 10 PUUIDs e decide.
@@ -97,22 +123,49 @@ export async function verificarPartida(
     const player = players.find((p: any) => p.userId === c.userId);
     if (player) puuidToSide.set(c.puuid, player.side as "blue" | "red");
   }
+
+  // Sala de TIMES (TIME vs TIME livre): a sala tem 1 VAGA por time e o jogo é
+  // 5v5 com o ROSTER dos times — a checagem "N participantes = N vagas" das
+  // salas normais cancelaria um jogo real (10 jogadores). Resolve os dois
+  // rosters (mesmo motor da série do campeonato: convidado com `guest_puuid`
+  // ou conta vinculada) e decide a jogada por PERTINÊNCIA ao roster.
+  const ehSalaDeTimes = m.mode === "time_vs_time_livre";
+  const rostA = new Set<string>();
+  const rostB = new Set<string>();
+  if (ehSalaDeTimes) {
+    for (const p of (await resolverRosterPuuids(d, await timeDaVaga(d, m, "blue"))).puuids) rostA.add(p);
+    for (const p of (await resolverRosterPuuids(d, await timeDaVaga(d, m, "red"))).puuids) rostB.add(p);
+    // Sem roster resolvido, cai nas contas vinculadas dos ocupantes da vaga.
+    if (rostA.size === 0 && rostB.size === 0) {
+      for (const [puuid, side] of puuidToSide) (side === "blue" ? rostA : rostB).add(puuid);
+    }
+  }
+
   // Sala sem jogadores OU alguém sem conta vinculada → impossível confirmar os
   // nicks. Trata como não verificável: segue no polling até o teto de 3h e
   // então cancela (nunca paga às cegas). O teto também cobre salas órfãs, que
-  // precisam liberar o tournament code mesmo sem ninguém na vaga.
-  if (players.length === 0 || puuids.length !== players.length) {
+  // precisam liberar o tournament code mesmo sem ninguém na vaga. (Sala de
+  // TIMES: verificável quando qualquer roster resolveu.)
+  const semComoVerificar = ehSalaDeTimes
+    ? rostA.size === 0 && rostB.size === 0
+    : players.length === 0 || puuids.length !== players.length;
+  if (semComoVerificar) {
     const decorrido = agora.getTime() - new Date(m.iniciandoPartidaAt ?? m.createdAt).getTime();
     if (decorrido >= FANTASMA_MS) return aplica(d, m, () => aplicarCancelamento(d, m, players, "nao_encontrada"));
     return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
   }
+
+  // Busca no histórico: nas salas de TIMES vale o roster inteiro dos dois times
+  // (qualquer membro que jogou acha a partida); nas demais, os PUUIDs das vagas.
+  const puuidsBusca =
+    ehSalaDeTimes && (rostA.size > 0 || rostB.size > 0) ? [...new Set([...rostA, ...rostB])] : puuids;
 
   const inicio = Math.floor(new Date(m.createdAt).getTime() / 1000);
   const fim = Math.floor(agora.getTime() / 1000);
   const queue = m.mode === "1v1" ? QUEUE_HOWLING_ABYSS : QUEUE_SUMMONERS_RIFT;
   const vistos = new Set<string>();
   const candidatos: string[] = [];
-  for (const puuid of puuids) {
+  for (const puuid of puuidsBusca) {
     const ids = await buscarIds(puuid, inicio, fim, queue);
     if (ids) for (const id of ids) if (!vistos.has(id)) { vistos.add(id); candidatos.push(id); }
   }
@@ -137,23 +190,39 @@ export async function verificarPartida(
   const matchRiot = melhor.match;
 
   // Confere os nicks: mesmo conjunto de participantes e todos os esperados lá.
-  const puuidsPartida = new Set(matchRiot.info.participants.map((p) => p.puuid));
-  const todosBatem =
-    matchRiot.info.participants.length === players.length && puuids.every((p) => puuidsPartida.has(p));
-  if (!todosBatem) {
-    return aplica(d, m, () => aplicarCancelamento(d, m, players, "nick_nao_bate", matchRiot.metadata.matchId));
+  // Sala de TIMES fica de fora: o jogo tem 10 jogadores e a validação é por
+  // PERTINÊNCIA ao roster (feita logo abaixo, na decisão do vencedor).
+  if (!ehSalaDeTimes) {
+    const puuidsPartida = new Set(matchRiot.info.participants.map((p) => p.puuid));
+    const todosBatem =
+      matchRiot.info.participants.length === players.length && puuids.every((p) => puuidsPartida.has(p));
+    if (!todosBatem) {
+      return aplica(d, m, () => aplicarCancelamento(d, m, players, "nick_nao_bate", matchRiot.metadata.matchId));
+    }
   }
 
-  // Partida completa normalmente: o time com `win` vence. O lado vencedor é
-  // resolvido pelo puuid dos participantes do time vencedor (não pelo teamId),
-  // com fallback para o teamId quando o puuid não está mapeado.
+  // Partida completa normalmente: o time com `win` vence. Nas salas normais o
+  // lado vencedor sai do puuid dos vencedores (não do teamId, que em custom
+  // game é arbitrário); na sala de TIMES sai da pertinência ao ROSTER (mesmo
+  // motor da série do campeonato).
   if (matchRiot.info.endOfGameResult === "GameComplete") {
-    const teamVencedor = matchRiot.info.teams.find((t) => t.win);
-    const fallback: "blue" | "red" = teamVencedor?.teamId === 200 ? "red" : "blue";
-    const puuidsVencedores = matchRiot.info.participants
-      .filter((p) => p.teamId === teamVencedor?.teamId)
-      .map((p) => p.puuid);
-    const winnerSide = ladoPorPuuids(puuidsVencedores, puuidToSide, fallback);
+    let winnerSide: "blue" | "red" | null = null;
+    if (ehSalaDeTimes) {
+      const { lado } = ladoVencedorDaJogada(matchRiot, rostA, rostB);
+      winnerSide = lado === "a" ? "blue" : lado === "b" ? "red" : null;
+    } else {
+      const teamVencedor = matchRiot.info.teams.find((t) => t.win);
+      const fallback: "blue" | "red" = teamVencedor?.teamId === 200 ? "red" : "blue";
+      const puuidsVencedores = matchRiot.info.participants
+        .filter((p) => p.teamId === teamVencedor?.teamId)
+        .map((p) => p.puuid);
+      winnerSide = ladoPorPuuids(puuidsVencedores, puuidToSide, fallback);
+    }
+    // Jogo completo, mas ninguém identificado no roster (ex.: participante sem
+    // conta vinculada): não decide às cegas — segue no polling.
+    if (!winnerSide) {
+      return { ok: false, estado: "partida_iniciada", motivo: "ainda_em_jogo", matchIdRiot: matchRiot.metadata.matchId };
+    }
     // SÉRIE DA SALA LIVRE (scrim MD1/MD3/MD5, isolada em time_vs_time_livre):
     // grava o jogo e volta pro PRONTO quando ainda há jogo; só quando o alvo é
     // atingido o encerramento normal below assume.

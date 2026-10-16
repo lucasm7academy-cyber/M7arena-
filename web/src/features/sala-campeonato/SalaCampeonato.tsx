@@ -371,6 +371,44 @@ export default function SalaCampeonato() {
     }
   };
 
+  // Verificar Partida (sala LIVRE / T vs T): mesmo acelerador das salas
+  // normais — força a verificação da partida na Riot AGORA (avança a série ou
+  // encerra). O servidor valida quem pode (staff ou quem está na vaga) e
+  // também confere sozinho pelo polling.
+  const verificarPartidaAgora = async () => {
+    setOcupado('verificar-partida');
+    try {
+      const r = await fetch(`/api/matches/${id}/verificar`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const j = await r.json().catch(() => null);
+      if (j?.estado === 'encerrada') {
+        const nome = j?.vencedor === 'A' ? sala?.time_a_nome ?? 'Time A' : sala?.time_b_nome ?? 'Time B';
+        toast.success(`Partida finalizada! ${nome} venceu.`);
+      } else if (j?.estado === 'cancelada') {
+        toast.error('Partida cancelada — os nicks não conferiram ou o jogo não foi encontrado.');
+      } else if (j?.motivo === 'serie_avancou' || j?.estado === 'camp_prontos') {
+        toast.success('Jogo verificado! A série continua — de volta ao PRONTO.');
+      } else if (j?.erro === 'estado_invalido') {
+        toast.error('A sala não está em partida iniciada.');
+      } else if (j?.erro === 'nao_participante') {
+        toast.error('Só participantes da sala ou staff podem verificar.');
+      } else if (j?.erro) {
+        toast.error('Não foi possível verificar a partida.');
+      } else {
+        toast('Partida ainda em andamento ou não encontrada na Riot. A verificação automática continua.', { icon: 'ℹ️' });
+      }
+      await carregar();
+    } catch {
+      toast.error('Falha de rede.');
+    } finally {
+      setOcupado(null);
+    }
+  };
+
   // TEMPORÁRIO (admin): reseta a sala para o PRONTO do mesmo jogo — prontos
   // zerados, escolhas limpas e o draft do jogo atual apagado. Botão sai quando
   // o fluxo estiver 100% (pedido do usuário 13/10).
@@ -1118,6 +1156,32 @@ export default function SalaCampeonato() {
                   <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
                   <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
                     Atualizar Resultado
+                  </span>
+                </div>
+              </motion.button>
+            )}
+
+            {/* Verificar Partida (sala LIVRE / T vs T): mesmo acelerador das
+                salas normais — força a verificação na Riot AGORA (avança a
+                série ou encerra). Visível para staff (ADM/organizador) e para
+                quem está na vaga; o servidor valida e o polling continua. */}
+            {!serie && estado === 'partida_iniciada' && (ehStaffCampeonato || !!meuJogador) && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                disabled={!!ocupado}
+                onClick={verificarPartidaAgora}
+                className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                style={{ clipPath: CUT_BUTTON }}
+                title="Verificar partida — confere na Riot agora"
+              >
+                <div
+                  className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-partida' ? 'animate-spin' : ''}`} />
+                  <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                    Verificar Partida
                   </span>
                 </div>
               </motion.button>
