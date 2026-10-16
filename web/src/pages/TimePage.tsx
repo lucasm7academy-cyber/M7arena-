@@ -290,13 +290,27 @@ const InvitePlayerModal = ({
               }]);
               setNotFound(false);
             } else {
+              // Não existe nem na Riot: entra DIRETO como convidado manual
+              // (sem conta em lugar nenhum — não precisa de botão).
               setSearchResults([]);
-              setNotFound(true);
+              const [nick, tag] = query.trim().split('#');
+              if (nick && tag && tag.length >= 3) {
+                addManualGuest(query);
+                setNotFound(false);
+              } else {
+                setNotFound(true);
+              }
             }
           } catch {
             setSearching(false);
             setSearchResults([]);
-            setNotFound(true);
+            const [nick, tag] = query.trim().split('#');
+            if (nick && tag && tag.length >= 3) {
+              addManualGuest(query);
+              setNotFound(false);
+            } else {
+              setNotFound(true);
+            }
           }
         } else {
           setSearching(false);
@@ -438,18 +452,20 @@ const InvitePlayerModal = ({
     setTimeout(onClose, 1500);
   };
 
-  const handleAddManualGuest = () => {
+  // Adiciona um convidado manual direto na lista de pendentes (sem conta, sem
+  // resultado de busca). Usado pelo AUTO-ADD quando a busca não encontra nada.
+  const addManualGuest = (riotId: string) => {
     playSound('click');
     const guestPlayer = {
       user_id: null,
-      riot_id: query.trim(),
+      riot_id: riotId.trim(),
       profile_icon_id: 1,
       level: 1,
       is_guest: true,
       elo_cache: 'UNRANKED',
       is_manual: true
     };
-    
+
     const alreadyPending = pendingPlayers.some(item => item.riot_id === guestPlayer.riot_id);
     if (alreadyPending) {
       setError('Jogador já está na lista de adições pendentes.');
@@ -529,15 +545,11 @@ const InvitePlayerModal = ({
             <div className="mt-2">
               {notFound ? (
                 <div className="bg-[#0c0c10] border border-white/10 rounded-xl p-4 text-center space-y-2.5">
-                  <p className="text-white/40 text-xs font-medium">Jogador não encontrado na Riot</p>
-                  {query.includes('#') && (
-                    <button
-                      onClick={handleAddManualGuest}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
-                    >
-                      Adicionar como Convidado Manual
-                    </button>
-                  )}
+                  <p className="text-white/40 text-xs font-medium">
+                    {query.includes('#')
+                      ? 'Riot ID incompleto — continue digitando (ex: Kami#BR1)'
+                      : 'Digite o Riot ID completo (ex: Kami#BR1)'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-1.5 max-h-44 overflow-y-auto custom-scrollbar pr-1">
