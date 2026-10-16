@@ -5,7 +5,7 @@ import { users } from "../../db/schema/identidade.js";
 import { games, gameAccounts } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { setupDb } from "./helpers.js";
-import { findUserTeamMemberships, getRiotIdentities } from "../src/lib/team-membership.js";
+import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes } from "../src/lib/team-membership.js";
 
 const U = (n: number) => `aaaaaaa6-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbb6-0000-0000-0000-00000000000${n}`;
@@ -116,5 +116,71 @@ describe("team-membership (ADR-056)", () => {
     const rows = await findUserTeamMemberships(ctx.db, U(1), { onlyAccepted: true });
     assert.equal(rows[0].userId, U(1), "time com user_id deve ser o primeiro");
     assert.equal(rows[0].teamId, T(3));
+  });
+});
+
+describe("team-membership — um time só (ADR-092)", () => {
+  let ctx: any;
+  beforeEach(async () => { ctx = await setupDb(); await seed(ctx.db); });
+  afterEach(async () => { await ctx.client.close(); });
+
+  test("sairDeOutrosTimes limpa vínculo real E vaga de convidado, preservando o time atual", async () => {
+    // Ghozt: guest na M7W (T1) + vínculo real no TIME REAL (T3).
+    const limpou = await sairDeOutrosTimes(ctx.db, { userId: U(1) }, T(1));
+    assert.equal(limpou, 1, "só o vínculo real do T3 é removido");
+    const restantes = await findUserTeamMemberships(ctx.db, U(1), { onlyAccepted: true });
+    assert.deepEqual(restantes.map((r: any) => r.teamId), [T(1)], "fica só o time que ele acabou de entrar");
+  });
+
+  test("sairDeOutrosTimes com userId remove a vaga de CONVIDADO do outro time (caso macoinha)", async () => {
+    // Caso macoinha: o cara TEM conta e está no time anterior só como guest.
+    // Entrar num time novo (com user_id) tem que liberar a vaga guest.
+    await ctx.db.delete(teamMembers).where(eq(teamMembers.teamId, T(3))); // tira o vínculo real
+    const limpou = await sairDeOutrosTimes(ctx.db, { userId: U(1) }, T(2));
+    assert.equal(limpou, 1, "vaga guest da M7W é apagada pelo vínculo Riot da conta");
+    const naM7W = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(1)));
+    assert.equal(naM7W.length, 0, "M7W ficou sem a vaga de convidado");
+  });
+
+  test("sairDeOutrosTimes por Riot ID remove a vaga de convidado do time anterior", async () => {
+    // Só identidade de Riot ID (sem user_id): remove a vaga guest que casa.
+    const limpou = await sairDeOutrosTimes(ctx.db, { userId: null, riotId: "ghozt#123 " }, T(3));
+    assert.equal(limpou, 1, "vaga guest da M7W é apagada");
+    const restantes = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(1)));
+    assert.equal(restantes.length, 0, "M7W ficou sem a vaga de convidado");
+    assert.equal(
+      (await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(3)))).length,
+      1,
+      "o vínculo real de outro jogador não é atingido"
+    );
+  });
+
+  test("sairDeOutrosTimes não apaga vaga de convidado de OUTRA pessoa com nick parecido", async () => {
+    await ctx.db.insert(teamMembers).values({
+      teamId: T(2),
+      userId: null,
+      guestRiotId: "Ghozt#1234", // outro cara, handle diferente
+      roleSlot: "adc",
+      status: "accepted",
+    });
+    const limpou = await sairDeOutrosTimes(ctx.db, { userId: null, riotId: "Ghozt#123" }, T(3));
+    assert.equal(limpou, 1, "remove só a vaga que casa exatamente");
+    const noBBB = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(2)));
+    assert.equal(noBBB.filter((m: any) => m.guestRiotId === "Ghozt#1234").length, 1);
+  });
+
+  test("sairDeOutrosTimes é no-op quando ele não está em outro time", async () => {
+    // U(2) só existe como membro do T(1): nada a sair.
+    await ctx.db.insert(teamMembers).values({
+      teamId: T(1), userId: U(2), roleSlot: "mid", status: "accepted",
+    });
+    assert.equal(await sairDeOutrosTimes(ctx.db, { userId: U(2) }, T(1)), 0);
+    assert.equal(await sairDeOutrosTimes(ctx.db, { userId: null, riotId: "ninguem#1" }, T(1)), 0);
+    assert.equal(await sairDeOutrosTimes(ctx.db, {}, T(1)), 0, "sem identidade não mexe em nada");
+    assert.equal(
+      (await findUserTeamMemberships(ctx.db, U(2), { onlyAccepted: true })).length,
+      1,
+      "o vínculo do próprio time permanece"
+    );
   });
 });

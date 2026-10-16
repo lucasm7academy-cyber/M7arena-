@@ -560,29 +560,68 @@ describe("sala time vs time livre (ADR-086, sem campeonato)", () => {
     await ctx.client.close();
   });
 
-  test("qualquer usuário ocupa as vagas e o draft fecha com código do pool", async () => {
+  test("vaga de CONVIDADO conta como time (caso macoinha07#fck13, ADR-092)", async () => {
+    // O jogador tem CONTA mas está no time só como guest (user_id NULL) —
+    // metade dos rosters migrados é assim. Antes a vaga olhava só user_id e
+    // devolvia sem_time ("você precisa participar de um time").
+    const r: any = await criarSalaTimeVsTime(ctx.db, { userId: U(1) });
+    assert.equal(r.ok, true);
+    await ctx.db.insert(teamMembers).values({
+      teamId: T(1),
+      userId: null,
+      guestRiotId: "Convidado#001",
+      roleSlot: "top",
+      status: "accepted",
+    });
+    // U(5) é o dono daquela vaga de convidado (conta vinculada ao Riot ID).
+    await ctx.db.update(users).set({ riotId: "Convidado#001" }).where(eq(users.id, U(5)));
+
+    const la: any = await entrarNaVaga(ctx.db, { salaNum: r.sala.salaNum, userId: U(5), side: "blue" });
+    assert.equal(la.ok, true, "vaga de convidado deve ser aceita na sala livre");
+    assert.equal(la.estado, "camp_vagas", "uma vaga só não muda o estado");
+
+    // Segundo lado com vínculo real (U(3) é coach aceito do BBB) → camp_prontos.
+    const lb: any = await entrarNaVaga(ctx.db, { salaNum: r.sala.salaNum, userId: U(3), side: "red" });
+    assert.equal(lb.ok, true);
+    assert.equal(lb.estado, "camp_prontos");
+  });
+
+  test("sem time de jeito nenhum devolve sem_time", async () => {
+    const r: any = await criarSalaTimeVsTime(ctx.db, { userId: U(1) });
+    assert.equal(r.ok, true);
+    const la: any = await entrarNaVaga(ctx.db, { salaNum: r.sala.salaNum, userId: U(5), side: "blue" });
+    assert.equal(la.ok, false);
+    assert.equal(la.erro, "sem_time", "sem vínculo real nem guest não ocupa a vaga");
+  });
+
+  test("sala livre completa o ciclo com um time por lado (ADR-092: time é obrigatório)", async () => {
     const r: any = await criarSalaTimeVsTime(ctx.db, { userId: U(1) });
     assert.equal(r.ok, true);
     assert.equal(r.sala.mode, "time_vs_time_livre");
     assert.equal(r.sala.status, "camp_vagas");
     const sala = r.sala;
 
-    // U(5) (fora de qualquer time do seed) entra no azul; U(1) no vermelho.
-    const la: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(5), side: "blue" });
-    const lb: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(1), side: "red" });
-    assert.equal(la.ok, true, "estranho entra no azul (sem validação de time)");
+    // Quem NÃO tem time nenhum é barrado (regra desde 13/10 + ADR-092).
+    const semTime: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(5), side: "blue" });
+    assert.equal(semTime.ok, false, "sem time não ocupa a vaga");
+    assert.equal(semTime.erro, "sem_time");
+
+    // U(2) (membro aceito do AAA) no azul; U(3) (coach aceito do BBB) no vermelho.
+    const la: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(2), side: "blue" });
+    const lb: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(3), side: "red" });
+    assert.equal(la.ok, true);
     assert.equal(lb.ok, true);
     assert.equal(lb.estado, "camp_prontos");
 
-    await marcarPronto(ctx.db, { salaNum: sala.salaNum, userId: U(5) });
-    const p2: any = await marcarPronto(ctx.db, { salaNum: sala.salaNum, userId: U(1) });
+    await marcarPronto(ctx.db, { salaNum: sala.salaNum, userId: U(2) });
+    const p2: any = await marcarPronto(ctx.db, { salaNum: sala.salaNum, userId: U(3) });
     assert.equal(p2.estado, "camp_lado");
 
     const [estado] = await ctx.db
       .select()
       .from(campeonatoSalaEstado)
       .where(eq(campeonatoSalaEstado.matchId, sala.id));
-    const usuarioDoLado = (l: string) => (l === "blue" ? U(5) : U(1));
+    const usuarioDoLado = (l: string) => (l === "blue" ? U(2) : U(3));
     const sorteado = estado.escolhaTime as string;
     const outro = sorteado === "blue" ? "red" : "blue";
     assert.equal((await escolherLado(ctx.db, { salaNum: sala.salaNum, userId: usuarioDoLado(sorteado), lado: "red" })).ok, true);

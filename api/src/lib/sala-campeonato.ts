@@ -13,10 +13,10 @@
  * campeonato_sala_estado — o SERVIDOR é a única autoridade; o front só desenha.
  * Sem timer em V1 (ADR-083): o adm destrava se precisar.
  */
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import { tournaments, tournamentMatches, bracketMatches, tournamentTeams, tournamentSeriesGames } from "../../../db/schema/tournaments.js";
-import { teams, teamMembers } from "../../../db/schema/teams.js";
+import { teams } from "../../../db/schema/teams.js";
 import { users, userRoles } from "../../../db/schema/identidade.js";
 import { transmissoes } from "../../../db/schema/conteudo.js";
 import { atribuirCodigoSerie, normalizarBestOf } from "./serie-campeonato.js";
@@ -319,17 +319,15 @@ export async function entrarNaVaga(
       // membro aceito. Sem time → `sem_time` (o front mostra "crie ou entre em
       // um time"). O mesmo time nunca ocupa os dois lados.
       const cols = { id: teams.id, name: teams.name, tag: teams.tag, logoUrl: teams.logoUrl } as const;
-      // Só MEMBERSHIP aceita (user_id), a mais recente — o MESMO critério da
-      // página de time. Ser DONO sem vínculo de membro NÃO conta (caso real:
-      // dono antigo que "saiu" e o time ainda era puxado na vaga — 13/10).
-      const [t] = await tx
-        .select(cols)
-        .from(teamMembers)
-        .innerJoin(teams, eq(teams.id, teamMembers.teamId))
-        .where(and(eq(teamMembers.userId, opts.userId), eq(teamMembers.status, "accepted")))
-        .orderBy(desc(teamMembers.createdAt))
-        .limit(1);
-      const meuTime = t ?? null;
+      // ADR-092: a vaga vale por user_id OU por vaga de convidado resolvida
+      // pelo vínculo Riot (ADR-056). Antes só `user_id` era aceito, e quem
+      // estava no time como CONVIDADO batia em `sem_time` ao entrar na vaga
+      // (caso real: macoinha07#fck13, sala 196). Vínculo real vem primeiro.
+      const vagas = await findUserTeamMemberships(tx, opts.userId, { onlyAccepted: true });
+      const minhaVaga = vagas[0] ?? null;
+      const meuTime = minhaVaga
+        ? ((await tx.select(cols).from(teams).where(eq(teams.id, minhaVaga.teamId)).limit(1))[0] ?? null)
+        : null;
       if (!meuTime) return { ok: false, erro: "sem_time" };
       const outraTag = opts.side === "blue" ? sala.timeBTag : sala.timeATag;
       if (outraTag && meuTime.tag && outraTag === meuTime.tag) return { ok: false, erro: "mesmo_time" };

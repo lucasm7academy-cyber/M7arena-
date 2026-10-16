@@ -10,7 +10,7 @@ import {
 } from "../../../db/schema/teams.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { tournamentMatches, bracketMatches, tournaments } from "../../../db/schema/tournaments.js";
-import { findUserTeamMemberships } from "../lib/team-membership.js";
+import { findUserTeamMemberships, sairDeOutrosTimes } from "../lib/team-membership.js";
 
 export const teamsRouter = Router();
 
@@ -198,16 +198,31 @@ teamsRouter.get("/members", async (req, res) => {
 
     const clauses = [];
     if (userIds.length) clauses.push(inArray(teamMembers.userId, userIds));
-    if (guestRiotIds.length)
-      clauses.push(inArray(teamMembers.guestRiotId, guestRiotIds));
+    // Riot ID casado sem depender de caixa/espaço — mesmo critério da lib de
+    // membership (ADR-056/092). Um "macoinha07#fck13" salvo com outro casing
+    // no roster deixa de sumir da listagem de jogadores.
+    if (guestRiotIds.length) {
+      const alvos = guestRiotIds.map((s) => s.toLowerCase()).filter(Boolean);
+      if (alvos.length)
+        clauses.push(
+          or(...alvos.map((h) => sql`lower(trim(coalesce(${teamMembers.guestRiotId}, ''))) = ${h}`))!
+        );
+    }
     if (clauses.length === 0) return res.json([]);
 
-    const rows = await db.select().from(teamMembers).where(or(...clauses));
+    // user_id por último: o chamador que mantém "o último wins" (players.tsx)
+    // prefere o vínculo real sobre a vaga de convidado do mesmo jogador.
+    const rows = await db
+      .select()
+      .from(teamMembers)
+      .where(or(...clauses))
+      .orderBy(sql`(${teamMembers.userId} IS NULL) ASC`);
     return res.json(
       rows.map((m) => ({
         user_id: m.userId,
         time_id: m.teamId,
         guest_riot_id: m.guestRiotId ?? null,
+        status: m.status,
       }))
     );
   } catch (error: any) {
@@ -402,6 +417,9 @@ teamsRouter.post("/", async (req, res) => {
       wins: 0,
       losses: 0,
     });
+
+    // ADR-092 — um time só: o dono que cria um time sai de qualquer outro.
+    await sairDeOutrosTimes(db, { userId: user.id }, newTeam.id);
 
     await db.insert(teamMembers).values({
       teamId: newTeam.id,
@@ -699,16 +717,24 @@ teamsRouter.post("/invites/:id/accept", async (req, res) => {
       }
     }
 
-    const [existing] = await db
-      .select()
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, targetUserId))
-      .limit(1);
-    if (existing) {
-      const msg = isRequest
-        ? "Este jogador já pertence a outro time."
-        : "Você já pertence a um time. Saia antes de aceitar outro convite.";
-      return res.status(409).json({ error: msg });
+    // ADR-092 — um time só por jogador. A checagem enxerga o vínculo REAL e a
+    // vaga de CONVIDADO resolvida pelo Riot ID: antes olhava só `user_id`, o
+    // "já pertence a um time" passava batido e o jogador ficava em dois times
+    // (caso real: macoinha07#fck13 no M7W como guest + request na Lula).
+    // Decisão do usuário: entrar em um time ele o do ANTERIOR na hora.
+    const anteriores = await findUserTeamMemberships(db, targetUserId, { onlyAccepted: true });
+    const jaNoTimeAlvo = anteriores.find((m) => m.teamId === team.id);
+    const foraDoTimeAlvo = anteriores.filter((m) => m.teamId !== team.id);
+    if (foraDoTimeAlvo.length) {
+      await db
+        .delete(teamMembers)
+        .where(inArray(teamMembers.id, foraDoTimeAlvo.map((m) => m.id)));
+    }
+
+    // Já está aceito neste time (convite duplicado): não cria linha repetida.
+    if (jaNoTimeAlvo) {
+      await db.update(teamInvites).set({ status: "accepted" }).where(eq(teamInvites.id, invite.id));
+      return res.json({ ok: true });
     }
 
     const members = await db.select().from(teamMembers).where(eq(teamMembers.teamId, team.id));
@@ -781,14 +807,21 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
       await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
       for (const m of membros) {
         const slot = legacyToSlot(m.lane);
+        // ADR-092 — um time só: quem entra neste lineup sai dos outros times na
+        // mesma gravação. O Riot ID resolve o dono da vaga quando ela é de
+        // convidado (metade dos rosters é guest) — sem isso o jogador seguia
+        // pendurado no time anterior sem ninguém ver.
+        const userId: string | null = m.user_id || null;
+        const riotId: string | null = userId ? null : m.guest_riot_id ?? null;
+        await sairDeOutrosTimes(tx, { userId, riotId }, id);
         await tx.insert(teamMembers).values({
           teamId: id,
-          userId: m.user_id || null,
-          guestHandle: m.user_id ? null : m.guest_riot_id ?? null,
-          guestRiotId: m.user_id ? null : m.guest_riot_id ?? null,
-          guestPuuid: m.user_id ? null : m.guest_puuid ?? null,
-          guestProfileIconId: m.user_id ? null : m.guest_profile_icon_id ?? null,
-          guestEloCache: m.user_id ? null : m.guest_elo_cache ?? null,
+          userId,
+          guestHandle: userId ? null : m.guest_riot_id ?? null,
+          guestRiotId: userId ? null : m.guest_riot_id ?? null,
+          guestPuuid: userId ? null : m.guest_puuid ?? null,
+          guestProfileIconId: userId ? null : m.guest_profile_icon_id ?? null,
+          guestEloCache: userId ? null : m.guest_elo_cache ?? null,
           roleSlot: slot,
           isCaptain: !!m.is_capitao,
           status: "accepted",

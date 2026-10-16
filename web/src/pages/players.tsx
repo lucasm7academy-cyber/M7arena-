@@ -131,9 +131,13 @@ async function carregarJogadores(
     (walletsData ?? []).forEach((w: any) => { walletMap[w.userId] = { mp: w.mp ?? 0, mc: w.mc ?? 0 }; });
   }
 
-  // Buscar membros e times (incluindo convidados/guests)
+  // Buscar membros e times (incluindo convidados/guests).
+  // O Riot ID é mandado para TODOS os jogadores, não só para quem não tem
+  // conta: quem tem conta mas está no time como CONVIDADO (user_id NULL no
+  // roster — metade dos times) ficava sem time no card enquanto a página do
+  // time mostrava ele (ADR-092, caso macoinha07#fck13).
   const userIdsFilter: string[] = userIds.length ? userIds : [];
-  const guestRiotIds = rows.filter((r: any) => !r.user_id).map((r: any) => r.riot_id).filter(Boolean);
+  const guestRiotIds = rows.map((r: any) => r.riot_id).filter(Boolean);
 
   let membros: any[] = [];
   if (userIdsFilter.length > 0 || guestRiotIds.length > 0) {
@@ -146,11 +150,22 @@ async function carregarJogadores(
     ? await api.teams.batch(timeIds)
     : [];
 
-  const membroMap = Object.fromEntries((membros ?? []).map(m => [m.user_id || m.guest_riot_id, m]));
+  // Vínculo real (user_id) vence a vaga de convidado do mesmo jogador. A API
+  // já ordena user_id por último; aqui a preferência fica explícita.
+  const membroMap: Record<string, any> = {};
+  for (const m of membros ?? []) {
+    if (m.status && m.status !== 'accepted') continue; // 'saiu'/'pendente' não é time
+    if (m.user_id) membroMap[m.user_id] = m;
+    const guestKey = (m.guest_riot_id ?? '').trim().toLowerCase();
+    if (!m.user_id && guestKey && !membroMap[guestKey]) membroMap[guestKey] = m;
+  }
   const timeMap   = Object.fromEntries((times   ?? []).map((t: any) => [t.id, t]));
 
   const jogadores: Jogador[] = rows.map((c: any) => {
-    const membro = membroMap[c.user_id || c.riot_id];
+    const membro =
+      (c.user_id ? membroMap[c.user_id] : null) ??
+      membroMap[(c.riot_id ?? '').trim().toLowerCase()] ??
+      null;
     const time   = membro ? timeMap[membro.time_id] : null;
     const { partidas, winRate } = statsDeRanqueada(c);
     const eloType: EloType = c.tier ? (TIER_MAP[c.tier] ?? 'Sem Rank') : 'Sem Rank';

@@ -115,6 +115,8 @@ export interface ApiMemberRow {
   user_id: string | null;
   time_id: string;
   guest_riot_id?: string | null;
+  /** 'pending' | 'accepted' | 'declined' — só 'accepted' vale como time do jogador. */
+  status?: string;
 }
 
 /**
