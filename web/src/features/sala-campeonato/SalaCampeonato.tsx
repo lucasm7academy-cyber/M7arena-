@@ -373,9 +373,14 @@ export default function SalaCampeonato() {
 
   // Verificar Partida (sala LIVRE / T vs T): mesmo acelerador das salas
   // normais — força a verificação da partida na Riot AGORA (avança a série ou
-  // encerra). O servidor valida quem pode (staff ou quem está na vaga) e
-  // também confere sozinho pelo polling.
+  // encerra). Fica disponível para QUALQUER jogador logado na sala (pedido do
+  // usuário); o servidor valida (staff ou quem está na vaga) e o polling
+  // automático continua rodando por trás.
   const verificarPartidaAgora = async () => {
+    if ((sala?.estado ?? '') !== 'partida_iniciada') {
+      toast('A verificação roda com a partida em andamento (depois do draft).', { icon: 'ℹ️' });
+      return;
+    }
     setOcupado('verificar-partida');
     try {
       const r = await fetch(`/api/matches/${id}/verificar`, {
@@ -1163,9 +1168,10 @@ export default function SalaCampeonato() {
 
             {/* Verificar Partida (sala LIVRE / T vs T): mesmo acelerador das
                 salas normais — força a verificação na Riot AGORA (avança a
-                série ou encerra). Visível para staff (ADM/organizador) e para
-                quem está na vaga; o servidor valida e o polling continua. */}
-            {!serie && estado === 'partida_iniciada' && (ehStaffCampeonato || !!meuJogador) && (
+                série ou encerra). Visível para QUALQUER jogador logado, em
+                qualquer fase da sala (pedido do usuário); o servidor valida
+                (staff ou vaga) e o polling automático continua por trás. */}
+            {!serie && !!perfil && !['encerrada', 'cancelada'].includes(estado) && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.94 }}
