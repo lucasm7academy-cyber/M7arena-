@@ -119,7 +119,7 @@ describe("team-membership (ADR-056)", () => {
   });
 });
 
-describe("team-membership — um time só (ADR-092)", () => {
+describe("team-membership — um time só (ADR-087)", () => {
   let ctx: any;
   beforeEach(async () => { ctx = await setupDb(); await seed(ctx.db); });
   afterEach(async () => { await ctx.client.close(); });

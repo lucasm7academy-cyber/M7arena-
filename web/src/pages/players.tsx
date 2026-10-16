@@ -135,7 +135,7 @@ async function carregarJogadores(
   // O Riot ID é mandado para TODOS os jogadores, não só para quem não tem
   // conta: quem tem conta mas está no time como CONVIDADO (user_id NULL no
   // roster — metade dos times) ficava sem time no card enquanto a página do
-  // time mostrava ele (ADR-092, caso macoinha07#fck13).
+  // time mostrava ele (ADR-087, caso macoinha07#fck13).
   const userIdsFilter: string[] = userIds.length ? userIds : [];
   const guestRiotIds = rows.map((r: any) => r.riot_id).filter(Boolean);
 

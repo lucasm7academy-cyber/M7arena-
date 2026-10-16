@@ -560,7 +560,7 @@ describe("sala time vs time livre (ADR-086, sem campeonato)", () => {
     await ctx.client.close();
   });
 
-  test("vaga de CONVIDADO conta como time (caso macoinha07#fck13, ADR-092)", async () => {
+  test("vaga de CONVIDADO conta como time (caso macoinha07#fck13, ADR-087)", async () => {
     // O jogador tem CONTA mas está no time só como guest (user_id NULL) —
     // metade dos rosters migrados é assim. Antes a vaga olhava só user_id e
     // devolvia sem_time ("você precisa participar de um time").
@@ -594,14 +594,14 @@ describe("sala time vs time livre (ADR-086, sem campeonato)", () => {
     assert.equal(la.erro, "sem_time", "sem vínculo real nem guest não ocupa a vaga");
   });
 
-  test("sala livre completa o ciclo com um time por lado (ADR-092: time é obrigatório)", async () => {
+  test("sala livre completa o ciclo com um time por lado (ADR-087: time é obrigatório)", async () => {
     const r: any = await criarSalaTimeVsTime(ctx.db, { userId: U(1) });
     assert.equal(r.ok, true);
     assert.equal(r.sala.mode, "time_vs_time_livre");
     assert.equal(r.sala.status, "camp_vagas");
     const sala = r.sala;
 
-    // Quem NÃO tem time nenhum é barrado (regra desde 13/10 + ADR-092).
+    // Quem NÃO tem time nenhum é barrado (regra desde 13/10 + ADR-087).
     const semTime: any = await entrarNaVaga(ctx.db, { salaNum: sala.salaNum, userId: U(5), side: "blue" });
     assert.equal(semTime.ok, false, "sem time não ocupa a vaga");
     assert.equal(semTime.erro, "sem_time");

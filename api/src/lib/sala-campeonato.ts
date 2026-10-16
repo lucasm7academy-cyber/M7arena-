@@ -319,7 +319,7 @@ export async function entrarNaVaga(
       // membro aceito. Sem time → `sem_time` (o front mostra "crie ou entre em
       // um time"). O mesmo time nunca ocupa os dois lados.
       const cols = { id: teams.id, name: teams.name, tag: teams.tag, logoUrl: teams.logoUrl } as const;
-      // ADR-092: a vaga vale por user_id OU por vaga de convidado resolvida
+      // ADR-087: a vaga vale por user_id OU por vaga de convidado resolvida
       // pelo vínculo Riot (ADR-056). Antes só `user_id` era aceito, e quem
       // estava no time como CONVIDADO batia em `sem_time` ao entrar na vaga
       // (caso real: macoinha07#fck13, sala 196). Vínculo real vem primeiro.
@@ -508,7 +508,7 @@ export async function marcarPronto(
 }
 
 /**
- * Escolha de LADO (ADR-092, ajusta a ADR-079): o time da vez (`escolha_time`)
+ * Escolha de LADO (ADR-087, ajusta a ADR-079): o time da vez (`escolha_time`)
  * pode escolher o LADO agora — ou o pick order primeiro (ver escolherPickOrder);
  * o adversário completa o que sobrar. `lado_escolhido` é o lado que o time
  * ESCOLHEDOR joga; o adversário fica com o outro. Se o pick order JÁ tiver sido
@@ -566,7 +566,7 @@ export async function escolherLado(
 }
 
 /**
- * Escolha do FIRST/LAST PICK (ADR-092, ajusta a ADR-079): o time da vez pode
+ * Escolha do FIRST/LAST PICK (ADR-087, ajusta a ADR-079): o time da vez pode
  * escolher o pick order AGORA — ou o lado primeiro (ver escolherLado); o
  * adversário completa o que sobrar. Se o lado JÁ estiver escolhido, esta escolha
  * FECHA o par e a sala vai para `camp_draft`. `escolha_time` fica com quem fez
@@ -723,7 +723,7 @@ export async function iniciarLiveDaSala(
 }
 
 /**
- * Lado em jogo do TIME A depois das escolhas (ADR-092). `escolha_time` fica com
+ * Lado em jogo do TIME A depois das escolhas (ADR-087). `escolha_time` fica com
  * quem fez a ÚLTIMA escolha; quem escolheu o LADO depende da ORDEM:
  *  - primeiraEscolha = 'lado' (ou null, fluxo antigo): o lado veio primeiro →
  *    quem escolheu o lado é o OUTRO de escolha_time;

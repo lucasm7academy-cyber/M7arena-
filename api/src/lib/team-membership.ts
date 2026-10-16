@@ -86,7 +86,7 @@ export async function findUserTeamMemberships(
 }
 
 /**
- * ADR-092 — um time só por jogador.
+ * ADR-087 — um time só por jogador.
  *
  * Um jogador pode estar num time como CONVIDADO (`user_id` NULL, casado por
  * Riot ID) e em outro como vínculo real. Metade dos rosters migrados é guest,

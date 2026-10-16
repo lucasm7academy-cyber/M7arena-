@@ -418,7 +418,7 @@ teamsRouter.post("/", async (req, res) => {
       losses: 0,
     });
 
-    // ADR-092 — um time só: o dono que cria um time sai de qualquer outro.
+    // ADR-087 — um time só: o dono que cria um time sai de qualquer outro.
     await sairDeOutrosTimes(db, { userId: user.id }, newTeam.id);
 
     await db.insert(teamMembers).values({
@@ -717,7 +717,7 @@ teamsRouter.post("/invites/:id/accept", async (req, res) => {
       }
     }
 
-    // ADR-092 — um time só por jogador. A checagem enxerga o vínculo REAL e a
+    // ADR-087 — um time só por jogador. A checagem enxerga o vínculo REAL e a
     // vaga de CONVIDADO resolvida pelo Riot ID: antes olhava só `user_id`, o
     // "já pertence a um time" passava batido e o jogador ficava em dois times
     // (caso real: macoinha07#fck13 no M7W como guest + request na Lula).
@@ -807,7 +807,7 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
       await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
       for (const m of membros) {
         const slot = legacyToSlot(m.lane);
-        // ADR-092 — um time só: quem entra neste lineup sai dos outros times na
+        // ADR-087 — um time só: quem entra neste lineup sai dos outros times na
         // mesma gravação. O Riot ID resolve o dono da vaga quando ela é de
         // convidado (metade dos rosters é guest) — sem isso o jogador seguia
         // pendurado no time anterior sem ninguém ver.
