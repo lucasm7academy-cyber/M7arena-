@@ -3,18 +3,20 @@
  * Teste do serviço realtime (P4, design v3 §7). Cada fase é independente e
  * reporta PASS/FAIL por comportamento:
  *
- *   1. Sem cookie m7_session                  → rejeitado no handshake (trava 1)
- *   2. Origin errado (mesmo com cookie)       → rejeitado no handshake (trava 2)
- *   3. Não-participante subscribe sala N      → error "sem_permissao" (trava 3)
- *   4. Participante subscribe sala N          → "subscribed" (travas 1/3)
- *   5. pg_notify com sala_num                 → "match_update" chega no socket
- *   6. pg_notify com uuid interno (matches.id)→ "match_update" chega no socket
+ *   1. Sem cookie m7_session                → VISITANTE aceito no handshake
+ *   2. Origin errado (mesmo com cookie)     → rejeitado no handshake (trava 2)
+ *   3. Visitante subscribe sala N           → "subscribed" (estado é público)
+ *   4. Visitante chat_send                  → chat_error "nao_autenticado"
+ *   5. Visitante draft_preview              → NÃO chega para quem tem sessão
+ *   6. Autenticado subscribe sala N         → "subscribed"
+ *   7. pg_notify com sala_num               → "match_update" chega no socket
+ *   8. pg_notify com uuid interno (matches.id) → "match_update" chega no socket
  *
  * Uso:
- *   node scripts/test-realtime.mjs --reject-only          (só fases 1 e 2)
+ *   node scripts/test-realtime.mjs --guest-only
  *   node scripts/test-realtime.mjs \
- *     TEST_SESSION=<token participante> TEST_FORBIDDEN_SESSION=<token não-participante> \
- *     TEST_MATCH=<sala_num> TEST_MATCH_UUID=<uuid> TEST_DATABASE_URL=<postgres-url>
+ *     TEST_SESSION=<token> TEST_MATCH=<sala_num> \
+ *     TEST_MATCH_UUID=<uuid do matches.id> TEST_DATABASE_URL=<postgres-url>
  */
 import WebSocket from "ws";
 import pg from "pg";
@@ -22,7 +24,7 @@ import pg from "pg";
 const URL = process.env.WS_URL || "ws://localhost:3000/ws";
 const ORIGIN = process.env.ORIGIN || "http://localhost:3000";
 
-function tentar({ origin = ORIGIN, cookie, descricao, onOpen }) {
+function tentar({ origin = ORIGIN, cookie, descricao, onOpen, rejeicaoEsperada = false }) {
   return new Promise((resolve) => {
     const headers = {};
     if (cookie) headers.Cookie = cookie;
@@ -40,13 +42,21 @@ function tentar({ origin = ORIGIN, cookie, descricao, onOpen }) {
       console.log(`${ok ? "PASS" : "FAIL"} ${descricao} — ${motivo}`);
       resolve(ok);
     };
-    const timer = setTimeout(() => finish(false, "timeout"), 6000);
+    const timer = setTimeout(() => finish(false, "timeout"), 9000);
     ws.on("open", () => {
+      if (rejeicaoEsperada) {
+        finish(false, "conexão aceita quando deveria ser rejeitada");
+        return;
+      }
       if (onOpen) onOpen(ws, finish);
       else finish(true, "conexão aceita");
     });
     ws.on("unexpected-response", (_req, res) => {
-      finish(res.statusCode === 401 || res.statusCode === 403, `rejeitado HTTP ${res.statusCode}`);
+      if (rejeicaoEsperada) {
+        finish(res.statusCode === 401 || res.statusCode === 403, `rejeitado HTTP ${res.statusCode}`);
+      } else {
+        finish(false, `rejeitado HTTP ${res.statusCode}`);
+      }
     });
     ws.on("error", () => {
       /* sem upgrade: erro aparece como unexpected-response na maioria dos casos */
@@ -64,52 +74,117 @@ async function notificar(payload) {
 }
 
 async function main() {
-  const onlyReject = process.argv.includes("--reject-only");
+  const onlyGuest = process.argv.includes("--guest-only");
   const session = process.env.TEST_SESSION;
-  const forbidden = process.env.TEST_FORBIDDEN_SESSION;
   const match = process.env.TEST_MATCH;
   const matchUuid = process.env.TEST_MATCH_UUID;
 
   let ok = true;
 
-  ok = (await tentar({ descricao: "sem cookie → rejeitado" })) && ok;
+  // 1. Sem cookie → visitante (espectador anônimo) aceito.
+  ok = (await tentar({ descricao: "sem cookie → visitante aceito (só recebe)" })) && ok;
+
+  // 2. Origin errado → rejeitado, com ou sem sessão.
   ok =
     (await tentar({
       origin: "http://evil.example",
       cookie: session ? `m7_session=${session}` : undefined,
-      descricao: "origin errado (com cookie) → rejeitado",
+      descricao: "origin errado → rejeitado no handshake",
+      rejeicaoEsperada: true,
     })) && ok;
 
-  if (onlyReject) {
-    process.exit(ok ? 0 : 1);
-  }
-
-  if (forbidden && match) {
+  if (match) {
+    // 3. Visitante assina (o estado da sala é público — ADR-040).
     ok =
       (await tentar({
-        cookie: `m7_session=${forbidden}`,
-        descricao: `não-participante subscribe sala ${match} → sem_permissao`,
+        descricao: `visitante subscribe sala ${match} → subscribed`,
         onOpen: (ws, finish) => {
           ws.send(JSON.stringify({ type: "subscribe_match", matchId: Number(match) }));
           ws.on("message", (raw) => {
             const msg = JSON.parse(raw.toString());
-            if (msg.type === "error" && msg.error === "sem_permissao") {
-              finish(true, "error sem_permissao recebido");
-            } else if (msg.type === "subscribed") {
-              finish(false, "não-participante foi assinado");
+            if (msg.type === "subscribed" && Number(msg.matchId) === Number(match)) {
+              finish(true, "subscribed recebido");
+            } else if (msg.type === "error") {
+              finish(false, `erro do servidor: ${msg.error}`);
             }
           });
         },
       })) && ok;
+
+    // 4. Visitante NÃO envia chat.
+    ok =
+      (await tentar({
+        descricao: "visitante chat_send → chat_error nao_autenticado",
+        onOpen: (ws, finish) => {
+          ws.send(JSON.stringify({ type: "subscribe_match", matchId: Number(match) }));
+          ws.on("message", (raw) => {
+            const msg = JSON.parse(raw.toString());
+            if (msg.type === "subscribed") {
+              ws.send(JSON.stringify({ type: "chat_send", body: "teste visitante" }));
+            } else if (msg.type === "chat_error" && msg.error === "nao_autenticado") {
+              finish(true, "chat bloqueado para visitante");
+            } else if (msg.type === "chat_message") {
+              finish(false, "visitante conseguiu enviar chat");
+            }
+          });
+        },
+      })) && ok;
+
+    // 5. Prévia de visitante NÃO vaza — precisa de uma sessão autenticada
+    // escutando a mesma sala para provar que nada chega.
+    if (session) {
+      ok =
+        (await tentar({
+          cookie: `m7_session=${session}`,
+          descricao: "visitante draft_preview → não chega para quem tem sessão",
+          onOpen: (wsAutenticado, finish) => {
+            wsAutenticado.on("message", (raw) => {
+              const msg = JSON.parse(raw.toString());
+              if (msg.type === "draft_preview") {
+                finish(false, "prévia de visitante chegou na sala");
+                return;
+              }
+              if (msg.type !== "subscribed") return;
+              // Autenticado já está na sala; agora o visitante assina e manda
+              // a prévia falsa (depois do "subscribed" dele, para o envio não
+              // cair na janela em que a assinatura ainda não terminou).
+              const visitante = new WebSocket(URL, { origin: ORIGIN });
+              visitante.on("message", (raw2) => {
+                const msg2 = JSON.parse(raw2.toString());
+                if (msg2.type !== "subscribed") return;
+                visitante.send(JSON.stringify({ type: "draft_preview", championId: "Aatrox", side: "blue" }));
+                setTimeout(() => {
+                  try {
+                    visitante.terminate();
+                  } catch {
+                    /* já fechou */
+                  }
+                  finish(true, "prévia de visitante ignorada");
+                }, 1500);
+              });
+              visitante.on("open", () => {
+                visitante.send(JSON.stringify({ type: "subscribe_match", matchId: Number(match) }));
+              });
+            });
+            wsAutenticado.send(JSON.stringify({ type: "subscribe_match", matchId: Number(match) }));
+          },
+        })) && ok;
+    } else {
+      console.log("SKIP fase 5: defina TEST_SESSION");
+    }
   } else {
-    console.log("SKIP fase 3: defina TEST_FORBIDDEN_SESSION e TEST_MATCH");
+    console.log("SKIP fases 3/4/5: defina TEST_MATCH");
+  }
+
+  if (onlyGuest) {
+    process.exit(ok ? 0 : 1);
   }
 
   if (session && match) {
     ok =
       (await tentar({
         cookie: `m7_session=${session}`,
-        descricao: `participante subscribe sala ${match} → subscribed`,
+        descricao: `autenticado subscribe sala ${match} → subscribed`,
         onOpen: (ws, finish) => {
           ws.send(JSON.stringify({ type: "subscribe_match", matchId: Number(match) }));
           ws.on("message", (raw) => {
@@ -141,10 +216,10 @@ async function main() {
           },
         })) && ok;
     } else {
-      console.log("SKIP fase 5: fase 4 falhou");
+      console.log("SKIP fase 7: fase 6 falhou");
     }
   } else {
-    console.log("SKIP fases 4/5: defina TEST_SESSION e TEST_MATCH");
+    console.log("SKIP fases 6/7: defina TEST_SESSION e TEST_MATCH");
   }
 
   if (session && match && matchUuid) {
@@ -165,7 +240,7 @@ async function main() {
         },
       })) && ok;
   } else {
-    console.log("SKIP fase 6: defina TEST_SESSION, TEST_MATCH e TEST_MATCH_UUID");
+    console.log("SKIP fase 8: defina TEST_SESSION, TEST_MATCH e TEST_MATCH_UUID");
   }
 
   process.exit(ok ? 0 : 1);

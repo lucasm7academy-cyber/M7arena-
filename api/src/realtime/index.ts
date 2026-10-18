@@ -8,11 +8,14 @@
  *
  * Segurança (6 travas):
  *  1. Cookie `m7_session` validado no handshake (sessão viva na tabela
- *     `user_sessions`, mesma regra de routes/auth.ts e match-flow.ts).
+ *     `user_sessions`, mesma regra de routes/auth.ts e match-flow.ts). Sem
+ *     sessão válida a conexão vira VISITANTE (espectador anônimo), que só
+ *     RECEBE — teto global + por IP; enviar (chat/prévia) continua exigindo
+ *     sessão.
  *  2. `Origin` conferido contra `APP_URL` antes de aceitar o upgrade.
- *  3. `subscribe_match` é aceito para qualquer usuário autenticado (o estado
- *     da sala é público e o chat é para todos na sala — ADR-040); enviar chat
- *     continua exigindo Riot vinculado (`enviarChat`).
+ *  3. `subscribe_match` é aceito para qualquer um (o estado da sala é público
+ *     e o chat é para todos na sala — ADR-040); enviar chat continua exigindo
+ *     Riot vinculado (`enviarChat`) e prévia exige sessão (`enviarPreview`).
  *  4. Os dados nunca vêm do socket — o cliente refaz o GET.
  *  5. Máx. 10 conexões por usuário (derruba a mais antiga) + matchId validado.
  *  6. Ping/pong a cada 30s; conexão que não responde 2 pings é derrubada.
@@ -38,6 +41,12 @@ const DATABASE_URL =
   process.env.DATABASE_URL || "postgresql://postgres:postgres@postgres:5432/m7arena";
 
 const MAX_CONEXOES_POR_USUARIO = 10;
+// Visitante = espectador sem sessão (só RECEBE — o estado da sala é público,
+// ADR-040). A porta anônima tem teto global e por IP para não virar
+// esgotamento, e a assinatura de sala tem throttle (cada uma consulta o banco).
+const MAX_VISITANTES = 500;
+const MAX_VISITANTES_POR_IP = 10;
+const VISITANTE_ASSINATURA_MIN_MS = 2_000;
 const PING_INTERVAL_MS = 30_000;
 const RECONEXAO_BASE_MS = 1_000;
 const RECONEXAO_MAX_MS = 30_000;
@@ -72,6 +81,12 @@ const socketRoom = new Map<WebSocket, number>();
 const userSockets = new Map<string, Set<WebSocket>>();
 // userId por socket, setado no handshake (handleUpgrade não leva argumento extra).
 const socketUser = new Map<WebSocket, string>();
+// Visitantes: IP → sockets (teto por IP), socket → IP (limpeza no close) e
+// socket → último subscribe_match aceito (throttle sem sessão).
+const visitanteSocketsPorIp = new Map<string, Set<WebSocket>>();
+const socketVisitanteIp = new Map<WebSocket, string>();
+const visitanteAssinaturaTimestamps = new Map<WebSocket, number>();
+let visitantesTotal = 0;
 // Socket → uuid interno do match (para o INSERT do chat, que referencia matches.id).
 const socketMatchId = new Map<WebSocket, string>();
 // userId → timestamps das mensagens (rate limit em memória; processo único).
@@ -128,6 +143,7 @@ function enviar(ws: WebSocket, payload: unknown) {
 function removerDaSala(ws: WebSocket) {
   socketMatchId.delete(ws);
   previewTimestamps.delete(ws);
+  visitanteAssinaturaTimestamps.delete(ws);
   const salaNum = socketRoom.get(ws);
   if (salaNum === undefined) return;
   socketRoom.delete(ws);
@@ -135,6 +151,35 @@ function removerDaSala(ws: WebSocket) {
   if (set) {
     set.delete(ws);
     if (set.size === 0) rooms.delete(salaNum);
+  }
+}
+
+/** IP real do handshake (nginx na frente → primeiro do X-Forwarded-For). */
+function ipDoHandshake(req: http.IncomingMessage): string {
+  const xff = String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim();
+  return xff || req.socket.remoteAddress || "desconhecido";
+}
+
+function registrarVisitante(ws: WebSocket, ip: string) {
+  let set = visitanteSocketsPorIp.get(ip);
+  if (!set) {
+    set = new Set();
+    visitanteSocketsPorIp.set(ip, set);
+  }
+  set.add(ws);
+  socketVisitanteIp.set(ws, ip);
+  visitantesTotal += 1;
+}
+
+function removerVisitante(ws: WebSocket) {
+  const ip = socketVisitanteIp.get(ws);
+  if (ip === undefined) return;
+  socketVisitanteIp.delete(ws);
+  visitantesTotal = Math.max(0, visitantesTotal - 1);
+  const set = visitanteSocketsPorIp.get(ip);
+  if (set) {
+    set.delete(ws);
+    if (set.size === 0) visitanteSocketsPorIp.delete(ip);
   }
 }
 
@@ -186,14 +231,15 @@ async function assinarSala(ws: WebSocket, msg: any) {
       enviar(ws, { type: "error", error: "sala_nao_encontrada" });
       return;
     }
-    // Qualquer usuário autenticado pode assinar a sala (o estado da sala é
-    // público e o chat é para todos que estão na sala, na vaga ou não — ADR-040).
-    // A sessão já foi validada no handshake (trava 1); enviar mensagem continua
-    // exigindo Riot vinculado, checado em `enviarChat`.
-    const userId = socketUser.get(ws);
-    if (!userId) {
-      enviar(ws, { type: "error", error: "nao_autenticado" });
-      return;
+    // O estado da sala é público (ADR-040): qualquer um assina — inclusive o
+    // VISITANTE (sem sessão), que só RECEBE; enviar (chat/prévia) continua
+    // exigindo sessão, checado abaixo. O visitante tem throttle de assinatura
+    // para o subscribe não virar rajada de consultas ao banco sem login.
+    if (!socketUser.get(ws)) {
+      const agora = Date.now();
+      const ultimo = visitanteAssinaturaTimestamps.get(ws) ?? 0;
+      if (agora - ultimo < VISITANTE_ASSINATURA_MIN_MS) return;
+      visitanteAssinaturaTimestamps.set(ws, agora);
     }
     removerDaSala(ws);
     socketRoom.set(ws, match.salaNum);
@@ -310,6 +356,8 @@ const PREVIEW_MIN_INTERVALO_MS = 150;
 const previewTimestamps = new Map<WebSocket, number>();
 
 function enviarPreview(ws: WebSocket, msg: any) {
+  // Só quem tem sessão publica prévia — visitante é espectador (só recebe).
+  if (!socketUser.get(ws)) return;
   const salaNum = socketRoom.get(ws);
   if (salaNum === undefined) return;
   const agora = Date.now();
@@ -368,7 +416,8 @@ async function handleNotification(payload: string) {
   }
 }
 
-// ── Handshake: Origin (trava 2) + cookie (trava 1), antes do upgrade. ──
+// ── Handshake: Origin (trava 2) + sessão (trava 1) antes do upgrade. Sem
+// sessão válida a conexão vira VISITANTE (espectador anônimo, só recebe). ──
 const httpServer = http.createServer((_req, res) => {
   res.writeHead(400).end();
 });
@@ -382,19 +431,25 @@ httpServer.on("upgrade", (req, socket) => {
       return;
     }
     const token = lerCookie(req.headers.cookie, "m7_session");
-    if (!token) {
-      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-      socket.destroy();
-      return;
-    }
-    const userId = await sessaoValida(token);
+    const userId = token ? await sessaoValida(token) : null;
+
+    // Sem sessão válida = VISITANTE (espectador anônimo). O estado da sala é
+    // público (ADR-040): ele assina e RECEBE (match_update, prévia, chat),
+    // mas não envia nada (chat/prévia exigem sessão). Teto global + por IP
+    // para a porta anônima não virar esgotamento de conexões.
+    const ip = ipDoHandshake(req);
     if (!userId) {
-      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-      socket.destroy();
-      return;
+      const doIp = visitanteSocketsPorIp.get(ip)?.size ?? 0;
+      if (visitantesTotal >= MAX_VISITANTES || doIp >= MAX_VISITANTES_POR_IP) {
+        socket.write("HTTP/1.1 429 Too Many Requests\r\n\r\n");
+        socket.destroy();
+        return;
+      }
     }
+
     wss.handleUpgrade(req, socket, Buffer.alloc(0), (ws) => {
-      socketUser.set(ws, userId);
+      if (userId) socketUser.set(ws, userId);
+      else registrarVisitante(ws, ip);
       wss.emit("connection", ws, req);
     });
   })().catch((err) => {
@@ -405,12 +460,9 @@ httpServer.on("upgrade", (req, socket) => {
 
 wss.on("connection", (ws: WebSocket) => {
   const userId = socketUser.get(ws);
-  if (!userId) {
-    ws.close();
-    return;
-  }
-
-  registrarConexao(ws, userId);
+  // Autenticado entra no livro por usuário (trava 5); visitante já foi
+  // contabilizado por IP no upgrade.
+  if (userId) registrarConexao(ws, userId);
 
   socketState.set(ws, { isAlive: true });
   ws.on("pong", () => {
@@ -423,9 +475,13 @@ wss.on("connection", (ws: WebSocket) => {
   });
 
   ws.on("close", () => {
-    const sockets = userSockets.get(userId);
-    sockets?.delete(ws);
-    if (sockets && sockets.size === 0) userSockets.delete(userId);
+    if (userId) {
+      const sockets = userSockets.get(userId);
+      sockets?.delete(ws);
+      if (sockets && sockets.size === 0) userSockets.delete(userId);
+    } else {
+      removerVisitante(ws);
+    }
     socketUser.delete(ws);
     removerDaSala(ws);
   });
