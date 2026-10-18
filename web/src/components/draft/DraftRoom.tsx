@@ -204,29 +204,39 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
               centro é a logo do time de fundo, igual aos demais estados.) */}
 
           {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
-              campeão aparece NA BOLA do lado que agiu (pop de zoom) e some
-              sozinho (~2s). Ban = preto e branco; pick = o MESMO efeito sem
-              a cor. (A lâmina vermelha do ban e o anel dourado do pick saíram
-              — pedido do usuário 2026-10-17.) */}
+              campeão aparece NA BOLA do lado que agiu e some sozinho (~2s).
+              Ban = pop de zoom em preto e branco. Pick = SEM entrada de
+              escala: o campeão já estava na bola pelo preview e a entrada
+              dava uma "piscada" na confirmação — agora entra suave, no MESMO
+              tamanho da imagem normal (scale-125), e só SAI com fade (pedido
+              do usuário 2026-10-17). */}
           <AnimatePresence>
             {feedback ? (
               <motion.div
                 key={feedback.nonce}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
+                animate={{ opacity: 1, transition: { duration: feedback.tipo === 'pick' ? 0.12 : 0.18 } }}
+                exit={{ opacity: 0, transition: { duration: feedback.tipo === 'pick' ? 0.5 : 0.2 } }}
                 className="absolute inset-0 z-20"
               >
-                <motion.img
-                  src={buildChampionIconUrl(feedback.championId)}
-                  alt=""
-                  initial={{ scale: 1.3 }}
-                  animate={{ scale: 1.12 }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className={`w-full h-full object-cover ${feedback.tipo === 'ban' ? 'grayscale brightness-[0.7]' : ''}`}
-                  referrerPolicy="no-referrer"
-                />
+                {feedback.tipo === 'ban' ? (
+                  <motion.img
+                    src={buildChampionIconUrl(feedback.championId)}
+                    alt=""
+                    initial={{ scale: 1.3 }}
+                    animate={{ scale: 1.12 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="w-full h-full object-cover grayscale brightness-[0.7]"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <img
+                    src={buildChampionIconUrl(feedback.championId)}
+                    alt=""
+                    className="w-full h-full object-cover scale-125"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
               </motion.div>
             ) : null}
           </AnimatePresence>
