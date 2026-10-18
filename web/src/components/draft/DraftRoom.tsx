@@ -71,8 +71,10 @@ interface DraftRoomProps {
    * 2026-10-18). Sem grid, sem turno e sem sons de draft.
    */
   aoVivo?: {
-    /** Rótulo do estado: 'Partida Pronta!' (sala se preparando) / 'Partida Ao Vivo!'. */
-    status: string;
+    /** Rótulo do estado de espera ('Partida Pronta!'); o "Partida Ao Vivo!" saiu
+        da tela (pedido do usuário 18/10 — verde feio): quando a partida rola,
+        placar + transmissão já dizem isso. */
+    status?: string | null;
     /** Ponto vermelho pulsante — partida realmente em andamento. */
     pulsante?: boolean;
     placar?: { a: number; b: number } | null;
@@ -792,10 +794,12 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
               {aoVivo.legenda}
             </span>
           )}
-          <span className="inline-flex items-center gap-[0.8vmin] text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
-            {aoVivo?.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
-            {aoVivo?.status}
-          </span>
+          {!!aoVivo?.status && (
+            <span className="inline-flex items-center gap-[0.8vmin] text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
+              {aoVivo.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
+              {aoVivo.status}
+            </span>
+          )}
         </div>
       )}
 

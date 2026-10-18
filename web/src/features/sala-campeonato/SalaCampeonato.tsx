@@ -596,8 +596,11 @@ export default function SalaCampeonato() {
           timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
           placar={serie ? { a: placarA, b: placarB } : null}
           aoVivo={{
-            status: estado === 'iniciando_partida' ? 'Partida Pronta!' : 'Partida Ao Vivo!',
-            pulsante: estado !== 'iniciando_partida',
+            // "Partida Ao Vivo!" saiu da tela (pedido do usuário 18/10 — verde
+            // feio): com a partida rolando, o placar e a transmissão já dizem
+            // isso. Só o estado de espera ("Partida Pronta!") continua no
+            // centro.
+            status: estado === 'iniciando_partida' ? 'Partida Pronta!' : null,
             placar: { a: placarA, b: placarB },
             legenda: serie
               ? `JOGO ${camp?.jogo ?? 1} · MD${serie.best_of ?? 3}`
