@@ -73,7 +73,7 @@ function BanSlot({ champion, active, jaBaniu, champions, version }: {
       <div className={`
         relative w-[5vmin] h-[5vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
         ${jaBaniu ? 'border-red-600/80 shadow-[0_0_8px_rgba(220,38,38,0.3)]' : 'border-white/15'}
-        ${active ? 'border-[#c89b3c] shadow-[0_0_12px_rgba(200,155,60,0.5)] scale-110' : ''}
+        ${active ? 'border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)] scale-110' : ''}
       `}>
         {champ ? (
           <>
@@ -150,7 +150,7 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
   return (
     <div className="w-[25vmin] flex flex-col items-center gap-[1.5vmin] pointer-events-auto">
       <div className="text-center w-full truncate px-[1vmin]">
-        <span className="text-[2vmin] font-bold text-white/90 tracking-widest drop-shadow-md">
+        <span className="text-[2vmin] font-black text-white/90 tracking-widest drop-shadow-md">
           {jogadorNome}
         </span>
       </div>
