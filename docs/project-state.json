@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T02:21:50.999Z",
+  "updatedAt": "2026-10-18T02:25:35.102Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2433,12 +2433,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-10-07T22:47:07.181Z",
-      "agent": "claude",
-      "summary": "Pesquisa somente-leitura (nenhum arquivo do projeto modificado): clonei o repo antigo github.com/lucasm7academy-cyber/Projeto-Site em temp/opencode/Projeto-Site e localizei a sala antiga time vs time com logo de cada time + imagem VS no meio. Arquivo: src/pages/SalaPage.tsx (componente CentralDisplay, bloco \"Logos time_vs_time — sobreposto no centro\" com /images/vs.png 15vmin entre logos de 17vmin, e seção \"TEAM HEADERS COM VS NO MEIO\"). Linha do tempo: criado 8ea7db9 (09/04/2026); VS aparece em 49dc723 (18/04); logos no centro em 2cc6c1b (18/04); imagem vs.png adicionada em 1414cb2 (18/04, também vs1/vs2 nunca usados); última versão = be43354 (25/04/2026, = 37d91f6^); removido em 37d91f6 (25/04/2026) quando substituído por SalaMod1.tsx. vs.png ainda existe no HEAD do repo antigo. Projeto atual (M7arenaSite) não contém vs.png nem o layout — SalaMod1.tsx tem CentralDisplay vazia.",
-      "touched": []
-    },
-    {
       "at": "2026-10-08T22:57:13.326Z",
       "agent": "deepseek",
       "summary": "1) Draft por modo (ADR-074): novo módulo api/src/lib/draft/ (modos/5v5, modos/time-vs-time hoje idêntico ao 5v5, modos/1v1 e modos/aram ativo=false, regras.ts com DRAFT_RULES, flow.ts com o motor, index.ts); draft-flow.ts removido. match-flow pula a fase para 1v1/ARAM (confirmou → iniciando_partida com código) via helper iniciarPartidaComCodigo; shape publica draft.regras + duracao_turno_ms; DraftRoom sem if (modo). Evidência: 12/12 testes draft, suíte 218/218, tsc api/web 0, vite build ok. Smokes reescritos mas NÃO executados (rebuild local abortado; nada deployado). 2) Sala TIME vs TIME (ADR-075): features/sala-time-vs-time/SalaTimeVsTime.tsx (cópia verbatim de SalaMod1) e rota /time_vs_time/:id apontada para ela; demais modos seguem na SalaMod1 intocada. Componente app.sala.time-vs-time (doing). tsc web 0 + build com chunks idênticos. PRÓXIMO: usuário dirige o redesign; deploy do draft quando pedido.",
@@ -2747,6 +2741,12 @@
       "at": "2026-10-18T02:21:50.998Z",
       "agent": "deepseek",
       "summary": "DraftRoom (bola): killcam do pick e do ban agora 'lisa', sem piscada. aa440b5: pick confirmado sem entrada de escala -- o campeao ja estava na bola pelo preview (a re-entrada dava piscada); entra no MESMO tamanho (scale-125) e so sai com fade. 5a52338: ban tambem sem pop -- a imagem fica no lugar e DESBOTA de cor para P&B (filtro animado grayscale 0->1 + brightness 0.7, delay 0.15s, 0.45s) e a saida virou fade suave (0.5s) nos dois tipos; entrada 0.12s. Evidencia: deploy nginx na VPS health 200; bundle DraftRoom-Dd_o21Qr.js com grayscale(1)=1, scale-125=2, classe antiga brightness-[0.7]=0; entry aponta pro chunk. Outro agente deployou em paralelo (ADR-089) -- team-ownership.js confirmado no dist do app antes de buildar.",
+      "touched": []
+    },
+    {
+      "at": "2026-10-18T02:25:35.096Z",
+      "agent": "deepseek",
+      "summary": "Follow-up killcam da bola: usuario sentiu falta do ZOOM (na correcao anterior eu havia tirado o efeito junto com a piscada). c35c104: zoom de volta nos DOIS (pick e ban) SEM a piscada -- a imagem entra no MESMO tamanho que ja estava na bola (1.25, sem salto) e da o punch: 1.25 -> 1.42 (28% da duracao) -> assenta em 1.12, 0.55s easeOut; sai com fade 0.5s. Ban mantem o desbote de cor para P&B (filtro animado, delay 0.15s). Evidencia: deploy nginx health 200; bundle DraftRoom-Dit8RbA0.js com 1.42=1 ocorrencia e grayscale(1)=1; entry aponta pro chunk.",
       "touched": []
     }
   ]
