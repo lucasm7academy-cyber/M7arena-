@@ -196,25 +196,16 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
 
           {emTurno && !champNaBola && (
             <div
-              className="w-full h-full flex flex-col items-center justify-center gap-[1.8vmin] relative z-10"
+              className="w-full h-full flex flex-col items-center justify-center relative z-10"
               style={{ backgroundColor: `rgba(${corLadoRgb},0.12)` }}
             >
-              <div className="flex gap-[1.5vmin]">
-                {[0, 0.2, 0.4].map((d) => (
-                  <motion.div
-                    key={d}
-                    animate={{ scale: [1, 1.5, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: d }}
-                    className="w-[2.2vmin] h-[2.2vmin] rounded-full"
-                    style={{ backgroundColor: corLado, boxShadow: `0 0 10px rgba(${corLadoRgb},0.8)` }}
-                  />
-                ))}
-              </div>
+              {/* (As 3 bolinhas piscando saíram — pedido do usuário 2026-10-17:
+                  fica só o texto, agora no gerúndio "Banindo…/Escolhendo…".) */}
               <p
                 className="text-[3.2vmin] font-bold uppercase tracking-widest text-center px-2 drop-shadow-md"
                 style={{ color: corLado }}
               >
-                {fase === 'ban' ? 'Banir' : 'Escolher'}
+                {fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
               </p>
             </div>
           )}
