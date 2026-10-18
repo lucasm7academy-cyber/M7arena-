@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T01:53:32.877Z",
+  "updatedAt": "2026-10-18T02:09:40.676Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2346,6 +2346,15 @@
       "decision": "Fluxo de times corrigido: (1) membership de CONVIDADO (user_id NULL, casado por Riot ID/PUUID via ADR-056) agora vale em TODOS os pontos: vaga da sala livre (era sem_time), card do /jogador (players.tsx mandava guest_riot_ids so para quem NAO tinha conta) e trava de 'ja pertence a um time'. (2) Entrar em um time remove automaticamente o do anterior - nos 3 pontos de entrada: aceitar convite/solicitacao (aceitava 409 so com user_id; agora enxerga guest e sai do anterior), salvar lineup (cada membro entra, sai dos outros times, inclusive resolvendo guest_riot_id->conta) e criar time (dono sai do anterior). (3) GET /teams/members casa Riot ID case-insensitive e devolve status; players.tsx so mostra time com status accepted. Caso real: macoinha07#fck13 (user 1496c2a3) esta no M7W como guest e nao aparecia em /jogador nem entrava na vaga da sala 196 - corrigido. Testes: 262/262, tsc api+web 0, deploy 13b06e4 na VPS.",
       "rationale": "",
       "supersedes": null
+    },
+    {
+      "id": "ADR-088",
+      "date": "2026-10-18T02:06:54.299Z",
+      "author": "deepseek",
+      "title": "WebSocket: visitante sem sessao assiste a sala (so recebe)",
+      "decision": "O handshake do realtime aceita conexao sem sessao valida como VISITANTE (espectador anonimo): assina a sala e RECEBE match_update/draft_preview/chat, nunca envia; teto global 500 + 10 por IP (X-Forwarded-For) + throttle de assinatura de 2s; Origin continua obrigatorio (403).",
+      "rationale": "Espectar sala sem login e caso real (janela anonima) e o estado da sala ja e publico (ADR-040); sem isso a previa da bola nunca chegava em quem assiste deslogado. Enviar continua exigindo sessao: chat (chat_error nao_autenticado) e previa (gate novo em enviarPreview).",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2414,14 +2423,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-30T02:17:45.618Z",
-      "agent": "gemini",
-      "summary": "Ajuste de estilo no Lobby: removido o card/caixa roxa de fundo do streamer abaixo do proximo jogo e mantido apenas o icone e o texto em roxo Twitch (#9146FF) com brilho neon sutil (drop-shadow) e efeito hover. Deploy concluido na VPS servindo chunk Lobby-B10TG0oj.js com HTTP 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
     {
       "at": "2026-10-02T01:40:38.448Z",
       "agent": "deepseek",
@@ -2739,6 +2740,12 @@
       "at": "2026-10-18T01:53:32.876Z",
       "agent": "deepseek",
       "summary": "Draft (DraftRoom.tsx), pedido do usuario 2026-10-17: (1) 'Banindo.../Escolhendo...' saiu de dentro da bola (ficou so o tint do lado) e desceu para o lugar do nome do campeao abaixo dela, sem uppercase (uppercase so quando mostra o nome do campeao) e na cor do lado; (2) killcam da bola: ao CONFIRMAR ban/pick, o campeao aparece NA BOLA do lado que agiu por ~2,2s e some sozinho -- ban = icone P&B (grayscale + brightness 0.7) com lamina vermelha varrendo na diagonal (scaleX 0 para 1, rotate -18deg, glow rgba(239,68,68,0.9)); pick = zoom com anel dourado expandindo + clarao radial (#c89b3c). Deteccao por diff das contagens de blue/red bans+picks (ref; primeira carga nao repete historico); pick escondido pela regra do modo (esconderPickAdversario) NAO anima para nao vazar o boneco. Commit 50b9a18 deployado na VPS (nginx rebuild + restart m7arena_nginx), health 200, bundle servido DraftRoom-Dly4d3ZQ.js com a lamina (1 ocorrencia de 239,68,68,0.9) e entry index-Di9Arsfc.js referenciando o chunk novo.",
+      "touched": []
+    },
+    {
+      "at": "2026-10-18T02:09:40.675Z",
+      "agent": "deepseek",
+      "summary": "Bola do draft na vez: removido o tint azul/vermelho translucido de dentro da bola (div com rgba(corLadoRgb,0.12)) -- na vez fica so a BORDA acesa pulsando na cor do lado + a logo do time de fundo no centro, igual aos demais estados. Pedido do usuario 2026-10-17 (fica feio o azul/vermelho mais claro por dentro). Deploy 991a3fa SO do nginx (outro agente mexendo na VPS -- app/realtime nao foram tocados), restart m7arena_nginx, health 200, bundle servido DraftRoom-DFw_em2j.js: contagem de ,0.12 = 0 e Banindo presente; entry index-DHkDFabg.js referencia o chunk novo. Sessao anterior (mesmo dia): realtime aceita visitante sem sessao (espectador anonimo so recebe -- ADR-088) resolvendo o preview da bola na janela anonima; evidencias: tsc api exit 0, test-realtime.mjs 8/8 PASS pelo nginx, test-guest-recebe-previa.mjs PASS (jogador envia previa Ahri/blue -> visitante recebe), deploy 100dfae app+realtime.",
       "touched": []
     }
   ]
