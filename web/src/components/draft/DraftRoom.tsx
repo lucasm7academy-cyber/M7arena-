@@ -208,9 +208,10 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
           )}
 
           {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
-              campeão aparece NA BOLA do lado que agiu e some sozinho (~2s).
-              Ban = preto e branco + lâmina vermelha atravessando; pick =
-              explosão dourada. Pedido do usuário 2026-10-17. */}
+              campeão aparece NA BOLA do lado que agiu (pop de zoom) e some
+              sozinho (~2s). Ban = preto e branco; pick = o MESMO efeito sem
+              a cor. (A lâmina vermelha do ban e o anel dourado do pick saíram
+              — pedido do usuário 2026-10-17.) */}
           <AnimatePresence>
             {feedback ? (
               <motion.div
@@ -221,51 +222,15 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
                 transition={{ duration: 0.18 }}
                 className="absolute inset-0 z-20"
               >
-                {feedback.tipo === 'ban' ? (
-                  <>
-                    <motion.img
-                      src={buildChampionIconUrl(feedback.championId)}
-                      alt=""
-                      initial={{ scale: 1.3 }}
-                      animate={{ scale: 1.12 }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                      className="w-full h-full object-cover grayscale brightness-[0.7]"
-                      referrerPolicy="no-referrer"
-                    />
-                    {/* A lâmina vermelha: varre o boneco na diagonal */}
-                    <motion.div
-                      initial={{ scaleX: 0, rotate: -18 }}
-                      animate={{ scaleX: 1, rotate: -18 }}
-                      transition={{ duration: 0.35, ease: 'easeOut', delay: 0.12 }}
-                      className="absolute left-0 top-[49%] w-full h-[0.7vmin] bg-red-600 origin-left shadow-[0_0_18px_rgba(239,68,68,0.9)]"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <motion.img
-                      src={buildChampionIconUrl(feedback.championId)}
-                      alt=""
-                      initial={{ scale: 1.45 }}
-                      animate={{ scale: 1.15 }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    {/* A escolha: anel dourado expandindo + clarão */}
-                    <motion.div
-                      initial={{ scale: 0.35, opacity: 0.9 }}
-                      animate={{ scale: 1.7, opacity: 0 }}
-                      transition={{ duration: 0.9, ease: 'easeOut' }}
-                      className="absolute inset-[10%] rounded-full border-[0.5vmin] border-[#c89b3c]"
-                    />
-                    <motion.div
-                      initial={{ opacity: 0.5 }}
-                      animate={{ opacity: 0 }}
-                      transition={{ duration: 0.7, ease: 'easeOut' }}
-                      className="absolute inset-0 bg-[radial-gradient(circle,rgba(200,155,60,0.6)_0%,rgba(200,155,60,0)_70%)]"
-                    />
-                  </>
-                )}
+                <motion.img
+                  src={buildChampionIconUrl(feedback.championId)}
+                  alt=""
+                  initial={{ scale: 1.3 }}
+                  animate={{ scale: 1.12 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className={`w-full h-full object-cover ${feedback.tipo === 'ban' ? 'grayscale brightness-[0.7]' : ''}`}
+                  referrerPolicy="no-referrer"
+                />
               </motion.div>
             ) : null}
           </AnimatePresence>
