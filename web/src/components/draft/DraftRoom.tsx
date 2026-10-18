@@ -205,12 +205,11 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
 
           {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
               campeão fica NA BOLA do lado que agiu e some sozinho (~2s).
-              SEM entrada de escala nos dois — o campeão já estava na bola
-              pelo preview e a re-entrada dava uma "piscada". Ban = a imagem
-              DESBOTA de cor para preto e branco no próprio lugar (filtro
-              animado, sem pular); pick = só o fade de saída. Nos dois, a
-              saída é um fade suave. (Pedido do usuário 2026-10-17: "fazer
-              liso".) */}
+              LISO, mas COM o zoom: o campeão já estava na bola pelo preview
+              (mesmo tamanho, sem piscada/salto) e dá o punch — cresce e
+              assenta de volta; depois só SAI com fade. Ban = a imagem desbota
+              de cor para preto e branco no próprio lugar, sem pular (filtro
+              animado). (Pedidos do usuário 2026-10-17.) */}
           <AnimatePresence>
             {feedback ? (
               <motion.div
@@ -224,9 +223,15 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
                   src={buildChampionIconUrl(feedback.championId)}
                   alt=""
                   initial={{ filter: 'grayscale(0) brightness(1)' }}
-                  animate={{ filter: feedback.tipo === 'ban' ? 'grayscale(1) brightness(0.7)' : 'grayscale(0) brightness(1)' }}
-                  transition={feedback.tipo === 'ban' ? { duration: 0.45, ease: 'easeOut', delay: 0.15 } : { duration: 0.1 }}
-                  className="w-full h-full object-cover scale-125"
+                  animate={{
+                    scale: [1.25, 1.42, 1.12],
+                    filter: feedback.tipo === 'ban' ? 'grayscale(1) brightness(0.7)' : 'grayscale(0) brightness(1)',
+                  }}
+                  transition={{
+                    scale: { duration: 0.55, times: [0, 0.28, 1], ease: 'easeOut' },
+                    filter: feedback.tipo === 'ban' ? { duration: 0.45, ease: 'easeOut', delay: 0.15 } : { duration: 0.1 },
+                  }}
+                  className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
               </motion.div>
