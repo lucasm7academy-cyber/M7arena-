@@ -1105,7 +1105,17 @@ const ManageLineupModal = ({
 
   const handleRemove = (idKey: string) => {
     playSound('click');
-    setMembros(m => m.filter(mb => (mb.userId || mb.riotId) !== idKey));
+    setMembros(prev => {
+      const removido = prev.find(mb => (mb.userId || mb.riotId) === idKey);
+      const restantes = prev.filter(mb => (mb.userId || mb.riotId) !== idKey);
+      // A coroa não fica órfã: se o líder saiu, o próximo herda — de
+      // preferência alguém com CONTA (o dono do time precisa de user_id).
+      if (removido?.isLeader && restantes.length > 0) {
+        const herdeiro = restantes.find(mb => mb.userId) ?? restantes[0];
+        return restantes.map(mb => (mb === herdeiro ? { ...mb, isLeader: true } : mb));
+      }
+      return restantes;
+    });
     setConfirmRemove(null);
   };
 
@@ -1251,26 +1261,26 @@ const ManageLineupModal = ({
                     </>
                   ) : (
                     <>
-                      {!m.isLeader && (
-                        <>
-                          {m.userId && (
-                            <button
-                              onClick={() => handlePromote(mId)}
-                              className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-yellow-400/20 text-white/30 hover:text-yellow-400 transition-all cursor-pointer"
-                              title="Promover a Capitão"
-                            >
-                              <Crown className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setConfirmRemove(mId)}
-                            className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all cursor-pointer"
-                            title="Expulsar"
-                          >
-                            <UserX className="w-3.5 h-3.5" />
-                          </button>
-                        </>
+                      {/* Coroa: quem tem a coroa é o dono/capitão (ADR-089). */}
+                      {!m.isLeader && m.userId && (
+                        <button
+                          onClick={() => handlePromote(mId)}
+                          className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-yellow-400/20 text-white/30 hover:text-yellow-400 transition-all cursor-pointer"
+                          title="Promover a Capitão/Dono"
+                        >
+                          <Crown className="w-3.5 h-3.5" />
+                        </button>
                       )}
+                      {/* Retirar da equipe vale para TODOS, inclusive o líder —
+                          o proprietário pode kitar o dono e a coroa anda
+                          sozinha (handleRemove promove o primeiro restante). */}
+                      <button
+                        onClick={() => setConfirmRemove(mId)}
+                        className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all cursor-pointer"
+                        title={m.isLeader ? 'Expulsar (a coroa vai para o próximo)' : 'Expulsar'}
+                      >
+                        <UserX className="w-3.5 h-3.5" />
+                      </button>
                     </>
                   )}
                 </div>

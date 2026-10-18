@@ -11,6 +11,7 @@ import {
 import { gameAccounts } from "../../../db/schema/games.js";
 import { tournamentMatches, bracketMatches, tournaments } from "../../../db/schema/tournaments.js";
 import { findUserTeamMemberships, sairDeOutrosTimes } from "../lib/team-membership.js";
+import { resolverNovoDono } from "../lib/team-ownership.js";
 
 export const teamsRouter = Router();
 
@@ -592,7 +593,14 @@ teamsRouter.post("/:id/transferir-dono", async (req, res) => {
 
     const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
     if (!team) return res.status(404).json({ error: "Time não encontrado" });
-    if (team.ownerId !== user.id) return res.status(403).json({ error: "Só o dono pode passar a coroa" });
+
+    // ADR-089: além do dono atual, o PROPRIETÁRIO (cargo da plataforma) pode
+    // passar a coroa para quem quiser.
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isProprietario = roles.some((r) => r.role === "proprietario");
+    if (team.ownerId !== user.id && !isProprietario) {
+      return res.status(403).json({ error: "Só o dono (ou o proprietário) pode passar a coroa" });
+    }
     if (targetUserId === user.id) return res.status(400).json({ error: "escolha_outro_membro" });
 
     const [alvo] = await db
@@ -826,6 +834,16 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
           isCaptain: !!m.is_capitao,
           status: "accepted",
         });
+      }
+
+      // ADR-089 — quem tiver a coroa é o dono do time (regra em lib).
+      const gravados = await tx.select().from(teamMembers).where(eq(teamMembers.teamId, id));
+      const novoDono = resolverNovoDono(
+        gravados.map((m) => ({ userId: m.userId, isCaptain: m.isCaptain })),
+        team.ownerId
+      );
+      if (novoDono) {
+        await tx.update(teams).set({ ownerId: novoDono, updatedAt: new Date() }).where(eq(teams.id, id));
       }
     });
 
