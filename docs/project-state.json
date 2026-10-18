@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T01:45:29.490Z",
+  "updatedAt": "2026-10-18T01:53:32.877Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2415,16 +2415,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-09-30T02:10:55.179Z",
-      "agent": "gemini",
-      "summary": "Ajustes concluidos e deployados na VPS: 1) /streamers: o card de 'Iniciar Transmissao Avulsa' agora e retratil (formato sanfona/gaveta) com botao minimalista e seta discreta (ChevronDown animado), fechado por padrao para nao ocupar espaco vertical no mobile e abrindo suavemente ao clicar; 2) No Lobby e na Agenda: o canal do streamer agora e exibido no formato oficial com barra /{streamer.twitch} (ex: /onelucks_) acompanhado do emote da Twitch, preservando o casing original e link direto para a Twitch. Build e deploy no ar na VPS servindo Lobby-B6c2rZRg.js e Streamers-CTCTqoWF.js.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/Streamers.tsx",
-        "web/src/features/streams/components/AgendaTransmissoes.tsx"
-      ]
-    },
-    {
       "at": "2026-09-30T02:17:45.618Z",
       "agent": "gemini",
       "summary": "Ajuste de estilo no Lobby: removido o card/caixa roxa de fundo do streamer abaixo do proximo jogo e mantido apenas o icone e o texto em roxo Twitch (#9146FF) com brilho neon sutil (drop-shadow) e efeito hover. Deploy concluido na VPS servindo chunk Lobby-B10TG0oj.js com HTTP 200.",
@@ -2744,6 +2734,12 @@
       "touched": [
         "web/src/components/draft/DraftRoom.tsx"
       ]
+    },
+    {
+      "at": "2026-10-18T01:53:32.876Z",
+      "agent": "deepseek",
+      "summary": "Draft (DraftRoom.tsx), pedido do usuario 2026-10-17: (1) 'Banindo.../Escolhendo...' saiu de dentro da bola (ficou so o tint do lado) e desceu para o lugar do nome do campeao abaixo dela, sem uppercase (uppercase so quando mostra o nome do campeao) e na cor do lado; (2) killcam da bola: ao CONFIRMAR ban/pick, o campeao aparece NA BOLA do lado que agiu por ~2,2s e some sozinho -- ban = icone P&B (grayscale + brightness 0.7) com lamina vermelha varrendo na diagonal (scaleX 0 para 1, rotate -18deg, glow rgba(239,68,68,0.9)); pick = zoom com anel dourado expandindo + clarao radial (#c89b3c). Deteccao por diff das contagens de blue/red bans+picks (ref; primeira carga nao repete historico); pick escondido pela regra do modo (esconderPickAdversario) NAO anima para nao vazar o boneco. Commit 50b9a18 deployado na VPS (nginx rebuild + restart m7arena_nginx), health 200, bundle servido DraftRoom-Dly4d3ZQ.js com a lamina (1 ocorrencia de 239,68,68,0.9) e entry index-Di9Arsfc.js referenciando o chunk novo.",
+      "touched": []
     }
   ]
 }
