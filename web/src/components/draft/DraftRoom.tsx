@@ -18,7 +18,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Ban, Check, Copy, RefreshCw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Ban, Check, Copy, RefreshCw, RotateCcw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FaShieldAlt } from 'react-icons/fa';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
@@ -80,26 +80,31 @@ interface DraftRoomProps {
     legenda?: string | null;
     /** Código da partida — só chega aqui para quem pode ver (filtro do servidor). */
     codigo?: string | null;
-    /**
-     * Ações do TOPO da tela ao vivo — ícones ao lado do mudo (pedido do
-     * usuário 18/10): Verificar Partida, Twitch do streamer e sair da sala.
-     */
-    acoes?: {
-      /** Verificar Partida — só ícone (RefreshCw), à direita do mudo. */
-      verificar?: { aoClicar: () => void; carregando?: boolean } | null;
-      /** Twitch do streamer: iniciar a live, ENCERRAR a própria, ou abrir a de outro. */
-      twitch?: {
-        aoIniciar?: (() => void) | null;
-        /** Sua live está no ar — clicar encerra (o card "Assista ao vivo" abre a Twitch). */
-        aoEncerrar?: (() => void) | null;
-        carregando?: boolean;
-        /** Live no ar de outro streamer — link para assistir. */
-        assistirHref?: string | null;
-      } | null;
-      /** Seta de sair da sala — canto oposto (esquerda). */
-      sair?: (() => void) | null;
-    } | null;
   } | null;
+  /**
+   * Ícones do TOPO — valem no DRAFT e na TELA AO VIVO (pedido do usuário
+   * 18/10). Quem não passa a ação não vê o ícone; o MUDO é sempre visível.
+   */
+  acoesTopo?: AcoesTopo | null;
+}
+
+/** Ações dos ícones do topo (ao lado do mudo; sair fica no canto oposto). */
+export interface AcoesTopo {
+  /** Verificar Partida — só ícone (RefreshCw). */
+  verificar?: { aoClicar: () => void; carregando?: boolean } | null;
+  /** Twitch do streamer: iniciar a live, ENCERRAR a própria, ou abrir a de outro. */
+  twitch?: {
+    aoIniciar?: (() => void) | null;
+    /** Sua live está no ar — clicar encerra (o card "Assista ao vivo" abre a Twitch). */
+    aoEncerrar?: (() => void) | null;
+    carregando?: boolean;
+    /** Live no ar de outro streamer — link para assistir. */
+    assistirHref?: string | null;
+  } | null;
+  /** Resetar Sala — só adm (o servidor valida). */
+  resetar?: { aoClicar: () => void; carregando?: boolean } | null;
+  /** Seta de sair da sala — canto oposto (esquerda). */
+  sair?: (() => void) | null;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -341,7 +346,7 @@ function TimeRecap({ time, picks, lado, champions, version }: {
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar, recap, espectadorCompleto, aoVivo,
+  timeA, timeB, placar, recap, espectadorCompleto, aoVivo, acoesTopo,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -795,32 +800,43 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       )}
 
       {/* ÍCONES DO TOPO — canto superior direito, acima dos bans do time
-          vermelho e colados na lateral. Na TELA AO VIVO entram ao lado do mudo
-          o Verificar Partida (só ícone) e o Twitch do streamer (iniciar live /
-          abrir a que está no ar); no canto oposto, a seta de sair da sala
-          (pedido do usuário 18/10). Absoluto de propósito: não empurra a linha
-          de bans nem muda a altura dela. */}
+          vermelho e colados na lateral. Valem no DRAFT e na TELA AO VIVO
+          (pedido do usuário 18/10): Trocar/Encerrar live do streamer, Resetar
+          Sala (SÓ adm), Verificar Partida (só na tela ao vivo) e o mudo; no
+          canto oposto, a seta de sair da sala. Absoluto de propósito: não
+          empurra a linha de bans nem muda a altura dela. */}
       <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
-        {aoVivoAtivo && aoVivo?.acoes?.twitch && (
-          aoVivo.acoes.twitch.aoEncerrar ? (
+        {acoesTopo?.resetar && (
+          <button
+            type="button"
+            disabled={acoesTopo.resetar.carregando}
+            onClick={() => acoesTopo?.resetar?.aoClicar()}
+            title="Resetar sala (adm) — volta para o PRONTO"
+            className="p-[0.7vmin] border border-[#ef4444]/50 text-[#ff8a8a] hover:text-white hover:border-[#ef4444] transition-colors duration-200 cursor-pointer disabled:opacity-50"
+          >
+            <RotateCcw className={`w-[2vmin] h-[2vmin] ${acoesTopo.resetar.carregando ? 'animate-spin' : ''}`} />
+          </button>
+        )}
+        {acoesTopo?.twitch && (
+          acoesTopo.twitch.aoEncerrar ? (
             /* Sua live está no ar: clicar ENCERRA — o card "Assista ao vivo"
                (canto inferior esquerdo) já leva para a Twitch (pedido do
                usuário 18/10). */
             <button
               type="button"
-              disabled={aoVivo.acoes.twitch.carregando}
-              onClick={() => aoVivo?.acoes?.twitch?.aoEncerrar?.()}
+              disabled={acoesTopo.twitch.carregando}
+              onClick={() => acoesTopo?.twitch?.aoEncerrar?.()}
               title="Encerrar sua live"
               className="relative p-[0.7vmin] border border-white/60 text-white hover:text-red-400 hover:border-red-500/60 transition-colors duration-200 cursor-pointer disabled:opacity-50"
             >
-              {aoVivo.acoes.twitch.carregando
+              {acoesTopo.twitch.carregando
                 ? <RefreshCw className="w-[2vmin] h-[2vmin] animate-spin" />
                 : <Twitch className="w-[2vmin] h-[2vmin]" />}
               <span className="absolute top-[0.2vmin] right-[0.2vmin] w-[0.9vmin] h-[0.9vmin] rounded-full bg-red-600 animate-pulse" />
             </button>
-          ) : aoVivo.acoes.twitch.assistirHref ? (
+          ) : acoesTopo.twitch.assistirHref ? (
             <a
-              href={aoVivo.acoes.twitch.assistirHref}
+              href={acoesTopo.twitch.assistirHref}
               target="_blank"
               rel="noreferrer"
               title="Abrir live na Twitch"
@@ -832,26 +848,26 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           ) : (
             <button
               type="button"
-              disabled={aoVivo.acoes.twitch.carregando}
-              onClick={() => aoVivo?.acoes?.twitch?.aoIniciar?.()}
+              disabled={acoesTopo.twitch.carregando}
+              onClick={() => acoesTopo?.twitch?.aoIniciar?.()}
               title="Iniciar live na Twitch"
               className="p-[0.7vmin] border border-[#9146FF]/60 text-[#9146FF] hover:text-[#c9a7ff] hover:border-[#9146FF] transition-colors duration-200 cursor-pointer disabled:opacity-50"
             >
-              {aoVivo.acoes.twitch.carregando
+              {acoesTopo.twitch.carregando
                 ? <RefreshCw className="w-[2vmin] h-[2vmin] animate-spin" />
                 : <Twitch className="w-[2vmin] h-[2vmin]" />}
             </button>
           )
         )}
-        {aoVivoAtivo && aoVivo?.acoes?.verificar && (
+        {acoesTopo?.verificar && (
           <button
             type="button"
-            disabled={aoVivo.acoes.verificar.carregando}
-            onClick={() => aoVivo?.acoes?.verificar?.aoClicar()}
+            disabled={acoesTopo.verificar.carregando}
+            onClick={() => acoesTopo?.verificar?.aoClicar()}
             title="Verificar partida — confere na Riot agora"
             className="p-[0.7vmin] border border-[#00F0FF]/40 text-[#00F0FF] hover:text-white hover:border-[#00F0FF] transition-colors duration-200 cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-[2vmin] h-[2vmin] ${aoVivo.acoes.verificar.carregando ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-[2vmin] h-[2vmin] ${acoesTopo.verificar.carregando ? 'animate-spin' : ''}`} />
           </button>
         )}
         <button
@@ -873,12 +889,12 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         </button>
       </div>
 
-      {/* SAIR DA SALA (tela ao vivo) — mesma linguagem dos ícones do topo, no
-          canto oposto: volta para /jogar como a seta da sala normal. */}
-      {aoVivoAtivo && aoVivo?.acoes?.sair && (
+      {/* SAIR DA SALA (draft e tela ao vivo) — mesma linguagem dos ícones do
+          topo, no canto oposto: volta para /jogar como a seta da sala normal. */}
+      {acoesTopo?.sair && (
         <button
           type="button"
-          onClick={() => aoVivo?.acoes?.sair?.()}
+          onClick={() => acoesTopo?.sair?.()}
           title="Sair da sala"
           className="absolute top-[1vmin] left-[1.5vmin] z-50 p-[0.7vmin] border border-white/15 text-white/70 hover:text-red-400 hover:border-red-500/50 transition-colors duration-200 cursor-pointer"
         >

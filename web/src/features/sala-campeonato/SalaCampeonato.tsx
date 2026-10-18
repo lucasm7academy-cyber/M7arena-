@@ -8,7 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, RotateCcw, Share2, Shield, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { DraftRoom } from '../../components/draft/DraftRoom';
+import { DraftRoom, type AcoesTopo } from '../../components/draft/DraftRoom';
 import { VagaSlot } from '../../components/partidas/VagaSlot';
 import { useSalaRealtime } from '../../hooks/useSalaRealtime';
 import { usePerfil } from '../../contexts/PerfilContext';
@@ -517,6 +517,31 @@ export default function SalaCampeonato() {
     return { ok: !!r?.ok, erro: r?.ok ? undefined : r?.erro ?? undefined, estado: r?.estado ?? null, mudou: !!r?.ok };
   };
 
+  // ── AÇÕES DO TOPO (valem no DRAFT e na TELA AO VIVO — pedido do usuário
+  //    18/10): a Twitch do streamer (iniciar a live / encerrar a própria /
+  //    abrir a de outro) e o Resetar Sala (SÓ adm — o servidor valida de novo).
+  //    O draft não tem Verificar Partida: não existe código de partida ainda.
+  const acaoTopoTwitch: AcoesTopo['twitch'] = perfil?.cargo === 'streamer'
+    ? camp?.live
+      // Live no ar: se é a SUA, o ícone encerra (o card "Assista ao
+      // vivo" já abre a Twitch); se é de outro, abre para assistir.
+      ? (!!(perfil as any)?.twitch
+          && String((perfil as any).twitch).toLowerCase() === String(camp.live.twitch).toLowerCase()
+          ? { aoEncerrar: encerrarLive, carregando: ocupado === 'live-parar' }
+          : { assistirHref: `https://twitch.tv/${camp.live.twitch}` })
+      : {
+          aoIniciar: async () => {
+            const r = await chamar('/sala-campeonato/live');
+            if (r?.ok) toast.success('Live criada! Os jogadores já recebem o aviso de assistir.');
+          },
+          carregando: ocupado === '/sala-campeonato/live',
+        }
+    : null;
+  const acaoTopoResetar: AcoesTopo['resetar'] = ehAdm
+    ? { aoClicar: resetarSala, carregando: String(ocupado ?? '').includes('resetar') }
+    : null;
+  const acaoTopoSair = () => navigate('/jogar');
+
   // Draft em TELA CHEIA + PÓS-DRAFT: durante o draft o DraftRoom ocupa a tela
   // (igual à sala normal); quando a última escolha fecha, a MESMA tela segura
   // até a killcam do último campeão terminar (`posDraftAtivo`, derivado do
@@ -537,6 +562,7 @@ export default function SalaCampeonato() {
         timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
         timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
+        acoesTopo={{ twitch: acaoTopoTwitch, resetar: acaoTopoResetar, sair: acaoTopoSair }}
       />
     );
   }
@@ -579,40 +605,26 @@ export default function SalaCampeonato() {
                 ? `Série ${String(camp.formato).toUpperCase()}`
                 : null,
             codigo: sala.codigo_partida ?? null,
-            // Ícones do topo (pedido do usuário 18/10): Verificar Partida só
-            // ícone ao lado do mudo, Twitch do streamer (iniciar live / abrir a
-            // que está no ar) e a seta de sair da sala no canto oposto.
-            acoes: {
-              verificar: !serie && !!perfil && !['encerrada', 'cancelada'].includes(estado)
-                ? { aoClicar: verificarPartidaAgora, carregando: ocupado === 'verificar-partida' }
-                : null,
-              twitch: perfil?.cargo === 'streamer'
-                ? camp?.live
-                  // Live no ar: se é a SUA, o ícone encerra (o card "Assista ao
-                  // vivo" já abre a Twitch); se é de outro, abre para assistir.
-                  ? (!!(perfil as any)?.twitch
-                      && String((perfil as any).twitch).toLowerCase() === String(camp.live.twitch).toLowerCase()
-                      ? { aoEncerrar: encerrarLive, carregando: ocupado === 'live-parar' }
-                      : { assistirHref: `https://twitch.tv/${camp.live.twitch}` })
-                  : {
-                      aoIniciar: async () => {
-                        const r = await chamar('/sala-campeonato/live');
-                        if (r?.ok) toast.success('Live criada! Os jogadores já recebem o aviso de assistir.');
-                      },
-                      carregando: ocupado === '/sala-campeonato/live',
-                    }
-                : null,
-              sair: () => navigate('/jogar'),
-            },
+          }}
+          // Ícones do topo (pedido do usuário 18/10): Verificar Partida só
+          // ícone ao lado do mudo, Twitch do streamer, Resetar Sala (adm) e a
+          // seta de sair da sala no canto oposto — as MESMAS ações do draft.
+          acoesTopo={{
+            verificar: !serie && !!perfil && !['encerrada', 'cancelada'].includes(estado)
+              ? { aoClicar: verificarPartidaAgora, carregando: ocupado === 'verificar-partida' }
+              : null,
+            twitch: acaoTopoTwitch,
+            resetar: acaoTopoResetar,
+            sair: acaoTopoSair,
           }}
         />
 
         {/* A tela ao vivo não tem a top bar da sala: os gatilhos que ainda
             importam com a partida rolando ficam neste canto, DEPOIS da seta de
-            sair (que ocupa a ponta esquerda). O Verificar Partida virou ícone
-            do topo direito, ao lado do mudo (pedido do usuário 18/10). O
-            automático (polling/cron) continua rodando por trás de qualquer
-            jeito. */}
+            sair (que ocupa a ponta esquerda). O Verificar Partida e o Resetar
+            Sala (adm) viraram ícones do topo direito, ao lado do mudo (pedido
+            do usuário 18/10). O automático (polling/cron) continua rodando por
+            trás de qualquer jeito. */}
         <div className="absolute left-[6vmin] top-[0.5vmin] z-[80] flex items-center gap-[0.8vmin]">
           {!!serie && (ehStaffCampeonato || !!meuLado) && (
             <motion.button
@@ -631,27 +643,6 @@ export default function SalaCampeonato() {
                 <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
                 <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
                   Atualizar Resultado
-                </span>
-              </div>
-            </motion.button>
-          )}
-          {ehAdm && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.94 }}
-              disabled={!!ocupado}
-              onClick={resetarSala}
-              className="relative p-[1px] bg-[#ef4444]/50 hover:bg-[#ef4444] transition-colors shrink-0 cursor-pointer disabled:opacity-50"
-              style={{ clipPath: CUT_BUTTON }}
-              title="Temporário: reseta a sala para o PRONTO (prontos, escolhas e draft)"
-            >
-              <div
-                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#1a0505] hover:bg-[#2a0808] flex items-center justify-center gap-1.5 text-[#ff8a8a] transition-colors"
-                style={{ clipPath: CUT_BUTTON_INNER }}
-              >
-                <RotateCcw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${String(ocupado ?? '').includes('resetar') ? 'animate-spin' : ''}`} />
-                <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
-                  Resetar Sala
                 </span>
               </div>
             </motion.button>
