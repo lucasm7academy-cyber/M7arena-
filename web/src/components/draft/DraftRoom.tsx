@@ -198,14 +198,10 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
             />
           ) : null}
 
-          {emTurno && !champNaBola && (
-            // Só o tint do lado: o texto "Banindo.../Escolhendo..." desceu para
-            // o lugar do nome do campeão, abaixo da bola (pedido do usuário).
-            <div
-              className="w-full h-full relative z-10"
-              style={{ backgroundColor: `rgba(${corLadoRgb},0.12)` }}
-            />
-          )}
+          {/* (O tint azul/vermelho por dentro da bola na vez saiu — pedido do
+              usuário 2026-10-17: "fica feio demais esse azul/vermelho mais
+              claro dentro". Na vez fica só a BORDA acesa na cor do lado; o
+              centro é a logo do time de fundo, igual aos demais estados.) */}
 
           {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
               campeão aparece NA BOLA do lado que agiu (pop de zoom) e some
