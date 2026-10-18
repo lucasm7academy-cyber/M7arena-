@@ -204,39 +204,31 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
               centro é a logo do time de fundo, igual aos demais estados.) */}
 
           {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
-              campeão aparece NA BOLA do lado que agiu e some sozinho (~2s).
-              Ban = pop de zoom em preto e branco. Pick = SEM entrada de
-              escala: o campeão já estava na bola pelo preview e a entrada
-              dava uma "piscada" na confirmação — agora entra suave, no MESMO
-              tamanho da imagem normal (scale-125), e só SAI com fade (pedido
-              do usuário 2026-10-17). */}
+              campeão fica NA BOLA do lado que agiu e some sozinho (~2s).
+              SEM entrada de escala nos dois — o campeão já estava na bola
+              pelo preview e a re-entrada dava uma "piscada". Ban = a imagem
+              DESBOTA de cor para preto e branco no próprio lugar (filtro
+              animado, sem pular); pick = só o fade de saída. Nos dois, a
+              saída é um fade suave. (Pedido do usuário 2026-10-17: "fazer
+              liso".) */}
           <AnimatePresence>
             {feedback ? (
               <motion.div
                 key={feedback.nonce}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: feedback.tipo === 'pick' ? 0.12 : 0.18 } }}
-                exit={{ opacity: 0, transition: { duration: feedback.tipo === 'pick' ? 0.5 : 0.2 } }}
+                animate={{ opacity: 1, transition: { duration: 0.12 } }}
+                exit={{ opacity: 0, transition: { duration: 0.5 } }}
                 className="absolute inset-0 z-20"
               >
-                {feedback.tipo === 'ban' ? (
-                  <motion.img
-                    src={buildChampionIconUrl(feedback.championId)}
-                    alt=""
-                    initial={{ scale: 1.3 }}
-                    animate={{ scale: 1.12 }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                    className="w-full h-full object-cover grayscale brightness-[0.7]"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <img
-                    src={buildChampionIconUrl(feedback.championId)}
-                    alt=""
-                    className="w-full h-full object-cover scale-125"
-                    referrerPolicy="no-referrer"
-                  />
-                )}
+                <motion.img
+                  src={buildChampionIconUrl(feedback.championId)}
+                  alt=""
+                  initial={{ filter: 'grayscale(0) brightness(1)' }}
+                  animate={{ filter: feedback.tipo === 'ban' ? 'grayscale(1) brightness(0.7)' : 'grayscale(0) brightness(1)' }}
+                  transition={feedback.tipo === 'ban' ? { duration: 0.45, ease: 'easeOut', delay: 0.15 } : { duration: 0.1 }}
+                  className="w-full h-full object-cover scale-125"
+                  referrerPolicy="no-referrer"
+                />
               </motion.div>
             ) : null}
           </AnimatePresence>
