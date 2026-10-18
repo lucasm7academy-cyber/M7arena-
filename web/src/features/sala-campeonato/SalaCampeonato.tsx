@@ -547,6 +547,13 @@ export default function SalaCampeonato() {
   const equipeNoLado = (posicao: 'blue' | 'red'): 'blue' | 'red' =>
     (ladoJogoA === posicao ? 'blue' : 'red');
 
+  // A VAGA só aparece quando ela SERVE: ocupar (camp_vagas), marcar PRONTO
+  // (camp_prontos — inclusive o PRONTO de novo dos jogos 2+ da série) e na
+  // escolha de lado/pick. Com o jogo em andamento (iniciando_partida /
+  // partida_iniciada) ou série finalizada ela sai de cena — pedido do usuário
+  // (18/10): no lugar dela ficam os campeões escolhidos, maiores.
+  const mostrarVaga = ['camp_vagas', 'camp_prontos', 'camp_lado'].includes(estado);
+
   const renderTimeColumn = (lado: 'blue' | 'red', posicao: 'blue' | 'red') => {
     const jogador = lado === 'blue' ? jogadorBlue : jogadorRed;
     const pronto = lado === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
@@ -580,55 +587,61 @@ export default function SalaCampeonato() {
         </div>
 
         {/* (Nome/logo do time saíram daqui — a identidade dos times fica no
-            centro, estilo resumo; a coluna fica só com o lado + a vaga) */}
+            centro, estilo resumo; a coluna fica com o lado, a vaga quando ela
+            serve [PRONTO] e os campeões escolhidos) */}
 
-        {/* VAGA — visual idêntico ao da sala normal (foto do time no ícone) */}
-        <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
-          <VagaSlot
-            ocupada={!!jogador}
-            nome={jogador?.nome}
-            tag={jogador?.tag}
-            icone={jogador?.avatar}
-            isTimeA={posicao === 'blue'}
-            role={tagDoLado(lado) || (lado === 'blue' ? 'TIME A' : 'TIME B')}
-            semRoleIcon
-            isConfirmado={!!pronto && estado === 'camp_prontos'}
-            aoEntrar={() => {
-              if (!perfil?.id) {
-                toast.error('Entre na sua conta para ocupar a vaga.');
-                navigate('/login');
-                return;
+        {/* VAGA — visual idêntico ao da sala normal (foto do time no ícone).
+            Some com o jogo em andamento: vaga só serve quando alguém precisa
+            entrar/PRONTO (pedido do usuário 18/10). */}
+        {mostrarVaga && (
+          <div className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full">
+            <VagaSlot
+              ocupada={!!jogador}
+              nome={jogador?.nome}
+              tag={jogador?.tag}
+              icone={jogador?.avatar}
+              isTimeA={posicao === 'blue'}
+              role={tagDoLado(lado) || (lado === 'blue' ? 'TIME A' : 'TIME B')}
+              semRoleIcon
+              isConfirmado={!!pronto && estado === 'camp_prontos'}
+              aoEntrar={() => {
+                if (!perfil?.id) {
+                  toast.error('Entre na sua conta para ocupar a vaga.');
+                  navigate('/login');
+                  return;
+                }
+                if (estado !== 'camp_vagas') {
+                  toast.error('A sala não está aceitando entradas agora.');
+                  return;
+                }
+                // Bloqueio local SÓ quando temos certeza de que a vaga é de outro
+                // time; na dúvida (dados ainda carregando), quem decide é o servidor.
+                if (serie && meuLado && meuLado !== lado) {
+                  toast.error('Essa vaga é do outro time.');
+                  return;
+                }
+                chamar('/sala-campeonato/entrar', { side: lado });
+              }}
+              aoSair={
+                // Sair da vaga: antes do PRONTO e durante camp_prontos (o servidor
+                // reseta os prontos e a sala volta a camp_vagas) — igual à sala
+                // normal, para outro membro do time poder assumir a vaga.
+                valorVaga && (estado === 'camp_vagas' || estado === 'camp_prontos')
+                  ? () => chamar('/sala-campeonato/sair')
+                  : undefined
               }
-              if (estado !== 'camp_vagas') {
-                toast.error('A sala não está aceitando entradas agora.');
-                return;
-              }
-              // Bloqueio local SÓ quando temos certeza de que a vaga é de outro
-              // time; na dúvida (dados ainda carregando), quem decide é o servidor.
-              if (serie && meuLado && meuLado !== lado) {
-                toast.error('Essa vaga é do outro time.');
-                return;
-              }
-              chamar('/sala-campeonato/entrar', { side: lado });
-            }}
-            aoSair={
-              // Sair da vaga: antes do PRONTO e durante camp_prontos (o servidor
-              // reseta os prontos e a sala volta a camp_vagas) — igual à sala
-              // normal, para outro membro do time poder assumir a vaga.
-              valorVaga && (estado === 'camp_vagas' || estado === 'camp_prontos')
-                ? () => chamar('/sala-campeonato/sair')
-                : undefined
-            }
-            roleIconImg={logoDoLado(lado) ?? ROLE_CONFIG.MID.img}
-            vipTier="free"
-            isFinalizada={estado === 'camp_finalizada' || estado === 'encerrada'}
-          />
-        </div>
+              roleIconImg={logoDoLado(lado) ?? ROLE_CONFIG.MID.img}
+              vipTier="free"
+              isFinalizada={estado === 'camp_finalizada' || estado === 'encerrada'}
+            />
+          </div>
+        )}
 
         {/* Campeões escolhidos para ESTE confronto (picks do draft do jogo
-            atual) — aparecem na sala depois que o draft fecha. */}
+            atual) — aparecem na sala depois que o draft fecha e, com o jogo em
+            andamento, ocupam o lugar da vaga em destaque (maiores). */}
         {camp?.draft?.status === 'finished' && (
-          <div className="flex items-center justify-center gap-1 md:gap-[0.6vmin] mt-1 md:mt-[0.6vmin]">
+          <div className="flex items-center justify-center gap-1.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
             {(lado === 'blue' ? camp.draft.blue_picks : camp.draft.red_picks)
               .filter(Boolean)
               .map((c: string, i: number) => (
@@ -637,7 +650,7 @@ export default function SalaCampeonato() {
                   src={buildChampionIconUrl(c)}
                   alt={c}
                   title={c}
-                  className="w-10 h-10 md:w-[6vmin] md:h-[6vmin] object-cover border border-white/15"
+                  className="w-12 h-12 md:w-[8vmin] md:h-[8vmin] object-cover border border-white/15"
                   referrerPolicy="no-referrer"
                 />
               ))}
@@ -687,7 +700,7 @@ export default function SalaCampeonato() {
           ) : (
             <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
           )}
-          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-full">
+          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
             {sala.time_a_nome ?? ''}
           </span>
         </div>
@@ -702,7 +715,7 @@ export default function SalaCampeonato() {
           ) : (
             <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
           )}
-          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-full">
+          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
             {sala.time_b_nome ?? ''}
           </span>
         </div>
@@ -744,7 +757,12 @@ export default function SalaCampeonato() {
       )}
       {['camp_jogo', 'camp_finalizada', 'iniciando_partida', 'partida_iniciada', 'encerrada'].includes(estado) && (
         <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
-          <span className="text-lg md:text-[2.2vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
+          <span className="inline-flex items-center gap-1.5 md:gap-[0.8vmin] text-lg md:text-[2.2vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
+            {/* Ponto vermelho pulsante = "ao vivo" (mesmo indicador das lives
+                da sala) — pedido do usuário 18/10. */}
+            {estado === 'partida_iniciada' && (
+              <span className="w-2 h-2 md:w-[1.1vmin] md:h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />
+            )}
             {estado === 'camp_jogo'
               ? 'Série em Andamento'
               : estado === 'camp_finalizada'
@@ -752,7 +770,7 @@ export default function SalaCampeonato() {
                 : estado === 'iniciando_partida'
                   ? 'Partida Pronta!'
                   : estado === 'partida_iniciada'
-                    ? 'Partida em Andamento'
+                    ? 'Partida Ao Vivo!'
                     : 'Partida Encerrada'}
           </span>
           {camp?.lado_time_a && serie && (
@@ -802,7 +820,6 @@ export default function SalaCampeonato() {
     const bloco = (posicao: 'blue' | 'red') => {
       const vaga: 'blue' | 'red' = ladoA === posicao ? 'blue' : 'red';
       const isA = vaga === 'blue';
-      const jogador = isA ? jogadorBlue : jogadorRed;
       const picks = ((isA ? camp?.draft?.blue_picks : camp?.draft?.red_picks) ?? []).filter(Boolean) as string[];
       const logo = isA ? sala.time_a_logo : sala.time_b_logo;
       const nome = isA ? sala.time_a_nome : sala.time_b_nome;
@@ -832,7 +849,7 @@ export default function SalaCampeonato() {
               </span>
             )}
           </div>
-          <span className="text-[11px] md:text-[1.6vmin] font-black uppercase tracking-[0.25em] truncate max-w-full" style={{ color: cor }}>
+          <span className="text-[11px] md:text-[1.6vmin] font-black uppercase tracking-[0.25em] leading-tight line-clamp-2 max-w-full" style={{ color: cor }}>
             {nome ?? ''}
           </span>
 
@@ -854,48 +871,9 @@ export default function SalaCampeonato() {
             ))}
           </div>
 
-          {/* VAGA do jogador — mesmo tamanho do chip, MAS com a aparência do
-              card da sala (fundo sólido, borda/brilho na cor do lado, avatar
-              com anel e canto recortado) */}
-          <div
-            style={{
-              filter:
-                posicao === 'blue'
-                  ? 'drop-shadow(0 0 10px rgba(59,130,246,0.45))'
-                  : 'drop-shadow(0 0 10px rgba(239,68,68,0.45))',
-            }}
-          >
-            <CutCard
-              borderColor={posicao === 'blue' ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'}
-              background="#050505"
-              className="w-full"
-              contentClassName="flex items-center gap-2 px-3 py-1.5 md:px-[1.6vmin] md:py-[0.8vmin]"
-            >
-              {jogador?.avatar ? (
-                <img
-                  src={jogador.avatar}
-                  alt=""
-                  className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full object-cover border ${
-                    posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
-                  }`}
-                />
-              ) : (
-                <div
-                  className={`w-6 h-6 md:w-[3.2vmin] md:h-[3.2vmin] rounded-full bg-white/10 border ${
-                    posicao === 'blue' ? 'border-blue-500/40' : 'border-red-500/40'
-                  }`}
-                />
-              )}
-              <span className="text-[11px] md:text-[1.4vmin] font-black uppercase tracking-wide text-white/90">
-                {jogador?.nome ?? 'VAGA ABERTA'}
-              </span>
-              {!!jogador?.tag && (
-                <span className="text-[10px] md:text-[1.2vmin] font-bold text-white/50">
-                  #{String(jogador.tag).replace('#', '')}
-                </span>
-              )}
-            </CutCard>
-          </div>
+          {/* (A vaga do jogador saiu daqui — com o jogo em andamento ela não
+              serve; quem manda é o jogo. A vaga volta nas fases de PRONTO.
+              Pedido do usuário 18/10.) */}
         </div>
       );
     };
