@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T02:09:40.676Z",
+  "updatedAt": "2026-10-18T02:21:50.999Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2355,6 +2355,15 @@
       "decision": "O handshake do realtime aceita conexao sem sessao valida como VISITANTE (espectador anonimo): assina a sala e RECEBE match_update/draft_preview/chat, nunca envia; teto global 500 + 10 por IP (X-Forwarded-For) + throttle de assinatura de 2s; Origin continua obrigatorio (403).",
       "rationale": "Espectar sala sem login e caso real (janela anonima) e o estado da sala ja e publico (ADR-040); sem isso a previa da bola nunca chegava em quem assiste deslogado. Enviar continua exigindo sessao: chat (chat_error nao_autenticado) e previa (gate novo em enviarPreview).",
       "supersedes": null
+    },
+    {
+      "id": "ADR-089",
+      "date": "2026-10-18T02:18:26.256Z",
+      "author": "deepseek",
+      "title": "Coroa define o dono do time; proprietario pode kitar o dono",
+      "decision": "ADR-089 (ADR-088 ja era do realtime/outro agente): 1) No modal Gerenciar Lineup, o botao Retirar/Expulsar agora aparece para TODOS os membros, inclusive o lider/dono — antes sumia para o isLeader (o proprietario nao conseguia kitar o capitao/dono). 2) Quem tiver a coroa e o DONO de verdade: ao salvar o lineup, teams.owner_id passa a seguir a coroa (lib resolverNovoDono) — dono anterior que perdeu a coroa deixa de ser dono; coroa num convidado sem conta nao troca owner_id; dono fora do lineup faz a coroa cair para o primeiro membro com conta. 3) POST /teams/:id/transferir-dono aceita proprietario (cargo) alem do dono atual. 4) No front, ao remover o lider a coroa anda sozinha para o proximo membro com conta. Testes: team-ownership 6/6 novos, suíte 268/268, tsc api+web 0, vite build ok, deploy 2039d39 na VPS (app+nginx), health 200.",
+      "rationale": "",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2423,31 +2432,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-02T01:40:38.448Z",
-      "agent": "deepseek",
-      "summary": "Fix do erro \"duplicate key bracket_matches_cell_idx\" ao salvar o chaveamento (Copa Kraken). Causa: storeBracket persistia side.left e side.right com o mesmo round e o unique index (tournament_id, section, round, slot) estourava; buildBracket também não decodificava a convenção do ETL, então o lado voltava vazio. Correção: round carrega o lado ('left_qf'/'right_qf', 'grand_final') e a leitura decodifica. NENHUMA automação foi criada: a chave segue apenas visual e manual, jogos só pelo cronograma. Evidência: teste novo 1/1; suíte API 201/201; tsc 0; transação real no Postgres de prod (rollback, 5 linhas sem 23505, roundtrip ok; bracket_matches intacto com 22). Commit e6428a2 deployado na VPS (build app + up -d app realtime), /api 200. Pendente: usuário testar salvar o chaveamento.",
-      "touched": [
-        "api/src/lib/tournament-store.ts",
-        "api/src/lib/tournament-shape.ts",
-        "api/test/tournament-bracket.test.ts",
-        "scripts/migrate/transform-campeonatos.js"
-      ]
-    },
-    {
-      "at": "2026-10-07T04:00:55.908Z",
-      "agent": "deepseek",
-      "summary": "Duas correções no ar (commit 2dcf3d9, deploy VPS nginx+app): (1) aviso \"Unable to preventDefault inside passive event listener\" no zoom do chaveamento — onWheel do React (passivo) virou listener nativo {passive:false} em CampeonatoContext; (2) ícones de jogador lentos (raw.communitydragon.org ~19,5s por imagem) — trocados para ddragon com versão dinâmica (web/src/api/riot.ts via /api/riot/version; players.tsx aguarda; VagaSlot campeão ddragon/CDN; API match-shape via nova lib ddragon.ts; preconnect no index.html). Evidências: tsc web/api 0; suíte API 201/201; vite build ok; chunk live index-DvEu3Ekp.js contém ddragon+profileicon; container executou profileIconUrl(5889) → ddragon .../16.20.1/img/profileicon/5889.png; site e /api/health 200. Falta: usuário testar /jogadores e o scroll do chaveamento. Obs: npm do PowerShell local está quebrado (stub 0 bytes em System32) — usar node direto.",
-      "touched": [
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/api/riot.ts",
-        "web/src/pages/players.tsx",
-        "web/src/components/partidas/VagaSlot.tsx",
-        "web/index.html",
-        "api/src/lib/match-shape.ts",
-        "api/src/lib/ddragon.ts"
-      ]
-    },
     {
       "at": "2026-10-07T22:47:07.181Z",
       "agent": "claude",
@@ -2746,6 +2730,23 @@
       "at": "2026-10-18T02:09:40.675Z",
       "agent": "deepseek",
       "summary": "Bola do draft na vez: removido o tint azul/vermelho translucido de dentro da bola (div com rgba(corLadoRgb,0.12)) -- na vez fica so a BORDA acesa pulsando na cor do lado + a logo do time de fundo no centro, igual aos demais estados. Pedido do usuario 2026-10-17 (fica feio o azul/vermelho mais claro por dentro). Deploy 991a3fa SO do nginx (outro agente mexendo na VPS -- app/realtime nao foram tocados), restart m7arena_nginx, health 200, bundle servido DraftRoom-DFw_em2j.js: contagem de ,0.12 = 0 e Banindo presente; entry index-DHkDFabg.js referencia o chunk novo. Sessao anterior (mesmo dia): realtime aceita visitante sem sessao (espectador anonimo so recebe -- ADR-088) resolvendo o preview da bola na janela anonima; evidencias: tsc api exit 0, test-realtime.mjs 8/8 PASS pelo nginx, test-guest-recebe-previa.mjs PASS (jogador envia previa Ahri/blue -> visitante recebe), deploy 100dfae app+realtime.",
+      "touched": []
+    },
+    {
+      "at": "2026-10-18T02:18:33.532Z",
+      "agent": "deepseek",
+      "summary": "ADR-089: coroa define o dono do time + proprietario pode kitar o dono. Front (TimePage ManageLineupModal): botao Expulsar visivel para TODOS incluindo o lider (antes sumia); ao expulsar o lider a coroa anda sozinha pro proximo membro com conta; coroa promove a Capitao/Dono. Backend (teams.ts lineup): teams.owner_id segue a coroa via lib resolverNovoDono (coroado vira dono, coroa em guest nao troca dono, dono fora do lineup -> primeiro membro com conta herda). transferir-dono aceita proprietario. Cuidado com outro agente: rebaseei a VPS em cima do 2039d39 (commits de draft/realtime dele preservados aa440b5/e1789e6). Evidencia: 6 testes novos team-ownership, suite 268/268 (concurrency 1), tsc api+web 0, vite build ok, deploy na VPS health 200.",
+      "touched": [
+        "api/src/routes/teams.ts",
+        "api/src/lib/team-ownership.ts",
+        "api/test/team-ownership.test.ts",
+        "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-18T02:21:50.998Z",
+      "agent": "deepseek",
+      "summary": "DraftRoom (bola): killcam do pick e do ban agora 'lisa', sem piscada. aa440b5: pick confirmado sem entrada de escala -- o campeao ja estava na bola pelo preview (a re-entrada dava piscada); entra no MESMO tamanho (scale-125) e so sai com fade. 5a52338: ban tambem sem pop -- a imagem fica no lugar e DESBOTA de cor para P&B (filtro animado grayscale 0->1 + brightness 0.7, delay 0.15s, 0.45s) e a saida virou fade suave (0.5s) nos dois tipos; entrada 0.12s. Evidencia: deploy nginx na VPS health 200; bundle DraftRoom-Dd_o21Qr.js com grayscale(1)=1, scale-125=2, classe antiga brightness-[0.7]=0; entry aponta pro chunk. Outro agente deployou em paralelo (ADR-089) -- team-ownership.js confirmado no dist do app antes de buildar.",
       "touched": []
     }
   ]
