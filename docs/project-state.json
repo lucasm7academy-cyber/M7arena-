@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T03:24:50.776Z",
+  "updatedAt": "2026-10-18T03:34:58.195Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2433,19 +2433,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-10-11T22:21:19.841Z",
-      "agent": "deepseek",
-      "summary": "Passo 1 da ordem da Sala Campeonato fechado. (1) sec.codigo-campeonato implementado e deployado (5f5719e): codigo_partida redigido no servidor para quem não é staff nem time da série; verificar agora exige staff/time; testes 8/8, suíte 226/226, smoke VPS 8/8. (2) Draft por modo deployado (f92b338): smoke VPS 34/34; no smoke achei 2 códigos 1v1 PRESOS no pool (used=true sem match_id desde 08/10 — x1 sem código) e liberei. (3) Achado registrado como sec.campeonato-permissoes (rotas de escrita só exigem login). Obs: container m7arena_mcp_ops em restart-loop (89935) — provável stdio server como daemon; não afeta o site. Próximo: schema da sala campeonato (vínculo sala↔série + estados + draft por jogo/Fearless).",
-      "touched": [
-        "api/src/lib/tournament-access.ts",
-        "api/src/routes/tournaments.ts",
-        "api/test/tournament-access.test.ts",
-        "scripts/smoke-vps-codigo.mjs",
-        "scripts/smoke-vps-draft.mjs",
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
-    {
       "at": "2026-10-11T22:55:42.989Z",
       "agent": "deepseek",
       "summary": "Passo 2 (schema da sala campeonato) concluído: ADR-085 + migration 0026 aplicada na VPS (12 statements OK, \\d confere). matches.tournament_match_id/bracket_match_id (FK cascade, check de vínculo único, índices); campeonato_sala_estado (jogo, PRONTO, sorteio/escolhas, sem timer); match_drafts ganha jogo com PK (match_id, jogo) para draft por jogo (Fearless = picks de jogos anteriores). Migration 0026 corrigida à mão (ordem do ADD COLUMN antes do PK e DROP do match_drafts_pkey — drizzle-kit não nomeia o PK antigo). Evidência: teste schema 4/4, suíte 230/230, tsc 0, drizzle-kit generate idempotente, psql prod confere. Commit d90fdb7. Próximo passo 3: criação automática T-10 (cron + lazy) + rotas da vaga/PRONTO + shape da sala.",
@@ -2733,6 +2720,14 @@
       "agent": "deepseek",
       "summary": "Draft: ultimo pick nao e mais cortado. Causa raiz: o servidor fecha o draft (status finished + finalizado_em) e muda a sala para camp_jogo NA MESMA transacao, entao o render do fechamento caia direto na sala (1 frame) e o DraftRoom desmontava -- a killcam do ultimo campeao nunca rodava e sobrava o cronometro de 10s (recap por efeito/estado, que tambem tinha o buraco). Fix em SalaCampeonato.tsx: condicao de render virou (estado camp_draft || posDraftAtivo), com posDraftAtivo DERIVADO do relogio (finalizado_em + 3400ms = killcam 2,2s + fade 0,5s + folga) + timeout para soltar no instante certo; removidos mostrarRecap/recapSegundos/draftStatusRef/recapJogoRef (e o antigo hold de 10s). Sem remount -> a animacao do ultimo pick roda e a tela volta pra sala logo depois. Evidencia: deploy nginx health 200; bundle SalaCampeonato-3osIIlXd.js com 3400=1 e entry apontando pra ele; DraftRoom-DWxi45_J.js mantem zoom (1.42=1) e grayscale(1)=1.",
       "touched": []
+    },
+    {
+      "at": "2026-10-18T03:34:58.194Z",
+      "agent": "deepseek",
+      "summary": "Sons do draft no ar. 13 .ogg do client do LoL (curadoria do usuario) commitados EM REPO em web/public/sounds/draft (servidos pelo nginx como estatico, sem API/delay) + helper web/src/components/draft/draftSounds.ts (cache preguiçoso, precarga no mount, unlock no primeiro gesto, play morto em silencio com aviso unico de autoplay) + gatilhos no DraftRoom.tsx: intro de ban na abertura e em cada virada de fase (ban->pick toca bans-travados; template encadeia os dois no mesmo instante, entao inicio-do-pick ficou fora), notificacao da minha vez (seu-ban/sua-vez-de-escolher), tick por segundo (curto nos ultimos 10s), clique no campeao (grid-clique; indisponivel -> pick-negado), hover/click do BANIR/CONFIRMAR (lock-in-hover/lock-in-clique), ban confirmado na killcam (aliado/inimigo por meuTime) e draft-finalizado no ultimo pick (status finished chega no mesmo update). Evidencia: tsc web 0 erros; vite build ok (DraftRoom-CxQZBlY7.js local); commit cf6156c pushado origin+vps; nginx rebuild + restart; health 200; /sounds/draft/inicio-do-ban.ogg 200 70432 bytes e grid-clique.ogg 200 15405 bytes; bundle servido DraftRoom-CrN9FrLQ.js contem os 13 nomes .ogg e o path /sounds/draft/. Provisorio sinalizado ao usuario: draft-finalizado = sfx-cs-splash-forward renomeado (nao havia arquivo 'fim de draft' nos 17), grid-clique = sfx-uikit-grid-click da pasta pai, troca-* nao ligados (nao existe troca de campeoes) e grid-abrir/fechar sem momento no layout atual.",
+      "touched": [
+        "app.draft.campeonato"
+      ]
     }
   ]
 }
