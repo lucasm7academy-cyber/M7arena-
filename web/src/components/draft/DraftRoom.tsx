@@ -18,14 +18,14 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Search, Ban } from 'lucide-react';
+import { Search, Ban, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FaShieldAlt } from 'react-icons/fa';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
 import { CHAMPION_POSITIONS, type RoleFiltro } from './championPositions';
-import { desbloquearSonsDraft, precarregarSons, tocarSom } from './draftSounds';
+import { alternarSomMudo, desbloquearSonsDraft, precarregarSons, somMudo, tocarSom } from './draftSounds';
 
 interface DraftRoomProps {
   draft: SalaDraft;
@@ -308,6 +308,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // Filtro de rota (como no client do LoL): null = todos; clicar de novo limpa.
   const [roleFiltro, setRoleFiltro] = useState<RoleFiltro | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Mudo dos sons do draft (botão no canto do topo) — preferência lembrada.
+  const [mudo, setMudo] = useState<boolean>(() => somMudo());
 
   useEffect(() => {
     let vivo = true;
@@ -531,14 +533,14 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     tocarSom(minha === 'ban' ? 'seuBan' : 'suaVez');
   }, [emTurno, isMeuTurno, fase]);
 
-  // Relógio do turno: 1 tick por segundo; nos últimos 10s o tick curto (a
-  // reta final, como no client). Fora do turno (draft finished) silencia.
+  // Relógio do turno: SÓ os últimos 10 segundos têm som (tick curto) — a
+  // contagem de 30→10 ficou sem nada a pedido do usuário (2026-10-18).
   const segundoSonoroRef = useRef<number | null>(null);
   useEffect(() => {
     const anterior = segundoSonoroRef.current;
     segundoSonoroRef.current = segundos;
     if (!emTurno || anterior === null || segundos === anterior) return;
-    tocarSom(segundos <= 10 ? 'tickCurto' : 'tick');
+    if (segundos <= 10) tocarSom('tickCurto');
   }, [segundos, emTurno]);
 
   // Coluna de picks de uma EQUIPE, rotulada pelo lado EM JOGO dela.
@@ -674,6 +676,29 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           {segundos}
         </div>
       </div>
+
+      {/* MUDO DOS SONS DO DRAFT — canto superior direito, acima dos bans do
+          time vermelho e colado na lateral (pedido do usuário 2026-10-18).
+          Absoluto de propósito: não empurra a linha de bans nem muda a
+          altura dela. */}
+      <button
+        type="button"
+        onClick={() => setMudo(alternarSomMudo())}
+        title={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
+        aria-label={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
+        aria-pressed={mudo}
+        className={`
+          absolute top-[1vmin] right-[1.5vmin] z-50 cursor-pointer
+          p-[0.7vmin] border transition-colors duration-200
+          ${mudo
+            ? 'border-white/10 text-white/30 hover:text-white/60'
+            : 'border-[#c89b3c]/40 text-[#c89b3c] hover:text-[#e6c469]'}
+        `}
+      >
+        {mudo
+          ? <VolumeX className="w-[2vmin] h-[2vmin]" />
+          : <Volume2 className="w-[2vmin] h-[2vmin]" />}
+      </button>
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
       <div className="absolute top-[5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">

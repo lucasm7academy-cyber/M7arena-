@@ -12,7 +12,7 @@
 export type SomDraft =
   | 'inicioBan' | 'bansTravados' | 'seuBan' | 'suaVez'
   | 'banAliado' | 'banInimigo'
-  | 'tick' | 'tickCurto'
+  | 'tickCurto'
   | 'gridClique' | 'lockInHover' | 'lockInClique' | 'pickNegado'
   | 'draftFinalizado';
 
@@ -25,7 +25,6 @@ const FONTES: Record<SomDraft, { arquivo: string; volume: number }> = {
   suaVez: { arquivo: 'sua-vez-de-escolher.ogg', volume: 0.7 },
   banAliado: { arquivo: 'ban-do-time-aliado.ogg', volume: 0.55 },
   banInimigo: { arquivo: 'ban-do-time-inimigo.ogg', volume: 0.55 },
-  tick: { arquivo: 'relogio-tick.ogg', volume: 0.35 },
   tickCurto: { arquivo: 'relogio-tick-curto.ogg', volume: 0.4 },
   gridClique: { arquivo: 'grid-clique.ogg', volume: 0.45 },
   lockInHover: { arquivo: 'lock-in-hover.ogg', volume: 0.35 },
@@ -36,6 +35,39 @@ const FONTES: Record<SomDraft, { arquivo: string; volume: number }> = {
 
 const cache = new Map<SomDraft, HTMLAudioElement>();
 let avisouAutoplay = false;
+
+// Mudo: preferência do usuário lembrada no navegador (botão no canto do draft).
+const CHAVE_MUDO = 'm7.draft.som.mudo';
+let mudo: boolean | null = null;
+
+/** Se o usuário mutou os sons do draft (lembrado entre visitas). */
+export function somMudo(): boolean {
+  if (mudo === null) {
+    try {
+      mudo = typeof window !== 'undefined' && window.localStorage.getItem(CHAVE_MUDO) === '1';
+      // fallback (storage indisponível, modo privado): começa ligado
+    } catch {
+      mudo = false;
+    }
+  }
+  return mudo;
+}
+
+/** Liga/desliga TODOS os sons do draft. Devolve o novo estado. */
+export function alternarSomMudo(): boolean {
+  mudo = !somMudo();
+  try {
+    window.localStorage.setItem(CHAVE_MUDO, mudo ? '1' : '0');
+  } catch (erro) {
+    // Sem storage a escolha vale só para esta página — não é falha do draft.
+    console.info('[draft] não consegui guardar a preferência de mudo', erro);
+  }
+  // Mutou agora: silencia o que estiver tocando (killcam/ban em andamento).
+  if (mudo) {
+    for (const som of cache.values()) som.pause();
+  }
+  return mudo;
+}
 
 function obterSom(nome: SomDraft): HTMLAudioElement | null {
   if (typeof window === 'undefined') return null;
@@ -53,6 +85,7 @@ function obterSom(nome: SomDraft): HTMLAudioElement | null {
 /** Toca um som do draft. Rebobina se estiver tocando; falha em silêncio. */
 export function tocarSom(nome: SomDraft): void {
   try {
+    if (somMudo()) return;
     const som = obterSom(nome);
     if (!som) return;
     som.currentTime = 0;
