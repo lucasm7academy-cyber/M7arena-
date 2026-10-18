@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T02:25:35.102Z",
+  "updatedAt": "2026-10-18T03:24:50.776Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2433,44 +2433,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-10-08T22:57:13.326Z",
-      "agent": "deepseek",
-      "summary": "1) Draft por modo (ADR-074): novo módulo api/src/lib/draft/ (modos/5v5, modos/time-vs-time hoje idêntico ao 5v5, modos/1v1 e modos/aram ativo=false, regras.ts com DRAFT_RULES, flow.ts com o motor, index.ts); draft-flow.ts removido. match-flow pula a fase para 1v1/ARAM (confirmou → iniciando_partida com código) via helper iniciarPartidaComCodigo; shape publica draft.regras + duracao_turno_ms; DraftRoom sem if (modo). Evidência: 12/12 testes draft, suíte 218/218, tsc api/web 0, vite build ok. Smokes reescritos mas NÃO executados (rebuild local abortado; nada deployado). 2) Sala TIME vs TIME (ADR-075): features/sala-time-vs-time/SalaTimeVsTime.tsx (cópia verbatim de SalaMod1) e rota /time_vs_time/:id apontada para ela; demais modos seguem na SalaMod1 intocada. Componente app.sala.time-vs-time (doing). tsc web 0 + build com chunks idênticos. PRÓXIMO: usuário dirige o redesign; deploy do draft quando pedido.",
-      "touched": [
-        "api/src/lib/draft/",
-        "api/src/lib/match-flow.ts",
-        "api/src/lib/match-shape.ts",
-        "api/src/routes/matches-actions.ts",
-        "web/src/components/draft/DraftRoom.tsx",
-        "web/src/components/draft/draftTypes.ts",
-        "web/src/lib/api.ts",
-        "web/src/pages/SalaMod1.tsx",
-        "web/src/features/sala-time-vs-time/SalaTimeVsTime.tsx",
-        "web/src/App.tsx",
-        "api/test/draft.test.ts",
-        "api/test/draft-rules.test.ts",
-        "scripts/smoke-draft.mjs",
-        "scripts/smoke-vps-draft.mjs",
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
-    {
-      "at": "2026-10-11T21:51:40.002Z",
-      "agent": "deepseek",
-      "summary": "Sala Campeonato V1: brainstorm com o usuário + registro no MCP (nenhum código de produção alterado). Registrei os componentes app.sala.campeonato, app.sala.campeonato.definicao-lado, app.draft.campeonato e sec.codigo-campeonato (+ deps no plan.js) e as ADRs 076-080: sala substitui 'Iniciar Série'; 2 vagas (1 por time) com PRONTO sem timer; sala vive a série toda e o código fica visível até o fim; definição de lado estilo CBLOL (sorteio + lado vs first/last pick); live do streamer dentro da sala. Achados: codigo_partida do campeonato vaza no GET público (só o front esconde); código 'sumir' = toast 2,5s + liberação ao finalizar série (suspeita de save stale do cronograma — investigar). Pendente com o usuário: jogos 2+, polling x WS, timeouts e quem cria a sala.",
-      "touched": [
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
-    {
-      "at": "2026-10-11T21:58:46.980Z",
-      "agent": "deepseek",
-      "summary": "Sala Campeonato V1 — decisões fechadas com o usuário e registradas: ADR-081 (fluxo por jogo: PRONTO + definição de lado + draft FEARLESS a cada jogo; jogo 1 por sorteio, jogos 2+ perdedor escolhe o lado; ajusta ADR-077), ADR-082 (estado via WebSocket existente + fallback 5s), ADR-083 (lado sem timeout; no draft ban vencido = vazio e pick vencido trava — nunca cancela). Notas dos componentes atualizadas (app.sala.campeonato, .definicao-lado, app.draft.campeonato) e comentário do plan.js atualizado. Falta confirmar com o usuário: quem cria a sala (default proposto: mesmas regras do Iniciar Série) e a regra exata de quem escolhe o lado nos jogos 2+.",
-      "touched": [
-        "mcp/status-server/lib/plan.js"
-      ]
-    },
-    {
       "at": "2026-10-11T22:21:19.841Z",
       "agent": "deepseek",
       "summary": "Passo 1 da ordem da Sala Campeonato fechado. (1) sec.codigo-campeonato implementado e deployado (5f5719e): codigo_partida redigido no servidor para quem não é staff nem time da série; verificar agora exige staff/time; testes 8/8, suíte 226/226, smoke VPS 8/8. (2) Draft por modo deployado (f92b338): smoke VPS 34/34; no smoke achei 2 códigos 1v1 PRESOS no pool (used=true sem match_id desde 08/10 — x1 sem código) e liberei. (3) Achado registrado como sec.campeonato-permissoes (rotas de escrita só exigem login). Obs: container m7arena_mcp_ops em restart-loop (89935) — provável stdio server como daemon; não afeta o site. Próximo: schema da sala campeonato (vínculo sala↔série + estados + draft por jogo/Fearless).",
@@ -2747,6 +2709,29 @@
       "at": "2026-10-18T02:25:35.096Z",
       "agent": "deepseek",
       "summary": "Follow-up killcam da bola: usuario sentiu falta do ZOOM (na correcao anterior eu havia tirado o efeito junto com a piscada). c35c104: zoom de volta nos DOIS (pick e ban) SEM a piscada -- a imagem entra no MESMO tamanho que ja estava na bola (1.25, sem salto) e da o punch: 1.25 -> 1.42 (28% da duracao) -> assenta em 1.12, 0.55s easeOut; sai com fade 0.5s. Ban mantem o desbote de cor para P&B (filtro animado, delay 0.15s). Evidencia: deploy nginx health 200; bundle DraftRoom-Dit8RbA0.js com 1.42=1 ocorrencia e grayscale(1)=1; entry aponta pro chunk.",
+      "touched": []
+    },
+    {
+      "at": "2026-10-18T02:29:04.191Z",
+      "agent": "deepseek",
+      "summary": "ADR-089 (continuação): coroa para mudar dono/capitao agora aparece DIRETO no lineup da pagina do time, visivel apenas para o cargo proprietario do site (pedido: antes so existia dentro do modal Gerenciar Lineup). Botao de coroa em cada membro com conta (sem conta nao pode ser dono); clique chama POST /teams/:id/transferir-dono (client transferirDono novo no api.ts) e recarrega. Backend ja aceitava proprietario (turno anterior). Cuidado com outro agente: rebasei em cima dos commits dele de draft/killcam (a547230) preservados; deploy app+nginx, app recriado com force-recreate (estava com imagem antiga), health 200.",
+      "touched": [
+        "web/src/pages/TimePage.tsx",
+        "web/src/lib/api.ts"
+      ]
+    },
+    {
+      "at": "2026-10-18T02:37:57.259Z",
+      "agent": "deepseek",
+      "summary": "ADR-089 (fix): coroa no modal Gerenciar Lineup agora aparece para o PROPRIETARIO DO SITE em qualquer membro — inclusive convidado sem conta (que vira capito, nao dono; regra do servidor mantida). Antes a coroa so aparecia para membros com userId, entao times 100% convidados (ex.: NKZ RACCONS) nao mostravam coroa nenhuma. O Khymera666#BR1 tem cargo proprietario do site e agora ve a coroa em todo time. isProprietario passado do TimePage pro modal; backend inalterado (resolverNovoDono ja cobre convidado coroado). Evidencia: tsc web 0, vite build ok, commit 8ef100d deployado (nginx rebuild, m7arena.pro 200), rebase preservando commits do outro agente.",
+      "touched": [
+        "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-18T03:24:50.775Z",
+      "agent": "deepseek",
+      "summary": "Draft: ultimo pick nao e mais cortado. Causa raiz: o servidor fecha o draft (status finished + finalizado_em) e muda a sala para camp_jogo NA MESMA transacao, entao o render do fechamento caia direto na sala (1 frame) e o DraftRoom desmontava -- a killcam do ultimo campeao nunca rodava e sobrava o cronometro de 10s (recap por efeito/estado, que tambem tinha o buraco). Fix em SalaCampeonato.tsx: condicao de render virou (estado camp_draft || posDraftAtivo), com posDraftAtivo DERIVADO do relogio (finalizado_em + 3400ms = killcam 2,2s + fade 0,5s + folga) + timeout para soltar no instante certo; removidos mostrarRecap/recapSegundos/draftStatusRef/recapJogoRef (e o antigo hold de 10s). Sem remount -> a animacao do ultimo pick roda e a tela volta pra sala logo depois. Evidencia: deploy nginx health 200; bundle SalaCampeonato-3osIIlXd.js com 3400=1 e entry apontando pra ele; DraftRoom-DWxi45_J.js mantem zoom (1.42=1) e grayscale(1)=1.",
       "touched": []
     }
   ]
