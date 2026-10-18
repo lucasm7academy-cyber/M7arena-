@@ -87,11 +87,13 @@ interface DraftRoomProps {
     acoes?: {
       /** Verificar Partida — só ícone (RefreshCw), à direita do mudo. */
       verificar?: { aoClicar: () => void; carregando?: boolean } | null;
-      /** Twitch do streamer: iniciar a live, ou abrir a que está no ar. */
+      /** Twitch do streamer: iniciar a live, ENCERRAR a própria, ou abrir a de outro. */
       twitch?: {
         aoIniciar?: (() => void) | null;
+        /** Sua live está no ar — clicar encerra (o card "Assista ao vivo" abre a Twitch). */
+        aoEncerrar?: (() => void) | null;
         carregando?: boolean;
-        /** Live no ar — o ícone vira link para assistir. */
+        /** Live no ar de outro streamer — link para assistir. */
         assistirHref?: string | null;
       } | null;
       /** Seta de sair da sala — canto oposto (esquerda). */
@@ -800,7 +802,23 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           de bans nem muda a altura dela. */}
       <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
         {aoVivoAtivo && aoVivo?.acoes?.twitch && (
-          aoVivo.acoes.twitch.assistirHref ? (
+          aoVivo.acoes.twitch.aoEncerrar ? (
+            /* Sua live está no ar: clicar ENCERRA — o card "Assista ao vivo"
+               (canto inferior esquerdo) já leva para a Twitch (pedido do
+               usuário 18/10). */
+            <button
+              type="button"
+              disabled={aoVivo.acoes.twitch.carregando}
+              onClick={() => aoVivo?.acoes?.twitch?.aoEncerrar?.()}
+              title="Encerrar sua live"
+              className="relative p-[0.7vmin] border border-white/60 text-white hover:text-red-400 hover:border-red-500/60 transition-colors duration-200 cursor-pointer disabled:opacity-50"
+            >
+              {aoVivo.acoes.twitch.carregando
+                ? <RefreshCw className="w-[2vmin] h-[2vmin] animate-spin" />
+                : <Twitch className="w-[2vmin] h-[2vmin]" />}
+              <span className="absolute top-[0.2vmin] right-[0.2vmin] w-[0.9vmin] h-[0.9vmin] rounded-full bg-red-600 animate-pulse" />
+            </button>
+          ) : aoVivo.acoes.twitch.assistirHref ? (
             <a
               href={aoVivo.acoes.twitch.assistirHref}
               target="_blank"

@@ -587,14 +587,20 @@ export default function SalaCampeonato() {
                 ? { aoClicar: verificarPartidaAgora, carregando: ocupado === 'verificar-partida' }
                 : null,
               twitch: perfil?.cargo === 'streamer'
-                ? {
-                    aoIniciar: camp?.live ? null : async () => {
-                      const r = await chamar('/sala-campeonato/live');
-                      if (r?.ok) toast.success('Live criada! Os jogadores já recebem o aviso de assistir.');
-                    },
-                    carregando: ocupado === '/sala-campeonato/live',
-                    assistirHref: camp?.live ? `https://twitch.tv/${camp.live.twitch}` : null,
-                  }
+                ? camp?.live
+                  // Live no ar: se é a SUA, o ícone encerra (o card "Assista ao
+                  // vivo" já abre a Twitch); se é de outro, abre para assistir.
+                  ? (!!(perfil as any)?.twitch
+                      && String((perfil as any).twitch).toLowerCase() === String(camp.live.twitch).toLowerCase()
+                      ? { aoEncerrar: encerrarLive, carregando: ocupado === 'live-parar' }
+                      : { assistirHref: `https://twitch.tv/${camp.live.twitch}` })
+                  : {
+                      aoIniciar: async () => {
+                        const r = await chamar('/sala-campeonato/live');
+                        if (r?.ok) toast.success('Live criada! Os jogadores já recebem o aviso de assistir.');
+                      },
+                      carregando: ocupado === '/sala-campeonato/live',
+                    }
                 : null,
               sair: () => navigate('/jogar'),
             },
@@ -652,13 +658,15 @@ export default function SalaCampeonato() {
           )}
         </div>
 
-        {/* Notificação "Assista ao vivo" — vale igual na tela ao vivo */}
+        {/* Notificação "Assista ao vivo" — vale igual na tela ao vivo, mas
+            SUBIU para não ficar atrás dos campeões dos picks (pedido do
+            usuário 18/10): 17vmin limpa a coluna de picks (que ocupa ~15,5). */}
         {camp?.live && (
           <a
             href={`https://twitch.tv/${camp.live.twitch}`}
             target="_blank"
             rel="noreferrer"
-            className="fixed left-3 bottom-3 sm:left-5 sm:bottom-5 z-[80] bg-white text-black shadow-2xl px-4 py-3 flex items-center gap-3 hover:scale-[1.03] transition-transform"
+            className="fixed left-3 bottom-[17vmin] sm:left-5 z-[80] bg-white text-black shadow-2xl px-4 py-3 flex items-center gap-3 hover:scale-[1.03] transition-transform"
             style={{ clipPath: CUT_BUTTON }}
             title="Assistir na Twitch"
           >
