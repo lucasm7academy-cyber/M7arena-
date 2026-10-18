@@ -89,7 +89,7 @@ function BanSlot({ champion, active, jaBaniu, champions, version }: {
   return (
     <div className="flex flex-col items-center gap-[0.3vmin]">
       <div className={`
-        relative w-[5vmin] h-[5vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
+        relative w-[6vmin] h-[6vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
         ${jaBaniu ? 'border-red-600/80 shadow-[0_0_8px_rgba(220,38,38,0.3)]' : 'border-white/15'}
         ${active ? 'border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)] scale-110' : ''}
       `}>
@@ -101,7 +101,7 @@ function BanSlot({ champion, active, jaBaniu, champions, version }: {
           </>
         ) : (
           <div className={jaBaniu ? 'opacity-40' : 'opacity-15'}>
-            <Ban className="w-[3vmin] h-[3vmin] text-white" />
+            <Ban className="w-[3.6vmin] h-[3.6vmin] text-white" />
           </div>
         )}
       </div>
@@ -688,26 +688,41 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       <div className="relative pt-[2vmin] flex flex-col items-center z-40">
         {aoVivoAtivo ? (
           <>
-            <div className="flex items-center justify-center gap-[3vmin] w-[85vmin]">
-              <span className="flex-1 min-w-0 text-right text-[2.6vmin] font-black uppercase tracking-[0.15em] text-[#60A5FA] truncate">
-                {labelEquipeA}
-              </span>
-              <span className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.3)] whitespace-nowrap">
-                {aoVivo?.placar?.a ?? 0} <span className="text-white/40">-</span> {aoVivo?.placar?.b ?? 0}
-              </span>
-              <span className="flex-1 min-w-0 text-left text-[2.6vmin] font-black uppercase tracking-[0.15em] text-[#f87171] truncate">
-                {labelEquipeB}
-              </span>
+            {/* MESMA composição do miolo da sala (logo X logo com os nomes,
+                placar e "Partida Ao Vivo!") — agora no lugar do cronômetro,
+                já que as bolas laterais saem desta tela (não há ban/pick).
+                Pedido do usuário 18/10. */}
+            <div className="flex items-start justify-center gap-[5vmin]">
+              <div className="flex flex-col items-center gap-[0.8vmin] w-[18vmin]">
+                {timeA?.logo
+                  ? <img src={timeA.logo} alt="" className="w-[11vmin] h-[11vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]" />
+                  : <div className="w-[11vmin] h-[11vmin]" />}
+                <span className="text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
+                  {labelEquipeA}
+                </span>
+              </div>
+              <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[3.9vmin]">X</span>
+              <div className="flex flex-col items-center gap-[0.8vmin] w-[18vmin]">
+                {timeB?.logo
+                  ? <img src={timeB.logo} alt="" className="w-[11vmin] h-[11vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]" />
+                  : <div className="w-[11vmin] h-[11vmin]" />}
+                <span className="text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
+                  {labelEquipeB}
+                </span>
+              </div>
             </div>
-            <span className="inline-flex items-center gap-[1vmin] mt-[1.4vmin] text-[2vmin] font-black uppercase tracking-[0.35em] text-[#00FF41]">
-              {aoVivo?.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
-              {aoVivo?.status}
+            <span className="text-[5vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.25)] mt-[1.2vmin]">
+              {aoVivo?.placar?.a ?? 0} <span className="text-white/40">-</span> {aoVivo?.placar?.b ?? 0}
             </span>
             {!!aoVivo?.legenda && (
-              <span className="mt-[0.6vmin] text-[1.2vmin] font-bold uppercase tracking-[0.45em] text-white/45">
+              <span className="text-[1.1vmin] font-black uppercase tracking-[0.4em] text-white/50 mt-[0.8vmin]">
                 {aoVivo.legenda}
               </span>
             )}
+            <span className="inline-flex items-center gap-[0.8vmin] text-[2.2vmin] font-black text-[#00FF41] uppercase tracking-[0.25em] mt-[0.8vmin]">
+              {aoVivo?.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
+              {aoVivo?.status}
+            </span>
           </>
         ) : (
           <>
@@ -800,7 +815,10 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       {/* MAIN CONTENT AREA — painéis no lado em jogo de cada equipe.
           A bola fica CENTRADA no vão entre o draft (85vmin) e a lateral da
           tela: padding = metade do vão − metade da coluna (12.5vmin). O max()
-          só segura telas estreitas (vão menor que a coluna). */}
+          só segura telas estreitas (vão menor que a coluna).
+          Na TELA AO VIVO as bolas SAEM: sem ban/pick elas não têm função — o
+          confronto (logos + placar + status) fica no topo (pedido do usuário). */}
+      {!aoVivoAtivo && (
       <div className="absolute inset-0 flex items-center justify-between px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] pointer-events-none z-30">
         {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
           const ehA = equipe === 'A';
@@ -808,16 +826,17 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           return (
             <TeamPanel key={equipe} lado={dataSide}
               ladoJogo={ehA ? ladoEquipeA : ladoEquipeB}
-              emTurno={!aoVivoAtivo && emTurno && draft.current_team === dataSide}
-              selected={aoVivoAtivo ? null : selectedChamp} meuTime={meuTime}
+              emTurno={emTurno && draft.current_team === dataSide}
+              selected={selectedChamp} meuTime={meuTime}
               jogadorNome={ehA ? labelEquipeA : labelEquipeB}
-              preview={aoVivoAtivo ? null : (ehA ? previewBlue : previewRed)}
+              preview={ehA ? previewBlue : previewRed}
               logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)}
-              textoAbaixo={aoVivoAtivo ? '' : fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
+              textoAbaixo={fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
               feedback={feedback && feedback.lado === dataSide ? feedback : null} />
           );
         })}
       </div>
+      )}
 
       {/* CENTER - CHAMPION GRID — SÓ para quem está na sala como JOGADOR. O
           telespectador não escolhe nada: fica sem grid, sem busca e sem o
@@ -968,34 +987,31 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         </div>
         )}
 
-        {/* CÓDIGO DA PARTIDA (tela ao vivo): no lugar do botão de confirmar.
-            Só chega aqui quem o servidor deixa ver (staff ou time da vaga) —
-            o espectador comum continua com a fileira de patrocinadores. */}
+        {/* CÓDIGO DA PARTIDA (tela ao vivo): no lugar do botão de confirmar —
+            MESMO painel da sala ("Prepare-se para a batalha" + "Copiar
+            Código"), sem mudar nada. Só chega aqui quem o servidor deixa ver
+            (staff ou time da vaga); o espectador continua com os patrocínios. */}
         {aoVivoAtivo && aoVivo?.codigo && (
-          <div className="mb-[2vmin] flex flex-col items-center gap-[0.9vmin]">
-            <span className="text-[1.1vmin] font-bold uppercase tracking-[0.5em] text-white/45">
-              Código da partida
-            </span>
-            <button
-              type="button"
+          <div className="mb-[2vmin] flex flex-col items-center gap-[1.5vmin]">
+            <p className="text-[1.4vmin] font-black text-white uppercase tracking-[0.5em]">
+              Prepare-se para a batalha
+            </p>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={copiarCodigoAoVivo}
-              title="Copiar código da partida"
-              className="relative p-[1.5px] bg-[#c89b3c] hover:bg-[#e6c469] transition-colors cursor-pointer"
-              style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
+              className="relative p-[1.5px] bg-black cursor-pointer"
+              style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
             >
               <span
-                className="flex items-center justify-center gap-[1.2vmin] px-[4vmin] py-[1.4vmin] bg-[#FFB700] hover:bg-yellow-400 transition-colors text-black font-black text-[2.6vmin] uppercase tracking-[0.2em]"
-                style={{ clipPath: 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)' }}
+                className="block bg-[#FFB700] px-[8vmin] py-[1.6vmin] font-black uppercase tracking-[0.4em] text-[1.5vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.2vmin] transition-colors"
+                style={{ clipPath: 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)' }}
               >
                 {codigoCopiado
-                  ? <Check className="w-[2.4vmin] h-[2.4vmin] shrink-0" />
-                  : <Copy className="w-[2.4vmin] h-[2.4vmin] shrink-0" />}
-                {codigoCopiado ? 'Código Copiado!' : aoVivo.codigo}
+                  ? <Check className="w-[1.8vmin] h-[1.8vmin]" />
+                  : <Copy className="w-[1.8vmin] h-[1.8vmin]" />}
+                {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
               </span>
-            </button>
-            <span className="text-[1vmin] font-bold uppercase tracking-[0.3em] text-white/35">
-              Clique para copiar · Cole no LoL em Jogar {'>'} Torneios
-            </span>
+            </motion.button>
           </div>
         )}
 

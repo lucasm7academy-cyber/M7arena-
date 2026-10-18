@@ -573,7 +573,11 @@ export default function SalaCampeonato() {
             status: estado === 'iniciando_partida' ? 'Partida Pronta!' : 'Partida Ao Vivo!',
             pulsante: estado !== 'iniciando_partida',
             placar: { a: placarA, b: placarB },
-            legenda: serie ? `JOGO ${camp?.jogo ?? 1} · MD${serie.best_of ?? 3}` : null,
+            legenda: serie
+              ? `JOGO ${camp?.jogo ?? 1} · MD${serie.best_of ?? 3}`
+              : camp?.formato
+                ? `Série ${String(camp.formato).toUpperCase()}`
+                : null,
             codigo: sala.codigo_partida ?? null,
           }}
         />
