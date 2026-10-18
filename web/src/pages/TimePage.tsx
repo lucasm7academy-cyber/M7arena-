@@ -1087,11 +1087,14 @@ const EditTeamModal = ({
 };
 
 const ManageLineupModal = ({
-  team, onClose, onUpdateTeam,
+  team, onClose, onUpdateTeam, isProprietario = false,
 }: {
   team: TimeData;
   onClose: () => void;
   onUpdateTeam: (players: Membro[]) => Promise<boolean> | void;
+  /** Cargo proprietário DO SITE (não do time): vê a coroa em qualquer membro,
+      mesmo convidado sem conta (que vira capitão, não dono). */
+  isProprietario?: boolean;
 }) => {
   const { playSound } = useSound();
   const [membros, setMembros] = useState<Membro[]>(sortPlayers(team.membros));
@@ -1261,12 +1264,15 @@ const ManageLineupModal = ({
                     </>
                   ) : (
                     <>
-                      {/* Coroa: quem tem a coroa é o dono/capitão (ADR-089). */}
-                      {!m.isLeader && m.userId && (
+                      {/* Coroa: quem tem a coroa é o dono/capitão (ADR-089).
+                          O PROPRIETÁRIO DO SITE vê a coroa em qualquer membro
+                          — até convidado sem conta (vira capitão; o dono só
+                          muda para quem tem conta, regra do servidor). */}
+                      {!m.isLeader && (m.userId || isProprietario) && (
                         <button
                           onClick={() => handlePromote(mId)}
                           className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-yellow-400/20 text-white/30 hover:text-yellow-400 transition-all cursor-pointer"
-                          title="Promover a Capitão/Dono"
+                          title={m.userId ? 'Promover a Capitão/Dono' : 'Promover a Capitão (sem conta não vira dono)'}
                         >
                           <Crown className="w-3.5 h-3.5" />
                         </button>
@@ -2129,7 +2135,7 @@ export default function TimePage() {
         <EditTeamModal team={time} onClose={() => setModalEditar(false)} onSave={handleUpdateTeam} />
       )}
       {modalLineup && (
-        <ManageLineupModal team={time} onClose={() => setModalLineup(false)} onUpdateTeam={handleUpdatePlayers} />
+        <ManageLineupModal team={time} onClose={() => setModalLineup(false)} onUpdateTeam={handleUpdatePlayers} isProprietario={isProprietario} />
       )}
       {modalSair && (
         <ConfirmLeaveModal onClose={() => setModalSair(false)} onConfirm={handleSairTime} />
