@@ -25,6 +25,7 @@ import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
 import { CHAMPION_POSITIONS, type RoleFiltro } from './championPositions';
+import { desbloquearSonsDraft, precarregarSons, tocarSom } from './draftSounds';
 
 interface DraftRoomProps {
   draft: SalaDraft;
@@ -417,7 +418,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
   const handleChampionClick = (champ: Champion) => {
     if (!isMeuTurno || enviando) return;
-    if (indisponivel(champ.id)) return;
+    if (indisponivel(champ.id)) {
+      // Campeão usado/banido: o client do LoL nega com som — o clique nem chega
+      // no servidor.
+      tocarSom('pickNegado');
+      return;
+    }
+    tocarSom('gridClique');
     setSelectedChamp(champ);
     // Prévia para a sala: quem assiste vê o que está sendo considerado.
     onPreview?.(champ.id);
@@ -425,6 +432,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
   const confirmarAcao = async () => {
     if (!selectedChamp || !isMeuTurno || enviando) return;
+    tocarSom('lockInClique');
     setEnviando(true);
     try {
       const r = fase === 'ban' ? await onBanir(selectedChamp.id) : await onPickar(selectedChamp.id);
@@ -477,9 +485,61 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       const nonce = Date.now();
       setFeedback({ lado, championId, tipo, nonce });
       window.setTimeout(() => setFeedback((f) => (f && f.nonce === nonce ? null : f)), 2200);
+      // Som da ação junto com a killcam: ban tem voz de time aliado/inimigo
+      // (comparação no espaço de dados, igual às listas acima); o ÚLTIMO pick
+      // fecha o draft — o servidor marca `finished` no mesmo update, então o
+      // som de finalização sai no mesmo frame da animação.
+      if (tipo === 'ban') tocarSom(lado === meuTime ? 'banAliado' : 'banInimigo');
+      else if (draft.status === 'finished') tocarSom('draftFinalizado');
       break; // uma ação por atualização de estado
     }
   }, [draft.blue_bans.join(','), draft.red_bans.join(','), draft.blue_picks.join(','), draft.red_picks.join(',')]);
+
+  // ── Sons do draft (pedido do usuário 2026-10-18) ─────────────────────────
+  // Arquivos locais /sounds/draft (repo → nginx, sem API). Precarga no mount e
+  // destrava no primeiro gesto — sem isso o iOS/Safari mantém mudo.
+  useEffect(() => {
+    precarregarSons();
+    return desbloquearSonsDraft();
+  }, []);
+
+  // Intro de fase: o draft abre banindo (turno 0 do template é ban) e cada
+  // virada ban→pick→ban avisa. No ban→pick os bans do momento acabaram de
+  // travar — o som desta virada é o "bans travados", não uma intro de pick
+  // (o template encadeia os dois no mesmo instante; tocar os dois seria sopa).
+  const faseSonoraRef = useRef<string | null>(null);
+  useEffect(() => {
+    const anterior = faseSonoraRef.current;
+    faseSonoraRef.current = fase;
+    if (anterior === fase) return;
+    if (anterior === null) {
+      // Mount: só anuncia se o draft abre na fase de ban; espectador que entra
+      // no meio de uma fase de picks não ouve "bans travados" fora de hora.
+      if (fase === 'ban') tocarSom('inicioBan');
+      return;
+    }
+    tocarSom(fase === 'pick' ? 'bansTravados' : 'inicioBan');
+  }, [fase]);
+
+  // Vez de agir: notificação própria quando o turno vira pra mim.
+  const minhaVezSonoraRef = useRef<string | null>(null);
+  useEffect(() => {
+    const minha = emTurno && isMeuTurno ? fase : null;
+    const anterior = minhaVezSonoraRef.current;
+    minhaVezSonoraRef.current = minha;
+    if (!minha || minha === anterior) return;
+    tocarSom(minha === 'ban' ? 'seuBan' : 'suaVez');
+  }, [emTurno, isMeuTurno, fase]);
+
+  // Relógio do turno: 1 tick por segundo; nos últimos 10s o tick curto (a
+  // reta final, como no client). Fora do turno (draft finished) silencia.
+  const segundoSonoroRef = useRef<number | null>(null);
+  useEffect(() => {
+    const anterior = segundoSonoroRef.current;
+    segundoSonoroRef.current = segundos;
+    if (!emTurno || anterior === null || segundos === anterior) return;
+    tocarSom(segundos <= 10 ? 'tickCurto' : 'tick');
+  }, [segundos, emTurno]);
 
   // Coluna de picks de uma EQUIPE, rotulada pelo lado EM JOGO dela.
   const colunaPicks = (equipe: 'A' | 'B', direita: boolean) => {
@@ -780,6 +840,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <div className="mb-[2vmin] relative">
           <button
             disabled={!selectedChamp || !isMeuTurno || enviando}
+            onMouseEnter={() => {
+              if (selectedChamp && isMeuTurno && !enviando) tocarSom('lockInHover');
+            }}
             onClick={confirmarAcao}
             className={`
               relative px-[12vmin] py-[2.5vmin] font-bold text-[2.2vmin] tracking-[0.15em] uppercase transition-all duration-300 group
