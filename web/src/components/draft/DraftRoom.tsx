@@ -167,7 +167,7 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
             borderColor: [corLado, corLadoClaro, corLado],
           } : { boxShadow: '0 0 0px rgba(0,0,0,0)', borderColor: 'rgba(255,255,255,0.1)' }}
           transition={emTurno ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
-          className={`relative w-[18vmin] h-[18vmin] rounded-full border-[0.6vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? '' : 'border-white/10'}`}
+          className={`relative w-[36vmin] h-[36vmin] rounded-full border-[1.2vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? '' : 'border-white/10'}`}
           style={emTurno ? { borderColor: corLado } : undefined}
         >
           {/* Fundo com a LOGO DO TIME quando a bola está VAZIA (sem campeão e
@@ -183,13 +183,13 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
 
           {!emTurno && !champNaBola && (
             <div className="w-full h-full relative flex items-center justify-center bg-black/40">
-              <div className="relative flex flex-col items-center justify-center gap-[1vmin] z-10">
-                <div className="flex gap-[0.8vmin]">
-                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className="w-[1.2vmin] h-[1.2vmin] bg-white/60 rounded-full" />
-                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} className="w-[1.2vmin] h-[1.2vmin] bg-white/60 rounded-full" />
-                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} className="w-[1.2vmin] h-[1.2vmin] bg-white/60 rounded-full" />
+              <div className="relative flex flex-col items-center justify-center gap-[2vmin] z-10">
+                <div className="flex gap-[1.6vmin]">
+                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className="w-[2.4vmin] h-[2.4vmin] bg-white/60 rounded-full" />
+                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} className="w-[2.4vmin] h-[2.4vmin] bg-white/60 rounded-full" />
+                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} className="w-[2.4vmin] h-[2.4vmin] bg-white/60 rounded-full" />
                 </div>
-                <p className="text-[1.2vmin] font-bold text-white/90 uppercase tracking-wider drop-shadow-md">Aguardando</p>
+                <p className="text-[2.4vmin] font-bold text-white/90 uppercase tracking-wider drop-shadow-md">Aguardando</p>
               </div>
             </div>
           )}
@@ -205,22 +205,22 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
 
           {emTurno && !champNaBola && (
             <div
-              className="w-full h-full flex flex-col items-center justify-center gap-[1vmin] relative z-10"
+              className="w-full h-full flex flex-col items-center justify-center gap-[2vmin] relative z-10"
               style={{ backgroundColor: `rgba(${corLadoRgb},0.12)` }}
             >
-              <div className="flex gap-[0.8vmin]">
+              <div className="flex gap-[1.6vmin]">
                 {[0, 0.2, 0.4].map((d) => (
                   <motion.div
                     key={d}
                     animate={{ scale: [1, 1.5, 1] }}
                     transition={{ duration: 0.6, repeat: Infinity, delay: d }}
-                    className="w-[1.2vmin] h-[1.2vmin] rounded-full"
+                    className="w-[2.4vmin] h-[2.4vmin] rounded-full"
                     style={{ backgroundColor: corLado, boxShadow: `0 0 10px rgba(${corLadoRgb},0.8)` }}
                   />
                 ))}
               </div>
               <p
-                className="text-[1.8vmin] font-bold uppercase tracking-widest text-center px-2 drop-shadow-md"
+                className="text-[3.6vmin] font-bold uppercase tracking-widest text-center px-2 drop-shadow-md"
                 style={{ color: corLado }}
               >
                 {fase === 'ban' ? 'Banir' : 'Escolher'}
@@ -588,8 +588,10 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           })}
       </div>
 
-      {/* MAIN CONTENT AREA — painéis no lado em jogo de cada equipe */}
-      <div className="absolute inset-0 flex items-center justify-between px-[4vmin] pointer-events-none z-30">
+      {/* MAIN CONTENT AREA — painéis no lado em jogo de cada equipe.
+          Px com +10px: com a bola dobrada (36vmin) os painéis ficam 10px mais
+          perto do draft (pedido do usuário 2026-10-16). */}
+      <div className="absolute inset-0 flex items-center justify-between px-[calc(4vmin+10px)] pointer-events-none z-30">
         {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
           const ehA = equipe === 'A';
           const dataSide = ehA ? 'blue' : 'red';
