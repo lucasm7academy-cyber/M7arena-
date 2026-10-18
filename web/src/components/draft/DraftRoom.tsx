@@ -16,8 +16,8 @@
 //  - Sem HUD de transmissão (o sistema de streams do site novo é por escala de
 //    jogo, ADR-072 — não há StreamModal na sala).
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Search, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FaShieldAlt } from 'react-icons/fa';
@@ -130,13 +130,17 @@ function PickSlot({ champion, active, hidden, champions, version }: {
 
 // ── Painel do time (círculo central de cada lado) ───────────────────────────
 
-function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNome, preview, logoTime }: {
-  lado: 'blue' | 'red'; ladoJogo: 'blue' | 'red'; emTurno: boolean; fase: 'ban' | 'pick';
+function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, preview, logoTime, textoAbaixo, feedback }: {
+  lado: 'blue' | 'red'; ladoJogo: 'blue' | 'red'; emTurno: boolean;
   selected: Champion | null; meuTime: 'blue' | 'red' | null; jogadorNome: string;
   /** Prévia recebida de outro jogador deste lado (escolha ainda não confirmada). */
   preview?: Champion | null;
   /** Logo do time do lado — vira fundo da bola quando ela está vazia. */
   logoTime?: string | null;
+  /** Texto no lugar do nome do campeão enquanto o time não escolheu (ex.: "Banindo..."). */
+  textoAbaixo?: string | null;
+  /** "Killcam" da última ação confirmada deste lado (ban = P&B + corte; pick = dourado). */
+  feedback?: { championId: string; tipo: 'ban' | 'pick'; nonce: number } | null;
 }) {
   // A cor da VEZ é a cor do LADO (azul/vermelho) — nunca mais por fase.
   const corLado = ladoJogo === 'blue' ? '#3B82F6' : '#ef4444';
@@ -195,26 +199,85 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
           ) : null}
 
           {emTurno && !champNaBola && (
+            // Só o tint do lado: o texto "Banindo.../Escolhendo..." desceu para
+            // o lugar do nome do campeão, abaixo da bola (pedido do usuário).
             <div
-              className="w-full h-full flex flex-col items-center justify-center relative z-10"
+              className="w-full h-full relative z-10"
               style={{ backgroundColor: `rgba(${corLadoRgb},0.12)` }}
-            >
-              {/* (As 3 bolinhas piscando saíram — pedido do usuário 2026-10-17:
-                  fica só o texto, agora no gerúndio "Banindo…/Escolhendo…".) */}
-              <p
-                className="text-[3.2vmin] font-bold uppercase tracking-widest text-center px-2 drop-shadow-md"
-                style={{ color: corLado }}
-              >
-                {fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
-              </p>
-            </div>
+            />
           )}
+
+          {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
+              campeão aparece NA BOLA do lado que agiu e some sozinho (~2s).
+              Ban = preto e branco + lâmina vermelha atravessando; pick =
+              explosão dourada. Pedido do usuário 2026-10-17. */}
+          <AnimatePresence>
+            {feedback ? (
+              <motion.div
+                key={feedback.nonce}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="absolute inset-0 z-20"
+              >
+                {feedback.tipo === 'ban' ? (
+                  <>
+                    <motion.img
+                      src={buildChampionIconUrl(feedback.championId)}
+                      alt=""
+                      initial={{ scale: 1.3 }}
+                      animate={{ scale: 1.12 }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                      className="w-full h-full object-cover grayscale brightness-[0.7]"
+                      referrerPolicy="no-referrer"
+                    />
+                    {/* A lâmina vermelha: varre o boneco na diagonal */}
+                    <motion.div
+                      initial={{ scaleX: 0, rotate: -18 }}
+                      animate={{ scaleX: 1, rotate: -18 }}
+                      transition={{ duration: 0.35, ease: 'easeOut', delay: 0.12 }}
+                      className="absolute left-0 top-[49%] w-full h-[0.7vmin] bg-red-600 origin-left shadow-[0_0_18px_rgba(239,68,68,0.9)]"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <motion.img
+                      src={buildChampionIconUrl(feedback.championId)}
+                      alt=""
+                      initial={{ scale: 1.45 }}
+                      animate={{ scale: 1.15 }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    {/* A escolha: anel dourado expandindo + clarão */}
+                    <motion.div
+                      initial={{ scale: 0.35, opacity: 0.9 }}
+                      animate={{ scale: 1.7, opacity: 0 }}
+                      transition={{ duration: 0.9, ease: 'easeOut' }}
+                      className="absolute inset-[10%] rounded-full border-[0.5vmin] border-[#c89b3c]"
+                    />
+                    <motion.div
+                      initial={{ opacity: 0.5 }}
+                      animate={{ opacity: 0 }}
+                      transition={{ duration: 0.7, ease: 'easeOut' }}
+                      className="absolute inset-0 bg-[radial-gradient(circle,rgba(200,155,60,0.6)_0%,rgba(200,155,60,0)_70%)]"
+                    />
+                  </>
+                )}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </motion.div>
       </div>
 
       <div className="text-center min-h-[3.5vmin]">
-        <h2 className="text-[2.5vmin] font-bold text-white uppercase tracking-tighter mb-[0.5vmin]">
-          {champNaBola ? champNaBola.name : ''}
+        <h2
+          className={`text-[2.5vmin] font-bold tracking-tighter mb-[0.5vmin] ${champNaBola ? 'text-white uppercase' : ''}`}
+          style={!champNaBola && emTurno && textoAbaixo ? { color: corLado } : undefined}
+        >
+          {champNaBola ? champNaBola.name : emTurno ? textoAbaixo ?? '' : ''}
         </h2>
       </div>
     </div>
@@ -415,6 +478,41 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const duracaoSeg = Math.max(1, Math.round((draft.duracao_turno_ms ?? 30_000) / 1000));
   const segundos = Math.max(0, Math.min(timer, duracaoSeg));
 
+  // ── "Killcam" da bola (pedido do usuário 2026-10-17) ─────────────────────
+  // Quando um ban/pick é CONFIRMADO, o campeão aparece por ~2s NA BOLA do lado
+  // que agiu (ban = P&B + lâmina vermelha varrendo; pick = explosão dourada).
+  // Detecta pela contagem das listas do draft — vale igual para o meu lado e
+  // para o adversário. Pick que a regra do modo esconde não anima: mostrar o
+  // boneco ali vazaria justamente o que a sala faz questão de esconder.
+  const [feedback, setFeedback] = useState<{ lado: 'blue' | 'red'; championId: string; tipo: 'ban' | 'pick'; nonce: number } | null>(null);
+  const contagensDraftRef = useRef<[number, number, number, number] | null>(null);
+  useEffect(() => {
+    const atual: [number, number, number, number] = [
+      draft.blue_bans.length, draft.red_bans.length,
+      draft.blue_picks.length, draft.red_picks.length,
+    ];
+    const prev = contagensDraftRef.current;
+    contagensDraftRef.current = atual;
+    if (!prev) return; // primeira carga: não repete o histórico
+    const listas: Array<[string[], 'blue' | 'red', 'ban' | 'pick']> = [
+      [draft.blue_bans, 'blue', 'ban'],
+      [draft.red_bans, 'red', 'ban'],
+      [draft.blue_picks, 'blue', 'pick'],
+      [draft.red_picks, 'red', 'pick'],
+    ];
+    for (let i = 0; i < listas.length; i++) {
+      const [lista, lado, tipo] = listas[i];
+      if (lista.length <= prev[i]) continue;
+      const championId = lista[lista.length - 1];
+      if (!championId) break;
+      if (tipo === 'pick' && esconderPickAdversario(lado, championId)) break;
+      const nonce = Date.now();
+      setFeedback({ lado, championId, tipo, nonce });
+      window.setTimeout(() => setFeedback((f) => (f && f.nonce === nonce ? null : f)), 2200);
+      break; // uma ação por atualização de estado
+    }
+  }, [draft.blue_bans.join(','), draft.red_bans.join(','), draft.blue_picks.join(','), draft.red_picks.join(',')]);
+
   // Coluna de picks de uma EQUIPE, rotulada pelo lado EM JOGO dela.
   const colunaPicks = (equipe: 'A' | 'B', direita: boolean) => {
     const ehA = equipe === 'A';
@@ -581,11 +679,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           return (
             <TeamPanel key={equipe} lado={dataSide}
               ladoJogo={ehA ? ladoEquipeA : ladoEquipeB}
-              emTurno={emTurno && draft.current_team === dataSide} fase={fase}
+              emTurno={emTurno && draft.current_team === dataSide}
               selected={selectedChamp} meuTime={meuTime}
               jogadorNome={ehA ? labelEquipeA : labelEquipeB}
               preview={ehA ? previewBlue : previewRed}
-              logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)} />
+              logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)}
+              textoAbaixo={fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
+              feedback={feedback && feedback.lado === dataSide ? feedback : null} />
           );
         })}
       </div>

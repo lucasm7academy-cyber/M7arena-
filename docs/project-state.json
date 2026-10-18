@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-11T23:54:20.637Z",
+  "updatedAt": "2026-10-18T01:45:29.490Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2337,6 +2337,15 @@
       "decision": "A sala de times deixa de ser exclusiva do campeonato: POST /api/matches/time-vs-time cria a sala LIVRE (mode time_vs_time_livre, sem série; qualquer usuário ocupa as vagas; PRONTO/lado/draft iguais; no fim do draft recebe código do pool e segue o ciclo normal da sala). Salas de times (campeonato e livre) aparecem em \"Salas Abertas\" no /jogar, abrem em tela cheia SEM sidebar e usam o visual da sala normal; o card de time (logo + nome + vaga/PRONTO) substitui o card de vaga; botão \"Sala Time vs Time\" no /jogar cria direto.",
       "rationale": "Pedido do usuário (2026-10-12): usar o mesmo sistema das salas de times sem precisar de campeonato, com o visual da sala normal e aparecendo nas salas abertas.",
       "supersedes": null
+    },
+    {
+      "id": "ADR-087",
+      "date": "2026-10-16T02:47:08.463Z",
+      "author": "deepseek",
+      "title": "Um time so por jogador: guest conta como membership (ADR-056 estendida)",
+      "decision": "Fluxo de times corrigido: (1) membership de CONVIDADO (user_id NULL, casado por Riot ID/PUUID via ADR-056) agora vale em TODOS os pontos: vaga da sala livre (era sem_time), card do /jogador (players.tsx mandava guest_riot_ids so para quem NAO tinha conta) e trava de 'ja pertence a um time'. (2) Entrar em um time remove automaticamente o do anterior - nos 3 pontos de entrada: aceitar convite/solicitacao (aceitava 409 so com user_id; agora enxerga guest e sai do anterior), salvar lineup (cada membro entra, sai dos outros times, inclusive resolvendo guest_riot_id->conta) e criar time (dono sai do anterior). (3) GET /teams/members casa Riot ID case-insensitive e devolve status; players.tsx so mostra time com status accepted. Caso real: macoinha07#fck13 (user 1496c2a3) esta no M7W como guest e nao aparecia em /jogador nem entrava na vaga da sala 196 - corrigido. Testes: 262/262, tsc api+web 0, deploy 13b06e4 na VPS.",
+      "rationale": "",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2405,160 +2414,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-09-24T15:09:54.668Z",
-      "agent": "gemini",
-      "summary": "Aumentado o espacamento superior da secao Proximos Jogos no Lobby (pt-12 sm:pt-16 md:pt-20 e gap-8 md:gap-12 com mb-2 md:mb-4 abaixo do banner do torneio) para afastar do banner principal e dar respiro aos blocos. Commits c3be601 enviados para o GitHub (branches main e feat/redesign-modais) e para a VPS. Container Nginx reconstruido e validado com HTTP/2 200 no ar.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/Jogar.tsx",
-        "web/src/pages/campeonatos.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-24T15:09:57.935Z",
-      "agent": "gemini",
-      "summary": "Ajuste de responsividade dos Hero Banners para notebooks nas telas Lobby, Campeonatos e Jogar (escalonamento gradual de tipografia text-5xl/7xl, botoes e min-height seguro, sem subir para VPS).",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/campeonatos.tsx",
-        "web/src/pages/Jogar.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-24T15:42:21.382Z",
-      "agent": "gemini",
-      "summary": "Removido o icone de trofeu ao lado do titulo da copa em Proximos Jogos no Lobby, mantendo apenas o nome da copa estilizado com a tipografia Anton e a linha decorativa. Commit 76985d3 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruido com sucesso e validado ao vivo em m7arena.pro.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-24T15:51:45.124Z",
-      "agent": "gemini",
-      "summary": "Criado o bloco de 3 figurinhas colecionáveis dos top times da arena estilo álbum da copa (1º lugar em ouro centralizado, maior e elevado; 2º em prata e 3º em bronze menores nas laterais) logo abaixo de Próximos Jogos no Lobby. Componente TopTeamsStickers.tsx criado com molduras metálicas foil, padrões holográficos SVG, badges de ranking, PDL/WR e logo oficial dos times, com link para página do time. Commit 1331d47 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado com HTTP/2 200 no ar.",
-      "touched": [
-        "web/src/components/home/TopTeamsStickers.tsx",
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-24T15:56:51.691Z",
-      "agent": "gemini",
-      "summary": "Aplicadas molduras vetoriais em SVG estilizadas como as bordas de tela de carregamento do League of Legends nos cards dos top 3 times do Lobby (Grão-Mestre com ouro/rubi alado para o 1º, Mestre com ametista e filigranas góticas para o 2º, Diamante com safira e facetas cristalinas para o 3º). Trilhos chanfrados, joias centrais com glow mágico, pingentes inferiores e cantoneiras de armadura. Commit 9fe5315 pushado para o GitHub (main e feat/redesign-modais) e para a VPS. Container Nginx reconstruído e validado ao vivo com HTTP/2 200.",
-      "touched": [
-        "web/src/components/home/TopTeamsStickers.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-27T22:36:43.762Z",
-      "agent": "deepseek",
-      "summary": "Copa do Tesouro: criei os 3 confrontos restantes da fase de grupos (não 1, como o usuário supunha): BKS x KRV, RMD x PHE, MDR x MOO. Inseridos direto em tournament_matches (status='combinando', 'A COMBINAR'/'--:--', best_of=3, phase_label='Fase de Grupos', score 0-0) — mesmo formato do sortear-semana.mjs (ADR-068). O script não serve aqui porque aborta rodada parcial (<4 pares). Validei no DB (INSERT 0 3, 0 pares repetidos) e pela API: 28/28 pares presentes, 3 novos pendentes aparecem em Meus Jogos Pendentes. Kraken já estava com 28/28 (grupos completos). Atualizei o histórico de docs/ROTINA_SORTEIO_COPAS.md e registrei a limitação do script.",
-      "touched": [
-        "docs/ROTINA_SORTEIO_COPAS.md",
-        "tournament_matches",
-        "copa-tesouro"
-      ]
-    },
-    {
-      "at": "2026-09-27T22:44:18.007Z",
-      "agent": "deepseek",
-      "summary": "Fix: confronto criado pelo ADM no \"Criar Confronto\" nascia sempre com status 'proposto' (aparecia como \"proposta enviada\") mesmo sem data/horário. handleCreateAdminMatch agora: ADM sem data+hora -> status 'combinando' e proposedBy vazio (\"A Agendar\", ambos capitães propõem); ADM com data+hora -> 'proposto' por ADMIN; \"Agendar Desafio\" do capitão (não-admin) mantém proposta do time dele. AdminMatchModal ganhou inputs opcionais de data/hora que começam em branco (AdminCriarJogo limpa os campos ao abrir). Verificado: npm run lint (tsc --noEmit) exit 0 e vite build ok; commit 3672e9a + refinamento 6e91199 pushados para vps e origin; nginx reconstruído na VPS, site HTTP 200 e chunk CampeonatoDetalhes-C1vGNuis.js servindo o hint novo. Obs.: NKZ x CMS já está com proposta real do NKZ (2026-09-29 20:00), então não foi alterado.",
-      "touched": [
-        "web/src/features/campeonatos/CampeonatoContext.tsx",
-        "web/src/features/campeonatos/components/modals/AdminMatchModal.tsx",
-        "web/src/components/campeonatos/AdminCriarJogo.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T00:23:34.737Z",
-      "agent": "deepseek",
-      "summary": "Escala de transmissões implementada via superpowers (spec+plano 2026-09-29): migration 0024 (transmissoes.match_id + escalas_transmissao unique match_id), encerramento automático no motor de série (serie-campeonato) e no storeCronograma (W.O.) + proteção de leitura na vitrine/minha, endpoints /streams/agenda (GET público, POST pegar, DELETE soltar, POST no-ar), SDK web, componente AgendaTransmissoes em /streamers e chip do streamer no carrossel do Lobby. Evidências: streams.test.ts 11 PASS; suíte completa 200 PASS/30 suites; tsc api+web exit 0; vite build ok; smoke status-server 23 checks. ADR-072. PENDENTE DO USUÁRIO: teste interativo no browser (pegar jogo → estou no ar → finalizar série) e commit/deploy quando pedir — não commitei nada.",
-      "touched": [
-        "db/schema/conteudo.ts",
-        "db/migrations/0024_gray_gressill.sql",
-        "api/src/lib/transmissoes.ts",
-        "api/src/lib/streams.ts",
-        "api/src/lib/serie-campeonato.ts",
-        "api/src/lib/tournament-store.ts",
-        "api/src/routes/streams.ts",
-        "api/test/streams.test.ts",
-        "web/src/features/streams/types.ts",
-        "web/src/features/streams/components/AgendaTransmissoes.tsx",
-        "web/src/lib/api.ts",
-        "web/src/hooks/useTransmissoesAtivas.ts",
-        "web/src/pages/Streamers.tsx",
-        "web/src/pages/Lobby.tsx",
-        "mcp/status-server/lib/plan.js",
-        "docs/superpowers/specs/2026-09-29-escala-transmissoes-design.md",
-        "docs/superpowers/plans/2026-09-29-escala-transmissoes.md"
-      ]
-    },
-    {
-      "at": "2026-09-30T00:29:59.236Z",
-      "agent": "deepseek",
-      "summary": "Deploy da escala de transmissões na VPS concluído: commits e6ee0e9 (feature) + 0a659b8 (docs) pushados para origin e vps; migration 0024 aplicada via psql no m7arena_postgres (CREATE TABLE escalas_transmissao + ALTER transmissoes.match_id + FKs + indexes, ON_ERROR_STOP=1, sem erro); docker compose build app nginx + up -d app/realtime/nginx (containers recriados). Evidência viva: GET https://m7arena.pro/api/streams/agenda → HTTP 200 com os 3 jogos confirmados da COPA DO KRAKEN (M7W x NKZA 30/09 20:00 'AMANHÃ', BKA x AES 30/09 21:10, LDL x BKT 01/10 20:00 '01 OUT') — label no fuso SP correto, streamer null, pode_assumir false (sem sessão). Site /streamers HTTP 200 e vitrine /api/streams HTTP 200 []. Falta: teste interativo do usuário com conta streamer (pegar jogo → estou no ar → código → finalizar série desliga sozinho).",
-      "touched": [
-        "db/migrations/0024_gray_gressill.sql",
-        "api/src/lib/streams.ts",
-        "api/src/routes/streams.ts",
-        "web/src/features/streams/components/AgendaTransmissoes.tsx",
-        "web/src/pages/Streamers.tsx",
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T00:41:54.076Z",
-      "agent": "deepseek",
-      "summary": "Ajuste de UI na tela de lives (pedido do usuário): AgendaTransmissoes agora tem duas seções — 'Minhas Transmissões' (jogos que o streamer pegou, com ESTOU NO AR/Soltar/código/Encerrar) e 'Agenda de Jogos' (disponíveis; pegar migra o card para cima, soltar devolve o jogo para a agenda). Card extraído para CardJogo com contexto (meu/não-meu). Deploy: commit 787953f pushado para origin e vps; docker compose build nginx + up -d nginx. Evidência: chunk Streamers-CFgd5dvi.js servido em https://m7arena.pro/assets/ contém os textos novos ('Minhas Transmiss'/'Agenda de Jogos'); /streamers HTTP 200.",
-      "touched": [
-        "web/src/features/streams/components/AgendaTransmissoes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T01:20:47.285Z",
-      "agent": "deepseek",
-      "summary": "Ajuste de UI pedido: AgendaTransmissoes trocou os cards por listas compactas (linha com data/hora, #TAG x #TAG, campeonato, status/streamer e ações à direita), mantendo as duas seções — Minhas Transmissões e Agenda de Jogos. Deploy: commit b3a8d62 pushado origin+vps; nginx reconstruído; chunk Streamers-BpDbsl3d.js servido e /streamers HTTP 200. Obs.: antes disso, verifiquei a queixa dos jogos do Tesouro 'sumidos' — no banco estão os 28 (25 finalizado, 1 proposto BKS x KRV 30/09, 2 combinando RMD x PHE e MDR x MOO) e a API /tournaments/:id devolve os 3 pendentes; nada foi perdido, era tela/cache do usuário (ele confirmou que apareceu).",
-      "touched": [
-        "web/src/features/streams/components/AgendaTransmissoes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T01:50:19.462Z",
-      "agent": "gemini",
-      "summary": "Ajustes visuais e de responsividade concluídos e deployados na VPS: 1) /streamers: removido visual de vidro/transparência adicionando fundos escuros sólidos (bg-[#0c0d12], bg-black/60) no card do painel de abrir live, nos selects/inputs, nas linhas da AgendaTransmissoes e empty states; 2) /streamers: card superior tornado 100% responsivo para mobile com quebra flex-col e botões full-width sem cortes; 3) / (Lobby): eliminada a rolagem horizontal no celular isolando o blur-[120px] com overflow-hidden, limitando a largura dos cards das figurinhas com max-w-[calc(100vw-32px)] e blindando o container raiz com overflow-x-hidden. Deploy: commit 5f2d409 pushado em origin e vps, container m7arena-nginx rebuildado com sucesso, assets Streamers-ChixHMTy.js e Lobby-DQWvqLto.js servidos com HTTP 200.",
-      "touched": [
-        "web/src/components/home/TopTeamsStickers.tsx",
-        "web/src/features/streams/components/AgendaTransmissoes.tsx",
-        "web/src/pages/Lobby.tsx",
-        "web/src/pages/Streamers.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T01:59:55.685Z",
-      "agent": "gemini",
-      "summary": "Ajustes visuais na tela de streamers: 1) Badge de data/hora alterado de amarelo para roxo estilo Twitch (#9146FF) com texto branco em negrito; 2) Nome dos times exibido por extenso (nomeDe) em vez de apenas a TAG; 3) Emoji de check (✅) adicionado imediatamente a frente do botao 'Soltar' quando o jogo esta selecionado pelo streamer, e o botao 'Soltar' estilizado em tom avermelhado (bg-red-600/20 text-red-400 hover:bg-red-600); 4) Todos os cards da tela de streamers e agenda ajustados para o estilo exato do menu: bg-[#050505]/90 backdrop-blur-md (preto profundo com sutis 10% de transparencia e desfoque de fundo). Deploy realizado na VPS com rebuild do container m7arena_nginx.",
-      "touched": [
-        "web/src/features/streams/components/AgendaTransmissoes.tsx",
-        "web/src/pages/Streamers.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T02:02:33.634Z",
-      "agent": "gemini",
-      "summary": "Removido o emoji de check (✅) a pedido do usuario na tela de streamers (web/src/features/streams/components/AgendaTransmissoes.tsx), mantendo o botao Soltar com estilo avermelhado. Build e deploy concluidos na VPS com HTTP 200 servindo chunk Streamers-JZlKCwes.js.",
-      "touched": [
-        "web/src/features/streams/components/AgendaTransmissoes.tsx"
-      ]
-    },
-    {
-      "at": "2026-09-30T02:04:55.934Z",
-      "agent": "gemini",
-      "summary": "Ajuste no card/badge do streamer abaixo do proximo jogo no Lobby (web/src/pages/Lobby.tsx): alterado para roxo solido Twitch (#9146FF) com texto branco em negrito, removida transparencia, formato menos redondo (rounded-xl em vez de rounded-full), tamanho aumentado (px-4 py-1.5 md:px-5 md:py-2, text-xs md:text-sm) e espacado mais abaixo com mt-2.5, com link clicavel para a Twitch. Build e deploy concluidos na VPS com HTTP 200 servindo chunk Lobby-DvbkT0Xs.js.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
     {
       "at": "2026-09-30T02:10:55.179Z",
       "agent": "gemini",
@@ -2740,6 +2595,154 @@
         "web/src/pages/Jogar.tsx",
         "web/src/App.tsx",
         "scripts/smoke-vps-sala-campeonato.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-13T23:27:33.954Z",
+      "agent": "deepseek",
+      "summary": "Sala TIME vs TIME personalizada (livre) no MESMO componente/estilo da sala de campeonato (/sala-time/:id -> SalaCampeonato): a vaga agora e ocupada COM o time do jogador — dono ou membro aceito (nome/tag/logo entram no match e aparecem em coluna/centro/pos-draft); sem time -> erro sem_time (toast crie ou entre em um time); mesmo time nos dois lados -> mesmo_time; sair da vaga -> o time sai junto e a vaga reabre. Ciclo compartilhado: PRONTO, sorteio, lado/pick, draft, resumo e codigo. Rodada: botoes de escolha visiveis para todos (apagados/travados p/ quem nao e da vez), First verde e Last amarelo, Sair da Vaga em camp_prontos, revert da mudanca errada na sala normal, CutCard oficial restaurado. Deploy app+nginx, health 200.",
+      "touched": [
+        "api/src/lib/sala-campeonato.ts",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-14T04:51:26.159Z",
+      "agent": "deepseek",
+      "summary": "Scrim TIME vs TIME (sala livre) - parte 2 iniciada: formato da serie na criacao (MD1/MD3 presetado/MD5, migration 0029), campeoes aparecem pos-draft (shape carrega draft em iniciando/partida_iniciada), rotulo da serie e campo placar no centro. Base da serie local: migration 0030 (placar_a/placar_b/ultimo_vencedor em campeonato_sala_estado) + marcarPronto usa ultimo_vencedor local nos jogos 2+ (perdedor escolhe). FALTA (proxima peca): o gancho de FIM DE JOGO da sala livre (verificacao/manual) gravar placar+ultimo_vencedor e voltar a camp_prontos com jogo+1, fechando no alvo do formato (MD1=1, MD3=2, MD5=3). Isolado em time_vs_time_livre.",
+      "touched": [
+        "db/schema/matches.ts",
+        "api/src/lib/sala-campeonato.ts",
+        "web/src/pages/Jogar.tsx",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-14T04:57:26.598Z",
+      "agent": "deepseek",
+      "summary": "Scrim TIME vs TIME (sala livre) COMPLETO: serie local MD1/MD3(preset)/MD5 — formato escolhido na criacao (0029), placar local + ultimo vencedor (0030), campeoes aparecem pos-draft e nas fases finais (shape), rotulo da serie + placar no centro, perdedor do jogo anterior escolhe o lado nos jogos 2+, e o GANCHO DE FIM DE JOGO (verificar-partida -> serie-livre.avancarSerieLivre): grava placar/vencedor, volta pro PRONTO com jogo+1 e so encerra ao atingir o alvo. TUDO isolado em mode=time_vs_time_livre (campeonato e normais intocados). Build passou no docker da VPS (67b121d), dist conferido, health 200. Tambem: fix do vazamento de lado vazio (side='') na sala livre que travava os botoes de escolha; fluxo de time revisado (coroa anda ao sair, transferir-dono, time apagado sem membros); vaga puxa time so por membership aceita.",
+      "touched": [
+        "api/src/lib/serie-livre.ts",
+        "api/src/lib/verificar-partida.ts",
+        "api/src/lib/sala-campeonato.ts",
+        "api/src/routes/teams.ts",
+        "web/src/pages/Jogar.tsx",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx",
+        "db/migrations/0029_formato_sala_livre.sql",
+        "db/migrations/0030_serie_livre_placar.sql"
+      ]
+    },
+    {
+      "at": "2026-10-14T06:21:02.769Z",
+      "agent": "deepseek",
+      "summary": "Live no TIME vs TIME livre (scrim): migration 0031 add transmissoes.sala_id (FK matches; o match_id e FK de series - nao serve pro scrim). iniciarLiveDaSala aceita time_vs_time_livre (ancora sala_id, matchId/campeonatoId null, modo time_vs_time_livre, titulo 'TAGA x TAGB - Scrim'); shape acha a live por sala_id; front liberou os botoes Iniciar/Encerrar Live sem exigir serie. Campeonato intocado. Tambem na rodada: slot vazio do draft com FaShieldAlt, contagem pos-draft no proprio cronometro (10s vermelho, sem banner), slots de PICK quadrados 11x11, pills MD com CutCard + docs/CANTOS_RECORTADOS.md + regra no AGENTS.md, campo Descricao removido do modal, seletor MD no modal (fix crash), titulo da escolha com # e dois-pontos. Deploy app+nginx, build ok, health 200.",
+      "touched": [
+        "db/schema/conteudo.ts",
+        "db/migrations/0031_live_sala_id.sql",
+        "api/src/lib/sala-campeonato.ts",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx",
+        "web/src/components/draft/DraftRoom.tsx",
+        "web/src/pages/Jogar.tsx",
+        "docs/CANTOS_RECORTADOS.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "at": "2026-10-14T06:29:08.245Z",
+      "agent": "deepseek",
+      "summary": "Live do TIME vs TIME/campeonato pode abrir em QUALQUER fase com a sala viva: FASES_COM_LIVE = fases camp_* + iniciando_partida + partida_iniciada + aguardando_revisao (antes o streamer tomava estado_invalido / 'A sala mudou de fase' ao tentar live com o jogo em andamento). Countdown 10s pos-draft agora tem gatilho robusto: shape publica draft.finalizado_em (updatedAt) e o front dispara pela transicao ongoing->finished OU por draft finished fechado ha <45s (cobre poll/WS fora de ordem e refresh) - o cronometro do proprio draft conta 10..1 em vermelho e volta pra sala. Verificado no container: shape da sala 188 (partida_iniciada, livre) vem com draft.status=finished e finalizado_em=2026-10-14T06:20:21.655Z; build web contem finalizado_em. Deploy f5c01a9 app+nginx, health 200.",
+      "touched": [
+        "api/src/lib/sala-campeonato.ts",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-14T22:40:23.326Z",
+      "agent": "deepseek",
+      "summary": "Sala TIME vs TIME (livre): removido o aviso central 'Aguardando os Times / Cada lado ocupa a sua vaga' na fase camp_vagas. Bloco agora e estado === 'camp_vagas' && serie — so o campeonato mantem o aviso. Build nginx ok, health 200 (b230b9f).",
+      "touched": [
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-15T22:49:34.588Z",
+      "agent": "deepseek",
+      "summary": "Sala 194 (time_vs_time_livre, Panda Post x moondust, MD3): simulado o fim do JOGO 1 com vitoria da moondust (1x0) rodando a propria avancarSerieLivre no container (winnerSide red = time B = moondust, lado normalizado das salas de times). Resultado persistido: status camp_prontos, jogo 2, placar 0x1, ultimo_vencedor b, prontos zerados (perdedor Panda Post escolhe lado/pick no jogo 2). notifyMatchChange disparado pro realtime.",
+      "touched": [
+        "sala 194 (dados)"
+      ]
+    },
+    {
+      "at": "2026-10-15T23:06:53.401Z",
+      "agent": "deepseek",
+      "summary": "Reset de senha (pedido do usuario): delgobogabriel@gmail.com / shinbinha#gabss (id 7fe4322d-fd43-427c-a0e6-b9fe045183fb). Senha gerada aleatoria 'M7-2bbaqc4jva', hash bcrypt rounds 10 (mesmo do register) gravado em users.password_hash pela propria app no container; verificacao pos-gravação com bcrypt.compare = true. 2 sessoes antigas removidas de user_sessions (qualquer dispositivo logado cai).",
+      "touched": [
+        "users (dados)",
+        "user_sessions (dados)"
+      ]
+    },
+    {
+      "at": "2026-10-15T23:51:02.353Z",
+      "agent": "deepseek",
+      "summary": "Sala TIME vs TIME (livre): partida finalizada agora tem a apresentacao igual as outras salas - renderPosDraft ganhou modo \finalizada (faixa dourada PARTIDA FINALIZADA, tag VENCEDOR com glow no time que fechou a serie via sala.vencedor legado A/B, placar local da serie (camp.placar_a/b), formato e duracao do ultimo jogo via resultado_riot). Campeoes do ultimo jogo (draft do jogo final) aparecem por time como no pos-draft. Gate: estado === camp_jogo || (!serie && estado === encerrada) - campeonato intocado. Verificado: bundle SalaCampeonato-*.js contem 'Partida Finalizada'; build nginx ok, health 200 (fa286ac).",
+      "touched": [
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-16T00:17:20.597Z",
+      "agent": "deepseek",
+      "summary": "Botao Verificar Partida na sala TIME vs TIME (faixa do topo, ciano, igual Atualizar Resultado do campeonato: staff ADM/organizador + quem esta na vaga, visivel em partida_iniciada) chamando POST /api/matches/:id/verificar. Junto veio a CORRECAO do motor: verificar-partida fazia a checagem de nicks 10 participantes x 2 vagas e CANCELAVA o 5v5 da sala de times (bug real: sala 196 cancelou as 00:08 com jogo real jogado 23:38). Agora em time_vs_time_livre o motor resolve o ROSTER dos dois times (time da vaga pela membership + tag do snapshot; puuids de guest_puuid ou conta vinculada, reusando resolverRosterPuuids/ladoVencedorDaJogada da serie do campeonato), busca candidatas pelo roster inteiro e decide o vencedor por pertinencia ao roster (nunca pelo teamId); sem roster cai nas contas das vagas. SALA 196 RECUPERADA: des-cancelada + motor novo rodado de verdade -> achou BR1_3293564428 (26min, GameComplete) -> M7 WHITE venceu o jogo 1 -> serie avancou (placar 0x1, jogo 2, camp_prontos, ultimo_vencedor b). Deploy 2a5d45c app+nginx, health 200, bundle com o botao, ciclo ESM validado no container.",
+      "touched": [
+        "api/src/lib/verificar-partida.ts",
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx",
+        "sala 196 (dados)"
+      ]
+    },
+    {
+      "at": "2026-10-16T00:55:23.547Z",
+      "agent": "deepseek",
+      "summary": "Botao Verificar Partida da sala TIME vs TIME agora aparece para QUALQUER jogador logado e em qualquer fase da sala (camp_vagas, prontos, draft, partida) - antes so em partida_iniciada, por isso o usuario nao via ao criar/entrar na sala. O clique avisa quando nao ha partida em andamento (toast) e o servidor continua validando (staff ou vaga). Deploy 20db663 nginx, health 200, bundle conferido.",
+      "touched": [
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-16T02:54:28.622Z",
+      "agent": "deepseek",
+      "summary": "Fluxo de times (ADR-087): um time so por jogador. (1) membership de CONVIDADO (guest_riot_id, user_id NULL) agora vale em todos os pontos: vaga da sala livre (entrarNaVaga usava so user_id -> sem_time para metade dos rosters), card do /jogador (players.tsx so mandava guest_riot_ids para quem nao tinha conta) e trava de 'ja pertence a um time'. (2) Entrar em time remove o anterior nos 3 pontos: accept invite/solicitacao, save lineup, criar time (sairDeOutrosTimes cobre user_id e guest por Riot ID). (3) GET /teams/members case-insensitive + status. Caso real macoinha07#fck13: estava no M7W como guest e nao aparecia no /jogador nem entrava na sala 196. Evidencia: testes 262/262 (concurrency 1; os 4 falhos em paralelo sao contencao de PGlite, passam isolados), tsc api+web exit 0, vite build ok, deploy 13b06e4+docs e8ecb02 na VPS, health 200, API prod confirma by-user->M7W e members case-insensitive.",
+      "touched": [
+        "api/src/lib/team-membership.ts",
+        "api/src/lib/sala-campeonato.ts",
+        "api/src/routes/teams.ts",
+        "api/test/team-membership.test.ts",
+        "api/test/sala-campeonato.test.ts",
+        "web/src/pages/players.tsx",
+        "web/src/lib/api.ts"
+      ]
+    },
+    {
+      "at": "2026-10-16T03:11:14.715Z",
+      "agent": "deepseek",
+      "summary": "Modal Adicionar Jogadores (TimePage): jogador sem conta em lugar nenhum (busca local vazia + Riot API nao acha) agora entra DIRETO como convidado manual na lista de pendentes — botao 'Adicionar como Convidado Manual' removido. Guard: so auto-adiciona com Riot ID completo (nick#tag com tag >= 3 chars); ID incompleto continua mostrando dica 'continue digitando'. Player achado na Riot API continua como resultado clicavel (mostra icon/elo antes de adicionar). Evidencia: tsc web exit 0, vite build ok, commit 6d67268 deployado (nginx rebuildado, m7arena.pro 200).",
+      "touched": [
+        "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-18T01:36:23.334Z",
+      "agent": "deepseek",
+      "summary": "Bola do draft (circulo do TeamPanel no DraftRoom, compartilhado por todas as salas) dobrada: 18vmin -> 36vmin com conteudo interno proporcional (borda 1.2vmin, bolinhas 2.4vmin, Aguardando 2.4vmin, Banir/Escolher 3.6vmin) e paineis laterais 10px mais perto do draft (px-[calc(4vmin+10px)]). Deploy c01eae2 nginx + restart do nginx (IP novo do app -> 502) -> health 200.",
+      "touched": [
+        "web/src/components/draft/DraftRoom.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-18T01:45:29.489Z",
+      "agent": "deepseek",
+      "summary": "Draft (DraftRoom.tsx): (1) removido o 'Aguardando' com as 3 bolinhas do meio da bola — sem vez a bola fica so com a logo do time de fundo (borda nao acende fora da vez); (2) removidas as 3 bolinhas da vez Banir/Escolher — texto agora 'Banindo...'/'Escolhendo...'; (3) sombra/borda do ban ATIVO mudou de dourada (#c89b3c) para vermelha (border-red-500 + glow rgba(239,68,68,0.5)), mantendo o scale-110 (so a cor mudou); (4) nome das equipes acima da bola agora font-black (era font-bold). Antes: bola 32vmin com conteudo reescalado, borda 0.8vmin, paineis centralizados no vao draft x lateral via px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] (Tailwind gerou 'padding-inline:max(2vmin,25% - 33.75vmin)' verificado no CSS). Deploys 8e5385f/e3dc348/f225dc5/3fbd17d nginx + restart; health 200; bundle DraftRoom-DM6e_C-p.js conferido (border-red-500 e rgba(239,68,68,0.5) presentes).",
+      "touched": [
+        "web/src/components/draft/DraftRoom.tsx"
       ]
     }
   ]
