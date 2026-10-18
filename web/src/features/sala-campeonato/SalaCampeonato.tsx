@@ -541,6 +541,133 @@ export default function SalaCampeonato() {
     );
   }
 
+  // ── TELA AO VIVO (partida em andamento): a MESMA casca do draft segue
+  //    segurando a sala depois que o draft fecha — o relógio/turno dão lugar a
+  //    times + placar + status e o botão de confirmar vira o CÓDIGO DA PARTIDA
+  //    (pedido do usuário 18/10). Vale para a sala livre (iniciando_partida /
+  //    partida_iniciada) e para a série do campeonato (camp_jogo).
+  const aoVivoAtivo =
+    estado === 'camp_jogo' ||
+    estado === 'partida_iniciada' ||
+    (!serie && estado === 'iniciando_partida');
+  if (aoVivoAtivo && camp?.draft) {
+    const placarA = serie ? (serie.placar_a ?? 0) : (camp?.placar_a ?? 0);
+    const placarB = serie ? (serie.placar_b ?? 0) : (camp?.placar_b ?? 0);
+    return (
+      <div className="relative">
+        <DraftRoom
+          draft={camp.draft}
+          jogadores={sala.jogadores ?? []}
+          usuarioId={eu}
+          timer={timerDraft}
+          onBanir={(champ: string) => acaoDraft('ban', champ)}
+          onPickar={(champ: string) => acaoDraft('pick', champ)}
+          onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
+          previewExterno={previewDraft}
+          ladoDoTimeA={camp?.lado_time_a ?? null}
+          espectadorCompleto
+          timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
+          timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
+          placar={serie ? { a: placarA, b: placarB } : null}
+          aoVivo={{
+            status: estado === 'iniciando_partida' ? 'Partida Pronta!' : 'Partida Ao Vivo!',
+            pulsante: estado !== 'iniciando_partida',
+            placar: { a: placarA, b: placarB },
+            legenda: serie ? `JOGO ${camp?.jogo ?? 1} · MD${serie.best_of ?? 3}` : null,
+            codigo: sala.codigo_partida ?? null,
+          }}
+        />
+
+        {/* A tela ao vivo não tem a top bar da sala: os gatilhos que ainda
+            importam com a partida rolando ficam neste canto. O automático
+            (polling/cron) continua rodando por trás de qualquer jeito. */}
+        <div className="absolute left-[1.2vmin] top-[0.5vmin] z-[80] flex items-center gap-[0.8vmin]">
+          {!serie && !!perfil && !['encerrada', 'cancelada'].includes(estado) && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
+              disabled={!!ocupado}
+              onClick={verificarPartidaAgora}
+              className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+              style={{ clipPath: CUT_BUTTON }}
+              title="Verificar partida — confere na Riot agora"
+            >
+              <div
+                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
+                style={{ clipPath: CUT_BUTTON_INNER }}
+              >
+                <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-partida' ? 'animate-spin' : ''}`} />
+                <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                  Verificar Partida
+                </span>
+              </div>
+            </motion.button>
+          )}
+          {!!serie && (ehStaffCampeonato || !!meuLado) && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
+              disabled={!!ocupado}
+              onClick={atualizarResultado}
+              className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+              style={{ clipPath: CUT_BUTTON }}
+              title="Atualizar resultado — verifica a série na Riot agora"
+            >
+              <div
+                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
+                style={{ clipPath: CUT_BUTTON_INNER }}
+              >
+                <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
+                <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                  Atualizar Resultado
+                </span>
+              </div>
+            </motion.button>
+          )}
+          {ehAdm && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
+              disabled={!!ocupado}
+              onClick={resetarSala}
+              className="relative p-[1px] bg-[#ef4444]/50 hover:bg-[#ef4444] transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+              style={{ clipPath: CUT_BUTTON }}
+              title="Temporário: reseta a sala para o PRONTO (prontos, escolhas e draft)"
+            >
+              <div
+                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#1a0505] hover:bg-[#2a0808] flex items-center justify-center gap-1.5 text-[#ff8a8a] transition-colors"
+                style={{ clipPath: CUT_BUTTON_INNER }}
+              >
+                <RotateCcw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${String(ocupado ?? '').includes('resetar') ? 'animate-spin' : ''}`} />
+                <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                  Resetar Sala
+                </span>
+              </div>
+            </motion.button>
+          )}
+        </div>
+
+        {/* Notificação "Assista ao vivo" — vale igual na tela ao vivo */}
+        {camp?.live && (
+          <a
+            href={`https://twitch.tv/${camp.live.twitch}`}
+            target="_blank"
+            rel="noreferrer"
+            className="fixed left-3 bottom-3 sm:left-5 sm:bottom-5 z-[80] bg-white text-black shadow-2xl px-4 py-3 flex items-center gap-3 hover:scale-[1.03] transition-transform"
+            style={{ clipPath: CUT_BUTTON }}
+            title="Assistir na Twitch"
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shrink-0" />
+            <span className="flex flex-col leading-tight">
+              <span className="text-sm font-black uppercase tracking-wide">Assista ao vivo</span>
+              <span className="text-[11px] font-bold text-[#9146FF]">@{camp.live.twitch}</span>
+            </span>
+          </a>
+        )}
+      </div>
+    );
+  }
+
   // ── LATERAIS: etiqueta + nome do time + VAGA (componente VagaSlot, idêntico
   //    ao da sala normal; a foto do time entra no lugar do ícone de rota) ────
   //

@@ -18,7 +18,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Search, Ban, Volume2, VolumeX } from 'lucide-react';
+import { Search, Ban, Check, Copy, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FaShieldAlt } from 'react-icons/fa';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
@@ -60,6 +60,23 @@ interface DraftRoomProps {
    * No campeonato fica `false` (visão de transmissão).
    */
   espectadorCompleto?: boolean;
+  /**
+   * MODO AO VIVO (partida em andamento): a MESMA tela do draft segura a sala
+   * depois que o draft fecha — o relógio/turno dão lugar a times + placar +
+   * status e o botão central vira o CÓDIGO DA PARTIDA (pedido do usuário
+   * 2026-10-18). Sem grid, sem turno e sem sons de draft.
+   */
+  aoVivo?: {
+    /** Rótulo do estado: 'Partida Pronta!' (sala se preparando) / 'Partida Ao Vivo!'. */
+    status: string;
+    /** Ponto vermelho pulsante — partida realmente em andamento. */
+    pulsante?: boolean;
+    placar?: { a: number; b: number } | null;
+    /** Linha fina extra sob o status (ex.: 'JOGO 2 · MD3' na série). */
+    legenda?: string | null;
+    /** Código da partida — só chega aqui para quem pode ver (filtro do servidor). */
+    codigo?: string | null;
+  } | null;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -299,7 +316,7 @@ function TimeRecap({ time, picks, lado, champions, version }: {
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar, recap, espectadorCompleto,
+  timeA, timeB, placar, recap, espectadorCompleto, aoVivo,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -310,6 +327,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const [enviando, setEnviando] = useState(false);
   // Mudo dos sons do draft (botão no canto do topo) — preferência lembrada.
   const [mudo, setMudo] = useState<boolean>(() => somMudo());
+  // Tela ao vivo: feedback do "copiar código" (2,5s de "Código Copiado!").
+  const [codigoCopiado, setCodigoCopiado] = useState(false);
 
   useEffect(() => {
     let vivo = true;
@@ -333,8 +352,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const meuJogador = jogadores.find((j: any) => j.user_id === usuarioId);
   const meuTime: 'blue' | 'red' | null = meuJogador ? (meuJogador.is_time_a ? 'blue' : 'red') : null;
   const possoJogar = !!meuJogador;
+  // TELA AO VIVO (partida em andamento): mesma casca do draft com os dados do
+  // jogo no lugar do relógio — sem grid e sem botão de confirmar.
+  const aoVivoAtivo = !!aoVivo;
   // Espectador do Time vs Time vê o grid (mesma visão de quem picka).
-  const mostraGrid = possoJogar || !!espectadorCompleto;
+  const mostraGrid = !aoVivoAtivo && (possoJogar || !!espectadorCompleto);
 
   const emTurno = draft.status === 'ongoing';
   const fase = draft.current_phase;
@@ -456,6 +478,21 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   const duracaoSeg = Math.max(1, Math.round((draft.duracao_turno_ms ?? 30_000) / 1000));
   const segundos = Math.max(0, Math.min(timer, duracaoSeg));
 
+  // Código da partida (tela ao vivo): mesmo gesto do botão da sala — copia e
+  // confirma no toast; o próprio botão troca o texto por "Código Copiado!".
+  const copiarCodigoAoVivo = async () => {
+    try {
+      await navigator.clipboard.writeText(aoVivo?.codigo ?? '');
+      setCodigoCopiado(true);
+      toast.success('Código copiado! Cole no LoL em Jogar > Torneios > Código de Torneio.');
+      setTimeout(() => setCodigoCopiado(false), 2500);
+    } catch (erro) {
+      // Permissão de clipboard negada: o código está na tela para copiar na mão.
+      console.error('[DraftRoom] Falha ao copiar o código da partida:', erro);
+      toast.error('Não foi possível copiar — selecione o código na tela.');
+    }
+  };
+
   // ── "Killcam" da bola (pedido do usuário 2026-10-17) ─────────────────────
   // Quando um ban/pick é CONFIRMADO, o campeão aparece por ~2s NA BOLA do lado
   // que agiu (ban = P&B + lâmina vermelha varrendo; pick = explosão dourada).
@@ -520,6 +557,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // (o template encadeia os dois no mesmo instante; tocar os dois seria sopa).
   const faseSonoraRef = useRef<string | null>(null);
   useEffect(() => {
+    // Tela ao vivo: o draft já fechou — nada de intro de fase no mount.
+    if (aoVivoAtivo) return;
     const anterior = faseSonoraRef.current;
     faseSonoraRef.current = fase;
     if (anterior === fase) return;
@@ -644,8 +683,34 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
 
-      {/* HEADER SECTION - TIMER + FASE */}
+      {/* HEADER SECTION - TIMER + FASE — na TELA AO VIVO o mesmo lugar mostra
+          os times + placar + status da partida (pedido do usuário 18/10). */}
       <div className="relative pt-[2vmin] flex flex-col items-center z-40">
+        {aoVivoAtivo ? (
+          <>
+            <div className="flex items-center justify-center gap-[3vmin] w-[85vmin]">
+              <span className="flex-1 min-w-0 text-right text-[2.6vmin] font-black uppercase tracking-[0.15em] text-[#60A5FA] truncate">
+                {labelEquipeA}
+              </span>
+              <span className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.3)] whitespace-nowrap">
+                {aoVivo?.placar?.a ?? 0} <span className="text-white/40">-</span> {aoVivo?.placar?.b ?? 0}
+              </span>
+              <span className="flex-1 min-w-0 text-left text-[2.6vmin] font-black uppercase tracking-[0.15em] text-[#f87171] truncate">
+                {labelEquipeB}
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-[1vmin] mt-[1.4vmin] text-[2vmin] font-black uppercase tracking-[0.35em] text-[#00FF41]">
+              {aoVivo?.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
+              {aoVivo?.status}
+            </span>
+            {!!aoVivo?.legenda && (
+              <span className="mt-[0.6vmin] text-[1.2vmin] font-bold uppercase tracking-[0.45em] text-white/45">
+                {aoVivo.legenda}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
         <h1 className="text-[3.5vmin] font-bold tracking-[0.2em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">
           {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
         </h1>
@@ -684,6 +749,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
           {segundos}
         </div>
+          </>
+        )}
       </div>
 
       {/* MUDO DOS SONS DO DRAFT — canto superior direito, acima dos bans do
@@ -741,12 +808,12 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           return (
             <TeamPanel key={equipe} lado={dataSide}
               ladoJogo={ehA ? ladoEquipeA : ladoEquipeB}
-              emTurno={emTurno && draft.current_team === dataSide}
-              selected={selectedChamp} meuTime={meuTime}
+              emTurno={!aoVivoAtivo && emTurno && draft.current_team === dataSide}
+              selected={aoVivoAtivo ? null : selectedChamp} meuTime={meuTime}
               jogadorNome={ehA ? labelEquipeA : labelEquipeB}
-              preview={ehA ? previewBlue : previewRed}
+              preview={aoVivoAtivo ? null : (ehA ? previewBlue : previewRed)}
               logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)}
-              textoAbaixo={fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
+              textoAbaixo={aoVivoAtivo ? '' : fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
               feedback={feedback && feedback.lado === dataSide ? feedback : null} />
           );
         })}
@@ -870,7 +937,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       <div className="absolute bottom-[2vmin] left-0 right-0 flex items-end justify-between px-[4vmin] z-50">
         {colunaPicks(equipeEsquerda, false)}
 
-        {possoJogar && (
+        {!aoVivoAtivo && possoJogar && (
         <div className="mb-[2vmin] relative">
           <button
             disabled={!selectedChamp || !isMeuTurno || enviando}
@@ -901,9 +968,40 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         </div>
         )}
 
+        {/* CÓDIGO DA PARTIDA (tela ao vivo): no lugar do botão de confirmar.
+            Só chega aqui quem o servidor deixa ver (staff ou time da vaga) —
+            o espectador comum continua com a fileira de patrocinadores. */}
+        {aoVivoAtivo && aoVivo?.codigo && (
+          <div className="mb-[2vmin] flex flex-col items-center gap-[0.9vmin]">
+            <span className="text-[1.1vmin] font-bold uppercase tracking-[0.5em] text-white/45">
+              Código da partida
+            </span>
+            <button
+              type="button"
+              onClick={copiarCodigoAoVivo}
+              title="Copiar código da partida"
+              className="relative p-[1.5px] bg-[#c89b3c] hover:bg-[#e6c469] transition-colors cursor-pointer"
+              style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
+            >
+              <span
+                className="flex items-center justify-center gap-[1.2vmin] px-[4vmin] py-[1.4vmin] bg-[#FFB700] hover:bg-yellow-400 transition-colors text-black font-black text-[2.6vmin] uppercase tracking-[0.2em]"
+                style={{ clipPath: 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc(100% - 7.8px) 100%, 0 100%, 0 7.8px)' }}
+              >
+                {codigoCopiado
+                  ? <Check className="w-[2.4vmin] h-[2.4vmin] shrink-0" />
+                  : <Copy className="w-[2.4vmin] h-[2.4vmin] shrink-0" />}
+                {codigoCopiado ? 'Código Copiado!' : aoVivo.codigo}
+              </span>
+            </button>
+            <span className="text-[1vmin] font-bold uppercase tracking-[0.3em] text-white/35">
+              Clique para copiar · Cole no LoL em Jogar {'>'} Torneios
+            </span>
+          </div>
+        )}
+
         {/* PATROCINADORES (telespectador): no lugar do botão de confirmar —
             linha fina, selo "PATROCINADORES" e os logos centralizados. */}
-        {!possoJogar && (
+        {!possoJogar && !(aoVivoAtivo && aoVivo?.codigo) && (
           <div className="mb-[1vmin] flex flex-col items-center gap-[0.8vmin] pointer-events-none">
             <div className="w-[42vmin] h-[1px] bg-gradient-to-r from-transparent via-[#c89b3c]/70 to-transparent" />
             <span className="text-[1.1vmin] font-bold uppercase tracking-[0.5em] text-white/45">Patrocinadores</span>
