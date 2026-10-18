@@ -116,8 +116,10 @@ function BanSlot({ champion, active, jaBaniu, champions, version }: {
       `}>
         {champ ? (
           <>
+            {/* Ban em PRETO E BRANCO: o campeão está fora do jogo — colorido, o
+                espectador confundia com pick (pedido do usuário 18/10). */}
             <img src={buildChampionIconUrl(champ.id, version)} alt={champ.name}
-              className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
             <div className="absolute inset-0 border-t-2 border-red-600/80 -rotate-45 origin-center scale-150" />
           </>
         ) : (
