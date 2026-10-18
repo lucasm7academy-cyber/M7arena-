@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T03:34:58.195Z",
+  "updatedAt": "2026-10-18T03:44:12.268Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2433,16 +2433,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-10-11T22:55:42.989Z",
-      "agent": "deepseek",
-      "summary": "Passo 2 (schema da sala campeonato) concluído: ADR-085 + migration 0026 aplicada na VPS (12 statements OK, \\d confere). matches.tournament_match_id/bracket_match_id (FK cascade, check de vínculo único, índices); campeonato_sala_estado (jogo, PRONTO, sorteio/escolhas, sem timer); match_drafts ganha jogo com PK (match_id, jogo) para draft por jogo (Fearless = picks de jogos anteriores). Migration 0026 corrigida à mão (ordem do ADD COLUMN antes do PK e DROP do match_drafts_pkey — drizzle-kit não nomeia o PK antigo). Evidência: teste schema 4/4, suíte 230/230, tsc 0, drizzle-kit generate idempotente, psql prod confere. Commit d90fdb7. Próximo passo 3: criação automática T-10 (cron + lazy) + rotas da vaga/PRONTO + shape da sala.",
-      "touched": [
-        "db/schema/matches.ts",
-        "db/migrations/0026_amused_king_cobra.sql",
-        "api/test/sala-campeonato-schema.test.ts"
-      ]
-    },
-    {
       "at": "2026-10-11T23:12:45.040Z",
       "agent": "deepseek",
       "summary": "Passo 3 (sala campeonato: criação + vagas + PRONTO + shape) concluído e deployado (50f93d6). Lib nova api/src/lib/sala-campeonato.ts: criação AUTOMÁTICA T-10 pela varredura de 1 min (index.ts) + manual (A COMBINAR, idempotente); vagas com validação de roster (dono/membro aceito/coach/convidado por PUUID); PRONTO sem timer repetido por jogo → camp_lado com sorteio (jogo 1) ou perdedor do jogo anterior (2+); gancho no motor de série avança jogo/zera prontos/encerra sala (inclusive W.O. manual no storeCronograma); shape ganha bloco `campeonato` e o código fica visível a membros dos 2 times/streamer/staff. Evidências: smoke VPS 19/19 (auto+manual+vagas+pronto+sorteio+shape+redação), testes 9/9, suíte 239/239, tsc 0. Obs: a partir do deploy, jogos confirmados com horário ganham sala no banco automaticamente (SEM UI ainda — o front entra nos próximos passos). Próximo: passo 4 (escolha de lado) e 5 (draft Fearless).",
@@ -2725,6 +2715,14 @@
       "at": "2026-10-18T03:34:58.194Z",
       "agent": "deepseek",
       "summary": "Sons do draft no ar. 13 .ogg do client do LoL (curadoria do usuario) commitados EM REPO em web/public/sounds/draft (servidos pelo nginx como estatico, sem API/delay) + helper web/src/components/draft/draftSounds.ts (cache preguiçoso, precarga no mount, unlock no primeiro gesto, play morto em silencio com aviso unico de autoplay) + gatilhos no DraftRoom.tsx: intro de ban na abertura e em cada virada de fase (ban->pick toca bans-travados; template encadeia os dois no mesmo instante, entao inicio-do-pick ficou fora), notificacao da minha vez (seu-ban/sua-vez-de-escolher), tick por segundo (curto nos ultimos 10s), clique no campeao (grid-clique; indisponivel -> pick-negado), hover/click do BANIR/CONFIRMAR (lock-in-hover/lock-in-clique), ban confirmado na killcam (aliado/inimigo por meuTime) e draft-finalizado no ultimo pick (status finished chega no mesmo update). Evidencia: tsc web 0 erros; vite build ok (DraftRoom-CxQZBlY7.js local); commit cf6156c pushado origin+vps; nginx rebuild + restart; health 200; /sounds/draft/inicio-do-ban.ogg 200 70432 bytes e grid-clique.ogg 200 15405 bytes; bundle servido DraftRoom-CrN9FrLQ.js contem os 13 nomes .ogg e o path /sounds/draft/. Provisorio sinalizado ao usuario: draft-finalizado = sfx-cs-splash-forward renomeado (nao havia arquivo 'fim de draft' nos 17), grid-clique = sfx-uikit-grid-click da pasta pai, troca-* nao ligados (nao existe troca de campeoes) e grid-abrir/fechar sem momento no layout atual.",
+      "touched": [
+        "app.draft.campeonato"
+      ]
+    },
+    {
+      "at": "2026-10-18T03:44:12.267Z",
+      "agent": "deepseek",
+      "summary": "Sons do draft ajuste 2 (pedido do usuario): (1) botao de mudo no canto superior direito do draft, ACIMA dos bans do time vermelho e colado na lateral (absolute top-[1vmin] right-[1.5vmin] — nao empurra nem muda a altura da linha de bans), icone Volume2/VolumeX dourado/apagado, estado lembrado no navegador (localStorage m7.draft.som.mudo), mutar silencia o que estiver tocando e nenhum som novo dispara. (2) contagem 30->10 ficou SEM som: removido o SomDraft 'tick' + arquivo relogio-tick.ogg do repo (git rm) e o efeito agora so toca tickCurto nos ultimos 10s (que o usuario aprovou). Evidencia: tsc web 0 erros; vite build ok (DraftRoom-CUGkLHVh.js local, 41.75 kB); commit 7e1217f pushado origin+vps; nginx rebuild + restart; health 200; imagem serve DraftRoom-BO-nee_y.js com m7.draft.som.mudo=true, relogio-tick.ogg ausente e relogio-tick-curto.ogg presente; /sounds/draft/seu-ban.ogg 200 audio/ogg 104517 bytes; dir da imagem com 12 sons (sem relogio-tick.ogg). Obs: em URL de arquivo removido o nginx do host cai no fallback do SPA (serve index.html com 200 text/html) — inofensivo pois nada mais o referencia.",
       "touched": [
         "app.draft.campeonato"
       ]
