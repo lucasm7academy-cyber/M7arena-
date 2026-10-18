@@ -579,34 +579,35 @@ export default function SalaCampeonato() {
                 ? `Série ${String(camp.formato).toUpperCase()}`
                 : null,
             codigo: sala.codigo_partida ?? null,
+            // Ícones do topo (pedido do usuário 18/10): Verificar Partida só
+            // ícone ao lado do mudo, Twitch do streamer (iniciar live / abrir a
+            // que está no ar) e a seta de sair da sala no canto oposto.
+            acoes: {
+              verificar: !serie && !!perfil && !['encerrada', 'cancelada'].includes(estado)
+                ? { aoClicar: verificarPartidaAgora, carregando: ocupado === 'verificar-partida' }
+                : null,
+              twitch: perfil?.cargo === 'streamer'
+                ? {
+                    aoIniciar: camp?.live ? null : async () => {
+                      const r = await chamar('/sala-campeonato/live');
+                      if (r?.ok) toast.success('Live criada! Os jogadores já recebem o aviso de assistir.');
+                    },
+                    carregando: ocupado === '/sala-campeonato/live',
+                    assistirHref: camp?.live ? `https://twitch.tv/${camp.live.twitch}` : null,
+                  }
+                : null,
+              sair: () => navigate('/jogar'),
+            },
           }}
         />
 
         {/* A tela ao vivo não tem a top bar da sala: os gatilhos que ainda
-            importam com a partida rolando ficam neste canto. O automático
-            (polling/cron) continua rodando por trás de qualquer jeito. */}
-        <div className="absolute left-[1.2vmin] top-[0.5vmin] z-[80] flex items-center gap-[0.8vmin]">
-          {!serie && !!perfil && !['encerrada', 'cancelada'].includes(estado) && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.94 }}
-              disabled={!!ocupado}
-              onClick={verificarPartidaAgora}
-              className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
-              style={{ clipPath: CUT_BUTTON }}
-              title="Verificar partida — confere na Riot agora"
-            >
-              <div
-                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
-                style={{ clipPath: CUT_BUTTON_INNER }}
-              >
-                <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-partida' ? 'animate-spin' : ''}`} />
-                <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
-                  Verificar Partida
-                </span>
-              </div>
-            </motion.button>
-          )}
+            importam com a partida rolando ficam neste canto, DEPOIS da seta de
+            sair (que ocupa a ponta esquerda). O Verificar Partida virou ícone
+            do topo direito, ao lado do mudo (pedido do usuário 18/10). O
+            automático (polling/cron) continua rodando por trás de qualquer
+            jeito. */}
+        <div className="absolute left-[6vmin] top-[0.5vmin] z-[80] flex items-center gap-[0.8vmin]">
           {!!serie && (ehStaffCampeonato || !!meuLado) && (
             <motion.button
               whileHover={{ scale: 1.05 }}

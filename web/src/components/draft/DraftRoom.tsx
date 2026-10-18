@@ -18,7 +18,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Search, Ban, Check, Copy, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Ban, Check, Copy, RefreshCw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FaShieldAlt } from 'react-icons/fa';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
@@ -26,6 +26,10 @@ import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/
 import type { Champion, SalaDraft } from './draftTypes';
 import { CHAMPION_POSITIONS, type RoleFiltro } from './championPositions';
 import { alternarSomMudo, desbloquearSonsDraft, pararSom, pararSonsDraft, precarregarSons, somMudo, tocarSom } from './draftSounds';
+
+/** Nome de time no confronto: o hífen não pode virar ponto de quebra de linha
+ *  (U+2011 é o hífen "não separável" — mesma regra da sala normal). */
+const nomeSemQuebra = (n?: string | null) => (n ?? '').replace(/-/g, '\u2011');
 
 interface DraftRoomProps {
   draft: SalaDraft;
@@ -76,6 +80,23 @@ interface DraftRoomProps {
     legenda?: string | null;
     /** Código da partida — só chega aqui para quem pode ver (filtro do servidor). */
     codigo?: string | null;
+    /**
+     * Ações do TOPO da tela ao vivo — ícones ao lado do mudo (pedido do
+     * usuário 18/10): Verificar Partida, Twitch do streamer e sair da sala.
+     */
+    acoes?: {
+      /** Verificar Partida — só ícone (RefreshCw), à direita do mudo. */
+      verificar?: { aoClicar: () => void; carregando?: boolean } | null;
+      /** Twitch do streamer: iniciar a live, ou abrir a que está no ar. */
+      twitch?: {
+        aoIniciar?: (() => void) | null;
+        carregando?: boolean;
+        /** Live no ar — o ícone vira link para assistir. */
+        assistirHref?: string | null;
+      } | null;
+      /** Seta de sair da sala — canto oposto (esquerda). */
+      sair?: (() => void) | null;
+    } | null;
   } | null;
 }
 
@@ -683,49 +704,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
 
-      {/* HEADER SECTION - TIMER + FASE — na TELA AO VIVO o mesmo lugar mostra
-          os times + placar + status da partida (pedido do usuário 18/10). */}
+      {/* HEADER SECTION - TIMER + FASE. Na TELA AO VIVO o topo fica limpo: o
+          confronto desce para o CENTRO da tela (pedido do usuário 18/10). */}
+      {!aoVivoAtivo && (
       <div className="relative pt-[2vmin] flex flex-col items-center z-40">
-        {aoVivoAtivo ? (
-          <>
-            {/* MESMA composição do miolo da sala (logo X logo com os nomes,
-                placar e "Partida Ao Vivo!") — agora no lugar do cronômetro,
-                já que as bolas laterais saem desta tela (não há ban/pick).
-                Pedido do usuário 18/10. */}
-            <div className="flex items-start justify-center gap-[5vmin]">
-              <div className="flex flex-col items-center gap-[0.8vmin] w-[18vmin]">
-                {timeA?.logo
-                  ? <img src={timeA.logo} alt="" className="w-[11vmin] h-[11vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]" />
-                  : <div className="w-[11vmin] h-[11vmin]" />}
-                <span className="text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-                  {labelEquipeA}
-                </span>
-              </div>
-              <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[3.9vmin]">X</span>
-              <div className="flex flex-col items-center gap-[0.8vmin] w-[18vmin]">
-                {timeB?.logo
-                  ? <img src={timeB.logo} alt="" className="w-[11vmin] h-[11vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]" />
-                  : <div className="w-[11vmin] h-[11vmin]" />}
-                <span className="text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-                  {labelEquipeB}
-                </span>
-              </div>
-            </div>
-            <span className="text-[5vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.25)] mt-[1.2vmin]">
-              {aoVivo?.placar?.a ?? 0} <span className="text-white/40">-</span> {aoVivo?.placar?.b ?? 0}
-            </span>
-            {!!aoVivo?.legenda && (
-              <span className="text-[1.1vmin] font-black uppercase tracking-[0.4em] text-white/50 mt-[0.8vmin]">
-                {aoVivo.legenda}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-[0.8vmin] text-[2.2vmin] font-black text-[#00FF41] uppercase tracking-[0.25em] mt-[0.8vmin]">
-              {aoVivo?.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
-              {aoVivo?.status}
-            </span>
-          </>
-        ) : (
-          <>
+        <>
         <h1 className="text-[3.5vmin] font-bold tracking-[0.2em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">
           {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
         </h1>
@@ -764,32 +747,124 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <div className={`text-[6vmin] font-black mt-[0.5vmin] tabular-nums drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
           {segundos}
         </div>
-          </>
+        </>
+      </div>
+      )}
+
+      {/* TELA AO VIVO — CONFRONTO NO CENTRO da altura (pedido do usuário
+          18/10): logos grandes, nomes em até 2 linhas CENTRALIZADOS, placar e
+          status — mesma composição do miolo da sala, agora no meio da tela. */}
+      {aoVivoAtivo && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-[1.4vmin] pointer-events-none">
+          <div className="flex items-start justify-center gap-[7vmin]">
+            <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
+              {timeA?.logo
+                ? <img src={timeA.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]" />
+                : <div className="w-[14vmin] h-[14vmin]" />}
+              <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
+                {nomeSemQuebra(labelEquipeA)}
+              </span>
+            </div>
+            <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[5.4vmin]">X</span>
+            <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
+              {timeB?.logo
+                ? <img src={timeB.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]" />
+                : <div className="w-[14vmin] h-[14vmin]" />}
+              <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
+                {nomeSemQuebra(labelEquipeB)}
+              </span>
+            </div>
+          </div>
+          <span className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
+            {aoVivo?.placar?.a ?? 0} <span className="text-white/40">-</span> {aoVivo?.placar?.b ?? 0}
+          </span>
+          {!!aoVivo?.legenda && (
+            <span className="text-[1.2vmin] font-black uppercase tracking-[0.4em] text-white/50">
+              {aoVivo.legenda}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-[0.8vmin] text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
+            {aoVivo?.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
+            {aoVivo?.status}
+          </span>
+        </div>
+      )}
+
+      {/* ÍCONES DO TOPO — canto superior direito, acima dos bans do time
+          vermelho e colados na lateral. Na TELA AO VIVO entram ao lado do mudo
+          o Verificar Partida (só ícone) e o Twitch do streamer (iniciar live /
+          abrir a que está no ar); no canto oposto, a seta de sair da sala
+          (pedido do usuário 18/10). Absoluto de propósito: não empurra a linha
+          de bans nem muda a altura dela. */}
+      <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
+        {aoVivoAtivo && aoVivo?.acoes?.twitch && (
+          aoVivo.acoes.twitch.assistirHref ? (
+            <a
+              href={aoVivo.acoes.twitch.assistirHref}
+              target="_blank"
+              rel="noreferrer"
+              title="Abrir live na Twitch"
+              className="relative p-[0.7vmin] border border-[#9146FF]/60 text-[#a866ff] hover:text-white hover:border-[#9146FF] transition-colors duration-200 cursor-pointer"
+            >
+              <Twitch className="w-[2vmin] h-[2vmin]" />
+              <span className="absolute top-[0.2vmin] right-[0.2vmin] w-[0.9vmin] h-[0.9vmin] rounded-full bg-red-600 animate-pulse" />
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled={aoVivo.acoes.twitch.carregando}
+              onClick={() => aoVivo?.acoes?.twitch?.aoIniciar?.()}
+              title="Iniciar live na Twitch"
+              className="p-[0.7vmin] border border-[#9146FF]/60 text-[#9146FF] hover:text-[#c9a7ff] hover:border-[#9146FF] transition-colors duration-200 cursor-pointer disabled:opacity-50"
+            >
+              {aoVivo.acoes.twitch.carregando
+                ? <RefreshCw className="w-[2vmin] h-[2vmin] animate-spin" />
+                : <Twitch className="w-[2vmin] h-[2vmin]" />}
+            </button>
+          )
         )}
+        {aoVivoAtivo && aoVivo?.acoes?.verificar && (
+          <button
+            type="button"
+            disabled={aoVivo.acoes.verificar.carregando}
+            onClick={() => aoVivo?.acoes?.verificar?.aoClicar()}
+            title="Verificar partida — confere na Riot agora"
+            className="p-[0.7vmin] border border-[#00F0FF]/40 text-[#00F0FF] hover:text-white hover:border-[#00F0FF] transition-colors duration-200 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-[2vmin] h-[2vmin] ${aoVivo.acoes.verificar.carregando ? 'animate-spin' : ''}`} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setMudo(alternarSomMudo())}
+          title={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
+          aria-label={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
+          aria-pressed={mudo}
+          className={`
+            cursor-pointer p-[0.7vmin] border transition-colors duration-200
+            ${mudo
+              ? 'border-white/10 text-white/30 hover:text-white/60'
+              : 'border-[#c89b3c]/40 text-[#c89b3c] hover:text-[#e6c469]'}
+          `}
+        >
+          {mudo
+            ? <VolumeX className="w-[2vmin] h-[2vmin]" />
+            : <Volume2 className="w-[2vmin] h-[2vmin]" />}
+        </button>
       </div>
 
-      {/* MUDO DOS SONS DO DRAFT — canto superior direito, acima dos bans do
-          time vermelho e colado na lateral (pedido do usuário 2026-10-18).
-          Absoluto de propósito: não empurra a linha de bans nem muda a
-          altura dela. */}
-      <button
-        type="button"
-        onClick={() => setMudo(alternarSomMudo())}
-        title={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
-        aria-label={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
-        aria-pressed={mudo}
-        className={`
-          absolute top-[1vmin] right-[1.5vmin] z-50 cursor-pointer
-          p-[0.7vmin] border transition-colors duration-200
-          ${mudo
-            ? 'border-white/10 text-white/30 hover:text-white/60'
-            : 'border-[#c89b3c]/40 text-[#c89b3c] hover:text-[#e6c469]'}
-        `}
-      >
-        {mudo
-          ? <VolumeX className="w-[2vmin] h-[2vmin]" />
-          : <Volume2 className="w-[2vmin] h-[2vmin]" />}
-      </button>
+      {/* SAIR DA SALA (tela ao vivo) — mesma linguagem dos ícones do topo, no
+          canto oposto: volta para /jogar como a seta da sala normal. */}
+      {aoVivoAtivo && aoVivo?.acoes?.sair && (
+        <button
+          type="button"
+          onClick={() => aoVivo?.acoes?.sair?.()}
+          title="Sair da sala"
+          className="absolute top-[1vmin] left-[1.5vmin] z-50 p-[0.7vmin] border border-white/15 text-white/70 hover:text-red-400 hover:border-red-500/50 transition-colors duration-200 cursor-pointer"
+        >
+          <ArrowLeft className="w-[2vmin] h-[2vmin]" />
+        </button>
+      )}
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
       <div className="absolute top-[5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
