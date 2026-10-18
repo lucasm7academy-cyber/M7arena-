@@ -25,6 +25,12 @@ const CUT_BUTTON_INNER = 'polygon(7.8px 0, 100% 0, 100% calc(100% - 7.8px), calc
 const CUT_BADGE = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
 const CUT_BADGE_INNER = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
 
+// Nome do time em até 2 linhas quebrando SÓ nos espaços: o hífen vira hífen
+// não separável (U+2011) — senão "E-sports" quebra no traço ("E-" / "sports")
+// mesmo sem espaço ali, e o usuário quer a palavra inteira (18/10). O desenho
+// do traço não muda.
+const nomeSemQuebra = (n?: string | null) => (n ?? '').replace(/-/g, '\u2011');
+
 const ERROS: Record<string, string> = {
   vaga_ocupada: 'Essa vaga já está ocupada.',
   nao_e_do_time: 'Você não faz parte desse time.',
@@ -568,23 +574,26 @@ export default function SalaCampeonato() {
         transition={{ duration: bannerTroca ? 3 : 0, ease: 'easeInOut' }}
         className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
       >
-        {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) */}
-        <div
-          className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
-          style={{
-            backgroundColor: cor,
-            clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
-          }}
-        >
+        {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) — sai com o jogo
+            em andamento: o espaço é dos campeões (pedido do usuário 18/10). */}
+        {mostrarVaga && (
           <div
-            className="bg-[#050505] px-5 py-1"
-            style={{ clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)' }}
+            className="relative mb-1 md:mb-[1vmin] p-[1.5px] overflow-hidden self-center"
+            style={{
+              backgroundColor: cor,
+              clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
+            }}
           >
-            <span className="block text-xs md:text-[1.4vmin] font-black uppercase tracking-[0.4em]" style={{ color: cor }}>
-              {posicao === 'blue' ? 'Blue-Side' : 'Red-Side'}
-            </span>
+            <div
+              className="bg-[#050505] px-5 py-1"
+              style={{ clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)' }}
+            >
+              <span className="block text-xs md:text-[1.4vmin] font-black uppercase tracking-[0.4em]" style={{ color: cor }}>
+                {posicao === 'blue' ? 'Blue-Side' : 'Red-Side'}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* (Nome/logo do time saíram daqui — a identidade dos times fica no
             centro, estilo resumo; a coluna fica com o lado, a vaga quando ela
@@ -695,13 +704,13 @@ export default function SalaCampeonato() {
             <img
               src={sala.time_a_logo}
               alt=""
-              className="w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
+              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
             />
           ) : (
-            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
+            <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
           )}
           <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-            {sala.time_a_nome ?? ''}
+            {nomeSemQuebra(sala.time_a_nome)}
           </span>
         </div>
         <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
@@ -710,13 +719,13 @@ export default function SalaCampeonato() {
             <img
               src={sala.time_b_logo}
               alt=""
-              className="w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
+              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
             />
           ) : (
-            <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
+            <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
           )}
           <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-            {sala.time_b_nome ?? ''}
+            {nomeSemQuebra(sala.time_b_nome)}
           </span>
         </div>
       </div>
@@ -850,7 +859,7 @@ export default function SalaCampeonato() {
             )}
           </div>
           <span className="text-[11px] md:text-[1.6vmin] font-black uppercase tracking-[0.25em] leading-tight line-clamp-2 max-w-full" style={{ color: cor }}>
-            {nome ?? ''}
+            {nomeSemQuebra(nome)}
           </span>
 
           {/* Campeões escolhidos neste confronto */}
