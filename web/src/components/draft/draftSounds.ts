@@ -8,6 +8,12 @@
 // Som é acessório: autoplay bloqueado, arquivo ausente ou áudio indisponível
 // NUNCA pode quebrar o draft — por isso o play() sempre morre em silêncio
 // (com um aviso único de autoplay, pra não parecer bug mudo).
+//
+// Camada x evento (correção 2026-10-18): os sons de fase são "cama" (4-5s,
+// tocam quando a fase começa). Evento — o ban entrando, a notificação da sua
+// vez, o fim do draft — CORTA a cama. Sem isso o 1º ban de cada fase ficava
+// abafado por baixo da cama iniciada segundos antes (queixa do usuário: "o 1º
+// ban não tem som, no 2º solta").
 
 export type SomDraft =
   | 'inicioBan' | 'bansTravados' | 'seuBan' | 'suaVez'
@@ -30,8 +36,15 @@ const FONTES: Record<SomDraft, { arquivo: string; volume: number }> = {
   lockInHover: { arquivo: 'lock-in-hover.ogg', volume: 0.35 },
   lockInClique: { arquivo: 'lock-in-clique.ogg', volume: 0.55 },
   pickNegado: { arquivo: 'pick-negado.ogg', volume: 0.5 },
-  draftFinalizado: { arquivo: 'draft-finalizado.ogg', volume: 0.65 },
+  // Tema de finalização do draft (música, não SFX): começa no último pick e
+  // toca até a tela voltar pra sala (~3,4s) — o volume fica de fundo.
+  draftFinalizado: { arquivo: 'draft-finalizado.ogg', volume: 0.5 },
 };
+
+// "Cama" = som de fase (longo). "Evento" = acontecimento pontual. Evento
+// dispara => cama para; cama nova => troca a anterior (nunca duas camas).
+const CAMAS: ReadonlySet<SomDraft> = new Set(['inicioBan', 'bansTravados']);
+const EVENTOS: ReadonlySet<SomDraft> = new Set(['banAliado', 'banInimigo', 'seuBan', 'suaVez', 'draftFinalizado']);
 
 const cache = new Map<SomDraft, HTMLAudioElement>();
 let avisouAutoplay = false;
@@ -64,9 +77,27 @@ export function alternarSomMudo(): boolean {
   }
   // Mutou agora: silencia o que estiver tocando (killcam/ban em andamento).
   if (mudo) {
-    for (const som of cache.values()) som.pause();
+    pararSonsDraft();
   }
   return mudo;
+}
+
+/** Para um som específico (ex.: a notificação cumpriu o papel na ação confirmada). */
+export function pararSom(nome: SomDraft): void {
+  const som = cache.get(nome);
+  if (som && !som.paused) {
+    som.pause();
+    som.currentTime = 0;
+  }
+}
+
+function pararCamas(): void {
+  for (const nome of CAMAS) pararSom(nome);
+}
+
+/** Para TODOS os sons do draft (a tela desmontou: nada vaza pra sala). */
+export function pararSonsDraft(): void {
+  for (const nome of cache.keys()) pararSom(nome);
 }
 
 function obterSom(nome: SomDraft): HTMLAudioElement | null {
@@ -86,6 +117,8 @@ function obterSom(nome: SomDraft): HTMLAudioElement | null {
 export function tocarSom(nome: SomDraft): void {
   try {
     if (somMudo()) return;
+    // Evento corta a cama da fase; cama nova troca a anterior (uma por vez).
+    if (EVENTOS.has(nome) || CAMAS.has(nome)) pararCamas();
     const som = obterSom(nome);
     if (!som) return;
     som.currentTime = 0;

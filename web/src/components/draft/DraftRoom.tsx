@@ -25,7 +25,7 @@ import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
 import { CHAMPION_POSITIONS, type RoleFiltro } from './championPositions';
-import { alternarSomMudo, desbloquearSonsDraft, precarregarSons, somMudo, tocarSom } from './draftSounds';
+import { alternarSomMudo, desbloquearSonsDraft, pararSom, pararSonsDraft, precarregarSons, somMudo, tocarSom } from './draftSounds';
 
 interface DraftRoomProps {
   draft: SalaDraft;
@@ -493,6 +493,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       // som de finalização sai no mesmo frame da animação.
       if (tipo === 'ban') tocarSom(lado === meuTime ? 'banAliado' : 'banInimigo');
       else if (draft.status === 'finished') tocarSom('draftFinalizado');
+      // A ação confirmada foi MINHA: a notificação da minha vez já cumpriu o
+      // papel (senão ela segue 4-5s por baixo do som do ban/pick).
+      if (lado === meuTime) pararSom(tipo === 'ban' ? 'seuBan' : 'suaVez');
       break; // uma ação por atualização de estado
     }
   }, [draft.blue_bans.join(','), draft.red_bans.join(','), draft.blue_picks.join(','), draft.red_picks.join(',')]);
@@ -502,7 +505,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // destrava no primeiro gesto — sem isso o iOS/Safari mantém mudo.
   useEffect(() => {
     precarregarSons();
-    return desbloquearSonsDraft();
+    const desinstalar = desbloquearSonsDraft();
+    return () => {
+      desinstalar();
+      // Sair do draft (fim da killcam/fim da sala) para TUDO — o tema de
+      // finalização (34s) não pode continuar tocando na sala.
+      pararSonsDraft();
+    };
   }, []);
 
   // Intro de fase: o draft abre banindo (turno 0 do template é ban) e cada
