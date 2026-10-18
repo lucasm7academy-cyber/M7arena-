@@ -181,18 +181,9 @@ function TeamPanel({ lado, ladoJogo, emTurno, fase, selected, meuTime, jogadorNo
             />
           ) : null}
 
-          {!emTurno && !champNaBola && (
-            <div className="w-full h-full relative flex items-center justify-center bg-black/40">
-              <div className="relative flex flex-col items-center justify-center gap-[1.8vmin] z-10">
-                <div className="flex gap-[1.5vmin]">
-                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className="w-[2.2vmin] h-[2.2vmin] bg-white/60 rounded-full" />
-                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} className="w-[2.2vmin] h-[2.2vmin] bg-white/60 rounded-full" />
-                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} className="w-[2.2vmin] h-[2.2vmin] bg-white/60 rounded-full" />
-                </div>
-                <p className="text-[2.2vmin] font-bold text-white/90 uppercase tracking-wider drop-shadow-md">Aguardando</p>
-              </div>
-            </div>
-          )}
+          {/* (O "Aguardando" com as 3 bolinhas saiu do meio da bola — pedido do
+              usuário 2026-10-17: quando não é a vez, a borda não acende, então
+              a bola fica só com a logo do time de fundo, sem texto.) */}
 
           {champNaBola ? (
             <img
