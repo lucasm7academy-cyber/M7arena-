@@ -250,6 +250,8 @@ O padrão das salas de partida no site atual é o melhor código que existe lá,
 
 Um único serviço WebSocket, autenticado por sessão. O Postgres emite `NOTIFY` nas transições de estado; o serviço faz fan-out por sala.
 
+Visitante sem sessão também assiste: o handshake aceita a conexão anônima como **espectador** (teto global + por IP, assinatura com throttle) — ele **recebe** (`match_update`, prévia do draft, chat), mas **nunca envia** (chat e prévia exigem sessão). É o que permite o preview da bola aparecer para quem abre a sala sem login.
+
 **Escopo: salas e lobbies apenas.** Todo o resto é fetch-on-mount. O site atual tem exatamente um canal de realtime em todo o produto, e isso está correto.
 
 ### 4.4 Workers
