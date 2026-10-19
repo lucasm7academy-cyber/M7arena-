@@ -185,21 +185,16 @@ function validarImagem(file: File): Promise<string | null> {
       resolve('O arquivo deve ser uma imagem.');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      resolve('A imagem deve ter no máximo 2MB.');
-      return;
-    }
+    // Sem limite de tamanho nem de dimensão: o servidor aceita o arquivo como
+    // veio e normaliza a logo para 1080x1080 (pedido do usuário 19/10). Aqui só
+    // garantimos que é uma imagem que o navegador consegue abrir.
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
     const finish = (msg: string | null) => {
       URL.revokeObjectURL(objectUrl);
       resolve(msg);
     };
-    img.onload = () => {
-      finish(img.width > 1080 || img.height > 1080
-        ? 'A imagem deve ter no máximo 1080x1080px.'
-        : null);
-    };
+    img.onload = () => finish(null);
     // Sem onerror a Promise nunca resolve se a imagem falhar ao carregar
     // (arquivo corrompido, bloqueio de CSP), e o modal trava para sempre.
     img.onerror = () => finish('Não foi possível ler a imagem. Tente outro arquivo.');

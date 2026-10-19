@@ -50,7 +50,7 @@ const FORMATO_POR_MIME: Record<string, "png" | "jpeg" | "webp"> = {
   "image/webp": "webp",
 };
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_SIZE = 30 * 1024 * 1024; // 30 MB (teto do multer; por bucket abaixo)
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -113,17 +113,31 @@ export function validarArquivoImagem(buffer: Buffer, mimetype: string): Validaca
 }
 
 /**
- * Lado máximo (px) por bucket de imagem de EXIBIÇÃO. Um logo renderiza em
- * ~40–120px e o banner em ~1400px; guardar o arquivo original (1–2 MB PNG)
- * fazia o card ficar preto por ~1s até o download terminar. 512/1920 dão
- * folga para telas retina sem carregar o arquivo cru.
+ * Lado máximo (px) por bucket de imagem de EXIBIÇÃO (exceto `team-logos`, que
+ * tem regra própria: SEMPRE 1080x1080 — ver `otimizarImagemExibicao`). Um banner
+ * renderiza em ~1400px; guardar o arquivo original (1–2 MB PNG) fazia o card
+ * ficar preto por ~1s até o download terminar. 1920 dá folga para telas retina
+ * sem carregar o arquivo cru.
  *
  * `match-prints` NÃO passa por aqui de propósito: print é prova de resultado e
  * tem que manter os bytes originais.
  */
 const LADO_MAX_EXIBICAO: Record<string, number> = {
-  "team-logos": 512,
   "public-images": 1920,
+};
+
+/** Lado da logo de time: TODA logo é normalizada para 1080x1080 (pedido do usuário 19/10). */
+const LADO_LOGO = 1080;
+
+/**
+ * Teto por bucket. Logo/banner de time aceita arquivo grande de qualquer
+ * tamanho (o servidor redimensiona); print de partida continua em 5 MB porque
+ * é prova de resultado e guarda os bytes originais.
+ */
+const MAX_POR_BUCKET: Record<string, number> = {
+  "team-logos": 30 * 1024 * 1024,
+  "public-images": 30 * 1024 * 1024,
+  "match-prints": 5 * 1024 * 1024,
 };
 
 /**
@@ -131,14 +145,29 @@ const LADO_MAX_EXIBICAO: Record<string, number> = {
  * aplica a orientação do EXIF antes de redimensionar (foto de celular não sai
  * deitada).
  *
- * "Nunca piora": se o WebP sair maior que o original (acontece com imagens já
- * otimizadas ou muito ruidosas), devolve o buffer original — o upload guarda o
- * arquivo cru em vez de inflá-lo. Exportado para os testes exercerem o mesmo
- * caminho da rota.
+ * `team-logos`: qualquer tamanho de entrada vira 1080x1080. `contain` mantém a
+ * proporção da arte e completa o quadrado com transparência (não corta nem
+ * distorce) e AMPLIA quando a origem é menor — toda logo fica do mesmo tamanho.
+ * Aqui o resultado processado é sempre o guardado (a regra "nunca piora" não se
+ * aplica: o tamanho fixo é o requisito).
+ *
+ * Demais buckets: "nunca piora" — se o WebP sair maior que o original (acontece
+ * com imagens já otimizadas ou muito ruidosas), devolve o buffer original — o
+ * upload guarda o arquivo cru em vez de inflá-lo.
+ *
+ * Exportado para os testes exercerem o mesmo caminho da rota.
  */
 export type ImagemProcessada = { buffer: Buffer; otimizada: boolean };
 
 export async function otimizarImagemExibicao(buffer: Buffer, bucket: string): Promise<ImagemProcessada> {
+  if (bucket === "team-logos") {
+    const webp = await sharp(buffer)
+      .rotate()
+      .resize(LADO_LOGO, LADO_LOGO, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .webp({ quality: 82 })
+      .toBuffer();
+    return { buffer: webp, otimizada: true };
+  }
   const lado = LADO_MAX_EXIBICAO[bucket] ?? 1920;
   const webp = await sharp(buffer)
     .rotate()
@@ -375,7 +404,7 @@ uploadRouter.post(
       if (err) {
         const msg =
           err?.code === "LIMIT_FILE_SIZE"
-            ? "Arquivo muito grande. Máximo de 5 MB."
+            ? "Arquivo muito grande. Máximo de 30 MB."
             : err?.message || "Erro ao processar o upload.";
         return res.status(400).json({ error: msg });
       }
@@ -407,6 +436,18 @@ uploadRouter.post(
       const file = req.file;
       if (!file) {
         return res.status(400).json({ error: "Arquivo ausente. Envie o campo 'file' no multipart." });
+      }
+
+      // Teto por bucket (o multer só conhece o global de 30 MB; o bucket chega
+      // no mesmo multipart, então a checagem fina é aqui).
+      const limiteBucket = MAX_POR_BUCKET[bucket] ?? MAX_SIZE;
+      if (file.size > limiteBucket) {
+        return res.status(400).json({
+          error:
+            bucket === "match-prints"
+              ? "Print muito grande. Máximo de 5 MB."
+              : "Imagem muito grande. Máximo de 30 MB.",
+        });
       }
 
       // Magic bytes: rejeita conteúdo não reconhecido ou que não bate com o MIME
