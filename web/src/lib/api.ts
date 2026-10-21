@@ -777,6 +777,17 @@ export const api = {
     me: () => api.get<{ user: ApiUser | null }>("/auth/me"),
   },
 
+  authReset: {
+    /** Valida o token do link publico; 410 vira erro na promise. */
+    validar: (token: string) =>
+      api.get<{ valido: boolean; email: string }>(
+        `/auth/reset-password/${encodeURIComponent(token)}`
+      ),
+    /** Consome o token e grava a nova senha (minimo 8, checado no servidor). */
+    redefinir: (token: string, password: string) =>
+      api.post<{ ok: boolean }>("/auth/reset-password", { token, password }),
+  },
+
   terms: {
     /** Registra o aceite dos Termos de Uso com declaração de 18+ (design v3 §2.1). */
     accept: () => api.post<{ ok: boolean; termos_aceitos_em?: string }>("/terms/accept"),
@@ -1146,6 +1157,24 @@ export const api = {
     /** Desban (única forma de sair do ban, inclusive o automático). */
     desbanir: (userId: string) =>
       api.post<{ ok: boolean }>(`/admin/usuarios/${userId}/unban`),
+  },
+
+  adminSenhas: {
+    /** Busca usuários por email/nome/Riot ID (aba Senhas). */
+    buscarUsuarios: (q: string) =>
+      api.get<Array<{
+        id: string;
+        email: string;
+        displayName: string;
+        riotId: string | null;
+        status: string;
+        avatarUrl?: string | null;
+      }>>(`/admin/usuarios?q=${encodeURIComponent(q)}`),
+    /** Gera um link de uso único (24h). Só o proprietário recebe 200. */
+    gerarLink: (userId: string) =>
+      api.post<{ url: string; expira_em: string }>(
+        `/admin/usuarios/${userId}/reset-link`
+      ),
   },
 
   prints: {

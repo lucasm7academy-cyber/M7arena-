@@ -9,6 +9,7 @@ import {
   jsonb,
   primaryKey,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -74,6 +75,25 @@ export const userSessions = pgTable("user_sessions", {
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
 });
+
+// Reset de senha pelo painel (spec 2026-10-20). O banco guarda só o SHA-256 do
+// token; o token puro existe apenas na resposta que gera o link. Um link válido
+// por usuário: gerar outro apaga os anteriores. O índice por user_id cobre a
+// limpeza na geração e o delete no consumo.
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    usedAt: timestamp("used_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [index("password_reset_tokens_user_idx").on(table.userId)]
+);
 
 export const userRoles = pgTable(
   "user_roles",

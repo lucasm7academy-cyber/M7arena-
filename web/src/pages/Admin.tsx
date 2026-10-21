@@ -6,7 +6,7 @@ import {
   ShieldCheck, Trophy, Coins, Search, Check, X, AlertTriangle,
   RefreshCw, Ban, Users, Zap, GraduationCap, Mail, ChevronRight, Film,
   LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
-  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft, Banknote,
+  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft, Banknote, KeyRound,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -20,6 +20,7 @@ import {
 import { AbaCargos } from './AdminCargos';
 import { AbaContatos } from './AdminContatos';
 import { AbaPunicoes } from './AdminPunicoes';
+import { AbaSenhas } from './AdminSenhas';
 import { RevisaoPartidas } from '../components/admin/RevisaoPartidas';
 import { FinanceiroDashboard } from '../components/admin/FinanceiroDashboard';
 import { SaquesPix } from '../components/admin/SaquesPix';
@@ -42,7 +43,7 @@ interface PartidaTravada {
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
-type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao' | 'punicoes' | 'saques';
+type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao' | 'punicoes' | 'saques' | 'senhas';
 
 interface Highlight {
   id: string; titulo: string; link: string;
@@ -1548,6 +1549,7 @@ export default function Admin() {
     { id: 'contatos',   label: 'Contatos',   icon: Mail,            bloqueada: !isAdminOuProprietario },
     { id: 'revisao',    label: 'Revisão',    icon: Swords,          bloqueada: false },
     { id: 'punicoes',   label: 'Punições',   icon: Ban,             bloqueada: !isAdminOuProprietario },
+    { id: 'senhas',     label: 'Senhas',     icon: KeyRound,        bloqueada: adminCargo !== 'proprietario' },
     { id: 'saques',     label: 'Saques',     icon: Banknote,        bloqueada: !isAdminOuProprietario },
   ];
 
@@ -1707,6 +1709,7 @@ export default function Admin() {
                 {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
                 {abaAtiva === 'revisao'    && <RevisaoPartidas />}
                 {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
+                {abaAtiva === 'senhas'     && <AbaSenhas adminCargo={adminCargo} />}
                 {abaAtiva === 'saques'     && <SaquesPix />}
               </motion.div>
             </AnimatePresence>

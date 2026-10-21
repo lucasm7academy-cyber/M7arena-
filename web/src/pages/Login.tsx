@@ -42,6 +42,13 @@ export default function Login() {
       showError(erro);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    const senhaAlterada = params.get('senha_alterada');
+    if (senhaAlterada === '1') {
+      setSuccessMessage('Senha redefinida. Entre com a nova senha.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setTimeout(() => setSuccessMessage(null), 6000);
+    }
   }, []);
 
   // ── Ações ─────────────────────────────────────────

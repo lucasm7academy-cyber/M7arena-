@@ -33,6 +33,7 @@ function lazyWithRetry(factory: () => Promise<any>) {
 
 // ✅ Lazy loading para páginas que não são imediatamente necessárias
 const Login = lazyWithRetry(() => import("./pages/Login"));
+const RedefinirSenha = lazyWithRetry(() => import("./pages/RedefinirSenha"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const ResetHandler = lazyWithRetry(() => import("./pages/ResetHandler"));
 const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
@@ -210,6 +211,7 @@ export default function App() {
             <Route path="/login" element={<RouteWithSuspense element={<Login />} />} />
             <Route path="/reset-password" element={<RouteWithSuspense element={<ResetHandler />} />} />
             <Route path="/resetpassword" element={<RouteWithSuspense element={<ResetPassword />} />} />
+            <Route path="/redefinir-senha" element={<RouteWithSuspense element={<RedefinirSenha />} />} />
 
                         {/* OAuth Callback */}
                         <Route path="/auth/callback" element={<RouteWithSuspense element={<AuthCallback />} />} />
