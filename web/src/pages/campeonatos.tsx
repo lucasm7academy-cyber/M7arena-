@@ -10,7 +10,8 @@ import {
   Search, RefreshCw, X, SlidersHorizontal, Settings, Diamond
 } from 'lucide-react';
 import { useRole } from '../contexts/RoleContext';
-import { api, type ApiLegacyTournament } from '../lib/api';
+import { api, type ApiLegacyTournamentCard } from '../lib/api';
+import { prefetchTournament } from '../features/campeonatos/tournamentCache';
 
 // ============================================
 // POLÍGONOS CUT-EDGE OFICIAIS DA M7 ARENA
@@ -44,12 +45,11 @@ interface TournamentCard {
   themeColor: string;
   cor: string;
   bgImage: string | null;
-  timesInscritos: any[];
   formato: string;
 }
 
 let _campeonatosCache: { data: TournamentCard[]; ts: number } | null = null;
-let _imagensCache: Record<string, { logo: string; banner: string }> = {};
+let _imagensCache: Record<string, { logo: string }> = {};
 
 // ============================================
 // CARDS DE DESTAQUE (EM BREVE)
@@ -91,7 +91,7 @@ const Campeonatos = () => {
   const [torneiosCustom, setTorneiosCustom] = useState<TournamentCard[]>([]);
   const [loadingTorneios, setLoadingTorneios] = useState(true);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
-  const [torneioImagens, setTorneioImagens] = useState<Record<string, { logo: string; banner: string }>>(_imagensCache);
+  const [torneioImagens, setTorneioImagens] = useState<Record<string, { logo: string }>>(_imagensCache);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -130,9 +130,10 @@ const Campeonatos = () => {
       }
 
       setLoadingTorneios(true);
-      let data: ApiLegacyTournament[];
+      let data: ApiLegacyTournamentCard[];
       try {
-        data = await api.tournaments.list({ sort: 'created_at' });
+        // view=card: só o que o card desenha (sem cronograma/chave/grupos).
+        data = await api.tournaments.listCards({ sort: 'created_at' });
       } catch (error) {
         if (cancelled) return;
         console.error('Erro ao buscar campeonatos:', error);
@@ -156,16 +157,14 @@ const Campeonatos = () => {
         themeColor: t.theme_color || '#FFB700',
         cor: t.theme_color || '#FFB700',
         bgImage: null,
-        timesInscritos: t.times_inscritos || [],
         formato: t.formato,
       }));
 
-      // Logo/banner já vêm na própria listagem — não precisa mais do fetch por card
-      const imagens: Record<string, { logo: string; banner: string }> = {};
+      // A logo já vem na listagem (o banner é exclusivo do hero do detalhe).
+      const imagens: Record<string, { logo: string }> = {};
       for (const t of data) {
         imagens[t.id] = {
           logo: t.logo_url || '',
-          banner: t.banner_url || '',
         };
       }
       _imagensCache = imagens;
@@ -474,6 +473,7 @@ const Campeonatos = () => {
                       viewport={{ once: true }}
                       transition={{ delay: 0.1 * idx }}
                       onClick={() => navigate(`/campeonato/${card.id}`)}
+                      onMouseEnter={() => { void prefetchTournament(card.id); }}
                       className="flex-none w-[85vw] sm:w-[340px] lg:w-[calc((100%-40px)/3)] p-[1px] transition-all relative group cursor-pointer snap-start min-h-[320px]"
                       style={{ 
                         clipPath: CUT_FRAME,

@@ -124,7 +124,7 @@ export default function Streamers() {
   // ── BUSCAR CAMPEONATOS DISPONÍVEIS ────────────────────────────────────
   const fetchCampeonatos = useCallback(async () => {
     try {
-      const data = await api.tournaments.list({ status: 'em_andamento', sort: 'titulo' });
+      const data = await api.tournaments.listCards({ status: 'em_andamento', sort: 'titulo' });
       setAvailableCampeonatos(data || []);
     } catch (err) {
       console.error('❌ Erro ao buscar campeonatos:', err);

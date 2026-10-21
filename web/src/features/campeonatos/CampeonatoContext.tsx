@@ -24,8 +24,9 @@ import toast from "react-hot-toast";
 import { useRole } from "../../contexts/RoleContext";
 import { usePerfilSafe } from "../../contexts/PerfilContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { api } from "../../lib/api";
+import { api, type TournamentSection } from "../../lib/api";
 import { mapFromDb } from "./mappers";
+import { invalidateTournament, loadShell, loadSection } from "./tournamentCache";
 import { INITIAL_BRACKET_DATA, migrateBracketData, advanceTeamsInBracket } from "./domain/bracket";
 import { History, Eye, List, Clock, GitBranch, type LucideIcon } from "lucide-react";
 import { sameTeamRef } from "./domain/team-ref";
@@ -34,6 +35,10 @@ export interface CampeonatoContextType {
   id: string;
   campeonato: any;
   campeonatoLoading: boolean;
+  /** Aba cuja seção está sendo carregada (null = nenhuma). */
+  tabLoading: string | null;
+  /** Falha ao carregar a seção da aba atual (null = sem erro). */
+  tabError: string | null;
   activeTab: string;
   tabs: { id: string; label: string; icon: LucideIcon }[];
   isBracketModalOpen: boolean;
@@ -107,6 +112,18 @@ export interface CampeonatoContextType {
 
 export const CampeonatoContext = createContext<CampeonatoContextType | undefined>(undefined);
 
+/**
+ * O que cada aba precisa baixar. A Visão Geral é a aba inicial e usa só a
+ * classificação; Grupos/Histórico precisam de duas seções cada.
+ */
+const SECTION_BY_TAB: Record<string, TournamentSection[]> = {
+  overview: ["classificacao"],
+  groups: ["grupos", "cronograma"],
+  schedule: ["cronograma"],
+  bracket: ["chaves"],
+  history: ["classificacao", "cronograma"],
+};
+
 export function CampeonatoProvider({
   id,
   children,
@@ -157,6 +174,12 @@ export function CampeonatoProvider({
   // Carregamento dos dados do campeonato
   const [campeonato, setCampeonato] = useState<any>(null);
   const [campeonatoLoading, setCampeonatoLoading] = useState(true);
+  // Seções pesadas já baixadas nesta visita (cronograma/chave/classificação/grupos).
+  // É o que autoriza reenviar o campo numa escrita — seção não carregada NUNCA
+  // é enviada, senão o PUT apagaria o que o usuário nem viu.
+  const loadedSectionsRef = useRef<Set<TournamentSection>>(new Set());
+  const [tabLoading, setTabLoading] = useState<string | null>(null);
+  const [tabError, setTabError] = useState<string | null>(null);
 
   // Organizador é "admin" APENAS do campeonato que ele mesmo criou.
   const isOrganizerOwner =
@@ -164,8 +187,14 @@ export function CampeonatoProvider({
   // isAdmin do campeonato = admin da plataforma OU organizador-dono deste camp.
   const isAdmin = isPlatformAdmin || isOrganizerOwner;
 
-  // Helper: save tournament fields (fire-and-forget)
+  // Helper: save tournament fields (fire-and-forget).
+  //
+  // A partir do carregamento por abas, o PUT manda só o que o detalhe tem de
+  // verdade: escalares + times inscritos + as seções já baixadas. Sem esse
+  // recorte, um save de cor tema (aba Configurações) mandaria `cronograma: []`/
+  // `grupos: {}` e apagaria o campeonato inteiro.
   const saveToSupabase = (updated: any) => {
+    const secaoCarregada = (section: TournamentSection) => loadedSectionsRef.current.has(section);
     const payload: any = {
       titulo: updated.titulo,
       frase: updated.frase,
@@ -182,19 +211,22 @@ export function CampeonatoProvider({
       outros_premios: updated.outrosPremios,
       logo_url: updated.logoUrl,
       banner_url: updated.bannerUrl,
-      org_photo_url: updated.orgPhotoUrl,
       organizacao: updated.organizacao ?? null,
       regulamento: updated.regulamento,
       theme_color: updated.themeColor || '#FFB700',
-      grupos: updated.grupos || {},
-      cronograma: updated.cronograma || [],
+      times_inscritos: updated.timesInscritos || [],
+      times_ordem_sorteio: updated.timesOrdemSorteio || [],
       grupos_sorteados: updated.gruposSorteados || false,
       chaves_sorteados: updated.chavesSorteados || false,
-      times_inscritos: updated.timesInscritos || [],
-      classificacao: updated.classificacao || [],
-      times_ordem_sorteio: updated.timesOrdemSorteio || [],
+      // grupos/cronograma só vão se a aba correspondente já foi aberta.
+      ...(secaoCarregada("grupos") ? { grupos: updated.grupos || {} } : {}),
+      ...(secaoCarregada("cronograma") ? { cronograma: updated.cronograma || [] } : {}),
+      // `classificacao` é calculada no servidor e só exibida aqui: nunca volta
+      // no PUT. `org_photo_url` nem chega no shell (base64 pesado) — reenviar
+      // '' apagaria a foto; quem grava esse campo é o editor do admin.
     };
     api.tournaments.update(updated.id, payload)
+      .then(() => invalidateTournament(updated.id))
       .catch((error: any) => {
         console.error('Erro ao salvar campeonato:', error);
         // Feedback visível ao admin — antes só caía no console silencioso.
@@ -210,6 +242,7 @@ export function CampeonatoProvider({
   // Helper: save bracket to Supabase — agora reporta erros ao admin.
   const saveBracketToSupabase = (bracket: any) => {
     api.tournaments.update(id, { bracket_data: bracket })
+      .then(() => invalidateTournament(id))
       .catch((error: any) => {
         console.error('Erro ao salvar bracket:', error);
         if (typeof window !== 'undefined') {
@@ -537,9 +570,39 @@ export function CampeonatoProvider({
   const refetchCampeonato = React.useCallback(async () => {
     if (!id) return;
     try {
-      const data = await api.tournaments.detail(id);
-      const mapped = mapFromDb(data);
+      // Shell + seções já abertas. Na primeira carga a aba inicial é a Visão
+      // Geral, então a classificação vem junto — o resto chega por aba.
+      const sections: TournamentSection[] = loadedSectionsRef.current.size
+        ? Array.from(loadedSectionsRef.current)
+        : ["classificacao"];
+      // Shell é crítico; seção que falhar não pode derrubar a página inteira —
+      // o erro aparece na aba e o botão "Tentar novamente" refaz só ela.
+      const shell = await loadShell(id, { force: true });
+      const results = await Promise.allSettled(
+        sections.map((s) => loadSection(id, s, { force: true })),
+      );
+
+      const payloads: Partial<Record<TournamentSection, any>> = {};
+      results.forEach((result, i) => {
+        const section = sections[i];
+        if (result.status === "fulfilled") {
+          payloads[section] = result.value;
+          loadedSectionsRef.current.add(section);
+        } else {
+          console.error(`Erro ao carregar a seção "${section}" do campeonato:`, result.reason);
+        }
+      });
+
+      const merged: any = { ...shell };
+      if (payloads.cronograma) merged.cronograma = payloads.cronograma.cronograma || [];
+      if (payloads.classificacao) merged.classificacao = payloads.classificacao.classificacao || [];
+      if (payloads.grupos) merged.grupos = payloads.grupos.grupos || {};
+
+      const mapped = mapFromDb(merged);
       setCampeonato(mapped);
+      if (payloads.chaves?.bracket_data) {
+        setBracketData(migrateBracketData(payloads.chaves.bracket_data));
+      }
       // Fase default do "Criar Confronto" segue o formato do campeonato:
       // com grupos nasce como Fase de Grupos (soma na tabela), fora disso mata-mata.
       setAdminMatchData((prev: any) => ({
@@ -548,9 +611,6 @@ export function CampeonatoProvider({
           ? "Fase de Grupos"
           : "Mata-Mata",
       }));
-      if (data.bracket_data) {
-        setBracketData(migrateBracketData(data.bracket_data));
-      }
 
       // Busca informações atualizadas dos times (logo, nome, cor) diretamente da tabela 'times'
       const teamIds = (mapped.timesInscritos || []).map((t: any) => t.id).filter(Boolean);
@@ -602,10 +662,60 @@ export function CampeonatoProvider({
     }
   }, [id]);
 
+  // Aplica as seções baixadas sobre o estado atual (functional update para não
+  // sobrescrever uma edição feita enquanto a requisição estava em voo).
+  const applySections = React.useCallback((payloads: Partial<Record<TournamentSection, any>>) => {
+    setCampeonato((prev: any) => {
+      if (!prev) return prev;
+      let next = prev;
+      if (payloads.cronograma) next = { ...next, cronograma: payloads.cronograma.cronograma || [] };
+      if (payloads.classificacao) next = { ...next, classificacao: payloads.classificacao.classificacao || [] };
+      if (payloads.grupos) next = { ...next, grupos: payloads.grupos.grupos || {} };
+      return next;
+    });
+    if (payloads.chaves?.bracket_data) {
+      setBracketData(migrateBracketData(payloads.chaves.bracket_data));
+    }
+  }, []);
+
+  const loadSections = React.useCallback(async (
+    sections: TournamentSection[],
+    opts: { force?: boolean } = {},
+  ) => {
+    const alvo = opts.force ? sections : sections.filter((s) => !loadedSectionsRef.current.has(s));
+    if (!alvo.length) return;
+    const results = await Promise.all(alvo.map((s) => loadSection(id, s, { force: opts.force })));
+    const payloads: Partial<Record<TournamentSection, any>> = {};
+    alvo.forEach((section, i) => {
+      payloads[section] = results[i];
+      loadedSectionsRef.current.add(section);
+    });
+    applySections(payloads);
+  }, [id, applySections]);
+
+  const ensureSectionsForTab = React.useCallback(async (tabId: string) => {
+    const sections = SECTION_BY_TAB[tabId] || [];
+    if (!sections.length) return;
+    if (sections.every((s) => loadedSectionsRef.current.has(s))) return;
+    setTabError(null);
+    setTabLoading(tabId);
+    try {
+      await loadSections(sections);
+    } catch (err: any) {
+      console.error("Erro ao carregar a seção do campeonato:", err);
+      setTabError(err?.message || "Não foi possível carregar esta aba.");
+    } finally {
+      setTabLoading((prev) => (prev === tabId ? null : prev));
+    }
+  }, [loadSections]);
+
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     setCampeonatoLoading(true);
+    setTabLoading(null);
+    setTabError(null);
+    loadedSectionsRef.current = new Set();
 
     refetchCampeonato().finally(() => {
       if (!cancelled) setCampeonatoLoading(false);
@@ -699,6 +809,7 @@ export function CampeonatoProvider({
     // Salva via API própria (append atômico, substitui a RPC registrar_time_campeonato)
     try {
       await api.tournaments.inscreverTime(id, teamEntry);
+      invalidateTournament(id);
     } catch (error: any) {
       alert(error.message || 'Erro ao enviar inscrição. Tente novamente.');
       return;
@@ -717,6 +828,7 @@ export function CampeonatoProvider({
   // botão "Ver em Tela Cheia" do próprio Chaves (decisão do usuário).
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
+    void ensureSectionsForTab(tabId);
   };
 
   const getStatsForTeamForCalculation = (
@@ -762,6 +874,12 @@ export function CampeonatoProvider({
 
   const handleSortearGrupos = () => {
     if (!isAdmin) return;
+    // As seções são lazy: sem cronograma/grupos carregados, este save mandaria
+    // arrays vazios e apagaria o campeonato. A aba Grupos carrega as duas.
+    if (!loadedSectionsRef.current.has("cronograma") || !loadedSectionsRef.current.has("grupos")) {
+      toast.error("Abra a aba Grupos antes de sortear.");
+      return;
+    }
 
     const shuffledTeams = [...(campeonato.timesInscritos || [])].sort(
       () => Math.random() - 0.5,
@@ -824,11 +942,23 @@ export function CampeonatoProvider({
     const updated = { ...campeonato, chavesSorteados: true, status: "em_andamento" };
     setCampeonato(updated);
     saveToSupabase(updated);
-    setActiveTab("bracket");
+    // handleTabClick baixa a seção da chave; setActiveTab direto deixaria a aba
+    // vazia até um reload.
+    handleTabClick("bracket");
   };
 
   const handleSortearChaves = () => {
     if (!isAdmin) return;
+    // Mesma proteção do sortear grupos: a chave filtra o cronograma e o
+    // regrava inteiro; sem ele carregado, viraria cronograma vazio no banco.
+    if (!loadedSectionsRef.current.has("cronograma")) {
+      toast.error("Abra o Cronograma antes de sortear as chaves.");
+      return;
+    }
+    if (campeonato.formato === "liga" && !loadedSectionsRef.current.has("grupos")) {
+      toast.error("Abra a aba Grupos antes de sortear as chaves.");
+      return;
+    }
 
     const parseVagas = (vStr: any) => {
       const s = String(vStr || "16");
@@ -970,9 +1100,10 @@ export function CampeonatoProvider({
     saveToSupabase(updated);
     // Salva cronograma via API própria (substitui a RPC atualizar_cronograma_campeonato)
     api.tournaments.atualizarCronograma(id, newCronograma)
+      .then(() => invalidateTournament(id))
       .catch((error: any) => console.error('Erro ao salvar cronograma do chaveamento:', error.message));
 
-    setActiveTab("bracket");
+    handleTabClick("bracket");
   };
 
   const handleUpdateSchedule = (e: React.FormEvent) => {
@@ -1073,10 +1204,13 @@ export function CampeonatoProvider({
     // e substitui só o jogo correspondente.
     api.tournaments.mergeCronograma(id, [match])
       .then(() => {
+        invalidateTournament(id);
         // Jogo finalizado (ou placar editado) → recalcula PDL/V/D a partir dos
         // jogos finalizados do cronograma. Idempotente: corrige sozinho.
         if (match.status === "finalizado") {
-          api.tournaments.recalcularPdl(id).catch((e: any) => console.error('Erro ao recalcular PDL:', e.message));
+          api.tournaments.recalcularPdl(id)
+            .then(() => invalidateTournament(id))
+            .catch((e: any) => console.error('Erro ao recalcular PDL:', e.message));
         }
       })
       .catch((error: any) => {
@@ -1213,6 +1347,7 @@ export function CampeonatoProvider({
 
     // Envia só o jogo novo via merge atômico (substitui o write-all anterior)
     api.tournaments.mergeCronograma(id, [newMatch])
+      .then(() => invalidateTournament(id))
       .catch((error: any) => {
         console.error('Erro ao criar jogo:', error.message);
         alert(`Falha ao criar o jogo. Recarregue a página.\n\nDetalhe: ${error.message}`);
@@ -1239,6 +1374,7 @@ export function CampeonatoProvider({
     // `best_of` (shape legado) e `bestOf` (camel) são aceitos pelo servidor.
     api.tournaments.mergeCronograma(id, [{ ...updated, bestOf: valor }])
       .then(() => {
+        invalidateTournament(id);
         toast.success(`Formato da série definido: MD${valor}`);
       })
       .catch((error: any) => {
@@ -1389,6 +1525,7 @@ export function CampeonatoProvider({
     setCampeonato(updated);
     api.tournaments.atualizarCronograma(id, newCronograma)
       .then(() => {
+        invalidateTournament(id);
         toast.success("Jogo excluído com sucesso!");
       })
       .catch((err: any) => console.error("Erro ao excluir jogo:", err));
@@ -1408,6 +1545,8 @@ export function CampeonatoProvider({
     id,
     campeonato,
     campeonatoLoading,
+    tabLoading,
+    tabError,
     activeTab,
     tabs,
     isBracketModalOpen,

@@ -160,6 +160,49 @@ export interface ApiLegacyTournament {
   updated_at?: string;
 }
 
+/**
+ * Card de `/campeonatos` (GET /api/tournaments?view=card). Contrato enxuto:
+ * não traz cronograma, chave, classificação, grupos, regulamento nem a foto da
+ * organização — só o que o card desenha.
+ */
+export type ApiLegacyTournamentCard = Pick<
+  ApiLegacyTournament,
+  | "id"
+  | "titulo"
+  | "nome"
+  | "criado_por"
+  | "status"
+  | "formato"
+  | "frase"
+  | "logo_url"
+  | "theme_color"
+  | "vagas"
+  | "tier"
+  | "data"
+  | "premiacao"
+  | "taxa"
+  | "tem_outros_premios"
+  | "outros_premios"
+  | "organizacao"
+  | "grupos_sorteados"
+  | "chaves_sorteados"
+  | "created_at"
+  | "updated_at"
+  | "registeredTeamsCount"
+>;
+
+/**
+ * Agenda do Lobby (GET /api/tournaments?view=agenda): card + jogos confirmados
+ * + resumo dos times. É o mínimo para montar os "próximos jogos".
+ */
+export type ApiLegacyTournamentAgenda = ApiLegacyTournamentCard & {
+  cronograma: any[];
+  times_inscritos: any[];
+};
+
+/** Seções pesadas do detalhe, carregadas por aba. */
+export type TournamentSection = "cronograma" | "classificacao" | "grupos" | "chaves";
+
 /** Saldo de MP/MC no shape que as telas do fork consomem. */
 export interface ApiWalletBalance {
   userId: string;
@@ -800,7 +843,25 @@ export const api = {
       const ids = params.ids?.length ? `${base ? "&" : "?"}ids=${params.ids.join(",")}` : "";
       return api.get<ApiLegacyTournament[]>(`/tournaments${base}${ids}`);
     },
+    /** Listagem enxuta (contrato do card). Não traz as seções pesadas. */
+    listCards: (params: { status?: string; criado_por?: string; ids?: string[]; sort?: string } = {}) => {
+      const base = qs({ status: params.status, criado_por: params.criado_por, sort: params.sort });
+      const query = `${base ? "&" : "?"}view=card${params.ids?.length ? `&ids=${params.ids.join(",")}` : ""}`;
+      return api.get<ApiLegacyTournamentCard[]>(`/tournaments${query}`);
+    },
+    /** Listagem da agenda do Lobby: cards + jogos confirmados + times resumidos. */
+    listAgenda: (params: { status?: string; criado_por?: string; ids?: string[]; sort?: string } = {}) => {
+      const base = qs({ status: params.status, criado_por: params.criado_por, sort: params.sort });
+      const query = `${base ? "&" : "?"}view=agenda${params.ids?.length ? `&ids=${params.ids.join(",")}` : ""}`;
+      return api.get<ApiLegacyTournamentAgenda[]>(`/tournaments${query}`);
+    },
+    /** Documento completo — admin e compatibilidade. */
     detail: (id: string) => api.get<ApiLegacyTournament>(`/tournaments/${id}`),
+    /** Escalares + times inscritos (abre o detalhe sem baixar as seções). */
+    shell: (id: string) => api.get<ApiLegacyTournament>(`/tournaments/${id}/shell`),
+    /** Uma seção pesada do detalhe, sob demanda por aba. */
+    section: (id: string, section: TournamentSection) =>
+      api.get<Partial<ApiLegacyTournament>>(`/tournaments/${id}/${section}`),
     create: (data: Partial<ApiLegacyTournament>) => api.post<ApiLegacyTournament>("/tournaments", data),
     update: (id: string, data: Partial<ApiLegacyTournament>) => api.put<ApiLegacyTournament>(`/tournaments/${id}`, data),
     remove: (id: string) => api.delete<{ ok: boolean }>(`/tournaments/${id}`),

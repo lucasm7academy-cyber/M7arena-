@@ -71,6 +71,26 @@ export function cronogramaStatusToLegacy(status: string | null | undefined): str
 }
 
 /**
+ * Salas Campeonato ativas por série (o cronograma mostra "Entrar na Sala").
+ * Extraído para ser reutilizado tanto pela carga completa quanto pela seção
+ * `cronograma` (lazy load por aba).
+ */
+async function loadSalasMap(matches: any[], d: any) {
+  const salasMap = new Map<string, number>();
+  if (!matches.length) return salasMap;
+
+  const salas = await d
+    .select({ matchId: salasTable.tournamentMatchId, salaNum: salasTable.salaNum, status: salasTable.status })
+    .from(salasTable)
+    .where(inArray(salasTable.tournamentMatchId, matches.map((m: any) => m.id)));
+
+  for (const s of salas) {
+    if (s.matchId && SALA_CAMPEONATO_ATIVA.includes(s.status)) salasMap.set(s.matchId, s.salaNum);
+  }
+  return salasMap;
+}
+
+/**
  * Busca todos os dados relacionados de um torneio de uma vez.
  * Retorna { t, teams, groups, matches, brackets, standings, teamRows }.
  */
@@ -83,24 +103,84 @@ export async function loadTournamentData(id: string, d: typeof db = db as any) {
   const matches = await d.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
   const brackets = await d.select().from(bracketMatches).where(eq(bracketMatches.tournamentId, id));
   const standings = await d.select().from(tournamentStandings).where(eq(tournamentStandings.tournamentId, id));
-
-  // Sala Campeonato ativa por série (o cronograma mostra "Entrar na Sala").
-  const salas = matches.length
-    ? await d
-        .select({ matchId: salasTable.tournamentMatchId, salaNum: salasTable.salaNum, status: salasTable.status })
-        .from(salasTable)
-        .where(inArray(salasTable.tournamentMatchId, matches.map((m: any) => m.id)))
-    : [];
-  const salasMap = new Map<string, number>();
-  for (const s of salas) {
-    if (s.matchId && SALA_CAMPEONATO_ATIVA.includes(s.status)) salasMap.set(s.matchId, s.salaNum);
-  }
+  const salasMap = await loadSalasMap(matches, d);
 
   return { t, teamRows, groups, matches, brackets, standings, salasMap };
 }
 
+/** Seções que o detalhe carrega sob demanda (uma por aba pesada). */
+export type TournamentSection = "cronograma" | "classificacao" | "grupos" | "chaves";
+
+/**
+ * Carga enxuta do torneio + times (o "shell" do detalhe). Não toca nas tabelas
+ * de cronograma/chave/classificação/grupos: são seções carregadas por aba.
+ */
+export async function loadTournamentShell(id: string, d: typeof db = db as any) {
+  const [t] = await d.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+  if (!t) return null;
+
+  const teamRows = await d
+    .select()
+    .from(teams)
+    .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
+    .where(eq(tournamentTeams.tournamentId, id));
+
+  return { t, teamRows };
+}
+
+/**
+ * Tags dos times inscritos — o mínimo para redigir `codigo_partida` de uma
+ * seção (cronograma/chave) sem carregar o shape inteiro.
+ */
+export async function loadTournamentTags(id: string, d: typeof db = db as any) {
+  return d
+    .select({ id: teams.id, tag: teams.tag })
+    .from(teams)
+    .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
+    .where(eq(tournamentTeams.tournamentId, id));
+}
+
+/**
+ * Carga de UMA seção pesada. Cada seção busca apenas as tabelas de que precisa,
+ * mantendo a mesma forma que os builders abaixo esperam.
+ */
+export async function loadTournamentSection(id: string, section: TournamentSection, d: typeof db = db as any) {
+  const [t] = await d.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
+  if (!t) return null;
+
+  if (section === "cronograma") {
+    const matches = await d.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+    const salasMap = await loadSalasMap(matches, d);
+    return { t, matches, salasMap };
+  }
+
+  if (section === "classificacao") {
+    const teamRows = await d
+      .select()
+      .from(teams)
+      .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
+      .where(eq(tournamentTeams.tournamentId, id));
+    const matches = await d.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+    const standings = await d.select().from(tournamentStandings).where(eq(tournamentStandings.tournamentId, id));
+    return { t, teamRows, matches, standings };
+  }
+
+  if (section === "grupos") {
+    const teamRows = await d
+      .select()
+      .from(teams)
+      .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
+      .where(eq(tournamentTeams.tournamentId, id));
+    const groups = await d.select().from(tournamentGroups).where(eq(tournamentGroups.tournamentId, id));
+    return { t, teamRows, groups };
+  }
+
+  const brackets = await d.select().from(bracketMatches).where(eq(bracketMatches.tournamentId, id));
+  return { t, brackets };
+}
+
 /** `times_inscritos` — array de TeamRegistration (id, name, tag, status, paid, discord, whatsapp, logo). */
-export function buildTimesInscritos(data: NonNullable<Awaited<ReturnType<typeof loadTournamentData>>>) {
+export function buildTimesInscritos(data: { teamRows: any[] }) {
   return data.teamRows.map(({ teams: team, tournament_teams: tt }) => ({
     id: tt.teamId,
     name: team.name,
@@ -117,7 +197,7 @@ export function buildTimesInscritos(data: NonNullable<Awaited<ReturnType<typeof 
 }
 
 /** `cronograma` — array de jogos legado. */
-export function buildCronograma(data: NonNullable<Awaited<ReturnType<typeof loadTournamentData>>>) {
+export function buildCronograma(data: { matches: any[]; salasMap?: Map<string, number> }) {
   return data.matches.map((m) => ({
     id: m.matchKey || m.id,
     fase: m.phaseLabel || m.phase,
@@ -153,7 +233,7 @@ function sortStandings(a: any, b: any) {
 }
 
 /** `classificacao` — derivada do cronograma, com fallback para a tabela manual. */
-export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof loadTournamentData>>>) {
+export function buildClassificacao(data: { t: any; matches: any[]; teamRows: any[]; standings: any[] }) {
   const { t, matches, teamRows, standings } = data;
   const approved = teamRows.filter((r) => r.tournament_teams.status === "approved");
 
@@ -210,7 +290,7 @@ export function buildClassificacao(data: NonNullable<Awaited<ReturnType<typeof l
 }
 
 /** `grupos` — objeto { "Grupo A": [times...] } montado de tournament_groups + membership. */
-export function buildGrupos(data: NonNullable<Awaited<ReturnType<typeof loadTournamentData>>>) {
+export function buildGrupos(data: { groups: any[]; teamRows: any[] }) {
   const { groups, teamRows } = data;
   const byGroup: Record<string, any[]> = {};
   groups.forEach((g) => (byGroup[g.name] = []));
@@ -234,7 +314,7 @@ export function buildGrupos(data: NonNullable<Awaited<ReturnType<typeof loadTour
  * `bracket_data` — monta a árvore double-elimination completa (o shape fixo que
  * o fork espera) e preenche com as linhas de bracket_matches.
  */
-export function buildBracket(data: NonNullable<Awaited<ReturnType<typeof loadTournamentData>>>) {
+export function buildBracket(data: { brackets: any[] }) {
   const { brackets } = data;
   const empty = { t1: "", t2: "", s1: 0, s2: 0, winner: null };
 
@@ -295,16 +375,11 @@ export function buildBracket(data: NonNullable<Awaited<ReturnType<typeof loadTou
 }
 
 /**
- * Monta o shape legado completo de um torneio (o que o front consome).
- * `teamsCount` é opcional (só na listagem).
+ * Campos escalares do shape legado. Compartilhados entre o documento completo
+ * (admin/escrita), o shell do detalhe e o card da listagem — assim um campo
+ * novo nunca fica de fora de um contrato sem querer.
  */
-export async function toLegacyTournament(id: string, teamsCountOrDb?: number | any, maybeDb?: any) {
-  const teamsCount = typeof teamsCountOrDb === "number" ? teamsCountOrDb : undefined;
-  const d = typeof teamsCountOrDb === "object" && teamsCountOrDb !== null ? teamsCountOrDb : (maybeDb || db);
-  const data = await loadTournamentData(id, d);
-  if (!data) return null;
-  const { t } = data;
-
+function legacyScalars(t: any) {
   return {
     id: t.id,
     titulo: t.name,
@@ -328,15 +403,9 @@ export async function toLegacyTournament(id: string, teamsCountOrDb?: number | a
     tem_outros_premios: t.temOutrosPremios ?? false,
     outros_premios: t.outrosPremios ?? null,
     organizacao: t.organizacao ?? null,
-    times_inscritos: buildTimesInscritos(data),
-    cronograma: buildCronograma(data),
-    bracket_data: buildBracket(data),
-    classificacao: buildClassificacao(data),
-    grupos: buildGrupos(data),
     times_ordem_sorteio: t.seedOrder ?? [],
     grupos_sorteados: !!t.gruposSorteados,
     chaves_sorteados: !!t.chavesSorteados,
-    ...(teamsCount !== undefined ? { registeredTeamsCount: teamsCount } : {}),
     created_at: t.createdAt,
     updated_at: t.updatedAt,
     // Colunas normalizadas sem par legado — inofensivas no payload.
@@ -346,6 +415,120 @@ export async function toLegacyTournament(id: string, teamsCountOrDb?: number | a
     registrationOpensAt: t.registrationOpensAt,
     startsAt: t.startsAt,
     endsAt: t.endsAt,
+  };
+}
+
+/**
+ * Escalares do detalhe público: tudo, menos a foto da organização. Ela é
+ * usada só no formulário do admin e pode ser um data URL grande (a Copa do
+ * Milho tinha 59 KB de base64); o detalhe não renderiza esse campo.
+ */
+function publicScalars(t: any) {
+  const scalars: any = legacyScalars(t);
+  delete scalars.org_photo_url;
+  return scalars;
+}
+
+/**
+ * Contrato do card de `/campeonatos`: só o que o card desenha. Sem cronograma,
+ * chave, classificação, grupos, regulamento, inscritos ou foto da organização.
+ */
+export function toLegacyTournamentCard(t: any, teamsCount?: number) {
+  return {
+    id: t.id,
+    titulo: t.name,
+    nome: t.name,
+    criado_por: t.organizerId,
+    formato: formatToLegacy(t.format),
+    status: statusToLegacy(t.status),
+    frase: t.frase ?? null,
+    logo_url: t.logoUrl ?? null,
+    theme_color: t.themeColor ?? "#FFB700",
+    vagas: t.vagas ?? 0,
+    tier: t.tier ?? null,
+    data: t.data ?? null,
+    premiacao: t.premiacao ?? null,
+    taxa: t.taxa ?? null,
+    tem_outros_premios: t.temOutrosPremios ?? false,
+    outros_premios: t.outrosPremios ?? null,
+    organizacao: t.organizacao ?? null,
+    grupos_sorteados: !!t.gruposSorteados,
+    chaves_sorteados: !!t.chavesSorteados,
+    created_at: t.createdAt,
+    updated_at: t.updatedAt,
+    gameId: t.gameId,
+    slug: t.slug,
+    ...(teamsCount !== undefined ? { registeredTeamsCount: teamsCount } : {}),
+  };
+}
+
+/**
+ * Shell do detalhe: escalares + times inscritos. É o que o hero, a aba Visão
+ * Geral e o modal de inscrição precisam para o primeiro paint. As seções
+ * pesadas vêm depois, por aba.
+ */
+export async function toLegacyTournamentShell(id: string, d: typeof db = db as any) {
+  const data = await loadTournamentShell(id, d);
+  if (!data) return null;
+
+  return {
+    ...publicScalars(data.t),
+    times_inscritos: buildTimesInscritos(data),
+    registeredTeamsCount: data.teamRows.length,
+  };
+}
+
+/** Uma seção pesada do detalhe (cronograma, classificação, grupos ou chave). */
+export async function toLegacyTournamentSection(
+  id: string,
+  section: TournamentSection,
+  d: typeof db = db as any,
+) {
+  const data: any = await loadTournamentSection(id, section, d);
+  if (!data) return null;
+
+  if (section === "cronograma") return { cronograma: buildCronograma(data) };
+  if (section === "classificacao") return { classificacao: buildClassificacao(data) };
+  if (section === "grupos") return { grupos: buildGrupos(data) };
+  return { bracket_data: buildBracket(data) };
+}
+
+/**
+ * Times inscritos no formato enxuto que a agenda do Lobby usa (sem paid,
+ * discord e whatsapp). A agenda só precisa resolver tag/nome/logo/cor.
+ */
+export function buildTimesInscritosResumo(data: { teamRows: any[] }) {
+  return data.teamRows.map(({ teams: team, tournament_teams: tt }) => ({
+    id: tt.teamId,
+    name: team.name,
+    tag: team.tag,
+    status: tt.status === "approved" ? "approved" : tt.status === "rejected" ? "rejected" : "pending",
+    logo: team.logoUrl,
+    gradient_from: team.gradientFrom,
+    gradient_to: team.gradientTo,
+    cor: team.gradientFrom || team.gradientTo || "#FFB700",
+  }));
+}
+
+/**
+ * Monta o shape legado completo de um torneio (o que o front consome).
+ * `teamsCount` é opcional (só na listagem).
+ */
+export async function toLegacyTournament(id: string, teamsCountOrDb?: number | any, maybeDb?: any) {
+  const teamsCount = typeof teamsCountOrDb === "number" ? teamsCountOrDb : undefined;
+  const d = typeof teamsCountOrDb === "object" && teamsCountOrDb !== null ? teamsCountOrDb : (maybeDb || db);
+  const data = await loadTournamentData(id, d);
+  if (!data) return null;
+  const { t } = data;
+
+  return {
+    ...legacyScalars(t),
+    times_inscritos: buildTimesInscritos(data),
+    cronograma: buildCronograma(data),
+    bracket_data: buildBracket(data),
+    classificacao: buildClassificacao(data),
+    grupos: buildGrupos(data),
+    ...(teamsCount !== undefined ? { registeredTeamsCount: teamsCount } : {}),
   };
 }
 

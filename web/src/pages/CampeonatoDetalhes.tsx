@@ -52,6 +52,8 @@ const CampeonatoDetalhesInner = ({
     id,
     campeonato,
     campeonatoLoading,
+    tabLoading,
+    tabError,
     activeTab,
     setActiveTab,
     tabs,
@@ -246,6 +248,44 @@ const CampeonatoDetalhesInner = ({
               })}
             </div>
 
+            {/* Seção da aba em carregamento (lazy): só o conteúdo troca; o
+                cabeçalho, o hero e as abas continuam visíveis. */}
+            {tabLoading && (
+              <div
+                key="tab-loading"
+                className="w-full min-h-[240px] flex items-center justify-center rounded-xl border border-white/10 bg-[#08080a] p-6"
+              >
+                <div className="flex items-center gap-3 text-white/40">
+                  <RefreshCw
+                    className="w-5 h-5 animate-spin"
+                    style={{ color: campeonato.themeColor || '#FFB700' }}
+                  />
+                  <span className="text-xs font-black uppercase tracking-widest">
+                    Carregando...
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {tabError && !tabLoading && (
+              <div
+                key="tab-error"
+                className="w-full min-h-[240px] flex flex-col items-center justify-center gap-4 rounded-xl border border-white/10 bg-[#08080a] p-6 text-center"
+              >
+                <p className="text-xs font-black uppercase tracking-widest text-white/40">
+                  {tabError}
+                </p>
+                <button
+                  onClick={() => handleTabClick(activeTab)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/10 bg-[#0c0c10] text-white/70 hover:text-white hover:border-white/20 font-black text-[10px] uppercase tracking-widest transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Tentar novamente</span>
+                </button>
+              </div>
+            )}
+
+            {!tabLoading && !tabError && (
             <AnimatePresence mode="wait">
               {activeTab === "overview" && <VisaoGeral key="overview" campeonato={campeonato} getIcon={getIcon} isRegistrado={isRegistered} setAbrirInscricao={() => setIsRegistrationModalOpen(true)} setAbrirRegulamento={handleAbrirRegulamento} ehEspectador={role === "spectator"} />}
 
@@ -402,6 +442,7 @@ const CampeonatoDetalhesInner = ({
                 </motion.div>
               )}
             </AnimatePresence>
+            )}
 
             <AgendamentoModal isOpen={isScheduleEditModalOpen} onClose={() => setIsScheduleEditModalOpen(false)} campeonato={campeonato} editFormData={editFormData} setEditFormData={setEditFormData} jogoStatusAtStart={jogoStatusAtStart} editingMatchIndex={editingMatchIndex} onSubmit={handleUpdateSchedule} onDelete={handleDeleteMatch} myTeams={myTeams} isAdmin={isAdmin} id={id} setCampeonato={setCampeonato} onSetBestOf={handleSetSeriesFormat} />
 

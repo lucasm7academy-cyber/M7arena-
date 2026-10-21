@@ -586,7 +586,7 @@ const Home = () => {
       }
       try {
         const [camps, allTeams, agenda] = await Promise.all([
-          api.tournaments.list(),
+          api.tournaments.listAgenda(),
           api.teams.list().catch(() => [] as any[]),
           api.streams.agenda().catch(() => [] as any[]),
         ]);

@@ -3,7 +3,22 @@ import { eq, and, gt, asc, desc, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
 import { tournaments, tournamentTeams, tournamentMatches, bracketMatches, tournamentStandings } from "../../../db/schema/tournaments.js";
-import { toLegacyTournament, toLegacyTournamentList, statusToNew, formatToNew, statusToLegacy, formatToLegacy } from "../lib/tournament-shape.js";
+import { teams } from "../../../db/schema/teams.js";
+import {
+  toLegacyTournament,
+  toLegacyTournamentList,
+  toLegacyTournamentCard,
+  toLegacyTournamentShell,
+  toLegacyTournamentSection,
+  loadTournamentTags,
+  buildCronograma,
+  buildTimesInscritosResumo,
+  statusToNew,
+  formatToNew,
+  statusToLegacy,
+  formatToLegacy,
+  type TournamentSection,
+} from "../lib/tournament-shape.js";
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario, removerInscricao } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, normalizarBestOf, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
@@ -145,6 +160,9 @@ tournamentsRouter.get("/", async (req, res) => {
       .map((s) => s.trim())
       .filter(Boolean);
     const sort = String(req.query.sort || "created_at");
+    // `card` = contrato da listagem; `agenda` = card + próximos jogos do Lobby.
+    // Sem `view`, mantém o documento completo (admin e compatibilidade).
+    const view = String(req.query.view || "").trim();
 
     const clauses: any[] = [];
     if (statusLegacy) clauses.push(eq(tournaments.status, statusToNew(statusLegacy)));
@@ -160,6 +178,55 @@ tournamentsRouter.get("/", async (req, res) => {
     if (!rows.length) return res.json([]);
 
     const counts = await toLegacyTournamentList(rows.map((r) => r.id));
+
+    if (view === "card") {
+      res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
+      return res.json(rows.map((r) => toLegacyTournamentCard(r, counts[r.id] ?? 0)));
+    }
+
+    if (view === "agenda") {
+      const ids = rows.map((r) => r.id);
+      // Duas queries para todos os campeonatos (sem N+1): só jogos confirmados
+      // e o resumo dos times. O Lobby não precisa de mais nada.
+      const [confirmedMatches, teamRows] = await Promise.all([
+        db
+          .select()
+          .from(tournamentMatches)
+          .where(and(inArray(tournamentMatches.tournamentId, ids), eq(tournamentMatches.status, "confirmado"))),
+        db
+          .select()
+          .from(teams)
+          .innerJoin(tournamentTeams, eq(tournamentTeams.teamId, teams.id))
+          .where(inArray(tournamentTeams.tournamentId, ids)),
+      ]);
+
+      const matchesBy = new Map<string, any[]>();
+      for (const m of confirmedMatches) {
+        if (!m.teamATag || !m.teamBTag) continue;
+        if (!m.displayDate || m.displayDate === "A COMBINAR") continue;
+        const list = matchesBy.get(m.tournamentId) || [];
+        list.push(m);
+        matchesBy.set(m.tournamentId, list);
+      }
+
+      const teamsBy = new Map<string, any[]>();
+      for (const row of teamRows) {
+        const tid = row.tournament_teams.tournamentId;
+        const list = teamsBy.get(tid) || [];
+        list.push(row);
+        teamsBy.set(tid, list);
+      }
+
+      const items = rows.map((r) => ({
+        ...toLegacyTournamentCard(r, counts[r.id] ?? 0),
+        cronograma: buildCronograma({ matches: matchesBy.get(r.id) || [], salasMap: new Map() }),
+        times_inscritos: buildTimesInscritosResumo({ teamRows: teamsBy.get(r.id) || [] }),
+      }));
+
+      res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
+      return res.json(items);
+    }
+
     const user = await getAuthUser(req);
     const ident = user ? await identidadeAcessoCampeonato(db, user.id) : null;
     const items: any[] = [];
@@ -169,6 +236,8 @@ tournamentsRouter.get("/", async (req, res) => {
       const acesso = acessoNoCampeonato(ident, { userId: user?.id, organizerId: r.organizerId });
       items.push(redigirCodigosDaSerie(legacy, acesso));
     }
+    // Documento completo contém códigos de série — nunca cache compartilhado.
+    res.set("Cache-Control", "private, no-store");
     return res.json(items);
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao listar campeonatos" });
@@ -188,6 +257,71 @@ tournamentsRouter.get("/:id", async (req, res) => {
     return res.status(500).json({ error: error?.message || "Erro ao buscar campeonato" });
   }
 });
+
+// ── GET /api/tournaments/:id/shell — detalhe sem as seções pesadas ────────
+// O detalhe abre com escalares + times inscritos; cronograma, classificação,
+// grupos e chaves chegam por aba (ver rotas de seção abaixo). É o mesmo shape
+// legado, só que particionado — o endpoint completo acima continua existindo
+// para admin e compatibilidade.
+tournamentsRouter.get("/:id/shell", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const shell = await toLegacyTournamentShell(id);
+    if (!shell) {
+      return res.status(404).json({ error: "Campeonato não encontrado" });
+    }
+    // Curto e privado: shell tem por código de série nada, mas pode responder
+    // diferente para staff em breve; cache compartilhado não é necessário.
+    res.set("Cache-Control", "private, max-age=5, must-revalidate");
+    return res.json(shell);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar campeonato" });
+  }
+});
+
+// ── GET /api/tournaments/:id/:secao — uma seção pesada por vez ────────────
+const SECOES_DETALHE: TournamentSection[] = ["cronograma", "classificacao", "grupos", "chaves"];
+
+/**
+ * Seção no shape legado. Cronograma e chaves carregam `codigo_partida`, então
+ * passam pela mesma redação do detalhe completo (ADR-043): só staff ou quem
+ * joga a série enxerga o código.
+ */
+async function shapeSecaoComAcesso(req: any, id: string, section: TournamentSection) {
+  const secao = await toLegacyTournamentSection(id, section);
+  if (!secao) return null;
+  if (section !== "cronograma" && section !== "chaves") return secao;
+
+  const [t, tags, user] = await Promise.all([
+    db.select({ organizerId: tournaments.organizerId }).from(tournaments).where(eq(tournaments.id, id)).limit(1),
+    loadTournamentTags(id),
+    getAuthUser(req),
+  ]);
+
+  // `redigirCodigosDaSerie` resolve tag -> time por `times_inscritos`; aqui só
+  // id/tag importam, então evita montar o cadastro completo dos times.
+  const ident = user ? await identidadeAcessoCampeonato(db, user.id) : null;
+  const acesso = acessoNoCampeonato(ident, { userId: user?.id, organizerId: (t[0] as any)?.organizerId });
+  const inscritos = tags.map((row: any) => ({ id: row.id, tag: row.tag }));
+  return redigirCodigosDaSerie({ times_inscritos: inscritos, ...secao }, acesso);
+}
+
+for (const section of SECOES_DETALHE) {
+  tournamentsRouter.get(`/:id/${section}`, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const secao = await shapeSecaoComAcesso(req, id, section);
+      if (!secao) {
+        return res.status(404).json({ error: "Campeonato não encontrado" });
+      }
+      // Seção pode conter código de série para participante: nunca cache público.
+      res.set("Cache-Control", "private, max-age=5, must-revalidate");
+      return res.json(secao);
+    } catch (error: any) {
+      return res.status(500).json({ error: error?.message || "Erro ao buscar seção do campeonato" });
+    }
+  });
+}
 
 // ── POST /api/tournaments — criar (organizador vem da sessão, nunca do body) ─
 tournamentsRouter.post("/", async (req, res) => {

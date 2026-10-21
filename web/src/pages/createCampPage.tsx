@@ -193,6 +193,7 @@ export default function AdminPanel() {
           let needsUpdate = false;
           let updatedLogo = t.logoUrl;
           let updatedBanner = t.bannerUrl;
+          let updatedOrgPhoto = t.orgPhotoUrl;
 
           const checkAndUpload = async () => {
             if (t.logoUrl && t.logoUrl.startsWith('data:image/')) {
@@ -217,9 +218,28 @@ export default function AdminPanel() {
                 console.error(e);
               }
             }
+            // Foto da organização é o maior data URL do banco (a Copa do Milho
+            // tinha ~59 KB). Só o editor do admin a usa; migrar para upload
+            // tira esse peso de todas as leituras administrativas.
+            if (t.orgPhotoUrl && t.orgPhotoUrl.startsWith('data:image/')) {
+              try {
+                const compressed = t.orgPhotoUrl.length > 300000
+                  ? await compressImageFromBase64(t.orgPhotoUrl, 600, 600, 0.7)
+                  : t.orgPhotoUrl;
+                updatedOrgPhoto = await uploadBase64ToStorage(compressed, 'campeonatos', `${t.id}-org`);
+                needsUpdate = true;
+              } catch (e) {
+                console.error(e);
+              }
+            }
 
             if (needsUpdate) {
-              const updatedTournament = { ...t, logoUrl: updatedLogo, bannerUrl: updatedBanner };
+              const updatedTournament = {
+                ...t,
+                logoUrl: updatedLogo,
+                bannerUrl: updatedBanner,
+                orgPhotoUrl: updatedOrgPhoto,
+              };
               // Update local state
               setMyTournaments(prev => prev.map(item => item.id === t.id ? updatedTournament : item));
               // Update database

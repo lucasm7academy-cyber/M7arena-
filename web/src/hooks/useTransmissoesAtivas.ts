@@ -79,7 +79,7 @@ export function useTransmissoesAtivas() {
         // Buscar dados dos campeonatos
         const campsMap = new Map<string, { id: string; nome: string }>();
         if (campIds.size > 0) {
-          const campsData = await api.tournaments.list({ ids: Array.from(campIds) });
+          const campsData = await api.tournaments.listCards({ ids: Array.from(campIds) });
 
           if (campsData) {
             campsData.forEach((c: any) => campsMap.set(c.id, { id: c.id, nome: c.nome }));
