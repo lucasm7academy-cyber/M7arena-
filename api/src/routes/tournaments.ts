@@ -303,7 +303,11 @@ async function shapeSecaoComAcesso(req: any, id: string, section: TournamentSect
   const ident = user ? await identidadeAcessoCampeonato(db, user.id) : null;
   const acesso = acessoNoCampeonato(ident, { userId: user?.id, organizerId: (t[0] as any)?.organizerId });
   const inscritos = tags.map((row: any) => ({ id: row.id, tag: row.tag }));
-  return redigirCodigosDaSerie({ times_inscritos: inscritos, ...secao }, acesso);
+  const comTags: any = redigirCodigosDaSerie({ times_inscritos: inscritos, ...secao }, acesso);
+  // O mapa tag->time é só ferramenta de redação: a seção responde apenas com a
+  // sua própria chave (cronograma ou bracket_data).
+  delete comTags.times_inscritos;
+  return comTags;
 }
 
 for (const section of SECOES_DETALHE) {
