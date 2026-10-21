@@ -847,13 +847,13 @@ export const api = {
     listCards: (params: { status?: string; criado_por?: string; ids?: string[]; sort?: string } = {}) => {
       const base = qs({ status: params.status, criado_por: params.criado_por, sort: params.sort });
       const query = `${base ? "&" : "?"}view=card${params.ids?.length ? `&ids=${params.ids.join(",")}` : ""}`;
-      return api.get<ApiLegacyTournamentCard[]>(`/tournaments${query}`);
+      return api.get<ApiLegacyTournamentCard[]>(`/tournaments${base}${query}`);
     },
     /** Listagem da agenda do Lobby: cards + jogos confirmados + times resumidos. */
     listAgenda: (params: { status?: string; criado_por?: string; ids?: string[]; sort?: string } = {}) => {
       const base = qs({ status: params.status, criado_por: params.criado_por, sort: params.sort });
       const query = `${base ? "&" : "?"}view=agenda${params.ids?.length ? `&ids=${params.ids.join(",")}` : ""}`;
-      return api.get<ApiLegacyTournamentAgenda[]>(`/tournaments${query}`);
+      return api.get<ApiLegacyTournamentAgenda[]>(`/tournaments${base}${query}`);
     },
     /** Documento completo — admin e compatibilidade. */
     detail: (id: string) => api.get<ApiLegacyTournament>(`/tournaments/${id}`),
