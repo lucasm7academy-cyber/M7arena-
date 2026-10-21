@@ -194,11 +194,12 @@ export default function SalaCampeonato() {
   }, [carregar]);
 
   // TROCA DE LADOS NA SALA: o banner aparece junto com o deslize das colunas
-  // e some sozinho (~3s). A detecção da troca é feita em tempo de render, mais
-  // abaixo (só o render da troca ganha a animação).
+  // (1,2s — pedido do usuário 21/10: estava lento com 3s) e some sozinho em
+  // ~2,4s. A detecção da troca é feita em tempo de render, mais abaixo (só o
+  // render da troca ganha a animação).
   useEffect(() => {
     if (!bannerTroca) return;
-    const t = setTimeout(() => setBannerTroca(false), 3200);
+    const t = setTimeout(() => setBannerTroca(false), 2400);
     return () => clearTimeout(t);
   }, [bannerTroca]);
 
@@ -436,7 +437,7 @@ export default function SalaCampeonato() {
   // Padrão React de ajustar estado durante o render: no momento EXATO em que o
   // lado em jogo muda (shape novo pelo WS/polling), este render é descartado e
   // o re-render imediato já sai com banner + animação ligados — é o ÚNICO
-  // render que anima (~3s). Qualquer outro reflow depois é instantâneo; quem
+  // render que anima (1,2s). Qualquer outro reflow depois é instantâneo; quem
   // recarrega a página já vê os times no lado certo, sem animação. A chave é
   // por jogo: cada jogo novo começa sincronizado e parado.
   const ladoAtual: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
@@ -680,9 +681,9 @@ export default function SalaCampeonato() {
   //
   // TROCA DE LADOS NA SALA: as colunas são posicionais (esquerda = lado azul,
   // direita = lado vermelho) e o TIME de cada lado vem das escolhas. Quando o
-  // time da vaga azul escolhe jogar de vermelho, as colunas deslizam devagar
-  // (~3s via framer layout) — todos na sala veem, porque o estado chega pelo
-  // shape (WebSocket + polling).
+  // time da vaga azul escolhe jogar de vermelho, as colunas deslizam (1,2s via
+  // framer layout; era 3s — acelerado a pedido do usuário 21/10) — todos na
+  // sala veem, porque o estado chega pelo shape (WebSocket + polling).
   const ladoJogoA: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
   const equipeNoLado = (posicao: 'blue' | 'red'): 'blue' | 'red' =>
     (ladoJogoA === posicao ? 'blue' : 'red');
@@ -705,7 +706,7 @@ export default function SalaCampeonato() {
       <motion.div
         key={lado}
         layout="position"
-        transition={{ duration: bannerTroca ? 3 : 0, ease: 'easeInOut' }}
+        transition={{ duration: bannerTroca ? 1.2 : 0, ease: 'easeInOut' }}
         className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
       >
         {/* Etiqueta Blue-Side / Red-Side (igual à sala normal) — sai com o jogo
@@ -1369,7 +1370,8 @@ export default function SalaCampeonato() {
           )}
 
           {/* Banner da troca de lados — aparece junto com o deslize das
-              colunas e some sozinho (~3s). pointer-events-none: não bloqueia. */}
+              colunas (1,2s) e some sozinho em ~2,4s. pointer-events-none:
+              não bloqueia. */}
           <AnimatePresence>
             {bannerTroca && (
               <motion.div
