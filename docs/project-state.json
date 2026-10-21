@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-18T03:44:12.268Z",
+  "updatedAt": "2026-10-21T03:12:00.084Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2364,6 +2364,15 @@
       "decision": "ADR-089 (ADR-088 ja era do realtime/outro agente): 1) No modal Gerenciar Lineup, o botao Retirar/Expulsar agora aparece para TODOS os membros, inclusive o lider/dono — antes sumia para o isLeader (o proprietario nao conseguia kitar o capitao/dono). 2) Quem tiver a coroa e o DONO de verdade: ao salvar o lineup, teams.owner_id passa a seguir a coroa (lib resolverNovoDono) — dono anterior que perdeu a coroa deixa de ser dono; coroa num convidado sem conta nao troca owner_id; dono fora do lineup faz a coroa cair para o primeiro membro com conta. 3) POST /teams/:id/transferir-dono aceita proprietario (cargo) alem do dono atual. 4) No front, ao remover o lider a coroa anda sozinha para o proximo membro com conta. Testes: team-ownership 6/6 novos, suíte 268/268, tsc api+web 0, vite build ok, deploy 2039d39 na VPS (app+nginx), health 200.",
       "rationale": "",
       "supersedes": null
+    },
+    {
+      "id": "ADR-090",
+      "date": "2026-10-21T02:51:30.697Z",
+      "author": "deepseek",
+      "title": "Reset de senha pelo painel: link de uso unico, 24h, so proprietario",
+      "decision": "Token de 32 bytes aleatorios (banco guarda so SHA-256), link de uso unico valido por 24h gerado pelo proprietario no painel; consumo atomico grava bcrypt(10) e apaga todas as sessoes do usuario; sem e-mail e sem auditoria; auto-reset permitido; admin comum recebe 403.",
+      "rationale": "ADR-011 removeu o GoTrue e nao ha provedor de e-mail; BLK-001 deixa usuarios migrados com password_hash NULL. O link manual resolve um a um sem SMTP. Um unico link valido por usuario (gerar outro apaga o anterior) evita acumulo de tokens e simplifica a regra.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -2432,33 +2441,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-11T23:12:45.040Z",
-      "agent": "deepseek",
-      "summary": "Passo 3 (sala campeonato: criação + vagas + PRONTO + shape) concluído e deployado (50f93d6). Lib nova api/src/lib/sala-campeonato.ts: criação AUTOMÁTICA T-10 pela varredura de 1 min (index.ts) + manual (A COMBINAR, idempotente); vagas com validação de roster (dono/membro aceito/coach/convidado por PUUID); PRONTO sem timer repetido por jogo → camp_lado com sorteio (jogo 1) ou perdedor do jogo anterior (2+); gancho no motor de série avança jogo/zera prontos/encerra sala (inclusive W.O. manual no storeCronograma); shape ganha bloco `campeonato` e o código fica visível a membros dos 2 times/streamer/staff. Evidências: smoke VPS 19/19 (auto+manual+vagas+pronto+sorteio+shape+redação), testes 9/9, suíte 239/239, tsc 0. Obs: a partir do deploy, jogos confirmados com horário ganham sala no banco automaticamente (SEM UI ainda — o front entra nos próximos passos). Próximo: passo 4 (escolha de lado) e 5 (draft Fearless).",
-      "touched": [
-        "api/src/lib/sala-campeonato.ts",
-        "api/src/routes/matches.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/src/routes/tournaments.ts",
-        "api/src/index.ts",
-        "api/src/lib/serie-campeonato.ts",
-        "api/src/lib/tournament-store.ts",
-        "api/test/sala-campeonato.test.ts",
-        "scripts/smoke-vps-sala-campeonato.mjs"
-      ]
-    },
-    {
-      "at": "2026-10-11T23:18:34.370Z",
-      "agent": "deepseek",
-      "summary": "Passo 4 (escolha de lado) concluído e deployado (a6a5850). Lib: escolherLado/escolherPickOrder com lock e validação de vez (nao_e_do_time / fora_da_vez / lado_ja_escolhido); a escolha do lado passa a vez ao adversário escolher first/last pick; ao concluir, a sala vai para camp_draft e escolha_time fica com quem escolheu o pick order (base da ordem do draft). Rotas POST /api/matches/:id/sala-campeonato/lado e /pick-order. Evidências: smoke VPS 23/23 (ação automática + manual + vaga + PRONTO + sorteio + lado + pick order + shape + redação), testes 12/12, suíte 242/242, tsc 0. Próximo: passo 5 (draft Fearless do campeonato: engine por jogo com regras próprias e trava dos picks anteriores) e 6 (botão de live/assistir).",
-      "touched": [
-        "api/src/lib/sala-campeonato.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/test/sala-campeonato.test.ts",
-        "scripts/smoke-vps-sala-campeonato.mjs"
-      ]
-    },
     {
       "at": "2026-10-11T23:27:49.030Z",
       "agent": "deepseek",
@@ -2725,6 +2707,42 @@
       "summary": "Sons do draft ajuste 2 (pedido do usuario): (1) botao de mudo no canto superior direito do draft, ACIMA dos bans do time vermelho e colado na lateral (absolute top-[1vmin] right-[1.5vmin] — nao empurra nem muda a altura da linha de bans), icone Volume2/VolumeX dourado/apagado, estado lembrado no navegador (localStorage m7.draft.som.mudo), mutar silencia o que estiver tocando e nenhum som novo dispara. (2) contagem 30->10 ficou SEM som: removido o SomDraft 'tick' + arquivo relogio-tick.ogg do repo (git rm) e o efeito agora so toca tickCurto nos ultimos 10s (que o usuario aprovou). Evidencia: tsc web 0 erros; vite build ok (DraftRoom-CUGkLHVh.js local, 41.75 kB); commit 7e1217f pushado origin+vps; nginx rebuild + restart; health 200; imagem serve DraftRoom-BO-nee_y.js com m7.draft.som.mudo=true, relogio-tick.ogg ausente e relogio-tick-curto.ogg presente; /sounds/draft/seu-ban.ogg 200 audio/ogg 104517 bytes; dir da imagem com 12 sons (sem relogio-tick.ogg). Obs: em URL de arquivo removido o nginx do host cai no fallback do SPA (serve index.html com 200 text/html) — inofensivo pois nada mais o referencia.",
       "touched": [
         "app.draft.campeonato"
+      ]
+    },
+    {
+      "at": "2026-10-21T02:51:34.709Z",
+      "agent": "deepseek",
+      "summary": "Reset de senha pelo painel admin implementado (ADR-090): tabela password_reset_tokens + migration 0032 (SQL podado; cadeia 0000-0032 aplica no PGlite), lib password-reset (token 256 bits, SHA-256 no banco, consumo atomico, bcrypt 10, revoga sessoes), rota admin so proprietario, rotas publicas, aba Senhas e pagina /redefinir-senha (refresh do AuthContext no auto-reset). Evidencia: password-reset 8/8; suite completa serial 277/277 fail 0; tsc api exit 0; tsc web exit 0; vite build ok. Nao commitado; falta validacao manual do usuario.",
+      "touched": [
+        "db/schema/identidade.ts",
+        "db/migrations/0032_amused_santa_claus.sql",
+        "db/migrations/meta/0032_snapshot.json",
+        "api/src/lib/password-reset.ts",
+        "api/src/routes/admin-password-reset.ts",
+        "api/src/routes/password-reset.ts",
+        "api/src/index.ts",
+        "api/test/password-reset.test.ts",
+        "web/src/lib/api.ts",
+        "web/src/pages/AdminSenhas.tsx",
+        "web/src/pages/Admin.tsx",
+        "web/src/pages/RedefinirSenha.tsx",
+        "web/src/App.tsx",
+        "web/src/pages/Login.tsx",
+        "docs/superpowers/specs/2026-10-20-reset-senha-admin-design.md",
+        "docs/superpowers/plans/2026-10-20-reset-senha-admin.md"
+      ]
+    },
+    {
+      "at": "2026-10-21T03:12:00.083Z",
+      "agent": "deepseek",
+      "summary": "Deploy do reset de senha na VPS (ADR-090). Commits: feature 3b06470 rebasada sobre cdd9cd9 e pushada para origin (feat/reset-senha-admin + ff em feat/redesign-modais) e vps (updateInstead). Migration 0032 aplicada via psql no m7arena_postgres (password_reset_tokens criada, 0 rows). Rebuild docker compose app+realtime+nginx (exit 0). Smoke ao vivo https://m7arena.pro: health 200; GET /api/auth/reset-password/token-invalido -> 410 link_invalido_ou_expirado (cadeia Nginx->API->Postgres provada); POST /api/admin/usuarios/:id/reset-link sem sessao -> 401 nao_autenticado (rota admin montada); /redefinir-senha 200; bundle servido contem RedefinirSenha. Pre-deploy: suite completa serial 292/292 fail 0; tsc api e web exit 0; vite build exit 0. Pendente: validacao manual do usuario (gerar link como proprietario, abrir em anonima, definir senha 8+, relogin, link reutilizado invalido, sessoes antigas caindo, 403 p/ admin comum).",
+      "touched": [
+        "api/src/routes/password-reset.ts",
+        "api/src/routes/admin-password-reset.ts",
+        "web/src/pages/RedefinirSenha.tsx",
+        "web/src/pages/AdminSenhas.tsx",
+        "db/migrations/0032_amused_santa_claus.sql",
+        "VPS:/root/m7arena"
       ]
     }
   ]
