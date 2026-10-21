@@ -171,7 +171,8 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
       senha: temSenha ? senha : undefined,
       maxJogadores,
       eloMinimo: eloMinimo || undefined,
-      formato: modo === 'time_vs_time' ? formatoSerie : undefined,
+      // SÉRIE do 5x5 personalizado (default MD3) e do Time vs Time.
+      formato: modo === '5v5' || modo === 'time_vs_time' ? formatoSerie : undefined,
     };
 
     await onCreate(dados);
@@ -338,9 +339,9 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
               </div>
             </div>
 
-            {/* Formato da SÉRIE — só no card de criar a sala TIME vs TIME
-                (MD3 presetado; pedido 14/10) */}
-            {modo === 'time_vs_time' && (
+            {/* Formato da SÉRIE — sala 5x5 personalizada (MD3 presetado, pedido
+                19/10) e card de criar a sala TIME vs TIME (14/10). */}
+            {(modo === '5v5' || modo === 'time_vs_time') && (
               <div className="space-y-1.5">
                 <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Formato da Série</label>
                 <div className="flex items-center gap-1.5">

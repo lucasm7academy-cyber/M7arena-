@@ -10,18 +10,27 @@ import {
 import { toLegacyMatch } from "../src/lib/match-shape.js";
 
 describe("draft: registry de regras por modo", () => {
-  test("5v5 e time_vs_time: draft de 20 turnos, 5 slots por lado, tudo visível, vitrine JG", () => {
-    for (const modo of ["5v5", "time_vs_time"]) {
-      const r = getDraftRules(modo);
-      assert.equal(r.ativo, true, `${modo}: tem draft`);
-      assert.equal(r.turnOrder.length, 20, `${modo}: 20 turnos`);
-      assert.equal(r.maxBansPorLado, 5, `${modo}: 5 bans por lado`);
-      assert.equal(r.maxPicksPorLado, 5, `${modo}: 5 picks por lado`);
-      assert.equal(r.esconderPicksAdversario, false, `${modo}: tudo visível`);
-      assert.equal(r.roleControladora, "JG", `${modo}: vitrine do JG`);
-      assert.equal(temDraft(modo), true, modo);
-      assert.equal(getTurnOrder(modo), r.turnOrder, `${modo}: ordem vem do registry`);
-    }
+  test("5v5: draft de 20 turnos, 5 slots por lado, MID é o capitão (só ele age)", () => {
+    const r = getDraftRules("5v5");
+    assert.equal(r.ativo, true, "5v5: tem draft");
+    assert.equal(r.turnOrder.length, 20, "5v5: 20 turnos");
+    assert.equal(r.maxBansPorLado, 5, "5v5: 5 bans por lado");
+    assert.equal(r.maxPicksPorLado, 5, "5v5: 5 picks por lado");
+    assert.equal(r.esconderPicksAdversario, false, "5v5: tudo visível");
+    assert.equal(r.roleControladora, "MID", "5v5: o MID bane/escolhe");
+    assert.equal(r.apenasRoleControladora, true, "5v5: só a role controladora age");
+    assert.equal(temDraft("5v5"), true);
+    assert.equal(getTurnOrder("5v5"), r.turnOrder, "5v5: ordem vem do registry");
+  });
+
+  test("time_vs_time: mesmo draft, vitrine JG e qualquer role age (sem capitão)", () => {
+    const r = getDraftRules("time_vs_time");
+    assert.equal(r.ativo, true);
+    assert.equal(r.turnOrder.length, 20);
+    assert.equal(r.roleControladora, "JG", "time_vs_time: vitrine do JG");
+    assert.equal(r.apenasRoleControladora, false, "time_vs_time: qualquer participante do lado age");
+    assert.equal(temDraft("time_vs_time"), true);
+    assert.equal(getTurnOrder("time_vs_time"), r.turnOrder);
   });
 
   test("1v1 e aram: SEM draft (ativo=false, ordem vazia)", () => {
@@ -83,7 +92,8 @@ describe("draft: shape publica as regras do modo (o front não decide)", () => {
       max_bans_por_lado: 5,
       max_picks_por_lado: 5,
       esconder_picks_adversario: false,
-      role_controladora: "JG",
+      role_controladora: "MID",
+      apenas_role_controladora: true,
     });
   });
 

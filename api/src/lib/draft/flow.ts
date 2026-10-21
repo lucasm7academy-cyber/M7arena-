@@ -30,6 +30,7 @@
 import { eq, and } from "drizzle-orm";
 import { matchDrafts, matchPlayers } from "../../../../db/schema/matches.js";
 import { getDraftRules, getTurnOrder } from "./regras.js";
+import { jogoAtualSerie } from "../serie-sala.js";
 
 /** Duração de um turno (o que o cliente mostra). */
 export const DRAFT_TURN_MS = 30_000;
@@ -40,23 +41,26 @@ export const DRAFT_TURN_MS = 30_000;
 export const DRAFT_GRACE_MS = 2_000;
 
 /**
- * Cria o draft da sala (limpa qualquer sobra antes — igual ao criarDraft antigo,
- * que garantia reset completo). PRÉ-CONDIÇÃO: linha de `matches` travada.
+ * Cria o draft do jogo corrente da sala (limpa qualquer sobra DAQUELE jogo
+ * antes — igual ao criarDraft antigo, que garantia reset completo). Os drafts
+ * de jogos anteriores da série ficam preservados (histórico/Fearless).
+ * PRÉ-CONDIÇÃO: linha de `matches` travada.
  *
  * Só é chamado para modo com draft (`temDraft`); o guard abaixo é a rede de
  * segurança contra chamada indevida (modo sem ordem de turnos).
  */
-export async function criarDraft(tx: any, matchId: string, mode: string) {
+export async function criarDraft(tx: any, matchId: string, mode: string, jogo = 1) {
   const regras = getDraftRules(mode);
   if (!regras.ativo || regras.turnOrder.length === 0) {
     throw new Error(`criarDraft: modo sem draft (${mode})`);
   }
-  await tx.delete(matchDrafts).where(eq(matchDrafts.matchId, matchId));
+  await tx.delete(matchDrafts).where(and(eq(matchDrafts.matchId, matchId), eq(matchDrafts.jogo, jogo)));
   const primeiro = regras.turnOrder[0];
   const [row] = await tx
     .insert(matchDrafts)
     .values({
       matchId,
+      jogo,
       blueBans: [],
       bluePicks: [],
       redBans: [],
@@ -94,12 +98,13 @@ async function aplicarEAvancar(
   const novos = [...(draft[key] ?? []), valor];
   const ordem = getTurnOrder(mode);
   const proximo = draft.currentTurn + 1;
+  const where = and(eq(matchDrafts.matchId, draft.matchId), eq(matchDrafts.jogo, draft.jogo));
 
   if (proximo >= ordem.length) {
     await tx
       .update(matchDrafts)
       .set({ [key]: novos, status: "finished", updatedAt: new Date() })
-      .where(eq(matchDrafts.matchId, draft.matchId));
+      .where(where);
     return { finalizado: true };
   }
 
@@ -114,7 +119,7 @@ async function aplicarEAvancar(
       turnDeadlineAt: proximoDeadline,
       updatedAt: new Date(),
     })
-    .where(eq(matchDrafts.matchId, draft.matchId));
+    .where(where);
   return { finalizado: false };
 }
 
@@ -131,10 +136,13 @@ export async function avaliarDraft(
   tx: any,
   match: any
 ): Promise<{ mudou: boolean; finalizado: boolean; cancelou: boolean }> {
+  // Sala 5v5 personalizada: o draft é POR JOGO da série (match_drafts.jogo).
+  // Nos demais modos/estados o helper devolve 1 (mesma linha de sempre).
+  const jogo = await jogoAtualSerie(tx, match);
   const [draftInicial] = await tx
     .select()
     .from(matchDrafts)
-    .where(eq(matchDrafts.matchId, match.id))
+    .where(and(eq(matchDrafts.matchId, match.id), eq(matchDrafts.jogo, jogo)))
     .limit(1)
     .for("update");
   if (!draftInicial) return { mudou: false, finalizado: false, cancelou: false };
@@ -165,7 +173,11 @@ export async function avaliarDraft(
     mudou = true;
     if (r.finalizado) return { mudou, finalizado: true, cancelou: false };
 
-    const [d2] = await tx.select().from(matchDrafts).where(eq(matchDrafts.matchId, match.id)).limit(1);
+    const [d2] = await tx
+      .select()
+      .from(matchDrafts)
+      .where(and(eq(matchDrafts.matchId, match.id), eq(matchDrafts.jogo, jogo)))
+      .limit(1);
     draft = d2;
   }
 
@@ -184,10 +196,11 @@ export async function aplicarAcaoDraft(
   tipo: "ban" | "pick",
   championId: unknown
 ): Promise<{ ok: boolean; erro: string | null; estado: string | null; mudou: boolean; finalizado?: boolean }> {
+  const jogo = await jogoAtualSerie(tx, match);
   const [draft] = await tx
     .select()
     .from(matchDrafts)
-    .where(eq(matchDrafts.matchId, match.id))
+    .where(and(eq(matchDrafts.matchId, match.id), eq(matchDrafts.jogo, jogo)))
     .limit(1)
     .for("update");
   if (!draft || draft.status !== "ongoing") {
@@ -213,6 +226,12 @@ export async function aplicarAcaoDraft(
   if (!jogador) return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
   if (jogador.side !== draft.currentTeam) {
     return { ok: false, erro: "fora_do_turno", estado: match.status, mudou: false };
+  }
+  // Sala 5v5 personalizada: o CAPITÃO do draft é o MID do time. As demais
+  // roles só assistem — a regra vale no servidor (o cliente só desabilita o
+  // botão). Nos outros modos a role é apenas vitrine.
+  if (match.mode === "5v5" && String(jogador.roleSlot ?? "").toUpperCase() !== "MID") {
+    return { ok: false, erro: "apenas_mid", estado: match.status, mudou: false };
   }
   if (draft.currentPhase !== tipo) {
     return { ok: false, erro: "fase_invalida", estado: match.status, mudou: false };

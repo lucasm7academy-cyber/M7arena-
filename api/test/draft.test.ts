@@ -25,7 +25,7 @@ async function criaSalaConfirmada(db: any, mode = "5v5", values: any = {}) {
   await criaJogador(db, b);
   const dono = crypto.randomUUID();
   await db.insert(users).values({ id: dono, email: dono + "@x.com", displayName: "Dono" });
-  const roleSlot = mode === "1v1" || mode === "aram" ? "MID" : "JG";
+  const roleSlot = mode === "time_vs_time" ? "JG" : "MID";
   const [sala] = await db
     .insert(matches)
     .values({

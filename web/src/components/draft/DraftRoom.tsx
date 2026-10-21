@@ -88,6 +88,12 @@ interface DraftRoomProps {
    * 18/10). Quem não passa a ação não vê o ícone; o MUDO é sempre visível.
    */
   acoesTopo?: AcoesTopo | null;
+  /**
+   * Rótulo da SÉRIE (ex.: 'JOGO 2 · MD3 · 1 - 0') — sala 5x5 personalizada.
+   * Fica embaixo do título da fase; ausente nas salas de campeonato (que já
+   * mostram o placar no confronto), então o draft delas não muda.
+   */
+  serieLabel?: string | null;
 }
 
 /** Ações dos ícones do topo (ao lado do mudo; sair fica no canto oposto). */
@@ -348,7 +354,7 @@ function TimeRecap({ time, picks, lado, champions, version }: {
 
 export const DraftRoom: React.FC<DraftRoomProps> = ({
   draft, jogadores, usuarioId, timer, onBanir, onPickar, onPreview, previewExterno, ladoDoTimeA,
-  timeA, timeB, placar, recap, espectadorCompleto, aoVivo, acoesTopo,
+  timeA, timeB, placar, recap, espectadorCompleto, aoVivo, acoesTopo, serieLabel,
 }) => {
   const [champions, setChampions] = useState<Record<string, Champion>>({});
   const [version, setVersion] = useState('16.20.1');
@@ -392,11 +398,17 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
   const emTurno = draft.status === 'ongoing';
   const fase = draft.current_phase;
-  const isMeuTurno = possoJogar && emTurno && meuTime === draft.current_team;
+  // Sala 5v5 personalizada: o MID é o capitão do draft — só ele confirma o
+  // ban/pick do time. Nas salas de campeonato/livre a flag não vem (ou é
+  // false) e qualquer participante do lado da vez age, como sempre.
+  const apenasControlador = draft.regras.apenas_role_controladora === true;
+  const souControlador = !apenasControlador ||
+    String(meuJogador?.role ?? '').toUpperCase() === String(draft.regras.role_controladora ?? '').toUpperCase();
+  const isMeuTurno = possoJogar && emTurno && meuTime === draft.current_team && souControlador;
 
-  // Nome exibido do jogador "em turno" (JG no 5v5, MID quando houver) — a role
-  // vem das regras do modo publicadas pelo servidor; é só vitrine (qualquer
-  // participante confirmado do lado da vez pode agir — quem valida é o servidor).
+  // Nome exibido do jogador "em turno" (a role vem das regras do modo
+  // publicadas pelo servidor: MID na sala 5v5, JG no time_vs_time). Na sala
+  // 5v5 a role também RESTRINGE a ação (só o MID age); nos demais é vitrine.
   const roleEmTurno = draft.regras.role_controladora;
   const formatarNome = (p: any, padrao: string) => {
     if (!p) return padrao;
@@ -723,6 +735,15 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <h1 className="text-[3.5vmin] font-bold tracking-[0.2em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">
           {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
         </h1>
+
+        {/* Rótulo da SÉRIE (sala 5x5 personalizada): jogo, formato e placar.
+            Só aparece quando o dono da tela passa o rótulo — o draft da sala de
+            campeonato continua idêntico. */}
+        {serieLabel && (
+          <span className="mt-[0.6vmin] text-[1.25vmin] font-black uppercase tracking-[0.4em] text-[#c89b3c]">
+            {serieLabel}
+          </span>
+        )}
 
         {/* (A prévia agora aparece DENTRO da bola do time — ver TeamPanel) */}
 

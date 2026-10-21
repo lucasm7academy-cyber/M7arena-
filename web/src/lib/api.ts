@@ -269,6 +269,18 @@ export interface ApiLegacySala {
   prints_necessarios?: number;
   /** Draft (ban/pick) — presente entre `draft` e `iniciando_partida`. */
   draft?: ApiLegacySalaDraft | null;
+  /**
+   * SÉRIE da sala 5v5 personalizada (MD1/MD3/MD5). `jogo` é o jogo corrente e
+   * `placar_a`/`placar_b` são as vitórias de cada lado. Ausente em salas antigas
+   * (sem série) e nos demais modos.
+   */
+  serie?: {
+    formato: 'md1' | 'md3' | 'md5' | string;
+    jogo: number;
+    placar_a: number;
+    placar_b: number;
+    alvo: number;
+  } | null;
 }
 
 /**
@@ -288,11 +300,18 @@ export interface ApiLegacySalaDraft {
   turn_deadline_at: string | null;
   status: 'ongoing' | 'finished';
   duracao_turno_ms: number;
+  /** Jogo da série a que este draft pertence (1 nas salas sem série). */
+  jogo?: number;
   regras: {
     max_bans_por_lado: number;
     max_picks_por_lado: number;
     esconder_picks_adversario: boolean;
     role_controladora: string;
+    /**
+     * true = somente a role controladora (MID na sala 5v5) pode banir/escolher.
+     * Ausente/false = qualquer participante do lado da vez age (campeonato).
+     */
+    apenas_role_controladora?: boolean;
   };
 }
 
@@ -430,6 +449,8 @@ export interface ApiMatchesSdk {
     timeANome?: string;
     timeATag?: string;
     timeALogo?: string;
+    /** Série da sala 5v5 personalizada: md1 | md3 (default) | md5. */
+    formato?: string;
   }) => Promise<ApiLegacySala>;
   join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean; senha?: string }) => Promise<ApiSalaResultado>;
   leave: (id: number) => Promise<ApiSalaResultado>;
@@ -905,6 +926,8 @@ export const api = {
       timeANome?: string;
       timeATag?: string;
       timeALogo?: string;
+      /** Série da sala 5v5 personalizada: md1 | md3 (default) | md5. */
+      formato?: string;
     }) => api.post<ApiLegacySala>("/matches", data),
     join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean; senha?: string }) =>
       api.post<ApiSalaResultado>(`/matches/${id}/join`, data),

@@ -47,5 +47,7 @@ export function regrasDraftParaShape(mode: string) {
     max_picks_por_lado: r.maxPicksPorLado,
     esconder_picks_adversario: r.esconderPicksAdversario,
     role_controladora: r.roleControladora,
+    // true = só a role controladora (MID no 5v5) pode banir/escolher.
+    apenas_role_controladora: r.apenasRoleControladora === true,
   };
 }

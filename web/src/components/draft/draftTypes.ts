@@ -25,6 +25,11 @@ export interface SalaDraftRegras {
   max_picks_por_lado: number;
   esconder_picks_adversario: boolean;
   role_controladora: string;
+  /**
+   * true = somente a role controladora (MID na sala 5v5 personalizada) pode
+   * banir/escolher. Ausente/false = qualquer participante do lado da vez age.
+   */
+  apenas_role_controladora?: boolean;
 }
 
 /** Draft do shape legado da API (snake_case). */
@@ -40,6 +45,8 @@ export interface SalaDraft {
   status: 'ongoing' | 'finished';
   /** Duração de um turno em ms (regra geral do motor; barra de tempo). */
   duracao_turno_ms: number;
+  /** Jogo da série a que este draft pertence (1 nas salas sem série). */
+  jogo?: number;
   /** Regras do modo publicadas pelo servidor (registry por modo). */
   regras: SalaDraftRegras;
   /**

@@ -197,6 +197,10 @@ ${link}`;
         );
     }
 
+    // SÉRIE da sala 5v5 personalizada (MD1/MD3/MD5): formato, jogo corrente e
+    // placar. Ausente em salas antigas e nos demais modos.
+    const serie = sala.serie ?? null;
+
     // Draft em andamento: a tela do draft SUBSTITUI a sala (mesmo desenho do
     // site antigo, que renderizava o DraftRoom em tela cheia no estado
     // 'travada'). O estado do draft vem do servidor; o timer é derivado do
@@ -210,6 +214,8 @@ ${link}`;
                 timer={timerDraft}
                 onBanir={banir}
                 onPickar={pickar}
+                placar={serie ? { a: serie.placar_a, b: serie.placar_b } : null}
+                serieLabel={serie ? `JOGO ${serie.jogo} · ${String(serie.formato).toUpperCase()} · ${serie.placar_a} - ${serie.placar_b}` : null}
             />
         );
     }
@@ -315,6 +321,8 @@ ${link}`;
                 toast.success(`Partida finalizada! ${r.vencedor === 'A' ? 'Time Azul' : 'Time Vermelho'} venceu.`);
             } else if (r.estado === 'cancelada') {
                 toast.error('Partida cancelada — os nicks não conferiram ou o jogo não foi encontrado.');
+            } else if (r.motivo === 'serie_avancou') {
+                toast.success('Jogo confirmado! A série continua — confirmem presença para o próximo.');
             } else {
                 toast('Partida ainda em andamento ou não encontrada. Verificação automática continua.');
             }
@@ -499,6 +507,21 @@ ${link}`;
                             </span>
                         </div>
                     </div>
+
+                    {/* Card Série (5v5 personalizada): formato, jogo e placar */}
+                    {serie && (
+                        <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
+                            <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                                <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
+                                    Série
+                                </span>
+                                <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none text-[#FFB700]">
+                                    {String(serie.formato).toUpperCase()} · JOGO {serie.jogo}
+                                    <span className="text-white/50"> · {serie.placar_a}-{serie.placar_b}</span>
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Card Aposta / Pote */}
                     <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
@@ -872,6 +895,11 @@ ${link}`;
                                 className="flex flex-col items-center gap-2 md:gap-4 mt-2 md:mt-4"
                             >
                                 <span className="text-xs md:text-[1.8vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] md:tracking-[1em]">CONFIRME AGORA</span>
+                                {serie && (
+                                    <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.25em] text-white/70">
+                                        JOGO {serie.jogo} · {String(serie.formato).toUpperCase()} · {serie.placar_a} - {serie.placar_b}
+                                    </span>
+                                )}
                                 <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/50 uppercase tracking-[0.2em] text-center max-w-[280px] md:max-w-[40vmin]">
                                     Confiram os nicks — quem jogar no lugar do dono da vaga cancela a partida
                                 </span>

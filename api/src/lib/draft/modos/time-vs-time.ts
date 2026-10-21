@@ -8,4 +8,13 @@
 import type { DraftRules } from "../tipos.js";
 import { RULES_5V5 } from "./5v5.js";
 
-export const RULES_TIME_VS_TIME: DraftRules = { ...RULES_5V5 };
+/**
+ * Diferença proposital para o 5v5: aqui a role é só vitrine (JG) e QUALQUER
+ * participante do lado da vez pode agir — a restrição ao MID vale apenas na
+ * sala 5v5 personalizada (decisão de 2026-10-19).
+ */
+export const RULES_TIME_VS_TIME: DraftRules = {
+  ...RULES_5V5,
+  roleControladora: "JG",
+  apenasRoleControladora: false,
+};

@@ -5,6 +5,7 @@ import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { pagarPremio, pagarCancelamento } from "./escrow.js";
 import { notifyMatchChange } from "./match-flow.js";
 import { avancarSerieLivre } from "./serie-livre.js";
+import { avancarSerie5v5 } from "./serie-sala.js";
 import { resolverRosterPuuids, ladoVencedorDaJogada } from "./serie-campeonato.js";
 import { riotRaw } from "../routes/riot.js";
 
@@ -47,6 +48,9 @@ export type ResultadoVerificacao =
   // Sala LIVRE com série (scrim MD1/MD3/MD5): o jogo fechou e a sala volta pro
   // PRONTO do próximo jogo (isolado em time_vs_time_livre — ver serie-livre.ts).
   | { ok: true; estado: "camp_prontos"; motivo: "serie_avancou"; matchIdRiot: string }
+  // SALA 5v5 PERSONALIZADA com série (MD1/MD3/MD5): o jogo fechou e a sala volta
+  // para a confirmação do próximo (ver serie-sala.ts).
+  | { ok: true; estado: "confirmacao"; motivo: "serie_avancou"; matchIdRiot: string }
   | { ok: false; estado: "partida_iniciada"; motivo: "ainda_em_jogo" | "nao_encontrada"; matchIdRiot?: string };
 
 /** Busca real na Riot (match v5) filtrando pelo queue do mapa (3130 SR / 3200 ARAM). */
@@ -222,6 +226,16 @@ export async function verificarPartida(
     // conta vinculada): não decide às cegas — segue no polling.
     if (!winnerSide) {
       return { ok: false, estado: "partida_iniciada", motivo: "ainda_em_jogo", matchIdRiot: matchRiot.metadata.matchId };
+    }
+    // SÉRIE DA SALA 5v5 PERSONALIZADA (MD1/MD3/MD5): grava o placar do jogo e
+    // volta para a confirmação do próximo enquanto a série não fechar. O
+    // encerramento normal — e o pagamento do pote, uma vez só — só acontece no
+    // último jogo (quando `avancarSerie5v5` devolve false).
+    if (m.mode === "5v5") {
+      const continua = await avancarSerie5v5(d, m.id, winnerSide);
+      if (continua) {
+        return { ok: true, estado: "confirmacao", motivo: "serie_avancou", matchIdRiot: matchRiot.metadata.matchId };
+      }
     }
     // SÉRIE DA SALA LIVRE (scrim MD1/MD3/MD5, isolada em time_vs_time_livre):
     // grava o jogo e volta pro PRONTO quando ainda há jogo; só quando o alvo é

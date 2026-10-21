@@ -29,8 +29,17 @@ export interface DraftRules {
   /** true = o cliente esconde os picks do adversário durante o draft. */
   esconderPicksAdversario: boolean;
   /**
-   * Role cujo nick é exibido no "em turno" (vitrine). Qualquer participante
-   * confirmado do lado da vez pode agir — a role NÃO restringe a ação.
+   * Role cujo nick é exibido no "em turno" (vitrine).
+   *
+   * Na sala 5v5 personalizada o MID é o CAPITÃO do draft: só ele bane/escolhe
+   * pelo time (regra pedida em 2026-10-19). Nos demais modos a role é só
+   * vitrine — qualquer participante confirmado do lado da vez pode agir.
    */
   roleControladora: string;
+  /**
+   * true = SOMENTE a role `roleControladora` do lado da vez pode banir/escolher
+   * (sala 5v5 personalizada). Ausente/false = qualquer participante do lado
+   * age (sala de campeonato/livre e time_vs_time).
+   */
+  apenasRoleControladora?: boolean;
 }

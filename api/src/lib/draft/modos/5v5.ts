@@ -3,6 +3,11 @@
  *
  * 20 turnos: 6 bans (3 por lado) → 6 picks (3 por lado) → 4 bans (2 por lado)
  * → 4 picks (2 por lado). Total: 5 bans e 5 picks por lado (os slots da tela).
+ *
+ * CAPITÃO: na sala 5v5 personalizada o MID de cada time é quem bane/escolhe
+ * (decisão do usuário 2026-10-19). A regra é aplicada no SERVIDOR
+ * (`aplicarAcaoDraft`) e publicada no shape para a UI desabilitar o botão dos
+ * demais jogadores — as outras roles só assistem.
  */
 import type { DraftRules } from "../tipos.js";
 
@@ -33,5 +38,6 @@ export const RULES_5V5: DraftRules = {
   maxBansPorLado: 5,
   maxPicksPorLado: 5,
   esconderPicksAdversario: false,
-  roleControladora: "JG",
+  roleControladora: "MID",
+  apenasRoleControladora: true,
 };

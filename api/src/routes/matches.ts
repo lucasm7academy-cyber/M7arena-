@@ -3,7 +3,7 @@ import { timingSafeEqual } from "crypto";
 import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userWallets, userRoles } from "../../../db/schema/identidade.js";
-import { matches, matchPlayers, matchResults, matchCodes, salaMensagens, matchDrafts } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, matchResults, matchCodes, salaMensagens, matchDrafts, campeonatoSalaEstado } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
 import { platformRevenue } from "../../../db/schema/economia.js";
@@ -23,6 +23,8 @@ import { reservarEntrada, devolverEntrada } from "../lib/escrow.js";
 import { getRoles, eParticipante, eStaffSala } from "../lib/acesso-sala.js";
 import { shapeSalaCampeonato, podeVerCodigoSalaCampeonato, FASES_ATIVAS_CAMPEONATO } from "../lib/sala-campeonato.js";
 import { tickDraftSalaCampeonato } from "../lib/sala-campeonato-draft.js";
+import { normalizarFormato, estadoSerie } from "../lib/serie-sala.js";
+import { alvoVitorias } from "../lib/serie-livre.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
@@ -44,8 +46,10 @@ async function resolverSala(param: string, ctx: any = db) {
   return buscarSalaPorId(ctx, param);
 }
 
-/** Monta o shape legado de `salas` para uma linha de `matches` (com joins). */
-async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
+/** Monta o shape legado de `salas` para uma linha de `matches` (com joins).
+ *  `incluirSerie` liga a leitura extra do estado da série 5v5 (só o detalhe
+ *  da sala precisa; a listagem do /jogar não paga essa query). */
+async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirSerie = false) {
   const players = await ctx.select().from(matchPlayers).where(eq(matchPlayers.matchId, m.id));
   const userIds = [...new Set([m.createdBy, ...players.map((p: any) => p.userId)])];
   const usersRows: any[] = userIds.length ? await ctx.select().from(users).where(inArray(users.id, userIds)) : [];
@@ -118,11 +122,32 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true) {
   // nesses estados — não afeta a listagem comum.
   let draft: any = null;
   if (m.status === "draft" || m.status === "iniciando_partida" || m.status === "partida_iniciada") {
-    const [d] = await ctx.select().from(matchDrafts).where(eq(matchDrafts.matchId, m.id)).limit(1);
+    // Séries guardam uma linha por jogo: a linha do jogo CORRENTE é a de maior
+    // `jogo` (o draft do jogo 1 continua no banco como histórico).
+    const [d] = await ctx
+      .select()
+      .from(matchDrafts)
+      .where(eq(matchDrafts.matchId, m.id))
+      .orderBy(desc(matchDrafts.jogo))
+      .limit(1);
     draft = d ?? null;
   }
 
   const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
+  // Série da SALA 5v5 PERSONALIZADA (MD1/MD3/MD5): formato, jogo corrente e
+  // placar. Só o detalhe da sala pede (`incluirSerie`) — a listagem fica leve.
+  if (incluirSerie && m.mode === "5v5") {
+    const st = await estadoSerie(ctx, m.id);
+    if (st) {
+      (legacy as any).serie = {
+        formato: st.formato,
+        jogo: st.jogo ?? 1,
+        placar_a: st.placarA ?? 0,
+        placar_b: st.placarB ?? 0,
+        alvo: alvoVitorias(st.formato),
+      };
+    }
+  }
   // Sala de TIMES (ADR-085/086): o estado por jogo (PRONTO, sorteio, escolhas)
   // e a série (quando é campeonato) entram no shape para o front desenhar.
   if (m.mode === "campeonato" || m.mode === "time_vs_time_livre") {
@@ -191,7 +216,7 @@ matchesRouter.get("/:id", async (req, res) => {
       }
     }
 
-    return res.json(await shapeSala(match, db, podeVerCodigo));
+    return res.json(await shapeSala(match, db, podeVerCodigo, true));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar sala" });
   }
@@ -250,7 +275,7 @@ matchesRouter.post("/", async (req, res) => {
   const user = await getAuthUser(req);
   if (!user) return res.status(401).json({ error: "Não autenticado" });
 
-  const { mode, entryMp, apostaMc, taxaPct, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo } = req.body;
+  const { mode, entryMp, apostaMc, taxaPct, nome, descricao, temSenha, senha, eloMinimo, maxJogadores, timeANome, timeATag, timeALogo, formato } = req.body;
   // apostaMc é o nome novo; entryMp é o alias legado (o fork envia entryMp).
   // Segurança (MORPH-002/004): clamp rigoroso dos valores vindos do body. Sem
   // isso, um cliente pode enviar `taxaPct: -100` (infla o payout e cria MC do
@@ -268,6 +293,9 @@ matchesRouter.post("/", async (req, res) => {
   // inventado quebraria o layout de vagas do front (SalaMod1 usa a lista fixa).
   const MODOS_VALIDOS = ["5v5", "1v1", "aram", "time_vs_time"];
   const modoSanitizado = MODOS_VALIDOS.includes(mode) ? mode : "5v5";
+  // SÉRIE da sala 5x5 personalizada (MD1/MD3/MD5): o cliente escolhe na criação
+  // e o default é MD3 (pedido do usuário 2026-10-19). Modos sem série ignoram.
+  const formatoSerie = modoSanitizado === "5v5" ? normalizarFormato(formato) : null;
   const roomCode = `M7-${Math.floor(1000 + Math.random() * 9000)}`;
 
   try {
@@ -301,6 +329,12 @@ matchesRouter.post("/", async (req, res) => {
           timeALogo: timeALogo || null,
         })
         .returning();
+
+      // Estado da SÉRIE da sala 5v5: formato escolhido na criação (md3 default),
+      // jogo 1 e placar zerado. Salas antigas (sem linha) seguem MD1.
+      if (formatoSerie) {
+        await tx.insert(campeonatoSalaEstado).values({ matchId: newMatch.id, formato: formatoSerie });
+      }
 
       return { ok: true as const, sala: newMatch };
     });

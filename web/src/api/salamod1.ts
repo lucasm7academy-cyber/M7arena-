@@ -110,6 +110,7 @@ const ERROS_SALA: Record<string, string> = {
     tempo_expirado: 'O tempo deste turno acabou.',
     campeao_invalido: 'Campeão inválido.',
     campeao_indisponivel: 'Esse campeão já foi banido ou escolhido.',
+    apenas_mid: 'Só o MID do seu time bane e escolhe neste modo.',
     sala_nao_encontrada: 'Sala não encontrada.',
     estado_invalido: 'A sala mudou de estado. Tente novamente.',
     vaga_ocupada: 'Essa vaga já foi preenchida.',
@@ -160,6 +161,8 @@ export async function criarSala(
         timeANome?: string;
         timeATag?: string;
         timeALogo?: string;
+        /** Série da sala 5v5 personalizada: md1 | md3 (default) | md5. */
+        formato?: string;
     },
     usuario: { id: string; nome: string; tag?: string; elo: string; role: string }
 ) {
@@ -176,6 +179,7 @@ export async function criarSala(
             timeANome: dados.timeANome,
             timeATag: dados.timeATag,
             timeALogo: dados.timeALogo,
+            formato: dados.formato,
         });
 
         return {

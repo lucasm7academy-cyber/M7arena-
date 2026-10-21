@@ -517,6 +517,13 @@ matchesActionsRouter.post("/:id/verificar", async (req, res) => {
       }
       return res.json({ ok: true, estado: vr.estado, vencedor, matchIdRiot: vr.ok ? vr.matchIdRiot ?? null : null });
     }
+    // Série 5v5 da sala personalizada continua: o jogo foi contabilizado e a
+    // sala voltou para `confirmacao` (próximo jogo, com janela para trocar
+    // jogador). Não é erro — o front mostra o placar e o novo jogo.
+    if (vr.ok && vr.motivo === "serie_avancou") {
+      notifyMatchChange(String(req.params.id));
+      return res.json({ ok: true, estado: vr.estado, motivo: vr.motivo, matchIdRiot: vr.matchIdRiot ?? null });
+    }
     return res.json({ ok: false, estado: vr.estado, motivo: vr.motivo, matchIdRiot: vr.matchIdRiot ?? null });
   } catch (e: any) {
     return res.status(500).json({ ok: false, erro: e?.message || "rpc_falhou", estado: null, mudou: false });

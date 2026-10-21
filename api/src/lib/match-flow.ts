@@ -23,6 +23,7 @@ import { matches, matchPlayers, matchCodes, matchDrafts } from "../../../db/sche
 import { roleSlotToSlot } from "./match-shape.js";
 import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./escrow.js";
 import { avaliarDraft, criarDraft, temDraft } from "./draft/index.js";
+import { CONFIRMACAO_SERIE_MS, estadoSerie, jogoAtualSerie } from "./serie-sala.js";
 
 const TEMPO_CONFIRMACAO_MS = 75_000;
 const TEMPO_INICIO_MS = 90_000;
@@ -75,6 +76,18 @@ async function totalConfirmados(tx: any, matchId: string): Promise<number> {
     .from(matchPlayers)
     .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.confirmed, true)));
   return rows.length;
+}
+
+/**
+ * Janela de confirmação. Entre jogos da SÉRIE 5v5 é maior (5 min) de propósito:
+ * é a janela em que os jogadores podem "Recusar" (sair) e outro entrar no lugar
+ * antes do próximo draft. No primeiro jogo — e nos demais modos — segue os 75s
+ * históricos.
+ */
+async function janelaConfirmacao(tx: any, m: any): Promise<number> {
+  if (m.mode !== "5v5") return TEMPO_CONFIRMACAO_MS;
+  const st = await estadoSerie(tx, m.id);
+  return st && (st.jogo ?? 1) > 1 ? CONFIRMACAO_SERIE_MS : TEMPO_CONFIRMACAO_MS;
 }
 
 // ── ECONOMIA ────────────────────────────────────────────────────────────────
@@ -185,24 +198,26 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           .update(matchPlayers)
           .set({ confirmed: false })
           .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.confirmed, true)));
+        const janela = await janelaConfirmacao(tx, m);
         await tx
           .update(matches)
           .set({
             status: "confirmacao",
-            confirmacaoExpiresAt: new Date(Date.now() + TEMPO_CONFIRMACAO_MS),
+            confirmacaoExpiresAt: new Date(Date.now() + janela),
             iniciandoPartidaAt: null,
-            stateDeadlineAt: new Date(Date.now() + TEMPO_CONFIRMACAO_MS),
+            stateDeadlineAt: new Date(Date.now() + janela),
           })
           .where(eq(matches.id, matchId));
         avancou = true;
       }
     } else if (m.status === "confirmacao") {
       if (m.confirmacaoExpiresAt == null) {
+        const janela = await janelaConfirmacao(tx, m);
         await tx
           .update(matches)
           .set({
-            confirmacaoExpiresAt: new Date(Date.now() + TEMPO_CONFIRMACAO_MS),
-            stateDeadlineAt: new Date(Date.now() + TEMPO_CONFIRMACAO_MS),
+            confirmacaoExpiresAt: new Date(Date.now() + janela),
+            stateDeadlineAt: new Date(Date.now() + janela),
           })
           .where(eq(matches.id, matchId));
         avancou = true;
@@ -227,9 +242,10 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
           .set({ linked: true })
           .where(eq(matchPlayers.matchId, matchId));
         if (temDraft(m.mode)) {
-          // Modo com draft (5v5/time_vs_time): abre o ban/pick. O código da
-          // partida só é atribuído quando o draft FECHA (iniciando_partida).
-          await criarDraft(tx, matchId, m.mode);
+          // Modo com draft (5v5/time_vs_time): abre o ban/pick do JOGO corrente
+          // da série (jogo 1 nas salas normais). O código da partida só é
+          // atribuído quando o draft FECHA (iniciando_partida).
+          await criarDraft(tx, matchId, m.mode, await jogoAtualSerie(tx, m));
           await tx
             .update(matches)
             .set({
@@ -282,7 +298,10 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
       // atribuído e a sala segue para `iniciando_partida`.
       const d = await avaliarDraft(tx, m);
       if (d.cancelou) {
-        await tx.delete(matchDrafts).where(eq(matchDrafts.matchId, matchId));
+        const jogo = await jogoAtualSerie(tx, m);
+        await tx
+          .delete(matchDrafts)
+          .where(and(eq(matchDrafts.matchId, matchId), eq(matchDrafts.jogo, jogo)));
         await tx
           .update(matchPlayers)
           .set({ confirmed: false, linked: false })
