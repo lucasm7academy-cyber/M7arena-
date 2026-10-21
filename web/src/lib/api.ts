@@ -786,9 +786,6 @@ export const api = {
     clearInvites: (ids: string[]) => api.post<{ ok: boolean }>("/teams/invites/clear", { ids }),
     acceptInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/accept`),
     declineInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/decline`),
-    /** Passa a coroa (dono + capitão) para um membro com conta (ADR-089). */
-    transferirDono: (id: string | number, userId: string) =>
-      api.post<{ ok: boolean; dono_id?: string }>(`/teams/${id}/transferir-dono`, { userId }),
     /** Substitui o lineup inteiro (substitui RPC salvar_lineup_time). */
     saveLineup: (id: string | number, membros: any[]) =>
       api.post<{ ok: boolean }>(`/teams/${id}/lineup`, { p_membros: membros }),

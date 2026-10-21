@@ -1561,21 +1561,9 @@ export default function TimePage() {
     }
   };
 
-  // ── Passar a coroa (dono/capitão) — SÓ o proprietário do site ──────────────
-  // ADR-089: quem tiver a coroa é o dono. O botão aparece no lineup apenas
-  // para o cargo proprietário, em membros COM conta (dono precisa de user_id).
+  // Cargo proprietário DO SITE (não do time): habilita a coroa no Gerenciar
+  // Lineup para qualquer membro, inclusive convidado sem conta (ADR-089).
   const isProprietario = perfil?.cargo === 'proprietario';
-  const handlePassarCoroa = async (m: Membro) => {
-    if (!time || !m.userId) return;
-    playSound('click');
-    try {
-      await api.teams.transferirDono(String(time.id), m.userId);
-      lastLoadedIdRef.current = null;
-      await load();
-    } catch (err) {
-      console.error('❌ Erro ao passar a coroa:', err);
-    }
-  };
 
   // ── abrir OP.GG do jogador em nova aba ───────────────────────────────────────
   // Em vez do card padrão, leva direto pro perfil do player no OP.GG.
@@ -1930,19 +1918,6 @@ export default function TimePage() {
                       <span className="text-white/25 text-[10px] font-black uppercase tracking-wider shrink-0">
                         {eloDisplay(m.elo)}
                       </span>
-                    )}
-
-                    {/* Coroa: mudar o dono/capitão — SÓ para o proprietário do
-                        site (pedido do usuário 2026-10-18). Membros sem conta
-                        não podem ser dono, então a coroa não aparece neles. */}
-                    {isProprietario && !m.isLeader && m.userId && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handlePassarCoroa(m); }}
-                        title="Passar a coroa (dono/capitão)"
-                        className="p-1.5 border border-yellow-400/30 rounded-lg bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 transition-all cursor-pointer shrink-0"
-                      >
-                        <Crown className="w-4 h-4" />
-                      </button>
                     )}
 
                     <ChevronRight className="w-4 h-4 text-white/20 shrink-0 group-hover:translate-x-0.5 transition-transform" />
