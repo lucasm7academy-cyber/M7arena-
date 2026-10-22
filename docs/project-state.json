@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "Migrar o M7Academy (React+Vite+Supabase+Vercel, m7academy.pro) para VPS própria com PostgreSQL + Docker, sob o domínio m7arena.pro. O front é um FORK do app React+Vite atual, copiado sem alteração (ADR-010) — o design não é reconstruído, é o mesmo. Só o motor de dados muda.",
-  "updatedAt": "2026-10-21T03:12:00.084Z",
+  "updatedAt": "2026-10-22T04:31:00.985Z",
   "updatedBy": "deepseek",
   "invariants": [
     "DESIGN: o visual é cópia 1:1 do site atual. Nunca reescreva um className, nunca 'melhore' o layout sem o usuário pedir.",
@@ -2438,22 +2438,18 @@
       "openedAt": "2026-08-20T03:39:22.754Z",
       "resolvedAt": "2026-08-20T04:13:53.369Z",
       "resolution": "Criado symlink infra/.env -> /root/m7arena/.env na VPS (fix permanente). Agora compose resolve a senha correta mesmo sem --env-file. App recriado com --env-file, health 200, dados intactos."
+    },
+    {
+      "id": "BLK-008",
+      "description": "Backups automaticos diarios NUNCA funcionaram: o container m7arena_backup roda 'pg_dump -h postgres -U postgres m7arena' sem PGPASSWORD; o env tem POSTGRES_PASSWORD mas o pg_dump nao le essa variavel -> 'fe_sendauth: no password supplied' -> TODOS os arquivos do volume infra_backups_data (desde 09/08/2026, 74+) tem 20 bytes (gzip vazio). Fix pronto para aplicar: exportar PGPASSWORD=POSTGRES_PASSWORD no entrypoint do compose + recriar o container. Dumps MANUAIS validos existem em /root/backups da VPS (m7arena_20260919, m7arena_20261022) e copia local em D:\\Backups\\M7Arena.",
+      "component": null,
+      "openedBy": "deepseek",
+      "openedAt": "2026-10-22T04:31:00.895Z",
+      "resolvedAt": null,
+      "resolution": null
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-11T23:27:49.030Z",
-      "agent": "deepseek",
-      "summary": "Passo 5 (draft Fearless do campeonato) concluído e deployado (dc9d00d). Novo motor api/src/lib/sala-campeonato-draft.ts: template ban/pick em papéis first/last pick mapeados para o lado de cada time; um draft POR JOGO (match_drafts.jogo); FEARLESS com picks de jogos anteriores travados; ban vencido vira vazio e pick vencido TRAVA (ADR-083). O draft nasce na entrada de camp_draft; rotas /sala-campeonato/ban|pick com lock+catch-up; shape ganha campeonato.draft (regras + campeoes_travados + primeiro_pick); cron saneia bans vencidos. Evidências: smoke VPS 29/29 (fluxo completo até 20 turnos e camp_jogo), testes do draft 5/5, testes da sala 12/12, suíte 247/247, tsc 0. Próximo: passo 6 (botão de live do streamer na sala + 'assistir ao vivo') e depois a TELA da sala campeonato (design, dirigido pelo usuário).",
-      "touched": [
-        "api/src/lib/sala-campeonato-draft.ts",
-        "api/src/lib/sala-campeonato.ts",
-        "api/src/routes/matches-actions.ts",
-        "api/src/cron.ts",
-        "api/test/sala-campeonato-draft.test.ts",
-        "scripts/smoke-vps-sala-campeonato.mjs"
-      ]
-    },
     {
       "at": "2026-10-11T23:37:36.115Z",
       "agent": "deepseek",
@@ -2743,6 +2739,16 @@
         "web/src/pages/AdminSenhas.tsx",
         "db/migrations/0032_amused_santa_claus.sql",
         "VPS:/root/m7arena"
+      ]
+    },
+    {
+      "at": "2026-10-22T04:31:00.983Z",
+      "agent": "deepseek",
+      "summary": "Dump manual do banco m7arena criado e salvo (padrao de 19/09): /root/backups/m7arena_20261022_043015.sql.gz na VPS + copia em D:\\Backups\\M7Arena (mesma pasta dos arquivos de 19/09, que foram preservados). Evidencia: 1.245.165 bytes comprimidos, 9.100.817 descomprimidos, gzip -t OK nos dois lados, 48 CREATE TABLE, header 'PostgreSQL database dump'. Descoberta no caminho: backups AUTOMATICOS diarios do volume infra_backups_data estao VAZIOS (20 bytes) desde 09/08 - pg_dump sem PGPASSWORD no entrypoint do m7arena_backup (erro 'fe_sendauth: no password supplied' nos logs); registrado como blocker. Nao alterei nada de infra; fix do compose proposto ao usuario.",
+      "touched": [
+        "VPS:/root/backups",
+        "D:\\\\Backups\\\\M7Arena",
+        "m7arena_backup (diagnostico)"
       ]
     }
   ]
