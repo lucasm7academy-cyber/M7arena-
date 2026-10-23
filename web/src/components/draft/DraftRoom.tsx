@@ -791,7 +791,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           <div className="flex items-start justify-center gap-[7vmin]">
             <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
               {timeA?.logo
-                ? <img src={timeA.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]" />
+                ? <img src={timeA.logo} alt="" className={`w-[14vmin] h-[14vmin] object-contain ${
+                    ladoEquipeA === 'blue'
+                      ? 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
+                      : 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
+                  }`} />
                 : <div className="w-[14vmin] h-[14vmin]" />}
               <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
                 {nomeSemQuebra(labelEquipeA)}
@@ -800,7 +804,11 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[5.4vmin]">X</span>
             <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
               {timeB?.logo
-                ? <img src={timeB.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]" />
+                ? <img src={timeB.logo} alt="" className={`w-[14vmin] h-[14vmin] object-contain ${
+                    ladoEquipeB === 'blue'
+                      ? 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
+                      : 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
+                  }`} />
                 : <div className="w-[14vmin] h-[14vmin]" />}
               <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
                 {nomeSemQuebra(labelEquipeB)}

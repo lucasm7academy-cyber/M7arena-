@@ -839,7 +839,11 @@ export default function SalaCampeonato() {
             <img
               src={sala.time_a_logo}
               alt=""
-              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]"
+              className={`w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain ${
+                ladoJogoA === 'blue'
+                  ? 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
+                  : 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
+              }`}
             />
           ) : (
             <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
@@ -854,7 +858,11 @@ export default function SalaCampeonato() {
             <img
               src={sala.time_b_logo}
               alt=""
-              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]"
+              className={`w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain ${
+                ladoJogoA === 'blue'
+                  ? 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
+                  : 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
+              }`}
             />
           ) : (
             <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
