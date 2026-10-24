@@ -154,9 +154,10 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
       // 217), que antes caíam no teamId e jogavam os kills para o lado errado.
       const teamIdToSide = new Map<number, "blue" | "red">();
       if ((m.mode === "campeonato" || m.mode === "time_vs_time_livre") && puuidToSide.size > 0) {
-        const idsTimesPayload: number[] = [...new Set((mr.payload?.info?.participants ?? []).map((p: any) => p.teamId as number))];
+        const participantesPayload: any[] = (mr.payload as any)?.info?.participants ?? [];
+        const idsTimesPayload: number[] = [...new Set<number>(participantesPayload.map((p: any) => Number(p.teamId)))];
         for (const tid of idsTimesPayload) {
-          const doTime = (mr.payload?.info?.participants ?? []).filter((p: any) => p.teamId === tid);
+          const doTime = participantesPayload.filter((p: any) => Number(p.teamId) === tid);
           let azul = 0;
           let vermelho = 0;
           for (const p of doTime) {
