@@ -961,6 +961,12 @@ export default function SalaCampeonato() {
             : 'B';
     const nomeVencedor =
       vencedorSerie === 'A' ? sala.time_a_nome : vencedorSerie === 'B' ? sala.time_b_nome : null;
+    // O placar é guardado por TIME (A/B), mas as colunas abaixo são por LADO em
+    // jogo (esquerda = blue side). Se os lados inverteram, o número tem que
+    // acompanhar a coluna — senão lê errado (sala 217: BKS aparecia à esquerda
+    // com o "1" da AMT e virava "1-2 pra AMT").
+    const placarEsquerda = ladoA === 'blue' ? placarA : placarB;
+    const placarDireita = ladoA === 'blue' ? placarB : placarA;
     const duracao =
       finalizada && sala.resultado_riot?.duracao_s
         ? `${Math.floor(sala.resultado_riot.duracao_s / 60)}:${String(
@@ -1050,7 +1056,7 @@ export default function SalaCampeonato() {
         </div>
         {(serie || finalizada) && (
           <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-            {placarA} <span className="text-white/40">-</span> {placarB}
+            {placarEsquerda} <span className="text-white/40">-</span> {placarDireita}
           </span>
         )}
         <span
