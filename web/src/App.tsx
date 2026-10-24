@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { getDDRVersion } from "./api/riot";
 
@@ -9,6 +9,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PerfilProvider } from './contexts/PerfilContext';
 import { RoleProvider } from './contexts/RoleContext';
 import VerificacaoStatus from './components/notifications/VerificacaoStatus';
+/** Compat: URLs antigas da sala de times LIVRE com o modo cru na rota. */
+function RedirecionaSalaLivre() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/sala-time/${id ?? ''}`} replace />;
+}
+
 // ✅ Recupera de "chunk velho" após um novo deploy.
 // Quando sai uma versão nova, os arquivos .js mudam de hash. Se o usuário está
 // com a versão antiga aberta e navega, o import dinâmico falha (o arquivo antigo
@@ -254,6 +260,10 @@ export default function App() {
               <Route path="/campeonato/sala/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
               {/* Sala Time vs Time LIVRE: mesmo componente, sem campeonato (ADR-086). */}
               <Route path="/sala-time/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
+              {/* Compat: links antigos com o modo CRU na rota
+                  (/time_vs_time_livre/:id) são redirecionados para /sala-time/:id.
+                  Antes caíam em "No routes matched" (card de finalizadas). */}
+              <Route path="/time_vs_time_livre/:id" element={<RedirecionaSalaLivre />} />
               <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
               <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>

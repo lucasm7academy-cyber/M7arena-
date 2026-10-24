@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import type { ErroElegibilidade } from '../../hooks/useSalaSimples';
+import { rotaDaSala } from '../../lib/rotas';
 
 const DEPOSIT_EVENT = 'm7:open-deposit';
 
@@ -415,7 +416,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
               whileTap={{ scale: 0.97 }}
               onClick={() => {
                 onClose();
-                navigate(`/${erro.modo || '5v5'}/${erro.salaNum}`);
+                navigate(rotaDaSala(erro.modo, erro.salaNum));
               }}
               className="w-full relative p-[1px] cursor-pointer shadow-lg"
               style={{

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { LoaderCircle, ShieldAlert, Ban } from 'lucide-react';
 import { GiTwoCoins } from 'react-icons/gi';
 import { api, type ApiWalletBalance } from '../../lib/api';
+import { rotaDaSala } from '../../lib/rotas';
 import { CutCard } from '../ui/CutCard';
 import {
   CUT_BUTTON,
@@ -140,7 +141,7 @@ export function CarteiraEStrikes({
                     style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}
                   >
                     <button
-                      onClick={() => navigate(`/${s.modo || '5v5'}/${s.salaNum}`)}
+                      onClick={() => navigate(rotaDaSala(s.modo, s.salaNum))}
                       className="w-full flex items-center justify-between px-3 py-2 bg-[#09090c] hover:bg-[#14141c] transition-all text-left cursor-pointer"
                       style={{ clipPath: CUT_BADGE_INNER }}
                     >

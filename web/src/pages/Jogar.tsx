@@ -16,6 +16,7 @@ import { criarSala, traduzirErroSala } from '../api/salamod1';
 import { CutCard } from '../components/ui/CutCard';
 import { api } from '../lib/api';
 import { guardarSenhaSala } from '../lib/salaSenhaStore';
+import { rotaDaSala as rotaDaSalaPorModo } from '../lib/rotas';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
@@ -664,7 +665,7 @@ const Jogar = () => {
       const nova = await criarSala(dados, usuarioAtual);
       if (nova) {
         setShowCriarModal(false);
-        navigate(`/${nova.modo}/${nova.id}`);
+        navigate(rotaDaSalaPorModo(nova.modo, nova.id));
       }
     } catch (error: any) {
       // Nunca engole erro: traduz o código do servidor para o usuário.
@@ -724,12 +725,9 @@ const Jogar = () => {
   };
 
   // Sala de TIMES (campeonato/livre): card próprio e rota própria no /jogar.
-  const rotaDaSala = (sala: any) =>
-    sala.modo === 'campeonato'
-      ? `/campeonato/sala/${sala.id}`
-      : sala.modo === 'time_vs_time_livre'
-        ? `/sala-time/${sala.id}`
-        : `/${sala.modo}/${sala.id}`;
+  // A regra de rota mora em lib/rotas.ts (fonte única) — link montado direto
+  // com `/${sala.modo}` gerava `/time_vs_time_livre/:id` (rota inexistente).
+  const rotaDaSala = (sala: any) => rotaDaSalaPorModo(sala.modo, sala.id);
   const modoInfoDaSala = (modo: string) =>
     modo === 'campeonato'
       ? { nome: 'Sala Campeonato', cor: '#FFB700', icone: <Trophy className="w-5 h-5" />, bgImage: '/images/fundoCardTime.webp' }
@@ -1177,7 +1175,7 @@ const Jogar = () => {
                   return (
                     <div
                       key={sala.id}
-                      onClick={() => navigate(`/${sala.modo}/${sala.id}`)}
+                      onClick={() => navigate(rotaDaSalaPorModo(sala.modo, sala.id))}
                       className="flex-none w-full sm:w-[380px] h-[330px] relative cursor-pointer snap-start group/card transition-all p-[1.5px]"
                       style={{
                         clipPath: CUT_FRAME,
