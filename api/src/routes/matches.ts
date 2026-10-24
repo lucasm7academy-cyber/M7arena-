@@ -3,7 +3,7 @@ import { timingSafeEqual } from "crypto";
 import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userWallets, userRoles } from "../../../db/schema/identidade.js";
-import { teams } from "../../../db/schema/teams.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { matches, matchPlayers, matchResults, matchCodes, salaMensagens, matchDrafts, campeonatoSalaEstado } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
@@ -111,6 +111,39 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
       // da Riot (100/200) não casa com o nosso lado de forma confiável, então
       // o placar precisa ser clusterizado pelo lado real dos participantes.
       const puuidToSide = new Map<string, "blue" | "red">();
+      // Sala de TIMES (campeonato/livre): a sala tem 1 VAGA por time — o mapa
+      // tem que vir do ROSTER inteiro (titulares + reservas + convidados), não
+      // só dos ocupantes da vaga. Sem isso o resumo (kills/gold/venceu por
+      // jogador) sai trocado quando o time joga com reserva/convidado — foi o
+      // que aconteceu na sala 217 (BKA campeão aparecendo como azul).
+      if ((m.mode === "campeonato" || m.mode === "time_vs_time_livre") && m.timeATag && m.timeBTag) {
+        const timesRows = await ctx
+          .select({ id: teams.id, tag: teams.tag })
+          .from(teams)
+          .where(inArray(teams.tag, [m.timeATag, m.timeBTag]));
+        const idsTimes = timesRows.map((t: any) => t.id);
+        if (idsTimes.length) {
+          const membros = await ctx
+            .select({ teamId: teamMembers.teamId, userId: teamMembers.userId, guestPuuid: teamMembers.guestPuuid })
+            .from(teamMembers)
+            .where(and(inArray(teamMembers.teamId, idsTimes), eq(teamMembers.status, "accepted")));
+          const idsUsers = membros.map((x: any) => x.userId).filter(Boolean) as string[];
+          const contas = idsUsers.length
+            ? await ctx
+                .select({ userId: gameAccounts.userId, puuid: gameAccounts.externalId })
+                .from(gameAccounts)
+                .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, idsUsers)))
+            : [];
+          const puuidPorUser = new Map<string, string>(contas.map((c: any) => [c.userId, c.puuid]));
+          const tagPorTime = new Map<string, string>(timesRows.map((t: any) => [t.id, t.tag]));
+          for (const mb of membros) {
+            const puuid = mb.guestPuuid || (mb.userId ? puuidPorUser.get(mb.userId) : null);
+            if (!puuid) continue;
+            puuidToSide.set(puuid, tagPorTime.get(mb.teamId) === m.timeATag ? "blue" : "red");
+          }
+        }
+      }
+      // Fallback/complemento: conta vinculada de quem ocupa a vaga.
       for (const p of playersEnriched) {
         const puuid = p.__user?.__riotPuuid;
         if (puuid) puuidToSide.set(puuid, p.side as "blue" | "red");
@@ -121,6 +154,9 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
       // corresponde ao nosso lado (foi o que mostrou "AMATERASU" na sala 217).
       if (resultadoRiot && (mr.winnerSide === "blue" || mr.winnerSide === "red")) {
         resultadoRiot.vencedor = mr.winnerSide;
+        // O "venceu" por lado do placar também segue a decisão do motor.
+        if (resultadoRiot.placar?.blue) resultadoRiot.placar.blue.venceu = mr.winnerSide === "blue";
+        if (resultadoRiot.placar?.red) resultadoRiot.placar.red.venceu = mr.winnerSide === "red";
       }
     }
   }
