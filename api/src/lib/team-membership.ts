@@ -23,6 +23,58 @@ export type RiotIdentities = {
 type TeamMemberRow = typeof teamMembers.$inferSelect;
 
 /**
+ * Ao VINCULAR a conta Riot, promove as vagas de CONVIDADO que casam o Riot ID/
+ * PUUID para vínculo de MEMBRO (`user_id`) — decisão 24/10: quem tem conta é
+ * membro, não convidado (é como se já tivesse aceitado). Só promove se o
+ * usuário ainda NÃO estiver em outro time (regra um time só) e não tiver vaga
+ * no mesmo time. Devolve quantas vagas foram promovidas.
+ */
+export async function vincularVagasConvidado(
+  d: any,
+  userId: string,
+  handle: string | null | undefined,
+  puuid: string | null | undefined
+): Promise<number> {
+  const alvoHandle = (handle || "").trim().toLowerCase();
+  if (!alvoHandle && !puuid) return 0;
+  const clausulas: any[] = [];
+  if (puuid) clausulas.push(eq(teamMembers.guestPuuid, puuid));
+  if (alvoHandle) clausulas.push(sql`lower(trim(coalesce(${teamMembers.guestRiotId}, ''))) = ${alvoHandle}`);
+  if (!clausulas.length) return 0;
+
+  const candidatas = await d
+    .select({ id: teamMembers.id, teamId: teamMembers.teamId })
+    .from(teamMembers)
+    .where(and(isNull(teamMembers.userId), or(...clausulas)));
+  if (!candidatas.length) return 0;
+
+  const minhas = await d
+    .select({ teamId: teamMembers.teamId })
+    .from(teamMembers)
+    .where(and(eq(teamMembers.userId, userId), eq(teamMembers.status, "accepted")));
+  const times = new Set<string>(minhas.map((m: any) => m.teamId));
+  let promovidas = 0;
+  for (const c of candidatas) {
+    if (times.has(c.teamId)) continue; // já tem vaga neste time — não duplica
+    if (times.size > 0) continue; // já está em outro time — mantém como convidado
+    await d
+      .update(teamMembers)
+      .set({
+        userId,
+        guestHandle: null,
+        guestRiotId: null,
+        guestPuuid: null,
+        guestProfileIconId: null,
+        guestEloCache: null,
+      })
+      .where(eq(teamMembers.id, c.id));
+    times.add(c.teamId);
+    promovidas++;
+  }
+  return promovidas;
+}
+
+/**
  * Resolve um Riot ID ("Nick#TAG") para a CONTA da plataforma.
  *
  * Usado ao salvar o lineup: o capitão adiciona a pessoa pelo Riot ID; se ela

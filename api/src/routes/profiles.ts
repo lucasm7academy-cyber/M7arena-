@@ -10,6 +10,7 @@ import {
 } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { contarAdvertenciasAtivas, LIMITES } from "../lib/match-flow.js";
+import { vincularVagasConvidado } from "../lib/team-membership.js";
 
 export const profilesRouter = Router();
 
@@ -295,6 +296,9 @@ profilesRouter.post("/me/riot", async (req, res) => {
         .where(eq(gameAccounts.id, existing.id))
         .returning();
       await db.update(users).set({ riotId, updatedAt: new Date() }).where(eq(users.id, user.id)); // espelha users.riot_id (design v3 §2.1)
+      // Decisão 24/10: ao vincular a conta, vaga de convidado que casa o Riot
+      // ID/PUUID vira MEMBRO (é como se já tivesse aceitado).
+      await vincularVagasConvidado(db, user.id, riotId, puuid);
       return res.json(toLegacyRiot(updated));
     }
 
@@ -312,6 +316,7 @@ profilesRouter.post("/me/riot", async (req, res) => {
       .returning();
 
     await db.update(users).set({ riotId, updatedAt: new Date() }).where(eq(users.id, user.id));
+    await vincularVagasConvidado(db, user.id, riotId, puuid);
     return res.status(201).json(toLegacyRiot(created));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao vincular conta Riot" });

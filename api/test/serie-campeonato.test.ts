@@ -97,6 +97,51 @@ describe("serie-campeonato (motor de série)", () => {
     assert.equal(irregular, true, "presença de PUUID_X fora marca irregular");
   });
 
+  test("ladoVencedorDaJogada: vencedor sem roster — resolve pelo lado PERDEDOR", () => {
+    // Time 200 venceu, mas só tem gente FORA do roster. O time 100 (perdedor)
+    // tem o jogador A → o 100 é o time A, então o vencedor é o B.
+    const rostA = new Set(["PUUID_A"]);
+    const rostB = new Set(["PUUID_B"]);
+    const match = partidaRiot(
+      [
+        { puuid: "PUUID_X", teamId: 200, win: true },
+        { puuid: "PUUID_Y", teamId: 200, win: true },
+        { puuid: "PUUID_A", teamId: 100, win: false },
+        { puuid: "PUUID_Z", teamId: 100, win: false },
+      ],
+      [
+        { teamId: 100, win: false },
+        { teamId: 200, win: true },
+      ]
+    );
+    const { lado } = ladoVencedorDaJogada(match, rostA, rostB);
+    assert.equal(lado, "b");
+  });
+
+  test("ladoVencedorDaJogada: quantidade — maioria do roster define o lado do teamId", () => {
+    // 3 do time B no teamId 100 (vencedor), 1 do A no 100 e 2 do A no 200.
+    // O teamId 100 é do B → vencedor B.
+    const rostA = new Set(["A1", "A2", "A3"]);
+    const rostB = new Set(["B1", "B2", "B3"]);
+    const match = partidaRiot(
+      [
+        { puuid: "B1", teamId: 100, win: true },
+        { puuid: "B2", teamId: 100, win: true },
+        { puuid: "B3", teamId: 100, win: true },
+        { puuid: "A1", teamId: 100, win: true }, // irregular: A no time do B
+        { puuid: "A2", teamId: 200, win: false },
+        { puuid: "A3", teamId: 200, win: false },
+      ],
+      [
+        { teamId: 100, win: true },
+        { teamId: 200, win: false },
+      ]
+    );
+    const { lado, irregular } = ladoVencedorDaJogada(match, rostA, rostB);
+    assert.equal(lado, "b", "maioria do roster no teamId 100 é o time B");
+    assert.equal(irregular, false, "todos os participantes são de algum roster");
+  });
+
   test("killsPorLado clusteriza pelo roster (lados invertidos)", () => {
     const rostA = new Set(["PUUID_A"]);
     const rostB = new Set(["PUUID_B"]);

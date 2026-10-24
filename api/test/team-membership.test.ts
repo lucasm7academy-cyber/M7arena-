@@ -5,7 +5,7 @@ import { users } from "../../db/schema/identidade.js";
 import { games, gameAccounts } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { setupDb } from "./helpers.js";
-import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes, resolverUserIdPorRiotId } from "../src/lib/team-membership.js";
+import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes, resolverUserIdPorRiotId, vincularVagasConvidado } from "../src/lib/team-membership.js";
 
 const U = (n: number) => `aaaaaaa6-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbb6-0000-0000-0000-00000000000${n}`;
@@ -71,6 +71,29 @@ describe("team-membership (ADR-056)", () => {
     assert.equal(peloRiotId, U(4), "fallback pelo users.riot_id");
     const nenhum = await resolverUserIdPorRiotId(ctx.db, "Ninguem#000");
     assert.equal(nenhum, null, "Riot ID sem conta continua convidado");
+  });
+
+  test("ao vincular a conta, vaga de convidado vira membro (se não estiver em outro time)", async () => {
+    // U(2) não tem time. Cria uma vaga de convidado com o Riot ID dele.
+    await ctx.db.insert(teamMembers).values({
+      teamId: T(2),
+      userId: null,
+      guestRiotId: "Sem Riot#BR1",
+      roleSlot: "sub",
+      status: "accepted",
+    });
+    const promovidas = await vincularVagasConvidado(ctx.db, U(2), "sem riot#br1", null);
+    assert.equal(promovidas, 1);
+    const [vaga] = await ctx.db.select().from(teamMembers).where(eq(teamMembers.userId, U(2)));
+    assert.ok(vaga, "vaga promovida para membro");
+    assert.equal(vaga.teamId, T(2));
+    assert.equal(vaga.guestRiotId, null, "campos de convidado são limpos");
+
+    // U(1) já é membro de T(3): a vaga de convidado em T(1) NÃO é promovida.
+    const naoPromovidas = await vincularVagasConvidado(ctx.db, U(1), "Ghozt#123", "PUUID_GHOZT");
+    assert.equal(naoPromovidas, 0);
+    const [vagaGhozt] = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(1)));
+    assert.equal(vagaGhozt.userId, null);
   });
 
   test("getRiotIdentities devolve PUUID e handle normalizado", async () => {

@@ -140,43 +140,56 @@ export function ladoVencedorDaJogada(
     return null;
   };
 
-  // Quem é de fora: jogou e não pertence a NENHUM roster.
+  // Mapeia CADA teamId da Riot para o time pela MAIORIA do roster naquele
+  // teamId (parâmetro de QUANTIDADE): 3 membros do time A e 0 do B no teamId
+  // 100 → o 100 é o A. Isso vale mesmo quando o time VENCEDOR não tem ninguém
+  // do roster — aí o mapa do PERDEDOR resolve pelo outro lado (passo 2).
   let irregular = false;
+  const contagem = new Map<number, { a: number; b: number }>();
   for (const p of parts) {
-    if (!pertence(p.puuid)) irregular = true;
+    const lado = pertence(p.puuid);
+    if (!lado) {
+      irregular = true;
+      continue;
+    }
+    const atual = contagem.get(p.teamId) ?? { a: 0, b: 0 };
+    if (lado === "a") atual.a++;
+    else atual.b++;
+    contagem.set(p.teamId, atual);
+  }
+  const timePorTeamId = new Map<number, "a" | "b">();
+  for (const [tid, s] of contagem) {
+    if (s.a > s.b) timePorTeamId.set(tid, "a");
+    else if (s.b > s.a) timePorTeamId.set(tid, "b");
   }
 
-  // Equipes vencedoras: participantes com win=true. Se a Riot não marcou win
-  // (partida abortada), cai no teamId com win.
   const vencedores = parts.filter((p: any) => p.win);
-  let lado: "a" | "b" | null = null;
-  if (vencedores.length) {
-    // Conta os membros de CADA roster no time vencedor em vez de olhar só o
-    // primeiro `win`: o primeiro vencedor pode ser um stand-in fora do roster
-    // (caso da sala 217) e a jogada ficava sem lado. Maioria decide.
-    const teamVencedor = vencedores[0].teamId;
-    let a = 0;
-    let b = 0;
-    for (const p of parts) {
-      if (p.teamId !== teamVencedor) continue;
-      const l = pertence(p.puuid);
-      if (l === "a") a++;
-      else if (l === "b") b++;
-    }
-    lado = a > b ? "a" : b > a ? "b" : null;
-  } else {
-    // Fallback: teamId do time vencedor (100=A, 200=B) quando nenhum participant
-    // tem win (partida incompleta/abortada). Ainda assim, só aceita se o teamId
-    // do time vencedor tiver pelo menos um participante do roster.
-    const teamWin = (match?.info?.teams ?? []).find((t: any) => t.win);
-    if (teamWin) {
-      const membrosDoTime = parts.filter((p: any) => p.teamId === teamWin.teamId);
-      const primeiroDoRoster = membrosDoTime.find((p: any) => pertence(p.puuid));
-      if (primeiroDoRoster) lado = pertence(primeiroDoRoster.puuid);
-    }
-  }
+  // O `win` dos PARTICIPANTS é a fonte da verdade (o array `teams` do payload
+  // pode vir genérico em testes/mocks); `teams` é só fallback.
+  const teamWin: number | null =
+    vencedores[0]?.teamId ?? (match?.info?.teams ?? []).find((t: any) => t.win)?.teamId ?? null;
+  const teamLose: number | null =
+    parts.find((p: any) => p.win === false)?.teamId ??
+    (match?.info?.teams ?? []).find((t: any) => t.win === false)?.teamId ??
+    null;
 
-  return { lado, irregular };
+  // 1) Lado do time VENCEDOR mapeado → ele venceu.
+  if (teamWin != null && timePorTeamId.has(teamWin)) {
+    return { lado: timePorTeamId.get(teamWin)!, irregular };
+  }
+  // 2) Lado do time PERDEDOR mapeado → o vencedor é o outro time. Cobre o caso
+  //    em que o time vencedor jogou só com gente fora do roster (stand-ins).
+  if (teamLose != null && timePorTeamId.has(teamLose)) {
+    const perdedor = timePorTeamId.get(teamLose)!;
+    return { lado: perdedor === "a" ? "b" : "a", irregular };
+  }
+  // 3) Último recurso: qualquer membro do roster que VENCEU — inclui quem fez o
+  //    draft, se ele jogou e venceu (mesmo sem maioria clara).
+  for (const p of vencedores) {
+    const lado = pertence(p.puuid);
+    if (lado) return { lado, irregular };
+  }
+  return { lado: null, irregular };
 }
 
 /**
