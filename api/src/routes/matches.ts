@@ -148,7 +148,27 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
         const puuid = p.__user?.__riotPuuid;
         if (puuid) puuidToSide.set(puuid, p.side as "blue" | "red");
       }
-      resultadoRiot = resumoRiot(mr.payload, puuidToSide);
+      // Em custom game o teamId 100/200 é escolhido no lobby e não corresponde
+      // ao nosso lado. Resolve o lado de CADA teamId pela maioria do roster —
+      // cobre stand-ins fora do roster (ex.: Cepan nomasks no jogo 3 da sala
+      // 217), que antes caíam no teamId e jogavam os kills para o lado errado.
+      const teamIdToSide = new Map<number, "blue" | "red">();
+      if ((m.mode === "campeonato" || m.mode === "time_vs_time_livre") && puuidToSide.size > 0) {
+        const idsTimesPayload: number[] = [...new Set((mr.payload?.info?.participants ?? []).map((p: any) => p.teamId as number))];
+        for (const tid of idsTimesPayload) {
+          const doTime = (mr.payload?.info?.participants ?? []).filter((p: any) => p.teamId === tid);
+          let azul = 0;
+          let vermelho = 0;
+          for (const p of doTime) {
+            const lado = puuidToSide.get(p.puuid);
+            if (lado === "blue") azul++;
+            else if (lado === "red") vermelho++;
+          }
+          if (azul > vermelho) teamIdToSide.set(tid, "blue");
+          else if (vermelho > azul) teamIdToSide.set(tid, "red");
+        }
+      }
+      resultadoRiot = resumoRiot(mr.payload, puuidToSide, teamIdToSide);
       // O vencedor do resumo é o decidido pelo MOTOR (match_results), não o
       // palpite por teamId da Riot — em custom game o teamId 100/200 não
       // corresponde ao nosso lado (foi o que mostrou "AMATERASU" na sala 217).

@@ -97,14 +97,20 @@ export function toLegacyPlayer(p: any, user: any, isVip: boolean, salaNum: numbe
  * `puuidToSide` (opcional) resolve o lado NUBA (blue/red) por puuid. Sem ele,
  * cai no teamId da Riot (100→blue, 200→red) — mas em custom games o teamId
  * não corresponde de forma confiável ao nosso lado, então o placar por teamId
- * sai invertido. Passar o mapa corrige a cluster de kills/ouro/vencedor.
+ * sai invertido. `teamIdToSide` (opcional) resolve o lado do TEAMID inteiro
+ * (maioria do roster), cobrindo quem jogou fora do roster (stand-in): o puuid
+ * continua tendo prioridade, o teamId entra como fallback.
  */
-export function resumoRiot(payload: any, puuidToSide?: Map<string, "blue" | "red">) {
+export function resumoRiot(
+  payload: any,
+  puuidToSide?: Map<string, "blue" | "red">,
+  teamIdToSide?: Map<number, "blue" | "red">
+) {
   if (!payload?.info?.teams || !payload?.info?.participants) return null;
   const info = payload.info;
   const times = new Map<number, any>(info.teams.map((t: any) => [t.teamId, t]));
   const ladoDe = (p: any): "blue" | "red" =>
-    puuidToSide?.get(p.puuid) ?? (p.teamId === 100 ? "blue" : "red");
+    puuidToSide?.get(p.puuid) ?? teamIdToSide?.get(p.teamId) ?? (p.teamId === 100 ? "blue" : "red");
   const porLado = (lado: "blue" | "red") => info.participants.filter((p: any) => ladoDe(p) === lado);
   const kills = (lado: "blue" | "red") => porLado(lado).reduce((s: number, p: any) => s + (p.kills || 0), 0);
   const gold = (lado: "blue" | "red") => porLado(lado).reduce((s: number, p: any) => s + (p.goldEarned || 0), 0);
