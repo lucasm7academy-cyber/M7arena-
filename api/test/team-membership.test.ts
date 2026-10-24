@@ -5,7 +5,7 @@ import { users } from "../../db/schema/identidade.js";
 import { games, gameAccounts } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { setupDb } from "./helpers.js";
-import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes } from "../src/lib/team-membership.js";
+import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes, resolverUserIdPorRiotId } from "../src/lib/team-membership.js";
 
 const U = (n: number) => `aaaaaaa6-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbb6-0000-0000-0000-00000000000${n}`;
@@ -16,6 +16,8 @@ async function seed(db: any) {
     { id: U(1), email: "ghozt@x.com", displayName: "Ghozt" },
     { id: U(2), email: "semriot@x.com", displayName: "Sem Riot" },
     { id: U(3), email: "dono@x.com", displayName: "Dono" },
+    // Conta sem game_account, mas com users.riot_id (fallback do resolvedor).
+    { id: U(4), email: "fallback@x.com", displayName: "Fallback", riotId: "Fallback#BR1" },
   ]);
   await db.insert(gameAccounts).values({
     userId: U(1),
@@ -61,6 +63,15 @@ describe("team-membership (ADR-056)", () => {
   let ctx: any;
   beforeEach(async () => { ctx = await setupDb(); await seed(ctx.db); });
   afterEach(async () => { await ctx.client.close(); });
+
+  test("lineup: Riot ID com conta resolve para user_id (vaga de MEMBRO, não convidado)", async () => {
+    const peloHandle = await resolverUserIdPorRiotId(ctx.db, "  ghozt#123 ");
+    assert.equal(peloHandle, U(1), "handle da conta LoL casa sem caixa/espaço");
+    const peloRiotId = await resolverUserIdPorRiotId(ctx.db, "fallback#br1");
+    assert.equal(peloRiotId, U(4), "fallback pelo users.riot_id");
+    const nenhum = await resolverUserIdPorRiotId(ctx.db, "Ninguem#000");
+    assert.equal(nenhum, null, "Riot ID sem conta continua convidado");
+  });
 
   test("getRiotIdentities devolve PUUID e handle normalizado", async () => {
     const ids = await getRiotIdentities(ctx.db, U(1));

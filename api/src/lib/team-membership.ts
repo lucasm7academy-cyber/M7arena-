@@ -22,6 +22,32 @@ export type RiotIdentities = {
 
 type TeamMemberRow = typeof teamMembers.$inferSelect;
 
+/**
+ * Resolve um Riot ID ("Nick#TAG") para a CONTA da plataforma.
+ *
+ * Usado ao salvar o lineup: o capitão adiciona a pessoa pelo Riot ID; se ela
+ * tem conta, a vaga é de MEMBRO (`user_id`, status accepted) — não de
+ * "convidado". Decisão do usuário (24/10): quem o capitão adiciona é membro,
+ * e é como se já tivesse aceitado. "Convidado" fica só para Riot ID sem conta.
+ * Procura no handle da conta LoL e, sem achar, no users.riot_id.
+ */
+export async function resolverUserIdPorRiotId(d: any, riotId: string | null | undefined): Promise<string | null> {
+  const alvo = (riotId || "").trim().toLowerCase();
+  if (!alvo) return null;
+  const [conta] = await d
+    .select({ userId: gameAccounts.userId })
+    .from(gameAccounts)
+    .where(and(eq(gameAccounts.gameId, "lol"), sql`lower(trim(${gameAccounts.handle})) = ${alvo}`))
+    .limit(1);
+  if (conta?.userId) return conta.userId;
+  const [u] = await d
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`lower(trim(coalesce(${users.riotId}, ''))) = ${alvo}`)
+    .limit(1);
+  return u?.id ?? null;
+}
+
 /** Identidades Riot da conta do usuário: PUUID e Riot ID (handle/users.riot_id). */
 export async function getRiotIdentities(d: any, userId: string): Promise<RiotIdentities> {
   const [user] = await d

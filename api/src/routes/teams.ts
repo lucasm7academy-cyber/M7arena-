@@ -10,7 +10,7 @@ import {
 } from "../../../db/schema/teams.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { tournamentMatches, bracketMatches, tournaments } from "../../../db/schema/tournaments.js";
-import { findUserTeamMemberships, sairDeOutrosTimes } from "../lib/team-membership.js";
+import { findUserTeamMemberships, sairDeOutrosTimes, resolverUserIdPorRiotId } from "../lib/team-membership.js";
 import { resolverNovoDono } from "../lib/team-ownership.js";
 
 export const teamsRouter = Router();
@@ -819,14 +819,26 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
         // mesma gravação. O Riot ID resolve o dono da vaga quando ela é de
         // convidado (metade dos rosters é guest) — sem isso o jogador seguia
         // pendurado no time anterior sem ninguém ver.
-        const userId: string | null = m.user_id || null;
-        const riotId: string | null = userId ? null : m.guest_riot_id ?? null;
+        let userId: string | null = m.user_id || null;
+        let riotId: string | null = userId ? null : m.guest_riot_id ?? null;
+        // Decisão 24/10: o capitão adiciona a pessoa pelo Riot ID → se esse
+        // Riot ID tem conta na plataforma, a vaga é de MEMBRO (user_id,
+        // accepted), não "convidado". "Convidado" fica só para Riot ID sem
+        // conta. Sem isso o roster ficava guest e checagens por user_id (ex.:
+        // verificador de partida) não achavam o jogador — bug da sala 217.
+        if (!userId && riotId) {
+          const resolvido = await resolverUserIdPorRiotId(tx, riotId);
+          if (resolvido) {
+            userId = resolvido;
+            riotId = null;
+          }
+        }
         await sairDeOutrosTimes(tx, { userId, riotId }, id);
         await tx.insert(teamMembers).values({
           teamId: id,
           userId,
-          guestHandle: userId ? null : m.guest_riot_id ?? null,
-          guestRiotId: userId ? null : m.guest_riot_id ?? null,
+          guestHandle: userId ? null : riotId,
+          guestRiotId: userId ? null : riotId,
           guestPuuid: userId ? null : m.guest_puuid ?? null,
           guestProfileIconId: userId ? null : m.guest_profile_icon_id ?? null,
           guestEloCache: userId ? null : m.guest_elo_cache ?? null,
