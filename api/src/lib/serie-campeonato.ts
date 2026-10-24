@@ -151,8 +151,19 @@ export function ladoVencedorDaJogada(
   const vencedores = parts.filter((p: any) => p.win);
   let lado: "a" | "b" | null = null;
   if (vencedores.length) {
-    const p = vencedores[0];
-    lado = pertence(p.puuid);
+    // Conta os membros de CADA roster no time vencedor em vez de olhar só o
+    // primeiro `win`: o primeiro vencedor pode ser um stand-in fora do roster
+    // (caso da sala 217) e a jogada ficava sem lado. Maioria decide.
+    const teamVencedor = vencedores[0].teamId;
+    let a = 0;
+    let b = 0;
+    for (const p of parts) {
+      if (p.teamId !== teamVencedor) continue;
+      const l = pertence(p.puuid);
+      if (l === "a") a++;
+      else if (l === "b") b++;
+    }
+    lado = a > b ? "a" : b > a ? "b" : null;
   } else {
     // Fallback: teamId do time vencedor (100=A, 200=B) quando nenhum participant
     // tem win (partida incompleta/abortada). Ainda assim, só aceita se o teamId

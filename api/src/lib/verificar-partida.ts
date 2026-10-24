@@ -1,12 +1,13 @@
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { matches, matchPlayers, matchResults, matchCodes } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
-import { teams, teamMembers } from "../../../db/schema/teams.js";
+import { teams } from "../../../db/schema/teams.js";
 import { pagarPremio, pagarCancelamento } from "./escrow.js";
 import { notifyMatchChange } from "./match-flow.js";
 import { avancarSerieLivre } from "./serie-livre.js";
 import { avancarSerie5v5 } from "./serie-sala.js";
 import { resolverRosterPuuids, ladoVencedorDaJogada } from "./serie-campeonato.js";
+import { findUserTeamMemberships } from "./team-membership.js";
 import { riotRaw } from "../routes/riot.js";
 
 export const FANTASMA_MS = 3 * 60 * 60 * 1000;
@@ -78,14 +79,20 @@ async function timeDaVaga(d: any, m: any, lado: "blue" | "red"): Promise<string 
     .limit(1);
   if (!vaga?.userId) return null;
   const tag = (lado === "blue" ? m.timeATag : m.timeBTag) ?? null;
-  const montadas = await d
-    .select({ teamId: teams.id, tag: teams.tag })
-    .from(teamMembers)
-    .innerJoin(teams, eq(teams.id, teamMembers.teamId))
-    .where(and(eq(teamMembers.userId, vaga.userId), eq(teamMembers.status, "accepted")))
-    .orderBy(desc(teamMembers.createdAt));
-  const porTag = tag ? montadas.find((x: any) => x.tag === tag) : null;
-  return (porTag ?? montadas[0])?.teamId ?? null;
+  // ADR-056: a vaga pode ser ocupada por um CONVIDADO (team_members.user_id
+  // NULL) — resolve pelo vínculo Riot do ocupante (PUUID/Riot ID), não só por
+  // user_id. Sem isso o roster do lado ficava vazio e o vencedor da jogada não
+  // era identificado (caso real: sala 217, vaga vermelha com o coach convidado
+  // do BKA — a série ficava travada em 0-0).
+  const vagas = await findUserTeamMemberships(d, vaga.userId, { onlyAccepted: true });
+  if (!vagas.length) return null;
+  const equipes = await d
+    .select({ id: teams.id, tag: teams.tag })
+    .from(teams)
+    .where(inArray(teams.id, vagas.map((v: any) => v.teamId)));
+  const tagPorId = new Map<string, string>(equipes.map((t: any) => [t.id, t.tag]));
+  const porTag = tag ? vagas.find((v: any) => tagPorId.get(v.teamId) === tag) : null;
+  return (porTag ?? vagas[0])?.teamId ?? null;
 }
 
 /**

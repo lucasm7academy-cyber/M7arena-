@@ -293,9 +293,12 @@ export interface ApiLegacySala {
   time_a_nome?: string | null;
   time_a_tag?: string | null;
   time_a_logo?: string | null;
+  /** Cor TEMA do time (gradient_from) — usada no brilho dos logos. */
+  time_a_cor?: string | null;
   time_b_nome?: string | null;
   time_b_tag?: string | null;
   time_b_logo?: string | null;
+  time_b_cor?: string | null;
   codigo_partida?: string | null;
   confirmacao_expires_at?: string | null;
   iniciando_partida_at?: string | null;

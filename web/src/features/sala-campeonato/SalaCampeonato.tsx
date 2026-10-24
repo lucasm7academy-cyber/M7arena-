@@ -560,8 +560,8 @@ export default function SalaCampeonato() {
         previewExterno={previewDraft}
         ladoDoTimeA={camp?.lado_time_a ?? null}
         espectadorCompleto
-        timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
-        timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
+        timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo, cor: sala.time_a_cor }}
+        timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo, cor: sala.time_b_cor }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
         acoesTopo={{ twitch: acaoTopoTwitch, resetar: acaoTopoResetar, sair: acaoTopoSair }}
       />
@@ -593,8 +593,8 @@ export default function SalaCampeonato() {
           previewExterno={previewDraft}
           ladoDoTimeA={camp?.lado_time_a ?? null}
           espectadorCompleto
-          timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo }}
-          timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo }}
+          timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo, cor: sala.time_a_cor }}
+          timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo, cor: sala.time_b_cor }}
           placar={serie ? { a: placarA, b: placarB } : null}
           aoVivo={{
             // "Partida Ao Vivo!" saiu da tela (pedido do usuário 18/10 — verde
@@ -687,6 +687,10 @@ export default function SalaCampeonato() {
   const ladoJogoA: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
   const equipeNoLado = (posicao: 'blue' | 'red'): 'blue' | 'red' =>
     (ladoJogoA === posicao ? 'blue' : 'red');
+  // Cor TEMA de cada time (gradient_from escolhido no time): manda no brilho
+  // dos logos. Sem cor cadastrada, cai na cor do lado em jogo.
+  const corLogoA = sala.time_a_cor || (ladoJogoA === 'blue' ? '#3B82F6' : '#ef4444');
+  const corLogoB = sala.time_b_cor || (ladoJogoA === 'blue' ? '#ef4444' : '#3B82F6');
 
   // A VAGA só aparece quando ela SERVE: ocupar (camp_vagas), marcar PRONTO
   // (camp_prontos — inclusive o PRONTO de novo dos jogos 2+ da série) e na
@@ -839,11 +843,8 @@ export default function SalaCampeonato() {
             <img
               src={sala.time_a_logo}
               alt=""
-              className={`w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain ${
-                ladoJogoA === 'blue'
-                  ? 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
-                  : 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
-              }`}
+              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain"
+              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${corLogoA} 70%, transparent))` }}
             />
           ) : (
             <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
@@ -858,11 +859,8 @@ export default function SalaCampeonato() {
             <img
               src={sala.time_b_logo}
               alt=""
-              className={`w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain ${
-                ladoJogoA === 'blue'
-                  ? 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
-                  : 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
-              }`}
+              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain"
+              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${corLogoB} 70%, transparent))` }}
             />
           ) : (
             <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />

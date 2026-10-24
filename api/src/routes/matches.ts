@@ -3,6 +3,7 @@ import { timingSafeEqual } from "crypto";
 import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userWallets, userRoles } from "../../../db/schema/identidade.js";
+import { teams } from "../../../db/schema/teams.js";
 import { matches, matchPlayers, matchResults, matchCodes, salaMensagens, matchDrafts, campeonatoSalaEstado } from "../../../db/schema/matches.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
@@ -47,9 +48,10 @@ async function resolverSala(param: string, ctx: any = db) {
 }
 
 /** Monta o shape legado de `salas` para uma linha de `matches` (com joins).
- *  `incluirSerie` liga a leitura extra do estado da série 5v5 (só o detalhe
- *  da sala precisa; a listagem do /jogar não paga essa query). */
-async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirSerie = false) {
+ *  `incluirExtras` liga as leituras que só o DETALHE da sala precisa (estado da
+ *  série 5v5 e cores tema dos times); a listagem do /jogar não paga essas
+ *  queries. */
+async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExtras = false) {
   const players = await ctx.select().from(matchPlayers).where(eq(matchPlayers.matchId, m.id));
   const userIds = [...new Set([m.createdBy, ...players.map((p: any) => p.userId)])];
   const usersRows: any[] = userIds.length ? await ctx.select().from(users).where(inArray(users.id, userIds)) : [];
@@ -134,18 +136,32 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirSer
   }
 
   const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
-  // Série da SALA 5v5 PERSONALIZADA (MD1/MD3/MD5): formato, jogo corrente e
-  // placar. Só o detalhe da sala pede (`incluirSerie`) — a listagem fica leve.
-  if (incluirSerie && m.mode === "5v5") {
-    const st = await estadoSerie(ctx, m.id);
-    if (st) {
-      (legacy as any).serie = {
-        formato: st.formato,
-        jogo: st.jogo ?? 1,
-        placar_a: st.placarA ?? 0,
-        placar_b: st.placarB ?? 0,
-        alvo: alvoVitorias(st.formato),
-      };
+  // Extras do DETALHE da sala (a listagem não paga essas queries):
+  //  - Série da SALA 5v5 PERSONALIZADA (MD1/MD3/MD5): formato, jogo e placar;
+  //  - Cor TEMA de cada time (gradient_from): o brilho dos logos na sala e no
+  //    draft usa a cor que o time escolheu (vermelho, roxo, …), não a do lado.
+  if (incluirExtras) {
+    if (m.mode === "5v5") {
+      const st = await estadoSerie(ctx, m.id);
+      if (st) {
+        (legacy as any).serie = {
+          formato: st.formato,
+          jogo: st.jogo ?? 1,
+          placar_a: st.placarA ?? 0,
+          placar_b: st.placarB ?? 0,
+          alvo: alvoVitorias(st.formato),
+        };
+      }
+    }
+    if (m.timeATag || m.timeBTag) {
+      const tags = [m.timeATag, m.timeBTag].filter(Boolean) as string[];
+      const rows = await ctx
+        .select({ tag: teams.tag, cor: teams.gradientFrom })
+        .from(teams)
+        .where(inArray(teams.tag, tags));
+      const corPorTag = new Map<string, string | null>(rows.map((r: any) => [r.tag, r.cor]));
+      (legacy as any).time_a_cor = m.timeATag ? corPorTag.get(m.timeATag) ?? null : null;
+      (legacy as any).time_b_cor = m.timeBTag ? corPorTag.get(m.timeBTag) ?? null : null;
     }
   }
   // Sala de TIMES (ADR-085/086): o estado por jogo (PRONTO, sorteio, escolhas)

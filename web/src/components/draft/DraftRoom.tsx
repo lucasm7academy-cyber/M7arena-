@@ -49,9 +49,10 @@ interface DraftRoomProps {
    * mostra o time A no lado vermelho e o B no azul (painéis, bans e picks).
    */
   ladoDoTimeA?: 'blue' | 'red' | null;
-  /** Visão de transmissão (telespectador): times grandes + placar da série. */
-  timeA?: { nome?: string | null; logo?: string | null } | null;
-  timeB?: { nome?: string | null; logo?: string | null } | null;
+  /** Visão de transmissão (telespectador): times grandes + placar da série.
+   *  `cor` = cor TEMA do time (gradient_from) para o brilho do logo. */
+  timeA?: { nome?: string | null; logo?: string | null; cor?: string | null } | null;
+  timeB?: { nome?: string | null; logo?: string | null; cor?: string | null } | null;
   placar?: { a: number; b: number } | null;
   /**
    * Modo RESUMO: mostra o confronto com os CAMPEÕES ESCOLHIDOS (usado nos
@@ -791,11 +792,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           <div className="flex items-start justify-center gap-[7vmin]">
             <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
               {timeA?.logo
-                ? <img src={timeA.logo} alt="" className={`w-[14vmin] h-[14vmin] object-contain ${
-                    ladoEquipeA === 'blue'
-                      ? 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
-                      : 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
-                  }`} />
+                ? <img src={timeA.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
+                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeA.cor || (ladoEquipeA === 'blue' ? '#3B82F6' : '#ef4444')} 70%, transparent))` }} />
                 : <div className="w-[14vmin] h-[14vmin]" />}
               <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
                 {nomeSemQuebra(labelEquipeA)}
@@ -804,11 +802,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[5.4vmin]">X</span>
             <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
               {timeB?.logo
-                ? <img src={timeB.logo} alt="" className={`w-[14vmin] h-[14vmin] object-contain ${
-                    ladoEquipeB === 'blue'
-                      ? 'drop-shadow-[0_0_28px_rgba(59,130,246,0.55)]'
-                      : 'drop-shadow-[0_0_28px_rgba(239,68,68,0.55)]'
-                  }`} />
+                ? <img src={timeB.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
+                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeB.cor || (ladoEquipeB === 'blue' ? '#3B82F6' : '#ef4444')} 70%, transparent))` }} />
                 : <div className="w-[14vmin] h-[14vmin]" />}
               <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
                 {nomeSemQuebra(labelEquipeB)}
