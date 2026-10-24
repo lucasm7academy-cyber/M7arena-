@@ -116,6 +116,12 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
         if (puuid) puuidToSide.set(puuid, p.side as "blue" | "red");
       }
       resultadoRiot = resumoRiot(mr.payload, puuidToSide);
+      // O vencedor do resumo é o decidido pelo MOTOR (match_results), não o
+      // palpite por teamId da Riot — em custom game o teamId 100/200 não
+      // corresponde ao nosso lado (foi o que mostrou "AMATERASU" na sala 217).
+      if (resultadoRiot && (mr.winnerSide === "blue" || mr.winnerSide === "red")) {
+        resultadoRiot.vencedor = mr.winnerSide;
+      }
     }
   }
 

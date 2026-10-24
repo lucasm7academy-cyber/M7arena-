@@ -166,6 +166,19 @@ export async function verificarPartida(
     return { ok: false, estado: "partida_iniciada", motivo: "nao_encontrada" };
   }
 
+  // SÉRIE (sala livre de times e 5v5 personalizada): o jogo da VEZ começa
+  // DEPOIS do draft fechar (`iniciando_partida_at`). Sem esse piso, a
+  // verificação do jogo N+1 podia achar o jogo N (já contado) enquanto o novo
+  // ainda estava começando e somar o mesmo jogo duas vezes — foi o que
+  // aconteceu na sala 217: o jogo 2 (já 1-1) foi recontado às 01:58 enquanto o
+  // jogo 3 começava, virando 2-1 errado. Margem de 2 min cobre o intervalo
+  // entre o draft fechar e a partida ser criada no client.
+  const temSerie = m.mode === "time_vs_time_livre" || m.mode === "5v5";
+  const pisoJogoAtual =
+    temSerie && m.iniciandoPartidaAt
+      ? new Date(m.iniciandoPartidaAt).getTime() - 2 * 60_000
+      : null;
+
   // Busca no histórico: nas salas de TIMES vale o roster inteiro dos dois times
   // (qualquer membro que jogou acha a partida); nas demais, os PUUIDs das vagas.
   const puuidsBusca =
@@ -188,6 +201,8 @@ export async function verificarPartida(
   for (const id of candidatos) {
     const match = await buscarMatch(id);
     if (!match || match.info.tournamentCode !== m.codigoPartida) continue;
+    // Só vale o jogo da VEZ (criado depois do draft fechar) — ver piso acima.
+    if (pisoJogoAtual !== null && match.info.gameCreation < pisoJogoAtual) continue;
     const diff = Math.abs(match.info.gameCreation - inicioRef);
     if (!melhor || diff < melhor.diff) melhor = { match, diff };
   }

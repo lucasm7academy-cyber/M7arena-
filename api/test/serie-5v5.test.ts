@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { users } from "../../db/schema/identidade.js";
 import { matches, matchPlayers, matchDrafts, campeonatoSalaEstado } from "../../db/schema/matches.js";
+import { gameAccounts, games } from "../../db/schema/games.js";
 import { setupDb } from "./helpers.js";
 import { avaliarTransicoes } from "../src/lib/match-flow.js";
 import { aplicarAcaoDraft } from "../src/lib/draft/index.js";
+import { verificarPartida } from "../src/lib/verificar-partida.js";
 import {
   avancarSerie5v5,
   normalizarFormato,
@@ -202,5 +204,81 @@ describe("série da sala 5v5: MD3/MD5 avançam e fecham no alvo", () => {
     const { sala } = await criaSala5v5(db, { comEstado: false });
     const continua = await avancarSerie5v5(db as any, sala.id, "blue");
     assert.equal(continua, false);
+  });
+});
+
+describe("série 5v5: verificação NÃO recontar o jogo anterior da série", () => {
+  let ctx: any;
+  before(async () => {
+    ctx = await setupDb();
+  });
+  after(async () => {
+    await ctx.client.close();
+  });
+
+  test("jogo antigo (antes do draft atual) é ignorado; só o jogo novo conta", async () => {
+    const db = ctx.db;
+    const { sala, vagas } = await criaSala5v5(db, { formato: "md3" });
+
+    // Sala no jogo atual: código da série + início 10 min atrás.
+    const inicio = new Date(Date.now() - 10 * 60_000);
+    await db
+      .update(matches)
+      .set({ status: "partida_iniciada", codigoPartida: "BR-TEST-SERIE-217", iniciandoPartidaAt: inicio })
+      .where(eq(matches.id, sala.id));
+
+    // Conta Riot vinculada dos dois jogadores (o motor exige PUUID de todos).
+    await db.insert(games).values({ id: "lol", name: "League of Legends" }).onConflictDoNothing();
+    const puuidPorSide: Record<string, string> = {};
+    for (const v of vagas) {
+      const puuid = "PUUID_" + v.side.toUpperCase();
+      puuidPorSide[v.side] = puuid;
+      await db.insert(gameAccounts).values({ userId: v.userId, gameId: "lol", externalId: puuid, handle: "nick#BR1", verified: true });
+    }
+
+    const partida = (matchId: string, gameCreation: number) => ({
+      metadata: { matchId },
+      info: {
+        tournamentCode: "BR-TEST-SERIE-217",
+        gameCreation,
+        endOfGameResult: "GameComplete",
+        participants: [
+          { puuid: puuidPorSide.blue, teamId: 100, win: true },
+          { puuid: puuidPorSide.red, teamId: 200, win: false },
+        ],
+        teams: [
+          { teamId: 100, win: true },
+          { teamId: 200, win: false },
+        ],
+      },
+    });
+    const antigo = partida("BR1_JOGO_ANTERIOR", Date.now() - 40 * 60_000);
+    const novo = partida("BR1_JOGO_ATUAL", Date.now() - 5 * 60_000);
+
+    // Só o jogo ANTERIOR está no histórico (o atual ainda não acabou): não conta.
+    const r1 = await verificarPartida(db as any, sala.id, {
+      agora: new Date(),
+      buscarIds: async () => ["BR1_JOGO_ANTERIOR"],
+      buscarMatch: async (id: string) => ((id === "BR1_JOGO_ANTERIOR" ? antigo : null) as any),
+    });
+    assert.equal(r1.ok, false);
+    // O jogo anterior é descartado pelo piso do jogo atual — o motor responde
+    // "não encontrada" (para esta jogada) e NÃO soma nada.
+    assert.equal("motivo" in r1 && r1.motivo, "nao_encontrada", "não pode recontar o jogo anterior");
+    const [st1] = await db.select().from(campeonatoSalaEstado).where(eq(campeonatoSalaEstado.matchId, sala.id));
+    assert.equal(st1.placarA, 0);
+
+    // Com o jogo ATUAL no histórico, conta 1-0 e a série continua.
+    const r2 = await verificarPartida(db as any, sala.id, {
+      agora: new Date(),
+      buscarIds: async () => ["BR1_JOGO_ANTERIOR", "BR1_JOGO_ATUAL"],
+      buscarMatch: async (id: string) => ((id === "BR1_JOGO_ANTERIOR" ? antigo : id === "BR1_JOGO_ATUAL" ? novo : null) as any),
+    });
+    assert.equal(r2.ok, true);
+    assert.equal("motivo" in r2 && r2.motivo, "serie_avancou");
+    const [st2] = await db.select().from(campeonatoSalaEstado).where(eq(campeonatoSalaEstado.matchId, sala.id));
+    assert.equal(st2.placarA, 1);
+    assert.equal(st2.placarB, 0);
+    assert.equal(st2.jogo, 2);
   });
 });
