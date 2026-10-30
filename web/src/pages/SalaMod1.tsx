@@ -508,7 +508,8 @@ ${link}`;
                         </div>
                     </div>
 
-                    {/* Card Série (5v5 personalizada): formato, jogo e placar */}
+                    {/* Card Série (5v5 personalizada): formato, jogo e placar por
+                        LADO — BLUE × RED nas cores (pedido do usuário 30/10). */}
                     {serie && (
                         <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
                             <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
@@ -517,7 +518,11 @@ ${link}`;
                                 </span>
                                 <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none text-[#FFB700]">
                                     {String(serie.formato).toUpperCase()} · JOGO {serie.jogo}
-                                    <span className="text-white/50"> · {serie.placar_a}-{serie.placar_b}</span>
+                                </span>
+                                <span className="text-[10px] md:text-[1.2vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
+                                    <span className="text-[#3B82F6]">BLUE {serie.placar_a}</span>
+                                    <span className="text-white/35">×</span>
+                                    <span className="text-[#ef4444]">{serie.placar_b} RED</span>
                                 </span>
                             </div>
                         </div>
