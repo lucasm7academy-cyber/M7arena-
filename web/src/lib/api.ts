@@ -507,6 +507,8 @@ export interface ApiMatchesSdk {
   }) => Promise<ApiLegacySala>;
   join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean; senha?: string }) => Promise<ApiSalaResultado>;
   leave: (id: number) => Promise<ApiSalaResultado>;
+  /** ADM/proprietário: retira outro jogador da vaga (mesmo efeito do leave). */
+  removerJogador: (id: number, userId: string) => Promise<ApiSalaResultado>;
   confirm: (id: number) => Promise<ApiSalaResultado>;
   recusar: (id: number) => Promise<ApiSalaResultado>;
   tick: (id: number) => Promise<ApiSalaResultado>;
@@ -1019,6 +1021,9 @@ export const api = {
     join: (id: number, data: { side?: string; slot?: number; roleSlot?: string; is_time_a?: boolean; senha?: string }) =>
       api.post<ApiSalaResultado>(`/matches/${id}/join`, data),
     leave: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/leave`),
+    /** ADM/proprietário: retira outro jogador da vaga (mesmo efeito do leave). */
+    removerJogador: (id: number, userId: string) =>
+      api.post<ApiSalaResultado>(`/matches/${id}/remover-jogador`, { user_id: userId }),
     confirm: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/confirm`),
     recusar: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/recusar`),
     tick: (id: number) => api.post<ApiSalaResultado>(`/matches/${id}/tick`),

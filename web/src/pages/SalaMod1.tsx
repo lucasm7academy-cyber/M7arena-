@@ -372,6 +372,20 @@ ${link}`;
     // escondemos o botão para quem não tem cargo.
     const ehAdminOuProprietario = perfil?.cargo === 'admin' || perfil?.cargo === 'proprietario';
 
+    // ADM/proprietário retira outro jogador da vaga (mesmo efeito do "Sair da
+    // Vaga"): o servidor devolve o escrow, libera a vaga e a sala reavalia.
+    // O jogador removido continua na sala e recebe o aviso no cliente.
+    const removerJogadorDaVaga = async (alvoUserId: string) => {
+        if (!ehAdminOuProprietario || !alvoUserId) return;
+        try {
+            const r = await api.matches.removerJogador(salaId, alvoUserId);
+            if (!r.ok) toast.error(traduzirErroSala(r.erro));
+            await atualizar();
+        } catch (e: any) {
+            toast.error(traduzirErroSala(e?.message));
+        }
+    };
+
     // Staff da sala (streamer/organizador/admin/proprietário) — pode ver o
     // código da partida e disparar a verificação mesmo sem estar na vaga
     // (auditoria). `perfil.cargo` vem do PerfilContext (rolesToCargo).
@@ -736,6 +750,7 @@ ${link}`;
                                         isTimeA={true} role={role as any} isConfirmado={jogador?.confirmado}
                                         aoEntrar={() => handleEntrar(role, true)}
                                         aoSair={isAtual ? sair : undefined}
+                                        aoRetirar={!isAtual && ehAdminOuProprietario && jogador ? () => removerJogadorDaVaga(jogador.user_id) : undefined}
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
                                         stats={statsDoJogador(jogador)}
@@ -856,6 +871,7 @@ ${link}`;
                                         isTimeA={false} role={role as any} isConfirmado={jogador?.confirmado}
                                         aoEntrar={() => handleEntrar(role, false)}
                                         aoSair={isAtual ? sair : undefined}
+                                        aoRetirar={!isAtual && ehAdminOuProprietario && jogador ? () => removerJogadorDaVaga(jogador.user_id) : undefined}
                                         roleIconImg={ROLE_CONFIG[role].img}
                                         vipTier={isVip ? 'vip' : 'free'}
                                         stats={statsDoJogador(jogador)}

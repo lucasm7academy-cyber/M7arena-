@@ -20,6 +20,11 @@ interface VagaSlotProps {
     isConfirmado?: boolean;
     aoEntrar: () => void;
     aoSair?: () => void;
+    /**
+     * ADM/proprietário: retira OUTRO jogador da vaga (mesmo efeito do sair).
+     * Mostra o mesmo overlay, com o rótulo "Retirar da Vaga".
+     */
+    aoRetirar?: () => void;
     roleIconImg: string;
     // NOVO - Sistema VIP
     vipTier?: 'free' | 'vip' | 'premium';
@@ -48,6 +53,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
     isConfirmado,
     aoEntrar,
     aoSair,
+    aoRetirar,
     roleIconImg,
     vipTier = 'free',
     stats = null,
@@ -189,8 +195,10 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                         )}
 
                         {/* Overlay para Sair da Vaga. Desktop: aparece no hover.
-                            Touch (celular): o toque na vaga revela FICAR/SAIR. */}
-                        {aoSair && !isFinalizada && (
+                            Touch (celular): o toque na vaga revela FICAR/SAIR.
+                            ADM: na vaga de outra pessoa, o mesmo overlay vira
+                            "Retirar da Vaga" (aoRetirar). */}
+                        {(aoSair || aoRetirar) && !isFinalizada && (
                             <div
                                 className={`absolute inset-0 bg-black/85 backdrop-blur-sm z-30 flex items-center justify-center transition-all duration-300 ${
                                     isTouch
@@ -214,24 +222,24 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                aoSair();
+                                                (aoSair ?? aoRetirar)?.();
                                             }}
                                             className="px-3 py-1.5 bg-red-600/30 hover:bg-red-600 border border-red-500/60 rounded-xl text-red-100 hover:text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all"
                                         >
                                             <X className="w-4 h-4 text-red-400" />
-                                            <span>SAIR</span>
+                                            <span>{aoSair ? 'SAIR' : 'RETIRAR'}</span>
                                         </button>
                                     </div>
                                 ) : (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            aoSair();
+                                            (aoSair ?? aoRetirar)?.();
                                         }}
                                         className="px-3 py-1.5 md:px-[2.5vmin] md:py-[0.8vmin] bg-red-600/30 hover:bg-red-600 border border-red-500/60 hover:border-red-400 rounded-xl text-red-100 hover:text-white text-xs md:text-[1.3vmin] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-[1vmin] shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95"
                                     >
                                         <X className="w-4 h-4 md:w-[1.6vmin] md:h-[1.6vmin] text-red-400 group-hover:text-white" />
-                                        <span>Sair da Vaga</span>
+                                        <span>{aoSair ? 'Sair da Vaga' : 'Retirar da Vaga'}</span>
                                     </button>
                                 )}
                             </div>

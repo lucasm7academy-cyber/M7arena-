@@ -84,6 +84,9 @@ export function useSalaSimples(
     const tickRef = useRef<{ chave: string; ts: number } | null>(null);
     const tickEmVooRef = useRef(false);
     const jogadoresRef = useRef<any[]>([]);
+    // Marca quando a SAÍDA foi do próprio jogador (sair/recusar) — sem isso o
+    // sync não distingue saída voluntária de um ADM retirando a vaga.
+    const saidaVoluntariaRef = useRef(false);
     // ── Fallback polling (ajustarsala bug A) ──
     // O WS é a via principal, mas se ele cai (serviço fora, aba em background,
     // mensagem perdida) o jogador que já está na sala não vê a transição.
@@ -144,7 +147,16 @@ export function useSalaSimples(
         registrarServerTime(dadosSala.server_time);
         setSala(dadosSala);
         setCodigoPartida(dadosSala.codigo_partida || null);
+        const anteriores = jogadoresRef.current;
         const dadosJogadores = dadosSala.jogadores || [];
+        // ADM retirou a vaga? O jogador continua na sala, só sai da vaga —
+        // avisa uma vez quando ele some da lista sem ter clicado em sair.
+        const estavaAntes = anteriores.some((j: any) => j.user_id === usuarioAtual.id);
+        const estaAgora = dadosJogadores.some((j: any) => j.user_id === usuarioAtual.id);
+        if (estavaAntes && !estaAgora && !saidaVoluntariaRef.current) {
+            mostrar('erro', 'Um administrador te retirou da vaga.');
+        }
+        saidaVoluntariaRef.current = false;
         setJogadores(dadosJogadores);
         jogadoresRef.current = dadosJogadores;
 
@@ -461,6 +473,7 @@ export function useSalaSimples(
     const sair = async () => {
         if (saindoRef.current) return;
         saindoRef.current = true;
+        saidaVoluntariaRef.current = true;
 
         try {
             if (IS_DEV) console.log(`🚪 [sair] sala_sair(${salaId})`);
@@ -534,6 +547,7 @@ export function useSalaSimples(
             return;
         }
         confirmandoRef.current = true;
+        saidaVoluntariaRef.current = true;
 
         try {
             if (IS_DEV) console.log(`🚫 [recusar] sala_recusar(${salaId})`);

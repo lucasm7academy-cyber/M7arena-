@@ -333,6 +333,59 @@ matchesActionsRouter.post("/:id/leave", async (req, res) => {
   }
 });
 
+// POST /api/matches/:id/remover-jogador — ADM/PROPRIETÁRIO retira outro jogador
+// da vaga (mesmo efeito do "Sair da Vaga": devolve o escrow, libera a vaga e a
+// sala reavalia; o jogador continua na sala, só perde a vaga). O aviso para
+// quem foi removido aparece no cliente ("Um administrador te retirou da vaga").
+matchesActionsRouter.post("/:id/remover-jogador", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const roles = await getRoles(db, user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ ok: false, erro: "sem_permissao", estado: null, mudou: false });
+    }
+    const alvo = String(req.body?.user_id || req.body?.userId || "");
+    if (!alvo) return res.status(400).json({ ok: false, erro: "alvo_invalido", estado: null, mudou: false });
+
+    const [sala] = await db.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1);
+    if (!sala) return res.status(404).json({ ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false });
+
+    // Sala de TIMES (campeonato/livre): usa a MESMA regra do sair da vaga
+    // (reseta os prontos, volta para camp_vagas etc.) com o userId do alvo.
+    if (sala.mode === "campeonato" || sala.mode === "time_vs_time_livre") {
+      const r = await sairDaVaga(db, { salaNum: Number(req.params.id), userId: alvo });
+      return responderSalaCampeonato(res, r);
+    }
+
+    // Salas normais: mesma regra do /leave (só em `preenchendo`, sem confirmação).
+    const r = await db.transaction(async (tx: any) => {
+      const [match] = await tx.select().from(matches).where(eq(matches.id, sala.id)).limit(1).for("update");
+      const trans = await avaliarTransicoes(tx, match.id);
+      if (match.status !== "preenchendo") {
+        return { ok: false, erro: "estado_invalido", estado: trans.estado, mudou: trans.mudou };
+      }
+      const [jogador] = await tx
+        .select()
+        .from(matchPlayers)
+        .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, alvo)))
+        .limit(1);
+      if (!jogador) return { ok: false, erro: "nao_esta_na_sala", estado: match.status, mudou: false };
+      if (jogador.confirmed || jogador.linked) {
+        return { ok: false, erro: "nao_pode_sair", estado: match.status, mudou: false };
+      }
+      await reembolsarSeNecessario(tx, alvo, match.apostaMc ?? match.entryMp ?? 0, match.id);
+      await tx.delete(matchPlayers).where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, alvo)));
+      const trans2 = await avaliarTransicoes(tx, match.id);
+      return { ok: true, erro: null, estado: trans2.estado, mudou: true };
+    });
+    notifyMatchChange(String(req.params.id));
+    return res.json(r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
 // POST /api/matches/:id/confirm - Confirmar presença
 matchesActionsRouter.post("/:id/confirm", async (req, res) => {
   try {
