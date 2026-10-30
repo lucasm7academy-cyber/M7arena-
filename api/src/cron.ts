@@ -161,10 +161,11 @@ export async function runCron(d: any = db) {
     console.log(`[cron] saneamento: ${linkedOrfao.length} vinculo(s) orfao(s) liberado(s) em ${idsOrfaos.length} sala(s)`);
   }
 
-  // 4. Chat (ADR-040): mensagens de sala expiram em 5 min. O purge preguiçoso
-  //    (no GET de histórico) já limpa na leitura; aqui é a rede de segurança
-  //    para a tabela nunca acumular mesmo sem leituras.
-  const corteChat = new Date(Date.now() - 5 * 60 * 1000);
+  // 4. Chat (ADR-040): mensagens de sala ficam por 24h (antes eram 5 min —
+  //    pedido do usuário 30/10). O purge preguiçoso (no GET de histórico) faz
+  //    a limpeza na leitura; aqui é a rede de segurança para a tabela não
+  //    acumular para sempre mesmo sem leituras.
+  const corteChat = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const purgadas = await d
     .delete(salaMensagens)
     .where(lt(salaMensagens.createdAt, corteChat))

@@ -337,8 +337,9 @@ matchesRouter.get("/:id", async (req, res) => {
 
 // GET /api/matches/:id/mensagens - Histórico do chat (ADR-040). Qualquer
 // usuário autenticado na sala lê (a sala é pública); enviar exige Riot
-// vinculado (realtime). Faz purge preguiçoso das mensagens expiradas (>5min).
-const CINCO_MINUTOS_MS = 5 * 60 * 1000;
+// vinculado (realtime). Faz purge preguiçoso das mensagens com mais de 24h
+// (antes eram 5 min — pedido do usuário 30/10).
+const VINTE_QUATRO_HORAS_MS = 24 * 60 * 60 * 1000;
 
 matchesRouter.get("/:id/mensagens", async (req, res) => {
   try {
@@ -349,7 +350,7 @@ matchesRouter.get("/:id/mensagens", async (req, res) => {
     if (!user) return res.status(401).json({ error: "nao_autenticado" });
 
     // Purge preguiçoso: apaga o que já expirou antes de ler (tabela pequena).
-    await db.delete(salaMensagens).where(lt(salaMensagens.createdAt, new Date(Date.now() - CINCO_MINUTOS_MS)));
+    await db.delete(salaMensagens).where(lt(salaMensagens.createdAt, new Date(Date.now() - VINTE_QUATRO_HORAS_MS)));
 
     const after = Number(req.query.after);
     const condicoes = [eq(salaMensagens.matchId, match.id)];

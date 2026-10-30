@@ -105,7 +105,7 @@ export default function ChatDaSala({ mensagens, naoLidas, onMarcarLidas, enviarC
                     className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
                     {mensagens.length === 0 && (
                         <p className="text-xs text-white/40 text-center pt-6">
-                            Nenhuma mensagem ainda. As mensagens somem após 5 minutos.
+                            Nenhuma mensagem ainda. As mensagens ficam por 24 horas.
                         </p>
                     )}
                     {mensagens.map((m) => (

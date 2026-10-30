@@ -1,12 +1,13 @@
 // src/hooks/useSalaChat.ts
 // Estado do chat da sala (ADR-040): lista de mensagens, não lidas, histórico e
-// autoexclusão de 5 min. O transporte é o socket do useSalaRealtime (já
-// assinado); aqui só a UI/estado. Receber = onChatMessage; carregar = onReconnect.
+// autoexclusão de 24h (antes eram 5 min — pedido do usuário 30/10). O
+// transporte é o socket do useSalaRealtime (já assinado); aqui só a UI/estado.
+// Receber = onChatMessage; carregar = onReconnect.
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { api, type ApiSalaChatMensagem } from '../lib/api';
 
-const TTL_MS = 5 * 60 * 1000;      // autoexclusão
+const TTL_MS = 24 * 60 * 60 * 1000; // autoexclusão (24h)
 const PRUNE_INTERVALO_MS = 5000;   // varredura leve de expiração
 
 export function useSalaChat(salaId: number, usuarioAtualId?: string) {
@@ -42,7 +43,7 @@ export function useSalaChat(salaId: number, usuarioAtualId?: string) {
         }
     }, [salaId]);
 
-    // Autoexclusão de 5 min: varredura leve, remove o que expirou.
+    // Autoexclusão de 24h: varredura leve, remove o que expirou.
     useEffect(() => {
         const id = setInterval(() => {
             setMensagens((prev) => {
