@@ -25,7 +25,9 @@ import { reservarEntrada as reservarEntradaEscrow, devolverEntrada } from "./esc
 import { avaliarDraft, criarDraft, temDraft } from "./draft/index.js";
 import { CONFIRMACAO_SERIE_MS, estadoSerie, jogoAtualSerie } from "./serie-sala.js";
 
-const TEMPO_CONFIRMACAO_MS = 75_000;
+// Janela de confirmação da sala (pedido do usuário 30/10: era 75s, passou a
+// 32s). Entre jogos da SÉRIE 5v5 o prazo é outro (5 min, para trocar jogador).
+const TEMPO_CONFIRMACAO_MS = 32_000;
 const TEMPO_INICIO_MS = 90_000;
 
 /** Usuário autenticado pela sessão (cookie httpOnly) ou Bearer token. */
@@ -81,8 +83,8 @@ async function totalConfirmados(tx: any, matchId: string): Promise<number> {
 /**
  * Janela de confirmação. Entre jogos da SÉRIE 5v5 é maior (5 min) de propósito:
  * é a janela em que os jogadores podem "Recusar" (sair) e outro entrar no lugar
- * antes do próximo draft. No primeiro jogo — e nos demais modos — segue os 75s
- * históricos.
+ * antes do próximo draft. No primeiro jogo — e nos demais modos — segue os 32s
+ * padrão.
  */
 async function janelaConfirmacao(tx: any, m: any): Promise<number> {
   if (m.mode !== "5v5") return TEMPO_CONFIRMACAO_MS;

@@ -103,7 +103,7 @@ export function useSalaSimples(
     const agora = agoraServidor();
     const timer = sala?.confirmacao_expires_at
         ? Math.max(0, Math.round((new Date(sala.confirmacao_expires_at).getTime() - agora) / 1000))
-        : 75;
+        : 32;
 
     const timerIniciandoPartida = sala?.iniciando_partida_at
         ? Math.max(0, Math.round((new Date(sala.iniciando_partida_at).getTime() + 90000 - agora) / 1000))

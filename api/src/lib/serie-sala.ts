@@ -25,7 +25,7 @@ export const FORMATOS_SERIE = ["md1", "md3", "md5"] as const;
 export type FormatoSerie = (typeof FORMATOS_SERIE)[number];
 
 /**
- * Janela para confirmar presença entre jogos da série. Maior que os 75s do
+ * Janela para confirmar presença entre jogos da série. Maior que os 32s do
  * primeiro jogo de propósito: dá tempo de trocar um jogador (sair/entrar)
  * sem a sala expulsar todo mundo no meio da troca.
  */
