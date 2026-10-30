@@ -460,12 +460,12 @@ ${link}`;
                             <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] truncate min-w-0">
                                 {sala.nome}
                             </h1>
-                            <div className="p-[1px] bg-[#FFB700]/30 shrink-0" style={{ clipPath: CUT_BADGE }}>
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 text-[10px] sm:text-xs md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono block"
-                                    style={{ clipPath: CUT_BADGE_INNER }}>
-                                    #{String(sala.id).padStart(6, '0')}
-                                </span>
-                            </div>
+                            {/* Nº da sala SEM card: só o texto, mesmo tamanho do
+                                nome, centralizado na mesma linha. # em amarelo. */}
+                            <span className="shrink-0 inline-flex items-center text-sm sm:text-base md:text-[2vmin] font-black tracking-wider leading-tight font-mono">
+                                <span className="text-[#FFB700]">#</span>
+                                <span className="text-white">{String(sala.id).padStart(6, '0')}</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -515,7 +515,7 @@ ${link}`;
                                     Série
                                 </span>
                                 <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-[#FFB700]">{String(serie.formato).toUpperCase()} · JOGO {serie.jogo}</span>
+                                    <span className="text-[#FFB700]">{String(serie.formato).toUpperCase()}</span>
                                     <span className="text-white/35">·</span>
                                     <span className="text-[#3B82F6]">BLUE {serie.placar_a}</span>
                                     <span className="text-white/35">×</span>
