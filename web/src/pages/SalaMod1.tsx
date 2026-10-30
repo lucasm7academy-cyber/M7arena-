@@ -461,10 +461,10 @@ ${link}`;
                                 {sala.nome}
                             </h1>
                             {/* Nº da sala SEM card: só o texto, mesmo tamanho do
-                                nome, centralizado na mesma linha. # em amarelo. */}
-                            <span className="shrink-0 inline-flex items-center text-sm sm:text-base md:text-[2vmin] font-black tracking-wider leading-tight font-mono">
-                                <span className="text-[#FFB700]">#</span>
-                                <span className="text-white">{String(sala.id).padStart(6, '0')}</span>
+                                nome, centralizado na mesma linha. Tudo amarelo. */}
+                            <span className="shrink-0 inline-flex items-center text-sm sm:text-base md:text-[2vmin] font-black tracking-wider leading-tight font-mono text-[#FFB700]">
+                                <span>#</span>
+                                <span>{String(sala.id).padStart(6, '0')}</span>
                             </span>
                         </div>
                     </div>
