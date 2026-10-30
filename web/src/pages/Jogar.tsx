@@ -26,10 +26,16 @@ import {
   ModalSenhaSala,
 } from '../components/partidas/ModaisElegibilidade';
 
-// ⚡ OTIMIZAÇÃO: Cache em memória de 30s para lista de salas.
-// Evita refetch quando usuário navega Lobby ↔ Jogar rapidamente.
-const _SALAS_CACHE_TTL = 30_000;
+// ⚡ Cache em memória da vitrine. Com o polling de 15s, o cache serve só para
+// pintar a tela na hora ao voltar da sala; a revalidação acontece sempre em
+// seguida (stale-while-revalidate).
 let _salasCache: { data: any[]; ts: number } | null = null;
+
+/** Assinatura barata do que o card desenha — evita re-render quando o poll não muda nada. */
+const _assinaturaSalas = (list: any[]) =>
+  list
+    .map((s) => `${s.id}:${s.estado}:${s.jogadores.length}:${s.nome}:${s.mpoints}:${s.temSenha ? 1 : 0}`)
+    .join('|');
 
 // ============================================
 // TIPOS
@@ -470,6 +476,10 @@ const Jogar = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');
   const [filtroModo, setFiltroModo] = useState<ModoJogo | 'todos'>('todos');
+  // Polling da vitrine: não deixa um request sobrepor o outro e evita re-render
+  // quando a resposta é idêntica à lista já pintada.
+  const salasEmVooRef = useRef(false);
+  const salasAssinaturaRef = useRef(_salasCache ? _assinaturaSalas(_salasCache.data) : '');
 
   // Estados das salas finalizadas (LAZY)
   const [salasFinalizadas, setSalasFinalizadas] = useState<Sala[]>([]);
@@ -504,24 +514,28 @@ const Jogar = () => {
     });
   }, [user, perfil]);
 
-  // ── CARREGAR SALAS (SEM JOIN PESADO) ──────────────
+  // ── CARREGAR SALAS (CONTRATO ENXUTO DO CARD) ──────
+  // Sempre revalida: se já existe cache, pinta na hora e busca por trás
+  // (voltar da sala mostra a lista atualizada em <1s). O endpoint `view=card`
+  // custa 3 queries fixas, então dá para chamar no polling de 15s.
   const carregarSalasLista = useCallback(async (forcar = false) => {
-    // ⚡ Cache: usa dados em memória se ainda dentro do TTL (30s).
-    if (!forcar && _salasCache && Date.now() - _salasCache.ts < _SALAS_CACHE_TTL) {
+    if (salasEmVooRef.current) return;
+
+    // Cache só como placeholder — nunca substitui a busca.
+    if (!forcar && _salasCache) {
       setSalas(_salasCache.data);
       setLoadingSalas(false);
-      return;
     }
 
-    // ✅ Busca SEM join com sala_jogadores (a API já entrega a contagem)
+    salasEmVooRef.current = true;
     try {
-      const data = await api.matches.list({ status: 'ativas', limit: 100 });
+      const data = await api.matches.listCards({ status: 'ativas', limit: 100 });
 
       // Montar objeto Sala com jogadores vazio (só contagem)
       const salasLeves = data.map(sala => ({
         ...sala,
         codigo: `#${String(sala.id).padStart(6, '0')}`,
-        jogadores: Array(sala.jogadores?.length || 0).fill({}),
+        jogadores: Array(sala.jogadores_count ?? sala.jogadores?.length ?? 0).fill({}),
         maxJogadores: sala.max_jogadores,
         criadorId: sala.criador_id,
         criadorNome: sala.criador_nome || 'Desconhecido',
@@ -537,13 +551,19 @@ const Jogar = () => {
         createdAt: new Date(sala.created_at),
       }));
 
-      setSalas(salasLeves);
+      const assinatura = _assinaturaSalas(salasLeves);
+      if (assinatura !== salasAssinaturaRef.current) {
+        salasAssinaturaRef.current = assinatura;
+        setSalas(salasLeves);
+      }
       _salasCache = { data: salasLeves, ts: Date.now() };
     } catch (error: any) {
       // Nunca engole erro: derruba silencioso mas loga para diagnóstico.
       console.error('[Jogar] falha ao listar salas:', error?.message);
+    } finally {
+      salasEmVooRef.current = false;
+      setLoadingSalas(false);
     }
-    setLoadingSalas(false);
   }, []);
 
   // ── CARREGAR SALAS FINALIZADAS (LAZY) ──────────────
@@ -584,6 +604,32 @@ const Jogar = () => {
   useEffect(() => {
     carregarSalasLista();
   }, []);
+
+  // ── POLLING LEVE DA VITRINE ────────────────────────
+  // 15s + revalidação ao voltar para a aba/janela. Pausa em aba oculta e usa o
+  // contrato view=card (3 queries fixas). Request em voo é deduplicado em
+  // carregarSalasLista; o piso de 5s evita focus + visibilitychange juntos.
+  useEffect(() => {
+    const INTERVALO_MS = 15_000;
+    let ultimaAtualizacao = 0;
+
+    const atualizar = () => {
+      if (document.visibilityState !== 'visible') return;
+      const agora = Date.now();
+      if (agora - ultimaAtualizacao < 5_000) return;
+      ultimaAtualizacao = agora;
+      carregarSalasLista(true);
+    };
+
+    const id = window.setInterval(atualizar, INTERVALO_MS);
+    document.addEventListener('visibilitychange', atualizar);
+    window.addEventListener('focus', atualizar);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', atualizar);
+      window.removeEventListener('focus', atualizar);
+    };
+  }, [carregarSalasLista]);
 
   // ── LAZY LOAD FINALIZADAS AO SCROLLAR ──────────────
   useEffect(() => {

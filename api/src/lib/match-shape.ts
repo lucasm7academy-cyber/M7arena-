@@ -148,6 +148,35 @@ export function resumoRiot(
 }
 
 /**
+ * Card da vitrine `/jogar` (GET /api/matches?view=card). Só o que o card
+ * desenha: nada de jogadores enriquecidos, senha, draft, código da partida ou
+ * resultado da Riot. A contagem de jogadores vem pronta para o polling ficar
+ * em 3 queries fixas, independente do número de salas.
+ */
+export function toLegacyMatchCard(m: any, jogadoresCount = 0, criadorNome = "Desconhecido") {
+  return {
+    id: m.salaNum,
+    match_id: m.id,
+    nome: m.nome || "Sala",
+    descricao: m.descricao || "",
+    modo: m.mode,
+    mpoints: m.entryMp || 0,
+    tem_senha: !!m.temSenha,
+    max_jogadores: m.maxJogadores ?? 10,
+    estado: m.status,
+    vencedor: winnerSideToLegacy(m.winnerSide ?? m.resultado),
+    criador_id: m.createdBy,
+    criador_nome: criadorNome || "Desconhecido",
+    time_a_nome: m.timeANome ?? null,
+    time_b_nome: m.timeBNome ?? null,
+    aposta_mc: m.apostaMc ?? 0,
+    jogadores_count: jogadoresCount,
+    created_at: m.createdAt,
+    ended_at: m.endedAt ?? null,
+  };
+}
+
+/**
  * Shape legado de `salas`. `players` são as linhas de `match_players` já
  * enriquecidas com user + isVip pelo chamador. `criadorNome` vem do dono.
  * `printsRecebidos` é opcional (contagem de `match_prints` para o estado

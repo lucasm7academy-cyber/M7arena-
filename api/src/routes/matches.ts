@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { timingSafeEqual } from "crypto";
-import { eq, and, gt, lt, asc, inArray, desc } from "drizzle-orm";
+import { eq, and, gt, lt, asc, inArray, desc, count } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userWallets, userRoles } from "../../../db/schema/identidade.js";
 import { teams, teamMembers } from "../../../db/schema/teams.js";
@@ -8,7 +8,7 @@ import { matches, matchPlayers, matchResults, matchCodes, salaMensagens, matchDr
 import { gameAccounts } from "../../../db/schema/games.js";
 import { matchPrints, matchDisputas, userAdvertencias } from "../../../db/schema/apostas.js";
 import { platformRevenue } from "../../../db/schema/economia.js";
-import { toLegacyMatch, resumoRiot } from "../lib/match-shape.js";
+import { toLegacyMatch, toLegacyMatchCard, resumoRiot } from "../lib/match-shape.js";
 import {
   avaliarTransicoes,
   buscarSalaPorNumero,
@@ -266,9 +266,43 @@ matchesRouter.get("/", async (req, res) => {
         .limit(limit);
     }
 
+    // ── view=card: contrato enxuto da vitrine /jogar ──────────────────────
+    // O polling de 15s precisa ser barato: 3 queries fixas (salas, contagem de
+    // jogadores e nome do criador), independente do número de salas. Sem
+    // jogadores enriquecidos, draft, código ou resultado da Riot.
+    if (String(req.query.view || "").trim() === "card") {
+      const ids = rows.map((m) => m.id);
+      const criadorIds = [...new Set(rows.map((m) => m.createdBy).filter((v): v is string => !!v))];
+      const [contagens, criadores] = await Promise.all([
+        ids.length
+          ? db
+              .select({ matchId: matchPlayers.matchId, total: count() })
+              .from(matchPlayers)
+              .where(inArray(matchPlayers.matchId, ids))
+              .groupBy(matchPlayers.matchId)
+          : Promise.resolve([] as { matchId: string; total: number }[]),
+        criadorIds.length
+          ? db
+              .select({ id: users.id, displayName: users.displayName, email: users.email })
+              .from(users)
+              .where(inArray(users.id, criadorIds))
+          : Promise.resolve([] as { id: string; displayName: string | null; email: string | null }[]),
+      ]);
+      const totalPorSala = new Map(contagens.map((c) => [c.matchId, Number(c.total)]));
+      const nomePorUsuario = new Map(
+        criadores.map((u) => [u.id, u.displayName || u.email?.split("@")[0] || "Desconhecido"]),
+      );
+      // Curto e privado: a vitrine revalida a cada 15s.
+      res.set("Cache-Control", "private, max-age=5");
+      return res.json(
+        rows.map((m) =>
+          toLegacyMatchCard(m, totalPorSala.get(m.id) ?? 0, nomePorUsuario.get(m.createdBy) || "Desconhecido"),
+        ),
+      );
+    }
+
     const results = await Promise.all(rows.map((m) => shapeSala(m, db, false)));
-    return res.json(results);
-  } catch (error: any) {
+    return res.json(results);  } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar salas" });
   }
 });

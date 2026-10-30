@@ -306,6 +306,11 @@ export interface ApiLegacySala {
   ended_at?: string | null;
   server_time?: number | null;
   jogadores: ApiLegacySalaJogador[];
+  /**
+   * Contagem de jogadores na listagem enxuta (`GET /matches?view=card`). A
+   * vitrine usa isso para desenhar as vagas sem baixar o array de jogadores.
+   */
+  jogadores_count?: number;
   // ── Salas apostadas (design v3 §5/§11) — campos aditivos do port ──
   aposta_mc?: number;
   taxa_pct?: string | number;
@@ -482,6 +487,8 @@ export interface ApiDecisaoResultado {
 
 export interface ApiMatchesSdk {
   list: (params?: { status?: string; limit?: number }) => Promise<ApiLegacySala[]>;
+  /** Listagem enxuta da vitrine (`view=card`), usada no polling do /jogar. */
+  listCards: (params?: { status?: string; limit?: number }) => Promise<ApiLegacySala[]>;
   detail: (id: number | string) => Promise<ApiLegacySala>;
   create: (data: {
     mode: string;
@@ -985,6 +992,14 @@ export const api = {
   matches: {
     list: (params: { status?: string; limit?: number } = {}) =>
       api.get<ApiLegacySala[]>(`/matches${qs({ status: params.status, limit: params.limit })}`),
+    /**
+     * Listagem enxuta da vitrine (/jogar): 3 queries fixas no servidor e sem
+     * jogadores/draft/código. Usada no polling de 15s.
+     */
+    listCards: (params: { status?: string; limit?: number } = {}) => {
+      const base = qs({ status: params.status, limit: params.limit });
+      return api.get<ApiLegacySala[]>(`/matches${base}${base ? "&" : "?"}view=card`);
+    },
     detail: (id: number | string) => api.get<ApiLegacySala>(`/matches/${id}`),
     create: (data: {
       mode: string;
