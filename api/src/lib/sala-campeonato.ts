@@ -28,9 +28,11 @@ import {
   garantirDraftSalaCampeonato,
   campeoesTravados,
   ladoPrimeiroPick,
+  ordemDoDraft,
   REGRAS_SHAPE_CAMPEONATO,
   DRAFT_TURNO_MS_CAMPEONATO,
 } from "./sala-campeonato-draft.js";
+import { restantesNoTurno } from "./draft/index.js";
 
 /** Fases "vivas" da sala (campeonato OU livre): fora delas, não é mais a ativa. */
 export const FASES_ATIVAS_CAMPEONATO = ["camp_vagas", "camp_prontos", "camp_lado", "camp_draft", "camp_jogo"];
@@ -888,6 +890,9 @@ export async function shapeSalaCampeonato(d: any, sala: any) {
         // qual lado tem o first pick (a ordem não é do azul por definição).
         campeoes_travados: await campeoesTravados(d, sala.id, dr.jogo),
         primeiro_pick: ladoPrimeiroPick(estado),
+        // Quantas ações ainda cabem neste turno (1 ou 2): o 5v5 tem turnos de
+        // pick duplo e o front marca os dois slots.
+        restantes_no_turno: restantesNoTurno(ordemDoDraft(estado), dr.currentTurn ?? 0),
       };
     }
   }

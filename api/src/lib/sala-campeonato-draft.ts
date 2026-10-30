@@ -76,6 +76,15 @@ function ladoDoPapel(papel: "F" | "L", estado: any): "blue" | "red" {
   return primeiro === "blue" ? "red" : "blue";
 }
 
+/**
+ * Ordem de turnos do campeonato JÁ resolvida em blue/red (a mesma que cria e
+ * avança o draft). Usada também para publicar quantas ações restam no turno
+ * atual — o 5v5 tem turnos de pick duplo.
+ */
+export function ordemDoDraft(estado: any): Array<{ team: "blue" | "red"; phase: "ban" | "pick" }> {
+  return TURN_TEMPLATE.map((t) => ({ team: ladoDoPapel(t.papel, estado), phase: t.phase }));
+}
+
 /** Campeões PICKADOS em jogos anteriores da série (Fearless). */
 export async function campeoesTravados(d: any, matchId: string, jogoAtual: number): Promise<string[]> {
   const rows = await d

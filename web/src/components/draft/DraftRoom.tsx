@@ -20,7 +20,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft, Ban, Check, Copy, RefreshCw, RotateCcw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { FaShieldAlt } from 'react-icons/fa';
+import { SiRiotgames } from 'react-icons/si';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
@@ -118,8 +118,8 @@ export interface AcoesTopo {
 
 // ── Slots ────────────────────────────────────────────────────────────────────
 
-function BanSlot({ champion, active, jaBaniu, champions, version }: {
-  champion: string | null; active: boolean; jaBaniu: boolean;
+function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
+  champion: string | null; preview?: Champion | null; active: boolean; jaBaniu: boolean;
   champions: Record<string, Champion>; version: string;
 }) {
   const champ = champion ? champions[champion] : null;
@@ -128,7 +128,6 @@ function BanSlot({ champion, active, jaBaniu, champions, version }: {
       <div className={`
         relative w-[6vmin] h-[6vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
         ${jaBaniu ? 'border-red-600/80 shadow-[0_0_8px_rgba(220,38,38,0.3)]' : 'border-white/15'}
-        ${active ? 'border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)] scale-110' : ''}
       `}>
         {champ ? (
           <>
@@ -138,27 +137,52 @@ function BanSlot({ champion, active, jaBaniu, champions, version }: {
               className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
             <div className="absolute inset-0 border-t-2 border-red-600/80 -rotate-45 origin-center scale-150" />
           </>
+        ) : preview ? (
+          /* PRÉVIA (campeão na mira, ainda não confirmado) — o mesmo campeão que
+             aparece na bola do lado, aqui no slot que está sendo decidido. */
+          <img src={buildChampionIconUrl(preview.id, version)} alt={preview.name}
+            className="w-full h-full object-cover grayscale opacity-45" referrerPolicy="no-referrer" />
         ) : (
           <div className={jaBaniu ? 'opacity-40' : 'opacity-15'}>
             <Ban className="w-[3.6vmin] h-[3.6vmin] text-white" />
           </div>
+        )}
+
+        {/* Turno do BAN: linha vermelha só na base + brilho subindo, pulsando devagar */}
+        {active && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-20 animate-pulse [animation-duration:2.8s]"
+          >
+            <span
+              className="absolute inset-x-0 bottom-0"
+              style={{ height: '62%', background: 'linear-gradient(to top, rgba(239,68,68,0.55), rgba(239,68,68,0.18) 45%, transparent)' }}
+            />
+            <span
+              className="absolute inset-x-0 bottom-0"
+              style={{ height: '0.22vmin', background: '#ef4444', boxShadow: '0 -0.8vmin 1.8vmin rgba(239,68,68,0.95)' }}
+            />
+          </span>
         )}
       </div>
     </div>
   );
 }
 
-function PickSlot({ champion, active, hidden, champions, version }: {
-  champion: string | null; active: boolean; hidden: boolean;
+function PickSlot({ champion, preview, active, naFila, hidden, champions, version, lado }: {
+  champion: string | null; preview?: Champion | null; active: boolean; naFila?: boolean; hidden: boolean;
   champions: Record<string, Champion>; version: string;
+  /** Lado do time dono do slot — a cor do indicador segue o lado (azul/vermelho). */
+  lado: 'blue' | 'red';
 }) {
   const champ = champion ? champions[champion] : null;
+  const rgbLado = lado === 'blue' ? '59,130,246' : '239,68,68';
+  const corLado = lado === 'blue' ? '#3b82f6' : '#ef4444';
   return (
     <div className="flex flex-col items-center gap-[0.3vmin]">
       <div className={`
         w-[11vmin] h-[11vmin] border bg-black/50 overflow-hidden shadow-inner relative group transition-all duration-300
         ${champ ? 'border-white/20' : 'border-white/10'}
-        ${active ? 'border-[#c89b3c] shadow-[0_0_12px_rgba(200,155,60,0.5)]' : ''}
       `}>
         {hidden ? (
           <div className="w-full h-full flex items-center justify-center opacity-40">
@@ -175,10 +199,42 @@ function PickSlot({ champion, active, hidden, champions, version }: {
               </span>
             </div>
           </>
+        ) : preview ? (
+          /* PRÉVIA (campeão na mira, ainda não confirmado) — igual à bola do
+             lado, agora também no slot que está sendo decidido. */
+          <img src={buildChampionIconUrl(preview.id, version)} alt={preview.name}
+            className="w-full h-full object-cover opacity-55 saturate-50" referrerPolicy="no-referrer" />
         ) : (
           <div className="w-full h-full flex items-center justify-center opacity-50 text-white/30">
-            <FaShieldAlt className="w-[6vmin] h-[6vmin]" />
+            <SiRiotgames className="w-[5vmin] h-[5vmin]" />
           </div>
+        )}
+
+        {/* Turno com DOIS picks (pick duplo do 5v5): o segundo slot do turno
+            ganha a barra na cor do lado; o pulso fica só no que está aberto. */}
+        {naFila && !active && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-10"
+            style={{ height: '0.28vmin', background: corLado, boxShadow: `0 0 1.4vmin rgba(${rgbLado},0.5)` }}
+          />
+        )}
+
+        {/* Turno do PICK: linha na cor do lado só na base + brilho neon subindo, pulsando devagar */}
+        {active && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-20 animate-pulse [animation-duration:2.8s]"
+          >
+            <span
+              className="absolute inset-x-0 bottom-0"
+              style={{ height: '62%', background: `linear-gradient(to top, rgba(${rgbLado},0.55), rgba(${rgbLado},0.18) 45%, transparent)` }}
+            />
+            <span
+              className="absolute inset-x-0 bottom-0"
+              style={{ height: '0.28vmin', background: corLado, boxShadow: `0 -1vmin 2.2vmin rgba(${rgbLado},0.95)` }}
+            />
+          </span>
         )}
       </div>
     </div>
@@ -187,12 +243,10 @@ function PickSlot({ champion, active, hidden, champions, version }: {
 
 // ── Painel do time (círculo central de cada lado) ───────────────────────────
 
-function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, preview, logoTime, textoAbaixo, feedback }: {
-  lado: 'blue' | 'red'; ladoJogo: 'blue' | 'red'; emTurno: boolean;
-  selected: Champion | null; meuTime: 'blue' | 'red' | null; jogadorNome: string;
-  /** Prévia recebida de outro jogador deste lado (escolha ainda não confirmada). */
-  preview?: Champion | null;
-  /** Logo do time do lado — vira fundo da bola quando ela está vazia. */
+function TeamPanel({ ladoJogo, emTurno, jogadorNome, logoTime, textoAbaixo, feedback }: {
+  ladoJogo: 'blue' | 'red'; emTurno: boolean;
+  jogadorNome: string;
+  /** Logo do time do lado — fundo da bola. Apagada; ACESA na cor do time na vez. */
   logoTime?: string | null;
   /** Texto no lugar do nome do campeão enquanto o time não escolheu (ex.: "Banindo..."). */
   textoAbaixo?: string | null;
@@ -203,11 +257,6 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
   const corLado = ladoJogo === 'blue' ? '#3B82F6' : '#ef4444';
   const corLadoClaro = ladoJogo === 'blue' ? '#60A5FA' : '#f87171';
   const corLadoRgb = ladoJogo === 'blue' ? '59,130,246' : '239,68,68';
-  const estaSelecionando = selected && emTurno && meuTime === lado;
-  // O que aparece DENTRO da bola: minha própria seleção (normal) ou a prévia
-  // recebida de outro jogador da sala (mostra em que campeão ele está pensando).
-  const propria = !!estaSelecionando;
-  const champNaBola: Champion | null = propria ? (selected as Champion) : preview ?? null;
   return (
     <div className="w-[25vmin] flex flex-col items-center gap-[1.5vmin] pointer-events-auto">
       <div className="text-center w-full truncate px-[1vmin]">
@@ -231,13 +280,13 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
           className={`relative w-[32vmin] h-[32vmin] rounded-full border-[0.8vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? '' : 'border-white/10'}`}
           style={emTurno ? { borderColor: corLado } : undefined}
         >
-          {/* Fundo com a LOGO DO TIME quando a bola está VAZIA (sem campeão e
-              sem prévia) — vale no "Aguardando" e no "Banir/Escolher". */}
-          {!champNaBola && logoTime ? (
+          {/* LOGO DO TIME no fundo da bola. Apagada no normal; ACESA (cor cheia)
+              quando é a vez deste lado banir/escolher. */}
+          {logoTime ? (
             <img
               src={logoTime}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+              className={`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${emTurno ? 'opacity-100' : 'opacity-25'}`}
               referrerPolicy="no-referrer"
             />
           ) : null}
@@ -246,14 +295,9 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
               usuário 2026-10-17: quando não é a vez, a borda não acende, então
               a bola fica só com a logo do time de fundo, sem texto.) */}
 
-          {champNaBola ? (
-            <img
-              src={buildChampionIconUrl(champNaBola.id)}
-              alt={champNaBola.name}
-              className={`w-full h-full object-cover scale-125 relative z-10 ${propria ? '' : 'opacity-80'}`}
-              referrerPolicy="no-referrer"
-            />
-          ) : null}
+          {/* (A prévia/seleção do campeão saiu da bola — pedido do usuário
+              2026-10-24: o campeão na mira aparece nos slots de ban/pick, e a
+              bola fica só com a logo do time.) */}
 
           {/* (O tint azul/vermelho por dentro da bola na vez saiu — pedido do
               usuário 2026-10-17: "fica feio demais esse azul/vermelho mais
@@ -261,12 +305,10 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
               centro é a logo do time de fundo, igual aos demais estados.) */}
 
           {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
-              campeão fica NA BOLA do lado que agiu e some sozinho (~2s).
-              LISO, mas COM o zoom: o campeão já estava na bola pelo preview
-              (mesmo tamanho, sem piscada/salto) e dá o punch — cresce e
-              assenta de volta; depois só SAI com fade. Ban = a imagem desbota
-              de cor para preto e branco no próprio lugar, sem pular (filtro
-              animado). (Pedidos do usuário 2026-10-17.) */}
+              campeão pisca NA BOLA do lado que agiu e some sozinho (~2s).
+              Cresce e assenta de volta; depois SAI com fade. Ban = a imagem
+              desbota de cor para preto e branco no próprio lugar. A bola em si
+              fica só com a logo do time (pedido do usuário 2026-10-24). */}
           <AnimatePresence>
             {feedback ? (
               <motion.div
@@ -299,10 +341,10 @@ function TeamPanel({ lado, ladoJogo, emTurno, selected, meuTime, jogadorNome, pr
 
       <div className="text-center min-h-[3.5vmin]">
         <h2
-          className={`text-[2.5vmin] font-bold tracking-tighter mb-[0.5vmin] ${champNaBola ? 'text-white uppercase' : ''}`}
-          style={!champNaBola && emTurno && textoAbaixo ? { color: corLado } : undefined}
+          className="text-[2.5vmin] font-bold tracking-tighter mb-[0.5vmin]"
+          style={emTurno && textoAbaixo ? { color: corLado } : undefined}
         >
-          {champNaBola ? champNaBola.name : emTurno ? textoAbaixo ?? '' : ''}
+          {emTurno ? textoAbaixo ?? '' : ''}
         </h2>
       </div>
     </div>
@@ -466,6 +508,14 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   };
   const previewBlue = champDoPreview('blue');
   const previewRed = champDoPreview('red');
+
+  // Prévia que vai para o SLOT do time (além da bola): a minha própria escolha
+  // ainda não confirmada ou a que o outro jogador do lado mandou. `ehA` fala em
+  // espaço de TIME (blue = time A), igual aos arrays do draft.
+  const previewDoTime = (ehA: boolean): Champion | null => {
+    if (meuTime === (ehA ? 'blue' : 'red') && selectedChamp) return selectedChamp;
+    return ehA ? previewBlue : previewRed;
+  };
 
   // Esconde os picks do time ADVERSÁRIO enquanto o draft está em andamento —
   // ligado só nos modos cujo registry marca `esconder_picks_adversario` (nada
@@ -641,6 +691,15 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     const ehA = equipe === 'A';
     const lado = ehA ? ladoEquipeA : ladoEquipeB;
     const picks = ehA ? draft.blue_picks : draft.red_picks;
+    // Prévia vai só para o slot da vez (o próximo vazio do lado que está agindo).
+    const previa = emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick'
+      ? previewDoTime(ehA)
+      : null;
+    // Turnos de PICK DUPLO: além do slot aberto, os próximos do MESMO turno
+    // ganham a barra na cor do lado (sem pulso) — mostra que vêm dois picks.
+    const restantes = emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick'
+      ? Math.max(1, draft.restantes_no_turno ?? 1)
+      : 1;
     return (
       <div className={`flex flex-col gap-[1vmin] ${direita ? 'items-end' : ''}`}>
         <span
@@ -655,10 +714,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             <PickSlot
               key={`${equipe}-${i}`}
               champion={picks[i] ?? null}
-              active={emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick'}
+              preview={i === picks.length ? previa : null}
+              active={emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick' && i === picks.length}
+              naFila={i > picks.length && i < picks.length + restantes}
               hidden={esconderPickAdversario(ehA ? 'blue' : 'red', picks[i] ?? null)}
               champions={champions}
               version={version}
+              lado={lado}
             />
           ))}
         </div>
@@ -936,13 +998,17 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             const ehA = equipe === 'A';
             const dataSide = ehA ? 'blue' : 'red';
             const bans = ehA ? draft.blue_bans : draft.red_bans;
+            const previaBan = emTurno && draft.current_team === dataSide && fase === 'ban'
+              ? previewDoTime(ehA)
+              : null;
             return (
               <div key={equipe} className="flex flex-col gap-[0.5vmin] items-start">
                 <span className="text-[1vmin] font-bold text-white/20 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
                 <div className="flex flex-row gap-[1vmin]">
                   {[...Array(maxBans)].map((_, i) => (
                     <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
-                      active={emTurno && draft.current_team === dataSide && fase === 'ban'}
+                      preview={i === bans.length ? previaBan : null}
+                      active={emTurno && draft.current_team === dataSide && fase === 'ban' && i === bans.length}
                       jaBaniu={i < bans.length} champions={champions} version={version} />
                   ))}
                 </div>
@@ -963,12 +1029,10 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           const ehA = equipe === 'A';
           const dataSide = ehA ? 'blue' : 'red';
           return (
-            <TeamPanel key={equipe} lado={dataSide}
+            <TeamPanel key={equipe}
               ladoJogo={ehA ? ladoEquipeA : ladoEquipeB}
               emTurno={emTurno && draft.current_team === dataSide}
-              selected={selectedChamp} meuTime={meuTime}
               jogadorNome={ehA ? labelEquipeA : labelEquipeB}
-              preview={ehA ? previewBlue : previewRed}
               logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)}
               textoAbaixo={fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
               feedback={feedback && feedback.lado === dataSide ? feedback : null} />
@@ -1095,36 +1159,57 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       <div className="absolute bottom-[2vmin] left-0 right-0 flex items-end justify-between px-[4vmin] z-50">
         {colunaPicks(equipeEsquerda, false)}
 
-        {!aoVivoAtivo && possoJogar && (
-        <div className="mb-[2vmin] relative">
-          <button
-            disabled={!selectedChamp || !isMeuTurno || enviando}
-            onMouseEnter={() => {
-              if (selectedChamp && isMeuTurno && !enviando) tocarSom('lockInHover');
-            }}
-            onClick={confirmarAcao}
-            className={`
-              relative px-[12vmin] py-[2.5vmin] font-bold text-[2.2vmin] tracking-[0.15em] uppercase transition-all duration-300 group
-              ${selectedChamp && isMeuTurno && !enviando
-                ? 'text-[#f0e6d2] hover:text-white cursor-pointer'
-                : 'text-white/20 cursor-not-allowed'}
-            `}
-          >
-            <div className="absolute inset-0 z-0">
-              <svg viewBox="0 0 300 80" preserveAspectRatio="none" className="w-full h-full drop-shadow-[0_0_15px_rgba(200,155,60,0.1)]">
-                <path d="M40,5 L260,5 L295,60 Q150,85 5,60 Z" fill="none"
-                  stroke={selectedChamp && isMeuTurno && !enviando ? '#c89b3c' : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
-                <path d="M42,7 L258,7 L292,59 Q150,83 8,59 Z"
-                  fill={selectedChamp && isMeuTurno && !enviando ? '#1e2328' : '#0a0a0a'}
-                  className="transition-colors duration-300 group-hover:fill-[#252a30]" />
-              </svg>
+        {!aoVivoAtivo && possoJogar && (() => {
+          // Cor do "aguardando você escolher": ban = vermelho; pick = cor do
+          // MEU lado como aparece na tela (azul/vermelho). Ação dos outros =
+          // botão apagado, como sempre.
+          const meuLadoVisual = meuTime === 'blue' ? ladoEquipeA : meuTime === 'red' ? ladoEquipeB : null;
+          const aguardando = isMeuTurno && !selectedChamp && !enviando;
+          const pronto = !!selectedChamp && isMeuTurno && !enviando;
+          // Só a BORDA muda de cor (texto e fundo seguem o padrão do botão).
+          const corVez = fase === 'ban' || meuLadoVisual !== 'blue'
+            ? { linha: '#ef4444', brilho: 'rgba(239,68,68,0.6)' }
+            : { linha: '#3b82f6', brilho: 'rgba(59,130,246,0.6)' };
+          return (
+            <div className="mb-[2vmin] relative">
+              <button
+                disabled={!selectedChamp || !isMeuTurno || enviando}
+                onMouseEnter={() => {
+                  if (selectedChamp && isMeuTurno && !enviando) tocarSom('lockInHover');
+                }}
+                onClick={confirmarAcao}
+                className={`
+                  relative px-[12vmin] py-[2.5vmin] font-bold text-[2.2vmin] tracking-[0.15em] uppercase transition-all duration-300 group
+                  ${pronto ? 'text-[#f0e6d2] hover:text-white cursor-pointer' : 'text-white/20 cursor-not-allowed'}
+                `}
+              >
+                <div className={`absolute inset-0 z-0 ${aguardando ? 'animate-pulse [animation-duration:2.8s]' : ''}`}>
+                  <svg
+                    viewBox="0 0 300 80"
+                    preserveAspectRatio="none"
+                    className="w-full h-full"
+                    style={{
+                      filter: pronto
+                        ? 'drop-shadow(0 0 15px rgba(200,155,60,0.35))'
+                        : aguardando
+                          ? `drop-shadow(0 0 16px ${corVez.brilho})`
+                          : 'drop-shadow(0 0 15px rgba(200,155,60,0.1))',
+                    }}
+                  >
+                    <path d="M40,5 L260,5 L295,60 Q150,85 5,60 Z" fill="none"
+                      stroke={pronto ? '#c89b3c' : aguardando ? corVez.linha : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
+                    <path d="M42,7 L258,7 L292,59 Q150,83 8,59 Z"
+                      fill={pronto ? '#1e2328' : '#0a0a0a'}
+                      className="transition-colors duration-300 group-hover:fill-[#252a30]" />
+                  </svg>
+                </div>
+                <span className="relative z-10 drop-shadow-md">
+                  {enviando ? '...' : fase === 'ban' ? 'BANIR' : 'CONFIRMAR'}
+                </span>
+              </button>
             </div>
-            <span className="relative z-10 drop-shadow-md">
-              {enviando ? '...' : fase === 'ban' ? 'BANIR' : 'CONFIRMAR'}
-            </span>
-          </button>
-        </div>
-        )}
+          );
+        })()}
 
         {/* CÓDIGO DA PARTIDA (tela ao vivo): no lugar do botão de confirmar —
             MESMO painel da sala ("Prepare-se para a batalha" + "Copiar

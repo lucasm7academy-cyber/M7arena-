@@ -39,6 +39,30 @@ export function getTurnOrder(mode: string): TurnInfo[] {
   return getDraftRules(mode).turnOrder;
 }
 
+/**
+ * Quantas ações ainda pertencem ao turno ATUAL (contando a que está aberta).
+ * Em draft de LoL o mesmo time escolhe dois campeões seguidos em alguns
+ * turnos — o front usa isso para marcar os dois slots de pick.
+ * `ordem` já vem resolvida em blue/red (no campeonato o lado depende do
+ * first pick, não do modo).
+ */
+export function restantesNoTurno(
+  ordem: Array<{ team: string; phase: string }>,
+  turnoAtual: number
+): number {
+  const atual = ordem[turnoAtual];
+  if (!atual) return 1;
+  let fim = turnoAtual;
+  while (
+    fim + 1 < ordem.length &&
+    ordem[fim + 1].team === atual.team &&
+    ordem[fim + 1].phase === atual.phase
+  ) {
+    fim++;
+  }
+  return fim - turnoAtual + 1;
+}
+
 /** Subconjunto de APRESENTAÇÃO publicado no shape da sala (snake_case legado). */
 export function regrasDraftParaShape(mode: string) {
   const r = getDraftRules(mode);
