@@ -135,7 +135,19 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
                 espectador confundia com pick (pedido do usuário 18/10). */}
             <img src={buildChampionIconUrl(champ.id, version)} alt={champ.name}
               className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 border-t-2 border-red-600/80 -rotate-45 origin-center scale-150" />
+
+            {/* Linha vermelha fina na diagonal: deixa explícito que o campeão
+                está banido, sem voltar a colorir o ícone. */}
+            <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center overflow-hidden">
+              <span className="block h-[1.5px] w-[150%] -rotate-45 bg-[#ef4444] shadow-[0_0_5px_rgba(239,68,68,0.9)]" />
+            </div>
+
+            {/* Nome do campeão no rodapé do slot, no mesmo padrão dos picks. */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex h-[1.8vmin] items-end justify-center bg-gradient-to-t from-black/95 to-transparent pb-[0.15vmin]">
+              <span className="max-w-full truncate px-[0.15vmin] text-[0.9vmin] font-bold uppercase tracking-wider text-[#f0e6d2] drop-shadow-md">
+                {champ.name}
+              </span>
+            </div>
           </>
         ) : preview ? (
           /* PRÉVIA (campeão na mira, ainda não confirmado) — o mesmo campeão que
