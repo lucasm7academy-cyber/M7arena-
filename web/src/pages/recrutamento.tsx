@@ -223,12 +223,12 @@ function RecruitmentCard({ post, myUserId, onEdit, onDelete, onClick }: CardProp
 
           {/* Descrição */}
           <div className="p-[1px] bg-primary/25" style={{ clipPath: CUT_BADGE }}>
-            <p
-              className="text-xs text-white/70 line-clamp-3 font-medium leading-relaxed px-3 py-2.5 bg-[#0e0f14] border-l-2 border-primary italic"
-              style={{ clipPath: CUT_BADGE_INNER }}
-            >
-              "{post.descricao}"
-            </p>
+            <div className="relative bg-[#0e0f14]" style={{ clipPath: CUT_BADGE_INNER }}>
+              <span className="absolute left-0 top-0 h-full w-[2px] bg-primary" aria-hidden="true" />
+              <p className="text-xs text-white/70 line-clamp-3 font-medium leading-relaxed px-3 py-2.5 italic">
+                "{post.descricao}"
+              </p>
+            </div>
           </div>
 
           {/* WhatsApp Button */}

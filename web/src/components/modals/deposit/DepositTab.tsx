@@ -8,6 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import GoldEssenceIcon from '../../icons/GoldEssenceIcon';
 import { CUT_BUTTON, CUT_BUTTON_INNER, CUT_BADGE, CUT_BADGE_INNER } from '../../partidas/ModaisElegibilidade';
+import { cutPolygon } from '../../ui/CutCard';
 
 interface PackageOption {
   id: string;
@@ -318,23 +319,30 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
             <>
               <div className="flex flex-col items-center">
                 <div
-                  className="mb-4 bg-[#141208] border border-[#FFB700]/30 px-5 py-2 inline-flex items-baseline gap-1.5"
-                  style={{ clipPath: CUT_BADGE_INNER }}
+                  className="mb-4 p-[1px] bg-[#FFB700]/30"
+                  style={{ clipPath: CUT_BADGE }}
                 >
-                  <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Pagando</span>
-                  <span className="text-2xl font-black text-[#FFB700]">
-                    R$ {selectedPackage?.priceInReais.toFixed(2).replace('.', ',')}
-                  </span>
+                  <div
+                    className="bg-[#141208] px-5 py-2 inline-flex items-baseline gap-1.5"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Pagando</span>
+                    <span className="text-2xl font-black text-[#FFB700]">
+                      R$ {selectedPackage?.priceInReais.toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
                 </div>
                 <div
-                  className="p-3 bg-white border-2 border-[#FFB700] shadow-xl"
-                  style={{ clipPath: CUT_BUTTON_INNER }}
+                  className="p-[2px] bg-[#FFB700] shadow-xl"
+                  style={{ clipPath: CUT_BUTTON }}
                 >
-                  <img
-                    src={`data:image/png;base64,${paymentData.qrCode}`}
-                    alt="QR Code PIX"
-                    className="w-48 h-48 bg-white"
-                  />
+                  <div className="p-3 bg-white" style={{ clipPath: cutPolygon(9, 2) }}>
+                    <img
+                      src={`data:image/png;base64,${paymentData.qrCode}`}
+                      alt="QR Code PIX"
+                      className="w-48 h-48 bg-white"
+                    />
+                  </div>
                 </div>
                 <div className="mt-3">
                   <h3
@@ -359,17 +367,19 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                     style={{ clipPath: CUT_BUTTON_INNER }}
                   >
                     <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-black mb-2">Código PIX (Copia e Cola)</p>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(paymentData.brCode);
-                        toast.success('Código PIX copiado!');
-                      }}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-white/10 text-zinc-200 text-xs font-bold transition-all border border-white/10"
-                      style={{ clipPath: CUT_BADGE }}
-                    >
-                      <Copy size={14} />
-                      Copiar Código PIX
-                    </button>
+                    <div className="p-[1px] bg-white/10" style={{ clipPath: CUT_BADGE }}>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(paymentData.brCode);
+                          toast.success('Código PIX copiado!');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#0f0f14] hover:bg-[#16161d] text-zinc-200 text-xs font-bold transition-all cursor-pointer"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Copy size={14} />
+                        Copiar Código PIX
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

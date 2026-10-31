@@ -320,10 +320,15 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
                             className="p-3.5 flex items-start gap-3"
                           >
                             <div
-                              className="w-9 h-9 bg-[#16161f] border border-[#FFB700]/30 flex items-center justify-center shrink-0 text-[#FFB700]"
+                              className="p-[1px] bg-[#FFB700]/30 shrink-0"
                               style={{ clipPath: CUT_BADGE }}
                             >
-                              <Icon className="w-4 h-4 text-[#FFB700]" strokeWidth={2.5} />
+                              <div
+                                className="w-9 h-9 bg-[#16161f] flex items-center justify-center text-[#FFB700]"
+                                style={{ clipPath: CUT_BADGE_INNER }}
+                              >
+                                <Icon className="w-4 h-4 text-[#FFB700]" strokeWidth={2.5} />
+                              </div>
                             </div>
                             <div className="min-w-0 flex-1">
                               <h4 className="text-zinc-100 font-black text-xs uppercase tracking-wide mb-0.5">
@@ -537,10 +542,15 @@ export default function VipModal({ isOpen, onClose }: VipModalProps) {
 
                   <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.25} className="p-3.5 max-w-lg mx-auto mb-4 flex items-center gap-3 text-left">
                     <div
-                      className="w-8 h-8 bg-[#16161f] border border-[#FFB700]/30 flex items-center justify-center shrink-0 text-[#FFB700]"
+                      className="p-[1px] bg-[#FFB700]/30 shrink-0"
                       style={{ clipPath: CUT_BADGE }}
                     >
-                      <Clock className="w-4 h-4 animate-pulse" />
+                      <div
+                        className="w-8 h-8 bg-[#16161f] flex items-center justify-center text-[#FFB700]"
+                        style={{ clipPath: CUT_BADGE_INNER }}
+                      >
+                        <Clock className="w-4 h-4 animate-pulse" />
+                      </div>
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-zinc-200 font-bold text-xs">Aguardando confirmação do PIX</p>

@@ -13,7 +13,7 @@ import { sincronizarContaRiot } from '../api/player';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { VipLabel } from '../components/ui/VipBadge';
-import { CutCard, CUT_OUTER, CUT_INNER } from '../components/ui/CutCard';
+import { CutCard, CUT_OUTER, CUT_INNER, cutPolygon } from '../components/ui/CutCard';
 import { CarteiraEStrikes } from '../components/perfil/CarteiraEStrikes';
 import { HistoricoApostas } from '../components/perfil/HistoricoApostas';
 import {
@@ -79,18 +79,22 @@ function EloBlock({ elo, label }: any) {
                 {elo.tier} <span className="text-primary">{elo.rank}</span>
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <span
-                  className="px-2.5 py-1 text-[10px] font-black text-zinc-300 uppercase tracking-widest bg-white/5 border border-white/10"
-                  style={{ clipPath: CUT_BADGE }}
-                >
-                  {elo.lp} PDL
-                </span>
-                <span
-                  className="px-2.5 py-1 text-[10px] font-black text-zinc-300 uppercase tracking-widest bg-white/5 border border-white/10"
-                  style={{ clipPath: CUT_BADGE }}
-                >
-                  {total} Partidas
-                </span>
+                <div className="p-[1px] bg-white/10" style={{ clipPath: CUT_BADGE }}>
+                  <span
+                    className="block px-2.5 py-1 text-[10px] font-black text-zinc-300 uppercase tracking-widest bg-[#161616]"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    {elo.lp} PDL
+                  </span>
+                </div>
+                <div className="p-[1px] bg-white/10" style={{ clipPath: CUT_BADGE }}>
+                  <span
+                    className="block px-2.5 py-1 text-[10px] font-black text-zinc-300 uppercase tracking-widest bg-[#161616]"
+                    style={{ clipPath: CUT_BADGE_INNER }}
+                  >
+                    {total} Partidas
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -102,12 +106,14 @@ function EloBlock({ elo, label }: any) {
           </div>
           <div className="space-y-6">
             <div
-              className="relative h-10 overflow-hidden bg-black/60 border border-white/10"
-              style={{ clipPath: CUT_BUTTON }}
+              className="relative h-10 p-[1px]"
+              style={{ clipPath: CUT_BUTTON, background: 'rgba(255,255,255,0.10)' }}
             >
-              <motion.div initial={{ width: 0 }} animate={{ width: `${wr}%` }} transition={{ duration: 1, ease: 'circOut' }} className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-600 to-blue-400" />
-              <motion.div initial={{ width: 0 }} animate={{ width: `${100 - wr}%` }} transition={{ duration: 1, ease: 'circOut', delay: 0.1 }} className="absolute right-0 top-0 h-full bg-gradient-to-l from-[#ff0033] to-[#ff4d4d]" />
-              <div className="absolute inset-0 flex items-center justify-between px-6 z-10"><span className="text-white text-xs font-black">{elo.wins}V</span><span className="text-white text-xs font-black">{elo.losses}D</span></div>
+              <div className="relative h-full overflow-hidden bg-black" style={{ clipPath: CUT_BUTTON_INNER }}>
+                <motion.div initial={{ width: 0 }} animate={{ width: `${wr}%` }} transition={{ duration: 1, ease: 'circOut' }} className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-600 to-blue-400" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${100 - wr}%` }} transition={{ duration: 1, ease: 'circOut', delay: 0.1 }} className="absolute right-0 top-0 h-full bg-gradient-to-l from-[#ff0033] to-[#ff4d4d]" />
+                <div className="absolute inset-0 flex items-center justify-between px-6 z-10"><span className="text-white text-xs font-black">{elo.wins}V</span><span className="text-white text-xs font-black">{elo.losses}D</span></div>
+              </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -165,17 +171,21 @@ function PerformanceSection({ stats, ddrVer }: any) {
                     <div className="flex items-center gap-4">
                       <div className="relative flex-shrink-0">
                         <div
-                          className="relative w-16 h-16 overflow-hidden border border-white/10 bg-black/40"
+                          className="relative w-16 h-16 p-[1px] bg-white/10"
                           style={{ clipPath: CUT_BADGE }}
                         >
-                          <img src={`https://ddragon.leagueoflegends.com/cdn/${ddrVer}/img/champion/${champ.championName}.png`} loading="lazy" 
-                            alt={champ.championName} className="w-full h-full object-cover" />
+                          <div className="w-full h-full overflow-hidden bg-black/40" style={{ clipPath: CUT_BADGE_INNER }}>
+                            <img src={`https://ddragon.leagueoflegends.com/cdn/${ddrVer}/img/champion/${champ.championName}.png`} loading="lazy" 
+                              alt={champ.championName} className="w-full h-full object-cover" />
+                          </div>
                         </div>
                         <div
-                          className="absolute -top-2 -left-2 w-6 h-6 bg-black border border-white/10 flex items-center justify-center"
+                          className="absolute -top-2 -left-2 w-6 h-6 p-[1px] bg-white/10"
                           style={{ clipPath: CUT_BADGE }}
                         >
-                          <span className="text-primary text-[10px] font-black">{i + 1}</span>
+                          <div className="w-full h-full bg-black flex items-center justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                            <span className="text-primary text-[10px] font-black">{i + 1}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex-1">
@@ -529,11 +539,16 @@ export default function Perfil() {
                     {perfilContext?.riotId && (
                       <button
                         onClick={handleSyncRiot}
-                        className="flex items-center justify-center w-6 h-6 border border-white/10 hover:border-primary/40 bg-white/5 hover:bg-primary/10 transition-all cursor-pointer"
+                        className="group/sync flex items-center justify-center w-6 h-6 p-[1px] bg-white/15 hover:bg-primary/60 transition-all cursor-pointer"
                         style={{ clipPath: CUT_BADGE }}
                         title="Sincronizar conta Riot"
                       >
-                        <RefreshCw className={`w-3 h-3 text-zinc-400 hover:text-primary transition-colors ${sincronizando ? 'animate-spin text-primary' : ''}`} />
+                        <span
+                          className="w-full h-full flex items-center justify-center bg-[#0d0d10] group-hover/sync:bg-[#151005] transition-colors"
+                          style={{ clipPath: CUT_BADGE_INNER }}
+                        >
+                          <RefreshCw className={`w-3 h-3 text-zinc-400 hover:text-primary transition-colors ${sincronizando ? 'animate-spin text-primary' : ''}`} />
+                        </span>
                       </button>
                     )}
                   </div>
@@ -649,20 +664,24 @@ export default function Perfil() {
               >
                 {/* Logo */}
                 <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-                  <div className="shrink-0">
+                  <div
+                    className="shrink-0"
+                    style={{ filter: `drop-shadow(0 8px 18px ${equipe.gradient_from || '#FFB700'}55)` }}
+                  >
                     <div
-                      className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center relative overflow-hidden bg-black"
-                      style={{
-                        clipPath: CUT_BUTTON,
-                        border: `2px solid ${equipe.gradient_from || '#FFB700'}`,
-                        boxShadow: `0 8px 24px -6px ${equipe.gradient_from || '#FFB700'}60`
-                      }}
+                      className="w-16 h-16 sm:w-20 sm:h-20 p-[2px]"
+                      style={{ clipPath: CUT_BUTTON, background: equipe.gradient_from || '#FFB700' }}
                     >
-                      {equipe.logo_url ? (
-                        <img src={equipe.logo_url} loading="lazy" alt={equipe.nome} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-black text-base sm:text-lg tracking-widest" style={{ color: equipe.gradient_from || '#FFB700' }}>{equipe.tag}</span>
-                      )}
+                      <div
+                        className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black"
+                        style={{ clipPath: cutPolygon(9, 2) }}
+                      >
+                        {equipe.logo_url ? (
+                          <img src={equipe.logo_url} loading="lazy" alt={equipe.nome} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-black text-base sm:text-lg tracking-widest" style={{ color: equipe.gradient_from || '#FFB700' }}>{equipe.tag}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -671,17 +690,21 @@ export default function Perfil() {
                     <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
                       <h3 className="text-white font-black text-lg sm:text-xl tracking-tight truncate uppercase">{equipe.nome}</h3>
                       {equipe.tag && (
-                        <span
-                          className="text-[10px] font-black px-2 py-0.5 shrink-0"
-                          style={{
-                            clipPath: CUT_BADGE,
-                            color: equipe.gradient_from || '#FFB700',
-                            background: `${equipe.gradient_from || '#FFB700'}18`,
-                            border: `1px solid ${equipe.gradient_from || '#FFB700'}40`
-                          }}
+                        <div
+                          className="p-[1px] shrink-0"
+                          style={{ clipPath: CUT_BADGE, background: `${equipe.gradient_from || '#FFB700'}55` }}
                         >
-                          #{equipe.tag}
-                        </span>
+                          <span
+                            className="block text-[10px] font-black px-2 py-0.5"
+                            style={{
+                              clipPath: CUT_BADGE_INNER,
+                              color: equipe.gradient_from || '#FFB700',
+                              background: `linear-gradient(${equipe.gradient_from || '#FFB700'}18, ${equipe.gradient_from || '#FFB700'}18), #0b0b0d`
+                            }}
+                          >
+                            #{equipe.tag}
+                          </span>
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-4 sm:gap-6">
@@ -778,10 +801,15 @@ export default function Perfil() {
                     <span className="text-zinc-200 text-sm truncate font-mono">{user?.email}</span>
                   </div>
                   <div
-                    className="px-2.5 py-1 bg-green-500/10 border border-green-500/20 text-[9px] font-black text-green-400 self-start sm:self-auto shrink-0 uppercase tracking-wider"
+                    className="p-[1px] bg-green-500/30 self-start sm:self-auto shrink-0"
                     style={{ clipPath: CUT_BADGE }}
                   >
-                    Verificado
+                    <div
+                      className="px-2.5 py-1 bg-[#0c1c14] text-[9px] font-black text-green-400 uppercase tracking-wider"
+                      style={{ clipPath: CUT_BADGE_INNER }}
+                    >
+                      Verificado
+                    </div>
                   </div>
                 </div>
               </div>

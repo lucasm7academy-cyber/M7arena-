@@ -279,7 +279,42 @@ export default function SalaCampeonato() {
 
   const compartilhar = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const link = window.location.href;
+
+      // Sala de SCRIM (Time vs Time livre): o link é um CONVITE de quem está
+      // compartilhando, não um anúncio de confronto. O adversário pode nem
+      // estar na sala ainda, e o time convidado não conhece a plataforma.
+      if (sala?.modo === 'time_vs_time_livre') {
+        const formato = String(camp?.formato ?? 'md3').toUpperCase();
+        const rotuloFormato = formato === 'MD1' ? 'MD1' : `${formato} FEARLESS`;
+
+        // Quem convida: o time do sharer se ele já ocupou a vaga; senão o nick
+        // dele. O nome do outro time NUNCA entra — o convite é para ele entrar.
+        const meuAssento = (sala?.jogadores ?? []).find(
+          (j: any) => String(j.user_id) === String(perfil?.id)
+        );
+        const meuTime =
+          meuAssento?.is_time_a === true
+            ? sala?.time_a_nome
+            : meuAssento?.is_time_a === false
+              ? sala?.time_b_nome
+              : null;
+        const convidante = meuTime || perfil?.riotId || perfil?.nome || 'Jogador';
+
+        const mensagem = [
+          `⚔️ ${convidante} te convida para jogar uma SCRIM ${rotuloFormato}`,
+          `Sala na M7 (draft completo e lado sorteado): ${link}`,
+          'Entra, marca PRONTO e o draft abre.',
+        ].join('\n');
+
+        await navigator.clipboard.writeText(mensagem);
+        setCompartilhado(true);
+        toast.success('Convite do scrim copiado!');
+        setTimeout(() => setCompartilhado(false), 2500);
+        return;
+      }
+
+      await navigator.clipboard.writeText(link);
       setCompartilhado(true);
       toast.success('Link da sala copiado!');
       setTimeout(() => setCompartilhado(false), 2500);
@@ -416,10 +451,12 @@ export default function SalaCampeonato() {
           <p className="text-white/70">{erro}</p>
           <button
             onClick={() => navigate('/jogar')}
-            className="px-4 py-2 bg-white/10 border border-white/15 text-xs font-black uppercase tracking-wider cursor-pointer"
+            className="p-[1px] bg-white/15 text-xs font-black uppercase tracking-wider cursor-pointer"
             style={{ clipPath: CUT_BUTTON }}
           >
-            Voltar
+            <span className="block px-4 py-2 bg-[#121216] hover:bg-[#1a1a20] transition-colors" style={{ clipPath: CUT_BUTTON_INNER }}>
+              Voltar
+            </span>
           </button>
         </div>
       </div>
@@ -1086,9 +1123,13 @@ export default function SalaCampeonato() {
       <motion.div
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-20 w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
+        className="relative z-20 w-full p-[1px] bg-white/[0.08] shadow-2xl"
         style={{ clipPath: CUT_FRAME }}
       >
+        <div
+          className="w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl flex-wrap md:flex-nowrap"
+          style={{ clipPath: CUT_INNER }}
+        >
         <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -1117,7 +1158,9 @@ export default function SalaCampeonato() {
             </div>
             <div className="flex flex-col">
               <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-                {sala.nome || (serie ? `${sala.time_a_tag} x ${sala.time_b_tag}` : 'Time vs Time')}
+                {sala.modo === 'time_vs_time_livre' && sala.nome === 'Time vs Time'
+                  ? 'Scrim'
+                  : sala.nome || (serie ? `${sala.time_a_tag} x ${sala.time_b_tag}` : 'Scrim')}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <div className="p-[1px] bg-[#FFB700]/30" style={{ clipPath: CUT_BADGE }}>
@@ -1176,7 +1219,7 @@ export default function SalaCampeonato() {
                 Modo
               </span>
               <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none text-[#FFB700]">
-                {serie ? 'CAMPEONATO' : 'TIME VS TIME'}
+                {serie ? 'CAMPEONATO' : 'SCRIM'}
               </span>
             </div>
           </div>
@@ -1363,6 +1406,7 @@ export default function SalaCampeonato() {
                 </motion.button>
               )}
           </div>
+        </div>
         </div>
       </motion.div>
 
