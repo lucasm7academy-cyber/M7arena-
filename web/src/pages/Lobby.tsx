@@ -879,18 +879,17 @@ const Home = () => {
             className="relative w-full h-full bg-black overflow-hidden"
             style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}
           >
-          {/* Background Image/Art Placeholder */}
+          {/* Hero: campanha do Halloween 2026 (pedido do usuário 31/10).
+              A arte antiga do Lucian segue salva em
+              /images/animated-highnoon-lucian.webm — para voltar, é só
+              restaurar o bloco <video> abaixo do <img>. */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover object-[center_15%] opacity-80 transition-transform duration-700 group-hover:scale-105"
-            >
-              <source src="/images/animated-highnoon-lucian.webm" type="video/webm" />
-            </video>
+            <img
+              src="/images/hero-halloween-2026.webp"
+              alt="Copa do Halloween 2026"
+              className="w-full h-full object-cover object-[center_35%] opacity-90 transition-transform duration-700 group-hover:scale-105"
+            />
           </div>
 
           {/* Content Wrapper */}
