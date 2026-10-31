@@ -895,7 +895,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           Sala (SÓ adm), Verificar Partida (só na tela ao vivo) e o mudo; no
           canto oposto, a seta de sair da sala. Absoluto de propósito: não
           empurra a linha de bans nem muda a altura dela. */}
-      <div className="absolute bottom-[2vmin] right-[4vmin] z-50 flex items-center gap-[0.8vmin]">
+      <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
         {acoesTopo?.resetar && (
           <button
             type="button"
@@ -993,8 +993,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       )}
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul).
-          Fica alto, encostado na faixa do timer (pedido do usuário 31/10). */}
-      <div className="absolute top-[2.5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
+          Fica alto, encostado na faixa do timer e CENTRALIZADO (perto do
+          "FASE DE BANS/PICKS") — pedido do usuário 31/10. */}
+      <div className="absolute top-[2.5vmin] left-1/2 -translate-x-1/2 w-full max-w-[140vmin] flex justify-between px-[1vmin] z-40">
         {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
             const ehA = equipe === 'A';
             const dataSide = ehA ? 'blue' : 'red';
