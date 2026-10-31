@@ -274,12 +274,22 @@ teamsRouter.get("/", async (req, res) => {
       ? and(eq(teams.status, "active"), or(ilike(teams.name, `%${search}%`), ilike(teams.tag, `%${search}%`)))
       : eq(teams.status, "active");
 
+    // Ordem determinística: PDL é a pontuação, mas empates (ex.: NKZ Academy e
+    // Kravyn, ambos 64 PDL e 6-2) eram resolvidos pela ordem que o Postgres
+    // devolvia — e mudava conforme o LIMIT. O desempate oficial usa a coluna
+    // `ranking` (posição da temporada) e, por último, o nome.
     const orderBy =
       sort === "ranking"
         ? [dir === "asc" ? asc(teamStats.ranking) : desc(teamStats.ranking), desc(teamStats.pdl)]
         : sort === "nome"
           ? [asc(teams.name)]
-          : [desc(teamStats.pdl), desc(teamStats.wins)];
+          : [
+              desc(teamStats.pdl),
+              desc(teamStats.wins),
+              asc(teamStats.losses),
+              asc(teamStats.ranking),
+              asc(teams.name),
+            ];
 
     const [countRow] = await db.select({ total: count() }).from(teams).where(filters);
 

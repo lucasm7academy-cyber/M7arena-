@@ -13,7 +13,6 @@ export const PLAN = {
   "gov.agents": ["fase-0"],
   "gov.mcp.registro": ["fase-0", "gov.mcp.status"],
   "gov.docs.arquitetura": ["fase-0"],
-  "gov.docs.plano": ["fase-0"],
   "gov.repo": ["fase-0"],
 
   // ---- Fase 1 — schema
@@ -39,7 +38,7 @@ export const PLAN = {
   "db.descarte": ["fase-1"],
 
   // ---- Fase 2 — infra
-  "infra.vps": ["fase-2"], // bloqueio externo: depende do usuário contratar
+  "infra.vps": ["fase-2"],
   "infra.compose": ["fase-2"],
   "infra.postgres": ["fase-2"],
   "infra.pgbouncer": ["fase-2", "infra.compose", "infra.postgres"],
@@ -51,14 +50,13 @@ export const PLAN = {
   "infra.nginx.spa": ["fase-2", "infra.nginx", "app.fork.build"],
   "infra.app.imagem": ["fase-2", "infra.compose", "app.api.server"],
 
-  // ---- Fase 3 — aplicação (ADR-010: fork do React/Vite, não reescrita em Next)
+  // ---- Fase 3 — aplicação (React + Vite + API)
   //
-  // ETAPA A — o site em React rodando, com o visual intacto, SEM tocar em banco.
-  // É o portão de tudo: nenhuma peça de dados abre antes de o fork buildar.
+  // ETAPA A — o front em React rodando, com o visual intacto, SEM tocar em banco.
+  // É o portão de tudo: nenhuma peça de dados abre antes de o build passar.
   "app.fork.copia": ["fase-3"],
   "app.fork.build": ["fase-3", "app.fork.copia"],
   "design.assets": ["fase-3", "app.fork.copia"],
-  "design.regressao": ["fase-3", "app.fork.build"],
 
   // ETAPA B — camada de dados própria, atrás do portão do fork.
   "app.api.server": ["fase-3", "app.fork.build", "db.setup"],
@@ -69,10 +67,8 @@ export const PLAN = {
   "app.workers": ["fase-3", "app.api.server"],
   "app.riot-proxy": ["fase-3", "app.api.server"],
 
-  // Os swaps: cada um troca um domínio de supabase.* por chamada ao app.sdk.
-  // Todos dependem de app.auth.sessao: enquanto o front usar supabase.auth para
-  // a sessão, nenhuma chamada à API própria consegue se autenticar. Auth primeiro,
-  // sempre. E nenhum deles fecha sem `node scripts/verify-swap.js <dominio>` em 0.
+  // Os swaps trocaram cada domínio do Supabase pela API própria. Todos estão
+  // fechados; o gate de `done` roda `node scripts/verify-swap.js <dominio>`.
   "app.swap.identidade": ["fase-3", "app.sdk", "app.auth.sessao", "db.identidade"],
   "app.swap.times": ["fase-3", "app.sdk", "app.auth.sessao", "db.teams"],
   "app.swap.campeonatos": ["fase-3", "app.sdk", "app.auth.sessao", "db.tournaments"],
@@ -117,9 +113,13 @@ export const PLAN = {
   "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],
   "app.swap.rpc": ["fase-3", "app.sdk", "app.auth.sessao"],
   "app.storage.uploads": ["fase-3", "app.api.server", "app.auth.sessao"],
-  // As 6 edge functions do Supabase (fonte em M7AcademySite/supabase/functions/).
-  // Não estavam no plano original e bloqueiam o pagamento e parte dos workers.
+  // Integrações que ainda dependem de edge functions do Supabase (pagamento/VIP).
+  // São a dívida real que impede remover o client Supabase do front.
   "app.edge-functions": ["fase-3", "app.api.server", "app.auth.sessao"],
+  // Dívida real: 4 integrações Supabase vivas no front (recrutamento, VIP,
+  // resultados em MinhasPartidas e o exchange do Discord). Migrar para a API
+  // própria e só então remover @supabase/supabase-js + VITE_SUPABASE_*.
+  "app.supabase.zero": ["fase-3", "app.api.server", "app.auth.sessao"],
   // Gateway de pagamento MC (ADR-031): Mercado Pago PIX, pacotes em mc_packages.
   "app.payments": ["fase-3", "app.api.server", "app.auth.sessao", "db.economia"],
   // Saque de MC via PIX (spec saque-mc-pix): withdrawals + ledger hold/refund,
@@ -153,53 +153,9 @@ export const PLAN = {
   "app.apostas.smoke": ["fase-3", "app.apostas.revisao", "app.apostas.cron", "app.apostas.realtime", "app.apostas.elegibilidade", "app.apostas.prints"],
   "app.apostas.ui": ["fase-3", "app.apostas.elegibilidade", "app.apostas.prints", "app.apostas.realtime", "app.swap.salas", "app.swap.carteira"],
 
-  // ---- descartados pela ADR-010 (o port em Next). Mantidos só para histórico:
-  // o grafo não os usa mais, mas remover quebraria phaseOf() de estado antigo.
-  "app.setup": ["fase-3"],
-  "design.tokens": ["fase-3"],
-  "design.fontes": ["fase-3"],
-  "design.libs": ["fase-3"],
-  "design.ui": ["fase-3"],
-  "app.auth": ["fase-3"],
-  "app.data": ["fase-3"],
-  "app.perfil-context": ["fase-3"],
-  "app.port.shell": ["fase-3"],
-  "app.port.notificacoes": ["fase-3"],
-  "app.port.institucional": ["fase-3"],
-  "app.port.perfil": ["fase-3"],
-  "app.port.players": ["fase-3"],
-  "app.port.recrutamento": ["fase-3"],
-  "app.port.streamers": ["fase-3"],
-  "app.port.carteira": ["fase-3"],
-  "app.port.vincular": ["fase-3"],
-  "app.port.times": ["fase-3"],
-  "app.port.admin": ["fase-3"],
-  "app.port.lobby": ["fase-3"],
-  "app.port.salas": ["fase-3"],
-  "app.port.campeonatos": ["fase-3"],
-
   // ---- Fase 4 — MCP de operações
   "mcpops.server": ["fase-4", "infra.vps"],
   "mcpops.seguranca": ["fase-4", "mcpops.server"],
-
-  // ---- Fase 5 — migração e cutover
-  "mig.extract": ["fase-5"],
-  "mig.identidade": ["fase-5", "mig.extract", "db.identidade"],
-  "mig.campeonatos": ["fase-5", "mig.extract", "db.tournaments"],
-  "mig.load": ["fase-5", "mig.identidade", "mig.campeonatos"],
-  "mig.verify": ["fase-5", "mig.load"],
-  "sec.rotacao": ["fase-5"],
-  // ADR-010: o cutover só abre com o app novo de pé — paridade visual conferida,
-  // regras de negócio no servidor e o Nginx servindo a SPA.
-  "mig.cutover": [
-    "fase-5",
-    "mig.verify",
-    "infra.vps",
-    "sec.rotacao",
-    "design.regressao",
-    "sec.regras-servidor",
-    "infra.nginx.spa",
-  ],
 };
 
 export const phaseOf = (id) => PLAN[id]?.[0] ?? null;

@@ -65,6 +65,7 @@ const CampeonatoDetalhes = lazyWithRetry(() => import('./pages/CampeonatoDetalhe
 const CreateCampPage = lazyWithRetry(() => import('./pages/createCampPage'));
 const MinhasPartidas = lazyWithRetry(() => import("./pages/MinhasPartidas"));
 const Recrutamento = lazyWithRetry(() => import("./pages/recrutamento"));
+const Tierlist = lazyWithRetry(() => import("./pages/tierlist"));
 const QuemSomos = lazyWithRetry(() => import("./pages/QuemSomos"));
 
 // ✅ Componente para inicializar o cache do DDragon (seguro)
@@ -232,6 +233,7 @@ export default function App() {
               <Route path="/campeonato/:id" element={<RouteWithSuspense element={<CampeonatoDetalhes />} />} />
               <Route path="/tutorial" element={<RouteWithSuspense element={<Tutorial />} />} />
               <Route path="/recrutamento" element={<RouteWithSuspense element={<Recrutamento />} />} />
+              <Route path="/tierlist" element={<RouteWithSuspense element={<Tierlist />} />} />
               <Route path="/auth/discord/callback" element={<RouteWithSuspense element={<DiscordCallback />} />} />
 
               {/* Rotas Privadas (Necessitam de Conta) */}

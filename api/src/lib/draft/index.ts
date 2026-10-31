@@ -7,6 +7,6 @@
  *  - `flow.ts` — o motor server-authoritative (timer, ban vazio, pick cancela,
  *    catch-up).
  */
-export { DRAFT_RULES, getDraftRules, temDraft, getTurnOrder, regrasDraftParaShape } from "./regras.js";
+export { DRAFT_RULES, getDraftRules, temDraft, getTurnOrder, regrasDraftParaShape, restantesNoTurno } from "./regras.js";
 export { DRAFT_TURN_MS, DRAFT_GRACE_MS, criarDraft, avaliarDraft, aplicarAcaoDraft } from "./flow.js";
 export type { DraftRules, DraftTeam, DraftPhase, TurnInfo } from "./tipos.js";

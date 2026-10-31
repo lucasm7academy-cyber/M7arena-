@@ -27,15 +27,14 @@ export const STATUS_ICON = {
  * Fases do plano. Um componente pertence a exatamente uma fase.
  * É o que faz "execute a Fase 1" ter significado preciso para qualquer agente.
  */
-export const PHASES = ["fase-0", "fase-1", "fase-2", "fase-3", "fase-4", "fase-5"];
+export const PHASES = ["fase-0", "fase-1", "fase-2", "fase-3", "fase-4"];
 
 export const PHASE_LABEL = {
   "fase-0": "Fase 0 — Governança multi-agente",
   "fase-1": "Fase 1 — Schema do banco",
-  "fase-2": "Fase 2 — Infraestrutura (Docker/VPS)",
-  "fase-3": "Fase 3 — Aplicação (fork do React/Vite + troca da camada de dados)",
-  "fase-4": "Fase 4 — MCP de operações da VPS",
-  "fase-5": "Fase 5 — Migração de dados e cutover",
+  "fase-2": "Fase 2 — Infraestrutura (VPS/Docker/Nginx)",
+  "fase-3": "Fase 3 — Aplicação (React + Vite + API)",
+  "fase-4": "Fase 4 — Operações da VPS (MCP)",
 };
 
 export const AREAS = [
@@ -45,18 +44,16 @@ export const AREAS = [
   "app",
   "design",
   "mcp-ops",
-  "migracao",
   "seguranca",
 ];
 
 export const AREA_LABEL = {
   governanca: "Governança & Agentes",
   banco: "Banco de Dados",
-  infra: "Infraestrutura (Docker/VPS)",
+  infra: "Infraestrutura (VPS/Docker/Nginx)",
   app: "Aplicação (React + Vite)",
-  design: "Design & Paridade Visual",
+  design: "Design & Interface",
   "mcp-ops": "MCP de Operações",
-  migracao: "Migração de Dados",
   seguranca: "Segurança",
 };
 

@@ -50,6 +50,12 @@ export interface SalaDraft {
   /** Regras do modo publicadas pelo servidor (registry por modo). */
   regras: SalaDraftRegras;
   /**
+   * Quantas ações ainda cabem no turno ATUAL (1 ou 2). O 5v5 tem turnos de
+   * pick duplo — o front marca os dois slots e pulsa só o que está aberto.
+   * Ausente em payloads antigos: assume 1.
+   */
+  restantes_no_turno?: number;
+  /**
    * FEARLESS (sala campeonato): picks de jogos anteriores da série — travados.
    * Publicado pelo servidor; o grid mostra esses campeões apagados.
    */

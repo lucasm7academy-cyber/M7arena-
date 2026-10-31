@@ -111,7 +111,8 @@ export default function MinhasPartidas() {
     const labels: Record<string, string> = {
       '1v1': '1v1',
       '5v5': '5v5',
-      'time_vs_time': 'Time vs Time',
+      'time_vs_time': 'Scrim',
+      'time_vs_time_livre': 'Scrim',
       'aram': 'ARAM',
     };
     return labels[modo] || modo;

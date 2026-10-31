@@ -291,9 +291,9 @@ export const MODOS_JOGO: Record<ModoJogo, {
     bgImage: '/images/fundoCard1v1.webp',
   },
   'time_vs_time': {
-    nome: 'Time vs Time',
+    nome: 'Scrim',
     icone: '🏅',
-    descricao: 'Clã contra clã — disputa que vale ranking e orgulho',
+    descricao: 'Time vs Time — MD3 Fearless com draft completo e lado sorteado',
     maxJogadores: 10,
     jogadoresPorTime: 5,
     tipo: 'time',

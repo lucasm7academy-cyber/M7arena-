@@ -19,7 +19,8 @@ const MODO_LABEL: Record<string, string> = {
   '5v5': '5v5',
   '1v1': '1v1',
   aram: 'ARAM',
-  time_vs_time: 'Time vs Time',
+  time_vs_time: 'Scrim',
+  time_vs_time_livre: 'Scrim',
 };
 
 const LADO_LABEL: Record<Lado, string> = {

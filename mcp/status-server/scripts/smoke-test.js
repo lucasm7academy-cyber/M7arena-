@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER = path.join(__dirname, "..", "index.js");
-const SEED = path.join(__dirname, "seed.js");
+const FIXTURE = path.join(__dirname, "fixture.js");
 
 // ---------------------------------------------------------- projeto temporário
 const TMP = await fs.mkdtemp(path.join(os.tmpdir(), "m7-status-smoke-"));
@@ -27,7 +27,7 @@ const run = (file) =>
     p.on("exit", (code) => (code === 0 ? res() : rej(new Error(`${file} saiu com ${code}`))));
   });
 
-await run(SEED);
+await run(FIXTURE);
 
 // ------------------------------------------------------------------- cliente
 const child = spawn("node", [SERVER], {
@@ -88,7 +88,7 @@ check("expõe 10 tools", names.length === 10, names.join(", "));
 const brief = await call("status_brief");
 check("status_brief responde", !brief.result?.isError);
 check("brief mostra progresso por fase", textOf(brief).includes("Fase 1 — Schema do banco"));
-check("brief mostra os invariantes", textOf(brief).includes("cópia 1:1"));
+check("brief mostra os invariantes", textOf(brief).includes("design atual é a referência"));
 
 const nt = await call("next_task", { phase: "fase-1" });
 check("next_task lista o que está liberado", textOf(nt).includes("db.setup"));
