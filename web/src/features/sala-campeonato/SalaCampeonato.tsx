@@ -1123,11 +1123,11 @@ export default function SalaCampeonato() {
       <motion.div
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-20 w-full p-[1px] bg-white/[0.08] shadow-2xl"
+        className="relative z-20 w-full p-[1px] bg-black/60 shadow-2xl"
         style={{ clipPath: CUT_FRAME }}
       >
         <div
-          className="w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl flex-wrap md:flex-nowrap"
+          className="w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-sm flex-wrap md:flex-nowrap"
           style={{ clipPath: CUT_INNER }}
         >
         <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
@@ -1147,7 +1147,7 @@ export default function SalaCampeonato() {
             </div>
           </motion.button>
 
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="relative p-[1px] bg-white/15 shrink-0" style={{ clipPath: CUT_BUTTON }}>
               <div
                 className="w-8 h-8 sm:w-9 sm:h-9 md:w-[4.4vmin] md:h-[4.4vmin] bg-[#0d0d10] flex items-center justify-center text-[#FFB700] shadow-inner"
@@ -1156,32 +1156,16 @@ export default function SalaCampeonato() {
                 <Trophy className="w-4 h-4 md:w-[2vmin] md:h-[2vmin]" />
               </div>
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-sm sm:text-base md:text-[2vmin] font-black tracking-wider text-white uppercase leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] truncate min-w-0">
                 {sala.modo === 'time_vs_time_livre' && sala.nome === 'Time vs Time'
                   ? 'Scrim'
                   : sala.nome || (serie ? `${sala.time_a_tag} x ${sala.time_b_tag}` : 'Scrim')}
               </h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="p-[1px] bg-[#FFB700]/30" style={{ clipPath: CUT_BADGE }}>
-                  <span
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#FFB700]/10 text-[10px] md:text-[1.2vmin] font-black text-[#FFB700] tracking-widest leading-none font-mono block"
-                    style={{ clipPath: CUT_BADGE_INNER }}
-                  >
-                    #{String(sala.id).padStart(6, '0')}
-                  </span>
-                </div>
-                {serie && (
-                  <div className="p-[1px] bg-white/10" style={{ clipPath: CUT_BADGE }}>
-                    <span
-                      className="px-1.5 py-0.5 bg-[#0b0a0e] text-[10px] md:text-[1.2vmin] font-black text-white/70 tracking-widest leading-none block"
-                      style={{ clipPath: CUT_BADGE_INNER }}
-                    >
-                      JOGO {camp?.jogo ?? 1} · MD{serie.best_of ?? 3}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <span className="shrink-0 inline-flex items-center text-sm sm:text-base md:text-[2vmin] font-black tracking-wider leading-tight font-mono text-[#FFB700]">
+                <span>#</span>
+                <span>{String(sala.id).padStart(6, '0')}</span>
+              </span>
             </div>
           </div>
         </div>
@@ -1224,17 +1208,21 @@ export default function SalaCampeonato() {
             </div>
           </div>
 
-          {/* Card Placar/Modalidade */}
+          {/* Card Série (igual ao 5x5): formato + placar por lado. */}
           <div className="relative p-[1px] bg-white/10 shrink-0" style={{ clipPath: CUT_BADGE }}>
             <div className="px-3 py-1.5 md:px-3.5 bg-[#0b0a0e] flex flex-col justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
               <span className="text-[8.5px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-widest leading-none">
-                {serie ? 'Placar da Série' : 'Modalidade'}
+                {serie ? 'Série' : 'Modalidade'}
               </span>
-              <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
+              <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5 flex-wrap">
                 {serie ? (
-                  <span className="text-white">
-                    {serie.placar_a} - {serie.placar_b}
-                  </span>
+                  <>
+                    <span className="text-[#FFB700]">{String(camp?.formato ?? `MD${serie.best_of ?? 3}`).toUpperCase()}</span>
+                    <span className="text-white/35">·</span>
+                    <span className="text-[#3B82F6]">BLUE {serie.placar_a ?? 0}</span>
+                    <span className="text-white/35">×</span>
+                    <span className="text-[#ef4444]">{serie.placar_b ?? 0} RED</span>
+                  </>
                 ) : (
                   <span className="text-emerald-400 flex items-center gap-1">
                     <Shield className="w-3 h-3 text-emerald-400" /> Casual
