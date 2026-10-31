@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 04:19 — por `deepseek`
+**Última atualização:** 31/10/2026 04:35 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 04:35 | deepseek | Draft: icones (resetar/verificar/twitch/mudo) de volta ao canto superior direito (top-1vmin right-1.5vmin) — estavam 'embaixo' porque eu os tinha descido para 12vmin. Para nao ficarem sob os bans, a faixa de bans desceu de 1.4 para 6vmin (continua no campo do timer, ao lado da barra azul/vermelha, sem sobrepor). Tamanho 7.2vmin e container 158vmin mantidos. Commit e1cfed3, deploy ok. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:19 | deepseek | Draft: bans subiram (top 2.5->1.4vmin) e ganharam mais respiro da barra do timer (container 152->158vmin); icones do topo andaram um pouco para o centro (right 1.5->8vmin), continuando abaixo da linha de bans. Commit f269f2d, deploy ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:15 | deepseek | Draft: ajuste fino do espacamento. Container dos bans 140->152vmin (max-w), criando ~4-5vmin de respiro entre o ultimo ban e a barra azul/vermelha do timer, mantendo os bans perto do bloco FASE. Icones do topo (resetar/verificar/twitch/mudo) descem para top-12vmin, logo abaixo da linha de bans (continuam no alto, sem colidir com o ultimo ban). tsc 0, build ok, commit 67507fe, deploy ok (DraftRoom-DMCiPsye.js, health 200). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:11 | deepseek | Draft: bans agora CENTRALIZADOS (container max-w-140vmin, left-1/2) — ficam encostados no bloco 'FASE DE BANS/PICKS' em vez de colados nas bordas; tamanho 7.2vmin e top 2.5vmin mantidos. Icones do topo (resetar/verificar/twitch/mudo) voltaram pro canto superior direito (top-1vmin right-1.5vmin) — com o container de 140vmin eles nao sobrepoem mais o ultimo ban. Commit 8b40961, deploy VPS ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
