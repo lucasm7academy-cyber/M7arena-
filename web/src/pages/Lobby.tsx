@@ -63,6 +63,33 @@ const Eyebrow = ({ children }: { children: React.ReactNode }) => (
 
 
 
+// ── Hero do lobby: dois modelos prontos ─────────────────────────────────────
+// Para VOLTAR ao hero padrão (texto antigo + vídeo do Lucian), troque
+// `HERO_EDICAO` para 'padrao' — nada mais precisa ser mexido.
+const HERO_PADRAO = {
+  eyebrow: 'M7 ARENA • Campeonatos 2026',
+  titulo: ['Seu Time está', 'pronto para vencer?'],
+  texto: 'Campeonatos de LoL com premiação em Pix, ranking por PDL e transmissão ao vivo — a vitrine para o seu time brilhar.',
+  primario: { label: 'Explorar Torneios', href: '/campeonatos' },
+  secundario: { label: 'Crie seu Time', href: '/times' },
+  selo: 'Temporada 2026',
+};
+
+const HERO_HALLOWEEN = {
+  eyebrow: 'M7 ARENA • Campeonato Halloween 2026',
+  titulo: ['Copa do Halloween', '2026 — inscrições abertas'],
+  texto: 'Torneio 5v5 em chaves, premiação em Pix e finais transmitidas ao vivo. Garanta a vaga do seu time antes de fechar.',
+  primario: {
+    label: 'Inscrever meu time',
+    href: 'https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460',
+  },
+  secundario: { label: 'Ver campeonatos', href: '/campeonatos' },
+  selo: 'Halloween 2026',
+};
+
+const HERO_EDICAO: 'padrao' | 'halloween' = 'halloween';
+const HERO = HERO_EDICAO === 'halloween' ? HERO_HALLOWEEN : HERO_PADRAO;
+
 const FeatureCard = ({ icon: Icon, title, description, delay }: any) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -888,7 +915,7 @@ const Home = () => {
             <img
               src="/images/hero-halloween-2026.webp"
               alt="Copa do Halloween 2026"
-              className="w-full h-full object-cover object-[center_12%] opacity-90 transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full object-cover object-[center_12%] opacity-90 scale-[0.95] transition-transform duration-700 group-hover:scale-100"
             />
           </div>
 
@@ -903,39 +930,44 @@ const Home = () => {
               <div className="flex items-center gap-2">
 
                 <span className="text-[#FFB700] text-[10px] md:text-xs xl:text-sm font-black uppercase tracking-[0.3em]">
-                  M7 ARENA • Campeonatos 2026
+                  {HERO.eyebrow}
                 </span>
               </div>
 
               <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black uppercase leading-[0.9] tracking-tighter break-words">
-                Seu Time está <br />
+                {HERO.titulo[0]} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/40">
-                  pronto para vencer?
+                  {HERO.titulo[1]}
                 </span>
               </h1>
 
               <p className="text-white/40 text-[10px] sm:text-xs md:text-sm xl:text-lg font-medium max-w-xs sm:max-w-xl leading-relaxed">
-                Campeonatos de LoL com premiação em Pix, ranking por PDL e
-                transmissão ao vivo — a vitrine para o seu time brilhar.
+                {HERO.texto}
               </p>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 md:gap-3 xl:gap-4 pt-2 sm:pt-3 xl:pt-4">
                 <button
-                  onClick={() => navigate('/campeonatos')}
+                  onClick={() => {
+                    if (HERO.primario.href.startsWith('http')) {
+                      window.open(HERO.primario.href, '_blank', 'noopener,noreferrer');
+                    } else {
+                      navigate(HERO.primario.href);
+                    }
+                  }}
                   className="group relative px-5 md:px-7 xl:px-10 py-3 md:py-3.5 xl:py-4 bg-[#FFB700] text-black font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,183,0,0.3)]"
                   style={{
                     clipPath: 'polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%)'
                   }}
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">Explorar Torneios <ChevronRight size={14} /></span>
+                  <span className="relative z-10 flex items-center justify-center gap-2">{HERO.primario.label} <ChevronRight size={14} /></span>
                 </button>
 
                 <button
-                  onClick={() => navigate('/times')}
+                  onClick={() => navigate(HERO.secundario.href)}
                   className="group relative px-5 md:px-7 xl:px-10 py-3 md:py-3.5 xl:py-4 border border-white/20 text-white font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:bg-white/5 hover:border-white/40 active:scale-95 rounded-sm"
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">Crie seu Time <ChevronRight size={14} /></span>
+                  <span className="relative z-10 flex items-center justify-center gap-2">{HERO.secundario.label} <ChevronRight size={14} /></span>
                 </button>
               </div>
             </motion.div>
@@ -945,7 +977,7 @@ const Home = () => {
           <div className="hidden sm:block absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
             <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg">
               <div className="w-1.5 h-1.5 rounded-full bg-[#FFB700] animate-pulse" />
-              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">Temporada 2026</span>
+              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-[#FFB700]">{HERO.selo}</span>
             </div>
           </div>
           </div>
