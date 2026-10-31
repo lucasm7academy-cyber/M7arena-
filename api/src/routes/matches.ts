@@ -307,6 +307,29 @@ matchesRouter.get("/", async (req, res) => {
   }
 });
 
+// GET /api/matches/minhas - Histórico de salas encerradas do usuário logado.
+// Fica antes de /:id para "minhas" não ser interpretado como número de sala.
+matchesRouter.get("/minhas", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "nao_autenticado" });
+
+    const limit = Math.min(Number(req.query.limit) || 200, 200);
+    const rows = await db
+      .select({ match: matches })
+      .from(matches)
+      .innerJoin(matchPlayers, eq(matchPlayers.matchId, matches.id))
+      .where(and(eq(matchPlayers.userId, user.id), eq(matches.status, "encerrada")))
+      .orderBy(desc(matches.createdAt))
+      .limit(limit);
+
+    const results = await Promise.all(rows.map((r) => shapeSala(r.match, db, false)));
+    return res.json(results);
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar histórico" });
+  }
+});
+
 // GET /api/matches/:id - Detalhe (shape legado de salas + jogadores)
 matchesRouter.get("/:id", async (req, res) => {
   try {

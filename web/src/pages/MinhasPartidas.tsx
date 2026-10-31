@@ -1,16 +1,16 @@
 // src/pages/MinhasPartidas.tsx
 // NOVA VERSÃO - Com bloqueio para não-VIP e marketing premium
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilSafe } from '../contexts/PerfilContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { supabase } from '../lib/supabase'; // ainda usado em resultados_partidas (app.swap.salas)
+import { api } from '../lib/api';
 import { 
   Trophy, Crown, Swords, Users, Calendar, Clock, 
-  ChevronRight, Medal, TrendingUp, TrendingDown, History,
-  Target, Shield, Zap, Lock, Sparkles, Gem, ArrowRight
+  ChevronRight, TrendingUp, TrendingDown, History,
+  Target, Shield
 } from 'lucide-react';
 import { getModoInfo, type ModoJogo } from '../api/salamod1';
 
@@ -33,66 +33,61 @@ export default function MinhasPartidas() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ vitorias: 0, derrotas: 0, winRate: 0 });
   const [isVip, setIsVip] = useState(false);
-  const [loadingVip, setLoadingVip] = useState(true);
 
   // VIP vem do PerfilContext (cargo/perfil já carregado pela API própria).
   useEffect(() => {
     setIsVip(perfilCtx?.isVip || false);
-    setLoadingVip(false);
   }, [perfilCtx?.isVip]);
 
   const carregarDados = React.useCallback(async () => {
     if (!user) return;
     try {
-      // ✅ OTIMIZADO: Limitar a últimas 200 partidas (evita baixar todas)
-      // Depois filtra em memória por user_id
-      const { data, error } = await supabase
-        .from('resultados_partidas')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
+      // Histórico vem da API própria (matches encerradas das quais o usuário
+      // participou), sem baixar a tabela legada de resultados.
+      const salas = await api.matches.minhas({ limit: 200 });
 
-      if (error) {
-        return;
-      }
+      const minhasPartidas: Partida[] = salas.map((sala) => {
+        const jogador = sala.jogadores.find((j) => j.user_id === user.id);
+        const meuLado = jogador?.is_time_a ?? false;
+        const nomeAdversario = sala.time_a_nome || sala.time_b_nome
+          ? (meuLado ? sala.time_b_nome : sala.time_a_nome) ?? undefined
+          : sala.jogadores.find((j) => j.is_time_a !== meuLado)?.nome ?? undefined;
 
-      if (data) {
-        // Filtrar apenas partidas que o usuário participou
-        const minhasPartidas = data
-          .filter((resultado: any) => {
-            const jogadores = Array.isArray(resultado.jogadores) ? resultado.jogadores : [];
-            return jogadores.some((j: any) => j.id === user?.id);
-          })
-          .map((resultado: any) => ({
-            id: resultado.sala_id,
-            modo: resultado.modo,
-            vencedor: resultado.vencedor,
-            vencedor_nome: resultado.vencedor_nome,
-            created_at: resultado.created_at,
-            jogadores: Array.isArray(resultado.jogadores) ? resultado.jogadores : [],
-            timeANome: resultado.time_a_nome,
-            timeBNome: resultado.time_b_nome,
-          }));
+        return {
+          id: sala.id,
+          modo: sala.modo,
+          vencedor: sala.vencedor ?? null,
+          vencedor_nome: nomeAdversario,
+          created_at: sala.created_at,
+          jogadores: sala.jogadores.map((j) => ({
+            id: j.user_id,
+            nome: j.nome,
+            isTimeA: j.is_time_a,
+          })),
+          timeANome: sala.time_a_nome ?? undefined,
+          timeBNome: sala.time_b_nome ?? undefined,
+        };
+      });
 
-        setPartidas(minhasPartidas);
+      setPartidas(minhasPartidas);
 
-        // Calcular estatísticas
-        let vitorias = 0;
-        minhasPartidas.forEach(partida => {
-          const jogador = partida.jogadores.find((j: any) => j.id === user?.id);
-          if (jogador && partida.vencedor) {
-            const venceuTimeA = partida.vencedor === 'A';
-            if (jogador.isTimeA === venceuTimeA) vitorias++;
-          }
-        });
+      // Calcular estatísticas
+      let vitorias = 0;
+      minhasPartidas.forEach(partida => {
+        const jogador = partida.jogadores.find((j) => j.id === user.id);
+        if (jogador && partida.vencedor) {
+          const venceuTimeA = partida.vencedor === 'A';
+          if (jogador.isTimeA === venceuTimeA) vitorias++;
+        }
+      });
 
-        setStats({
-          vitorias,
-          derrotas: minhasPartidas.length - vitorias,
-          winRate: minhasPartidas.length > 0 ? Math.round((vitorias / minhasPartidas.length) * 100) : 0
-        });
-      }
+      setStats({
+        vitorias,
+        derrotas: minhasPartidas.length - vitorias,
+        winRate: minhasPartidas.length > 0 ? Math.round((vitorias / minhasPartidas.length) * 100) : 0
+      });
     } catch (err) {
+      console.error('[MinhasPartidas] erro ao carregar histórico:', err);
     } finally {
       setLoading(false);
     }
@@ -117,9 +112,8 @@ export default function MinhasPartidas() {
     return labels[modo] || modo;
   };
 
-  // Partidas a serem exibidas (3 primeiras para não-VIP, todas para VIP)
-  const partidasExibidas = isVip ? partidas : partidas.slice(0, 3);
-  const partidasRestantes = partidas.length - 3;
+  // Partidas exibidas: histórico completo (o antigo bloqueio VIP foi removido
+  // junto com o modal de compra do VIP).
 
   return (
     <div className="min-h-screen bg-transparent text-white font-sans p-6 md:p-10 relative">
@@ -294,14 +288,13 @@ export default function MinhasPartidas() {
         ) : (
           <div className="relative">
             <div className="space-y-3">
-              {partidasExibidas.map((partida, index) => {
+              {partidas.map((partida, index) => {
                 const vitoria = isVitoria(partida, user!.id);
                 const jogador = partida.jogadores.find((j) => j.id === user!.id);
                 const modoInfo = getModoInfo(partida.modo as ModoJogo);
                 const nomeAdversario = partida.vencedor_nome || 'Desconhecido';
                 const timeJogador = jogador?.isTimeA ? 'A' : 'B';
                 const nomeTimeJogador = timeJogador === 'A' ? partida.timeANome : partida.timeBNome;
-                const isClickable = isVip;
 
                 return (
                   <motion.div
@@ -309,10 +302,8 @@ export default function MinhasPartidas() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    onClick={() => isClickable && navigate(`/sala/${partida.id}`)}
-                    className={`relative rounded-xl overflow-hidden group border transition-all ${
-                      isClickable ? 'cursor-pointer' : 'cursor-default'
-                    }`}
+                    onClick={() => navigate(`/sala/${partida.id}`)}
+                    className="relative rounded-xl overflow-hidden group border transition-all cursor-pointer"
                     style={{
                       background: vitoria 
                         ? 'rgba(34, 197, 94, 0.05)' 
@@ -431,11 +422,9 @@ export default function MinhasPartidas() {
                             </p>
                           </div>
                           
-                          {isClickable && (
-                            <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-[#FFB700]/20 group-hover:border-[#FFB700]/50 transition-all">
-                              <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-[#FFB700] transition-colors" />
-                            </div>
-                          )}
+                          <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-[#FFB700]/20 group-hover:border-[#FFB700]/50 transition-all">
+                            <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-[#FFB700] transition-colors" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -443,110 +432,13 @@ export default function MinhasPartidas() {
                 );
               })}
             </div>
-
-            {/* ============================================ */}
-            {/* OVERLAY DE BLOQUEIO PARA NÃO-VIP */}
-            {/* ============================================ */}
-            {!isVip && partidas.length > 0 && (
-              <div className="absolute bottom-0 left-0 right-0">
-                {/* Gradiente de fade (sombra) */}
-                <div 
-                  className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-                  style={{
-                    background: 'linear-gradient(to top, rgba(5, 5, 5, 0.95) 0%, rgba(5, 5, 5, 0.7) 50%, transparent 100%)'
-                  }}
-                />
-                
-                {/* Banner de Marketing VIP */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="relative mt-[-80px] z-20"
-                >
-                  <div 
-                    className="rounded-2xl overflow-hidden border-2 border-yellow-500/50 p-8 text-center"
-                    style={{
-                      background: 'rgba(13, 13, 13, 0.95)',
-                      boxShadow: '0 0 60px -10px rgba(255, 183, 0, 0.4)',
-                      backdropFilter: 'blur(20px)'
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-transparent to-transparent" />
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-3xl rounded-full -mr-16 -mt-16" />
-                    
-                    <div className="relative z-10">
-                      {/* Ícone de Coroa com Lock */}
-                      <div className="relative inline-block mb-4">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-500/30 to-transparent border-2 border-yellow-500/50 flex items-center justify-center">
-                          <Crown className="w-10 h-10 text-yellow-400" />
-                        </div>
-                        <div className="absolute -bottom-2 -right-2 bg-[#050505] rounded-full p-1.5 border-2 border-yellow-500/50">
-                          <Lock className="w-4 h-4 text-yellow-400" />
-                        </div>
-                      </div>
-                      
-                      <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic mb-2">
-                        Torne-se <span className="text-yellow-400">VIP</span>
-                      </h3>
-                      
-                      <p className="text-white/50 text-sm max-w-lg mx-auto mb-3">
-                        Você tem <span className="text-yellow-400 font-bold">{partidasRestantes}+ partidas</span> no seu histórico.
-                      </p>
-                      
-                      <p className="text-white/40 text-xs max-w-md mx-auto mb-6">
-                        Desbloqueie o histórico completo, estatísticas detalhadas e muito mais com o plano VIP.
-                      </p>
-                      
-                      {/* Benefícios */}
-                      <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-                        {[
-                          { icon: History, text: 'Histórico ilimitado' },
-                          { icon: TrendingUp, text: 'Estatísticas completas' },
-                          { icon: Crown, text: 'Badge exclusivo' },
-                          { icon: Gem, text: 'Recompensas em dobro' }
-                        ].map((benefit, i) => (
-                          <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                            <benefit.icon className="w-3.5 h-3.5 text-yellow-400" />
-                            <span className="text-white/60 text-[10px] font-bold uppercase">{benefit.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Botões */}
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          onClick={() => window.dispatchEvent(new Event('m7:open-vip'))}
-                          className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-black text-sm uppercase hover:scale-[1.02] transition-all flex items-center gap-2 shadow-[0_10px_30px_-5px_rgba(255,183,0,0.3)]"
-                        >
-                          <Crown className="w-4 h-4" />
-                          Tornar-se VIP
-                        </button>
-                        
-                        <button
-                          onClick={() => navigate('/jogar')}
-                          className="px-6 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-sm uppercase hover:bg-white/10 transition-all flex items-center gap-2"
-                        >
-                          <Swords className="w-4 h-4" />
-                          Jogar Agora
-                        </button>
-                      </div>
-                      
-                      <p className="text-white/20 text-[10px] uppercase tracking-widest mt-4">
-                        A partir de R$ 19,90/mês • Cancele quando quiser
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
           </div>
         )}
 
         {/* ============================================ */}
         {/* LEGENDA */}
         {/* ============================================ */}
-        {partidas.length > 0 && isVip && (
+        {partidas.length > 0 && (
           <div className="mt-6 flex items-center justify-center gap-6">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500/50 border border-green-400" />

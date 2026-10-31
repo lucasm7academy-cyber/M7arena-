@@ -17,7 +17,6 @@ import {
   X,
   ChevronDown,
   CreditCard,
-  UserPlus,
   UserCircle,
   LogIn,
 } from 'lucide-react';
@@ -30,7 +29,6 @@ import toast from 'react-hot-toast';
 import { useSound } from '../../hooks/useSound';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
-import VipModal from '../modals/vip/VipModal';
 import DepositModal from '../modals/deposit/DepositModal';
 import { GiTwoCoins } from 'react-icons/gi';
 
@@ -74,7 +72,6 @@ export default function Layout() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isGamePage);
-  const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -94,14 +91,6 @@ export default function Layout() {
   useEffect(() => {
     setIsSidebarOpen(!isGamePage);
   }, [isGamePage]);
-
-  // ✅ Qualquer botão do site pode abrir o modal VIP emitindo o evento global
-  // `m7:open-vip` (ex.: botões "Tornar-se VIP" em Jogar/MinhasPartidas).
-  useEffect(() => {
-    const openVip = () => setIsVipModalOpen(true);
-    window.addEventListener('m7:open-vip', openVip);
-    return () => window.removeEventListener('m7:open-vip', openVip);
-  }, []);
 
   // ✅ Modal de recarga abre por evento global `m7:open-deposit` — o modal de
   // "Saldo insuficiente" das salas apostadas (design v3 §11) usa isso para o
@@ -132,7 +121,6 @@ export default function Layout() {
     { label: 'Times', icon: FaFontAwesomeFlag, path: '/times' },
     { label: 'Jogadores', icon: UserIcon, path: '/players' },
     { label: 'LIVES', icon: FaTwitch, path: '/streamers' },
-    { label: 'Recrutamento', icon: UserPlus, path: '/recrutamento' },
     { label: 'Quem somos?', icon: UserCircle, path: '/quem-somos' },
     ...(ehAdmin ? [{ label: 'Painel Admin', icon: Settings, path: '/admin' }] : []),
   ];
@@ -505,16 +493,6 @@ export default function Layout() {
     {/* ✅ BOTÕES INFERIORES */}
     <div className="px-3 py-6 space-y-3 border-t border-white/5">
       <button
-        onClick={() => {
-          playSound('click');
-          setIsVipModalOpen(true);
-        }}
-        className="w-full py-2.5 bg-gradient-to-r from-primary to-[#E6A600] text-black font-headline text-[10px] uppercase tracking-[0.2em] font-black hover:brightness-110 transition-all shadow-lg shadow-primary/20 cursor-pointer"
-        style={{ clipPath: CUT_BUTTON }}
-      >
-        TORNE-SE VIP
-      </button>
-      <button
         onClick={() => { playSound('click'); window.open(SUPORTE_URL, '_blank', 'noopener,noreferrer'); }}
         className="flex items-center justify-center gap-2 text-white/40 hover:text-primary py-2 text-[10px] uppercase tracking-widest font-headline transition-colors w-full cursor-pointer"
         style={{ clipPath: CUT_BUTTON }}
@@ -632,17 +610,6 @@ export default function Layout() {
                   <button
                     onClick={() => {
                       playSound('click');
-                      setIsVipModalOpen(true);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full py-3.5 bg-gradient-to-r from-primary to-[#E6A600] text-black font-headline text-xs uppercase tracking-widest font-black hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/10 cursor-pointer"
-                    style={{ clipPath: CUT_BUTTON }}
-                  >
-                    TORNE-SE VIP
-                  </button>
-                  <button
-                    onClick={() => {
-                      playSound('click');
                       window.open(SUPORTE_URL, '_blank', 'noopener,noreferrer');
                       setIsMobileMenuOpen(false);
                     }}
@@ -667,9 +634,6 @@ export default function Layout() {
           </div>
         </main>
       </div>
-
-      {/* Modal VIP */}
-      <VipModal isOpen={isVipModalOpen} onClose={() => setIsVipModalOpen(false)} />
 
       {/* Modal Compra de MC */}
       <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />

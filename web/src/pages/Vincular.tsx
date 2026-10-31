@@ -2,7 +2,7 @@
 // NOVA VERSÃO - Design premium integrado ao estilo da plataforma
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, CheckCircle, AlertCircle, RefreshCw, ShieldCheck, Timer, Unlink, User, Gamepad2, ArrowLeft, Shield, Lock, Key, Sparkles, MessageCircle } from 'lucide-react';
+import { Search, CheckCircle, AlertCircle, RefreshCw, ShieldCheck, Timer, Unlink, User, Gamepad2, ArrowLeft, Shield, Lock, Key, Sparkles } from 'lucide-react';
 import { buscarJogadorCompleto, buscarSugestoes, buildProfileIconUrl } from '../api/riot';
 import { motion, AnimatePresence } from 'motion/react';
 import { useVerificacao } from '../contexts/VerificacaoContext';
@@ -11,7 +11,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 import { useNavigate } from 'react-router-dom';
 import { useSound } from '../hooks/useSound';
-import { FaDiscord } from 'react-icons/fa';
 
 const ICONES_PADRAO = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
@@ -26,15 +25,13 @@ export default function Vincular() {
   const [loading, setLoading] = useState(false);
   const [invocador, setInvocador] = useState<any>(null);
   const [erro, setErro] = useState('');
-  const [passo, setPasso] = useState<'busca' | 'validando' | 'verificando' | 'sucesso' | 'ja_vinculada'>('busca');
+  const [passo, setPasso] = useState<'busca' | 'verificando' | 'sucesso' | 'ja_vinculada'>('busca');
   const [iconeRequerido, setIconeRequerido] = useState<number | null>(null);
   const [popup, setPopup] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null);
   const [contaVinculada, setContaVinculada] = useState<any>(null);
   const [jaVinculadaInfo, setJaVinculadaInfo] = useState<{ riotId: string; email: string } | null>(null);
   const [desvinculando, setDesvinculando] = useState(false);
   const [carregandoInicial, setCarregandoInicial] = useState(true);
-  const [discordVinculado, setDiscordVinculado] = useState<string | null>(null);
-  const [loadingDiscord, setLoadingDiscord] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const { verificacaoAtiva, cancelarVerificacao } = useVerificacao();
@@ -50,17 +47,6 @@ export default function Vincular() {
     window.addEventListener('verificacao_concluida', handleVerificacaoConcluida);
     return () => window.removeEventListener('verificacao_concluida', handleVerificacaoConcluida);
   }, [refetch]);
-
-  // Notificação ao voltar do Discord (?discord=linked)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('discord') === 'linked') {
-      setPopup({ type: 'success', message: '✅ Conta vinculada com sucesso!' });
-      playSound('success');
-      // Limpa o query param da URL sem recarregar
-      window.history.replaceState({}, '', '/vincular');
-    }
-  }, []);
 
   // Carregar conta vinculada ao iniciar
   useEffect(() => {
@@ -80,18 +66,7 @@ export default function Vincular() {
               iconeUrl: getIconeUrl(data.profile_icon_id)
             });
 
-            // Verifica se já tem discord vinculado
-            const dl = await api.profiles.getDiscord();
-
-            if (dl?.discord_tag) {
-              // Riot + Discord vinculados → validação concluída
-              setDiscordVinculado(dl.discord_tag || 'Discord vinculado');
-              setPasso('sucesso');
-            } else {
-              // Riot vinculado, mas Discord ainda não → validação fica pendente
-              setPasso('validando');
-            }
-
+            setPasso('sucesso');
             setCarregandoInicial(false);
             return;
           }
@@ -311,16 +286,6 @@ export default function Vincular() {
     setIconeRequerido(null);
   };
 
-  const handleVincularDiscord = async () => {
-    if (!user) return;
-    setLoadingDiscord(true);
-    // A API gera e guarda o state (CSRF token); o cliente só recebe e redireciona.
-    const { state } = await api.discord.createState();
-    const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-    const redirect = encodeURIComponent(`${window.location.origin}/auth/discord/callback`);
-    window.location.href = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect}&response_type=code&scope=identify&state=${state}`;
-  };
-
   return (
     <div className="min-h-screen text-white font-sans p-6 md:p-10 relative">
       
@@ -479,60 +444,6 @@ export default function Vincular() {
                 </div>
               </div>
             </div>
-
-            {/* ── Card Discord ── */}
-            <div
-              className="relative rounded-2xl overflow-hidden border-2"
-              style={{
-                background: 'rgba(13,13,13,0.9)',
-                borderColor: discordVinculado ? 'rgba(88,101,242,0.4)' : 'rgba(255,255,255,0.08)',
-                boxShadow: discordVinculado ? '0 0 30px -10px rgba(88,101,242,0.4)' : 'none',
-                backdropFilter: 'blur(16px)',
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#5865F2]/10 via-transparent to-transparent pointer-events-none" />
-              <div className="relative p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <FaDiscord className="w-5 h-5 text-[#5865F2]" />
-                  <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Vincular Discord</h3>
-                  <div className="flex-1 h-px bg-gradient-to-r from-[#5865F2]/30 to-transparent" />
-                  {discordVinculado && (
-                    <span className="text-[10px] text-[#5865F2] font-black uppercase tracking-widest flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Vinculado
-                    </span>
-                  )}
-                </div>
-
-                {discordVinculado ? (
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center">
-                      <FaDiscord className="w-6 h-6 text-[#5865F2]" />
-                    </div>
-                    <div>
-                      <p className="text-white font-black">{discordVinculado}</p>
-                      <p className="text-white/30 text-xs">Conta Discord vinculada</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="flex-1">
-                      <p className="text-white font-bold text-sm mb-1">Conecte seu Discord</p>
-                      <p className="text-white/40 text-xs">Vincule sua conta Discord para gerenciar times pelo bot e receber notificações.</p>
-                    </div>
-                    <button
-                      onClick={handleVincularDiscord}
-                      disabled={loadingDiscord}
-                      className="shrink-0 px-8 py-4 rounded-xl font-black text-sm uppercase text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
-                      style={{ background: '#5865F2', boxShadow: '0 8px 20px -5px rgba(88,101,242,0.4)' }}
-                    >
-                      {loadingDiscord ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FaDiscord className="w-4 h-4" />}
-                      Vincular Discord
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
           </motion.div>
         )}
 
@@ -649,70 +560,6 @@ export default function Vincular() {
           </motion.div>
         )}
 
-
-        {/* ============================================ */}
-        {/* ESTADO: VALIDANDO → Quase lá! Vincule o Discord */}
-        {/* ============================================ */}
-        {!carregandoInicial && passo === 'validando' && invocador && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
-            {/* Card do Invocador selecionado */}
-            <div className="bg-black/60 backdrop-blur-xl rounded-3xl border border-white/5 p-6 shadow-2xl">
-              <h3 className="text-white/20 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Invocador Selecionado</h3>
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <img src={invocador.iconeUrl} className="w-16 h-16 rounded-full border-2 border-[#FFB700]/50 shadow-xl" alt="Ícone" />
-                  <div className="absolute -bottom-1 -right-1 bg-[#FFB700] text-[10px] font-bold text-black px-1.5 py-0.5 rounded-full border-2 border-[#0a0a0a]">
-                    {invocador.nivel}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xl font-black text-white tracking-tight">{invocador.riotId}</p>
-                  <p className="text-[10px] text-[#FFB700] font-bold uppercase tracking-widest mt-0.5">✅ Conta Riot vinculada</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Card — Termine seu cadastro vinculando o Discord */}
-            <div
-              className="relative rounded-2xl overflow-hidden border-2 border-[#5865F2]/40 p-8"
-              style={{
-                background: 'rgba(13,13,13,0.95)',
-                boxShadow: '0 0 40px -10px rgba(88,101,242,0.4)',
-                backdropFilter: 'blur(16px)',
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#5865F2]/10 via-transparent to-transparent pointer-events-none" />
-              <div className="relative text-center">
-                <div className="w-16 h-16 rounded-2xl bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center mx-auto mb-5">
-                  <FaDiscord className="w-8 h-8 text-[#5865F2]" />
-                </div>
-                <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">
-                  Termine seu cadastro
-                </h2>
-                <p className="text-white/50 text-sm mb-8 max-w-sm mx-auto">
-                  Para concluir sua validação, vincule sua conta Discord. Isso permite gerenciar seu time pelo bot e receber notificações.
-                </p>
-                <button
-                  onClick={handleVincularDiscord}
-                  disabled={loadingDiscord}
-                  className="w-full py-4 rounded-xl font-black text-lg uppercase text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 mb-4"
-                  style={{ background: '#5865F2', boxShadow: '0 10px 25px -5px rgba(88,101,242,0.5)' }}
-                >
-                  {loadingDiscord
-                    ? <><RefreshCw className="w-5 h-5 animate-spin" /> Redirecionando...</>
-                    : <><FaDiscord className="w-5 h-5" /> Validar agora usando o Discord</>}
-                </button>
-                <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest">
-                  A validação só é concluída com Riot + Discord vinculados
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {/* ============================================ */}
         {/* ESTADO: VERIFICANDO (AGUARDANDO SINCRONIZAÇÃO) */}

@@ -1,7 +1,7 @@
 /**
  * M7Arena API SDK Client (ADR-010 / ADR-011)
  * Cliente HTTP tipado para comunicação do front-end Vite com a API Node própria.
- * Substitui o cliente GoTrue / Supabase.
+ * Cliente HTTP da API própria.
  */
 
 import type {
@@ -487,6 +487,8 @@ export interface ApiDecisaoResultado {
 
 export interface ApiMatchesSdk {
   list: (params?: { status?: string; limit?: number }) => Promise<ApiLegacySala[]>;
+  /** Histórico de salas encerradas do usuário logado (Minhas Partidas). */
+  minhas: (params?: { limit?: number }) => Promise<ApiLegacySala[]>;
   /** Listagem enxuta da vitrine (`view=card`), usada no polling do /jogar. */
   listCards: (params?: { status?: string; limit?: number }) => Promise<ApiLegacySala[]>;
   detail: (id: number | string) => Promise<ApiLegacySala>;
@@ -587,14 +589,6 @@ export interface ApiProfileMe {
   termosAceitos?: boolean;
   profile: ApiLegacyProfile;
   riotAccount: ApiLegacyRiotAccount | null;
-  discordAccount?: { providerAccountId?: string; discord_tag?: string | null } | null;
-}
-
-/** Resposta do estado OAuth do Discord (CSRF token, TTL 10min na API). */
-export interface ApiDiscordStateResult {
-  valid: boolean;
-  reason?: string;
-  userId?: string;
 }
 
 /** Ponto da série financeira do painel admin (ADR-032). Valores em R$. */
@@ -994,6 +988,9 @@ export const api = {
   matches: {
     list: (params: { status?: string; limit?: number } = {}) =>
       api.get<ApiLegacySala[]>(`/matches${qs({ status: params.status, limit: params.limit })}`),
+    /** Histórico de salas encerradas do usuário logado (Minhas Partidas). */
+    minhas: (params: { limit?: number } = {}) =>
+      api.get<ApiLegacySala[]>(`/matches/minhas${qs({ limit: params.limit })}`),
     /**
      * Listagem enxuta da vitrine (/jogar): 3 queries fixas no servidor e sem
      * jogadores/draft/código. Usada no polling de 15s.
@@ -1057,8 +1054,6 @@ export const api = {
     updateRiot: (data: ApiRiotUpdate) => api.put<ApiLegacyRiotAccount>("/profiles/me/riot", data),
     /** Desvincula a conta Riot do usuário logado. */
     unlinkRiot: () => api.delete<{ ok: boolean }>("/profiles/me/riot"),
-    /** Discord vinculado do usuário logado (tag de exibição). */
-    getDiscord: () => api.get<{ discord_tag: string | null }>("/profiles/me/discord"),
   },
 
   players: {
@@ -1093,16 +1088,6 @@ export const api = {
         finalizadoEm: string | null;
         resultado: { verificadas: number; atualizadas: number; erros: number } | null;
       }>("/players/refresh-elos/status"),
-  },
-
-  discord: {
-    /** Gera um estado OAuth (CSRF token) para vincular Discord. */
-    createState: () => api.post<{ state: string }>("/discord/state"),
-    /** Valida o estado OAuth (não usado e dentro do TTL). */
-    getState: (state: string) => api.get<ApiDiscordStateResult>(`/discord/state/${state}`),
-    /** Vincula o Discord do usuário logado (identidade + tag). */
-    link: (data: { state: string; discordId: string; discordTag: string }) =>
-      api.post<{ ok: boolean }>("/discord/link", data),
   },
 
   streams: {

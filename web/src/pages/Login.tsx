@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // ── URLs CONSTANTES (não mudam, não precisam de query) ──
-// Servidas do volume local (mesmos bytes que o Supabase entregava) — nenhuma
+// Servidas do volume local - nenhuma
 // imagem do site depende mais de storage externo.
 const LOGO_URL = '/uploads/public-images/logo-m7.png';
 const YASUO_URL = '/uploads/public-images/Yasuo1.webp';
@@ -78,7 +78,7 @@ export default function Login() {
     try {
       // Recuperação por e-mail está fora do ar por decisão de escopo: o servidor
       // próprio (ADR-011) não tem provedor de envio configurado, e o GoTrue do
-      // Supabase deixou de ser a fonte da sessão. O formulário continua aqui
+      // A API própria é a fonte da sessão. O formulário continua aqui
       // para não alterar o layout — só a ação mudou.
       throw new Error(
         'Recuperação de senha por e-mail está temporariamente indisponível. Fale com o suporte.'

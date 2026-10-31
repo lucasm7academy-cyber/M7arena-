@@ -12,7 +12,6 @@
     "images:optimize": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.38.0",
     "react": "^19.0.0",
@@ -28,7 +27,6 @@
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "sharp": "^0.35.3",
-    "supabase": "^2.91.1",
     "tailwindcss": "^4.1.14",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

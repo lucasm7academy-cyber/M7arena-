@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, Rea
 import { api, ApiUser } from '../lib/api';
 
 /**
- * Forma compatível com o `User` do Supabase que as telas já consomem.
+ * Forma compatível com o usuário que as telas já consomem.
  *
  * O app inteiro usa só três coisas: `user.id` (42 lugares), `user.email` (4) e
  * `user_metadata.{full_name,avatar_url}` (5, todos no LayoutWrapper). Manter

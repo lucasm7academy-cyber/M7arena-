@@ -100,8 +100,8 @@ const CampeonatoDetalhesInner = ({
     handleUpdateThemeColor,
     handleAbrirChaveamento,
     handleDeleteMatch,
-    saveToSupabase,
-    saveBracketToSupabase,
+    salvarCampeonato,
+    salvarBracket,
     setCampeonato,
   } = useCampeonato();
 
@@ -419,9 +419,9 @@ const CampeonatoDetalhesInner = ({
                               if (window.confirm("Resetar o chaveamento? Isso limpa todos os times preenchidos na chave.")) {
                                 const reset = { ...campeonato, chavesSorteados: false };
                                 setCampeonato(reset);
-                                saveToSupabase(reset);
+                                salvarCampeonato(reset);
                                 setBracketData(INITIAL_BRACKET_DATA);
-                                saveBracketToSupabase(INITIAL_BRACKET_DATA);
+                                salvarBracket(INITIAL_BRACKET_DATA);
                               }
                             }}
                             className="px-5 py-3 font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 cursor-pointer rounded-xl"

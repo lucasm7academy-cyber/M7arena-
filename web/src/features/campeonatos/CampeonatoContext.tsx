@@ -92,8 +92,8 @@ export interface CampeonatoContextType {
   setBracketData: (v: any) => void;
   setExpandedTeam: (v: string | null) => void;
   setSelectedGroupFilter: (v: string) => void;
-  saveToSupabase: (updated: any) => void;
-  saveBracketToSupabase: (bracket: any) => void;
+  salvarCampeonato: (updated: any) => void;
+  salvarBracket: (bracket: any) => void;
   handleRegisterSubmit: (e: React.FormEvent) => Promise<void>;
   handleTabClick: (tabId: string) => void;
   handleBracketScoreChange: (type: string, side: string, round: string, index: number, teamSlot: "s1" | "s2" | "winner" | "t1" | "t2", delta: any) => void;
@@ -193,7 +193,7 @@ export function CampeonatoProvider({
   // verdade: escalares + times inscritos + as seções já baixadas. Sem esse
   // recorte, um save de cor tema (aba Configurações) mandaria `cronograma: []`/
   // `grupos: {}` e apagaria o campeonato inteiro.
-  const saveToSupabase = (updated: any) => {
+  const salvarCampeonato = (updated: any) => {
     const secaoCarregada = (section: TournamentSection) => loadedSectionsRef.current.has(section);
     const payload: any = {
       titulo: updated.titulo,
@@ -239,8 +239,8 @@ export function CampeonatoProvider({
       });
   };
 
-  // Helper: save bracket to Supabase — agora reporta erros ao admin.
-  const saveBracketToSupabase = (bracket: any) => {
+  // Helper: salvar bracket na API - agora reporta erros ao admin.
+  const salvarBracket = (bracket: any) => {
     api.tournaments.update(id, { bracket_data: bracket })
       .then(() => invalidateTournament(id))
       .catch((error: any) => {
@@ -421,7 +421,7 @@ export function CampeonatoProvider({
       match.winner = null;
       match.status = undefined;
       match.pdl_aplicado = false;
-      saveBracketToSupabase(next);
+      salvarBracket(next);
       setBracketData(next);
       return;
     }
@@ -450,7 +450,7 @@ export function CampeonatoProvider({
       match.winner = null;
     }
 
-    saveBracketToSupabase(next);
+    salvarBracket(next);
     setBracketData(next);
   };
 
@@ -733,7 +733,7 @@ export function CampeonatoProvider({
     setIsRegistered(jaInscrito);
   }, [campeonato, perfilMyTeam]);
 
-  // Fallback: carrega time do usuário direto do Supabase quando perfilMyTeam ainda
+  // Fallback: carrega time do usuário direto da API quando perfilMyTeam ainda
   // não está disponível (ex: usuário sem Riot account vinculada, contexto ainda carregando)
   useEffect(() => {
     if (!campeonato || !user || perfilMyTeam) return; // só roda se não tiver via contexto
@@ -931,7 +931,7 @@ export function CampeonatoProvider({
     };
 
     setCampeonato(updated);
-    saveToSupabase(updated);
+    salvarCampeonato(updated);
   };
 
   // Abre o chaveamento para preenchimento MANUAL (sem sorteio automático).
@@ -941,7 +941,7 @@ export function CampeonatoProvider({
     if (!isAdmin) return;
     const updated = { ...campeonato, chavesSorteados: true, status: "em_andamento" };
     setCampeonato(updated);
-    saveToSupabase(updated);
+    salvarCampeonato(updated);
     // handleTabClick baixa a seção da chave; setActiveTab direto deixaria a aba
     // vazia até um reload.
     handleTabClick("bracket");
@@ -1080,7 +1080,7 @@ export function CampeonatoProvider({
       fillSide(initialBracket.side.right, crossSeededTeams.slice(half));
     }
 
-    saveBracketToSupabase(initialBracket);
+    salvarBracket(initialBracket);
     setBracketData(initialBracket);
 
     // Chave é 100% VISUAL: não cria nenhum jogo no cronograma. Apenas remove
@@ -1097,7 +1097,7 @@ export function CampeonatoProvider({
       cronograma: newCronograma,
     };
     setCampeonato(updated);
-    saveToSupabase(updated);
+    salvarCampeonato(updated);
     // Salva cronograma via API própria (substitui a RPC atualizar_cronograma_campeonato)
     api.tournaments.atualizarCronograma(id, newCronograma)
       .then(() => invalidateTournament(id))
@@ -1288,7 +1288,7 @@ export function CampeonatoProvider({
             }
 
             const updated = advanceTeamsInBracket(nextBracket, matchInBracket, targetType, targetRound, targetIdx, targetSide, teamsCount);
-            saveBracketToSupabase(updated);
+            salvarBracket(updated);
             return updated;
           }
           return prevBracket;
@@ -1420,7 +1420,7 @@ export function CampeonatoProvider({
   const handleUpdateThemeColor = (color: string) => {
     const updatedCampeonato = { ...campeonato, themeColor: color };
     setCampeonato(updatedCampeonato);
-    saveToSupabase(updatedCampeonato);
+    salvarCampeonato(updatedCampeonato);
   };
 
   const tabs = React.useMemo(
@@ -1445,7 +1445,7 @@ export function CampeonatoProvider({
     });
     const updatedCampeonato = { ...campeonato, cronograma: updatedCronograma };
     setCampeonato(updatedCampeonato);
-    saveToSupabase(updatedCampeonato);
+    salvarCampeonato(updatedCampeonato);
   };
 
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
@@ -1536,9 +1536,9 @@ export function CampeonatoProvider({
     if (!window.confirm("Resetar o chaveamento? Isso limpa todos os times preenchidos na chave.")) return;
     const reset = { ...campeonato, chavesSorteados: false };
     setCampeonato(reset);
-    saveToSupabase(reset);
+    salvarCampeonato(reset);
     setBracketData(INITIAL_BRACKET_DATA);
-    saveBracketToSupabase(INITIAL_BRACKET_DATA);
+    salvarBracket(INITIAL_BRACKET_DATA);
   };
 
   const value: CampeonatoContextType = {
@@ -1600,8 +1600,8 @@ export function CampeonatoProvider({
     setBracketData,
     setExpandedTeam,
     setSelectedGroupFilter,
-    saveToSupabase,
-    saveBracketToSupabase,
+    salvarCampeonato,
+    salvarBracket,
     handleRegisterSubmit,
     handleTabClick,
     handleBracketScoreChange,

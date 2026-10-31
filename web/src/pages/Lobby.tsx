@@ -1251,7 +1251,7 @@ const Home = () => {
               n: '02',
               icon: Users,
               title: 'Monte seu Time',
-              desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento — sem time, a gente ajuda a montar.',
+              desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de Times — sem time, a gente ajuda a montar.',
               color: '#00F0FF',
               bgImage: '/images/poro_step2.webp',
             },
@@ -1528,7 +1528,7 @@ const Home = () => {
             },
             {
               quote:
-                'Encontrei meus parceiros de rotas pelo recrutamento da plataforma. Hoje jogamos torneios semanais da ACE e-Sports e lutamos pelo topo do Hall da Fama!',
+                'Encontrei meus parceiros de rotas pelos times da plataforma. Hoje jogamos torneios semanais da ACE e-Sports e lutamos pelo topo do Hall da Fama!',
               name: 'Blefy',
               role: 'Capitão • ACE e-Sports (ACE)',
               elo: 'DIAMANTE I',
@@ -1724,7 +1724,7 @@ const Home = () => {
             {
               id: 2,
               q: 'Preciso ter um time fechado de 5 jogadores para competir?',
-              a: 'Não! Você pode entrar sozinho nas salas rápidas 1v1 ou publicar seu perfil no nosso painel de Recrutamento — capitães procuram reforços lá todos os dias. Sem time? A M7 ajuda a montar o seu.',
+              a: 'Não! Você pode entrar sozinho nas salas rápidas 1v1 ou entrar em um time pelo painel de Times — capitães procuram reforços lá todos os dias. Sem time? A M7 ajuda a montar o seu.',
             },
             {
               id: 3,

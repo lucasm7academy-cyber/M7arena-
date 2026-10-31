@@ -7,7 +7,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "seed": "node scripts/seed.js",
+    "fixture": "node scripts/fixture.js",
     "render": "node scripts/render-only.js",
     "test": "node scripts/smoke-test.js"
   },

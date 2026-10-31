@@ -4,12 +4,9 @@ node_modules/
 .pnp.js
 
 # build
-.next/
-out/
 dist/
 build/
 *.tsbuildinfo
-next-env.d.ts
 
 # ambiente — NUNCA versione segredo
 .env
@@ -23,11 +20,9 @@ docs/.status.lock
 docs/*.tmp
 *.tmp
 
-# dados e dumps da migração (contêm dados pessoais de usuários reais)
+# dados e dumps (contêm dados pessoais de usuários reais)
 dump/
 backup/
-scripts/migrate/data/
-scripts/migrate/transformed/
 *.dump
 *.sql.gz
 *.tar.gz
@@ -36,6 +31,7 @@ m7arena.tar.gz
 # uploads locais
 uploads/
 public/uploads/
+web/public/uploads/
 
 # logs
 *.log

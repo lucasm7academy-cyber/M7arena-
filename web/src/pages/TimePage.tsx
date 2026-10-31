@@ -1377,7 +1377,7 @@ export default function TimePage() {
 
     // ✅ Schema novo: time_membros enxuto (tipo, lane, is_capitao).
     // Dados pesados (riot_id, elo, balance, ícone) vêm via JOIN com contas_riot + wallets.
-    // A API devolve o mesmo shape que o Supabase entregava (times + time_membros).
+    // A API devolve o mesmo shape legado (times + time_membros).
     let t: any;
     try {
       t = await api.teams.detail(id);
@@ -1831,98 +1831,105 @@ export default function TimePage() {
               </span>
             </div>
 
-            <div className="p-5 space-y-2">
+            <div className="divide-y divide-white/5">
               {ROLE_ORDER.map(role => {
                 const membrosRole = time.membros.filter(m => m.role === role);
                 const cfg = ROLE_CONFIG[role];
 
-                if (membrosRole.length === 0) {
-                  return (
-                    <div
-                      key={role}
-                      className="rounded-xl border border-white/5 bg-[#0c0c10]/40 p-3 flex items-center gap-3 opacity-30"
-                    >
-                      <div className="flex items-center gap-2 w-16 shrink-0">
-                        <img src={cfg.img} alt={cfg.label} className="w-4 h-4 object-contain opacity-40" />
-                        <span className={`text-[10px] font-black uppercase ${cfg.color}`}>{cfg.label}</span>
-                      </div>
-                      <span className="text-white/20 text-xs font-semibold uppercase tracking-wider">Vaga aberta</span>
-                    </div>
-                  );
-                }
+                // Só as 5 posições principais mostram "vaga aberta". Reserva e coach
+                // só aparecem quando existem de fato — não inventam vaga vazia.
+                const abreVaga = role !== 'RES' && role !== 'COACH' && membrosRole.length === 0;
 
-                return membrosRole.map((m, idx) => (
-                  <motion.div
-                    key={m.userId || m.riotId}
-                    whileHover={{ scale: 1.005 }}
-                    onClick={() => handlePlayerClick(m)}
-                    className="rounded-xl border border-white/5 bg-[#0c0c10] hover:bg-[#121218] hover:border-white/10 p-3 flex items-center gap-3 transition-colors cursor-pointer group"
-                  >
-                    {/* Role */}
-                    <div className="flex items-center gap-2 w-16 shrink-0">
-                      <img src={cfg.img} alt={cfg.label} className="w-4 h-4 object-contain" />
-                      <span className={`text-[10px] font-black uppercase ${cfg.color}`}>
-                        {role === 'RES' ? `R${idx + 1}` : cfg.label}
-                      </span>
-                    </div>
+                return (
+                  <React.Fragment key={role}>
+                    {membrosRole.map((m, idx) => (
+                      <div
+                        key={m.userId || m.riotId}
+                        onClick={() => handlePlayerClick(m)}
+                        className="flex items-center gap-3 md:gap-4 px-4 md:px-6 py-2.5 hover:bg-white/[0.035] transition-colors cursor-pointer group"
+                      >
+                        {/* Role */}
+                        <div className="flex items-center gap-2 w-[62px] md:w-[70px] shrink-0">
+                          <img src={cfg.img} alt={cfg.label} className="w-4 h-4 object-contain" />
+                          <span className={`text-[10px] font-black uppercase ${cfg.color}`}>
+                            {role === 'RES' ? `R${idx + 1}` : cfg.label}
+                          </span>
+                        </div>
 
-                    {/* Avatar */}
-                    {m.iconeId ? (
-                      <div className="w-9 h-9 rounded-lg overflow-hidden border border-white/10 bg-[#08080a] flex items-center justify-center shrink-0">
-                        <img
-                          src={buildProfileIconUrl(m.iconeId)}
-                          alt={m.riotId}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          width={36}
-                          height={36}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-9 h-9 rounded-lg border border-white/10 bg-[#08080a] flex items-center justify-center shrink-0">
-                        <Users className="w-4 h-4 text-white/30" />
-                      </div>
-                    )}
+                        {/* Avatar */}
+                        {m.iconeId ? (
+                          <div className="w-9 h-9 rounded-lg overflow-hidden border border-white/10 bg-[#08080a] flex items-center justify-center shrink-0">
+                            <img
+                              src={buildProfileIconUrl(m.iconeId)}
+                              alt={m.riotId}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              width={36}
+                              height={36}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-9 h-9 rounded-lg border border-white/10 bg-[#08080a] flex items-center justify-center shrink-0">
+                            <Users className="w-4 h-4 text-white/30" />
+                          </div>
+                        )}
 
-                    {/* Nome + cargo */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-white font-bold text-xs truncate">{m.riotId.split('#')[0]}</span>
-                        {m.isLeader && (
-                          <span
-                            className="text-[8px] font-black px-1.5 py-0.5 rounded-full shrink-0 border"
-                            style={{ color: time.gradientFrom, borderColor: `${time.gradientFrom}60`, background: `${time.gradientFrom}18` }}
+                        {/* Nome + cargo */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-white font-bold text-xs md:text-[13px] truncate">{m.riotId.split('#')[0]}</span>
+                            {m.isLeader && (
+                              <span
+                                className="text-[8px] font-black px-1.5 py-0.5 rounded-full shrink-0 border"
+                                style={{ color: time.gradientFrom, borderColor: `${time.gradientFrom}60`, background: `${time.gradientFrom}18` }}
+                              >
+                                CAP
+                              </span>
+                            )}
+                            {m.puuid && <ShieldCheck className="w-3 h-3 text-green-400 shrink-0" />}
+                          </div>
+                          <span className="text-white/30 text-[10px]">{m.riotId.split('#')[1] ? `#${m.riotId.split('#')[1]}` : ''}</span>
+                        </div>
+
+                        {/* Elo */}
+                        {getEloRankIcon(m.elo) ? (
+                          <div
+                            className="flex items-center justify-center shrink-0 w-8 h-8 cursor-help"
+                            title={eloDisplay(m.elo)}
                           >
-                            CAP
+                            <img
+                              src={getEloRankIcon(m.elo)!}
+                              alt={eloDisplay(m.elo)}
+                              className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] hover:scale-110 transition-transform"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-white/25 text-[10px] font-black uppercase tracking-wider shrink-0">
+                            {eloDisplay(m.elo)}
                           </span>
                         )}
-                        {m.puuid && <ShieldCheck className="w-3 h-3 text-green-400 shrink-0" />}
-                      </div>
-                      <span className="text-white/30 text-[10px]">{m.riotId.split('#')[1] ? `#${m.riotId.split('#')[1]}` : ''}</span>
-                    </div>
 
-                    {/* Elo */}
-                    {getEloRankIcon(m.elo) ? (
-                      <div
-                        className="flex items-center justify-center shrink-0 w-8 h-8 cursor-help"
-                        title={eloDisplay(m.elo)}
-                      >
-                        <img
-                          src={getEloRankIcon(m.elo)!}
-                          alt={eloDisplay(m.elo)}
-                          className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] hover:scale-110 transition-transform"
-                          loading="lazy"
-                        />
+                        <ChevronRight className="w-4 h-4 text-white/20 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                       </div>
-                    ) : (
-                      <span className="text-white/25 text-[10px] font-black uppercase tracking-wider shrink-0">
-                        {eloDisplay(m.elo)}
-                      </span>
+                    ))}
+
+                    {abreVaga && (
+                      <div className="flex items-center gap-3 md:gap-4 px-4 md:px-6 py-2.5 opacity-40">
+                        <div className="flex items-center gap-2 w-[62px] md:w-[70px] shrink-0">
+                          <img src={cfg.img} alt={cfg.label} className="w-4 h-4 object-contain opacity-40" />
+                          <span className={`text-[10px] font-black uppercase ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
+                        </div>
+                        <div className="w-9 h-9 rounded-lg border border-dashed border-white/15 flex items-center justify-center shrink-0">
+                          <Plus className="w-3.5 h-3.5 text-white/30" />
+                        </div>
+                        <span className="text-white/30 text-[11px] font-bold uppercase tracking-[0.12em]">Vaga aberta</span>
+                      </div>
                     )}
-
-                    <ChevronRight className="w-4 h-4 text-white/20 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                  </motion.div>
-                ));
+                  </React.Fragment>
+                );
               })}
             </div>
           </motion.div>

@@ -56,7 +56,6 @@ const SalaTimeVsTime = lazyWithRetry(() => import("./features/sala-time-vs-time/
 // da série (vagas de time, PRONTO, escolha de lado, draft Fearless, código, live).
 const SalaCampeonato = lazyWithRetry(() => import("./features/sala-campeonato/SalaCampeonato"));
 const Vincular = lazyWithRetry(() => import("./pages/Vincular"));
-const DiscordCallback = lazyWithRetry(() => import("./pages/DiscordCallback"));
 const Perfil = lazyWithRetry(() => import("./pages/perfil"));
 const Equipes = lazyWithRetry(() => import("./pages/equipes"));
 const Players = lazyWithRetry(() => import("./pages/players"));
@@ -71,7 +70,6 @@ const Campeonatos = lazyWithRetry(() => import('./pages/campeonatos'));
 const CampeonatoDetalhes = lazyWithRetry(() => import('./pages/CampeonatoDetalhes'));
 const CreateCampPage = lazyWithRetry(() => import('./pages/createCampPage'));
 const MinhasPartidas = lazyWithRetry(() => import("./pages/MinhasPartidas"));
-const Recrutamento = lazyWithRetry(() => import("./pages/recrutamento"));
 const QuemSomos = lazyWithRetry(() => import("./pages/QuemSomos"));
 
 // ✅ Componente para inicializar o cache do DDragon (seguro)
@@ -158,11 +156,11 @@ class RootErrorBoundary extends React.Component<{ children: React.ReactNode }, {
  * RootRedirect
  *
  * Na rota "/", verifica se a URL contém parâmetros OAuth (?code=, #access_token=, etc.).
- * Se sim, mostra um loading e deixa o OAuthCallbackHandler / Supabase processar o callback.
+ * Se sim, mostra um loading e deixa o OAuthCallbackHandler / API processar o callback.
  * Se não, redireciona normalmente para /lobby.
  *
  * Isso resolve o problema de o <Navigate to="/lobby"> descartar o ?code= antes
- * do Supabase trocar o authorization code por uma sessão.
+ * de a API trocar o authorization code por uma sessão.
  */
 function RootRedirect() {
   const { user, isLoading } = useAuth();
@@ -239,8 +237,6 @@ export default function App() {
               <Route path="/campeonatos" element={<RouteWithSuspense element={<Campeonatos />} />} />
               <Route path="/campeonato/:id" element={<RouteWithSuspense element={<CampeonatoDetalhes />} />} />
               <Route path="/tutorial" element={<RouteWithSuspense element={<Tutorial />} />} />
-              <Route path="/recrutamento" element={<RouteWithSuspense element={<Recrutamento />} />} />
-              <Route path="/auth/discord/callback" element={<RouteWithSuspense element={<DiscordCallback />} />} />
 
               {/* Rotas Privadas (Necessitam de Conta) */}
               {/* `/jogar` é vitrine pública (design v3 §2.1): visitante vê salas e

@@ -815,10 +815,6 @@ const Jogar = () => {
 
   const handleHeroClick = () => {
     if (!currentSlide.actionLink) return;
-    if (currentSlide.actionLink === '/sejavip') {
-      window.dispatchEvent(new Event('m7:open-vip'));
-      return;
-    }
     if (currentSlide.actionLink === '/aposta-individual') {
       // Mesma verificação do card de aposta: precisa logar e ter
       // conta Riot vinculada para apostar (regra de negócio no servidor).

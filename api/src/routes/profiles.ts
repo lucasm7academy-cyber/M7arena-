@@ -5,7 +5,6 @@ import {
   users,
   userSessions,
   userRoles,
-  userIdentities,
   userPayoutInfo,
 } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
@@ -99,14 +98,9 @@ profilesRouter.get("/me", async (req, res) => {
       return res.status(401).json({ error: "Não autenticado" });
     }
 
-    const [roles, riotAccount, discordIdentity, advertencias] = await Promise.all([
+    const [roles, riotAccount, advertencias] = await Promise.all([
       getRoles(user.id),
       getRiotAccount(user.id),
-      db
-        .select()
-        .from(userIdentities)
-        .where(and(eq(userIdentities.userId, user.id), eq(userIdentities.provider, "discord")))
-        .limit(1),
       contarAdvertenciasAtivas(db, user.id),
     ]);
 
@@ -129,9 +123,6 @@ profilesRouter.get("/me", async (req, res) => {
       termosAceitos: !!user.termosAceitosEm,
       profile: toLegacyProfile(user, payout),
       riotAccount: toLegacyRiot(riotAccount),
-      discordAccount: discordIdentity?.length
-        ? { providerAccountId: discordIdentity[0].providerAccountId, discord_tag: socials.discord ?? null }
-        : null,
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar perfil" });
@@ -149,20 +140,6 @@ profilesRouter.get("/me/riot", async (req, res) => {
     return res.json(toLegacyRiot(riotAccount));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar conta Riot" });
-  }
-});
-
-// GET /api/profiles/me/discord - Discord vinculado do usuário logado
-profilesRouter.get("/me/discord", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-    const socials = (user.socials as Record<string, string>) || {};
-    return res.json({ discord_tag: socials.discord ?? null });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao buscar Discord" });
   }
 });
 

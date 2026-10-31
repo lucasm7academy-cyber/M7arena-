@@ -85,7 +85,7 @@ export async function loadState() {
   } catch (err) {
     if (err.code === "ENOENT") {
       throw new Error(
-        `Estado não encontrado em ${STATE_PATH}. Rode 'node mcp/status-server/scripts/seed.js' para criar.`
+        `Estado não encontrado em ${STATE_PATH}. O estado canônico é versionado em docs/project-state.json — restaure do git.`
       );
     }
     throw err;

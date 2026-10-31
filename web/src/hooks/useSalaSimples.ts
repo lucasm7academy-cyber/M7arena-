@@ -276,7 +276,7 @@ export function useSalaSimples(
     // ── REALTIME ─────────────────────────────────────
     // O socket próprio (P4) só avisa "a sala mudou"; o estado completo vem do
     // GET /api/matches/:id (que revalida permissão no servidor). Substitui o
-    // supabase.channel (ADR-009): as mensagens de transição de estado passam a
+    // canal de tempo real (ADR-009): as mensagens de transição de estado passam a
     // ser derivadas comparando o estado antes/depois do refetch.
     const { enviarChat } = useSalaRealtime(salaId, {
         onUpdate: async () => {
