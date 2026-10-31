@@ -76,9 +76,9 @@ const HERO_PADRAO = {
 };
 
 const HERO_HALLOWEEN = {
-  eyebrow: 'M7 ARENA • Campeonato Halloween 2026',
-  titulo: ['Copa do Halloween', '2026 — inscrições abertas'],
-  texto: 'Torneio 5v5 em chaves, premiação em Pix e finais transmitidas ao vivo. Garanta a vaga do seu time antes de fechar.',
+  eyebrow: 'M7 ARENA • INSCRIÇÕES ABERTAS',
+  titulo: ['Copa do Halloween', '2026'],
+  texto: 'Torneio 5v5 em chaves, premiação em Pix e finais transmitidas ao vivo. Garanta a vaga do seu time.',
   primario: {
     label: 'Inscrever meu time',
     href: 'https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460',
