@@ -126,7 +126,7 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
   return (
     <div className="flex flex-col items-center gap-[0.3vmin]">
       <div className={`
-        relative w-[6vmin] h-[6vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
+        relative w-[7.2vmin] h-[7.2vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
         ${jaBaniu ? 'border-red-600/80 shadow-[0_0_8px_rgba(220,38,38,0.3)]' : 'border-white/15'}
       `}>
         {champ ? (
@@ -144,7 +144,7 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
             className="w-full h-full object-cover grayscale opacity-45" referrerPolicy="no-referrer" />
         ) : (
           <div className={jaBaniu ? 'opacity-40' : 'opacity-15'}>
-            <Ban className="w-[3.6vmin] h-[3.6vmin] text-white" />
+            <Ban className="w-[4.3vmin] h-[4.3vmin] text-white" />
           </div>
         )}
 
@@ -895,7 +895,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           Sala (SÓ adm), Verificar Partida (só na tela ao vivo) e o mudo; no
           canto oposto, a seta de sair da sala. Absoluto de propósito: não
           empurra a linha de bans nem muda a altura dela. */}
-      <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
+      <div className="absolute bottom-[2vmin] right-[4vmin] z-50 flex items-center gap-[0.8vmin]">
         {acoesTopo?.resetar && (
           <button
             type="button"
@@ -992,8 +992,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         </button>
       )}
 
-      {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul) */}
-      <div className="absolute top-[5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
+      {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul).
+          Fica alto, encostado na faixa do timer (pedido do usuário 31/10). */}
+      <div className="absolute top-[2.5vmin] left-0 right-0 flex justify-between px-[4vmin] z-40">
         {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
             const ehA = equipe === 'A';
             const dataSide = ehA ? 'blue' : 'red';
@@ -1003,8 +1004,8 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
               : null;
             return (
               <div key={equipe} className="flex flex-col gap-[0.5vmin] items-start">
-                <span className="text-[1vmin] font-bold text-white/20 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
-                <div className="flex flex-row gap-[1vmin]">
+                <span className="text-[1.1vmin] font-bold text-white/25 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
+                <div className="flex flex-row gap-[0.9vmin]">
                   {[...Array(maxBans)].map((_, i) => (
                     <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
                       preview={i === bans.length ? previaBan : null}
