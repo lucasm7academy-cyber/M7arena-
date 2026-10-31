@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 05:25 — por `deepseek`
+**Última atualização:** 31/10/2026 05:34 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 05:34 | deepseek | Lobby/hero: imagem centralizada de verdade — troquei object-[center_12%] por object-center e ajustei o zoom para scale-96 (levemente reduzido, sem barras visiveis). Arte do Halloween continua; modelo padrao (video do Lucian) segue salvo em HERO_PADRAO/HERO_EDICAO. Commit 6fda571, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 31/10/2026 05:25 | deepseek | Lobby: hero agora tem DOIS modelos trocaveis por HERO_EDICAO em Lobby.tsx — 'padrao' (texto antigo + video animated-highnoon-lucian.webm, arquivo preservado) e 'halloween' (arte Bruxa da Lua/Copa do Halloween 2026 em webp 1920px, titulo 'Copa do Halloween 2026', CTA 'Inscrever meu time' apontando para https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460 e CTA secundario 'Ver campeonatos'). Imagem com zoom reduzido (scale-95) e object-position 12%. Selo do topo virou 'Halloween 2026'. tsc 0, build ok, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`, `web/public/images/hero-halloween-2026.webp`_ |
 | 31/10/2026 05:12 | deepseek | Ajuste fino da linha do ban: SVG 1px de canto a canto (barra invertida), cobrindo o card todo; nome do campeao mantido. tsc/build ok; web deployado (DraftRoom-agJsbyUU, index-Bkef1JKM). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 05:05 | deepseek | Draft: linha vermelha fina (1,5px) na diagonal no campeao banido + nome do campeao no slot de ban, no padrao dos picks. Rebase sobre os bans alinhados do outro agente; tsc/build ok; web deployado (DraftRoom-JmJ0hsEl, index-BwMw7xSk). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |

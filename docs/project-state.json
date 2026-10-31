@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-10-31T08:25:04.471Z",
+  "updatedAt": "2026-10-31T08:34:51.302Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -347,6 +347,14 @@
       "touched": [
         "web/src/pages/Lobby.tsx",
         "web/public/images/hero-halloween-2026.webp"
+      ]
+    },
+    {
+      "at": "2026-10-31T08:34:51.302Z",
+      "agent": "deepseek",
+      "summary": "Lobby/hero: imagem centralizada de verdade — troquei object-[center_12%] por object-center e ajustei o zoom para scale-96 (levemente reduzido, sem barras visiveis). Arte do Halloween continua; modelo padrao (video do Lucian) segue salvo em HERO_PADRAO/HERO_EDICAO. Commit 6fda571, deploy ok, health 200.",
+      "touched": [
+        "web/src/pages/Lobby.tsx"
       ]
     }
   ]
