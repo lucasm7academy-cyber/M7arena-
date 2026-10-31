@@ -993,9 +993,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       )}
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul).
-          Fica alto, encostado na faixa do timer e CENTRALIZADO (perto do
-          "FASE DE BANS/PICKS") — pedido do usuário 31/10. */}
-      <div className="absolute top-[6vmin] left-1/2 -translate-x-1/2 w-full max-w-[158vmin] flex justify-between px-[1vmin] z-40">
+          Alinhado HORIZONTALMENTE com a bola do time (mesmo px do TeamPanel)
+          para não invadir o grid de campeões — pedido do usuário 31/10. */}
+      <div className="absolute top-[6vmin] inset-x-0 flex justify-between px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] z-40">
         {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
             const ehA = equipe === 'A';
             const dataSide = ehA ? 'blue' : 'red';
@@ -1004,15 +1004,17 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
               ? previewDoTime(ehA)
               : null;
             return (
-              <div key={equipe} className="flex flex-col gap-[0.5vmin] items-start">
-                <span className="text-[1.1vmin] font-bold text-white/25 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
-                <div className="flex flex-row gap-[0.9vmin]">
-                  {[...Array(maxBans)].map((_, i) => (
-                    <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
-                      preview={i === bans.length ? previaBan : null}
-                      active={emTurno && draft.current_team === dataSide && fase === 'ban' && i === bans.length}
-                      jaBaniu={i < bans.length} champions={champions} version={version} />
-                  ))}
+              <div key={equipe} className="w-[25vmin] flex justify-center">
+                <div className="flex flex-col gap-[0.5vmin] items-start">
+                  <span className="text-[1.1vmin] font-bold text-white/25 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
+                  <div className="flex flex-row gap-[0.9vmin]">
+                    {[...Array(maxBans)].map((_, i) => (
+                      <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
+                        preview={i === bans.length ? previaBan : null}
+                        active={emTurno && draft.current_team === dataSide && fase === 'ban' && i === bans.length}
+                        jaBaniu={i < bans.length} champions={champions} version={version} />
+                    ))}
+                  </div>
                 </div>
               </div>
             );
