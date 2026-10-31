@@ -1,6 +1,6 @@
 # AGENTS.md — Regras do projeto M7Arena
 
-**Este arquivo é a fonte única de regras.** Vale para todo agente: Claude, Gemini, DeepSeek, Codex, Cursor, ou qualquer outro. `CLAUDE.md` e `GEMINI.md` apenas apontam para cá.
+**Este arquivo é a fonte única de regras.** Vale para todo agente: Claude, Gemini, DeepSeek, Codex, Cursor, ou qualquer outro.
 
 Você provavelmente está entrando neste projeto sem ter visto nada do que foi conversado antes. Este documento e o MCP `m7-status` existem exatamente por isso.
 
@@ -225,7 +225,6 @@ Se passou, é hora de recortar. Existem arquivos herdados grandes (`CampeonatoDe
 ```
 M7arenaSite/
 ├── AGENTS.md                    ← você está aqui (fonte única de regras)
-├── CLAUDE.md, GEMINI.md         ← ponteiros para este arquivo
 ├── statusdoprojeto.md           ← GERADO. Não edite.
 ├── docs/
 │   ├── project-state.json       ← fonte da verdade do status
