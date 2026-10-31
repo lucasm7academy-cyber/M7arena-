@@ -1,7 +1,7 @@
 /**
  * realtime/index.ts — serviço WebSocket próprio (P4, design v3 §7).
  *
- * Substitui o `supabase.channel` por um WebSocket na VPS que SÓ transporta o id
+ * Substitui o canal do sistema antigo por um WebSocket na VPS que SÓ transporta o id
  * da sala. Princípio: o socket nunca leva dados — ao receber `match_update`, o
  * cliente refaz `GET /api/matches/:id`, que valida permissão de novo no
  * servidor (trava 4).

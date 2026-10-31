@@ -12,7 +12,7 @@ export const paymentsRouter = Router();
 /**
  * Gateway de pagamento de MC (ADR-031) — Mercado Pago, Checkout Transparente,
  * PIX. Substitui as edge functions `create-mercado-pago-order` e
- * `mercado-pago-webhook` do Supabase (BLK-003). O cliente só envia `packageId`;
+ * `mercado-pago-webhook` do sistema antigo (BLK-003). O cliente só envia `packageId`;
  * preço, bônus e crédito são decididos no servidor (invariante 3.3).
  */
 

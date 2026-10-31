@@ -866,7 +866,7 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
 });
 
 // ── POST /api/teams/:id/stats/adjust — ajusta PDL/V/D de um time ───────────
-// Substitui a RPC ajustar_stats_time (admin no Supabase, agora valida cargo na API).
+// Substitui a RPC ajustar_stats_time (admin no sistema antigo, agora valida cargo na API).
 teamsRouter.post("/:id/stats/adjust", async (req, res) => {
   try {
     const user = await getAuthUser(req);

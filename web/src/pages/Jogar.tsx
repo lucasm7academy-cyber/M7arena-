@@ -7,7 +7,6 @@ import {
   Search, Lock, X, LogIn, Plus, SlidersHorizontal,
   Sword, Swords, Gem, Snowflake, Tv2, RefreshCw, Trash2, Gamepad2
 } from 'lucide-react';
-import { GiTwoCoins } from 'react-icons/gi';
 import {
   MODOS_JOGO, OPCOES_ELO, OPCOES_MPOINTS, getModoInfo, getMPointsInfo,
   getMaxJogadoresPorModo, type ModoJogo, type Sala,
@@ -16,10 +15,11 @@ import { criarSala, traduzirErroSala } from '../api/salamod1';
 import { CutCard } from '../components/ui/CutCard';
 import { api } from '../lib/api';
 import { guardarSenhaSala } from '../lib/salaSenhaStore';
-import { rotaDaSala as rotaDaSalaPorModo } from '../lib/rotas';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
+import { rotaDaSala as rotaDaSalaPorModo } from '../lib/rotas';
+import { MCIcon } from '../components/ui/MCIcon';
 import {
   ModalLoginVitrine,
   ModalVincularConta,
@@ -106,11 +106,11 @@ const modosCards = [
   },
   {
     modo: 'time_vs_time' as ModoJogo,
-    titulo: 'TIME vs TIME',
-    subtitulo: 'Competitivo',
+    titulo: 'SCRIM',
+    subtitulo: 'Time vs Time',
     icone: Trophy,
     cor: '#a855f7',
-    stats: 'Clã • Ranking',
+    stats: 'MD3 • Fearless',
     bgImage: '/images/fundoCardTime.webp'
   }
 ];
@@ -166,7 +166,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
       '5v5': '5x5 Personalizada',
       'aram': 'ARAM Personalizada',
       '1v1': '1v1 Personalizada',
-      'time_vs_time': 'Time vs Time Personalizada',
+      'time_vs_time': 'Scrim Personalizado',
     };
 
     const dados: any = {
@@ -665,7 +665,12 @@ const Jogar = () => {
     const matchBusca = sala.nome.toLowerCase().includes(busca.toLowerCase()) ||
                        (sala.descricao || '').toLowerCase().includes(busca.toLowerCase()) ||
                        (sala.codigo || '').includes(busca.toUpperCase());
-    const matchModo = filtroModo === 'todos' || sala.modo === filtroModo;
+    const matchModo =
+      filtroModo === 'todos' ||
+      sala.modo === filtroModo ||
+      // "Scrim" no filtro é a sala de times LIVRE (time_vs_time_livre), que
+      // não está no union ModoJogo — é um modo interno, não um card de criação.
+      (filtroModo === 'time_vs_time' && (sala.modo as string) === 'time_vs_time_livre');
     return matchBusca && matchModo;
   });
 
@@ -673,7 +678,12 @@ const Jogar = () => {
     const matchBusca = sala.nome.toLowerCase().includes(busca.toLowerCase()) ||
                        (sala.descricao || '').toLowerCase().includes(busca.toLowerCase()) ||
                        (sala.codigo || '').includes(busca.toUpperCase());
-    const matchModo = filtroModo === 'todos' || sala.modo === filtroModo;
+    const matchModo =
+      filtroModo === 'todos' ||
+      sala.modo === filtroModo ||
+      // "Scrim" no filtro é a sala de times LIVRE (time_vs_time_livre), que
+      // não está no union ModoJogo — é um modo interno, não um card de criação.
+      (filtroModo === 'time_vs_time' && (sala.modo as string) === 'time_vs_time_livre');
     return matchBusca && matchModo;
   });
 
@@ -778,8 +788,15 @@ const Jogar = () => {
     modo === 'campeonato'
       ? { nome: 'Sala Campeonato', cor: '#FFB700', icone: <Trophy className="w-5 h-5" />, bgImage: '/images/fundoCardTime.webp' }
       : modo === 'time_vs_time_livre'
-        ? { nome: 'Time vs Time', cor: '#00F0FF', icone: <Trophy className="w-5 h-5" />, bgImage: '/images/fundoCardTime.webp' }
+        ? { nome: 'Scrim', cor: '#00F0FF', icone: <Trophy className="w-5 h-5" />, bgImage: '/images/fundoCardTime.webp' }
         : getModoInfo(modo);
+
+  // Sala de scrim antiga nasceu com o nome interno "Time vs Time". O card passa
+  // a mostrar SCRIM sem precisar de migration nos dados já gravados.
+  const nomeDaSala = (sala: any) =>
+    sala.modo === 'time_vs_time_livre' && (!sala.nome || sala.nome === 'Time vs Time')
+      ? 'Scrim'
+      : sala.nome;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -931,9 +948,12 @@ const Jogar = () => {
                     <h3 className="relative z-10 text-white font-black text-lg uppercase tracking-tight mb-1 group-hover:text-[#FFB700] transition-colors">{card.titulo}</h3>
                     <p className="relative z-10 text-white/40 text-xs uppercase tracking-widest mb-2 font-medium">{card.subtitulo}</p>
                     
-                    <div className="relative z-10 flex items-center gap-2 mt-auto pt-3 px-3 py-1 bg-white/5 border border-white/10"
+                    <div className="relative z-10 mt-auto p-[1px] bg-white/10"
                       style={{ clipPath: CUT_BADGE }}>
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: card.cor }}>{card.stats}</span>
+                      <div className="flex items-center gap-2 pt-3 px-3 py-1 bg-[#111]"
+                        style={{ clipPath: CUT_BADGE_INNER }}>
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: card.cor }}>{card.stats}</span>
+                      </div>
                     </div>
                     
                     <div className="relative z-10 mt-4 text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-[#FFB700] transition-colors">
@@ -983,7 +1003,7 @@ const Jogar = () => {
                   <option value="5v5" className="bg-[#09090c]">5v5 Clássico</option>
                   <option value="aram" className="bg-[#09090c]">ARAM</option>
                   <option value="1v1" className="bg-[#09090c]">1v1</option>
-                  <option value="time_vs_time" className="bg-[#09090c]">Time vs Time</option>
+                  <option value="time_vs_time" className="bg-[#09090c]">Scrim</option>
                 </select>
               </div>
             </div>
@@ -1024,7 +1044,7 @@ const Jogar = () => {
               </div>
             ) : (
               salasFiltradas.map((sala) => {
-                const modoInfo = getModoInfo(sala.modo);
+                const modoInfo = modoInfoDaSala(sala.modo);
                 const mpInfo = getMPointsInfo(sala.mpoints);
                 const estaCheia = (sala.jogadores || []).length >= sala.maxJogadores;
                 const jaEsta = usuarioAtual
@@ -1098,7 +1118,7 @@ const Jogar = () => {
                           )}
                         </div>
                         
-                        <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-[#FFB700] transition-colors">{sala.nome}</h3>
+                        <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-[#FFB700] transition-colors">{nomeDaSala(sala)}</h3>
                         <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
                         
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -1138,17 +1158,28 @@ const Jogar = () => {
                                 entrarNaSala(sala);
                               }
                             }}
-                            className={`w-full py-3 font-black text-sm uppercase transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                            className={`group/entrar w-full p-[1px] font-black text-sm uppercase transition-all cursor-pointer ${
                               jaEsta
-                                ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30'
+                                ? 'bg-green-500/30'
                                 : estaCheia
-                                ? 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
-                                : 'bg-[#FFB700] hover:bg-[#e0a000] text-black shadow-[0_0_20px_-5px_rgba(255,183,0,0.4)]'
+                                ? 'bg-white/10 cursor-not-allowed'
+                                : 'bg-[#FFB700] hover:bg-[#e0a000]'
                             }`}
                             style={{ clipPath: CUT_BUTTON }}
                           >
-                            <LogIn className="w-4 h-4" />
-                            {jaEsta ? 'REENTRAR' : estaCheia ? 'SALA CHEIA' : 'ENTRAR'}
+                            <span
+                              className={`w-full flex items-center justify-center gap-2 py-3 ${
+                                jaEsta
+                                  ? 'bg-green-500/20 text-green-400 group-hover/entrar:bg-green-500/30'
+                                  : estaCheia
+                                  ? 'bg-[#0b0b0e] text-white/30'
+                                  : 'bg-[#FFB700] group-hover/entrar:bg-[#e0a000] text-black'
+                              }`}
+                              style={{ clipPath: CUT_BUTTON_INNER }}
+                            >
+                              <LogIn className="w-4 h-4" />
+                              {jaEsta ? 'REENTRAR' : estaCheia ? 'SALA CHEIA' : 'ENTRAR'}
+                            </span>
                           </button>
                         </div>
                       </div>
@@ -1162,14 +1193,18 @@ const Jogar = () => {
           {salasFiltradas.length > 2 && (
             <>
               <button onClick={() => gamesRef.current?.scrollBy({ left: -450, behavior: 'smooth' })}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 p-[1px] bg-white/20 hover:bg-[#FFB700]/50 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
                 style={{ clipPath: CUT_BUTTON }}>
-                <ChevronLeft className="w-5 h-5" />
+                <span className="w-full h-full bg-black flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                  <ChevronLeft className="w-5 h-5" />
+                </span>
               </button>
               <button onClick={() => gamesRef.current?.scrollBy({ left: 450, behavior: 'smooth' })}
-                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 p-[1px] bg-white/20 hover:bg-[#FFB700]/50 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
                 style={{ clipPath: CUT_BUTTON }}>
-                <ChevronRight className="w-5 h-5" />
+                <span className="w-full h-full bg-black flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                  <ChevronRight className="w-5 h-5" />
+                </span>
               </button>
             </>
           )}
@@ -1180,9 +1215,11 @@ const Jogar = () => {
         {/* ============================================ */}
         <div ref={finalizadasRef} className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white/5 border border-white/10 flex items-center justify-center"
+            <div className="w-8 h-8 p-[1px] bg-white/10"
               style={{ clipPath: CUT_BADGE }}>
-              <Trophy className="w-4 h-4 text-[#FFB700]" />
+              <div className="w-full h-full bg-[#111] flex items-center justify-center" style={{ clipPath: CUT_BADGE_INNER }}>
+                <Trophy className="w-4 h-4 text-[#FFB700]" />
+              </div>
             </div>
             <h2 className="text-xl font-black text-white uppercase tracking-widest">Partidas Finalizadas</h2>
           </div>
@@ -1251,7 +1288,7 @@ const Jogar = () => {
                             </div>
                           </div>
 
-                          <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-zinc-200 transition-colors">{sala.nome}</h3>
+                          <h3 className="text-white font-black text-xl uppercase tracking-tight mb-1 line-clamp-1 group-hover/card:text-zinc-200 transition-colors">{nomeDaSala(sala)}</h3>
                           <p className="text-white/40 text-xs uppercase tracking-wider mb-3 line-clamp-2">{sala.descricao}</p>
 
                           <div className="flex flex-wrap gap-2 mb-3">
@@ -1264,7 +1301,7 @@ const Jogar = () => {
                             <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
                               <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1 bg-white/[0.04] text-zinc-300"
                                 style={{ clipPath: CUT_BADGE_INNER }}>
-                                <GiTwoCoins className="w-3 h-3 text-zinc-400" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
+                                <MCIcon className="w-3 h-3 text-zinc-400" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
                               </span>
                             </div>
                             <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
@@ -1313,22 +1350,28 @@ const Jogar = () => {
               {salasFinalizadasFiltradas.length > 2 && (
                 <>
                   <button onClick={() => finalizadasScrollRef.current?.scrollBy({ left: -450, behavior: 'smooth' })}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-5 w-10 h-10 p-[1px] bg-white/20 hover:bg-[#FFB700]/50 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
                     style={{ clipPath: CUT_BUTTON }}>
-                    <ChevronLeft className="w-5 h-5" />
+                    <span className="w-full h-full bg-black flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                      <ChevronLeft className="w-5 h-5" />
+                    </span>
                   </button>
                   <button onClick={() => finalizadasScrollRef.current?.scrollBy({ left: 450, behavior: 'smooth' })}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 bg-black text-white/60 hover:text-white flex items-center justify-center border border-white/20 hover:border-[#FFB700]/50 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-lg cursor-pointer"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-5 w-10 h-10 p-[1px] bg-white/20 hover:bg-[#FFB700]/50 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
                     style={{ clipPath: CUT_BUTTON }}>
-                    <ChevronRight className="w-5 h-5" />
+                    <span className="w-full h-full bg-black flex items-center justify-center" style={{ clipPath: CUT_BUTTON_INNER }}>
+                      <ChevronRight className="w-5 h-5" />
+                    </span>
                   </button>
                 </>
               )}
             </div>
           ) : (
-            <div className="text-center py-10 bg-white/[0.02] border border-dashed border-white/10 p-8"
+            <div className="py-10 p-[1px] bg-white/10"
               style={{ clipPath: CUT_FRAME }}>
-              <p className="text-white/20 text-xs uppercase">Continue descendo para ver as partidas já disputadas</p>
+              <div className="text-center bg-[#08080a] p-8" style={{ clipPath: CUT_FRAME_INNER }}>
+                <p className="text-white/20 text-xs uppercase">Continue descendo para ver as partidas já disputadas</p>
+              </div>
             </div>
           )}
         </div>

@@ -195,10 +195,9 @@ Serviços do compose (`infra/docker-compose.yml`):
 
 ## 8. Dívida técnica conhecida (estado atual)
 
-- Ainda há chamadas diretas ao Supabase em `web/src`:
-  **recrutamento, VIP/edge functions, transmissões, votos e resultados**.
-  `node scripts/verify-swap.js` mostra a contagem por domínio. Não finja que o
-  site já é 100% próprio; ao mexer nesses fluxos, migre para a API.
+- O front não fala mais com o Supabase. `node scripts/verify-swap.js` deve
+  sair com 0 ocorrências; se aparecer chamada nova, é regressão. O histórico
+  da migração continua no status, mas o runtime é 100% da API própria.
 - `CampeonatoDetalhes.tsx` e outros arquivos herdados passam de milhares de
   linhas; recorte ao tocar, sem misturar com mudança de comportamento.
 - Auditoria de segurança das salas em [`auditoria-salas-morpheus.md`](./auditoria-salas-morpheus.md)

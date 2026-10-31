@@ -1,7 +1,7 @@
 /**
  * Cliente HTTP do Mercado Pago (ADR-031) — Checkout Transparente, PIX.
  *
- * Porta a edge function `create-mercado-pago-order` do Supabase (site antigo)
+ * Porta a edge function `create-mercado-pago-order` do sistema antigo
  * para a API própria. Segurança: o access token vive só no servidor, e o
  * webhook NÃO confia no payload do MP — confirma o status na API do MP antes
  * de qualquer crédito.

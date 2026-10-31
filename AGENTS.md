@@ -171,12 +171,12 @@ Toda mudança de schema entra como migration versionada em `db/migrations/`. Um 
 
 Regra que sai disso:
 
-- **Se a tarefa é remover algo, a evidência é a contagem caindo** — não um build passando. Para os domínios que ainda falam com o Supabase existe `node scripts/verify-swap.js`, que conta as ocorrências em `web/src` por domínio e por arquivo.
+- **Se a tarefa é remover algo, a evidência é a contagem caindo** — não um build passando. `node scripts/verify-swap.js` conta qualquer chamada ao Supabase em `web/src`; hoje tem que sair **0**.
 - **Isso não é honra, é portão.** Para todo `app.swap.*`, mais `app.auth.sessao` e `app.storage.uploads`, o próprio MCP roda o `verify-swap.js` quando você chama `set_component_status ... done` e **recusa** se sobrar ocorrência — pelo MCP e pelo CLI. Ver `mcp/status-server/lib/gates.js`.
 - **Criar o endpoint não é fazer o swap.** O swap só existe quando o front deixa de chamar o antigo.
 - **Nunca cite como evidência um arquivo que você escreveu mas não executou**, nem um comando que roda numa parte do sistema diferente da que a tarefa mudou.
 
-> Ainda existem chamadas ao Supabase em `web/src` (recrutamento, VIP/edge functions, transmissões, votos e resultados). Elas são dívida técnica real e estão no status — não finja que o site já é 100% próprio.
+> O front não fala mais com o Supabase: `node scripts/verify-swap.js` deve sair com 0 ocorrências. Se aparecer chamada nova, é regressão — não reintroduza.
 
 ### 3.6 Nenhum arquivo passa de ~400 linhas
 

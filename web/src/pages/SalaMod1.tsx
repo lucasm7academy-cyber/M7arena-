@@ -3,7 +3,6 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Copy, Check, AlertTriangle, LinkIcon, Loader, X, Trash2, Share2, Trophy, ArrowLeft, Swords, Gamepad2, Zap, Shield } from 'lucide-react';
-import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../hooks/useSalaSimples';
 import { useSalaChat } from '../hooks/useSalaChat';
@@ -20,6 +19,7 @@ import { api } from '../lib/api';
 import { lerSenhaSala, limparSenhaSala } from '../lib/salaSenhaStore';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
+import { MCIcon } from '../components/ui/MCIcon';
 
 // ── Componentes visuais ─────────────────────────────
 // Borda cortada no padrão das vagas/cards de campeonato: wrapper com
@@ -215,7 +215,7 @@ ${link}`;
                 onBanir={banir}
                 onPickar={pickar}
                 placar={serie ? { a: serie.placar_a, b: serie.placar_b } : null}
-                serieLabel={serie ? `JOGO ${serie.jogo} · ${String(serie.formato).toUpperCase()} · ${serie.placar_a} - ${serie.placar_b}` : null}
+                serieLabel={serie ? `${String(serie.formato).toUpperCase()} · BLUE ${serie.placar_a} × ${serie.placar_b} RED` : null}
             />
         );
     }
@@ -548,7 +548,7 @@ ${link}`;
                             <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
                                 {ehApostada ? (
                                     <>
-                                        <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
+                                        <MCIcon className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
                                         <span className="text-[#FFB700]">{apostaPorJogador} MC</span>
                                         <span className="text-white/35 text-[9.5px] md:text-[1.05vmin]">• Pote {poteBruto} MC</span>
                                     </>
@@ -699,7 +699,7 @@ ${link}`;
 
                             {ehApostada && (
                                 <span className="text-[#FFB700] pl-2 sm:pl-3 border-l border-white/15 flex items-center gap-1">
-                                    <GiTwoCoins className="w-3.5 h-3.5" /> POTE {poteBruto} MC (+{premioPorJogador} MC)
+                                    <MCIcon className="w-3.5 h-3.5" /> POTE {poteBruto} MC (+{premioPorJogador} MC)
                                 </span>
                             )}
                         </div>
@@ -816,7 +816,7 @@ ${link}`;
                                     {ehApostada ? (
                                         <>
                                             <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                                <GiTwoCoins className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                                <MCIcon className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
                                             </span>
                                             <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-0.5 md:mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
                                                 Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
@@ -914,8 +914,12 @@ ${link}`;
                             >
                                 <span className="text-xs md:text-[1.8vmin] font-black text-[#FFB700] uppercase tracking-[0.5em] md:tracking-[1em]">CONFIRME AGORA</span>
                                 {serie && (
-                                    <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.25em] text-white/70">
-                                        JOGO {serie.jogo} · {String(serie.formato).toUpperCase()} · {serie.placar_a} - {serie.placar_b}
+                                    <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.25em] text-white/70 flex items-center gap-1.5">
+                                        <span className="text-[#FFB700]">{String(serie.formato).toUpperCase()}</span>
+                                        <span className="text-white/35">·</span>
+                                        <span className="text-[#3B82F6]">BLUE {serie.placar_a}</span>
+                                        <span className="text-white/35">×</span>
+                                        <span className="text-[#ef4444]">{serie.placar_b} RED</span>
                                     </span>
                                 )}
                                 <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/50 uppercase tracking-[0.2em] text-center max-w-[280px] md:max-w-[40vmin]">
@@ -1104,7 +1108,7 @@ ${link}`;
                                     }`}>
                                     {usuarioVenceu ? (
                                         <>
-                                            <GiTwoCoins className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
+                                            <MCIcon className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
                                             <span className="text-xs md:text-[1.3vmin] font-black uppercase tracking-wider">
                                                 Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} MC</strong> nesta partida!
                                             </span>
@@ -1139,7 +1143,7 @@ ${link}`;
                                     >
                                         <span className="block bg-[#0A0A0A] px-6 py-3.5 md:px-[4vmin] md:py-[1.8vmin] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs sm:text-sm md:text-[1.3vmin] text-white hover:text-[#FFB700] flex items-center justify-center gap-2 md:gap-[1vmin] transition-colors"
                                             style={{ clipPath: CUT_INNER }}>
-                                            <GiTwoCoins className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-[#FFB700]" />
+                                            <MCIcon className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-[#FFB700]" />
                                             Minha Carteira
                                         </span>
                                     </motion.button>
