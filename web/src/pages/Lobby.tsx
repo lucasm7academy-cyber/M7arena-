@@ -930,7 +930,7 @@ const Home = () => {
               <img
                 src={HERO.imagem ?? ''}
                 alt="Copa do Halloween 2026"
-                className="w-full h-full object-cover object-[center_12%] opacity-90 scale-[0.95] transition-transform duration-700 group-hover:scale-100"
+                className="w-full h-full object-cover object-center opacity-90 scale-[0.96] transition-transform duration-700 group-hover:scale-100"
               />
             )}
           </div>
