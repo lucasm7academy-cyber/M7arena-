@@ -125,7 +125,9 @@ O motivo: se cada agente escrever markdown livre, em duas semanas o arquivo tem 
 
 ## 1.1 Multi-agente: worktree e commit na main (obrigatório)
 
-- Cada agente/terminal trabalha no **seu próprio `git worktree`**. Nunca trabalhe na pasta principal compartilhada nem no worktree de outro agente.
+- A pasta `D:\Aplicativos\M7arenaSite` é a **pasta real do usuário** e a referência do estado atual: ela deve estar sempre na `main` e atualizada. Não a trate como proibida; se o usuário pedir para trabalhar nela, trabalhe nela.
+- Para trabalho paralelo, cada agente/terminal usa **seu próprio `git worktree`**; nunca trabalhe no worktree de outro agente.
+- Antes de encerrar, se a pasta principal estiver limpa (`git -C D:\Aplicativos\M7arenaSite status --short` vazio), rode `git -C D:\Aplicativos\M7arenaSite fetch origin main` e `git -C D:\Aplicativos\M7arenaSite merge --ff-only origin/main` para deixá-la na main. Se estiver suja ou à frente da main, não faça reset/force; avise.
 - Antes de começar: `git fetch origin`, atualize seu worktree a partir da `main` e confira `git status`.
 - **Toda mudança tem que ser commitada e enviada para a `main` antes de encerrar a tarefa.** Não deixe alteração só no worktree nem "para depois".
 - Commits pequenos e claros. No fim: `git add -A`, `git commit`, `git push origin main` (ou PR já mergeado). O que não está na main não existe para os outros agentes.

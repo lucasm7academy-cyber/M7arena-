@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 03:40 — por `deepseek`
+**Última atualização:** 31/10/2026 04:00 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -167,10 +167,19 @@ _31/10/2026 03:35 — deepseek_
 
 _31/10/2026 03:40 — deepseek_
 
+### ADR-095 — Pasta principal sempre na main
+
+**Decisão:** D:\Aplicativos\M7arenaSite e a pasta real do usuario e deve estar sempre na main e atualizada. Agentes podem usar worktrees para trabalho paralelo, mas no fim fazem fetch/merge --ff-only na pasta principal (se limpa); se o usuario pedir, editam nela.
+
+**Por quê:** O usuario abre essa pasta para ver o estado real; deixa-la atras gera duvida e risco de trabalhar em versao antiga.
+
+_31/10/2026 04:00 — deepseek_
+
 ## Histórico de sessões
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 04:00 | deepseek | AGENTS.md: pasta principal D:\Aplicativos\M7arenaSite sempre na main e atualizada; agentes sincronizam no fim. ADR-095 registrada. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
 | 31/10/2026 03:40 | deepseek | Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
 | 31/10/2026 03:36 | deepseek | Status enxugado: removido o histórico da migração antiga; ficaram só componentes, ADRs e blockers atuais do M7Arena em produção. AGENTS.md agora exige worktree próprio + commit/push na main; deploy só da main commitada. Supabase zero (verify-swap 0). <br>_tocou: `AGENTS.md`, `mcp/status-server/lib/plan.js`, `docs/project-state.json`, `web/src`, `api/src`_ |
 

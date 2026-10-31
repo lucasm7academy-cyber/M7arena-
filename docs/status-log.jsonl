@@ -1,3 +1,5 @@
 {"at":"2026-10-31T06:36:12.774Z","agent":"deepseek","event":"log_session","summary":"Status enxugado: removido o histórico da migração antiga; ficaram só componentes, ADRs e blockers atuais do M7Arena em produção. AGENTS.md agora exige worktree próprio + commit/push na main; deploy só da main commitada. Supabase zero (verify-swap 0)."}
 {"at":"2026-10-31T06:40:11.354Z","agent":"deepseek","event":"add_decision","id":"ADR-094","title":"Modo local vs VPS"}
 {"at":"2026-10-31T06:40:11.411Z","agent":"deepseek","event":"log_session","summary":"Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094."}
+{"at":"2026-10-31T07:00:27.791Z","agent":"deepseek","event":"add_decision","id":"ADR-095","title":"Pasta principal sempre na main"}
+{"at":"2026-10-31T07:00:27.845Z","agent":"deepseek","event":"log_session","summary":"AGENTS.md: pasta principal D:\\Aplicativos\\M7arenaSite sempre na main e atualizada; agentes sincronizam no fim. ADR-095 registrada."}
