@@ -73,6 +73,8 @@ const HERO_PADRAO = {
   primario: { label: 'Explorar Torneios', href: '/campeonatos' },
   secundario: { label: 'Crie seu Time', href: '/times' },
   selo: 'Temporada 2026',
+  video: '/images/animated-highnoon-lucian.webm' as string | null,
+  imagem: null as string | null,
 };
 
 const HERO_HALLOWEEN = {
@@ -85,6 +87,8 @@ const HERO_HALLOWEEN = {
   },
   secundario: { label: 'Ver campeonatos', href: '/campeonatos' },
   selo: 'Halloween 2026',
+  video: null as string | null,
+  imagem: '/images/hero-halloween-2026.webp' as string | null,
 };
 
 const HERO_EDICAO: 'padrao' | 'halloween' = 'halloween';
@@ -906,17 +910,29 @@ const Home = () => {
             className="relative w-full h-full bg-black overflow-hidden"
             style={{ clipPath: 'polygon(17.4px 0, 100% 0, 100% calc(100% - 17.4px), calc(100% - 17.4px) 100%, 0 100%, 0 17.4px)' }}
           >
-          {/* Hero: campanha do Halloween 2026 (pedido do usuário 31/10).
-              A arte antiga do Lucian segue salva em
-              /images/animated-highnoon-lucian.webm — para voltar, é só
-              restaurar o bloco <video> abaixo do <img>. */}
+          {/* Hero: modelo atual em HERO_EDICAO (topo do arquivo).
+              - 'halloween' → arte da Copa do Halloween 2026
+              - 'padrao'    → vídeo do Lucian (/images/animated-highnoon-lucian.webm)
+              O vídeo do Lucian segue salvo no repositório. */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
-            <img
-              src="/images/hero-halloween-2026.webp"
-              alt="Copa do Halloween 2026"
-              className="w-full h-full object-cover object-[center_12%] opacity-90 scale-[0.95] transition-transform duration-700 group-hover:scale-100"
-            />
+            {HERO.video ? (
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover object-[center_15%] opacity-80 transition-transform duration-700 group-hover:scale-105"
+              >
+                <source src={HERO.video} type="video/webm" />
+              </video>
+            ) : (
+              <img
+                src={HERO.imagem ?? ''}
+                alt="Copa do Halloween 2026"
+                className="w-full h-full object-cover object-[center_12%] opacity-90 scale-[0.95] transition-transform duration-700 group-hover:scale-100"
+              />
+            )}
           </div>
 
           {/* Content Wrapper */}
