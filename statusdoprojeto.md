@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 04:00 — por `deepseek`
+**Última atualização:** 31/10/2026 04:07 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 04:07 | deepseek | Draft: bans maiores e mais altos. BanSlot 6->7.2vmin, icone interno 3.6->4.3vmin, gap 1->0.9vmin, rotulo 1->1.1vmin; faixa de bans subiu de top-5vmin para top-2.5vmin (encostada na faixa do timer). Icones do topo (resetar/verificar/twitch/mudo) movidos do topo-direita para o canto inferior direito (bottom-2vmin right-4vmin) para nao cobrir o ultimo ban. tsc 0, check-cut-borders ok, commit 8687f6a na main, deploy VPS ok (/api/health 200, chunk DraftRoom-s2IbL3Mn.js com as classes novas). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:00 | deepseek | AGENTS.md: pasta principal D:\Aplicativos\M7arenaSite sempre na main e atualizada; agentes sincronizam no fim. ADR-095 registrada. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
 | 31/10/2026 03:40 | deepseek | Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
 | 31/10/2026 03:36 | deepseek | Status enxugado: removido o histórico da migração antiga; ficaram só componentes, ADRs e blockers atuais do M7Arena em produção. AGENTS.md agora exige worktree próprio + commit/push na main; deploy só da main commitada. Supabase zero (verify-swap 0). <br>_tocou: `AGENTS.md`, `mcp/status-server/lib/plan.js`, `docs/project-state.json`, `web/src`, `api/src`_ |
