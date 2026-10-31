@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 03:36 — por `deepseek`
+**Última atualização:** 31/10/2026 03:40 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -159,10 +159,19 @@ _31/10/2026 03:35 — deepseek_
 
 _31/10/2026 03:35 — deepseek_
 
+### ADR-094 — Modo local vs VPS
+
+**Decisão:** Padrao: implementar, validar, commitar/pushar na main e subir na VPS quando a tarefa mudar o runtime. Em modo local explicito, editar/validar/commitar, mas nao subir ate o usuario pedir; avisar no inicio/fim do bloco se a main estiver a frente do commit da VPS.
+
+**Por quê:** O usuario quer editar em lote localmente e subir de uma vez; o aviso evita esquecer mudancas fora da VPS. O commit/push continua obrigatorio para nao perder trabalho.
+
+_31/10/2026 03:40 — deepseek_
+
 ## Histórico de sessões
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 03:40 | deepseek | Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
 | 31/10/2026 03:36 | deepseek | Status enxugado: removido o histórico da migração antiga; ficaram só componentes, ADRs e blockers atuais do M7Arena em produção. AGENTS.md agora exige worktree próprio + commit/push na main; deploy só da main commitada. Supabase zero (verify-swap 0). <br>_tocou: `AGENTS.md`, `mcp/status-server/lib/plan.js`, `docs/project-state.json`, `web/src`, `api/src`_ |
 
 ---

@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-10-31T06:36:12.774Z",
+  "updatedAt": "2026-10-31T06:40:11.411Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -193,6 +193,15 @@
       "rationale": "O projeto atual usa API própria e banco na VPS; manter o client antigo era dívida e risco de regressão.",
       "date": "2026-10-31T06:35:33.206Z",
       "author": "deepseek"
+    },
+    {
+      "id": "ADR-094",
+      "date": "2026-10-31T06:40:11.354Z",
+      "author": "deepseek",
+      "title": "Modo local vs VPS",
+      "decision": "Padrao: implementar, validar, commitar/pushar na main e subir na VPS quando a tarefa mudar o runtime. Em modo local explicito, editar/validar/commitar, mas nao subir ate o usuario pedir; avisar no inicio/fim do bloco se a main estiver a frente do commit da VPS.",
+      "rationale": "O usuario quer editar em lote localmente e subir de uma vez; o aviso evita esquecer mudancas fora da VPS. O commit/push continua obrigatorio para nao perder trabalho.",
+      "supersedes": null
     }
   ],
   "blockers": [
@@ -236,6 +245,16 @@
         "docs/project-state.json",
         "web/src",
         "api/src"
+      ]
+    },
+    {
+      "at": "2026-10-31T06:40:11.411Z",
+      "agent": "deepseek",
+      "summary": "Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094.",
+      "touched": [
+        "AGENTS.md",
+        "docs/project-state.json",
+        "statusdoprojeto.md"
       ]
     }
   ]

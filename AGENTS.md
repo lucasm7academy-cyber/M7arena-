@@ -135,6 +135,30 @@ O motivo: se cada agente escrever markdown livre, em duas semanas o arquivo tem 
 
 ---
 
+## 1.2 Modo local vs VPS (padrão: VPS)
+
+Por padrão, quando a tarefa muda o runtime (web/API/infra), o fluxo é **implementar, validar, commitar/pushar na main e subir na VPS** ao final, seguindo o deploy documentado. Tarefas só de docs/status não precisam de deploy.
+
+Quando o usuário disser **"trabalhar local"**, **"editar local"**, **"só local"**, **"não sobe"** ou equivalente:
+
+- edite e valide localmente; **não suba para a VPS** ainda;
+- commite e envie para a main (regra 1.1), mas deixe claro que **ainda não está na VPS**;
+- só suba quando o usuário disser **"sobe"**, **"pode subir"**, **"aplica na VPS"** ou equivalente;
+- o modo local vale para a tarefa/lote atual; uma nova solicitação sem "local" volta ao padrão VPS.
+
+Aqui, "local" significa **commitado na main, mas ainda não aplicado na VPS**. Trabalho não commitado é proibido pela regra 1.1.
+
+**Se o usuário esquecer de pedir para subir:**
+
+- no início da sessão/tarefa e ao terminar cada bloco local, compare `origin/main` com o commit da VPS (`ssh pandapost-vps "cd /root/m7arena && git rev-parse --short HEAD"`, ou o marcador de deploy);
+- se houver mudança de runtime na main que não está na VPS, avise uma vez, curto: "⚠️ Há mudanças de runtime na main que ainda não estão na VPS (apenas local: X..Y). Quer subir agora?";
+- não repita o aviso a cada mensagem; avise no início, no fim do bloco e antes de encerrar;
+- em modo local, **nunca** faça deploy sem o "pode subir".
+
+O deploy é na VPS e só da main commitada; nunca de worktree sujo. Depois de subir, valide `/api/health`, o bundle e a rota principal.
+
+---
+
 ## 2. O que é este projeto
 
 O **M7Arena** é uma plataforma de campeonatos de League of Legends em produção: times, ranking, salas de partida (5v5, ARAM, 1v1 e Time vs Time), carteira com moeda interna (MP/MC), VIP, recrutamento, streamers e notícias.
