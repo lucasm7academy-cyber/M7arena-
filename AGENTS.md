@@ -123,6 +123,18 @@ O motivo: se cada agente escrever markdown livre, em duas semanas o arquivo tem 
 
 ---
 
+## 1.1 Multi-agente: worktree e commit na main (obrigatório)
+
+- Cada agente/terminal trabalha no **seu próprio `git worktree`**. Nunca trabalhe na pasta principal compartilhada nem no worktree de outro agente.
+- Antes de começar: `git fetch origin`, atualize seu worktree a partir da `main` e confira `git status`.
+- **Toda mudança tem que ser commitada e enviada para a `main` antes de encerrar a tarefa.** Não deixe alteração só no worktree nem "para depois".
+- Commits pequenos e claros. No fim: `git add -A`, `git commit`, `git push origin main` (ou PR já mergeado). O que não está na main não existe para os outros agentes.
+- Nunca `force-push`, `reset --hard` ou `checkout -f` na main nem no worktree de outro agente. Se outro agente estiver no mesmo arquivo, pare e combine.
+- O deploy é na VPS e **somente a partir da main commitada**. Nunca suba um worktree sujo nem uma branch local. Depois valide `/api/health` e os chunks.
+- Na VPS, compose sempre com `--env-file /root/m7arena/.env`; sem isso o app sobe com senha default (ADR-015/BLK-007).
+
+---
+
 ## 2. O que é este projeto
 
 O **M7Arena** é uma plataforma de campeonatos de League of Legends em produção: times, ranking, salas de partida (5v5, ARAM, 1v1 e Time vs Time), carteira com moeda interna (MP/MC), VIP, recrutamento, streamers e notícias.
@@ -231,8 +243,8 @@ O usuário está no Windows com PowerShell. Ele tem Node 24, Docker 29 e git ins
 
 - A VPS existe e está em produção (`/root/m7arena`, serviços `m7arena_app`, `m7arena_realtime`, `m7arena_nginx`, `m7arena_postgres`). O deploy é feito por lá.
 - **Não rode migration contra o banco de produção sem o usuário pedir.**
-- **Não commite sem ele pedir.**
-- Não invente comando de deploy: siga o que está em `docs/ARQUITETURA.md`.
+- **Commite e envie para a main ao terminar**; não deixe trabalho só no worktree.
+- Não invente comando de deploy: siga o que está em `docs/ARQUITETURA.md` e só suba da main commitada.
 
 ---
 

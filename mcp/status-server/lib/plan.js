@@ -1,161 +1,36 @@
 /**
- * Mapa do plano: a qual fase cada componente pertence e do que ele depende.
+ * Plano atual do M7Arena em produção.
  *
- * Isto é o que permite a um agente responder com precisão a "execute a Fase 1"
- * e a "posso começar isso agora?" — sem ter que interpretar prosa de documento.
+ * Só entram componentes que existem hoje. O histórico da migração antiga fica
+ * no Git; não reintroduza `mig.*`, `app.swap.*` nem as fases mortas.
  *
- * Formato: id → [fase, ...dependências]
+ * Formato: id -> [fase, ...dependências]
  */
 
 export const PLAN = {
   // ---- Fase 0 — governança
-  "gov.mcp.status": ["fase-0"],
   "gov.agents": ["fase-0"],
-  "gov.mcp.registro": ["fase-0", "gov.mcp.status"],
-  "gov.docs.arquitetura": ["fase-0"],
+  "gov.mcp.status": ["fase-0"],
   "gov.repo": ["fase-0"],
 
-  // ---- Fase 1 — schema
-  "db.setup": ["fase-1"],
-  "db.identidade": ["fase-1", "db.setup"],
-  "db.games": ["fase-1", "db.setup"],
-  "db.teams": ["fase-1", "db.identidade", "db.games"],
-  "db.tournaments": ["fase-1", "db.teams"],
-  "db.matches": ["fase-1", "db.identidade", "db.games"],
-  "db.economia": ["fase-1", "db.identidade"],
-  "db.conteudo": ["fase-1", "db.identidade"],
-  "db.indices": [
-    "fase-1",
-    "db.identidade",
-    "db.games",
-    "db.teams",
-    "db.tournaments",
-    "db.matches",
-    "db.economia",
-    "db.conteudo",
-  ],
-  "db.retencao": ["fase-1", "db.setup"],
-  "db.descarte": ["fase-1"],
+  // ---- Fase 1 — banco
+  "db.postgres": ["fase-1"],
 
-  // ---- Fase 2 — infra
+  // ---- Fase 2 — infraestrutura
   "infra.vps": ["fase-2"],
-  "infra.compose": ["fase-2"],
-  "infra.postgres": ["fase-2"],
-  "infra.pgbouncer": ["fase-2", "infra.compose", "infra.postgres"],
-  "infra.nginx": ["fase-2", "infra.compose"],
-  "infra.backup": ["fase-2", "infra.compose", "infra.postgres"],
-  "infra.ci": ["fase-2", "gov.repo"],
-  // ADR-010: o Nginx passa a servir o build estático do Vite e o serviço `app`
-  // deixa de ser Next para virar a API Node.
-  "infra.nginx.spa": ["fase-2", "infra.nginx", "app.fork.build"],
-  "infra.app.imagem": ["fase-2", "infra.compose", "app.api.server"],
+  "infra.backup": ["fase-2", "infra.vps"],
 
-  // ---- Fase 3 — aplicação (React + Vite + API)
-  //
-  // ETAPA A — o front em React rodando, com o visual intacto, SEM tocar em banco.
-  // É o portão de tudo: nenhuma peça de dados abre antes de o build passar.
-  "app.fork.copia": ["fase-3"],
-  "app.fork.build": ["fase-3", "app.fork.copia"],
-  "design.assets": ["fase-3", "app.fork.copia"],
+  // ---- Fase 3 — aplicação em produção
+  "app.web": ["fase-3"],
+  "app.api": ["fase-3", "db.postgres"],
+  "app.realtime": ["fase-3", "app.api"],
+  "app.supabase.zero": ["fase-3", "app.web", "app.api"],
+  "app.payments": ["fase-3", "app.api"],
+  "app.riot-proxy": ["fase-3", "app.api"],
+  "sec.campeonato-permissoes": ["fase-3", "app.api"],
 
-  // ETAPA B — camada de dados própria, atrás do portão do fork.
-  "app.api.server": ["fase-3", "app.fork.build", "db.setup"],
-  "app.auth.sessao": ["fase-3", "app.api.server", "db.identidade"],
-  "app.sdk": ["fase-3", "app.api.server", "app.auth.sessao"],
-
-  "app.realtime": ["fase-3", "app.api.server", "db.matches", "infra.pgbouncer"],
-  "app.workers": ["fase-3", "app.api.server"],
-  "app.riot-proxy": ["fase-3", "app.api.server"],
-
-  // Os swaps trocaram cada domínio do Supabase pela API própria. Todos estão
-  // fechados; o gate de `done` roda `node scripts/verify-swap.js <dominio>`.
-  "app.swap.identidade": ["fase-3", "app.sdk", "app.auth.sessao", "db.identidade"],
-  "app.swap.times": ["fase-3", "app.sdk", "app.auth.sessao", "db.teams"],
-  "app.swap.campeonatos": ["fase-3", "app.sdk", "app.auth.sessao", "db.tournaments"],
-  // Participação de convidado sem conta no campeonato: a vaga é reconhecida
-  // pelo vínculo Riot (PUUID/Riot ID) da conta do jogador (ADR-056).
-  "app.participacao.vinculo-riot": ["fase-3", "app.swap.times", "app.swap.campeonatos"],
-  // Verificação de série por PUUID + tournamentCode (ADR-058) — substitui o
-  // by-tournament-code, que é proibido para a chave atual (403 sempre).
-  "app.campeonatos.verificacao-serie": ["fase-3", "app.swap.campeonatos"],
-  // PDL global recalculado do cronograma (ADR-059) — o endpoint era no-op.
-  "app.campeonatos.pdl-global": ["fase-3", "app.swap.campeonatos"],
-  // Agendamento: contra-proposta e arbitragem direta do admin (ADR-060).
-  "app.campeonatos.agendamento": ["fase-3", "app.swap.campeonatos"],
-  // Inscrições: remover time e excluir campeonato (ADR-061).
-  "app.campeonatos.inscricoes": ["fase-3", "app.swap.campeonatos"],
-  // Agenda de transmissões (spec 2026-09-29): escala jogo ↔ streamer com
-  // desligamento automático no fim da série (motor + leitura).
-  "app.streams.agenda": ["fase-3", "app.swap.campeonatos", "app.swap.conteudo", "db.tournaments", "db.conteudo"],
-  "app.streams.agenda-ui": ["fase-3", "app.streams.agenda", "app.sdk", "app.port.streamers"],
-  "app.swap.salas": ["fase-3", "app.sdk", "app.auth.sessao", "app.realtime", "db.matches"],
-  // Draft de sala (ban/pick após a confirmação): estado 'draft' no lugar de
-  // iniciando_partida direto; timer no relógio do servidor (turn_deadline_at).
-  // Registry por modo (ADR-074): 1v1/ARAM pulam a fase; 5v5/time_vs_time têm draft.
-  "app.sala.draft": ["fase-3", "app.swap.salas", "app.realtime", "db.matches"],
-  // Sala de TIME vs TIME com estrutura DEDICADA (cópia 1:1 de SalaMod1 em
-  // features/sala-time-vs-time) para o redesign/uso em campeonato. A rota
-  // /time_vs_time/:id aponta para ela desde 2026-10-08.
-  "app.sala.time-vs-time": ["fase-3", "app.swap.salas", "db.matches", "app.sala.draft"],
-  // Sala Campeonato V1 (spec do usuário, 2026-10-11): a sala da série substitui o
-  // "Iniciar Série" — 2 vagas (1 por time), PRONTO sem timer, definição de lado
-  // CBLOL, draft do modo campeonato, placar da série e código visível até o fim.
-  // Evolui a base app.sala.time-vs-time. Decidido em 2026-10-11: fluxo por jogo
-  // (PRONTO + definição de lado + draft FEARLESS a cada jogo) e estado via
-  // WebSocket existente + fallback de 5s; lado sem timeout; draft nunca cancela.
-  "app.sala.campeonato": ["fase-3", "app.sala.draft", "app.campeonatos.verificacao-serie", "app.streams.agenda", "app.realtime", "db.tournaments", "db.matches"],
-  // Sorteio + escolha de lado/first-last pick antes do draft (estado no servidor).
-  "app.sala.campeonato.definicao-lado": ["fase-3", "app.sala.campeonato", "app.realtime"],
-  // Draft do modo campeonato: regras próprias no registry (ADR-074), ordem derivada
-  // do first/last pick.
-  "app.draft.campeonato": ["fase-3", "app.sala.draft", "app.sala.campeonato.definicao-lado"],
-  "app.swap.carteira": ["fase-3", "app.sdk", "app.auth.sessao", "db.economia"],
-  "app.swap.conteudo": ["fase-3", "app.sdk", "app.auth.sessao", "db.conteudo"],
-  "app.swap.rpc": ["fase-3", "app.sdk", "app.auth.sessao"],
-  "app.storage.uploads": ["fase-3", "app.api.server", "app.auth.sessao"],
-  // Integrações que ainda dependem de edge functions do Supabase (pagamento/VIP).
-  // São a dívida real que impede remover o client Supabase do front.
-  "app.edge-functions": ["fase-3", "app.api.server", "app.auth.sessao"],
-  // Dívida real: 4 integrações Supabase vivas no front (recrutamento, VIP,
-  // resultados em MinhasPartidas e o exchange do Discord). Migrar para a API
-  // própria e só então remover @supabase/supabase-js + VITE_SUPABASE_*.
-  "app.supabase.zero": ["fase-3", "app.api.server", "app.auth.sessao"],
-  // Gateway de pagamento MC (ADR-031): Mercado Pago PIX, pacotes em mc_packages.
-  "app.payments": ["fase-3", "app.api.server", "app.auth.sessao", "db.economia"],
-  // Saque de MC via PIX (spec saque-mc-pix): withdrawals + ledger hold/refund,
-  // debitado na solicitação, admin decide (paid/rejected) no painel.
-  "app.saque": ["fase-3", "app.swap.carteira", "app.sdk", "app.auth.sessao", "db.economia"],
-  "app.env": ["fase-3", "app.fork.build"],
-
-  // segurança acompanha a peça que ela corrige
-  "sec.riot-key": ["fase-3", "app.riot-proxy", "app.env"],
-  // O PIX de fallback vive dentro de create-mercado-pago-order, então tirar ele
-  // do cliente exige a edge function migrada, não só a carteira trocada.
-  "sec.pix": ["fase-3", "app.swap.carteira", "app.edge-functions"],
-  "sec.regras-servidor": ["fase-3", "app.swap.carteira", "app.swap.salas"],
-  "sec.upload": ["fase-3", "app.storage.uploads"],
-  // O código da série de campeonato vaza no shape público (só o front esconde —
-  // achado 2026-10-11). Redigir no servidor, como as salas fazem (ADR-043).
-  "sec.codigo-campeonato": ["fase-3", "app.swap.campeonatos"],
-  // Rotas de escrita do campeonato sem checagem além do login (achado 2026-10-11,
-  // durante sec.codigo-campeonato): PUT/reabrir/aprovar/recalcular/merge/inscrições.
-  "sec.campeonato-permissoes": ["fase-3", "app.swap.campeonatos"],
-
-  // ---- Salas apostadas (ADR-019, design v3) — P1: escrow + máquina de estados
-  "app.apostas.schema": ["fase-3", "db.matches", "db.economia", "db.identidade"],
-  "app.apostas.escrow": ["fase-3", "app.apostas.schema"],
-  "app.apostas.machine": ["fase-3", "app.apostas.escrow"],
-  "app.apostas.revisao": ["fase-3", "app.apostas.machine"],
-  "app.apostas.cron": ["fase-3", "app.apostas.machine"],
-  "app.apostas.realtime": ["fase-3", "app.api.server", "db.matches", "infra.compose"],
-  "app.apostas.elegibilidade": ["fase-3", "app.apostas.machine"],
-  "app.apostas.prints": ["fase-3", "app.apostas.machine", "app.apostas.revisao", "app.storage.uploads"],
-  "app.apostas.smoke": ["fase-3", "app.apostas.revisao", "app.apostas.cron", "app.apostas.realtime", "app.apostas.elegibilidade", "app.apostas.prints"],
-  "app.apostas.ui": ["fase-3", "app.apostas.elegibilidade", "app.apostas.prints", "app.apostas.realtime", "app.swap.salas", "app.swap.carteira"],
-
-  // ---- Fase 4 — MCP de operações
+  // ---- Fase 4 — operações da VPS
   "mcpops.server": ["fase-4", "infra.vps"],
-  "mcpops.seguranca": ["fase-4", "mcpops.server"],
 };
 
 export const phaseOf = (id) => PLAN[id]?.[0] ?? null;
