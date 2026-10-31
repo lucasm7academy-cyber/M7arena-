@@ -18,9 +18,9 @@ import {
   Lock,
   Trophy,
 } from 'lucide-react';
-import { GiTwoCoins } from 'react-icons/gi';
 import type { ErroElegibilidade } from '../../hooks/useSalaSimples';
 import { rotaDaSala } from '../../lib/rotas';
+import { MCIcon } from '../ui/MCIcon';
 
 const DEPOSIT_EVENT = 'm7:open-deposit';
 
@@ -311,7 +311,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
           badge="M7 Coins • Carteira"
           subtitulo="Recarregue para entrar na disputa"
           corBorda="#FFB700"
-          icone={<GiTwoCoins className="w-7 h-7 text-[#FFB700]" />}
+          icone={<MCIcon className="w-7 h-7 text-[#FFB700]" />}
           onClose={onClose}
         >
           <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
@@ -323,7 +323,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
               <div className="text-right">
                 <span className="text-zinc-400 text-[10px] uppercase font-black tracking-widest block">Faltam</span>
                 <span className="text-2xl font-black text-[#FFB700] tracking-tight flex items-center gap-1.5 justify-end">
-                  <GiTwoCoins className="w-5 h-5" /> {erro.faltam} MC
+                  <MCIcon className="w-5 h-5" /> {erro.faltam} MC
                 </span>
               </div>
             </div>
@@ -543,7 +543,7 @@ export function ModalLoginVitrine({ onClose }: { onClose: () => void }) {
               className="px-3 py-2 bg-black/70 flex items-center gap-2 text-xs font-black text-zinc-200 uppercase tracking-wider"
               style={{ clipPath: CUT_BADGE_INNER }}
             >
-              <GiTwoCoins className="text-[#FFB700] w-3.5 h-3.5 shrink-0" /> Prêmios MC
+              <MCIcon className="text-[#FFB700] w-3.5 h-3.5 shrink-0" /> Prêmios MC
             </div>
           </div>
         </div>

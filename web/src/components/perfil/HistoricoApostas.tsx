@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { LoaderCircle, Swords, Shield, TrendingUp, TrendingDown, History, Minus } from 'lucide-react';
-import { GiTwoCoins } from 'react-icons/gi';
 import { api, type ApiBetHistoryItem } from '../../lib/api';
 import { CutCard } from '../ui/CutCard';
+import { MCIcon } from '../ui/MCIcon';
 
 /**
  * Histórico de apostas (MC) do jogador: apostas individuais (self-bet) e salas
@@ -88,7 +88,7 @@ function DeltaBadge({ delta }: { delta: number }) {
     return (
       <div className="flex flex-col items-end shrink-0">
         <span className="inline-flex items-center gap-1.5 text-emerald-400 font-black text-base tabular-nums">
-          <TrendingUp className="w-4 h-4 text-emerald-400" /> +{delta} <GiTwoCoins className="w-4 h-4 text-[#FFB700]" />
+          <TrendingUp className="w-4 h-4 text-emerald-400" /> +{delta} <MCIcon className="w-4 h-4 text-[#FFB700]" />
         </span>
         <span className="text-[10px] font-bold text-emerald-400/70 uppercase tracking-widest">Lucro MC</span>
       </div>
@@ -98,7 +98,7 @@ function DeltaBadge({ delta }: { delta: number }) {
     return (
       <div className="flex flex-col items-end shrink-0">
         <span className="inline-flex items-center gap-1.5 text-red-400 font-black text-base tabular-nums">
-          <TrendingDown className="w-4 h-4 text-red-400" /> {delta} <GiTwoCoins className="w-4 h-4 text-[#FFB700]" />
+          <TrendingDown className="w-4 h-4 text-red-400" /> {delta} <MCIcon className="w-4 h-4 text-[#FFB700]" />
         </span>
         <span className="text-[10px] font-bold text-red-400/70 uppercase tracking-widest">Perda MC</span>
       </div>
@@ -107,7 +107,7 @@ function DeltaBadge({ delta }: { delta: number }) {
   return (
     <div className="flex flex-col items-end shrink-0">
       <span className="inline-flex items-center gap-1.5 text-zinc-400 font-bold text-sm tabular-nums">
-        <Minus className="w-4 h-4 text-zinc-500" /> 0 <GiTwoCoins className="w-3.5 h-3.5 text-zinc-500" />
+        <Minus className="w-4 h-4 text-zinc-500" /> 0 <MCIcon className="w-3.5 h-3.5 text-zinc-500" />
       </span>
       <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Devolvido</span>
     </div>
@@ -145,10 +145,15 @@ export function HistoricoApostas() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div
-            className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center"
+            className="p-[1px] bg-white/10"
             style={{ clipPath: 'polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)' }}
           >
-            <History className="w-3.5 h-3.5 text-[#FFB700]" />
+            <div
+              className="w-7 h-7 bg-[#141414] flex items-center justify-center"
+              style={{ clipPath: 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)' }}
+            >
+              <History className="w-3.5 h-3.5 text-[#FFB700]" />
+            </div>
           </div>
           <h3 className="text-sm font-black text-white uppercase tracking-widest">Histórico de Partidas e Apostas</h3>
         </div>
@@ -198,29 +203,39 @@ export function HistoricoApostas() {
                     {/* Ícone do Campeão jogado ou ícone temático */}
                     {championImgUrl ? (
                       <div
-                        className="w-12 h-12 shrink-0 rounded-xl overflow-hidden bg-black/60 border border-white/20 relative flex items-center justify-center shadow-lg"
+                        className="w-12 h-12 shrink-0 p-[1px] bg-white/20 relative"
                         style={{ clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)' }}
                         title={displayChampion || undefined}
                       >
-                        <img
-                          src={championImgUrl}
-                          alt={displayChampion || 'Campeão'}
-                          className="w-full h-full object-cover scale-105"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
+                        <div
+                          className="w-full h-full overflow-hidden bg-black flex items-center justify-center"
+                          style={{ clipPath: 'polygon(6.8px 0, 100% 0, 100% calc(100% - 6.8px), calc(100% - 6.8px) 100%, 0 100%, 0 6.8px)' }}
+                        >
+                          <img
+                            src={championImgUrl}
+                            alt={displayChampion || 'Campeão'}
+                            className="w-full h-full object-cover scale-105"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div
-                        className="w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-md"
+                        className="w-12 h-12 shrink-0 p-[1px] bg-white/10"
                         style={{ clipPath: 'polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px)' }}
                       >
-                        {ehHero ? (
-                          <Shield className="w-5 h-5 text-[#FFB700]" />
-                        ) : (
-                          <Swords className="w-5 h-5 text-purple-400" />
-                        )}
+                        <div
+                          className="w-full h-full bg-[#141414] flex items-center justify-center"
+                          style={{ clipPath: 'polygon(6.8px 0, 100% 0, 100% calc(100% - 6.8px), calc(100% - 6.8px) 100%, 0 100%, 0 6.8px)' }}
+                        >
+                          {ehHero ? (
+                            <Shield className="w-5 h-5 text-[#FFB700]" />
+                          ) : (
+                            <Swords className="w-5 h-5 text-purple-400" />
+                          )}
+                        </div>
                       </div>
                     )}
 

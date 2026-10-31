@@ -32,7 +32,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
 import VipModal from '../modals/vip/VipModal';
 import DepositModal from '../modals/deposit/DepositModal';
-import { GiTwoCoins } from 'react-icons/gi';
+import ConviteScrim from '../ConviteScrim';
+import { MCIcon } from '../ui/MCIcon';
 
 // ✅ Lazy loading para componentes carregados sob demanda
 const NotificationBell = lazy(() => import('../notifications/NotificationBell'));
@@ -276,7 +277,7 @@ export default function Layout() {
                   style={{ clipPath: CUT_BADGE_INNER }}
                   title="Saldo em M7 Coins"
                 >
-                  <GiTwoCoins size={16} className="shrink-0 text-primary" />
+                  <MCIcon size={16} className="shrink-0 text-primary" />
                   <span className="tabular-nums">{(perfil?.saldo ?? 0).toLocaleString('pt-BR')}</span>
                 </Link>
               </div>
@@ -673,6 +674,9 @@ export default function Layout() {
 
       {/* Modal Compra de MC */}
       <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
+
+      {/* Convite de scrim (campanha) — aparece 1x por sessão no Lobby/Jogar. */}
+      <ConviteScrim />
     </div>
   );
 }

@@ -13,7 +13,6 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Copy, Check, AlertTriangle, LinkIcon, Loader, X, Trash2, Share2, Trophy, ArrowLeft, Swords, Gamepad2, Zap, Shield } from 'lucide-react';
-import { GiTwoCoins } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 import { useSalaSimples } from '../../hooks/useSalaSimples';
 import { useSalaChat } from '../../hooks/useSalaChat';
@@ -30,6 +29,7 @@ import { api } from '../../lib/api';
 import { lerSenhaSala, limparSenhaSala } from '../../lib/salaSenhaStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
+import { MCIcon } from '../../components/ui/MCIcon';
 
 // ── Componentes visuais ─────────────────────────────
 // Borda cortada no padrão das vagas/cards de campeonato: wrapper com
@@ -151,23 +151,25 @@ export default function SalaTimeVsTime() {
     const compartilharSala = () => {
         if (!sala) return;
 
-        const nick = perfil?.riotId || perfil?.nome || 'Jogador';
-        const textoModo: Record<string, string> = {
-            '5v5': "5x5 Summoner's Rift",
-            'aram': 'ARAM Howling Abyss',
-            '1v1': '1v1 Howling Abyss',
-            'time_vs_time': 'Time vs Time Summoner\'s Rift',
-        };
-        const eloLinha = sala.elo_minimo ? `Mínimo: ${sala.elo_minimo}` : 'Free Elo';
-        const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} M7Coins` : 'Casual';
-        const link = `${window.location.origin}/${sala.modo}/${sala.id}`;
+        // Convite de SCRIM: fala em nome de quem compartilha. Se ele já ocupou
+        // a vaga, o convite é do TIME dele; senão, do nick. O time adversário
+        // não aparece — o convite é justamente para ele entrar.
+        const meuAssento = (jogadores ?? []).find(
+            (j: any) => String(j.user_id) === String(perfil?.id)
+        );
+        const meuTime =
+            meuAssento?.is_time_a === true
+                ? sala.time_a_nome
+                : meuAssento?.is_time_a === false
+                    ? sala.time_b_nome
+                    : null;
+        const convidante = meuTime || perfil?.riotId || perfil?.nome || 'Jogador';
+        const link = window.location.href;
 
         const mensagem =
-`🎮 ${nick} convida você para jogar ${textoModo[sala.modo] || 'uma partida'} personalizado
-🎯 ${eloLinha}
-👥 ${jogadores.length}/${sala.max_jogadores} vagas preenchidas
-💰 ${premio}
-👇 Entre aqui
+`⚔️ ${convidante} te convida para jogar uma SCRIM FEARLESS
+🏆 Time vs Time · draft completo · lado sorteado
+👇 Entre na sala
 
 ${link}`;
 
@@ -175,7 +177,7 @@ ${link}`;
         setCompartilhado(true);
         if (compartilhadoTimeoutRef.current) clearTimeout(compartilhadoTimeoutRef.current);
         compartilhadoTimeoutRef.current = setTimeout(() => setCompartilhado(false), 2000);
-        toast.success('Mensagem de convite copiada!');
+        toast.success('Convite do scrim copiado!');
     };
 
 
@@ -423,9 +425,13 @@ ${link}`;
             <motion.div 
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative z-20 w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl flex-wrap md:flex-nowrap"
+                className="relative z-20 w-full p-[1px] bg-white/[0.08] shadow-2xl"
                 style={{ clipPath: CUT_FRAME }}
             >
+              <div
+                className="w-full flex items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 md:p-[1.5vmin] bg-black/60 backdrop-blur-xl flex-wrap md:flex-nowrap"
+                style={{ clipPath: CUT_INNER }}
+              >
                 {/* Left Side: Exit Button, Mode Icon & Title */}
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-[2vmin] z-10">
                     <motion.button 
@@ -519,7 +525,7 @@ ${link}`;
                             <span className="text-xs md:text-[1.35vmin] font-black uppercase tracking-wider mt-1 leading-none flex items-center gap-1.5">
                                 {ehApostada ? (
                                     <>
-                                        <GiTwoCoins className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
+                                        <MCIcon className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
                                         <span className="text-[#FFB700]">{apostaPorJogador} MC</span>
                                         <span className="text-white/35 text-[9.5px] md:text-[1.05vmin]">• Pote {poteBruto} MC</span>
                                     </>
@@ -575,6 +581,7 @@ ${link}`;
                         )}
                     </div>
                 </div>
+              </div>
             </motion.div>
 
             {/* AVISO ANTECIPADO DE RIOT ID (salas apostadas, design v3 §11) */}
@@ -670,7 +677,7 @@ ${link}`;
 
                             {ehApostada && (
                                 <span className="text-[#FFB700] pl-2 sm:pl-3 border-l border-white/15 flex items-center gap-1">
-                                    <GiTwoCoins className="w-3.5 h-3.5" /> POTE {poteBruto} MC (+{premioPorJogador} MC)
+                                    <MCIcon className="w-3.5 h-3.5" /> POTE {poteBruto} MC (+{premioPorJogador} MC)
                                 </span>
                             )}
                         </div>
@@ -786,7 +793,7 @@ ${link}`;
                                     {ehApostada ? (
                                         <>
                                             <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                                <GiTwoCoins className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                                <MCIcon className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
                                             </span>
                                             <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-0.5 md:mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
                                                 Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
@@ -1068,7 +1075,7 @@ ${link}`;
                                     }`}>
                                     {usuarioVenceu ? (
                                         <>
-                                            <GiTwoCoins className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
+                                            <MCIcon className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
                                             <span className="text-xs md:text-[1.3vmin] font-black uppercase tracking-wider">
                                                 Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} MC</strong> nesta partida!
                                             </span>
@@ -1103,7 +1110,7 @@ ${link}`;
                                     >
                                         <span className="block bg-[#0A0A0A] px-6 py-3.5 md:px-[4vmin] md:py-[1.8vmin] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs sm:text-sm md:text-[1.3vmin] text-white hover:text-[#FFB700] flex items-center justify-center gap-2 md:gap-[1vmin] transition-colors"
                                             style={{ clipPath: CUT_INNER }}>
-                                            <GiTwoCoins className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-[#FFB700]" />
+                                            <MCIcon className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] text-[#FFB700]" />
                                             Minha Carteira
                                         </span>
                                     </motion.button>

@@ -6,10 +6,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoaderCircle, ShieldAlert, Ban } from 'lucide-react';
-import { GiTwoCoins } from 'react-icons/gi';
 import { api, type ApiWalletBalance } from '../../lib/api';
 import { rotaDaSala } from '../../lib/rotas';
 import { CutCard } from '../ui/CutCard';
+import { MCIcon } from '../ui/MCIcon';
 import {
   CUT_BUTTON,
   CUT_BUTTON_INNER,
@@ -84,7 +84,7 @@ export function CarteiraEStrikes({
           <span className="text-xs text-zinc-400 font-normal uppercase tracking-widest">
             Carteira
           </span>
-          <GiTwoCoins className="w-5 h-5 text-primary" />
+          <MCIcon className="w-5 h-5 text-primary" />
         </div>
 
         {carregando && !wallet ? (
@@ -105,7 +105,7 @@ export function CarteiraEStrikes({
                   Disponível
                 </span>
                 <span className="flex items-center gap-1.5 text-zinc-100 font-black text-base">
-                  <GiTwoCoins className="w-4 h-4 text-primary" />{' '}
+                  <MCIcon className="w-4 h-4 text-primary" />{' '}
                   {disponivel.toLocaleString('pt-BR')} MC
                 </span>
               </div>
@@ -123,7 +123,7 @@ export function CarteiraEStrikes({
                   Em partida
                 </span>
                 <span className="flex items-center gap-1.5 text-primary font-black text-base">
-                  <GiTwoCoins className="w-4 h-4 text-primary" />{' '}
+                  <MCIcon className="w-4 h-4 text-primary" />{' '}
                   {mcReservado.toLocaleString('pt-BR')} MC
                 </span>
               </div>

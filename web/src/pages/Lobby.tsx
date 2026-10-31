@@ -15,6 +15,52 @@ import { useTransmissoesAtivas } from '../hooks/useTransmissoesAtivas';
 import { api } from '../lib/api';
 import { TopTeamsStickers } from '../components/home/TopTeamsStickers';
 
+// ── Peças do design da casa (canto recortado) ────────────────────────────────
+const CUT_CARD = 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)';
+const CUT_CARD_IN = 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)';
+const CUT_TAG = 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)';
+const CUT_TAG_IN = 'polygon(5.8px 0, 100% 0, 100% calc(100% - 5.8px), calc(100% - 5.8px) 100%, 0 100%, 0 5.8px)';
+
+/** Card com o canto recortado do site: moldura 1px + fill opaco, tudo clipado. */
+const CardCorte = ({
+  children,
+  className = '',
+  border = 'rgba(255,255,255,0.10)',
+  bg = '#08080a',
+}: {
+  children: React.ReactNode;
+  className?: string;
+  border?: string;
+  bg?: string;
+}) => (
+  <div className={`relative p-[1px] ${className}`} style={{ clipPath: CUT_CARD, background: border }}>
+    <div className="w-full h-full" style={{ clipPath: CUT_CARD_IN, background: bg }}>
+      {children}
+    </div>
+  </div>
+);
+
+/** Etiqueta pequena no mesmo corte (categoria, passo, eyebrow). */
+const TagCorte = ({ children, color = '#FFB700' }: { children: React.ReactNode; color?: string }) => (
+  <span className="inline-block p-[1px]" style={{ clipPath: CUT_TAG, background: `${color}90` }}>
+    <span
+      className="block px-2.5 py-1 bg-[#08080a] text-[9px] font-black uppercase tracking-[0.18em] leading-none"
+      style={{ clipPath: CUT_TAG_IN, color }}
+    >
+      {children}
+    </span>
+  </span>
+);
+
+/** Eyebrow de seção: régua dourada + texto (sem ícone genérico). */
+const Eyebrow = ({ children }: { children: React.ReactNode }) => (
+  <span className="inline-flex items-center gap-2.5">
+    <span className="h-[2px] w-8 bg-[#FFB700]" />
+    <span className="text-[#FFB700] text-[10px] font-black uppercase tracking-[0.3em]">{children}</span>
+    <span className="h-[2px] w-8 bg-[#FFB700]/40" />
+  </span>
+);
+
 
 
 const FeatureCard = ({ icon: Icon, title, description, delay }: any) => (
@@ -42,7 +88,7 @@ const TournamentPreview = ({ title, prize, date, image, category }: any) => (
   <div className="relative group rounded-xl overflow-hidden border border-white/10 aspect-video">
     <div
       className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-      style={{ backgroundImage: `url(${image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'})` }}
+      style={{ backgroundImage: `url(${image || 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg'})` }}
     />
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
     <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -1241,102 +1287,84 @@ const Home = () => {
           {[
             {
               n: '01',
-              icon: UserPlus,
+              icone: '/images/icon-poro.png',
               title: 'Crie sua Conta',
               desc: 'Cadastro rápido e seguro. Vincule sua conta Riot Games para checagem de elo oficial.',
-              color: '#FFB700',
               bgImage: '/images/poro_step1.webp',
             },
             {
               n: '02',
-              icon: Users,
+              icone: '/lanes_brancas/icon-position-fillB.png',
               title: 'Monte seu Time',
               desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento — sem time, a gente ajuda a montar.',
-              color: '#00F0FF',
               bgImage: '/images/poro_step2.webp',
             },
             {
               n: '03',
-              icon: Trophy,
+              icone: '/ranks/crests/gold.svg',
               title: 'Inscreva-se',
               desc: 'Escolha o campeonato ideal para o nível da sua equipe — do Bronze ao Desafiante — e garanta sua vaga nas chaves.',
-              color: '#00FF41',
               bgImage: '/images/poro_step3.webp',
             },
             {
               n: '04',
-              icon: SwordsIcon,
+              icone: '/ranks/crests/challenger.svg',
               title: 'Compita e Suba',
               desc: 'Jogue partidas competitivas, acumule PDL no ranking global e dispute premiações em Pix.',
-              color: '#D500FF',
               bgImage: '/images/poro_step4.webp',
             },
           ].map((step, idx) => (
-            <motion.div
+            <CardCorte
               key={step.n}
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="group relative bg-[#0d0d0d] border border-white/10 hover:border-[#FFB700]/60 rounded-2xl overflow-hidden transition-all duration-500 flex flex-col justify-between shadow-2xl hover:scale-[1.02]"
+              className="group transition-transform duration-500 hover:scale-[1.02] shadow-2xl"
+              border="rgba(255,255,255,0.10)"
             >
-              {/* Banner de Imagem em Destaque no Topo do Card com Altura Fixa */}
-              <div className="relative h-48 w-full overflow-hidden bg-[#151515]">
-                <img
-                  src={step.bgImage}
-                  alt={step.title}
-                  className="w-full h-full object-cover block group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-black/30 pointer-events-none" />
+              <motion.div
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="flex flex-col h-full"
+              >
+                {/* banner do poro */}
+                <div className="relative h-44 w-full overflow-hidden bg-[#151515]">
+                  <img
+                    src={step.bgImage}
+                    alt={step.title}
+                    className="w-full h-full object-cover block group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-[#08080a]/25 to-black/40 pointer-events-none" />
 
-                {/* Badge do Passo */}
-                <div className="absolute top-3 left-3 z-10">
-                  <span
-                    className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded shadow-md border backdrop-blur-md"
-                    style={{
-                      backgroundColor: `${step.color}25`,
-                      borderColor: `${step.color}50`,
-                      color: step.color,
-                    }}
-                  >
-                    Passo {step.n}
-                  </span>
-                </div>
-
-                {/* Número no Canto da Imagem */}
-                <div
-                  className="absolute bottom-2 right-3 text-5xl font-black opacity-30 select-none z-10"
-                  style={{ color: step.color }}
-                >
-                  {step.n}
-                </div>
-              </div>
-
-              {/* Conteúdo do Card */}
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="w-9 h-9 rounded-xl border flex items-center justify-center flex-none"
-                      style={{
-                        backgroundColor: `${step.color}15`,
-                        borderColor: `${step.color}30`,
-                        color: step.color,
-                      }}
-                    >
-                      <step.icon className="w-4.5 h-4.5" />
-                    </div>
-                    <h3 className="text-base font-black uppercase tracking-tight text-white group-hover:text-[#FFB700] transition-colors">
-                      {step.title}
-                    </h3>
+                  {/* número do passo */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <TagCorte>Passo {step.n}</TagCorte>
                   </div>
 
-                  <p className="text-white/50 text-xs leading-relaxed">
-                    {step.desc}
-                  </p>
+                  {/* ícone do League */}
+                  <div
+                    className="absolute top-3 right-3 z-10 w-11 h-11 p-[1px]"
+                    style={{ clipPath: CUT_TAG, background: 'rgba(255,183,0,0.55)' }}
+                  >
+                    <div
+                      className="w-full h-full bg-black/80 backdrop-blur-md flex items-center justify-center overflow-hidden"
+                      style={{ clipPath: CUT_TAG_IN }}
+                    >
+                      <img src={step.icone} alt="" className="w-7 h-7 object-contain" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+
+                {/* texto */}
+                <div className="p-6 flex-1">
+                  <h3 className="text-base font-black uppercase tracking-tight text-white group-hover:text-[#FFB700] transition-colors">
+                    {step.title}
+                  </h3>
+                  <p className="text-white/50 text-xs leading-relaxed mt-2">{step.desc}</p>
+                </div>
+
+                <div className="h-[2px] w-full bg-gradient-to-r from-[#FFB700] via-[#FFB700]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </motion.div>
+            </CardCorte>
           ))}
         </div>
       </section>
@@ -1347,10 +1375,7 @@ const Home = () => {
       <section className="py-20 px-4 max-w-[1400px] mx-auto border-t border-white/5">
         <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div className="text-center sm:text-left">
-            <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              Informa e Esportes
-            </span>
+            <Eyebrow>Informa e Esportes</Eyebrow>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-3">
               Fique por <span className="text-[#FFB700]">Dentro</span>
             </h2>
@@ -1365,74 +1390,76 @@ const Home = () => {
             {[
               {
                 id: 'demo-1',
-                titulo: 'Nova Temporada de Torneios M7 ARENA Anunciada',
-                resumo: 'Premiação recorde, novas categorias por tier e narração ao vivo das finais todas as semanas.',
-                conteudo: 'A M7 ARENA tem o orgulho de anunciar a abertura oficial da nova temporada de torneios de eSports! Com premiação recorde distribuída em Pix, os campeonatos contarão com transmissões semanais ao vivo com narradores convidados na Twitch. Além disso, criamos novos tiers de entrada para que times iniciantes disputem em igualdade de condições com o mesmo suporte das equipes veteranas. Inscreva seu time hoje mesmo e venha fazer história na plataforma!',
-                categoria: 'Torneios',
+                titulo: 'Salas personalizadas em série: MD1, MD3 e MD5',
+                resumo: 'Agora você pode montar scrims no formato de campeonato: melhor de 1, 3 ou 5, com placar por jogo e draft novo a cada partida.',
+                conteudo:
+                  'A sala personalizada da M7 ARENA agora aceita SÉRIE. Ao criar a sala você escolhe o formato — MD1, MD3 ou MD5 — e o sistema controla tudo sozinho: placar da série, avanço de jogo e um draft novo para cada partida (com draft por jogo, igual aos campeonatos). O resultado de cada jogo entra no histórico da série e o vencedor é quem fechar primeiro o número de vitórias do formato. É o jeito mais próximo de um campeonato oficial para treinar com o seu time — e vale PDL normalmente.',
+                categoria: 'Novidade',
                 date: 'Hoje',
-                image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800',
+                image: '/images/fundoCard5v5.webp',
               },
               {
                 id: 'demo-2',
-                titulo: 'Sistema de Ranking por PDL Atualizado',
-                resumo: 'Agora cada vitória nas salas 1v1 e torneios oficiais garante pontos no ranking geral de equipes.',
-                conteudo: 'Atualizamos o algoritmo do nosso ranking global! A partir deste patch, cada vitória em salas de enfrentamento 1v1 e em partidas de campeonatos oficiais gera pontuação PDL proporcional ao Elo do adversário. Equipes que mantiverem sequências de vitórias (Win Streak) receberão bônus adicionais de PDL para subir mais rapidamente na tabela do Hall da Fama. Confira seu saldo de PDL no seu perfil!',
-                categoria: 'Patch Notes',
-                date: 'Há 2 dias',
-                image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800',
+                titulo: 'Seu elo agora atualiza sozinho na plataforma',
+                resumo: 'Vinculou a conta Riot? O elo do seu perfil passa a ser sincronizado automaticamente — sem editar na mão.',
+                conteudo:
+                  'Chega de atualizar elo manualmente. Ao vincular a conta Riot (Nick#TAG), a M7 ARENA busca sua liga direto da API oficial da Riot e mantém o elo do seu perfil sempre em dia: soloQ, flex e o tier usado para separar os campeonatos por nível. A sincronização roda automaticamente, então quando você subir de divisão o site já mostra o novo elo — e as salas passam a considerar o seu tier atual. Se o elo não aparecer, confira se a conta está vinculada em Perfil → Vincular Conta Riot.',
+                categoria: 'Atualização',
+                date: 'Esta semana',
+                image: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Yasuo_0.jpg',
               },
               {
                 id: 'demo-3',
-                titulo: 'Dicas para Capitães: Como Estruturar um Time Campeão',
-                resumo: 'Aprenda a selecionar os integrantes, definir horários de treino e alinhar estratégias.',
-                categoria: 'Dicas',
-                conteudo: 'Liderar uma equipe de eSports exige muito mais do que boa mecânica individual no jogo. Um verdadeiro capitão precisa organizar a comunicação da equipe (Shotcall), alinhar os horários de scrims e treinos semanais, e manter o foco do grupo durante momentos difíceis na partida. Confira nosso guia completo com 5 passos fundamentais para transformar seu time amador em uma máquina de vitórias nos torneios M7!',
-                date: 'Há 5 dias',
-                image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=800',
+                titulo: 'Copa do Halloween 2026 — inscrições em breve',
+                resumo: 'O torneio mais assustador do ano está chegando: vagas limitadas, premiação em Pix e transmissão ao vivo das finais.',
+                conteudo:
+                  'Prepare o squad: a COPA DO HALLOWEEN 2026 da M7 ARENA está chegando. Será um campeonato 5v5 no formato de chaves, com vagas limitadas, premiação em Pix e as finais transmitidas ao vivo nos canais oficiais. As inscrições abrem em breve e quem estiver com o time completo e a conta Riot vinculada garante prioridade na fila. Fique de olho no Discord e nesta página — o aviso de abertura sai por aqui primeiro.',
+                categoria: 'Evento',
+                date: 'Em breve',
+                image: '/images/copa-halloween-2026.webp',
               },
             ].map((n, idx) => (
-              <motion.article
+              <CardCorte
                 key={n.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08 }}
-                onClick={() => setSelectedNoticia(n)}
-                className="group relative bg-white/[0.02] border border-white/5 hover:border-[#FFB700]/50 rounded-2xl overflow-hidden transition-all duration-500 cursor-pointer flex flex-col justify-between hover:scale-[1.02]"
+                className="group cursor-pointer transition-transform duration-500 hover:scale-[1.02] shadow-2xl"
+                border="rgba(255,255,255,0.10)"
               >
-                <div className="relative aspect-[16/9] overflow-hidden bg-black">
-                  <img
-                    src={n.image}
-                    alt={n.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest rounded shadow-md">
-                      {n.categoria}
-                    </span>
+                <motion.article
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.08 }}
+                  onClick={() => setSelectedNoticia(n)}
+                  className="flex flex-col h-full"
+                >
+                  <div className="relative aspect-[16/9] overflow-hidden bg-black">
+                    <img
+                      src={n.image}
+                      alt={n.titulo}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-black/20 to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      <TagCorte>{n.categoria}</TagCorte>
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
-                      {n.titulo}
-                    </h3>
-                    <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">
-                      {n.resumo}
-                    </p>
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
+                        {n.titulo}
+                      </h3>
+                      <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">{n.resumo}</p>
+                    </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                      <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">{n.date}</span>
+                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
+                        Ler Matéria <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
-                      {n.date}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
-                      Ler Matéria <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </motion.article>
+                </motion.article>
+              </CardCorte>
             ))}
           </div>
         ) : (
@@ -1449,11 +1476,11 @@ const Home = () => {
               >
                 <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[#FFB700]/20 via-black to-black">
                   <img
-                    src={n.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
+                    src={n.thumbnail_url || 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg'}
                     alt={n.titulo}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800';
+                      (e.target as HTMLImageElement).src = 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
@@ -1583,10 +1610,7 @@ const Home = () => {
          ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 max-w-[1400px] mx-auto border-t border-white/5">
         <div className="text-center mb-14">
-          <span className="text-[#FFB700] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] inline-flex items-center gap-2 px-3 py-1 bg-[#FFB700]/10 border border-[#FFB700]/20 rounded-full">
-            <Globe className="w-3.5 h-3.5 text-[#FFB700]" />
-            Nossa Comunidade
-          </span>
+          <Eyebrow>Nossa Comunidade</Eyebrow>
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4">
             Conecte-se com a <span className="text-[#FFB700]">M7 ARENA</span>
           </h2>
@@ -1599,7 +1623,8 @@ const Home = () => {
           {/* Card Discord */}
           <motion.div
             whileHover={{ y: -5 }}
-            className="group relative p-8 rounded-3xl bg-gradient-to-b from-[#5865F2]/10 via-black to-black border border-[#5865F2]/20 hover:border-[#5865F2] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
+            className="group relative p-8 bg-gradient-to-b from-[#5865F2]/15 via-[#0a0a10] to-[#08080a] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
+            style={{ clipPath: CUT_CARD }}
           >
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -1633,7 +1658,8 @@ const Home = () => {
           {/* Card WhatsApp */}
           <motion.div
             whileHover={{ y: -5 }}
-            className="group relative p-8 rounded-3xl bg-gradient-to-b from-[#25D366]/10 via-black to-black border border-[#25D366]/20 hover:border-[#25D366] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
+            className="group relative p-8 bg-gradient-to-b from-[#25D366]/15 via-[#0a0a10] to-[#08080a] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
+            style={{ clipPath: CUT_CARD }}
           >
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -1667,7 +1693,8 @@ const Home = () => {
           {/* Card Instagram */}
           <motion.div
             whileHover={{ y: -5 }}
-            className="group relative p-8 rounded-3xl bg-gradient-to-b from-[#E1306C]/10 via-black to-black border border-[#E1306C]/20 hover:border-[#E1306C] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
+            className="group relative p-8 bg-gradient-to-b from-[#E1306C]/15 via-[#0a0a10] to-[#08080a] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl"
+            style={{ clipPath: CUT_CARD }}
           >
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -1741,18 +1768,25 @@ const Home = () => {
             return (
               <div
                 key={item.id}
-                className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden transition-all duration-300 hover:border-white/15"
+                className={`relative bg-[#0b0b0f] border rounded-2xl overflow-hidden transition-all duration-300 ${
+                  isOpen ? 'border-[#FFB700]/50' : 'border-white/10 hover:border-white/25'
+                }`}
               >
+                <span
+                  className={`absolute left-0 top-0 bottom-0 w-[3px] transition-opacity duration-300 ${
+                    isOpen ? 'bg-[#FFB700] opacity-100' : 'bg-[#FFB700] opacity-0'
+                  }`}
+                />
                 <button
                   onClick={() => setOpenFaqId(isOpen ? null : item.id)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-black uppercase tracking-tight text-sm md:text-base text-white hover:text-[#FFB700] transition-colors"
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-black uppercase tracking-tight text-sm md:text-base text-white hover:text-[#FFB700] transition-colors cursor-pointer"
                 >
                   <span className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-[#FFB700]" />
+                    <span className="w-1.5 h-1.5 rotate-45 bg-[#FFB700] shrink-0" />
                     {item.q}
                   </span>
                   <ChevronDown
-                    className={`w-5 h-5 text-white/40 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#FFB700]' : ''}`}
+                    className={`w-5 h-5 shrink-0 text-white/40 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#FFB700]' : ''}`}
                   />
                 </button>
 
@@ -1835,7 +1869,7 @@ const Home = () => {
               {/* Image Header */}
               <div className="relative aspect-[16/9] bg-black overflow-hidden flex-none">
                 <img
-                  src={selectedNoticia.image || selectedNoticia.thumbnail_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800'}
+                  src={selectedNoticia.image || selectedNoticia.thumbnail_url || 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg'}
                   alt={selectedNoticia.titulo}
                   className="w-full h-full object-cover"
                 />
