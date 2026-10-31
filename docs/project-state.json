@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-10-31T08:43:23.347Z",
+  "updatedAt": "2026-10-31T19:39:19.885Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -363,6 +363,14 @@
       "summary": "Lobby/hero: adicionados fades nas 4 bordas da arte (dois overlays de gradiente — horizontal e vertical) para a imagem dissolver no card em vez de parecer cortada; o gradiente da esquerda tambem reforca a leitura do texto. Funciona para os dois modelos do hero (padrao/halloween). Commit 0026e34, deploy ok, health 200.",
       "touched": [
         "web/src/pages/Lobby.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-31T19:39:19.885Z",
+      "agent": "deepseek",
+      "summary": "Scrim: header preto em linha igual ao 5x5, sem moldura branca; titulo + numero da sala na mesma linha e card Serie (MD3 - BLUE x RED) no lugar do JOGO/MD3 empilhado. tsc/build ok; deploy web (SalaCampeonato-DhqY-VPe, index-DcDsj443).",
+      "touched": [
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx"
       ]
     }
   ]

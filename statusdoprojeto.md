@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 05:43 — por `deepseek`
+**Última atualização:** 31/10/2026 16:39 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 16:39 | deepseek | Scrim: header preto em linha igual ao 5x5, sem moldura branca; titulo + numero da sala na mesma linha e card Serie (MD3 - BLUE x RED) no lugar do JOGO/MD3 empilhado. tsc/build ok; deploy web (SalaCampeonato-DhqY-VPe, index-DcDsj443). <br>_tocou: `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 | 31/10/2026 05:43 | deepseek | Lobby/hero: adicionados fades nas 4 bordas da arte (dois overlays de gradiente — horizontal e vertical) para a imagem dissolver no card em vez de parecer cortada; o gradiente da esquerda tambem reforca a leitura do texto. Funciona para os dois modelos do hero (padrao/halloween). Commit 0026e34, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 31/10/2026 05:34 | deepseek | Lobby/hero: imagem centralizada de verdade — troquei object-[center_12%] por object-center e ajustei o zoom para scale-96 (levemente reduzido, sem barras visiveis). Arte do Halloween continua; modelo padrao (video do Lucian) segue salvo em HERO_PADRAO/HERO_EDICAO. Commit 6fda571, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 31/10/2026 05:25 | deepseek | Lobby: hero agora tem DOIS modelos trocaveis por HERO_EDICAO em Lobby.tsx — 'padrao' (texto antigo + video animated-highnoon-lucian.webm, arquivo preservado) e 'halloween' (arte Bruxa da Lua/Copa do Halloween 2026 em webp 1920px, titulo 'Copa do Halloween 2026', CTA 'Inscrever meu time' apontando para https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460 e CTA secundario 'Ver campeonatos'). Imagem com zoom reduzido (scale-95) e object-position 12%. Selo do topo virou 'Halloween 2026'. tsc 0, build ok, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`, `web/public/images/hero-halloween-2026.webp`_ |
