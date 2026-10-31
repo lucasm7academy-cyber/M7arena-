@@ -136,11 +136,22 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
             <img src={buildChampionIconUrl(champ.id, version)} alt={champ.name}
               className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
 
-            {/* Linha vermelha fina na diagonal: deixa explícito que o campeão
-                está banido, sem voltar a colorir o ícone. */}
-            <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center overflow-hidden">
-              <span className="block h-[1.5px] w-[150%] -rotate-45 bg-[#ef4444] shadow-[0_0_5px_rgba(239,68,68,0.9)]" />
-            </div>
+            {/* Linha vermelha fina de canto a canto (\, topo-esquerda ->
+                baixo-direita): cobre o card todo e deixa explícito o ban. */}
+            <svg
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[15] h-full w-full"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
+              <line
+                x1="0" y1="0" x2="100" y2="100"
+                stroke="#ef4444"
+                strokeWidth="1"
+                strokeLinecap="butt"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
 
             {/* Nome do campeão no rodapé do slot, no mesmo padrão dos picks. */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex h-[1.8vmin] items-end justify-center bg-gradient-to-t from-black/95 to-transparent pb-[0.15vmin]">
