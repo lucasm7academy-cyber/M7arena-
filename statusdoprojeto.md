@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 04:15 — por `deepseek`
+**Última atualização:** 31/10/2026 04:19 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 04:19 | deepseek | Draft: bans subiram (top 2.5->1.4vmin) e ganharam mais respiro da barra do timer (container 152->158vmin); icones do topo andaram um pouco para o centro (right 1.5->8vmin), continuando abaixo da linha de bans. Commit f269f2d, deploy ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:15 | deepseek | Draft: ajuste fino do espacamento. Container dos bans 140->152vmin (max-w), criando ~4-5vmin de respiro entre o ultimo ban e a barra azul/vermelha do timer, mantendo os bans perto do bloco FASE. Icones do topo (resetar/verificar/twitch/mudo) descem para top-12vmin, logo abaixo da linha de bans (continuam no alto, sem colidir com o ultimo ban). tsc 0, build ok, commit 67507fe, deploy ok (DraftRoom-DMCiPsye.js, health 200). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:11 | deepseek | Draft: bans agora CENTRALIZADOS (container max-w-140vmin, left-1/2) — ficam encostados no bloco 'FASE DE BANS/PICKS' em vez de colados nas bordas; tamanho 7.2vmin e top 2.5vmin mantidos. Icones do topo (resetar/verificar/twitch/mudo) voltaram pro canto superior direito (top-1vmin right-1.5vmin) — com o container de 140vmin eles nao sobrepoem mais o ultimo ban. Commit 8b40961, deploy VPS ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:07 | deepseek | Draft: bans maiores e mais altos. BanSlot 6->7.2vmin, icone interno 3.6->4.3vmin, gap 1->0.9vmin, rotulo 1->1.1vmin; faixa de bans subiu de top-5vmin para top-2.5vmin (encostada na faixa do timer). Icones do topo (resetar/verificar/twitch/mudo) movidos do topo-direita para o canto inferior direito (bottom-2vmin right-4vmin) para nao cobrir o ultimo ban. tsc 0, check-cut-borders ok, commit 8687f6a na main, deploy VPS ok (/api/health 200, chunk DraftRoom-s2IbL3Mn.js com as classes novas). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
