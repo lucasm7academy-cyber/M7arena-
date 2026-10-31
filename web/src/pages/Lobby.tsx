@@ -915,7 +915,21 @@ const Home = () => {
               - 'padrao'    → vídeo do Lucian (/images/animated-highnoon-lucian.webm)
               O vídeo do Lucian segue salvo no repositório. */}
           <div className="absolute inset-0 z-0 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-black/30 z-10" />
+            {/* fades nas 4 bordas: a arte dissolve no card em vez de parecer cortada */}
+            <div
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.72) 14%, rgba(0,0,0,0.28) 34%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.12) 74%, rgba(0,0,0,0.6) 92%, #000 100%)',
+              }}
+            />
+            <div
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.12) 16%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.18) 74%, rgba(0,0,0,0.8) 100%)',
+              }}
+            />
             {HERO.video ? (
               <video
                 autoPlay
