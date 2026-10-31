@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-10-31T08:05:49.209Z",
+  "updatedAt": "2026-10-31T08:12:34.063Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -328,6 +328,14 @@
       "at": "2026-10-31T08:05:49.208Z",
       "agent": "deepseek",
       "summary": "Draft: linha vermelha fina (1,5px) na diagonal no campeao banido + nome do campeao no slot de ban, no padrao dos picks. Rebase sobre os bans alinhados do outro agente; tsc/build ok; web deployado (DraftRoom-JmJ0hsEl, index-BwMw7xSk).",
+      "touched": [
+        "web/src/components/draft/DraftRoom.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-31T08:12:34.062Z",
+      "agent": "deepseek",
+      "summary": "Ajuste fino da linha do ban: SVG 1px de canto a canto (barra invertida), cobrindo o card todo; nome do campeao mantido. tsc/build ok; web deployado (DraftRoom-agJsbyUU, index-Bkef1JKM).",
       "touched": [
         "web/src/components/draft/DraftRoom.tsx"
       ]

@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 05:05 — por `deepseek`
+**Última atualização:** 31/10/2026 05:12 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 31/10/2026 05:12 | deepseek | Ajuste fino da linha do ban: SVG 1px de canto a canto (barra invertida), cobrindo o card todo; nome do campeao mantido. tsc/build ok; web deployado (DraftRoom-agJsbyUU, index-Bkef1JKM). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 05:05 | deepseek | Draft: linha vermelha fina (1,5px) na diagonal no campeao banido + nome do campeao no slot de ban, no padrao dos picks. Rebase sobre os bans alinhados do outro agente; tsc/build ok; web deployado (DraftRoom-JmJ0hsEl, index-BwMw7xSk). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:38 | deepseek | Draft: bans agora alinhados HORIZONTALMENTE com a bola do time — o container usa o mesmo px do TeamPanel (max(2vmin,calc((100%-85vmin)/4-12.5vmin))) e cada grupo fica dentro de uma coluna de 25vmin centralizada (mesma largura do painel da bola). Altura mantida (top-6vmin), tamanho 7.2vmin mantido. Assim os bans deixam de ficar por cima do grid de campeoes. Commit 2cb969e, deploy ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:35 | deepseek | Draft: icones (resetar/verificar/twitch/mudo) de volta ao canto superior direito (top-1vmin right-1.5vmin) — estavam 'embaixo' porque eu os tinha descido para 12vmin. Para nao ficarem sob os bans, a faixa de bans desceu de 1.4 para 6vmin (continua no campo do timer, ao lado da barra azul/vermelha, sem sobrepor). Tamanho 7.2vmin e container 158vmin mantidos. Commit e1cfed3, deploy ok. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
