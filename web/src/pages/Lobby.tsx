@@ -888,7 +888,7 @@ const Home = () => {
             <img
               src="/images/hero-halloween-2026.webp"
               alt="Copa do Halloween 2026"
-              className="w-full h-full object-cover object-[center_35%] opacity-90 transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full object-cover object-[center_12%] opacity-90 transition-transform duration-700 group-hover:scale-105"
             />
           </div>
 
