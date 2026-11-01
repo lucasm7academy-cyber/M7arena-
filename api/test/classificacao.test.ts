@@ -1,89 +1,89 @@
-import { test } from "node:test";
+import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { buildClassificacao } from "../src/lib/tournament-shape.js";
 
-const team = (id: string, name: string, tag: string) => ({
-  teams: { id, name, tag, logoUrl: null },
-  tournament_teams: { status: "approved" },
+const team = (id: string, name: string, tag: string, status = "approved") => ({
+  teams: { id, name, tag, logoUrl: `/${tag}.png` },
+  tournament_teams: { status },
 });
 
-const match = (a: string, b: string, score: string, phaseLabel: string, status = "finalizado") => ({
-  teamATag: a,
-  teamBTag: b,
-  scoreDisplay: score,
-  phaseLabel,
-  phase: phaseLabel,
-  status,
-});
+describe("buildClassificacao", () => {
+  test("sem jogos finalizados, inclui todos os aprovados e preserva os valores manuais", () => {
+    const rows = buildClassificacao({
+      t: { format: "groups" },
+      matches: [],
+      teamRows: [
+        team("t1", "AMATERASU E-SPORTS", "AMS"),
+        team("t2", "Cães De Caça", "CDC"),
+        team("t3", "EMPI Academy", "EMPA"),
+        team("t4", "EMPI Esports", "EMPI"),
+      ],
+      standings: [
+        { teamId: "t2", rank: 2, v: 3, d: 1, wo: 0, j: 4, cor: "#fff", logo: "/manual-cdc.png" },
+        { teamId: "t1", rank: 1, v: 4, d: 0, wo: 0, j: 4, cor: "#000", logo: "/manual-ams.png" },
+      ],
+    });
 
-test("liga: desempate por saldo, depois menos derrotas, depois alfabetico", () => {
-  const data: any = {
-    t: { format: "groups" },
-    teamRows: [team("1", "Time A", "TA"), team("2", "Time B", "TB"), team("3", "Time C", "TC")],
-    matches: [
-      match("TA", "TB", "2 - 1", "Grupo A"),
-      match("TC", "TA", "1 - 2", "Grupo A"),
-    ],
-    brackets: [],
-    standings: [],
-  };
-  // TA: v=4 d=2 (saldo +2); TB: v=1 d=2 (saldo -1); TC: v=1 d=2 (saldo -1)
-  const c = buildClassificacao(data);
-  assert.equal(c[0].tag, "TA");
-  assert.equal(c[0].matches, 2);
-  // TB e TC empatam em saldo e derrotas; alfabetico: "Time B" < "Time C"
-  assert.equal(c[1].tag, "TB");
-  assert.equal(c[2].tag, "TC");
-});
+    assert.equal(rows.length, 4);
+    assert.deepEqual(rows.map((r: any) => r.tag), ["AMS", "CDC", "EMPA", "EMPI"]);
+    assert.equal(rows[0].rank, 1);
+    assert.equal(rows[0].v, 4);
+    assert.equal(rows[0].logo, "/manual-ams.png");
+    assert.equal(rows[1].rank, 2);
+    assert.equal(rows[1].v, 3);
+    assert.equal(rows[1].logo, "/manual-cdc.png");
+    assert.equal(rows[2].rank, 3);
+    assert.equal(rows[2].v, 0);
+    assert.equal(rows[3].rank, 4);
+  });
 
-test("mata-mata: filtra chaveamento e conta serie vencida", () => {
-  const data: any = {
-    t: { format: "single_elimination" },
-    teamRows: [team("1", "A", "TA"), team("2", "B", "TB")],
-    matches: [
-      match("TA", "TB", "2 - 1", "Final"),
-      match("TA", "TB", "1 - 2", "MATA-MATA (CHAVEAMENTO)"),
-    ],
-    brackets: [],
-    standings: [],
-  };
-  const c = buildClassificacao(data);
-  assert.equal(c[0].tag, "TA");
-  assert.equal(c[0].v, 1);
-  assert.equal(c[1].tag, "TB");
-  assert.equal(c[1].d, 1);
-});
+  test("não inclui classificação manual de time que não está aprovado", () => {
+    const rows = buildClassificacao({
+      t: { format: "groups" },
+      matches: [],
+      teamRows: [
+        team("t1", "APROVADO", "APR"),
+        team("t2", "REJEITADO", "REJ", "rejected"),
+      ],
+      standings: [
+        { teamId: "t1", rank: 1, v: 2, d: 0, wo: 0, j: 2 },
+        { teamId: "t2", rank: 2, v: 5, d: 0, wo: 0, j: 5 },
+      ],
+    });
 
-test("liga: confronto manual 'Fase de Grupos' conta; 'Mata-Mata' tambem conta na geral", () => {
-  const data: any = {
-    t: { format: "groups" },
-    teamRows: [team("1", "A", "TA"), team("2", "B", "TB")],
-    matches: [
-      match("TA", "TB", "2 - 0", "Fase de Grupos"),
-      match("TA", "TB", "2 - 1", "Mata-Mata"),
-    ],
-    brackets: [],
-    standings: [],
-  };
-  const c = buildClassificacao(data);
-  // Ambos contam na classificação geral (só o chaveamento visual é excluído).
-  assert.equal(c[0].tag, "TA");
-  assert.equal(c[0].v, 4);
-  assert.equal(c[0].d, 1);
-  assert.equal(c[1].tag, "TB");
-  assert.equal(c[1].v, 1);
-  assert.equal(c[1].d, 4);
-});
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].tag, "APR");
+    assert.equal(rows[0].v, 2);
+  });
 
-test("fallback para classificacao manual sem jogos finalizados", () => {
-  const data: any = {
-    t: { format: "single_elimination" },
-    teamRows: [team("1", "A", "TA")],
-    matches: [],
-    brackets: [],
-    standings: [{ rank: 1, teamId: "1", v: 3, d: 0, wo: 0, j: 3, cor: "#FFB700", logo: null }],
-  };
-  const c = buildClassificacao(data);
-  assert.equal(c[0].nome, "A");
-  assert.equal(c[0].v, 3);
+  test("com jogos finalizados, deriva do cronograma e inclui todos os aprovados", () => {
+    const rows = buildClassificacao({
+      t: { format: "groups" },
+      matches: [
+        {
+          status: "finalizado",
+          phase: "group_stage",
+          teamATag: "AMS",
+          teamBTag: "CDC",
+          scoreDisplay: "2 - 1",
+        },
+      ],
+      teamRows: [
+        team("t1", "AMATERASU", "AMS"),
+        team("t2", "CAES", "CDC"),
+        team("t3", "EMPI Academy", "EMPA"),
+        team("t4", "EMPI Esports", "EMPI"),
+      ],
+      standings: [],
+    });
+
+    assert.equal(rows.length, 4);
+    const byTag = new Map(rows.map((r: any) => [r.tag, r]));
+    assert.equal((byTag.get("AMS") as any).v, 2);
+    assert.equal((byTag.get("AMS") as any).d, 1);
+    assert.equal((byTag.get("CDC") as any).v, 1);
+    assert.equal((byTag.get("CDC") as any).d, 2);
+    assert.equal((byTag.get("EMPA") as any).v, 0);
+    assert.equal((byTag.get("EMPI") as any).v, 0);
+  });
 });

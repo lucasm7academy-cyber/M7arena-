@@ -243,23 +243,9 @@ export function buildClassificacao(data: { t: any; matches: any[]; teamRows: any
     return (m.status === "finalizado" || m.status === "finalizada") && fase !== "MATA-MATA (CHAVEAMENTO)";
   });
 
-  // Se não há jogos finalizados e há classificação manual → devolve a manual
-  if (finished.length === 0 && standings.length > 0) {
-    return standings.map((s) => ({
-      rank: s.rank,
-      nome: teamRows.find((r) => r.teams.id === s.teamId)?.teams.name || s.teamId,
-      tag: teamRows.find((r) => r.teams.id === s.teamId)?.teams.tag || s.teamId,
-      v: s.v,
-      d: s.d,
-      wo: s.wo,
-      j: s.j,
-      cor: s.cor,
-      logo: s.logo,
-      matches: 0,
-      icone: "ShieldCheck",
-    }));
-  }
-
+  // A base é SEMPRE todos os times aprovados. Antes, quando havia classificação
+  // manual e nenhum jogo finalizado, o retorno era só as linhas manuais — e os
+  // demais times aprovados sumiam do ranking.
   const stats: any = {};
   approved.forEach((r) => {
     stats[r.teams.tag] = {
@@ -267,6 +253,45 @@ export function buildClassificacao(data: { t: any; matches: any[]; teamRows: any
       v: 0, d: 0, wo: 0, j: 0, matches: 0, cor: "#FFB700", icone: "ShieldCheck",
     };
   });
+
+  // Sem jogos finalizados: a classificação manual sobrescreve os valores dos
+  // times que têm linha, mas os demais aprovados continuam listados com zero.
+  if (finished.length === 0 && standings.length > 0) {
+    const manualByTeamId = new Map<string, any>(
+      standings.map((s: any) => [String(s.teamId), s])
+    );
+
+    approved.forEach((r) => {
+      const s = manualByTeamId.get(String(r.teams.id));
+      const row = stats[r.teams.tag];
+      if (!s || !row) return;
+      row.v = s.v ?? row.v;
+      row.d = s.d ?? row.d;
+      row.wo = s.wo ?? row.wo;
+      row.j = s.j ?? row.j;
+      row.cor = s.cor ?? row.cor;
+      row.logo = s.logo ?? row.logo;
+      row.rank = Number(s.rank) || 0;
+    });
+
+    // Preserva os ranks manuais (1, 2, ...) e coloca os times sem linha depois
+    // do maior rank manual, em ordem alfabética. Assim ninguém some e os ranks
+    // manuais não são renumerados por acidente.
+    const usados = new Set(
+      Object.values(stats)
+        .map((row: any) => Number(row.rank) || 0)
+        .filter((n: number) => n > 0)
+    );
+    let proximo = usados.size ? Math.max(...usados) + 1 : 1;
+    Object.values(stats)
+      .filter((row: any) => !row.rank)
+      .sort((a: any, b: any) => (a.nome || "").localeCompare(b.nome || ""))
+      .forEach((row: any) => { row.rank = proximo++; });
+
+    return Object.values(stats).sort(
+      (a: any, b: any) => (a.rank - b.rank) || (a.nome || "").localeCompare(b.nome || "")
+    );
+  }
 
   const isLiga = t.format === "groups";
   finished.forEach((m) => {
