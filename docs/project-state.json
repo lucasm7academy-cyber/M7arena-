@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-01T19:36:50.838Z",
+  "updatedAt": "2026-11-01T20:48:08.531Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -395,6 +395,15 @@
         "db/migrations/0014_rodizio_codigos_lru.sql",
         "db/migrations/0020_separar_fila_codigos_x1.sql",
         "db/migrations/0034_blind_codes.sql"
+      ]
+    },
+    {
+      "at": "2026-11-01T20:48:08.531Z",
+      "agent": "deepseek",
+      "summary": "SalaCampeonato: header de partida finalizada trocado pela titlebar Anton com gradiente na cor do vencedor, igual à SalaMod1. Sem lista de games e sem migration (decisão do usuário). Live: index-D0tVwTiJ.js, SalaCampeonato-D1N5OQNH.js, health 200; chunk contém PARTIDA FINALIZADA/Anton.",
+      "touched": [
+        "web/src/features/sala-campeonato/SalaCampeonato.tsx",
+        "web/src/components/partidas/HeaderFinalizada.tsx"
       ]
     }
   ]
