@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 31/10/2026 16:39 — por `deepseek`
+**Última atualização:** 01/11/2026 16:30 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 01/11/2026 16:30 | deepseek | 5x5 sem draft no site: confirmou -> iniciando_partida com o codigo Tournament Draft antigo (mode NULL) e placar 0x0/1x0 na bola; MD1/MD3/MD5 mantidos. Scrim/campeonato: draft no site + codigos blind BR05116 (mode='blind', migration 0034 aplicada, 7 no pool). Testes API ok; tsc/build; web/API deployados (index-BKTUEe0z, SalaMod1-BsVjmLXg). <br>_tocou: `api/src/lib/match-flow.ts`, `api/src/lib/serie-campeonato.ts`, `api/src/lib/sala-campeonato.ts`, `api/src/lib/draft/modos/5v5.ts`, `web/src/pages/SalaMod1.tsx`, `db/migrations/0034_blind_codes.sql`_ |
 | 31/10/2026 16:39 | deepseek | Scrim: header preto em linha igual ao 5x5, sem moldura branca; titulo + numero da sala na mesma linha e card Serie (MD3 - BLUE x RED) no lugar do JOGO/MD3 empilhado. tsc/build ok; deploy web (SalaCampeonato-DhqY-VPe, index-DcDsj443). <br>_tocou: `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 | 31/10/2026 05:43 | deepseek | Lobby/hero: adicionados fades nas 4 bordas da arte (dois overlays de gradiente — horizontal e vertical) para a imagem dissolver no card em vez de parecer cortada; o gradiente da esquerda tambem reforca a leitura do texto. Funciona para os dois modelos do hero (padrao/halloween). Commit 0026e34, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 31/10/2026 05:34 | deepseek | Lobby/hero: imagem centralizada de verdade — troquei object-[center_12%] por object-center e ajustei o zoom para scale-96 (levemente reduzido, sem barras visiveis). Arte do Halloween continua; modelo padrao (video do Lucian) segue salvo em HERO_PADRAO/HERO_EDICAO. Commit 6fda571, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
@@ -193,7 +194,6 @@ _31/10/2026 04:00 — deepseek_
 | 31/10/2026 04:07 | deepseek | Draft: bans maiores e mais altos. BanSlot 6->7.2vmin, icone interno 3.6->4.3vmin, gap 1->0.9vmin, rotulo 1->1.1vmin; faixa de bans subiu de top-5vmin para top-2.5vmin (encostada na faixa do timer). Icones do topo (resetar/verificar/twitch/mudo) movidos do topo-direita para o canto inferior direito (bottom-2vmin right-4vmin) para nao cobrir o ultimo ban. tsc 0, check-cut-borders ok, commit 8687f6a na main, deploy VPS ok (/api/health 200, chunk DraftRoom-s2IbL3Mn.js com as classes novas). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:00 | deepseek | AGENTS.md: pasta principal D:\Aplicativos\M7arenaSite sempre na main e atualizada; agentes sincronizam no fim. ADR-095 registrada. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
 | 31/10/2026 03:40 | deepseek | Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094. <br>_tocou: `AGENTS.md`, `docs/project-state.json`, `statusdoprojeto.md`_ |
-| 31/10/2026 03:36 | deepseek | Status enxugado: removido o histórico da migração antiga; ficaram só componentes, ADRs e blockers atuais do M7Arena em produção. AGENTS.md agora exige worktree próprio + commit/push na main; deploy só da main commitada. Supabase zero (verify-swap 0). <br>_tocou: `AGENTS.md`, `mcp/status-server/lib/plan.js`, `docs/project-state.json`, `web/src`, `api/src`_ |
 
 ---
 
