@@ -10,6 +10,7 @@ import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, RotateCcw, Share2, S
 import toast from 'react-hot-toast';
 import { DraftRoom, type AcoesTopo } from '../../components/draft/DraftRoom';
 import { VagaSlot } from '../../components/partidas/VagaSlot';
+import { HeaderFinalizada } from '../../components/partidas/HeaderFinalizada';
 import { useSalaRealtime } from '../../hooks/useSalaRealtime';
 import { usePerfil } from '../../contexts/PerfilContext';
 import { agoraServidor, registrarServerTime } from '../../lib/clockSync';
@@ -998,6 +999,14 @@ export default function SalaCampeonato() {
             : 'B';
     const nomeVencedor =
       vencedorSerie === 'A' ? sala.time_a_nome : vencedorSerie === 'B' ? sala.time_b_nome : null;
+    const corVencedor = vencedorSerie === 'A' ? '#3b82f6' : vencedorSerie === 'B' ? '#ef4444' : '#fbbf24';
+    const textoVencedor = nomeVencedor ? `${nomeVencedor} VENCEU` : 'EMPATE';
+    const placarRiot = sala.resultado_riot?.placar;
+    const placarUltimoJogo = placarRiot
+      ? { blue: Number(placarRiot.blue?.kills ?? 0), red: Number(placarRiot.red?.kills ?? 0) }
+      : null;
+    const formatoSerie = serie?.best_of ? `MD${serie.best_of}` : String(camp?.formato ?? 'md3').toUpperCase();
+    const subtituloSerie = `SÉRIE ${formatoSerie}`;
     // O placar é guardado por TIME (A/B), mas as colunas abaixo são por LADO em
     // jogo (esquerda = blue side). Se os lados inverteram, o número tem que
     // acompanhar a coluna — senão lê errado (sala 217: BKS aparecia à esquerda
@@ -1075,16 +1084,13 @@ export default function SalaCampeonato() {
         {/* PARTIDA FINALIZADA (sala livre T vs T): faixa de título + vencedor
             + duração do último jogo — mesmo espírito das outras salas. */}
         {finalizada && (
-          <div className="flex flex-col items-center gap-1 md:gap-[0.9vmin]">
-            <span className="px-4 py-1.5 md:px-[2.4vmin] md:py-[1vmin] bg-[#FFB700] text-black text-sm md:text-[2.1vmin] font-black uppercase tracking-[0.35em] shadow-[0_0_30px_rgba(255,183,0,0.35)]">
-              Partida Finalizada
-            </span>
-            <span className="text-[10px] md:text-[1.35vmin] font-bold uppercase tracking-[0.25em] text-white/75 text-center">
-              {nomeVencedor ? `${nomeVencedor} venceu` : 'Empate'}
-              {` · série ${String(camp?.formato ?? 'md3').toUpperCase()}`}
-              {duracao ? ` · último jogo ${duracao}` : ''}
-            </span>
-          </div>
+          <HeaderFinalizada
+            cor={corVencedor}
+            vencedor={textoVencedor}
+            placar={placarUltimoJogo}
+            duracao={duracao}
+            subtitulo={subtituloSerie}
+          />
         )}
         <div className="w-full flex items-center justify-center gap-3 md:gap-[6vmin]">
           {bloco('blue')}
