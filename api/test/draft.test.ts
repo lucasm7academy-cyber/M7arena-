@@ -15,7 +15,8 @@ async function criaJogador(db: any, id: string) {
 
 /**
  * Sala em `confirmacao` com 2 jogadores já CONFIRMADOS. O `mode` decide o
- * fluxo: 5v5/time_vs_time têm draft; 1v1/ARAM pulam a fase. maxJogadores=2
+ * fluxo: time_vs_time/campeonato têm draft; 5v5/1v1/ARAM pulam a fase (no 5x5
+ * o draft é feito direto no LoL com o código Tournament Draft). maxJogadores=2
  * basta — o motor só olha o MODO para montar a ordem dos turnos.
  */
 async function criaSalaConfirmada(db: any, mode = "5v5", values: any = {}) {
@@ -54,13 +55,14 @@ describe("draft: modos sem draft (1v1/ARAM) pulam a fase", () => {
     await ctx.client.close();
   });
 
-  test("1v1 e ARAM: confirmados → iniciando_partida com código (sem linha de draft)", async () => {
+  test("1v1, ARAM e 5v5: confirmados → iniciando_partida com código (sem linha de draft)", async () => {
     const db = ctx.db;
-    // Código para a fila do 1v1 e código genérico (ARAM usa os genéricos, ADR-042).
+    // Código para a fila do 1v1 e códigos genéricos (ARAM/5v5 usam os genéricos).
     await db.insert(matchCodes).values({ code: "BR050c8-SKIP1V1", used: false, mode: "1v1" });
     await db.insert(matchCodes).values({ code: "BR04fa2-SKIPARAM", used: false, mode: null });
+    await db.insert(matchCodes).values({ code: "BR04fa2-SKIP5V5", used: false, mode: null });
 
-    for (const modo of ["1v1", "aram"]) {
+    for (const modo of ["1v1", "aram", "5v5"]) {
       const { sala } = await criaSalaConfirmada(db, modo);
       const r = await avaliarTransicoes(db as any, sala.id);
 
@@ -79,7 +81,7 @@ describe("draft: modos sem draft (1v1/ARAM) pulam a fase", () => {
   });
 });
 
-describe("draft 5v5: confirmacao abre o draft e o servidor é a autoridade", () => {
+describe("draft time_vs_time: confirmacao abre o draft e o servidor é a autoridade", () => {
   let ctx: any;
   before(async () => {
     ctx = await setupDb();
@@ -90,7 +92,7 @@ describe("draft 5v5: confirmacao abre o draft e o servidor é a autoridade", () 
 
   test("todos confirmados → estado draft com linha de draft criada e prazo do servidor", async () => {
     const db = ctx.db;
-    const { sala } = await criaSalaConfirmada(db, "5v5");
+    const { sala } = await criaSalaConfirmada(db, "time_vs_time");
 
     const r = await avaliarTransicoes(db as any, sala.id);
     assert.equal(r.estado, "draft");
@@ -125,7 +127,7 @@ describe("draft 5v5: confirmacao abre o draft e o servidor é a autoridade", () 
 
   test("ação do time errado é recusada; a do time certo avança o turno", async () => {
     const db = ctx.db;
-    const { sala, blue, red } = await criaSalaConfirmada(db, "5v5");
+    const { sala, blue, red } = await criaSalaConfirmada(db, "time_vs_time");
     await avaliarTransicoes(db as any, sala.id);
     const [match] = await db.select().from(matches).where(eq(matches.id, sala.id));
 
@@ -158,7 +160,7 @@ describe("draft 5v5: confirmacao abre o draft e o servidor é a autoridade", () 
 
   test("ban vencido vira ban vazio (null) com catch-up; pick vencido cancela o draft", async () => {
     const db = ctx.db;
-    const { sala } = await criaSalaConfirmada(db, "5v5");
+    const { sala } = await criaSalaConfirmada(db, "time_vs_time");
     await avaliarTransicoes(db as any, sala.id);
 
     // Força o prazo 45s para trás (> 1 turno de 30s): o catch-up do servidor
@@ -196,17 +198,17 @@ describe("draft 5v5: confirmacao abre o draft e o servidor é a autoridade", () 
     assert.ok(players.every((p: any) => p.confirmed === false && p.linked === false), "confirmações e vínculos resetados");
   });
 
-  test("draft 5v5 completo (20 turnos) fecha e a sala vai para iniciando_partida com código", async () => {
+  test("draft time_vs_time completo (20 turnos) fecha e a sala vai para iniciando_partida com código", async () => {
     const db = ctx.db;
-    const { sala, blue, red } = await criaSalaConfirmada(db, "5v5");
+    const { sala, blue, red } = await criaSalaConfirmada(db, "time_vs_time");
 
-    // Pool com 1 código genérico — a atribuição no fechamento usa este.
-    await db.insert(matchCodes).values({ code: "BR04fa2-TEST5V5", used: false, mode: null });
+    // Pool blind — a atribuição no fechamento (time_vs_time) usa a fila blind.
+    await db.insert(matchCodes).values({ code: "BR05116-TESTBLIND", used: false, mode: "blind" });
 
     await avaliarTransicoes(db as any, sala.id);
     const [match] = await db.select().from(matches).where(eq(matches.id, sala.id));
 
-    const ordem = getTurnOrder("5v5");
+    const ordem = getTurnOrder("time_vs_time");
     assert.equal(ordem.length, 20);
 
     for (let i = 0; i < ordem.length; i++) {

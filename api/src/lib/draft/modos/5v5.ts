@@ -1,5 +1,7 @@
 /**
- * 5v5 — draft completo (tournament draft).
+ * 5v5 — regras base do draft (turnos/limites). A sala 5v5 NÃO usa draft
+ * no site: o código antigo é Tournament Draft direto no LoL; o time_vs_time/
+ * campeonato usa estas regras com `ativo: true`.
  *
  * 20 turnos: 6 bans (3 por lado) → 6 picks (3 por lado) → 4 bans (2 por lado)
  * → 4 picks (2 por lado). Total: 5 bans e 5 picks por lado (os slots da tela).
@@ -12,7 +14,7 @@
 import type { DraftRules } from "../tipos.js";
 
 export const RULES_5V5: DraftRules = {
-  ativo: true,
+  ativo: false,
   turnOrder: [
     { team: "blue", phase: "ban" }, // 0
     { team: "red", phase: "ban" }, // 1

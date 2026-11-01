@@ -10,16 +10,16 @@ import {
 import { toLegacyMatch } from "../src/lib/match-shape.js";
 
 describe("draft: registry de regras por modo", () => {
-  test("5v5: draft de 20 turnos, 5 slots por lado, MID é o capitão (só ele age)", () => {
+  test("5v5: regras base de 20 turnos; SEM draft no site (Tournament Draft no LoL)", () => {
     const r = getDraftRules("5v5");
-    assert.equal(r.ativo, true, "5v5: tem draft");
+    assert.equal(r.ativo, false, "5v5: sem draft no site");
     assert.equal(r.turnOrder.length, 20, "5v5: 20 turnos");
     assert.equal(r.maxBansPorLado, 5, "5v5: 5 bans por lado");
     assert.equal(r.maxPicksPorLado, 5, "5v5: 5 picks por lado");
     assert.equal(r.esconderPicksAdversario, false, "5v5: tudo visível");
     assert.equal(r.roleControladora, "MID", "5v5: o MID bane/escolhe");
     assert.equal(r.apenasRoleControladora, true, "5v5: só a role controladora age");
-    assert.equal(temDraft("5v5"), true);
+    assert.equal(temDraft("5v5"), false);
     assert.equal(getTurnOrder("5v5"), r.turnOrder, "5v5: ordem vem do registry");
   });
 

@@ -187,7 +187,8 @@ export async function criarSalaCampeonato(
 
     let codigo = serie.codigoPartida ?? null;
     if (!codigo) {
-      codigo = await atribuirCodigoSerie(tx, "5v5");
+      // Campeonato/Scrim: draft no site + blind pick no LoL (códigos BR05116-*).
+      codigo = await atribuirCodigoSerie(tx, "blind");
       if (codigo === "SEM-CODIGO-AGUARDE") return { ok: false, erro: "sem_codigo" };
     }
     // Formato da série: `best_of` gravado na criação do jogo (MD1/MD3/MD5 no

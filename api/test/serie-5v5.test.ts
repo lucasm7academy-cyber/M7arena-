@@ -2,11 +2,10 @@ import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { users } from "../../db/schema/identidade.js";
-import { matches, matchPlayers, matchDrafts, campeonatoSalaEstado } from "../../db/schema/matches.js";
+import { matches, matchPlayers, matchDrafts, matchCodes, campeonatoSalaEstado } from "../../db/schema/matches.js";
 import { gameAccounts, games } from "../../db/schema/games.js";
 import { setupDb } from "./helpers.js";
 import { avaliarTransicoes } from "../src/lib/match-flow.js";
-import { aplicarAcaoDraft } from "../src/lib/draft/index.js";
 import { verificarPartida } from "../src/lib/verificar-partida.js";
 import {
   avancarSerie5v5,
@@ -80,7 +79,7 @@ describe("série da sala 5v5: formato e alvo de vitórias", () => {
   });
 });
 
-describe("série da sala 5v5: MID é o único que bane/escolhe", () => {
+describe("série da sala 5v5: SEM draft no site", () => {
   let ctx: any;
   before(async () => {
     ctx = await setupDb();
@@ -89,33 +88,20 @@ describe("série da sala 5v5: MID é o único que bane/escolhe", () => {
     await ctx.client.close();
   });
 
-  test("MID bane; JG do mesmo lado é recusado com apenas_mid", async () => {
+  test("confirmados → iniciando_partida com código; nenhuma linha de draft", async () => {
     const db = ctx.db;
-    const midBlue = crypto.randomUUID();
-    const jgBlue = crypto.randomUUID();
-    const midRed = crypto.randomUUID();
-    const { sala } = await criaSala5v5(db, {
-      vagas: [
-        { userId: midBlue, side: "blue", role: "MID", slot: 0 },
-        { userId: jgBlue, side: "blue", role: "JG", slot: 1 },
-        { userId: midRed, side: "red", role: "MID", slot: 0 },
-      ],
-    });
-    await avaliarTransicoes(db as any, sala.id);
-    const [match] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(match.status, "draft", "sala entrou no draft do jogo 1");
+    await db.insert(matchCodes).values({ code: "BR04fa2-SERIE5V5-NODRAFT", used: false, mode: null });
 
-    // JG do azul tenta banir no turno do azul → recusado pela regra do capitão.
-    const jg = await aplicarAcaoDraft(db as any, match, jgBlue, "ban", "Aatrox");
-    assert.equal(jg.ok, false);
-    assert.equal(jg.erro, "apenas_mid");
+    const { sala } = await criaSala5v5(db);
+    const r = await avaliarTransicoes(db as any, sala.id);
+    assert.equal(r.estado, "iniciando_partida", "5v5 vai direto para a partida");
 
-    // MID do azul age normalmente.
-    const mid = await aplicarAcaoDraft(db as any, match, midBlue, "ban", "Aatrox");
-    assert.equal(mid.ok, true);
+    const drafts = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(drafts.length, 0, "nenhuma linha de draft criada no 5v5");
 
-    const [draft] = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
-    assert.deepEqual(draft.blueBans, ["Aatrox"]);
+    const [m] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.ok(m.codigoPartida && m.codigoPartida !== "SEM-CODIGO-AGUARDE", "código Tournament Draft atribuído");
+    assert.ok(m.iniciandoPartidaAt, "timer de início marcado pelo servidor");
   });
 });
 
@@ -128,16 +114,20 @@ describe("série da sala 5v5: MD3/MD5 avançam e fecham no alvo", () => {
     await ctx.client.close();
   });
 
-  test("MD3: 1-0 continua no jogo 2 (todos desconfirmados); 2-1 fecha", async () => {
+  test("MD3: 1-0 continua no jogo 2 sem draft; 2-1 fecha", async () => {
     const db = ctx.db;
+    await db.insert(matchCodes).values({ code: "BR04fa2-SERIE5V5-MD3", used: false, mode: null });
+
     const { sala } = await criaSala5v5(db, { formato: "md3" });
 
-    // Fluxo real: a sala entra no draft do jogo 1 e o jogo termina.
-    await avaliarTransicoes(db as any, sala.id);
-    await db
-      .update(matchDrafts)
-      .set({ status: "finished" })
-      .where(eq(matchDrafts.matchId, sala.id));
+    // Jogo 1: confirmados → iniciando_partida (sem draft), código atribuído.
+    const r1 = await avaliarTransicoes(db as any, sala.id);
+    assert.equal(r1.estado, "iniciando_partida");
+    const [inicio1] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    const codigoSerie = inicio1.codigoPartida;
+    assert.ok(codigoSerie && !codigoSerie.startsWith("SEM-CODIGO"), "código real do pool");
+    const drafts1 = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(drafts1.length, 0, "5v5 não cria draft");
 
     // Jogo 1: azul vence → série continua.
     const continua1 = await avancarSerie5v5(db as any, sala.id, "blue");
@@ -155,22 +145,20 @@ describe("série da sala 5v5: MD3/MD5 avançam e fecham no alvo", () => {
 
     const jogadores = await db.select().from(matchPlayers).where(eq(matchPlayers.matchId, sala.id));
     assert.ok(jogadores.every((p: any) => p.confirmed === false && p.linked === false), "todos precisam confirmar de novo");
-    assert.equal(sala1.codigoPartida, null, "o código só é atribuído quando o draft fecha");
+    assert.equal(sala1.codigoPartida, codigoSerie, "o código da série é preservado");
 
-    // Ninguém confirmou ainda: a sala continua na confirmação (não pula pro draft).
+    // Ninguém confirmou ainda: continua na confirmação.
     const rParado = await avaliarTransicoes(db as any, sala.id);
     assert.equal(rParado.estado, "confirmacao");
 
-    // Todos confirmam → draft do JOGO 2, preservando o draft do jogo 1.
+    // Todos confirmam → iniciando_partida do jogo 2 (sem draft), mesmo código.
     await db.update(matchPlayers).set({ confirmed: true }).where(eq(matchPlayers.matchId, sala.id));
-    const rDraft = await avaliarTransicoes(db as any, sala.id);
-    assert.equal(rDraft.estado, "draft");
-
-    const drafts = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
-    assert.equal(drafts.length, 2, "draft do jogo 1 (histórico) + draft do jogo 2");
-    const jogo2 = drafts.find((d: any) => d.jogo === 2);
-    assert.ok(jogo2, "draft do jogo 2 criado");
-    assert.equal(jogo2.status, "ongoing");
+    const r2 = await avaliarTransicoes(db as any, sala.id);
+    assert.equal(r2.estado, "iniciando_partida");
+    const [inicio2] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(inicio2.codigoPartida, codigoSerie);
+    const drafts2 = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(drafts2.length, 0, "continua sem draft no jogo 2");
 
     // Jogo 2: vermelho vence (1-1) → continua no jogo 3.
     const continua2 = await avancarSerie5v5(db as any, sala.id, "red");

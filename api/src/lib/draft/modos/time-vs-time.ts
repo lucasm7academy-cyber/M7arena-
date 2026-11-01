@@ -15,6 +15,7 @@ import { RULES_5V5 } from "./5v5.js";
  */
 export const RULES_TIME_VS_TIME: DraftRules = {
   ...RULES_5V5,
+  ativo: true,
   roleControladora: "JG",
   apenasRoleControladora: false,
 };

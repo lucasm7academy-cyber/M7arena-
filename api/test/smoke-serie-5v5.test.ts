@@ -247,32 +247,13 @@ describe("SMOKE sala 5v5 MD3: criação → draft jogo 1 → troca de jogador �
     assert.equal(meioConfirm.status, "confirmacao", "9/10 confirmados: ainda aguardando");
     await confirmar(db, sala.id, todos[9].id);
 
-    const [noDraft1] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(noDraft1.status, "draft", "todos confirmaram → draft do jogo 1");
-    const [draft1] = await db
-      .select()
-      .from(matchDrafts)
-      .where(eq(matchDrafts.matchId, sala.id))
-      .orderBy(desc(matchDrafts.jogo))
-      .limit(1);
-    assert.equal(draft1.jogo, 1);
-    assert.equal(draft1.status, "ongoing");
-
-    const midBlue = azuis.find((j) => j.role === "MID")!;
-    const midRed = vermelhos.find((j) => j.role === "MID")!;
+    const [posConf1] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(posConf1.status, "iniciando_partida", "todos confirmaram → iniciando_partida (sem draft)");
+    const codigoSerie = posConf1.codigoPartida;
+    assert.ok(codigoSerie && !codigoSerie.startsWith("SEM-CODIGO"), "código real do pool");
+    const drafts1 = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(drafts1.length, 0, "5v5 não cria draft");
     const jgBlue = azuis.find((j) => j.role === "JG")!;
-
-    // Regra do capitão: JG é recusado, MID age.
-    const tentativaJg = await aplicarAcaoDraft(db, noDraft1, jgBlue.id, "ban", "Aatrox");
-    assert.equal(tentativaJg.ok, false);
-    assert.equal(tentativaJg.erro, "apenas_mid");
-
-    await jogarDraftCompleto(db, noDraft1, midBlue.id, midRed.id);
-
-    const [posDraft1] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(posDraft1.status, "iniciando_partida", "draft fechou → iniciando_partida");
-    const codigoSerie = posDraft1.codigoPartida;
-    assert.ok(codigoSerie && !codigoSerie.startsWith("SEM-CODIGO"), "código real do pool atribuído quando o draft fecha");
 
     // 90s de espera → partida_iniciada (prazo no passado).
     await db
@@ -347,49 +328,13 @@ describe("SMOKE sala 5v5 MD3: criação → draft jogo 1 → troca de jogador �
     const janela2 = new Date(salaJ2Reaberta.confirmacaoExpiresAt).getTime() - Date.now();
     assert.ok(janela2 > CONFIRMACAO_SERIE_MS - 10_000, "janela de 5 min no jogo 2");
 
-    // Todos confirmam → draft do JOGO 2 (limpo, MID segue no comando).
+    // Todos confirmam → iniciando_partida do JOGO 2 (sem draft), mesmo código.
     for (const j of todosComNovo) await confirmar(db, sala.id, j.id);
-    const [noDraft2] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(noDraft2.status, "draft", "draft do jogo 2");
-
-    const draftsApos2 = await db
-      .select()
-      .from(matchDrafts)
-      .where(eq(matchDrafts.matchId, sala.id))
-      .orderBy(matchDrafts.jogo);
-    assert.equal(draftsApos2.length, 2, "draft do jogo 1 preservado + draft do jogo 2");
-    const draft2 = draftsApos2[1];
-    assert.equal(draft2.jogo, 2);
-    assert.equal(draft2.status, "ongoing");
-    assert.deepEqual(draft2.blueBans, [], "bans do jogo 2 zerados");
-    assert.deepEqual(draft2.bluePicks, [], "picks do jogo 2 zerados");
-    assert.equal(draft2.currentTurn, 0, "turno reiniciado");
-
-    // MID-only vale no jogo 2 também (JG vermelho negado no turno do vermelho).
-    await aplicarAcaoDraft(db, noDraft2, midBlue.id, "ban", "BAN_0_blue"); // turno 0: azul
-    const jgRed = vermelhos.find((j) => j.role === "JG")!;
-    const tentaJgRed = await aplicarAcaoDraft(db, noDraft2, jgRed.id, "ban", "BAN_1_red");
-    assert.equal(tentaJgRed.ok, false);
-    assert.equal(tentaJgRed.erro, "apenas_mid");
-    const midRedBan = await aplicarAcaoDraft(db, noDraft2, midRed.id, "ban", "BAN_1_red");
-    assert.equal(midRedBan.ok, true);
-
-    // Restante do draft do jogo 2 (turnos 2..19).
-    const ordem = getTurnOrder("5v5");
-    for (let i = 2; i < ordem.length; i++) {
-      const turno = ordem[i];
-      const ator = turno.team === "blue" ? midBlue.id : midRed.id;
-      const champ = `${turno.phase === "ban" ? "BAN" : "PICK"}_${i}_${turno.team}`;
-      const r = await aplicarAcaoDraft(db, noDraft2, ator, turno.phase, champ);
-      assert.equal(r.ok, true, `jogo 2 turno ${i}: ${r.erro}`);
-    }
-    await avaliarTransicoes(db, sala.id); // fecha o draft → iniciando_partida
-
-    const [posDraft2] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(posDraft2.status, "iniciando_partida");
-    assert.equal(posDraft2.codigoPartida, codigoSerie, "MESMO código — um por série");
-    const [codeRow] = await db.select().from(matchCodes).where(eq(matchCodes.code, codigoSerie));
-    assert.equal(codeRow.used, true, "código continua reservado para a série");
+    const [posConf2] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(posConf2.status, "iniciando_partida", "sem draft no jogo 2");
+    assert.equal(posConf2.codigoPartida, codigoSerie, "MESMO código — um por série");
+    const drafts2 = await db.select().from(matchDrafts).where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(drafts2.length, 0, "5v5 sem draft");
 
     // ── RESULTADO do jogo 2 (vermelho vence) → 1-1, jogo 3 ──
     await db
@@ -415,11 +360,11 @@ describe("SMOKE sala 5v5 MD3: criação → draft jogo 1 → troca de jogador �
       "ainda sem resultado — série não fechou"
     );
 
-    // ── Jogo 3: todos confirmam, draft, azul vence 2-1 → SÉRIE FECHA ──
+    // ── Jogo 3: todos confirmam → iniciando_partida (sem draft), azul vence 2-1 → SÉRIE FECHA ──
     for (const j of todosComNovo) await confirmar(db, sala.id, j.id);
-    const [noDraft3] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(noDraft3.status, "draft", "draft do jogo 3");
-    await jogarDraftCompleto(db, noDraft3, midBlue.id, midRed.id);
+    const [posConf3] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(posConf3.status, "iniciando_partida", "sem draft no jogo 3");
+    assert.equal(posConf3.codigoPartida, codigoSerie, "mesmo código no jogo 3");
     await db
       .update(matches)
       .set({ iniciandoPartidaAt: new Date(Date.now() - 2 * 60_000) })
@@ -427,7 +372,6 @@ describe("SMOKE sala 5v5 MD3: criação → draft jogo 1 → troca de jogador �
     await avaliarTransicoes(db, sala.id);
     const [emJogo3] = await db.select().from(matches).where(eq(matches.id, sala.id));
     assert.equal(emJogo3.status, "partida_iniciada");
-
     const r3 = await verificarPartida(db, sala.id, {
       agora: new Date(),
       buscarIds: async () => [`BR1_SMOKE_JOGO_3`],
@@ -475,18 +419,12 @@ describe("SMOKE sala 5v5 MD3: criação → draft jogo 1 → troca de jogador �
     assert.equal(codeFinal.used, false, "código devolvido ao pool no fim da série");
     assert.equal(codeFinal.matchId, null);
 
-    // Drafts históricos preservados: 3 linhas (uma por jogo).
+    // 5v5 sem draft: nenhuma linha de draft em nenhum jogo.
     const draftsFinais = await db
       .select()
       .from(matchDrafts)
-      .where(eq(matchDrafts.matchId, sala.id))
-      .orderBy(matchDrafts.jogo);
-    assert.deepEqual(
-      draftsFinais.map((d: any) => d.jogo),
-      [1, 2, 3],
-      "um draft por jogo, preservados"
-    );
-    assert.ok(draftsFinais.every((d: any) => d.status === "finished"), "todos os drafts fechados");
+      .where(eq(matchDrafts.matchId, sala.id));
+    assert.equal(draftsFinais.length, 0, "5v5 não cria draft");
   });
 });
 
@@ -516,11 +454,10 @@ describe("SMOKE sala 5v5 MD1: primeiro resultado encerra na hora", () => {
     for (const j of todos) await criaJogador(db, j);
     for (const j of todos) await entrarVaga(db, sala.id, j);
     for (const j of todos) await confirmar(db, sala.id, j.id);
-    const [noDraft] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(noDraft.status, "draft");
-    await jogarDraftCompleto(db, noDraft, azuis.find((j) => j.role === "MID")!.id, vermelhos.find((j) => j.role === "MID")!.id);
-    const [posDraft] = await db.select().from(matches).where(eq(matches.id, sala.id));
-    assert.equal(posDraft.status, "iniciando_partida", "draft fechou → iniciando_partida");
+    const [posConf] = await db.select().from(matches).where(eq(matches.id, sala.id));
+    assert.equal(posConf.status, "iniciando_partida", "sem draft → iniciando_partida");
+    const codigo = posConf.codigoPartida;
+    assert.ok(codigo && !codigo.startsWith("SEM-CODIGO"), "código real do pool");
     await db
       .update(matches)
       .set({ iniciandoPartidaAt: new Date(Date.now() - 2 * 60_000), codigoPartida: "BR-SMOKE-MD1" })

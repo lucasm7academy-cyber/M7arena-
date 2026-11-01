@@ -119,9 +119,12 @@ export async function reembolsarSeNecessario(tx: any, userId: string, entryMp: n
  * (FOR UPDATE SKIP LOCKED). Código é valor real da Riot que o jogador cola no
  * cliente do LoL — inventar um número quebra.
  *
- * Fila por modo (ADR-041): o modo 1v1 (x1) só usa códigos com `mode='1v1'`
- * (os 2 códigos ARAM BR050c8-*); os demais modos (5v5/aram/time_vs_time) usam
- * os códigos genéricos (`mode IS NULL`, os 6 BR04fa2-* 5v5 Tournament Draft).
+ * Fila por modo (ADR-041):
+ *  - 1v1 -> mode='1v1' (ARAM x1);
+ *  - time_vs_time/time_vs_time_livre/campeonato -> mode='blind' (draft no site,
+ *    blind pick no LoL; códigos BR05116-*);
+ *  - 5v5/aram -> mode IS NULL (códigos Tournament Draft antigos; no 5x5 o
+ *    draft é feito direto no LoL).
  * Um modo nunca pega código da fila do outro.
  *
  * Rodízio LRU (ADR-040): pega o código livre usado há MAIS tempo (NULLS FIRST
@@ -129,14 +132,28 @@ export async function reembolsarSeNecessario(tx: any, userId: string, entryMp: n
  * ciclo natural é 1→2→…→N→1 — quando todos já foram usados, volta ao primeiro,
  * que já teve tempo de terminar. Teto do pool: N partidas simultâneas.
  */
+function filaDoModo(mode: string): string | null {
+  if (mode === "1v1") return "1v1";
+  if (
+    mode === "time_vs_time" ||
+    mode === "time_vs_time_livre" ||
+    mode === "campeonato" ||
+    mode === "blind"
+  ) {
+    return "blind";
+  }
+  return null;
+}
+
 export async function atribuirCodigoPartida(tx: any, matchId: string, mode: string): Promise<string> {
+  const fila = filaDoModo(mode);
   const [row]: any[] = await tx
     .select({ id: matchCodes.id, code: matchCodes.code })
     .from(matchCodes)
     .where(
       and(
         eq(matchCodes.used, false),
-        mode === "1v1" ? eq(matchCodes.mode, "1v1") : isNull(matchCodes.mode)
+        fila ? eq(matchCodes.mode, fila) : isNull(matchCodes.mode)
       )
     )
     .orderBy(sql`${matchCodes.lastUsedAt} ASC NULLS FIRST`)

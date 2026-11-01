@@ -20,6 +20,8 @@ import { RULES_ARAM } from "./modos/aram.js";
 export const DRAFT_RULES: Record<string, DraftRules> = {
   "5v5": RULES_5V5,
   time_vs_time: RULES_TIME_VS_TIME,
+  time_vs_time_livre: RULES_TIME_VS_TIME,
+  campeonato: RULES_TIME_VS_TIME,
   "1v1": RULES_1V1,
   aram: RULES_ARAM,
 };

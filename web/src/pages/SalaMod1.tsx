@@ -783,6 +783,21 @@ ${link}`;
                             <ArcaneIndicators />
                             <CentralDisplay />
 
+                            {/* Placar da série na bola do 5x5 (MD1/MD3/MD5).
+                                Fica acima dos overlays para continuar visível
+                                durante a confirmação/entrada na partida. */}
+                            {serie && (
+                                <div className="absolute top-[18%] z-[70] flex items-center gap-2 md:gap-[1.2vmin] rounded-full bg-black/75 border border-white/10 px-3 py-1 md:px-[1.6vmin] md:py-[0.6vmin] backdrop-blur-sm shadow-2xl pointer-events-none">
+                                    <span className="text-2xl md:text-[3.6vmin] font-black text-[#3B82F6] leading-none tabular-nums">
+                                        {serie.placar_a ?? 0}
+                                    </span>
+                                    <span className="text-xs md:text-[1.6vmin] font-black text-white/30 leading-none">×</span>
+                                    <span className="text-2xl md:text-[3.6vmin] font-black text-[#ef4444] leading-none tabular-nums">
+                                        {serie.placar_b ?? 0}
+                                    </span>
+                                </div>
+                            )}
+
                             {/* PARTIDA INICIADA — prompt de envio do resultado no
                                 display (fala com quem ainda não voltou da partida) */}
                             {sala.estado === 'partida_iniciada' && (

@@ -59,17 +59,27 @@ export function normalizarBestOf(v: unknown): number | null {
  * e a série vive em tournament_matches/bracket_matches). O vínculo série↔código
  * fica na coluna `codigo_partida` da própria série.
  *
- * `mode` segue a fila: '1v1' usa os códigos exclusivos; demais usam os
- * genéricos (mode IS NULL). Retorna o código, ou "SEM-CODIGO-AGUARDE".
+ * `mode` segue a fila: '1v1' usa os códigos exclusivos; time_vs_time/livre/
+ * campeonato usam os códigos blind (mode='blind'); os demais usam os genéricos
+ * (mode IS NULL). Retorna o código, ou "SEM-CODIGO-AGUARDE".
  */
 export async function atribuirCodigoSerie(tx: any, mode: string): Promise<string> {
+  const fila =
+    mode === "1v1"
+      ? "1v1"
+      : mode === "blind" ||
+          mode === "time_vs_time" ||
+          mode === "time_vs_time_livre" ||
+          mode === "campeonato"
+        ? "blind"
+        : null;
   const [row]: any[] = await tx
     .select({ id: matchCodes.id, code: matchCodes.code })
     .from(matchCodes)
     .where(
       and(
         eq(matchCodes.used, false),
-        mode === "1v1" ? eq(matchCodes.mode, "1v1") : isNull(matchCodes.mode)
+        fila ? eq(matchCodes.mode, fila) : isNull(matchCodes.mode)
       )
     )
     .orderBy(sql`${matchCodes.lastUsedAt} ASC NULLS FIRST`)

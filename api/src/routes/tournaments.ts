@@ -605,9 +605,8 @@ tournamentsRouter.post("/:id/jogo/:matchId/gerar-codigo", async (req, res) => {
 
     let codigo = serie.codigoPartida;
     if (!codigo) {
-      // Códigos de sala: 1v1 tem fila própria; demais usam os genéricos 5v5.
-      const modo = t.gameId === "lol" ? "5v5" : "5v5";
-      codigo = await atribuirCodigoSerie(db, modo);
+      // Campeonato: draft no site + blind pick no LoL (códigos BR05116-*).
+      codigo = await atribuirCodigoSerie(db, "blind");
       if (codigo === "SEM-CODIGO-AGUARDE") return res.status(409).json({ error: "Sem código disponível no momento" });
       // Formato da série: `best_of` gravado na criação do jogo (MD1/MD3/MD5 no
       // Painel de Arbitragem). Sem valor válido → MD3. A heurística antiga
