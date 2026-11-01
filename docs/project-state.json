@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-01T19:30:36.892Z",
+  "updatedAt": "2026-11-01T19:36:50.838Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -383,6 +383,17 @@
         "api/src/lib/sala-campeonato.ts",
         "api/src/lib/draft/modos/5v5.ts",
         "web/src/pages/SalaMod1.tsx",
+        "db/migrations/0034_blind_codes.sql"
+      ]
+    },
+    {
+      "at": "2026-11-01T19:36:50.832Z",
+      "agent": "deepseek",
+      "summary": "Pool de codigos corrigido: 12 BR-SMOKE-SALA de teste removidos (backup no VPS); 5x5 ficou com os 6 BR04fa2 Tournament Draft reais (mode NULL), 1v1 com 2 e blind com 7. Riot API respondeu 403 (chave sem permissao Tournament API); classificacao confirmada pelos seeds 0007/0014/0020. 5x5 sem draft/placar na bola e Scrim/campeonato blind seguem no ar.",
+      "touched": [
+        "db/migrations/0007_matches_salas_swap.sql",
+        "db/migrations/0014_rodizio_codigos_lru.sql",
+        "db/migrations/0020_separar_fila_codigos_x1.sql",
         "db/migrations/0034_blind_codes.sql"
       ]
     }
