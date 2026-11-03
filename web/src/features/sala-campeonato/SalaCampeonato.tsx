@@ -597,6 +597,16 @@ export default function SalaCampeonato() {
     ? { aoClicar: () => setResultadoAberto(true), carregando: String(ocupado ?? '').includes('resultado') }
     : null;
   const acaoTopoSair = () => navigate('/jogar');
+  const modalResultado = (
+    <ModalResultadoManual
+      aberto={resultadoAberto}
+      sala={sala}
+      camp={camp}
+      ocupado={String(ocupado ?? '').includes('resultado')}
+      onFechar={() => setResultadoAberto(false)}
+      onConfirmar={inserirResultado}
+    />
+  );
 
   // Draft em TELA CHEIA + PÓS-DRAFT: durante o draft o DraftRoom ocupa a tela
   // (igual à sala normal); quando a última escolha fecha, a MESMA tela segura
@@ -604,22 +614,25 @@ export default function SalaCampeonato() {
   // relógio — sem cronômetro e sem tela separada) e então a sala volta.
   if (((estado === 'camp_draft') || posDraftAtivo) && camp?.draft) {
     return (
-      <DraftRoom
-        draft={camp.draft}
-        jogadores={sala.jogadores ?? []}
-        usuarioId={eu}
-        timer={timerDraft}
-        onBanir={(champ: string) => acaoDraft('ban', champ)}
-        onPickar={(champ: string) => acaoDraft('pick', champ)}
-        onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
-        previewExterno={previewDraft}
-        ladoDoTimeA={camp?.lado_time_a ?? null}
-        espectadorCompleto
-        timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo, cor: sala.time_a_cor }}
-        timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo, cor: sala.time_b_cor }}
-        placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
-        acoesTopo={{ twitch: acaoTopoTwitch, resetar: acaoTopoResetar, resultado: acaoTopoResultado, sair: acaoTopoSair }}
-      />
+      <>
+        <DraftRoom
+          draft={camp.draft}
+          jogadores={sala.jogadores ?? []}
+          usuarioId={eu}
+          timer={timerDraft}
+          onBanir={(champ: string) => acaoDraft('ban', champ)}
+          onPickar={(champ: string) => acaoDraft('pick', champ)}
+          onPreview={(champId: string | null) => enviarPreview(champId, meuLadoEfetivo)}
+          previewExterno={previewDraft}
+          ladoDoTimeA={camp?.lado_time_a ?? null}
+          espectadorCompleto
+          timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo, cor: sala.time_a_cor }}
+          timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo, cor: sala.time_b_cor }}
+          placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
+          acoesTopo={{ twitch: acaoTopoTwitch, resetar: acaoTopoResetar, sair: acaoTopoSair }}
+        />
+        {modalResultado}
+      </>
     );
   }
 
@@ -678,6 +691,8 @@ export default function SalaCampeonato() {
             sair: acaoTopoSair,
           }}
         />
+
+        {modalResultado}
 
         {/* A tela ao vivo não tem a top bar da sala: os gatilhos que ainda
             importam com a partida rolando ficam neste canto, DEPOIS da seta de
@@ -1710,14 +1725,7 @@ export default function SalaCampeonato() {
         </div>
       </div>
 
-      <ModalResultadoManual
-        aberto={resultadoAberto}
-        sala={sala}
-        camp={camp}
-        ocupado={String(ocupado ?? '').includes('resultado')}
-        onFechar={() => setResultadoAberto(false)}
-        onConfirmar={inserirResultado}
-      />
+      {modalResultado}
     </div>
   );
 }
