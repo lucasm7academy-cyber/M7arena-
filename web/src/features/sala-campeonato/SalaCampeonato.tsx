@@ -737,16 +737,17 @@ export default function SalaCampeonato() {
   // (18/10): no lugar dela ficam os campeões escolhidos, maiores.
   const mostrarVaga = ['camp_vagas', 'camp_prontos', 'camp_lado'].includes(estado);
 
-  const renderTimeColumn = (lado: 'blue' | 'red', posicao: 'blue' | 'red') => {
-    const jogador = lado === 'blue' ? jogadorBlue : jogadorRed;
-    const pronto = lado === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
+  const renderTimeColumn = (posicao: 'blue' | 'red') => {
+    const equipe = equipeNoLado(posicao); // 'blue' = time A, 'red' = time B
+    const jogador = posicao === 'blue' ? jogadorBlue : jogadorRed;
+    const pronto = posicao === 'blue' ? camp?.pronto_blue : camp?.pronto_red;
     const valorVaga = !!jogador && (jogador.id === eu || jogador.user_id === eu);
     // Cor pelo lado EM JOGO (posição na sala), não pela vaga: é o que mostra a
     // troca acontecendo para todo mundo.
     const cor = posicao === 'blue' ? '#3B82F6' : '#ef4444';
     return (
       <motion.div
-        key={lado}
+        key={equipe}
         layout="position"
         transition={{ duration: bannerTroca ? 1.2 : 0, ease: 'easeInOut' }}
         className="flex flex-col gap-2 md:gap-[1.5vmin] items-center w-full max-w-[440px] md:w-[44vmin] md:max-w-none px-3 md:px-0 shrink-0"
@@ -786,8 +787,8 @@ export default function SalaCampeonato() {
               nome={jogador?.nome}
               tag={jogador?.tag}
               icone={jogador?.avatar}
-              isTimeA={posicao === 'blue'}
-              role={tagDoLado(lado) || (lado === 'blue' ? 'TIME A' : 'TIME B')}
+              isTimeA={equipe === 'blue'}
+              role={tagDoLado(equipe) || (equipe === 'blue' ? 'TIME A' : 'TIME B')}
               semRoleIcon
               isConfirmado={!!pronto && estado === 'camp_prontos'}
               aoEntrar={() => {
@@ -802,11 +803,11 @@ export default function SalaCampeonato() {
                 }
                 // Bloqueio local SÓ quando temos certeza de que a vaga é de outro
                 // time; na dúvida (dados ainda carregando), quem decide é o servidor.
-                if (serie && meuLado && meuLado !== lado) {
+                if (serie && meuLado && meuLado !== equipe) {
                   toast.error('Essa vaga é do outro time.');
                   return;
                 }
-                chamar('/sala-campeonato/entrar', { side: lado });
+                chamar('/sala-campeonato/entrar', { side: posicao });
               }}
               aoSair={
                 // Sair da vaga: antes do PRONTO e durante camp_prontos (o servidor
@@ -816,7 +817,7 @@ export default function SalaCampeonato() {
                   ? () => chamar('/sala-campeonato/sair')
                   : undefined
               }
-              roleIconImg={logoDoLado(lado) ?? ROLE_CONFIG.MID.img}
+              roleIconImg={logoDoLado(equipe) ?? ROLE_CONFIG.MID.img}
               vipTier="free"
               isFinalizada={estado === 'camp_finalizada' || estado === 'encerrada'}
             />
@@ -828,7 +829,7 @@ export default function SalaCampeonato() {
             andamento, ocupam o lugar da vaga em destaque (maiores). */}
         {camp?.draft?.status === 'finished' && (
           <div className="flex items-center justify-center gap-1.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
-            {(lado === 'blue' ? camp.draft.blue_picks : camp.draft.red_picks)
+            {(equipe === 'blue' ? camp.draft.blue_picks : camp.draft.red_picks)
               .filter(Boolean)
               .map((c: string, i: number) => (
                 <img
@@ -867,7 +868,18 @@ export default function SalaCampeonato() {
   //    série — SEM o display redondo (pedido do usuário). Todos os avisos de
   //    estado continuam aqui, no formato limpo. Desktop: absoluto no meio;
   //    Mobile: entra no fluxo vertical.
-  const renderHub = () => (
+  const renderHub = () => {
+    const timeEsquerda = ladoJogoA === 'blue'
+      ? { nome: sala.time_a_nome, logo: sala.time_a_logo, cor: corLogoA }
+      : { nome: sala.time_b_nome, logo: sala.time_b_logo, cor: corLogoB };
+    const timeDireita = ladoJogoA === 'blue'
+      ? { nome: sala.time_b_nome, logo: sala.time_b_logo, cor: corLogoB }
+      : { nome: sala.time_a_nome, logo: sala.time_a_logo, cor: corLogoA };
+    const placarEquipeA = serie ? (serie.placar_a ?? 0) : (camp?.placar_a ?? 0);
+    const placarEquipeB = serie ? (serie.placar_b ?? 0) : (camp?.placar_b ?? 0);
+    const placarEsquerda = ladoJogoA === 'blue' ? placarEquipeA : placarEquipeB;
+    const placarDireita = ladoJogoA === 'blue' ? placarEquipeB : placarEquipeA;
+    return (
     <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
       <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent" />
       <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
@@ -877,46 +889,46 @@ export default function SalaCampeonato() {
       {/* Logos + nomes dos times e placar da série (estilo resumo pós-draft) */}
       <div className="flex items-center justify-center gap-3 md:gap-[3vmin] mt-1 md:mt-[0.5vmin]">
         <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-          {sala.time_a_logo ? (
+          {timeEsquerda.logo ? (
             <img
-              src={sala.time_a_logo}
+              src={timeEsquerda.logo}
               alt=""
               className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain"
-              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${corLogoA} 70%, transparent))` }}
+              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeEsquerda.cor} 70%, transparent))` }}
             />
           ) : (
             <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
           )}
           <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-            {nomeSemQuebra(sala.time_a_nome)}
+            {nomeSemQuebra(timeEsquerda.nome)}
           </span>
         </div>
         <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
         <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-          {sala.time_b_logo ? (
+          {timeDireita.logo ? (
             <img
-              src={sala.time_b_logo}
+              src={timeDireita.logo}
               alt=""
               className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain"
-              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${corLogoB} 70%, transparent))` }}
+              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeDireita.cor} 70%, transparent))` }}
             />
           ) : (
             <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
           )}
           <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-            {nomeSemQuebra(sala.time_b_nome)}
+            {nomeSemQuebra(timeDireita.nome)}
           </span>
         </div>
       </div>
       {serie && (
         <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-          {serie.placar_a} <span className="text-white/40">-</span> {serie.placar_b}
+          {placarEsquerda} <span className="text-white/40">-</span> {placarDireita}
         </span>
       )}
       {!serie && camp?.formato && (
         <>
           <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-            {camp.placar_a ?? 0} <span className="text-white/40">-</span> {camp.placar_b ?? 0}
+            {placarEsquerda} <span className="text-white/40">-</span> {placarDireita}
           </span>
           <span className="text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] text-white/50 mt-1 md:mt-[0.6vmin]">
             Série {String(camp.formato).toUpperCase()}
@@ -939,7 +951,7 @@ export default function SalaCampeonato() {
         <div className="flex flex-col items-center gap-0.5 md:gap-[0.8vmin] mt-1 md:mt-[0.6vmin]">
           <span className="text-lg md:text-[2.4vmin] font-black text-white uppercase tracking-[0.25em]">Draft em Andamento</span>
           <span className="text-[10px] md:text-[1.1vmin] font-bold text-white/70 uppercase tracking-[0.25em]">
-            {camp?.primeiro_pick === 'blue' ? tagDoLado('blue') : tagDoLado('red')} tem o first pick
+            {tagDoLado(equipeNoLado(camp?.primeiro_pick === 'red' ? 'red' : 'blue'))} tem o first pick
           </span>
         </div>
       )}
@@ -975,7 +987,8 @@ export default function SalaCampeonato() {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // ── SÉRIE EM ANDAMENTO (camp_jogo): layout estilo "Escolhas concluídas" —
   //    logos grandes X, campeões do confronto e as VAGAS em chips logo abaixo
@@ -1225,9 +1238,9 @@ export default function SalaCampeonato() {
                   <>
                     <span className="text-[#FFB700]">{String(camp?.formato ?? `MD${serie.best_of ?? 3}`).toUpperCase()}</span>
                     <span className="text-white/35">·</span>
-                    <span className="text-[#3B82F6]">BLUE {serie.placar_a ?? 0}</span>
+                    <span className="text-[#3B82F6]">BLUE {ladoJogoA === 'blue' ? (serie.placar_a ?? 0) : (serie.placar_b ?? 0)}</span>
                     <span className="text-white/35">×</span>
-                    <span className="text-[#ef4444]">{serie.placar_b ?? 0} RED</span>
+                    <span className="text-[#ef4444]">{ladoJogoA === 'blue' ? (serie.placar_b ?? 0) : (serie.placar_a ?? 0)} RED</span>
                   </>
                 ) : (
                   <span className="text-emerald-400 flex items-center gap-1">
@@ -1413,9 +1426,9 @@ export default function SalaCampeonato() {
             </div>
           ) : (
           <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[70vmin] py-2 md:py-0">
-            {renderTimeColumn(equipeNoLado('blue'), 'blue')}
+            {renderTimeColumn('blue')}
             {renderHub()}
-            {renderTimeColumn(equipeNoLado('red'), 'red')}
+            {renderTimeColumn('red')}
           </div>
           )}
 
