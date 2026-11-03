@@ -14,6 +14,8 @@ import { verificarPartida } from "../lib/verificar-partida.js";
 import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
 import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder, iniciarLiveDaSala, criarSalaTimeVsTime } from "../lib/sala-campeonato.js";
 import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato, aplicarAcaoSalaCampeonato } from "../lib/sala-campeonato-draft.js";
+import { registrarResultadoManualSerie } from "../lib/serie-campeonato.js";
+import { alvoVitorias } from "../lib/serie-livre.js";
 
 export const matchesActionsRouter = Router();
 
@@ -242,6 +244,129 @@ matchesActionsRouter.post("/:id/sala-campeonato/resetar", async (req, res) => {
     });
 
     if (r?.ok) await notifyMatchChange(String(req.params.id));
+    return res.json(r);
+  } catch (error: any) {
+    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
+  }
+});
+
+/**
+ * POST /api/matches/:id/sala-campeonato/resultado — ADM/proprietário insere o
+ * vencedor de UMA jogada da série. O servidor soma 1, registra o jogo manual e
+ * decide: série aberta volta ao PRONTO do próximo jogo; série fechada encerra.
+ */
+matchesActionsRouter.post("/:id/sala-campeonato/resultado", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+    const roles = await getRoles(db, user.id);
+    if (!roles.includes("admin") && !roles.includes("proprietario")) {
+      return res.status(403).json({ ok: false, erro: "sem_permissao", estado: null, mudou: false });
+    }
+
+    const vencedorRaw = String(req.body?.vencedor ?? "").toUpperCase();
+    if (vencedorRaw !== "A" && vencedorRaw !== "B") {
+      return res.status(400).json({ ok: false, erro: "vencedor_invalido", estado: null, mudou: false });
+    }
+    const vencedor: "a" | "b" = vencedorRaw === "A" ? "a" : "b";
+
+    const r: any = await db.transaction(async (tx: any) => {
+      const [sala] = await tx
+        .select()
+        .from(matches)
+        .where(eq(matches.salaNum, Number(req.params.id)))
+        .limit(1)
+        .for("update");
+
+      if (!sala) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+      if (sala.mode !== "campeonato" && sala.mode !== "time_vs_time_livre") {
+        return { ok: false, erro: "nao_e_sala_campeonato", estado: null, mudou: false };
+      }
+
+      if (sala.mode === "time_vs_time_livre") {
+        // A finalização de uma sala apostada paga prêmio pelo lado do jogo; o
+        // resultado manual não tem essa informação — evita fechar sem pagar.
+        if ((sala.apostaMc ?? 0) > 0) {
+          return { ok: false, erro: "sala_com_aposta", estado: sala.status, mudou: false };
+        }
+
+        const [estado] = await tx
+          .select()
+          .from(campeonatoSalaEstado)
+          .where(eq(campeonatoSalaEstado.matchId, sala.id))
+          .limit(1)
+          .for("update");
+        if (!estado) return { ok: false, erro: "estado_ausente", estado: sala.status, mudou: false };
+
+        const winsNeeded = alvoVitorias(estado.formato);
+        const placarA = (estado.placarA ?? 0) + (vencedor === "a" ? 1 : 0);
+        const placarB = (estado.placarB ?? 0) + (vencedor === "b" ? 1 : 0);
+        const finalizada = placarA >= winsNeeded || placarB >= winsNeeded;
+
+        await tx
+          .update(campeonatoSalaEstado)
+          .set({
+            jogo: finalizada ? estado.jogo : (estado.jogo ?? 1) + 1,
+            placarA,
+            placarB,
+            ultimoVencedor: vencedor,
+            prontoBlue: false,
+            prontoRed: false,
+            sorteioVencedor: null,
+            escolhaTime: null,
+            ladoEscolhido: null,
+            pickOrderEscolhido: null,
+            primeiraEscolha: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(campeonatoSalaEstado.matchId, sala.id));
+
+        const matchPatch: any = {
+          // Sala LIVRE: o encerramento normal termina em `encerrada`, que é o
+          // estado que dispara a tela de PARTIDA FINALIZADA no front.
+          status: finalizada ? "encerrada" : "camp_prontos",
+          updatedAt: new Date(),
+        };
+        if (finalizada) matchPatch.endedAt = new Date();
+        await tx.update(matches).set(matchPatch).where(eq(matches.id, sala.id));
+
+        return {
+          ok: true,
+          erro: null,
+          estado: matchPatch.status,
+          mudou: true,
+          jogo: finalizada ? estado.jogo : (estado.jogo ?? 1) + 1,
+          placar_a: placarA,
+          placar_b: placarB,
+          finalizada,
+        };
+      }
+
+      const serieId = sala.bracketMatchId ?? sala.tournamentMatchId;
+      if (!serieId) {
+        return { ok: false, erro: "serie_nao_encontrada", estado: sala.status, mudou: false };
+      }
+      const serie = await registrarResultadoManualSerie(tx, {
+        serieId,
+        isBracket: !!sala.bracketMatchId,
+        vencedor,
+      });
+      if (!serie.ok) {
+        return { ok: false, erro: serie.erro, estado: sala.status, mudou: false };
+      }
+      return {
+        ok: true,
+        erro: null,
+        estado: serie.finalizada ? "camp_finalizada" : "camp_prontos",
+        mudou: true,
+        placar_a: serie.scoreA,
+        placar_b: serie.scoreB,
+        finalizada: serie.finalizada,
+      };
+    });
+
+    if (r?.ok) await notifyMatchChange(String(req.params.id));
+    if (!r?.ok) return res.status(400).json(r);
     return res.json(r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });

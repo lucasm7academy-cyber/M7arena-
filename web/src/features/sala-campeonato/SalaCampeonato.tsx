@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { DraftRoom, type AcoesTopo } from '../../components/draft/DraftRoom';
 import { VagaSlot } from '../../components/partidas/VagaSlot';
 import { HeaderFinalizada } from '../../components/partidas/HeaderFinalizada';
+import { ModalResultadoManual } from './ModalResultadoManual';
 import { useSalaRealtime } from '../../hooks/useSalaRealtime';
 import { usePerfil } from '../../contexts/PerfilContext';
 import { agoraServidor, registrarServerTime } from '../../lib/clockSync';
@@ -52,6 +53,8 @@ const ERROS: Record<string, string> = {
   times_incompletos: 'Os times do confronto ainda não estão definidos.',
   serie_finalizada: 'A série já foi finalizada.',
   resultado_anterior_pendente: 'Aguardando o resultado do jogo anterior.',
+  vencedor_invalido: 'Escolha o time vencedor.',
+  sala_com_aposta: 'Sala com aposta: use o painel de revisão para inserir o resultado.',
 };
 
 type AcaoRpc = { ok: boolean; erro?: string | null; estado?: string | null; mudou?: boolean };
@@ -120,6 +123,7 @@ export default function SalaCampeonato() {
   const [erro, setErro] = useState<string | null>(null);
   const [meusTimes, setMeusTimes] = useState<string[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [resultadoAberto, setResultadoAberto] = useState(false);
   const [compartilhado, setCompartilhado] = useState(false);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<{ championId: string | null; side: 'blue' | 'red' | null } | null>(null);
@@ -446,6 +450,16 @@ export default function SalaCampeonato() {
     if (r?.ok) toast.success('Sala resetada para o PRONTO!');
   };
 
+  const inserirResultado = async (vencedor: 'A' | 'B') => {
+    const r = await chamar('/sala-campeonato/resultado', { vencedor });
+    if (r?.ok) {
+      setResultadoAberto(false);
+      toast.success(
+        `Resultado inserido: ${vencedor === 'A' ? sala?.time_a_nome : sala?.time_b_nome} venceu.`
+      );
+    }
+  };
+
   if (erro) {    return (
       <div className="flex-1 w-full min-h-screen bg-[#050505] flex items-center justify-center text-white">
         <div className="text-center space-y-4">
@@ -579,6 +593,9 @@ export default function SalaCampeonato() {
   const acaoTopoResetar: AcoesTopo['resetar'] = ehAdm
     ? { aoClicar: resetarSala, carregando: String(ocupado ?? '').includes('resetar') }
     : null;
+  const acaoTopoResultado: AcoesTopo['resultado'] = ehAdm
+    ? { aoClicar: () => setResultadoAberto(true), carregando: String(ocupado ?? '').includes('resultado') }
+    : null;
   const acaoTopoSair = () => navigate('/jogar');
 
   // Draft em TELA CHEIA + PÓS-DRAFT: durante o draft o DraftRoom ocupa a tela
@@ -601,7 +618,7 @@ export default function SalaCampeonato() {
         timeA={{ nome: sala.time_a_nome, logo: sala.time_a_logo, cor: sala.time_a_cor }}
         timeB={{ nome: sala.time_b_nome, logo: sala.time_b_logo, cor: sala.time_b_cor }}
         placar={camp?.serie ? { a: camp.serie.placar_a ?? 0, b: camp.serie.placar_b ?? 0 } : null}
-        acoesTopo={{ twitch: acaoTopoTwitch, resetar: acaoTopoResetar, sair: acaoTopoSair }}
+        acoesTopo={{ twitch: acaoTopoTwitch, resetar: acaoTopoResetar, resultado: acaoTopoResultado, sair: acaoTopoSair }}
       />
     );
   }
@@ -657,6 +674,7 @@ export default function SalaCampeonato() {
               : null,
             twitch: acaoTopoTwitch,
             resetar: acaoTopoResetar,
+            resultado: acaoTopoResultado,
             sair: acaoTopoSair,
           }}
         />
@@ -1336,6 +1354,29 @@ export default function SalaCampeonato() {
               </motion.button>
             )}
 
+            {/* ADM/proprietário: inserir o resultado de uma jogada manualmente. */}
+            {ehAdm && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                disabled={!!ocupado}
+                onClick={() => setResultadoAberto(true)}
+                className="relative p-[1px] bg-[#FFB700]/50 hover:bg-[#FFB700] transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                style={{ clipPath: CUT_BUTTON }}
+                title="Inserir resultado manual (adm)"
+              >
+                <div
+                  className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#1a1405] hover:bg-[#2a2008] flex items-center justify-center gap-1.5 text-[#FFB700] transition-colors"
+                  style={{ clipPath: CUT_BUTTON_INNER }}
+                >
+                  <Trophy className="w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin]" />
+                  <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+                    Inserir Resultado
+                  </span>
+                </div>
+              </motion.button>
+            )}
+
             {/* TEMPORÁRIO (admin): resetar a sala pro PRONTO — sai quando o
                 fluxo estiver 100% (pedido do usuário 13/10). */}
             {ehAdm && (
@@ -1668,6 +1709,15 @@ export default function SalaCampeonato() {
               notificação fixa "Assista ao vivo") */}
         </div>
       </div>
+
+      <ModalResultadoManual
+        aberto={resultadoAberto}
+        sala={sala}
+        camp={camp}
+        ocupado={String(ocupado ?? '').includes('resultado')}
+        onFechar={() => setResultadoAberto(false)}
+        onConfirmar={inserirResultado}
+      />
     </div>
   );
 }

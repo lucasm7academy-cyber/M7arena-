@@ -698,3 +698,111 @@ async function verificarSerieBracket(
 
   return r;
 }
+
+export interface ResultadoManualSerie {
+  ok: boolean;
+  erro?: "serie_nao_encontrada" | "serie_finalizada";
+  scoreA: number;
+  scoreB: number;
+  finalizada: boolean;
+}
+
+/**
+ * Resultado manual de UMA jogada da série (ADM/proprietário). Soma 1 vitória
+ * ao time escolhido, registra a linha em tournament_series_games e usa o mesmo
+ * motor da sala: se a série não fechou, volta para `camp_prontos` no jogo+1;
+ * se fechou, encerra a série e a sala.
+ */
+export async function registrarResultadoManualSerie(
+  tx: any,
+  opts: { serieId: string; isBracket: boolean; vencedor: "a" | "b" }
+): Promise<ResultadoManualSerie> {
+  const tabela: any = opts.isBracket ? bracketMatches : tournamentMatches;
+  const [serie] = await tx
+    .select()
+    .from(tabela)
+    .where(eq(tabela.id, opts.serieId))
+    .limit(1)
+    .for("update");
+
+  if (!serie) {
+    return { ok: false, erro: "serie_nao_encontrada", scoreA: 0, scoreB: 0, finalizada: false };
+  }
+  if (STATUS_FINALIZADOS.includes(serie.status)) {
+    return {
+      ok: false,
+      erro: "serie_finalizada",
+      scoreA: serie.scoreA ?? 0,
+      scoreB: serie.scoreB ?? 0,
+      finalizada: true,
+    };
+  }
+
+  const winsNeeded = bestOfToWins(normalizarBestOf(serie.bestOf) ?? 3);
+  const scoreA = (serie.scoreA ?? 0) + (opts.vencedor === "a" ? 1 : 0);
+  const scoreB = (serie.scoreB ?? 0) + (opts.vencedor === "b" ? 1 : 0);
+  const finalizada = scoreA >= winsNeeded || scoreB >= winsNeeded;
+
+  const cond = opts.isBracket
+    ? eq(tournamentSeriesGames.bracketMatchId, serie.id)
+    : eq(tournamentSeriesGames.matchId, serie.id);
+  const jogos = await tx
+    .select({ id: tournamentSeriesGames.id })
+    .from(tournamentSeriesGames)
+    .where(cond);
+
+  await tx.insert(tournamentSeriesGames).values({
+    matchId: opts.isBracket ? null : serie.id,
+    bracketMatchId: opts.isBracket ? serie.id : null,
+    tournamentId: serie.tournamentId,
+    gameNumber: jogos.length + 1,
+    winnerSide: opts.vencedor,
+    killA: 0,
+    killB: 0,
+    duracaoS: 0,
+    irregular: false,
+  });
+
+  if (opts.isBracket) {
+    const patch: any = { scoreA, scoreB, updatedAt: new Date() };
+    if (finalizada) {
+      patch.status = "finalizada";
+      patch.winnerSide = opts.vencedor;
+    }
+    await tx.update(bracketMatches).set(patch).where(eq(bracketMatches.id, serie.id));
+  } else {
+    const patch: any = {
+      scoreA,
+      scoreB,
+      scoreDisplay: `${scoreA} - ${scoreB}`,
+      irregular: false,
+      updatedAt: new Date(),
+    };
+    if (finalizada) patch.status = "finalizada";
+    await tx.update(tournamentMatches).set(patch).where(eq(tournamentMatches.id, serie.id));
+  }
+
+  if (finalizada && serie.codigoPartida) {
+    await tx
+      .update(matchCodes)
+      .set({ used: false, matchId: null, lastUsedAt: new Date() })
+      .where(eq(matchCodes.code, serie.codigoPartida));
+  }
+
+  if (finalizada && !opts.isBracket) {
+    await recalcularPdlGlobal(tx);
+    await encerrarTransmissoesDoJogo(tx, serie.id);
+  }
+
+  if (finalizada) {
+    await encerrarSalaCampeonato(tx, { serieId: serie.id, isBracket: opts.isBracket });
+  } else {
+    await avancarSalaCampeonatoAposJogada(tx, {
+      serieId: serie.id,
+      isBracket: opts.isBracket,
+      jogadas: scoreA + scoreB,
+    });
+  }
+
+  return { ok: true, scoreA, scoreB, finalizada };
+}

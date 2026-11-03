@@ -18,7 +18,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Ban, Check, Copy, RefreshCw, RotateCcw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Ban, Check, Copy, PlusCircle, RefreshCw, RotateCcw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SiRiotgames } from 'react-icons/si';
 import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
@@ -112,6 +112,8 @@ export interface AcoesTopo {
   } | null;
   /** Resetar Sala — só adm (o servidor valida). */
   resetar?: { aoClicar: () => void; carregando?: boolean } | null;
+  /** Inserir resultado manual — só adm (o servidor valida). */
+  resultado?: { aoClicar: () => void; carregando?: boolean } | null;
   /** Seta de sair da sala — canto oposto (esquerda). */
   sair?: (() => void) | null;
 }
@@ -931,6 +933,17 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           canto oposto, a seta de sair da sala. Absoluto de propósito: não
           empurra a linha de bans nem muda a altura dela. */}
       <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
+        {acoesTopo?.resultado && (
+          <button
+            type="button"
+            disabled={acoesTopo.resultado.carregando}
+            onClick={() => acoesTopo?.resultado?.aoClicar()}
+            title="Inserir resultado manual (adm)"
+            className="p-[0.7vmin] border border-[#FFB700]/60 text-[#FFB700] hover:text-white hover:border-[#FFB700] transition-colors duration-200 cursor-pointer disabled:opacity-50"
+          >
+            <PlusCircle className={`w-[2vmin] h-[2vmin] ${acoesTopo.resultado.carregando ? 'animate-spin' : ''}`} />
+          </button>
+        )}
         {acoesTopo?.resetar && (
           <button
             type="button"
