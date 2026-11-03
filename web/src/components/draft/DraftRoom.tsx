@@ -506,6 +506,18 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // bolas do draft (antes as logos grandes ficavam fixas A X B).
   const timeNaEsquerda = ladoEquipeA === 'blue' ? timeA : timeB;
   const timeNaDireita = ladoEquipeA === 'blue' ? timeB : timeA;
+  const labelNaEsquerda = ladoEquipeA === 'blue' ? labelEquipeA : labelEquipeB;
+  const labelNaDireita = ladoEquipeA === 'blue' ? labelEquipeB : labelEquipeA;
+  // Placar é por EQUIPE (a/b), mas a tela é por LADO (esquerda = azul). Sem
+  // esse mapa, o time A aparecia com o placar do B quando trocava de lado.
+  const placarPorLado = (p?: { a: number; b: number } | null) =>
+    p
+      ? ladoEquipeA === 'blue'
+        ? { esquerda: p.a, direita: p.b }
+        : { esquerda: p.b, direita: p.a }
+      : null;
+  const placarAoVivo = placarPorLado(aoVivo?.placar);
+  const placarVisivel = placarPorLado(placar);
   // Coluna da esquerda = equipe que joga de AZUL; da direita = de VERMELHO.
   const equipeEsquerda: 'A' | 'B' = ladoEquipeA === 'blue' ? 'A' : 'B';
   const equipeDireita: 'A' | 'B' = equipeEsquerda === 'A' ? 'B' : 'A';
@@ -876,27 +888,27 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-[1.4vmin] pointer-events-none">
           <div className="flex items-start justify-center gap-[7vmin]">
             <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
-              {timeA?.logo
-                ? <img src={timeA.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
-                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeA.cor || (ladoEquipeA === 'blue' ? '#3B82F6' : '#ef4444')} 70%, transparent))` }} />
+              {timeNaEsquerda?.logo
+                ? <img src={timeNaEsquerda.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
+                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeNaEsquerda.cor || '#3B82F6'} 70%, transparent))` }} />
                 : <div className="w-[14vmin] h-[14vmin]" />}
               <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
-                {nomeSemQuebra(labelEquipeA)}
+                {nomeSemQuebra(labelNaEsquerda)}
               </span>
             </div>
             <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[5.4vmin]">X</span>
             <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
-              {timeB?.logo
-                ? <img src={timeB.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
-                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeB.cor || (ladoEquipeB === 'blue' ? '#3B82F6' : '#ef4444')} 70%, transparent))` }} />
+              {timeNaDireita?.logo
+                ? <img src={timeNaDireita.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
+                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeNaDireita.cor || '#ef4444'} 70%, transparent))` }} />
                 : <div className="w-[14vmin] h-[14vmin]" />}
               <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
-                {nomeSemQuebra(labelEquipeB)}
+                {nomeSemQuebra(labelNaDireita)}
               </span>
             </div>
           </div>
           <span className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-            {aoVivo?.placar?.a ?? 0} <span className="text-white/40">-</span> {aoVivo?.placar?.b ?? 0}
+            {placarAoVivo?.esquerda ?? 0} <span className="text-white/40">-</span> {placarAoVivo?.direita ?? 0}
           </span>
           {!!aoVivo?.legenda && (
             <span className="text-[1.2vmin] font-black uppercase tracking-[0.4em] text-white/50">
@@ -1174,9 +1186,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
               </span>
             </div>
           </div>
-          {placar && (
+          {placarVisivel && (
             <div className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.3)]">
-              {placar.a} <span className="text-white/40">-</span> {placar.b}
+              {placarVisivel.esquerda} <span className="text-white/40">-</span> {placarVisivel.direita}
             </div>
           )}
         </div>
