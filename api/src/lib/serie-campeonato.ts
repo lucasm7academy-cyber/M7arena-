@@ -31,7 +31,7 @@ import {
   tournamentSeriesGames,
 } from "../../../db/schema/tournaments.js";
 import { riotRaw } from "../routes/riot.js";
-import { RiotMatch, QUEUE_SUMMONERS_RIFT, QUEUE_HOWLING_ABYSS } from "./verificar-partida.js";
+import { RiotMatch, QUEUE_SUMMONERS_RIFT, QUEUE_HOWLING_ABYSS, queueDoCodigo } from "./verificar-partida.js";
 import { recalcularPdlGlobal } from "./tournament-pdl.js";
 import { encerrarTransmissoesDoJogo } from "./transmissoes.js";
 import { avancarSalaCampeonatoAposJogada, encerrarSalaCampeonato } from "./sala-campeonato.js";
@@ -486,7 +486,7 @@ async function resolverQueueSerie(tx: any, codigo: string | null): Promise<numbe
     .from(matchCodes)
     .where(eq(matchCodes.code, codigo))
     .limit(1);
-  return mc?.mode === "1v1" ? QUEUE_HOWLING_ABYSS : QUEUE_SUMMONERS_RIFT;
+  return queueDoCodigo(codigo, mc?.mode ?? null);
 }
 
 async function verificarSerieMatch(

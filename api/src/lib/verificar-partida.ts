@@ -38,10 +38,21 @@ export type BuscarMatch = (matchId: string) => Promise<RiotMatch | null>;
 // Queue IDs das partidas custom/torneio no match-v5 da Riot. O mapa é definido
 // na criação do tournament code, não no modo em si: os códigos BR050c8-* (1v1)
 // são Howling Abyss (ARAM), os BR04fa2-* (5v5/aram/time_vs_time) são Summoner's
-// Rift. Filtra a busca de histórico pelo queue certo — senão a partida ARAM
-// nunca aparece quando se busca queue=3130 (SR).
+// Rift 3130 e os BR05116-* (blind, Scrim/Campeonato) caem na fila custom 3100.
+// Filtra a busca de histórico pelo queue certo — senão a partida nunca aparece.
 export const QUEUE_SUMMONERS_RIFT = 3130;
 export const QUEUE_HOWLING_ABYSS = 3200;
+export const QUEUE_CUSTOM_BLIND = 3100;
+
+/**
+ * Queue do match-v5 conforme o código da sala. O prefixo do código é a fonte
+ * mais confiável: o mesmo modo pode usar códigos de mapas/filas diferentes.
+ */
+export function queueDoCodigo(codigo: string | null | undefined, mode?: string | null): number {
+  if (codigo?.startsWith("BR05116")) return QUEUE_CUSTOM_BLIND;
+  if (codigo?.startsWith("BR050c8") || mode === "1v1") return QUEUE_HOWLING_ABYSS;
+  return QUEUE_SUMMONERS_RIFT;
+}
 
 export type ResultadoVerificacao =
   | { ok: true; estado: "encerrada"; winnerSide: "blue" | "red"; matchIdRiot: string }
@@ -186,7 +197,7 @@ export async function verificarPartida(
 
   const inicio = Math.floor(new Date(m.createdAt).getTime() / 1000);
   const fim = Math.floor(agora.getTime() / 1000);
-  const queue = m.mode === "1v1" ? QUEUE_HOWLING_ABYSS : QUEUE_SUMMONERS_RIFT;
+  const queue = queueDoCodigo(m.codigoPartida, m.mode);
   const vistos = new Set<string>();
   const candidatos: string[] = [];
   for (const puuid of puuidsBusca) {
