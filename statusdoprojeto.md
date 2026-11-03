@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 02/11/2026 21:35 — por `deepseek`
+**Última atualização:** 02/11/2026 21:48 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 02/11/2026 21:48 | deepseek | Sala 250/Scrim: adicionado Inserir Resultado manual para ADM/proprietario. API POST /api/matches/:id/sala-campeonato/resultado escolhe vencedor A/B, soma 1 e decide: serie aberta volta a camp_prontos; serie fechada encerra (Scrim encerrada; campeonato camp_finalizada). UI: botao no DraftRoom e na barra do adm, modal com os dois times. tsc API/web e build ok; rota 401 sem sessao; live index-CQ0si99s; health 200. <br>_tocou: `api/src/lib/serie-campeonato.ts`, `api/src/routes/matches-actions.ts`, `web/src/components/draft/DraftRoom.tsx`, `web/src/features/sala-campeonato/SalaCampeonato.tsx`, `web/src/features/sala-campeonato/ModalResultadoManual.tsx`_ |
 | 02/11/2026 21:35 | deepseek | Sala 250: aplicado 1-0 manual para BKSR (AMS 0 x 1 BKSR, jogo 2, camp_prontos) apos a Riot nao fechar. Causa raiz: partida blind BR05116 estava na queue 3100 e o verificador buscava 3130; corrigido em verificar-partida/serie-campeonato. Tambem corrigida a troca de lado no DraftRoom/SalaCampeonato: vaga, jogador, logo, tag, picks, hub central, card Serie e placar ao vivo seguem o lado real. Live web index-B__aKqoy; health 200; tsc/build ok. <br>_tocou: `api/src/lib/verificar-partida.ts`, `api/src/lib/serie-campeonato.ts`, `api/test/riot-queues.test.ts`, `web/src/components/draft/DraftRoom.tsx`, `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 | 01/11/2026 17:48 | deepseek | SalaCampeonato: header de partida finalizada trocado pela titlebar Anton com gradiente na cor do vencedor, igual à SalaMod1. Sem lista de games e sem migration (decisão do usuário). Live: index-D0tVwTiJ.js, SalaCampeonato-D1N5OQNH.js, health 200; chunk contém PARTIDA FINALIZADA/Anton. <br>_tocou: `web/src/features/sala-campeonato/SalaCampeonato.tsx`, `web/src/components/partidas/HeaderFinalizada.tsx`_ |
 | 01/11/2026 16:36 | deepseek | Pool de codigos corrigido: 12 BR-SMOKE-SALA de teste removidos (backup no VPS); 5x5 ficou com os 6 BR04fa2 Tournament Draft reais (mode NULL), 1v1 com 2 e blind com 7. Riot API respondeu 403 (chave sem permissao Tournament API); classificacao confirmada pelos seeds 0007/0014/0020. 5x5 sem draft/placar na bola e Scrim/campeonato blind seguem no ar. <br>_tocou: `db/migrations/0007_matches_salas_swap.sql`, `db/migrations/0014_rodizio_codigos_lru.sql`, `db/migrations/0020_separar_fila_codigos_x1.sql`, `db/migrations/0034_blind_codes.sql`_ |
@@ -193,7 +194,6 @@ _31/10/2026 04:00 — deepseek_
 | 31/10/2026 04:35 | deepseek | Draft: icones (resetar/verificar/twitch/mudo) de volta ao canto superior direito (top-1vmin right-1.5vmin) — estavam 'embaixo' porque eu os tinha descido para 12vmin. Para nao ficarem sob os bans, a faixa de bans desceu de 1.4 para 6vmin (continua no campo do timer, ao lado da barra azul/vermelha, sem sobrepor). Tamanho 7.2vmin e container 158vmin mantidos. Commit e1cfed3, deploy ok. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:19 | deepseek | Draft: bans subiram (top 2.5->1.4vmin) e ganharam mais respiro da barra do timer (container 152->158vmin); icones do topo andaram um pouco para o centro (right 1.5->8vmin), continuando abaixo da linha de bans. Commit f269f2d, deploy ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 04:15 | deepseek | Draft: ajuste fino do espacamento. Container dos bans 140->152vmin (max-w), criando ~4-5vmin de respiro entre o ultimo ban e a barra azul/vermelha do timer, mantendo os bans perto do bloco FASE. Icones do topo (resetar/verificar/twitch/mudo) descem para top-12vmin, logo abaixo da linha de bans (continuam no alto, sem colidir com o ultimo ban). tsc 0, build ok, commit 67507fe, deploy ok (DraftRoom-DMCiPsye.js, health 200). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
-| 31/10/2026 04:11 | deepseek | Draft: bans agora CENTRALIZADOS (container max-w-140vmin, left-1/2) — ficam encostados no bloco 'FASE DE BANS/PICKS' em vez de colados nas bordas; tamanho 7.2vmin e top 2.5vmin mantidos. Icones do topo (resetar/verificar/twitch/mudo) voltaram pro canto superior direito (top-1vmin right-1.5vmin) — com o container de 140vmin eles nao sobrepoem mais o ultimo ban. Commit 8b40961, deploy VPS ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 
 ---
 
