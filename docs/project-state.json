@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-03T00:48:46.977Z",
+  "updatedAt": "2026-11-04T22:53:13.977Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -429,6 +429,12 @@
         "web/src/features/sala-campeonato/SalaCampeonato.tsx",
         "web/src/features/sala-campeonato/ModalResultadoManual.tsx"
       ]
+    },
+    {
+      "at": "2026-11-04T22:53:13.976Z",
+      "agent": "deepseek",
+      "summary": "Mapeamento completo da estrutura atual do projeto em ESTRUTURA_ATUAL.md (arvore, rotas, API, banco, features, redundancias, 27 problemas confirmados, 14 suspeitas, 10 redundancias). Nenhum codigo alterado.",
+      "touched": []
     }
   ]
 }
