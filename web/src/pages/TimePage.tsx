@@ -2,22 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Crown, Trophy, Wallet, Users, Send,
+  ArrowLeft, Crown, Trophy, Wallet, Users,
   ChevronRight, ShieldCheck, LogOut, Paintbrush, Settings,
   UserPlus, UserX, Check, Plus, RefreshCw, X, Search, Upload,
-  Copy, Phone, MessageCircle, MessageSquare,
+  Copy, Phone, MessageSquare,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 import { buildProfileIconUrl, buscarJogadorCompleto } from '../api/riot';
+import { opGgUrl } from '../lib/opgg';
 import { useSound } from '../hooks/useSound';
 import { AnimatePresence as AP } from 'motion/react';
 import {
   type Role,
   ROLE_CONFIG,
   TIER_MAP,
-} from '../components/players/PlayerDetailModal';
+} from '../components/players/playerMeta';
 
 // ── tipos ─────────────────────────────────────────────────────────────────────
 // Polígonos Oficiais Cut-Edge
@@ -1423,10 +1424,9 @@ export default function TimePage() {
   // Em vez do card padrão, leva direto pro perfil do player no OP.GG.
   // Ex: "One Lucks#BR1" -> https://op.gg/pt/lol/summoners/br/One%20Lucks-br1
   const handlePlayerClick = (m: Membro) => {
-    if (!m.riotId || !m.riotId.includes('#')) return;
+    const url = opGgUrl(m.riotId);
+    if (!url) return;
     playSound('click');
-    const [gameName, tagLine] = m.riotId.split('#');
-    const url = `https://op.gg/pt/lol/summoners/br/${encodeURIComponent(gameName.trim())}-${tagLine.trim().toLowerCase()}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

@@ -15,12 +15,12 @@ type Aba = 'deposito' | 'saque';
 const TITULO: Record<Aba, { badge: string; title: string; desc: string }> = {
   deposito: {
     badge: 'Recarga Instantânea via PIX',
-    title: 'DEPOSITAR M7 COINS',
+    title: 'DEPOSITAR ESSÊNCIA AZUL',
     desc: 'Escolha um pacote e sua Essência Azul cai na hora. Quanto maior o pacote, maior o bônus.',
   },
   saque: {
     badge: 'Saque via PIX',
-    title: 'SACAR M7 COINS',
+    title: 'SACAR ESSÊNCIA AZUL',
     desc: 'Converta seus E em reais e receba na sua chave PIX. 100 E = R$1,00.',
   },
 };
@@ -131,8 +131,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     textShadow: '0 2px 10px rgba(0,0,0,0.8)',
                   }}
                 >
-                  <span>{info.title.split('M7 COINS')[0]}</span>
-                  <span className="text-[#FFB700]">M7 COINS</span>
+                  <span>{info.title.split('ESSÊNCIA AZUL')[0]}</span>
+                  <span className="text-[#FFB700]">ESSÊNCIA AZUL</span>
                 </h2>
                 <p className="text-zinc-400 text-xs mt-1 leading-relaxed max-w-md">{info.desc}</p>
               </div>

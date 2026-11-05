@@ -54,7 +54,7 @@ const ERROS: Record<string, string> = {
   serie_finalizada: 'A série já foi finalizada.',
   resultado_anterior_pendente: 'Aguardando o resultado do jogo anterior.',
   vencedor_invalido: 'Escolha o time vencedor.',
-  sala_com_aposta: 'Sala com aposta: use o painel de revisão para inserir o resultado.',
+  sala_com_aposta: 'Sala com aposta: o resultado deve ser confirmado pela verificação automática da Riot.',
 };
 
 type AcaoRpc = { ok: boolean; erro?: string | null; estado?: string | null; mudou?: boolean };

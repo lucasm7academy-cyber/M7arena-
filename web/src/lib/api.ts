@@ -73,19 +73,6 @@ export interface ApiLegacyMember {
   guest_elo_cache?: string | null;
 }
 
-export interface ApiLegacyInvite {
-  id: string;
-  time_id: string;
-  de_user_id: string;
-  para_user_id?: string | null;
-  riot_id?: string | null;
-  role: string;
-  mensagem?: string | null;
-  tipo: 'solicitacao' | 'convite';
-  status: 'pendente' | 'aceito' | 'recusado';
-  criado_em: string;
-}
-
 export interface ApiTeamListResult {
   teams: ApiLegacyTeam[];
   total: number;
@@ -200,7 +187,6 @@ export type TournamentSection = "cronograma" | "classificacao" | "grupos" | "cha
 /** Saldo de E/E no shape que as telas do fork consomem. */
 export interface ApiWalletBalance {
   userId: string;
-  mp: number;
   mc: number;
   /** E travado em salas apostadas ativas (design v3 §11 — "em partida"). */
   mcReservado?: number;
@@ -231,14 +217,6 @@ export interface ApiMcOrderResult {
 export interface ApiPaymentStatus {
   orderId: string;
   status: string;
-}
-
-/** Retorno do POST /api/wallet/admin/adjust (saldos finais calculados no servidor). */
-export interface ApiWalletAdjustResult {
-  ok: boolean;
-  erro: string | null;
-  mc: number;
-  mp: number;
 }
 
 /** Retorno do POST /api/wallet/admin/adjust-mc (exclusivo do proprietário). */
@@ -309,9 +287,6 @@ export interface ApiLegacySala {
   aposta_mc?: number;
   taxa_pct?: string | number;
   match_id?: string;
-  revisao_desde?: string | null;
-  prints_recebidos?: number;
-  prints_necessarios?: number;
   /** Draft (ban/pick) — presente entre `draft` e `iniciando_partida`. */
   draft?: ApiLegacySalaDraft | null;
   /**
@@ -401,82 +376,6 @@ export interface ApiSalaChatMensagem {
   /** Cor do nick no momento do envio (blue/red/gold). Null → dourado. */
   cor?: string | null;
   created_at: string;
-}
-
-/** Print de prova de uma partida apostada (design v3 §6). */
-export interface ApiPrint {
-  id: string;
-  matchId: string;
-  userId: string;
-  nomeJogador: string;
-  /** URL autenticada — passa por GET /api/prints/:id/arquivo, nunca link direto. */
-  url: string;
-  createdAt: string;
-}
-
-/** Contestação de resultado (design v3 §6.1). */
-export interface ApiDisputa {
-  id: string;
-  matchId: string;
-  userId: string;
-  nomeJogador: string;
-  motivo: string;
-  status: string;
-  createdAt: string;
-}
-
-/** Disputa em partida encerrada para o painel do admin (spec verificacao-partida-riot). */
-export interface ApiDisputaAdmin {
-  id: string;
-  matchId: string;
-  userId: string;
-  motivo: string;
-  contestacaoUrl: string | null;
-  status: string;
-  createdAt: string;
-  nomeJogador: string;
-  salaNum: number;
-  mode: string;
-  apostaMc: number;
-  winnerSide: string | null;
-  resultado: string | null;
-}
-
-/** Jogador da sala no painel de revisão. */
-export interface ApiRevisaoJogador {
-  userId: string;
-  nome: string;
-  side: 'blue' | 'red';
-  confirmed: boolean;
-}
-
-/** Sala em `aguardando_revisao` com o que o painel precisa (prints + disputas embutidos). */
-export interface ApiRevisaoSala {
-  id: string;
-  salaNum: number;
-  mode: string;
-  status: string;
-  apostaMc: number;
-  taxaPct: string;
-  maxJogadores: number;
-  timeANome?: string | null;
-  timeATag?: string | null;
-  timeALogo?: string | null;
-  timeBNome?: string | null;
-  timeBTag?: string | null;
-  timeBLogo?: string | null;
-  revisaoDesde?: string | null;
-  createdAt: string;
-  jogadores: ApiRevisaoJogador[];
-  prints: ApiPrint[];
-  disputas: ApiDisputa[];
-}
-
-/** Resultado da decisão do revisor (idempotente via decisionId, §4.3). */
-export interface ApiDecisaoResultado {
-  ok: boolean;
-  erro?: string;
-  estado?: string;
 }
 
 export interface ApiMatchesSdk {
@@ -583,26 +482,6 @@ export interface ApiProfileMe {
   termosAceitos?: boolean;
   profile: ApiLegacyProfile;
   riotAccount: ApiLegacyRiotAccount | null;
-}
-
-/** Ponto da série financeira do painel admin (ADR-032). Valores em R$. */
-export interface ApiFinanceiroPonto {  data: string;
-  faturamento: number;
-  saques: number;
-  lucro: number;
-}
-
-/** Retorno de GET /api/admin/financeiro (ADR-032). */
-export interface ApiFinanceiro {
-  periodo: string;
-  totais: {
-    faturamento: number;
-    saques: number;
-    lucro: number;
-    mcEmCirculacao: number;
-    dinheiroNoProjeto: number;
-  };
-  serie: ApiFinanceiroPonto[];
 }
 
 // ── Aposta individual (self-bet) — aposta em si mesmo na próxima ranqueada ──
@@ -903,13 +782,6 @@ export const api = {
       api.get<ApiWalletBalance[]>(
         `/wallet/admin/balances${userIds?.length ? `?userIds=${userIds.join(",")}` : ""}`
       ),
-    adminAdjust: (userId: string, deltaMC: number, deltaMP: number, motivo?: string) =>
-      api.post<ApiWalletAdjustResult>("/wallet/admin/adjust", {
-        userId,
-        deltaMC,
-        deltaMP,
-        motivo: motivo || "ajuste_admin",
-      }),
     adminAdjustMc: (userId: string, deltaMC: number, motivo?: string) =>
       api.post<ApiWalletAdjustMcResult>("/wallet/admin/adjust-mc", {
         userId,
@@ -1169,7 +1041,7 @@ export const api = {
     list: () => api.get<{ notifications: ApiNotification[]; unreadCount: number }>("/notifications"),
     /** Marca uma notificação como lida. */
     markRead: (id: string) => api.post<{ ok: boolean }>(`/notifications/${id}/read`),
-    /** Marca todas como lidas (usado ao abrir o sino). */
+    /** Marca todas como lidas (botão “Marcar lidas”). */
     markAllRead: () => api.post<{ ok: boolean }>("/notifications/read-all"),
   },
 };

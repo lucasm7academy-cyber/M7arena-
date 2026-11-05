@@ -29,8 +29,8 @@ import { alvoVitorias } from "../lib/serie-livre.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
-// Ações de sala (confirm/leave/recusar/tick/start/report-result) em
-// rota própria para o arquivo não estourar ~400 linhas.
+// Ações de sala (confirm/leave/recusar/tick/start) em rota própria para o
+// arquivo não estourar ~400 linhas.
 matchesRouter.use(matchesActionsRouter);
 
 /** Comparação de strings em tempo constante (CWE-208) — para senhas de sala. */
@@ -92,9 +92,8 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
     __isVip: userMap.get(p.userId)?.isVip ?? false,
   }));
 
-  // Prints de prova foram removidos do fluxo (C13); salas legadas não exibem
-  // mais contagem de prints.
-  const printsRecebidos = 0;
+  // Prints de prova pertenciam ao fluxo de revisão removido (C13); o shape
+  // não expõe mais contagem/limite de prints.
 
   // Salas encerradas verificadas pela Riot levam o resumo da partida real
   // (matchResults.payload) para o front mostrar vencedor + stats.
@@ -193,7 +192,7 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
     draft = d ?? null;
   }
 
-  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
+  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, resultadoRiot, draft);
   // Extras do DETALHE da sala (a listagem não paga essas queries):
   //  - Série da SALA 5v5 PERSONALIZADA (MD1/MD3/MD5): formato, jogo e placar;
   //  - Cor TEMA de cada time (gradient_from): o brilho dos logos na sala e no
@@ -297,7 +296,8 @@ matchesRouter.get("/", async (req, res) => {
     }
 
     const results = await Promise.all(rows.map((m) => shapeSala(m, db, false)));
-    return res.json(results);  } catch (error: any) {
+    return res.json(results);
+  } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar salas" });
   }
 });
@@ -631,7 +631,9 @@ matchesRouter.post("/:id/join", async (req, res) => {
 // DELETE /api/matches/:id - Excluir sala (somente admin/proprietário).
 // A exclusão é administrativa e LIQUIDA tudo: devolve as reservas (escrow) ainda
 // pendentes de cada jogador da sala apostada e remove a sala com todos os dados
-// vinculados (players, prints, resultados, disputas, strikes, revenue, códigos).
+// vinculados (players, resultados, strikes, revenue, códigos). Prints/disputas
+// não são mais gerados pelo fluxo (revisão removida em 2026-11), mas as linhas
+// históricas continuam sendo apagadas junto com a sala para não ficarem órfãs.
 // Não bloqueia por estado — em qualquer estado as reservas pendentes voltam para
 // a carteira do jogador antes do DELETE. `devolverEntrada` é idempotente (no-op
 // quando o jogador não tem mais nada reservado), então liquidar duas vezes é seguro.

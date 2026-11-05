@@ -2,20 +2,18 @@
  * PAINEL DE CONTATOS DOS TIMES - Admin
  *
  * Visualizar e gerenciar WhatsApp e Telefone dos times.
- * Exporta AbaContatos (usado dentro de /admin) e default page (rota /admin/contatos).
+ * Exporta AbaContatos (usado dentro de /admin).
  */
 
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
 import {
   Phone, MessageCircle, Search, Download, Copy, Check,
-  AlertCircle, Loader, ArrowLeft,
+  AlertCircle, Loader,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { usePerfilSafe } from '../contexts/PerfilContext';
 import { useSound } from '../hooks/useSound';
 import type { CargoAdmin } from '../config/adminPermissoes';
 
@@ -274,32 +272,6 @@ export function AbaContatos({ adminCargo }: { adminCargo: CargoAdmin }) {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PÁGINA STANDALONE (rota /admin/contatos)
-// ─────────────────────────────────────────────────────────────────────────────
-export default function AdminContatos() {
-  const navigate = useNavigate();
-  const { perfil } = usePerfilSafe();
-  const adminCargo = (perfil?.cargo as CargoAdmin) || 'jogador';
-
-  useEffect(() => { window.scrollTo(0, 0); }, []);
-
-  return (
-    <div className="flex-1 bg-[#0b0f19] min-h-screen text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,184,0,0.08),rgba(255,255,255,0))]">
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <button
-          onClick={() => navigate('/admin')}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-black uppercase tracking-widest transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar para o painel
-        </button>
-        <AbaContatos adminCargo={adminCargo} />
-      </div>
     </div>
   );
 }

@@ -72,12 +72,13 @@ completo.
 - `user_identities` — Google/Discord/credenciais.
 - `user_sessions` — sessões próprias (cookie httpOnly).
 - `user_roles` — N:N (um usuário pode ser streamer e organizador).
-- `user_wallets` — saldo corrente de MP/MC (linha quente).
+- `user_wallets` — saldo corrente de Essência Azul (`mc`); `mp` é coluna legada sem uso de produto.
 - `user_payout_info` — dados PIX (grant e auditoria próprios).
 
 ### 3.2 Times e campeonatos
 
-- `teams`, `team_members`, `team_stats`, `team_invites`.
+- `teams`, `team_members`, `team_stats`; `team_invites` é tabela legada, sem
+  endpoint/UI desde a remoção de B03.
 - `tournaments`, `tournament_teams`, `tournament_groups`,
   `tournament_matches`, `bracket_matches`, `tournament_standings`.
 - O shape que o front consome é montado no servidor por
@@ -86,7 +87,8 @@ completo.
 
 ### 3.3 Partidas e salas
 
-- `matches` — 5v5, ARAM, 1v1 e Time vs Time.
+- `matches` — 5v5, ARAM, 1v1 e Time vs Time livre (`time_vs_time_livre`); o
+  modo antigo `time_vs_time` não é mais criado nem roteado.
 - `match_players` — lado, slot, confirmação, vínculo.
 - `match_codes` — pool de tournament codes da Riot.
 - `match_results` — payload congelado do resultado.
@@ -100,16 +102,20 @@ completo.
 - `user_wallets` — saldo corrente; toda escrita acontece na mesma transação do
   lançamento.
 - `payments` — Mercado Pago (PIX), com webhook idempotente.
-- `platform_revenue`, `referral_events`.
-- Salas apostadas: escrow em `api/src/lib/escrow.ts` + revisão em
-  `api/src/routes/revisao.ts`. Regras em [`SALAS_APOSTADAS.md`](./SALAS_APOSTADAS.md).
+- `platform_revenue` fica como histórico; `referral_events` é tabela legada.
+- Salas apostadas: escrow em `api/src/lib/escrow.ts` + verificação automática
+  pela Riot; o fluxo antigo de print/revisão/disputa foi removido (C12-C14).
+  Regras gerais em [`SALAS_APOSTADAS.md`](./SALAS_APOSTADAS.md) — o documento é
+  histórico e pode citar o fluxo removido.
 - Aposta individual: `bet_tickets`/`bet_legs` + `api/src/lib/bets.ts` e
   `api/src/lib/live-bets.ts`.
 
 ### 3.5 Conteúdo e retenção
 
-- `news`, `highlights`, `broadcasts`, `recruitment_posts`, `notifications`.
-- `audit_log` particionado por mês; jobs de purge para estados de OAuth e
+- `highlights`, `notifications` e `transmissoes`/`escalas_transmissao` ativos.
+  `news`, `player_stats`, `broadcasts`, `recruitment_posts` e `referral_events`
+  permanecem como tabelas históricas, sem fluxo de produto.
+- `audit_logs` particionado por mês; jobs de purge para estados de OAuth e
   partidas antigas.
 
 ### 3.6 Armadilhas do banco
@@ -156,7 +162,8 @@ transições; o serviço faz fan-out por sala.
 ## 6. Front
 
 - SPA em `web/`, servida pelo Nginx com fallback para `index.html`.
-- Rotas de sala: `/(5v5|aram|1v1|time_vs_time)/:id`.
+- Rotas de sala: `/(5v5|aram|1v1)/:id`, `/sala-time/:id` (scrim livre) e
+  `/campeonato/sala/:id`; `/time_vs_time/:id` redireciona para `/jogar`.
 - Acesso a dados por `web/src/lib/api.ts` e `web/src/api/*`; nunca espalhar
   `fetch` cru pelas telas.
 - Cache de perfil: um Provider acima do Router carrega perfil, conta, saldo,

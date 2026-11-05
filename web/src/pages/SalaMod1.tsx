@@ -995,9 +995,9 @@ ${link}`;
                 </AnimatePresence>
 
                 {/* ESTADO PÓS-PRINT (LEGADO) — nenhuma sala nova entra em
-                    aguardando_revisao desde a verificação automática via Riot
-                    (Tasks 3-10). Se uma sala antiga em voo ainda estiver nesse
-                    estado, mostra um card simples em vez do fluxo de print. */}
+                    aguardando_revisao desde a verificação automática via Riot.
+                    Se uma sala antiga em voo ainda estiver nesse estado, mostra
+                    um card simples; o fluxo de print foi removido. */}
                 {sala.estado === 'aguardando_revisao' && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -1005,7 +1005,7 @@ ${link}`;
                     >
                         <div className="bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center">
                             <p className="text-white/60 text-xs uppercase tracking-widest font-bold">
-                                Partida em análise — aguarde o admin
+                                Sala em revisão legada — fale com o suporte
                             </p>
                         </div>
                     </motion.div>
@@ -1065,7 +1065,7 @@ ${link}`;
                     )}
 
                     {/* PARTIDA CONFIRMADA — copiar código (mesmo lugar dos botões
-                        de confirmar presença / enviar print) */}
+                        de confirmar presença) */}
                     {sala.estado === 'iniciando_partida' && codigoPartida && (jogadorAtual || ehStaffSala) && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}
                             className="flex flex-col items-center gap-2 md:gap-[1.5vmin]">
@@ -1090,8 +1090,7 @@ ${link}`;
                     )}
 
                     {/* PARTIDA INICIADA — verificação automática via Riot (acelerador
-                        do polling) substitui o envio de print nesta etapa; o print
-                        existe só na contestação em ResultadoPartida */}
+                        do polling); o fluxo de print/contestação foi removido. */}
                     {sala.estado === 'partida_iniciada' && (jogadorAtual || ehStaffSala) && (
                         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }}>
                             <motion.button

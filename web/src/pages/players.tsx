@@ -30,7 +30,7 @@ import {
   ROLES_ORDER,
   TIER_MAP,
   getIconeUrl,
-} from '../components/players/PlayerDetailModal';
+} from '../components/players/playerMeta';
 import { VipCrown } from '../components/ui/VipBadge';
 import { opGgUrl } from '../lib/opgg';
 
@@ -124,13 +124,6 @@ async function carregarJogadores(
   // ✅ Partidas/winRate vêm do elo_cache (wins/losses das ranqueadas).
   //    O cálculo é feito por linha mais abaixo via statsDeRanqueada().
 
-  // ✅ Schema novo: E/E vêm de wallets (não mais de contas_riot.mp/mc).
-  const walletMap: Record<string, { mp: number; mc: number }> = {};
-  if (userIds.length > 0) {
-    const walletsData = await api.wallet.adminBalances(userIds);
-    (walletsData ?? []).forEach((w: any) => { walletMap[w.userId] = { mp: w.mp ?? 0, mc: w.mc ?? 0 }; });
-  }
-
   // Buscar membros e times (incluindo convidados/guests).
   // O Riot ID é mandado para TODOS os jogadores, não só para quem não tem
   // conta: quem tem conta mas está no time como CONVIDADO (user_id NULL no
@@ -179,18 +172,13 @@ async function carregarJogadores(
       iconeId:  c.profile_icon_id ?? 1,
       partidas,
       winRate,
-      titulos:  0,
       rolePrincipal:  (LANE_MAP[c.lane]  ?? 'RES') as Role,
       roleSecundaria: (LANE_MAP[c.lane2] ?? 'RES') as Role,
       isVIP:       c.is_vip  ?? false,
       isVerified:  true,
-      kda: 0, csPorMinuto: 0, participacaoKill: 0, conquistas: [],
       timeTag:   time?.tag           ?? undefined,
       timeColor: time?.gradient_from ?? undefined,
-      timeLogo:  time?.logo_url      ?? undefined,
       timeId:    membro?.time_id     ?? undefined,
-      mp: c.user_id ? (walletMap[c.user_id]?.mp ?? 0) : 0,
-      mc: c.user_id ? (walletMap[c.user_id]?.mc ?? 0) : 0,
       _puuid: c.puuid ?? undefined,
     } as Jogador & { _puuid?: string };
   });
@@ -695,16 +683,6 @@ export default function App() {
                                   {jogador.elo}
                                 </span>
                               </div>
-
-                              {/* Ranking Badge */}
-                              <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.1)' }}>
-                                <span
-                                  className="block px-2 py-0.5 text-[9px] text-white/50 font-bold bg-[#141419]"
-                                  style={{ clipPath: CUT_BADGE_INNER }}
-                                >
-                                  Ranking #{index + 1}
-                                </span>
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -713,14 +691,14 @@ export default function App() {
                         <div className="grid grid-cols-2 gap-2 mb-4">
                           <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
                             <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
-                              <p className="text-white font-black text-sm">{jogador.partidas.toLocaleString()}</p>
-                              <p className="text-[8px] text-white/40 uppercase tracking-wider">Partidas</p>
+                              <p className="text-white font-black text-sm">{jogador.partidas > 0 ? jogador.partidas.toLocaleString() : '—'}</p>
+                              <p className="text-[8px] text-white/40 uppercase tracking-wider">{jogador.partidas > 0 ? 'Partidas' : 'Sem ranqueada'}</p>
                             </div>
                           </div>
                           <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
                             <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
-                              <p className="font-black text-sm" style={{ color: winRateColor }}>{jogador.winRate}%</p>
-                              <p className="text-[8px] text-white/40 uppercase tracking-wider">Win Rate</p>
+                              <p className="font-black text-sm" style={{ color: jogador.partidas > 0 ? winRateColor : '#71717a' }}>{jogador.partidas > 0 ? `${jogador.winRate}%` : '—'}</p>
+                              <p className="text-[8px] text-white/40 uppercase tracking-wider">{jogador.partidas > 0 ? 'Win Rate' : 'Sem ranqueada'}</p>
                             </div>
                           </div>
                         </div>

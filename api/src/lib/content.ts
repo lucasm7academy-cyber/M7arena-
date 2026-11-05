@@ -20,14 +20,14 @@ export async function getAuthUser(req: any) {
 
 /**
  * Requer usuário autenticado com um dos cargos permitidos em user_roles (regra
- * de negócio no servidor). Admin gerencia highlights; notícias também aceitam
- * organizer, que é o que a tela de Admin já permitia.
+ * de negócio no servidor). Usado hoje por highlights (`content-highlights.ts`)
+ * e pela fila de saques (`withdrawals.ts`), sempre com `["admin"]`.
  *
  * Normalização de cargo legado: `proprietario` é o dono do site e tem poder de
- * admin (mesma regra de wallet.ts/teams.ts/eRevisor), e `organizador` é o
- * equivalente em português de `organizer`. O fork usa `me.roles` e trata
- * `proprietario` como admin (PerfilContext rolesToCargo), então a checagem de
- * servidor precisa aceitar o mesmo conjunto.
+ * admin (mesma regra de wallet.ts/teams.ts), e `organizador` é o equivalente em
+ * português de `organizer`. O fork usa `me.roles` e trata `proprietario` como
+ * admin (PerfilContext rolesToCargo), então a checagem de servidor precisa
+ * aceitar o mesmo conjunto.
  */
 export async function getAdminUser(req: any, res: any, allowed: string[]) {
   const user = await getAuthUser(req);

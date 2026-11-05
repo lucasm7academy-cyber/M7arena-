@@ -649,7 +649,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
             >
               ✓
             </span>
-            <span>Validação de prints e <strong className="text-zinc-100">recebimento de E</strong></span>
+            <span>Validação de resultado pela Riot e <strong className="text-zinc-100">recebimento de E</strong></span>
           </div>
         </div>
       </CutCard>

@@ -38,10 +38,14 @@ export function useTransmissoesAtivas() {
 
         if (cancelled) return;
 
-        // Live de jogo (match_id) não usa expira_em: o servidor já filtra pelo
-        // fim da série. As livres mantêm a expiração.
+        // Live de jogo (match_id) e de scrim (sala_id, modo
+        // `time_vs_time_livre`) não usam expira_em: o servidor já filtra pelo
+        // fim da série/sala. As avulsas mantêm a expiração.
         const aindaAtivas = (txData || []).filter(
-          (tx: any) => tx.match_id || (tx.expira_em && tx.expira_em > now)
+          (tx: any) =>
+            tx.match_id ||
+            tx.modo === 'time_vs_time_livre' ||
+            (tx.expira_em && tx.expira_em > now)
         );
 
         if (aindaAtivas.length === 0) {

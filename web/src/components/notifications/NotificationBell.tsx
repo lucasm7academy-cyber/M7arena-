@@ -40,8 +40,6 @@ export default function NotificationBell() {
 
       if ((data.unreadCount ?? 0) > 0) {
         playNotificationSound();
-        api.notifications.markAllRead().catch(() => {});
-        setUnread(0);
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Erro ao carregar notificações.');
@@ -88,12 +86,21 @@ export default function NotificationBell() {
           >
             <div className="sticky top-0 bg-[#0a0b0f] border-b border-white/10 p-4 flex items-center justify-between">
               <h3 className="text-white font-black uppercase tracking-widest text-sm">Notificações</h3>
-              {notifications.length > 0 && (
+              {notifications.some((n) => !n.read) && (
                 <button
-                  onClick={() => { setNotifications([]); setUnread(0); }}
+                  onClick={async () => {
+                    try {
+                      await api.notifications.markAllRead();
+                      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+                      setUnread(0);
+                    } catch (err: any) {
+                      setErrorMsg(err?.message || 'Erro ao marcar notificações como lidas.');
+                      setTimeout(() => setErrorMsg(null), 4000);
+                    }
+                  }}
                   className="text-[0.75rem] text-white/40 hover:text-white/80 transition-colors font-bold uppercase"
                 >
-                  Limpar
+                  Marcar lidas
                 </button>
               )}
             </div>
@@ -109,13 +116,33 @@ export default function NotificationBell() {
                   const Icon = delta > 0 ? Trophy : delta < 0 ? TrendingDown : AlertCircle;
                   const color = delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-zinc-400';
                   return (
-                    <div key={notif.id} className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all">
+                    <button
+                      key={notif.id}
+                      type="button"
+                      onClick={async () => {
+                        if (notif.read) return;
+                        try {
+                          await api.notifications.markRead(notif.id);
+                          setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, read: true } : n));
+                          setUnread((prev) => Math.max(0, prev - 1));
+                        } catch (err: any) {
+                          setErrorMsg(err?.message || 'Erro ao marcar notificação como lida.');
+                          setTimeout(() => setErrorMsg(null), 4000);
+                        }
+                      }}
+                      className={`w-full text-left p-3 border rounded-lg transition-all ${
+                        notif.read
+                          ? 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
+                          : 'bg-primary/5 border-primary/20 hover:bg-primary/10'
+                      }`}
+                    >
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className={`w-4 h-4 ${color}`} />
                         <p className="text-xs font-bold text-white/60 uppercase">{notif.title}</p>
+                        {!notif.read && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
                       </div>
-                      <p className="text-sm text-white">{notif.message}</p>
-                    </div>
+                      <p className={`text-sm ${notif.read ? 'text-white/60' : 'text-white'}`}>{notif.message}</p>
+                    </button>
                   );
                 })
               )}

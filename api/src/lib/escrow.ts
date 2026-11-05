@@ -132,7 +132,12 @@ export type ResultadoReverter =
 
 /**
  * Estorna um payout já aplicado (contestação procedente — spec
- * verificacao-partida-riot). Devolve cada jogador ao estado pré-aposta:
+ * verificacao-partida-riot). HELPER LEGADO: a rota de disputa/revisão que o
+ * chamava foi removida na simplificação de 2026-11; hoje só
+ * `api/test/escrow.test.ts` o exercita. Mantido porque a operação de estorno
+ * continua válida para correção manual futura.
+ *
+ * Devolve cada jogador ao estado pré-aposta:
  * vencedores devolvem o prêmio E recebem a reserva de volta; perdedores
  * recebem a reserva de volta; a taxa/resto sai de `platform_revenue`.
  * Invariante `mc + mc_reservado = total` preservado (só move mc).

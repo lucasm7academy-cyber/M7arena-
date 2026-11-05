@@ -9,7 +9,7 @@
 import { Router } from "express";
 import { eq, count } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { matchPlayers } from "../../../db/schema/matches.js";
 import { buscarSalaPorNumero } from "../lib/match-flow.js";
 
 export const ogRouter = Router();
@@ -39,7 +39,7 @@ function rotuloEstado(status: string | null): string {
     iniciando_partida: "Iniciando partida",
     partida_iniciada: "Partida em andamento",
     finalizacao: "Finalizando",
-    aguardando_revisao: "Em análise de resultado",
+    aguardando_revisao: "Revisão legada",
     encerrada: "Encerrada",
     cancelada: "Cancelada",
   };

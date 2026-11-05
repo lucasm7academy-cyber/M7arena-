@@ -311,7 +311,6 @@ playersRouter.get("/filtrados", async (req, res) => {
           lane: u?.lanePrimary ?? null,
           lane2: u?.laneSecondary ?? null,
           is_vip: u?.isVip ?? false,
-          mp: 0,
           mc: 0,
           puuid: r.externalId,
           stats_updated_at: meta.stats_updated_at ?? r.syncedAt ?? r.createdAt,

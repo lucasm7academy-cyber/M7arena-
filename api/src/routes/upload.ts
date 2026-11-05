@@ -19,13 +19,12 @@ function obterUploadDir(): string {
 /**
  * Buckets aceitos. Cada bucket vira uma pasta de primeiro nível no volume
  * (ADR-007): `team-logos` → `/uploads/team-logos/`, `public-images` →
- * `/uploads/public-images/`, `match-prints` → `/uploads/match-prints/`. O
- * servidor restringe a escrita por bucket, então o cliente não decide caminho
- * arbitrário. A escrita também é restrita por dono (ARQUITETURA.md §6):
- * `team-logos` só aceita o dono/capitão do time (a logo cai em
- * `/uploads/team-logos/<team_id>/`), `public-images` só admin/organizador, e
- * `match-prints` é privado (design v3 §6): a URL servida passa por endpoint
- * autenticado, nunca link direto do disco.
+ * `/uploads/public-images/`. O servidor restringe a escrita por bucket, então o
+ * cliente não decide caminho arbitrário. A escrita também é restrita por dono
+ * (ARQUITETURA.md §6): `team-logos` só aceita o dono/capitão do time (a logo
+ * cai em `/uploads/team-logos/<team_id>/`), `public-images` só admin/organizador.
+ * O antigo bucket privado de prints de partida foi removido junto com o fluxo
+ * de revisão; não reintroduza caminho privado aqui sem um endpoint autenticado.
  */
 const BUCKETS = new Set(["team-logos", "public-images"]);
 
@@ -114,9 +113,6 @@ export function validarArquivoImagem(buffer: Buffer, mimetype: string): Validaca
  * renderiza em ~1400px; guardar o arquivo original (1–2 MB PNG) fazia o card
  * ficar preto por ~1s até o download terminar. 1920 dá folga para telas retina
  * sem carregar o arquivo cru.
- *
- * `match-prints` NÃO passa por aqui de propósito: print é prova de resultado e
- * tem que manter os bytes originais.
  */
 const LADO_MAX_EXIBICAO: Record<string, number> = {
   "public-images": 1920,
@@ -127,8 +123,7 @@ const LADO_LOGO = 1080;
 
 /**
  * Teto por bucket. Logo/banner de time aceita arquivo grande de qualquer
- * tamanho (o servidor redimensiona); print de partida continua em 5 MB porque
- * é prova de resultado e guarda os bytes originais.
+ * tamanho (o servidor redimensiona); os dois buckets públicos têm o mesmo teto.
  */
 const MAX_POR_BUCKET: Record<string, number> = {
   "team-logos": 30 * 1024 * 1024,
@@ -204,9 +199,6 @@ function sanitizeSubpath(subpath: string): string {
  *   pasta de um time alheio.
  * - `public-images`: usado só pelo painel de campeonatos. Só admin,
  *   proprietário ou organizador escreve.
- *
- * `match-prints` não passa por aqui (tem fluxo próprio acima, com participante
- * confirmado/revisor).
  */
 export type PermissaoBucketPublico =
   | { ok: true }

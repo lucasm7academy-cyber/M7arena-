@@ -1,27 +1,23 @@
 // src/config/adminPermissoes.ts
 // Definição de cargos e permissões da plataforma.
-// Hierarquia: proprietario > admin > streamer > coach > jogador
+// Hierarquia: proprietario > admin > organizador > streamer > caster > coach > jogador
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGOS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Hierarquia: proprietario > admin > organizador > streamer > coach > jogador (padrão) */
-export type CargoAdmin = 'proprietario' | 'admin' | 'organizador' | 'streamer' | 'coach' | 'jogador';
+/** Hierarquia: proprietario > admin > organizador > streamer > caster > coach > jogador (padrão) */
+export type CargoAdmin = 'proprietario' | 'admin' | 'organizador' | 'streamer' | 'caster' | 'coach' | 'jogador';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMISSÕES
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface PermissoesAdmin {
-  /** Pode gerenciar saldos de MPoints de jogadores */
+  /** Pode gerenciar o saldo de Essência Azul (E) dos jogadores */
   gerenciarSaldos: boolean;
   /** Pode ajustar saldo E (Essência Azul) — exclusivo do proprietário */
   gerenciarSaldoMc: boolean;
-  /** Pode votar no vencedor de partidas em disputa */
-  resolverPartidas: boolean;
-  /** Pode cancelar uma partida (sem declarar vencedor) */
-  cancelarPartidas: boolean;
   /** Pode promover / rebaixar / remover admins, streamers e coaches */
   gerenciarCargos: boolean;
   /** Pode expulsar jogadores da plataforma */
@@ -40,8 +36,6 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   proprietario: {
     gerenciarSaldos:   true,
     gerenciarSaldoMc:  true,
-    resolverPartidas:  true,
-    cancelarPartidas:  true,
     gerenciarCargos:   true,
     expulsarJogadores: true,
     criarSalas:        true,
@@ -52,8 +46,6 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   admin: {
     gerenciarSaldos:   true,
     gerenciarSaldoMc:  false,
-    resolverPartidas:  true,
-    cancelarPartidas:  true,
     gerenciarCargos:   false,
     expulsarJogadores: true,
     criarSalas:        true,
@@ -66,8 +58,6 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   organizador: {
     gerenciarSaldos:   false,
     gerenciarSaldoMc:  false,
-    resolverPartidas:  false,
-    cancelarPartidas:  false,
     gerenciarCargos:   false,
     expulsarJogadores: false,
     criarSalas:        false,
@@ -78,8 +68,6 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   streamer: {
     gerenciarSaldos:   false,
     gerenciarSaldoMc:  false,
-    resolverPartidas:  false,
-    cancelarPartidas:  false,
     gerenciarCargos:   false,
     expulsarJogadores: false,
     criarSalas:        false,
@@ -90,8 +78,16 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   coach: {
     gerenciarSaldos:   false,
     gerenciarSaldoMc:  false,
-    resolverPartidas:  false,
-    cancelarPartidas:  false,
+    gerenciarCargos:   false,
+    expulsarJogadores: false,
+    criarSalas:        false,
+    verTodosLogs:      false,
+    verCodigoPartida:  true,
+    criarCampeonatos:  false,
+  },
+  caster: {
+    gerenciarSaldos:   false,
+    gerenciarSaldoMc:  false,
     gerenciarCargos:   false,
     expulsarJogadores: false,
     criarSalas:        false,
@@ -102,8 +98,6 @@ export const PERMISSOES_POR_CARGO: Record<CargoAdmin, PermissoesAdmin> = {
   jogador: {
     gerenciarSaldos:   false,
     gerenciarSaldoMc:  false,
-    resolverPartidas:  false,
-    cancelarPartidas:  false,
     gerenciarCargos:   false,
     expulsarJogadores: false,
     criarSalas:        false,
@@ -128,7 +122,7 @@ export function temPermissao(
 
 /** Verifica se cargoA pode gerenciar cargoB (hierarquia). */
 export function podeGerenciar(cargoA: CargoAdmin, cargoB: CargoAdmin): boolean {
-  const ordem: CargoAdmin[] = ['jogador', 'coach', 'streamer', 'organizador', 'admin', 'proprietario'];
+  const ordem: CargoAdmin[] = ['jogador', 'coach', 'caster', 'streamer', 'organizador', 'admin', 'proprietario'];
   return ordem.indexOf(cargoA) > ordem.indexOf(cargoB);
 }
 
@@ -141,6 +135,7 @@ export const CARGO_LABELS: Record<CargoAdmin, string> = {
   admin:        'Admin',
   organizador:  'Organizador',
   streamer:     'Streamer',
+  caster:       'Caster',
   coach:        'Coach',
   jogador:      'Jogador',
 };
@@ -150,6 +145,7 @@ export const CARGO_COLORS: Record<CargoAdmin, { text: string; bg: string; border
   admin:        { text: 'text-red-400',     bg: 'bg-red-400/10',     border: 'border-red-400/20'    },
   organizador:  { text: 'text-orange-400',  bg: 'bg-orange-400/10',  border: 'border-orange-400/20' },
   streamer:     { text: 'text-purple-400',  bg: 'bg-purple-400/10',  border: 'border-purple-400/20' },
+  caster:       { text: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10', border: 'border-fuchsia-400/20' },
   coach:        { text: 'text-blue-400',    bg: 'bg-blue-400/10',    border: 'border-blue-400/20'   },
   jogador:      { text: 'text-green-400',   bg: 'bg-green-400/10',   border: 'border-green-400/20'  },
 };

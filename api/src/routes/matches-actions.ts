@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers, matchCodes, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import {
   avaliarTransicoes,
   reembolsarSeNecessario,

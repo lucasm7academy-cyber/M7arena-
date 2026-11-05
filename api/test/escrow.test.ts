@@ -247,10 +247,10 @@ describe("escrow", () => {
     assert.equal(w2Pago.mc, 40 + calc.porVencedor, "vencedor 2 recebeu o prêmio em cima da reserva");
     await db.update(userWallets).set({ mc: calc.porVencedor - 1 }).where(eq(userWallets.userId, w2));
 
-    // Contrato da rota (revisao.ts /disputas/:id/decidir): reverterPayout roda
-    // dentro de transação; se um vencedor não tem saldo, o THROW no callback
-    // faz o ROLLBACK — senão o w1 (estornado antes de achar o w2) ficaria
-    // parcialmente revertido para sempre.
+    // Contrato do estorno (reverterPayout, helper legado do fluxo de revisão
+    // removido em 2026-11): roda dentro de transação; se um vencedor não tem
+    // saldo, o THROW no callback faz o ROLLBACK — senão o w1 (estornado antes
+    // de achar o w2) ficaria parcialmente revertido para sempre.
     await assert.rejects(
       () =>
         db.transaction(async (tx: any) => {

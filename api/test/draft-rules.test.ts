@@ -82,7 +82,6 @@ describe("draft: shape publica as regras do modo (o front não decide)", () => {
       { mode: "5v5", salaNum: 1, status: "draft", createdAt: new Date() },
       [],
       "Dono",
-      0,
       null,
       draftRow
     );

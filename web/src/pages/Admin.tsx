@@ -3,14 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ShieldCheck, Trophy, Coins, Search, Check, X, AlertTriangle,
-  RefreshCw, Ban, Users, Zap, GraduationCap, Mail, ChevronRight, Film,
-  LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
-  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft, Banknote, KeyRound,
+  ShieldCheck, Trophy, Coins, Search, Check, X,
+  RefreshCw, Ban, Users, GraduationCap, Mail, ChevronRight, Film,
+  LayoutDashboard, Lock, Gamepad2, Sparkles, ArrowLeft, Banknote, KeyRound,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
-import { buscarElo, buscarJogadorCompleto } from '../api/riot';
 import {
   type CargoAdmin,
   CARGO_LABELS, CARGO_COLORS,
@@ -23,20 +21,6 @@ import { AbaSenhas } from './AdminSenhas';
 import { SaquesPix } from '../components/admin/SaquesPix';
 
 // ── TIPOS ──────────────────────────────────────────
-interface PartidaDisputa {
-  id: number; salaId: number; vencedor: string; vencedorNome?: string;
-  jogadores: Array<{ id: string; nome: string; isTimeA: boolean }>;
-  createdAt: string; modo: string;
-}
-interface SalaAberta {
-  id: number; nome: string; estado: string; criadorNome: string;
-  modo: string; numJogadores: number; maxJogadores: number;
-}
-interface PartidaTravada {
-  id: number; nome: string; estado: string; modo: string; criadorNome: string;
-  timeANome?: string; timeBNome?: string;
-  jogadores: Array<{ id: string; nome: string; isTimeA: boolean; role: string }>;
-}
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
@@ -46,44 +30,6 @@ interface Highlight {
   id: string; titulo: string; link: string;
   thumbnail_url: string | null; ativo: boolean; ordem: number; categoria: string;
 }
-
-interface NoticiaAdmin {
-  id: string;
-  titulo: string;
-  slug?: string;
-  resumo: string;
-  conteudo?: string;
-  categoria: string;
-  thumbnail_url: string | null;
-  autor?: string;
-  publicado_em: string;
-  destaque: boolean;
-  ativo?: boolean;
-  link_url?: string | null;
-  link_texto?: string | null;
-}
-
-const NOTICIA_CATEGORIAS = [
-  { value: 'Torneios', label: '🏆 Torneios & Campeonatos' },
-  { value: 'Patch Notes', label: '🛠️ Patch Notes & Atualizações' },
-  { value: 'Dicas', label: '💡 Dicas & Guias' },
-  { value: 'Esportes', label: '⚡ Informa & Esportes' },
-  { value: 'Anúncios', label: '📢 Anúncios Oficiais' },
-  { value: 'Comunidade', label: '👥 Comunidade' },
-  { value: 'Eventos', label: '🎉 Eventos Especiais' },
-];
-
-const INITIAL_NOTICIA_FORM = {
-  titulo: '',
-  resumo: '',
-  conteudo: '',
-  categoria: 'Torneios',
-  thumbnail_url: '',
-  link_url: '',
-  link_texto: '',
-  destaque: false,
-  ativo: true,
-};
 
 const HIGHLIGHT_CATEGORIAS: { value: string; label: string }[] = [
   { value: 'highlight',    label: '🎬 Highlight Geral' },
@@ -109,7 +55,6 @@ function CardStyle() {
   };
 }
 
-// ── ABA: DISPUTAS ──────────────────────────────────
 // ── ABA: SALDO E (exclusivo do proprietário) ─────
 function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
   const [busca, setBusca] = useState('');
@@ -658,7 +603,7 @@ interface PlatformStats {
   jogadores: number;
   salasAtivas: number;
   times: number;
-  mpDistribuido: number;
+  eDistribuido: number;
 }
 
 function StatsCards() {
@@ -673,15 +618,15 @@ function StatsCards() {
         api.players.count(),
         api.matches.list({ status: 'ativas', limit: 200 }).catch(() => []),
         api.teams.list({ limit: 1 }),
-        api.wallet.adminBalances(),
+        api.wallet.adminBalances().catch(() => []),
       ]);
       if (cancelled) return;
-      const totalMP = (wallets ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0), 0);
+      const totalE = (wallets ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0) + (w.mcReservado || 0), 0);
       setStats({
         jogadores: jog?.count ?? 0,
         salasAtivas: Array.isArray(salas) ? salas.length : 0,
         times: timesCount.total ?? 0,
-        mpDistribuido: totalMP,
+        eDistribuido: totalE,
       });
     })();
     return () => { cancelled = true; };
@@ -691,7 +636,7 @@ function StatsCards() {
     { label: 'Jogadores',        value: stats?.jogadores,      icon: Users,    color: '#A78BFA' },
     { label: 'Salas Ativas',     value: stats?.salasAtivas,    icon: Gamepad2, color: '#00FF41' },
     { label: 'Times',            value: stats?.times,          icon: Trophy,   color: '#FFB800' },
-    { label: 'Essência Azul em Circulação', value: stats?.mpDistribuido,  icon: Coins,    color: '#FF4D4D' },
+    { label: 'Essência Azul em Circulação', value: stats?.eDistribuido,  icon: Coins,    color: '#FF4D4D' },
   ];
 
   const fmt = (v?: number) => {

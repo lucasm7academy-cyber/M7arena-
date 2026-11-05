@@ -212,10 +212,13 @@ export default function Streamers() {
       const duracao = parseInt(duration);
       const now = new Date();
       const expiraEm = new Date(now.getTime() + duracao * 60 * 60 * 1000); // Duração em horas
+      // G06: no modo campeonato o vínculo com o campeonato é obrigatório —
+      // antes ia sempre `null` e a vitrine não mostrava o nome do campeonato.
+      const campeonatoId = transmissionMode === 'campeonato' ? (selectedCampeonato || null) : null;
 
       const data = await api.streams.iniciar({
         titulo: finalTitle,
-        campeonatoId: null,
+        campeonatoId,
         duracaoHoras: duracao,
         modo: transmissionMode,
         time1Id: selectedTeams[0] || null,
@@ -226,7 +229,7 @@ export default function Streamers() {
       setUserStream({
         ...data,
         twitch_channel: perfil.twitch,
-        campeonato_id: null,
+        campeonato_id: campeonatoId,
         criado_em: new Date().toISOString(),
         modo: transmissionMode,
         expira_em: expiraEm.toISOString(),
@@ -308,8 +311,14 @@ export default function Streamers() {
       const now = new Date().toISOString();
       const transmissoes = await api.streams.ativas();
 
+      // Live de campeonato (match_id) e de SCRIM (modo time_vs_time_livre) não
+      // usam expira_em: o servidor já filtra pelo fim da série/sala. As
+      // avulsas continuam valendo pela expiração.
       const aindaAtivas = (transmissoes || []).filter(
-        (tx: any) => tx.match_id || (tx.expira_em && tx.expira_em > now)
+        (tx: any) =>
+          tx.match_id ||
+          tx.modo === 'time_vs_time_livre' ||
+          (tx.expira_em && tx.expira_em > now)
       );
 
       if (!aindaAtivas || aindaAtivas.length === 0) {

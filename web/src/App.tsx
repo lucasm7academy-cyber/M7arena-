@@ -148,7 +148,7 @@ class RootErrorBoundary extends React.Component<{ children: React.ReactNode }, {
  * RootRedirect
  *
  * Na rota "/", verifica se a URL contém parâmetros OAuth (?code=, #access_token=, etc.).
- * Se sim, mostra um loading e deixa o OAuthCallbackHandler / API processar o callback.
+ * Se sim, mostra um loading e deixa a API processar o callback.
  * Se não, redireciona normalmente para /lobby.
  *
  * Isso resolve o problema de o <Navigate to="/lobby"> descartar o ?code= antes
@@ -162,7 +162,7 @@ function RootRedirect() {
     url.includes('#access_token=') || url.includes('#error=') ||
     url.includes('?error=') || url.includes('&error=');
 
-  // Se tem parâmetros OAuth, espera o OAuthCallbackHandler processar
+  // Se tem parâmetros OAuth, espera a API processar o callback
   if (hasOAuthParams) {
     // Se já tem sessão (callback processado com sucesso), redireciona
     if (!isLoading && user) {
@@ -234,7 +234,7 @@ export default function App() {
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
               <Route path="/admin/criar-campeonato" element={<PrivateRoute><RouteWithSuspense element={<CreateCampPage />} /></PrivateRoute>} />
-              {/* Sala por modo: /5v5/:id, /aram/:id, /1v1/:id, /time_vs_time/:id.
+              {/* Sala por modo: /5v5/:id, /aram/:id, /1v1/:id.
                   O slug reflete o modo real da sala (rota pública — visitante vê sem login). */}
               <Route path="/5v5/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/aram/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
@@ -246,6 +246,10 @@ export default function App() {
                   (/time_vs_time_livre/:id) são redirecionados para /sala-time/:id.
                   Antes caíam em "No routes matched" (card de finalizadas). */}
               <Route path="/time_vs_time_livre/:id" element={<RedirecionaSalaLivre />} />
+              {/* C16: a sala legada `/time_vs_time/:id` foi removida; links
+                  históricos caem na vitrine em vez de tela branca. */}
+              <Route path="/time_vs_time/:id" element={<Navigate to="/jogar" replace />} />
+              <Route path="*" element={<Navigate to="/lobby" replace />} />
             </Route>
           </Routes>
           </RootErrorBoundary>

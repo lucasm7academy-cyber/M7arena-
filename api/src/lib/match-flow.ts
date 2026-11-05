@@ -58,10 +58,6 @@ export async function notifyMatchChange(matchId: string) {
   }
 }
 
-function resultado(ok: boolean, erro: string | null, estado: string | null, mudou = false) {
-  return { ok, erro, estado, mudou };
-}
-
 /** Conta jogadores da sala. */
 async function totalJogadores(tx: any, matchId: string): Promise<number> {
   const rows = await tx
@@ -371,14 +367,14 @@ export async function avaliarTransicoes(tx: any, matchId: string): Promise<{ est
 }
 
 /**
- * Entra em `aguardando_revisao` (design v3 §6). PRÉ-CONDIÇÃO: quem chama já
- * travou a linha em `matches` com FOR UPDATE.
+ * Entra em `aguardando_revisao`. HELPER LEGADO: o fluxo de revisão manual
+ * (prints/disputas/painel) foi removido na simplificação de 2026-11 — não há
+ * mais caller de produção, só `api/test/estados.test.ts`. Mantido porque o
+ * estado `aguardando_revisao` continua existindo para salas históricas; remover
+ * este helper exigiria apagar também os testes que cobrem essas linhas.
  *
- * Decisão do usuário (2026-08-03): TODAS as salas — casuais e apostadas —
- * passam pelo admin. A votação red/blue no cliente foi removida; o resultado
- * é decidido por print + aprovação no painel (apostadas pagam escrow, casuais
- * só marcam o resultado). Zera o deadline: a revisão não tem timeout técnico,
- * o SLA é humano (admin decide).
+ * PRÉ-CONDIÇÃO: quem chama já travou a linha em `matches` com FOR UPDATE.
+ * Zera o deadline: a revisão não tem timeout técnico, o SLA era humano.
  */
 export async function entrarEmRevisao(tx: any, matchId: string) {
   const [m] = await tx.select().from(matches).where(eq(matches.id, matchId)).limit(1).for("update");

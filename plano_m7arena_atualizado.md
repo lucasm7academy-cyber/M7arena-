@@ -1,7 +1,7 @@
 # M7Arena — Matriz final de simplificação (planejamento)
-**Decisões consolidadas em 04/11/2026, com ressalvas posteriores de A09 e F01. Nenhum código foi alterado.**
+**Decisões consolidadas em 04/11/2026, com ressalvas posteriores de A09 e F01. A execução local está registrada na branch `simplificacao-m7arena`; este documento continua sendo a matriz de referência.**
 
-**Fonte funcional:** `CATALOGO_FUNCIONALIDADES.md` completo (84 itens, levantamento de 04/11/2026). **Fonte das decisões:** escolhas expressas pelo proprietário nesta conversa nas categorias A–H. **Estado da execução:** simplificação funcional ainda não iniciada. Baseline Git e backup de banco na VPS confirmados pelo relatório do agente (dump PostgreSQL restaurado com sucesso em container isolado). A produção permanece intocada.
+**Fonte funcional:** `CATALOGO_FUNCIONALIDADES.md` completo (84 itens, levantamento de 04/11/2026). **Fonte das decisões:** escolhas expressas pelo proprietário nesta conversa nas categorias A–H. **Estado da execução:** simplificação local implementada na branch `simplificacao-m7arena` (sem merge/deploy; `main` em `8e848f6`). Evidências e estado pós-mudança em `ESTRUTURA_ATUALIZADA_2026-11-04.md`. Baseline Git e backup de banco na VPS confirmados pelo relatório do agente (dump PostgreSQL restaurado com sucesso em container isolado). A produção permanece intocada.
 
 ## 1. Critério das decisões
 - **MANTER**: preservar comportamento e contratos necessários; não significa que bugs identificados estejam aprovados.
