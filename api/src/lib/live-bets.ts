@@ -342,10 +342,10 @@ export async function liquidarPartida(d: any, ticketId: string, opts: { agora?: 
     const delta = ganhoTotal - perdaTotal;
     const notif =
       resultado === "ganha"
-        ? { title: "Desafio ganho!", message: `Você ganhou +${ganhoTotal} MC no desafio.` }
+        ? { title: "Desafio ganho!", message: `Você ganhou +${ganhoTotal} E no desafio.` }
         : resultado === "perdida"
-        ? { title: "Desafio perdido", message: `Você perdeu ${perdaTotal} MC no desafio.` }
-        : { title: "Desafio anulado", message: "Seu desafio foi anulado e o MC devolvido." };
+        ? { title: "Desafio perdido", message: `Você perdeu ${perdaTotal} E no desafio.` }
+        : { title: "Desafio anulado", message: "Seu desafio foi anulado e o E devolvido." };
     await criarNotificacao(tx, {
       userId: t2.userId,
       type: "bet",
@@ -376,7 +376,7 @@ async function cancelarComDevolucao(d: any, t: any, motivo: string): Promise<Det
       userId: t2.userId,
       type: "bet",
       title: "Desafio cancelado",
-      message: "Nenhuma partida foi detectada no tempo limite e o MC foi devolvido.",
+      message: "Nenhuma partida foi detectada no tempo limite e o E foi devolvido.",
       payload: { ticketId: t2.id, fila: t2.queue, resultado: "anulada", delta: 0, stakeTotal: t2.stakeTotal },
     });
   });
@@ -401,7 +401,7 @@ async function anularComDevolucao(d: any, t: any, motivo: string): Promise<Settl
       userId: t2.userId,
       type: "bet",
       title: "Desafio anulado",
-      message: "Não foi possível validar o resultado do desafio e o MC foi devolvido.",
+      message: "Não foi possível validar o resultado do desafio e o E foi devolvido.",
       payload: { ticketId: t2.id, fila: t2.queue, resultado: "anulada", delta: 0, stakeTotal: t2.stakeTotal },
     });
   });

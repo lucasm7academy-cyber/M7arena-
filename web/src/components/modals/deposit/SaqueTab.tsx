@@ -1,6 +1,6 @@
-// Saque de MC via PIX — aba do checkout (spec saque-mc-pix). O jogador digita
-// o valor em MC, vê ao vivo o equivalente em reais (100 MC = R$1) e solicita.
-// O MC é debitado na solicitação; o admin paga o PIX fora do sistema e
+// Saque de E via PIX — aba do checkout (spec saque-mc-pix). O jogador digita
+// o valor em E, vê ao vivo o equivalente em reais (100 E = R$1) e solicita.
+// O E é debitado na solicitação; o admin paga o PIX fora do sistema e
 // confirma no painel.
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
@@ -83,8 +83,8 @@ export default function SaqueTab() {
       const mapa: Record<string, string> = {
         saldo_insuficiente: 'Saldo insuficiente.',
         pix_nao_cadastrado: 'Cadastre sua chave PIX no perfil antes de sacar.',
-        valor_minimo_nao_atingido: `Mínimo de R$20,00 (${VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC).`,
-        valor_invalido: 'Valor inválido. Use múltiplos de 100 MC.',
+        valor_minimo_nao_atingido: `Mínimo de R$20,00 (${VALOR_MINIMO_MC.toLocaleString('pt-BR')} E).`,
+        valor_invalido: 'Valor inválido. Use múltiplos de 100 E.',
       };
       toast.error(mapa[e?.message] || e?.message || 'Erro ao solicitar saque.');
     } finally {
@@ -110,7 +110,7 @@ export default function SaqueTab() {
             <div className="flex items-center gap-2">
               <GoldEssenceIcon size={18} />
               <span className="text-[#FFB700] font-black text-lg tabular-nums">
-                {saldoMc.toLocaleString('pt-BR')} MC
+                {saldoMc.toLocaleString('pt-BR')} E
               </span>
               <span className="text-zinc-400 text-xs font-bold">= {brl(saldoMc / MC_POR_REAL)}</span>
             </div>
@@ -168,7 +168,7 @@ export default function SaqueTab() {
                     step={MC_POR_REAL}
                     value={mcInput}
                     onChange={(e) => setMcInput(e.target.value)}
-                    placeholder={`Mínimo ${VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC`}
+                    placeholder={`Mínimo ${VALOR_MINIMO_MC.toLocaleString('pt-BR')} E`}
                     className="w-full bg-[#050508] pl-12 pr-4 py-3 text-zinc-100 text-sm font-bold focus:outline-none placeholder:text-zinc-600 transition-all font-mono"
                     style={{ clipPath: CUT_BADGE_INNER }}
                   />
@@ -180,7 +180,7 @@ export default function SaqueTab() {
               </div>
             </div>
             <p className={`text-[10px] font-bold uppercase tracking-widest ${acimaMinimo ? 'text-zinc-500' : 'text-yellow-400/80'}`}>
-              Mínimo de R$20,00 ({VALOR_MINIMO_MC.toLocaleString('pt-BR')} MC) · Sem taxas · 100 MC = R$1,00
+              Mínimo de R$20,00 ({VALOR_MINIMO_MC.toLocaleString('pt-BR')} E) · Sem taxas · 100 E = R$1,00
             </p>
           </div>
 
@@ -233,7 +233,7 @@ export default function SaqueTab() {
                   <CutCard key={p.id} corBorda="#ffffff" corBg="#0d0d12" bordaOpacity={0.08} className="flex items-center justify-between gap-3 p-3">
                     <div>
                       <p className="text-zinc-200 font-black text-sm">
-                        {p.mcAmount.toLocaleString('pt-BR')} MC{' '}
+                        {p.mcAmount.toLocaleString('pt-BR')} E{' '}
                         <span className="text-zinc-400 text-xs font-bold">= {brl(p.amountBrl)}</span>
                       </p>
                       <p className="text-zinc-500 text-[10px] mt-0.5">
@@ -282,11 +282,11 @@ export default function SaqueTab() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[#FFB700] font-black">•</span>
-              <span>Se o pedido for rejeitado, os MC voltam para o seu saldo.</span>
+              <span>Se o pedido for rejeitado, os E voltam para o seu saldo.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[#FFB700] font-black">•</span>
-              <span>Conversão fixa: <strong className="text-zinc-200 font-black">100 MC = R$ 1,00</strong>.</span>
+              <span>Conversão fixa: <strong className="text-zinc-200 font-black">100 E = R$ 1,00</strong>.</span>
             </li>
           </ul>
         </div>

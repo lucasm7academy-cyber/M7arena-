@@ -122,9 +122,9 @@ const ERROS_SALA: Record<string, string> = {
     rpc_falhou: 'Falha de comunicação com o servidor. Tente novamente.',
     // ── Elegibilidade de salas apostadas (design v3 §2.1) ──
     saldo_insuficiente: 'Saldo insuficiente.',
-    riot_id_obrigatorio: 'Você precisa vincular seu Riot ID para jogar valendo MC.',
+    riot_id_obrigatorio: 'Você precisa vincular seu Riot ID para jogar valendo E.',
     ja_em_sala_apostada: 'Você já está em uma sala apostada.',
-    termos_nao_aceitos: 'Você precisa aceitar os Termos de Uso antes de jogar valendo MC.',
+    termos_nao_aceitos: 'Você precisa aceitar os Termos de Uso antes de jogar valendo E.',
     conta_banida: 'Sua conta foi banida — você não pode jogar partidas casuais nem apostadas.',
     conta_nao_encontrada: 'Conta não encontrada.',
     motivo_invalido: 'O motivo da contestação precisa ter pelo menos 5 caracteres.',
@@ -311,11 +311,11 @@ export interface OpcaoMPoints {
 
 export const OPCOES_MPOINTS: OpcaoMPoints[] = [
   { valor: 0,    label: 'Casual — sem aposta', cor: '#6b7280' },
-  { valor: 100,  label: '100 MC',              cor: '#4ade80' },
-  { valor: 200,  label: '200 MC',              cor: '#22d3ee' },
-  { valor: 500,  label: '500 MC',              cor: '#a78bfa' },
-  { valor: 1000, label: '1.000 MC',            cor: '#fbbf24' },
-  { valor: 2000, label: '2.000 MC',            cor: '#f87171' },
+  { valor: 100,  label: '100 E',              cor: '#4ade80' },
+  { valor: 200,  label: '200 E',              cor: '#22d3ee' },
+  { valor: 500,  label: '500 E',              cor: '#a78bfa' },
+  { valor: 1000, label: '1.000 E',            cor: '#fbbf24' },
+  { valor: 2000, label: '2.000 E',            cor: '#f87171' },
 ];
 
 export const getMPointsInfo = (valor: number): OpcaoMPoints =>

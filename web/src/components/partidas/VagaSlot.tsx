@@ -291,7 +291,7 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                                 {nome}
                                             </span>
                                             <span className="px-2 py-0.5 md:px-[0.8vmin] md:py-[0.15vmin] bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] md:text-[1vmin] font-black uppercase tracking-widest rounded shadow-[0_0_10px_rgba(239,68,68,0.4)]">
-                                                {apostaMC > 0 ? `Desistente (-${apostaMC} MC)` : 'Desistente'}
+                                                {apostaMC > 0 ? `Desistente (-${apostaMC} E)` : 'Desistente'}
                                             </span>
                                         </div>
                                         <div className={`flex items-center gap-1 md:gap-[0.8vmin] mt-0.5 ${isTimeA ? 'flex-row' : 'flex-row-reverse'}`}>
@@ -332,11 +332,11 @@ const VagaSlotComponent: React.FC<VagaSlotProps> = ({
                                                 {apostaMC > 0 && isFinalizada && (
                                                     venceu ? (
                                                         <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 px-1.5 py-0.5 md:px-[0.6vmin] md:py-[0.1vmin] rounded shadow-[0_0_8px_rgba(16,185,129,0.3)]">
-                                                            +{premioMC} MC
+                                                            +{premioMC} E
                                                         </span>
                                                     ) : (
                                                         <span className="text-[10px] md:text-[0.95vmin] font-bold text-white/40 uppercase tracking-wider bg-white/5 border border-white/10 px-1 py-0.5 md:px-[0.5vmin] md:py-[0.1vmin] rounded">
-                                                            -{apostaMC} MC
+                                                            -{apostaMC} E
                                                         </span>
                                                     )
                                                 )}

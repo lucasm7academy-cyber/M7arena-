@@ -92,14 +92,9 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
     __isVip: userMap.get(p.userId)?.isVip ?? false,
   }));
 
-  // Só salas em `aguardando_revisao` levam a contagem de prints (design v3 §6):
-  // é o único estado que o front mostra "prints recebidos X/3". Evita query
-  // extra na listagem pública (vitrine).
-  let printsRecebidos = 0;
-  if (m.status === "aguardando_revisao") {
-    const printsRows = await ctx.select({ id: matchPrints.id }).from(matchPrints).where(eq(matchPrints.matchId, m.id));
-    printsRecebidos = printsRows.length;
-  }
+  // Prints de prova foram removidos do fluxo (C13); salas legadas não exibem
+  // mais contagem de prints.
+  const printsRecebidos = 0;
 
   // Salas encerradas verificadas pela Riot levam o resumo da partida real
   // (matchResults.payload) para o front mostrar vencedor + stats.
@@ -428,7 +423,7 @@ matchesRouter.post("/", async (req, res) => {
   const maxJogadoresSanitizado = Number.isFinite(maxRaw) ? Math.max(2, Math.min(Math.trunc(maxRaw), 10)) : 10;
   // Allowlist do modo (MORPH-002): mode do body não confiável — um valor
   // inventado quebraria o layout de vagas do front (SalaMod1 usa a lista fixa).
-  const MODOS_VALIDOS = ["5v5", "1v1", "aram", "time_vs_time"];
+  const MODOS_VALIDOS = ["5v5", "1v1", "aram"];
   const modoSanitizado = MODOS_VALIDOS.includes(mode) ? mode : "5v5";
   // SÉRIE da sala 5x5 personalizada (MD1/MD3/MD5): o cliente escolhe na criação
   // e o default é MD3 (pedido do usuário 2026-10-19). Modos sem série ignoram.

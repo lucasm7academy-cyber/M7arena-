@@ -223,15 +223,15 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
       {erro?.tipo === 'termos' && (
         <ModalShell
           titulo="Maioridade Obrigatória (18+)"
-          badge="Salas Apostadas • MC"
-          subtitulo="Declaração para partidas valendo M7 Coins"
+          badge="Salas Apostadas • E"
+          subtitulo="Declaração para partidas valendo Essência Azul"
           corBorda="#FFB700"
           icone={<ShieldCheck className="w-6 h-6 text-[#FFB700]" />}
           onClose={onClose}
         >
           <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
             <p className="text-zinc-300 text-xs font-bold leading-relaxed">
-              As salas valendo <span className="text-[#FFB700] font-black">M7 Coins (MC)</span> envolvem premiação real e são restritas a maiores de 18 anos.
+              As salas valendo <span className="text-[#FFB700] font-black">Essência Azul (E)</span> envolvem premiação real e são restritas a maiores de 18 anos.
             </p>
 
             <div className="space-y-2 pt-2 border-t border-white/5 text-xs font-bold text-zinc-300">
@@ -308,7 +308,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
       {erro?.tipo === 'saldo' && (
         <ModalShell
           titulo="Saldo Insuficiente"
-          badge="M7 Coins • Carteira"
+          badge="Essência Azul • Carteira"
           subtitulo="Recarregue para entrar na disputa"
           corBorda="#FFB700"
           icone={<MCIcon className="w-7 h-7 text-[#FFB700]" />}
@@ -323,7 +323,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
               <div className="text-right">
                 <span className="text-zinc-400 text-[10px] uppercase font-black tracking-widest block">Faltam</span>
                 <span className="text-2xl font-black text-[#FFB700] tracking-tight flex items-center gap-1.5 justify-end">
-                  <MCIcon className="w-5 h-5" /> {erro.faltam} MC
+                  <MCIcon className="w-5 h-5" /> {erro.faltam} E
                 </span>
               </div>
             </div>
@@ -359,7 +359,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
                 style={{ clipPath: CUT_BUTTON_INNER }}
               >
                 <Wallet className="w-4 h-4" />
-                <span>Recarregar MC via PIX</span>
+                <span>Recarregar E via PIX</span>
               </div>
             </motion.button>
 
@@ -393,7 +393,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
         >
           <CutCard corBorda="#3b82f6" corBg="#080d16" bordaOpacity={0.35} className="space-y-3">
             <p className="text-zinc-300 text-xs font-bold leading-relaxed">
-              Você só pode participar de <strong className="text-zinc-100">uma sala apostada ativa por vez</strong>. Sua vaga e seu MC estão protegidos na sala:
+              Você só pode participar de <strong className="text-zinc-100">uma sala apostada ativa por vez</strong>. Sua vaga e seu E estão protegidos na sala:
             </p>
 
             <div
@@ -456,7 +456,7 @@ export function ModaisElegibilidade({ erro, onClose, onAceitarTermos }: ModaisEl
       {erro?.tipo === 'riot_id' && (
         <ModalVincularConta
           onClose={onClose}
-          motivo="Esta sala vale MC. Vincule seu Riot ID (Nick #TAG) para jogar — é ele que valida sua elegibilidade e amarra o resultado oficial ao seu perfil."
+          motivo="Esta sala vale E. Vincule seu Riot ID (Nick #TAG) para jogar — é ele que valida sua elegibilidade e amarra o resultado oficial ao seu perfil."
         />
       )}
 
@@ -512,14 +512,14 @@ export function ModalLoginVitrine({ onClose }: { onClose: () => void }) {
     <ModalShell
       titulo="Crie Sua Conta Para Jogar"
       badge="Vitrine M7 Arena"
-      subtitulo="Entre na disputa por premiações em MC"
+      subtitulo="Entre na disputa por premiações em E"
       corBorda="#FFB700"
       icone={<Trophy className="w-6 h-6 text-[#FFB700]" />}
       onClose={onClose}
     >
       <CutCard corBorda="#FFB700" corBg="#0d0d12" bordaOpacity={0.35} className="space-y-3">
         <p className="text-zinc-300 text-xs font-bold leading-relaxed">
-          As salas valendo <span className="text-[#FFB700] font-black">MC</span> são a vitrine da arena. Crie sua conta grátis e ocupe uma vaga antes que a sala encha.
+          As salas valendo <span className="text-[#FFB700] font-black">E</span> são a vitrine da arena. Crie sua conta grátis e ocupe uma vaga antes que a sala encha.
         </p>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -543,7 +543,7 @@ export function ModalLoginVitrine({ onClose }: { onClose: () => void }) {
               className="px-3 py-2 bg-black/70 flex items-center gap-2 text-xs font-black text-zinc-200 uppercase tracking-wider"
               style={{ clipPath: CUT_BADGE_INNER }}
             >
-              <MCIcon className="text-[#FFB700] w-3.5 h-3.5 shrink-0" /> Prêmios MC
+              <MCIcon className="text-[#FFB700] w-3.5 h-3.5 shrink-0" /> Prêmios E
             </div>
           </div>
         </div>
@@ -620,7 +620,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
     >
       <CutCard corBorda="#3b82f6" corBg="#080d16" bordaOpacity={0.35} className="space-y-3">
         <p className="text-zinc-300 text-xs font-bold leading-relaxed">
-          {motivo || 'Para criar sala e participar das partidas valendo MC, você precisa vincular sua conta Riot.'}
+          {motivo || 'Para criar sala e participar das partidas valendo E, você precisa vincular sua conta Riot.'}
         </p>
 
         <div className="space-y-2 pt-2 border-t border-white/5 text-xs font-bold text-zinc-300">
@@ -649,7 +649,7 @@ export function ModalVincularConta({ onClose, motivo }: { onClose: () => void; m
             >
               ✓
             </span>
-            <span>Validação de prints e <strong className="text-zinc-100">recebimento de MC</strong></span>
+            <span>Validação de prints e <strong className="text-zinc-100">recebimento de E</strong></span>
           </div>
         </div>
       </CutCard>

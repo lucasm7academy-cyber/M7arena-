@@ -1,7 +1,7 @@
 /**
  * src/api/wallet.ts
  *
- * Saldo do usuário logado e ajuste administrativo. Toda leitura de MP/MC passa
+ * Saldo do usuário logado e ajuste administrativo. Toda leitura de E/E passa
  * pela API própria (`/wallet/*`); movimentação automática (aposta/ranking) é
  * decisão do servidor, nunca do navegador.
  */

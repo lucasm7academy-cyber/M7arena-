@@ -40,18 +40,12 @@ function lazyWithRetry(factory: () => Promise<any>) {
 // ✅ Lazy loading para páginas que não são imediatamente necessárias
 const Login = lazyWithRetry(() => import("./pages/Login"));
 const RedefinirSenha = lazyWithRetry(() => import("./pages/RedefinirSenha"));
-const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
-const ResetHandler = lazyWithRetry(() => import("./pages/ResetHandler"));
-const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
 const Lobby = lazyWithRetry(() => import("./pages/Lobby"));
 const Jogar = lazyWithRetry(() => import("./pages/Jogar"));
 
 const ApostaIndividualPage = lazyWithRetry(() => import("./pages/ApostaIndividualPage"));
 
 const SalaMod1 = lazyWithRetry(() => import("./pages/SalaMod1"));
-// Sala de TIME vs TIME — estrutura dedicada (features/sala-time-vs-time).
-// Cópia 1:1 de SalaMod1; o design dela evolui separado dos demais modos.
-const SalaTimeVsTime = lazyWithRetry(() => import("./features/sala-time-vs-time/SalaTimeVsTime"));
 // Sala Campeonato (ADRs 076-085): mesma cara da sala normal + funcionalidades
 // da série (vagas de time, PRONTO, escolha de lado, draft Fearless, código, live).
 const SalaCampeonato = lazyWithRetry(() => import("./features/sala-campeonato/SalaCampeonato"));
@@ -61,8 +55,6 @@ const Equipes = lazyWithRetry(() => import("./pages/equipes"));
 const Players = lazyWithRetry(() => import("./pages/players"));
 const TimePage = lazyWithRetry(() => import("./pages/TimePage"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
-const AdminCargos = lazyWithRetry(() => import("./pages/AdminCargos"));
-const AdminContatos = lazyWithRetry(() => import("./pages/AdminContatos"));
 const Streamers = lazyWithRetry(() => import("./pages/Streamers"));
 const Politicas = lazyWithRetry(() => import("./pages/Politicas"));
 const Tutorial = lazyWithRetry(() => import("./pages/Tutorial"));
@@ -213,12 +205,7 @@ export default function App() {
             {/* Rotas públicas */}
             <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<RouteWithSuspense element={<Login />} />} />
-            <Route path="/reset-password" element={<RouteWithSuspense element={<ResetHandler />} />} />
-            <Route path="/resetpassword" element={<RouteWithSuspense element={<ResetPassword />} />} />
             <Route path="/redefinir-senha" element={<RouteWithSuspense element={<RedefinirSenha />} />} />
-
-                        {/* OAuth Callback */}
-                        <Route path="/auth/callback" element={<RouteWithSuspense element={<AuthCallback />} />} />
 
                         {/* Admin em tela cheia: fora do Layout do site (sem header/sidebar do
                             site, como nas salas). O painel tem sidebar própria + botão voltar. */}
@@ -252,7 +239,6 @@ export default function App() {
               <Route path="/5v5/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/aram/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/1v1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
-              <Route path="/time_vs_time/:id" element={<RouteWithSuspense element={<SalaTimeVsTime />} />} />
               <Route path="/campeonato/sala/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
               {/* Sala Time vs Time LIVRE: mesmo componente, sem campeonato (ADR-086). */}
               <Route path="/sala-time/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
@@ -260,8 +246,6 @@ export default function App() {
                   (/time_vs_time_livre/:id) são redirecionados para /sala-time/:id.
                   Antes caíam em "No routes matched" (card de finalizadas). */}
               <Route path="/time_vs_time_livre/:id" element={<RedirecionaSalaLivre />} />
-              <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
-              <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
             </Route>
           </Routes>
           </RootErrorBoundary>

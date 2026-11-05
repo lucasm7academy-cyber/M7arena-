@@ -16,12 +16,12 @@ const TITULO: Record<Aba, { badge: string; title: string; desc: string }> = {
   deposito: {
     badge: 'Recarga Instantânea via PIX',
     title: 'DEPOSITAR M7 COINS',
-    desc: 'Escolha um pacote e seus MCs caem na hora. Quanto maior o pacote, maior o bônus.',
+    desc: 'Escolha um pacote e sua Essência Azul cai na hora. Quanto maior o pacote, maior o bônus.',
   },
   saque: {
     badge: 'Saque via PIX',
     title: 'SACAR M7 COINS',
-    desc: 'Converta seus MC em reais e receba na sua chave PIX. 100 MC = R$1,00.',
+    desc: 'Converta seus E em reais e receba na sua chave PIX. 100 E = R$1,00.',
   },
 };
 

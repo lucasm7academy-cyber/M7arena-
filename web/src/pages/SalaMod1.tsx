@@ -149,7 +149,7 @@ export default function SalaMod1() {
             'time_vs_time': 'Time vs Time Summoner\'s Rift',
         };
         const eloLinha = sala.elo_minimo ? `Mínimo: ${sala.elo_minimo}` : 'Free Elo';
-        const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} M7Coins` : 'Casual';
+        const premio = (sala.mpoints || 0) > 0 ? `${sala.mpoints} Essência Azul` : 'Casual';
         const link = `${window.location.origin}/${sala.modo}/${sala.id}`;
 
         const mensagem =
@@ -287,7 +287,7 @@ ${link}`;
         (jogadorAtual.is_time_a && vencedorSala === 'A') || (!jogadorAtual.is_time_a && vencedorSala === 'B')
     ) : false;
 
-    // Intercepta o clique na vaga: visitante sem login, sem Riot ID ou sem MC
+    // Intercepta o clique na vaga: visitante sem login, sem Riot ID ou sem E
     // (sala apostada) avisa ANTES de tentar entrar (design v3 §11) — o servidor
     // continua sendo a fonte da verdade.
     const handleEntrar = (role: string, isTimeA: boolean) => {
@@ -549,8 +549,8 @@ ${link}`;
                                 {ehApostada ? (
                                     <>
                                         <MCIcon className="w-3.5 h-3.5 md:w-[1.5vmin] md:h-[1.5vmin] text-[#FFB700]" />
-                                        <span className="text-[#FFB700]">{apostaPorJogador} MC</span>
-                                        <span className="text-white/35 text-[9.5px] md:text-[1.05vmin]">• Pote {poteBruto} MC</span>
+                                        <span className="text-[#FFB700]">{apostaPorJogador} E</span>
+                                        <span className="text-white/35 text-[9.5px] md:text-[1.05vmin]">• Pote {poteBruto} E</span>
                                     </>
                                 ) : (
                                     <span className="text-emerald-400 flex items-center gap-1">
@@ -613,7 +613,7 @@ ${link}`;
                     <div className="px-4 py-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 backdrop-blur-md flex items-center gap-3 shadow-2xl">
                         <LinkIcon className="w-4 h-4 text-blue-400 shrink-0" />
                         <p className="flex-1 text-blue-100 text-xs md:text-[1.4vmin] font-black uppercase tracking-wider">
-                            Vincule seu Riot ID para jogar valendo MC
+                            Vincule seu Riot ID para jogar valendo E
                         </p>
                         <button onClick={() => navigate('/vincular')}
                             className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs md:text-[1.2vmin] font-black uppercase tracking-widest hover:bg-blue-500/30 transition-all">
@@ -699,7 +699,7 @@ ${link}`;
 
                             {ehApostada && (
                                 <span className="text-[#FFB700] pl-2 sm:pl-3 border-l border-white/15 flex items-center gap-1">
-                                    <MCIcon className="w-3.5 h-3.5" /> POTE {poteBruto} MC (+{premioPorJogador} MC)
+                                    <MCIcon className="w-3.5 h-3.5" /> POTE {poteBruto} E (+{premioPorJogador} E)
                                 </span>
                             )}
                         </div>
@@ -831,10 +831,10 @@ ${link}`;
                                     {ehApostada ? (
                                         <>
                                             <span className="flex items-center gap-1.5 md:gap-[1vmin] text-xs sm:text-sm md:text-[1.6vmin] font-black text-[#FFB700] uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-[0_0_12px_rgba(255,183,0,0.4)]">
-                                                <MCIcon className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} MC
+                                                <MCIcon className="w-4 h-4 md:w-[2.2vmin] md:h-[2.2vmin]" /> Pote {poteBruto.toLocaleString('pt-BR')} E
                                             </span>
                                             <span className="text-[10px] md:text-[1.05vmin] font-black text-emerald-400 uppercase tracking-widest mt-0.5 md:mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
-                                                Prêmio +{premioPorJogador.toLocaleString('pt-BR')} MC / vencedor
+                                                Prêmio +{premioPorJogador.toLocaleString('pt-BR')} E / vencedor
                                             </span>
                                             <div className="w-20 md:w-[10vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent mt-1 md:mt-2" />
                                         </>
@@ -1125,12 +1125,12 @@ ${link}`;
                                         <>
                                             <MCIcon className="w-4 h-4 md:w-[2vmin] md:h-[2vmin] text-[#FFB700] shrink-0" />
                                             <span className="text-xs md:text-[1.3vmin] font-black uppercase tracking-wider">
-                                                Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} MC</strong> nesta partida!
+                                                Parabéns! Você faturou <strong className="text-[#FFB700]">+{premioPorJogador} E</strong> nesta partida!
                                             </span>
                                         </>
                                     ) : (
                                         <span className="text-[11px] md:text-[1.2vmin] font-bold uppercase tracking-wider text-white/50">
-                                            Partida finalizada • Débito da entrada: -{apostaPorJogador} MC
+                                            Partida finalizada • Débito da entrada: -{apostaPorJogador} E
                                         </span>
                                     )}
                                 </motion.div>
@@ -1182,7 +1182,7 @@ ${link}`;
                 {showAvisoRiotId && (
                     <ModalVincularConta
                         onClose={() => setShowAvisoRiotId(false)}
-                        motivo="Esta sala vale MC. Vincule seu Riot ID (Nick #TAG) para jogar — é ele que valida sua elegibilidade e amarra o resultado oficial ao seu perfil."
+                        motivo="Esta sala vale E. Vincule seu Riot ID (Nick #TAG) para jogar — é ele que valida sua elegibilidade e amarra o resultado oficial ao seu perfil."
                     />
                 )}
             </AnimatePresence>

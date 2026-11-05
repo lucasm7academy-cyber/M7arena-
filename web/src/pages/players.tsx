@@ -21,7 +21,6 @@ import { useSound } from '../hooks/useSound';
 import { api } from '../lib/api';
 import { getDDRVersion } from '../api/riot';
 import {
-  PlayerDetailModal,
   type Jogador,
   type Role,
   type EloType,
@@ -33,6 +32,7 @@ import {
   getIconeUrl,
 } from '../components/players/PlayerDetailModal';
 import { VipCrown } from '../components/ui/VipBadge';
+import { opGgUrl } from '../lib/opgg';
 
 const IS_DEV = import.meta.env.DEV;
 const PLAYERS_PAGE = 40;
@@ -124,7 +124,7 @@ async function carregarJogadores(
   // ✅ Partidas/winRate vêm do elo_cache (wins/losses das ranqueadas).
   //    O cálculo é feito por linha mais abaixo via statsDeRanqueada().
 
-  // ✅ Schema novo: MP/MC vêm de wallets (não mais de contas_riot.mp/mc).
+  // ✅ Schema novo: E/E vêm de wallets (não mais de contas_riot.mp/mc).
   const walletMap: Record<string, { mp: number; mc: number }> = {};
   if (userIds.length > 0) {
     const walletsData = await api.wallet.adminBalances(userIds);
@@ -321,9 +321,7 @@ export default function App() {
   const [loadingPage, setLoadingPage] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [selectedJogador, setSelectedJogador] = useState<Jogador | null>(null);
   const [popup, setPopup] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null);
-  const [_selectedPuuid, setSelectedPuuid] = useState<string | undefined>(undefined);
 
   const listTopRef = useRef<HTMLDivElement>(null);
   const filterTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -367,8 +365,12 @@ export default function App() {
 
   const handleVerPerfil = (jogador: Jogador) => {
     playSound('click');
-    setSelectedJogador(jogador);
-    setSelectedPuuid((jogador as any)._puuid);
+    const url = opGgUrl(jogador.riotId);
+    if (!url) {
+      setPopup({ type: 'error', message: 'Este jogador ainda não tem um Riot ID válido para abrir no OP.GG.' });
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -397,12 +399,6 @@ export default function App() {
               <span>{popup.message}</span>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {selectedJogador && (
-          <PlayerDetailModal jogador={selectedJogador} onClose={() => { setSelectedJogador(null); setSelectedPuuid(undefined); }} />
         )}
       </AnimatePresence>
 
@@ -714,7 +710,7 @@ export default function App() {
                         </div>
 
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-3 gap-2 mb-4">
+                        <div className="grid grid-cols-2 gap-2 mb-4">
                           <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
                             <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
                               <p className="text-white font-black text-sm">{jogador.partidas.toLocaleString()}</p>
@@ -725,12 +721,6 @@ export default function App() {
                             <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
                               <p className="font-black text-sm" style={{ color: winRateColor }}>{jogador.winRate}%</p>
                               <p className="text-[8px] text-white/40 uppercase tracking-wider">Win Rate</p>
-                            </div>
-                          </div>
-                          <div className="relative p-[1px]" style={{ clipPath: CUT_BADGE, background: 'rgba(255,255,255,0.08)' }}>
-                            <div className="text-center p-2 bg-white/[0.02]" style={{ clipPath: CUT_BADGE_INNER }}>
-                              <p className="text-white font-black text-sm">{(jogador.mp ?? 0).toLocaleString()}</p>
-                              <p className="text-[8px] text-white/40 uppercase tracking-wider">M7 Points</p>
                             </div>
                           </div>
                         </div>

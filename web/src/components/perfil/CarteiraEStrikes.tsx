@@ -1,6 +1,6 @@
 // src/components/perfil/CarteiraEStrikes.tsx
 // Wallet transparente + advertências/ban no perfil (ADR-033):
-// "X MC disponível + Y MC em partida", com o valor reservado linkando para a
+// "X E disponível + Y E em partida", com o valor reservado linkando para a
 // sala que o segura; e o contador "X/3 advertências" com o status de ban
 // quando aplicável. Saldo que "some" sem explicação vira ticket de suporte.
 import { useEffect, useState } from 'react';
@@ -106,7 +106,7 @@ export function CarteiraEStrikes({
                 </span>
                 <span className="flex items-center gap-1.5 text-zinc-100 font-black text-base">
                   <MCIcon className="w-4 h-4 text-primary" />{' '}
-                  {disponivel.toLocaleString('pt-BR')} MC
+                  {disponivel.toLocaleString('pt-BR')} E
                 </span>
               </div>
             </div>
@@ -124,7 +124,7 @@ export function CarteiraEStrikes({
                 </span>
                 <span className="flex items-center gap-1.5 text-primary font-black text-base">
                   <MCIcon className="w-4 h-4 text-primary" />{' '}
-                  {mcReservado.toLocaleString('pt-BR')} MC
+                  {mcReservado.toLocaleString('pt-BR')} E
                 </span>
               </div>
             </div>
@@ -149,7 +149,7 @@ export function CarteiraEStrikes({
                         #{String(s.salaNum).padStart(6, '0')} · {s.nome || 'Sala'}
                       </span>
                       <span className="text-[#FFB700] text-[11px] font-black shrink-0 ml-2">
-                        {s.apostaMc} MC
+                        {s.apostaMc} E
                       </span>
                     </button>
                   </div>

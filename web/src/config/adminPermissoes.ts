@@ -16,7 +16,7 @@ export type CargoAdmin = 'proprietario' | 'admin' | 'organizador' | 'streamer' |
 export interface PermissoesAdmin {
   /** Pode gerenciar saldos de MPoints de jogadores */
   gerenciarSaldos: boolean;
-  /** Pode ajustar saldo MC (M7 Coins) — exclusivo do proprietário */
+  /** Pode ajustar saldo E (Essência Azul) — exclusivo do proprietário */
   gerenciarSaldoMc: boolean;
   /** Pode votar no vencedor de partidas em disputa */
   resolverPartidas: boolean;

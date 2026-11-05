@@ -82,7 +82,7 @@ export function SaquesPix() {
             tipo: 'sucesso',
             msg: action === 'paid'
               ? `Saque de ${brl(pedido.amountBrl)} marcado como pago.`
-              : `Saque de ${brl(pedido.amountBrl)} rejeitado — MC devolvido.`,
+              : `Saque de ${brl(pedido.amountBrl)} rejeitado — E devolvido.`,
           });
         }
       } catch (e: any) {
@@ -188,7 +188,7 @@ export function SaquesPix() {
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-[10px] font-black uppercase tracking-widest">
                         <Coins className="w-3 h-3" />
-                        {p.mcAmount.toLocaleString('pt-BR')} MC
+                        {p.mcAmount.toLocaleString('pt-BR')} E
                       </span>
                       <span className="px-2.5 py-1 rounded-lg bg-[#0e1320] border border-white/10 text-zinc-300 text-[10px] font-black uppercase tracking-widest">
                         {brl(p.amountBrl)}
@@ -219,7 +219,7 @@ export function SaquesPix() {
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border bg-red-500/10 border-red-500/25 text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                     >
                       {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                      Rejeitar (devolve MC)
+                      Rejeitar (devolve E)
                     </button>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export function SaquesPix() {
                   <div className="min-w-0">
                     <p className="text-white font-black text-sm truncate">
                       {p.displayName || p.riotId || 'Jogador'}
-                      <span className="text-zinc-400 text-xs ml-2">{p.mcAmount.toLocaleString('pt-BR')} MC · {brl(p.amountBrl)}</span>
+                      <span className="text-zinc-400 text-xs ml-2">{p.mcAmount.toLocaleString('pt-BR')} E · {brl(p.amountBrl)}</span>
                     </p>
                     <p className="text-zinc-400 text-[10px] mt-0.5 truncate">{p.pixKey}</p>
                   </div>

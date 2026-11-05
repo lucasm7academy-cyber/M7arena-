@@ -6,9 +6,9 @@ import { CutCard } from '../ui/CutCard';
 import { MCIcon } from '../ui/MCIcon';
 
 /**
- * Histórico de apostas (MC) do jogador: apostas individuais (self-bet) e salas
+ * Histórico de apostas (E) do jogador: apostas individuais (self-bet) e salas
  * apostadas / modo desafio. Mostra o campeão jogado, a fila (SOLO/DUO ou RANK FLEXÍVEL),
- * mercados apostados, status do resultado e delta de MC real.
+ * mercados apostados, status do resultado e delta de E real.
  */
 
 const FLAG_LABEL: Record<string, string> = {
@@ -90,7 +90,7 @@ function DeltaBadge({ delta }: { delta: number }) {
         <span className="inline-flex items-center gap-1.5 text-emerald-400 font-black text-base tabular-nums">
           <TrendingUp className="w-4 h-4 text-emerald-400" /> +{delta} <MCIcon className="w-4 h-4 text-[#FFB700]" />
         </span>
-        <span className="text-[10px] font-bold text-emerald-400/70 uppercase tracking-widest">Lucro MC</span>
+        <span className="text-[10px] font-bold text-emerald-400/70 uppercase tracking-widest">Lucro E</span>
       </div>
     );
   }
@@ -100,7 +100,7 @@ function DeltaBadge({ delta }: { delta: number }) {
         <span className="inline-flex items-center gap-1.5 text-red-400 font-black text-base tabular-nums">
           <TrendingDown className="w-4 h-4 text-red-400" /> {delta} <MCIcon className="w-4 h-4 text-[#FFB700]" />
         </span>
-        <span className="text-[10px] font-bold text-red-400/70 uppercase tracking-widest">Perda MC</span>
+        <span className="text-[10px] font-bold text-red-400/70 uppercase tracking-widest">Perda E</span>
       </div>
     );
   }
@@ -282,7 +282,7 @@ export function HistoricoApostas() {
                           <span className="text-white/80 text-xs font-medium">Desafio Individual</span>
                         ) : (
                           <span className="text-white/90 text-xs font-semibold">
-                            Sala #{it.salaNum} • Aposta: <span className="text-[#FFB700] font-black">{it.apostaMc ?? 0} MC</span>
+                            Sala #{it.salaNum} • Aposta: <span className="text-[#FFB700] font-black">{it.apostaMc ?? 0} E</span>
                           </span>
                         )}
                       </div>
@@ -293,14 +293,14 @@ export function HistoricoApostas() {
                         {it.stakeTotal ? (
                           <>
                             <span className="text-white/20">•</span>
-                            <span className="text-white/40">Stake: {it.stakeTotal} MC</span>
+                            <span className="text-white/40">Stake: {it.stakeTotal} E</span>
                           </>
                         ) : null}
                       </p>
                     </div>
                   </div>
 
-                  {/* Saldo Ganho/Perdido em MC */}
+                  {/* Saldo Ganho/Perdido em E */}
                   <DeltaBadge delta={it.deltaMc} />
                 </div>
               </CutCard>
