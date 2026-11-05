@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 04/11/2026 22:39 — por `deepseek`
+**Última atualização:** 04/11/2026 22:41 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 04/11/2026 22:41 | deepseek | Simplificacao local da matriz 84 itens concluida na branch simplificacao-m7arena: removidos revisao/prints/disputas, noticias, player_stats, convites, dashboard financeiro, Time vs Time antigo e M7 Points; saldo MC renomeado para Essencia Azul (E); corrigidos lives de scrim (G04/G06), sino G07, cargo caster/H02 e H01 com reservas; novo ESTRUTURA_ATUALIZADA_2026-11-04.md. Evidencias: web lint/build, api tsc, 279 testes passando, verify-swap 0. Sem deploy, sem migration, main intacta. <br>_tocou: `web/src`, `api/src`, `db`, `docs`, `infra`, `scripts`, `plano_m7arena_atualizado.md`, `CATALOGO_FUNCIONALIDADES.md`, `ESTRUTURA_ATUALIZADA_2026-11-04.md`_ |
 | 04/11/2026 22:39 | deepseek | Inscrevi e aprovei os times Valdreia (VLD) e Tokaman (TKM) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert em tournament_teams como registered e update para approved. Camp. ficou com 15/16 vagas (14 aprovados + Chidori pendente); confirmado pela API publica que os dois aparecem na classificacao. Nenhum codigo alterado. |
 | 04/11/2026 20:41 | deepseek | Catalogo funcional completo em CATALOGO_FUNCIONALIDADES.md: 84/84 funcionalidades detalhadas, 67 ativas, 5 incompletas, 4 legadas, 5 desconectadas, 3 duplicadas; dossies de M7 Points, Discord, recrutamento, VIP, Tierlist e Time vs Time legado; 16 endpoints sem tela, 17 tabelas/campos orfaos, 10 jobs, 10 integracoes e 10 capacidades de infra. Nenhum codigo alterado. |
 | 04/11/2026 19:53 | deepseek | Mapeamento completo da estrutura atual do projeto em ESTRUTURA_ATUAL.md (arvore, rotas, API, banco, features, redundancias, 27 problemas confirmados, 14 suspeitas, 10 redundancias). Nenhum codigo alterado. |
@@ -193,7 +194,6 @@ _31/10/2026 04:00 — deepseek_
 | 31/10/2026 05:25 | deepseek | Lobby: hero agora tem DOIS modelos trocaveis por HERO_EDICAO em Lobby.tsx — 'padrao' (texto antigo + video animated-highnoon-lucian.webm, arquivo preservado) e 'halloween' (arte Bruxa da Lua/Copa do Halloween 2026 em webp 1920px, titulo 'Copa do Halloween 2026', CTA 'Inscrever meu time' apontando para https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460 e CTA secundario 'Ver campeonatos'). Imagem com zoom reduzido (scale-95) e object-position 12%. Selo do topo virou 'Halloween 2026'. tsc 0, build ok, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`, `web/public/images/hero-halloween-2026.webp`_ |
 | 31/10/2026 05:12 | deepseek | Ajuste fino da linha do ban: SVG 1px de canto a canto (barra invertida), cobrindo o card todo; nome do campeao mantido. tsc/build ok; web deployado (DraftRoom-agJsbyUU, index-Bkef1JKM). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 | 31/10/2026 05:05 | deepseek | Draft: linha vermelha fina (1,5px) na diagonal no campeao banido + nome do campeao no slot de ban, no padrao dos picks. Rebase sobre os bans alinhados do outro agente; tsc/build ok; web deployado (DraftRoom-JmJ0hsEl, index-BwMw7xSk). <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
-| 31/10/2026 04:38 | deepseek | Draft: bans agora alinhados HORIZONTALMENTE com a bola do time — o container usa o mesmo px do TeamPanel (max(2vmin,calc((100%-85vmin)/4-12.5vmin))) e cada grupo fica dentro de uma coluna de 25vmin centralizada (mesma largura do painel da bola). Altura mantida (top-6vmin), tamanho 7.2vmin mantido. Assim os bans deixam de ficar por cima do grid de campeoes. Commit 2cb969e, deploy ok, health 200. <br>_tocou: `web/src/components/draft/DraftRoom.tsx`_ |
 
 ---
 
