@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-05T02:41:38.574Z",
+  "updatedAt": "2026-11-05T03:21:48.714Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -476,6 +476,19 @@
         "docs",
         "ESTRUTURA_ATUALIZADA_2026-11-04.md",
         "docs/HOMOLOGACAO_SIMPLIFICACAO.md"
+      ]
+    },
+    {
+      "at": "2026-11-05T03:21:48.709Z",
+      "agent": "deepseek",
+      "summary": "Deploy da simplificacao aprovada em producao: merge --no-ff na main (8ee9e0a), backup novo do PostgreSQL validado por restore em DB temporario (48 tabelas; users 449/matches 58/wallets 324; mc 13622/reservado 0), uploads 304 arquivos preservados, imagens de rollback salvas. Deploy somente app/nginx; realtime (id 8f2710) e postgres preservados; sem migration. Health publico 200; login/sessao, OP.GG, salas/scrim/campeonato, PDL e privacidade Pix validados; 403 para funcoes admin por usuario comum. Pacote instalado: app sha256:56456f8..., nginx sha256:59a3c6b....",
+      "touched": [
+        "api/src",
+        "web/src",
+        "infra",
+        "docs",
+        "main",
+        "deploy-vps"
       ]
     }
   ]
