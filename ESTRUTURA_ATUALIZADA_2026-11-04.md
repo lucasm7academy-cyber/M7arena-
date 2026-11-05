@@ -400,9 +400,12 @@ Campos/aliases mantidos de propósito:
 - **Sala histórica em `aguardando_revisao`:** a UI mostra “Sala em revisão legada
   — fale com o suporte”; não há mais painel de revisão. Salas antigas nesse
   estado precisam de tratamento operacional/administrativo.
-- **Segurança:** a auditoria da Etapa 3 (Pix em endpoint público, autorização de
-  campeonato, saldo de terceiros) não foi executada. Apenas endpoints mortos
-  foram removidos; não trate este documento como certificação de segurança.
+- **Segurança:** a auditoria da Etapa 3 foi executada em 05/11/2026 e as
+  correções confirmadas estão em `docs/HOMOLOGACAO_SIMPLIFICACAO.md`: perfil
+  público sem Pix, saldos de terceiros só para admin, escrita de campeonato com
+  staff/organizador, inscrição sem autoaprovação, lineup sem sequestro de roster,
+  tick autenticado e remoção do refresh de elo client-side. Riot/Mercado Pago
+  ainda precisam de credenciais reais de homologação.
 - **Arquivos grandes:** `TimePage.tsx` (~1.817 linhas), `SalaCampeonato.tsx`
   (~1.657), `Lobby.tsx` (~1.596), `createCampPage.tsx` (~1.572),
   `CampeonatoContext.tsx` (~1.483), `Admin.tsx` (~951) e
@@ -441,13 +444,13 @@ Medição no worktree pós-simplificação, sem `node_modules`, `.git`, `dist`,
 
 | Métrica | Valor |
 |---|---:|
-| Arquivos | **~495** (incluindo este documento) |
+| Arquivos | **~497** (incluindo este documento e o relatório de homologação) |
 | Diretórios | **71** |
 | Arquivos TS/TSX em `web/src` | **130** |
 | Linhas TS/TSX em `web/src` | **~37.951** |
 | Arquivos TS em `api/src` | **68** |
 | Linhas TS em `api/src` | **~14.040** |
-| Arquivos de teste da API | **37** (`*.test.ts`) |
+| Arquivos de teste da API | **38** (`*.test.ts`) |
 | Páginas em `web/src/pages` | **25** |
 | Páginas roteadas | **20** |
 | Rotas com path | **28** |
@@ -475,7 +478,7 @@ web/  npm run lint (tsc --noEmit)                         exit 0
 web/  npm run build (vite)                                exit 0 — 2203 módulos
 api/  npx tsc --noEmit                                    exit 0
 api/  npx tsx --test --test-concurrency=1 api/test/*.test.ts
-      tests 279 | pass 279 | fail 0
+      tests 283 | pass 283 | fail 0
 api/  npx tsx --test --test-concurrency=1 api/test/streams.test.ts
       tests 12 | pass 12 | fail 0  (inclui o caso G04 de scrim)
 root  node scripts/verify-swap.js                         0 ocorrências
