@@ -907,9 +907,6 @@ export const api = {
     byPuuid: (puuid: string) => api.get<ApiLegacyRiotAccount | null>(`/players/by-puuid/${puuid}`),
     /** Total de contas Riot vinculadas (dashboard admin). */
     count: () => api.get<{ count: number }>("/players/count"),
-    /** Grava elo_cache de contas exibidas (refresh de cache, autenticado). */
-    refreshElo: (updates: { userId: string; eloCache: any }[]) =>
-      api.post<{ ok: boolean }>("/players/refresh-elo", { updates }),
     /** Busca paginada com filtros (substitui RPC buscar_jogadores_filtrados). */
     filtrados: (params: { p_offset?: number; p_limit?: number; p_search?: string; p_elo_tier?: string; p_role_lane?: string } = {}) =>
       api.get<Array<ApiLegacyRiotAccount & { total_count: number; rank: number }>>(

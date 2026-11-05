@@ -62,37 +62,32 @@ walletRouter.get("/balance", async (req, res) => {
 // O depósito legado `POST /wallet/deposit` foi removido (F02): a compra de E
 // acontece só por `/payments/mc/order`, que calcula preço/pacote no servidor.
 
-// GET /api/wallet/admin/balances?userIds=a,b,c — leitura em lote.
-// Com userIds: PÚBLICO — a página /players (diretório público) exibe o saldo
-// de Essência Azul (E) de terceiros. Sem userIds: só admin (agregação).
+// GET /api/wallet/admin/balances?userIds=a,b,c — leitura administrativa.
+// Sempre exige admin/proprietário: saldos de terceiros deixaram de ser
+// públicos quando o card A09 passou a abrir o OP.GG (não há mais consumidor
+// público). O parâmetro userIds continua aceito para a busca do painel.
 walletRouter.get("/admin/balances", async (req, res) => {
   try {
     const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    if (!(await ehAdmin(user.id))) {
+      return res.status(403).json({ error: "Apenas admin pode listar saldos" });
+    }
 
     const userIds = String(req.query.userIds || "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
 
-    if (userIds.length === 0) {
-      if (!user) {
-        return res.status(401).json({ error: "Não autenticado" });
-      }
-      if (!(await ehAdmin(user.id))) {
-        return res.status(403).json({ error: "Apenas admin pode listar todos os saldos" });
-      }
-      const todas = await db.select().from(userWallets);
-      return res.json(todas.map((w) => ({ userId: w.userId, mc: w.mc, mcReservado: w.mcReservado })));
-    }
-
     if (userIds.length > 500) {
       return res.status(400).json({ error: "Limite de 500 userIds por consulta" });
     }
 
-    const wallets = await db
-      .select()
-      .from(userWallets)
-      .where(inArray(userWallets.userId, userIds));
+    const wallets = userIds.length
+      ? await db.select().from(userWallets).where(inArray(userWallets.userId, userIds))
+      : await db.select().from(userWallets);
     return res.json(wallets.map((w) => ({ userId: w.userId, mc: w.mc, mcReservado: w.mcReservado })));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao consultar saldos" });

@@ -22,7 +22,7 @@ import {
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario, removerInscricao } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, normalizarBestOf, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
-import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie } from "../lib/tournament-access.js";
+import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie, podeGerenciarCampeonato } from "../lib/tournament-access.js";
 import { recalcularPdlGlobal } from "../lib/tournament-pdl.js";
 import { criarSalaCampeonato } from "../lib/sala-campeonato.js";
 
@@ -378,6 +378,10 @@ tournamentsRouter.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Campeonato não encontrado" });
     }
 
+    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
+      return res.status(403).json({ error: "Apenas o organizador ou staff pode editar o campeonato" });
+    }
+
     const body = req.body || {};
     await db
       .update(tournaments)
@@ -434,7 +438,26 @@ tournamentsRouter.post("/:id/inscricoes", async (req, res) => {
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
     const teamEntry = req.body || {};
-    await storeTimesInscritos(id, [teamEntry]);
+    const teamId = String(teamEntry.id ?? teamEntry.team_id ?? "").trim();
+    if (!teamId) return res.status(400).json({ error: "Time é obrigatório" });
+
+    // Staff inscreve qualquer time; dono inscreve o próprio time. Membro comum
+    // não pode inscrever nem trocar o time por outro.
+    const staff = await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId });
+    if (!staff) {
+      if (t.status !== "open") {
+        return res.status(409).json({ error: "Inscrições deste campeonato não estão abertas" });
+      }
+      const [team] = await db.select({ ownerId: teams.ownerId }).from(teams).where(eq(teams.id, teamId)).limit(1);
+      if (!team || team.ownerId !== user.id) {
+        return res.status(403).json({ error: "Apenas o dono do time ou staff pode inscrever este time" });
+      }
+    }
+
+    // O dono do time nunca decide aprovação/pagamento: entra como registered e
+    // paid=false. Só o staff pode gravar approved/paid por esta rota.
+    const registro = staff ? teamEntry : { ...teamEntry, status: "registered", paid: false };
+    await storeTimesInscritos(id, [registro]);
     return res.status(201).json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao inscrever time" });
@@ -450,6 +473,10 @@ tournamentsRouter.post("/:id/inscricoes/:teamId/aprovar", async (req, res) => {
     const { id, teamId } = req.params;
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
+      return res.status(403).json({ error: "Apenas o organizador ou staff pode aprovar inscrições" });
+    }
 
     const aprovar = req.body?.p_aprovar !== false;
     await db.update(tournamentTeams)
@@ -498,6 +525,10 @@ tournamentsRouter.post("/:id/reabrir", async (req, res) => {
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
+    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
+      return res.status(403).json({ error: "Apenas o organizador ou staff pode reabrir o campeonato" });
+    }
+
     await db.update(tournaments).set({ status: "open", updatedAt: new Date() }).where(eq(tournaments.id, id));
     return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
@@ -514,6 +545,10 @@ tournamentsRouter.put("/:id/cronograma", async (req, res) => {
     const { id } = req.params;
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
+      return res.status(403).json({ error: "Apenas o organizador ou staff pode alterar o cronograma" });
+    }
 
     await storeCronograma(id, req.body?.cronograma || [], false);
     await applyAutoTiebreakers(id, req.body?.cronograma || []);
@@ -532,6 +567,10 @@ tournamentsRouter.put("/:id/cronograma/merge", async (req, res) => {
     const { id } = req.params;
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
+      return res.status(403).json({ error: "Apenas o organizador ou staff pode alterar o cronograma" });
+    }
 
     const jogos = req.body?.jogos || req.body?.cronograma || [];
     // Confirmação exige data/hora: o aceite do agendamento não pode criar um
@@ -560,6 +599,10 @@ tournamentsRouter.post("/:id/recalcular-pdl", async (req, res) => {
     const { id } = req.params;
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
+
+    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
+      return res.status(403).json({ error: "Apenas o organizador ou staff pode recalcular o PDL" });
+    }
 
     const r = await recalcularPdlGlobal(db);
     return res.json({ ok: true, ...r });

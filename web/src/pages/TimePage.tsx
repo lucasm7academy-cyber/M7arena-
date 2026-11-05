@@ -1257,18 +1257,13 @@ export default function TimePage() {
         puuid:    m.guest_puuid ?? undefined,
       }));
 
-    // Buscar dados Riot + wallet de todos os membros em paralelo
+    // Buscar dados Riot de todos os membros
     const userIds = membrosRaw.map(m => m.userId).filter(Boolean);
     if (userIds.length > 0) {
-      const [contas, wallets] = await Promise.all([
-        api.players.byIds(userIds),
-        api.wallet.adminBalances(userIds),
-      ]);
+      const contas = await api.players.byIds(userIds);
 
       const contaMap: Record<string, any> = {};
       (contas ?? []).forEach((c: any) => { contaMap[c.user_id] = c; });
-      const walletMap: Record<string, number> = {};
-      (wallets ?? []).forEach((w: any) => { walletMap[w.userId] = w.mc; });
 
       membrosRaw.forEach(m => {
         if (m.userId) {
@@ -1281,7 +1276,6 @@ export default function TimePage() {
             const solo = c.elo_cache?.soloQ;
             if (solo?.tier) m.elo = TIER_MAP[solo.tier] ?? solo.tier;
           }
-          m.balance = walletMap[m.userId] ?? 0;
         }
       });
     }

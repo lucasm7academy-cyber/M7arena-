@@ -13,6 +13,39 @@ import { vincularVagasConvidado } from "../lib/team-membership.js";
 
 export const profilesRouter = Router();
 
+/**
+ * Confere na Riot se o PUUID informado pertence ao Riot ID antes de gravar o
+ * vínculo. O front já consulta o proxy /api/riot, mas o endpoint precisa ser
+ * seguro contra chamada direta: sem isso, qualquer conta poderia se declarar
+ * dona de um Riot ID/PUUID alheio e herdar vagas de convidado.
+ *
+ * Em produção falha fechado: sem chave ou com erro da Riot, devolve null e a
+ * rota responde 503. Em desenvolvimento local (NODE_ENV != production) permite
+ * o fluxo sem Riot para testes de UI com chave dummy.
+ */
+async function validarRiotIdComPuuid(riotId: string, puuid: string): Promise<boolean | null> {
+  if (process.env.NODE_ENV !== "production") return true;
+
+  const key = process.env.RIOT_API_KEY;
+  if (!key) return null;
+
+  const [gameName, tagLine] = riotId.split("#");
+  if (!gameName?.trim() || !tagLine?.trim()) return false;
+
+  try {
+    const url =
+      "https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
+      encodeURIComponent(gameName.trim()) + "/" + encodeURIComponent(tagLine.trim());
+    const r = await fetch(url, { headers: { "X-Riot-Token": key } });
+    if (r.status === 404) return false;
+    if (!r.ok) return null;
+    const account = await r.json() as { puuid?: string };
+    return account?.puuid === puuid;
+  } catch {
+    return null;
+  }
+}
+
 // Middleware auxiliar de autenticação
 async function getAuthUser(req: any) {
   const token = req.cookies?.m7_session || req.headers.authorization?.replace("Bearer ", "");
@@ -68,27 +101,7 @@ function toLegacyRiot(ga: any) {
   };
 }
 
-/**
- * Traduz users + user_payout_info para o shape legado de `profiles` que as telas
- * leem (lane_primaria, lane_secundaria, is_vip, redes sociais e chave Pix).
- */
-function toLegacyProfile(user: any, payout: any) {
-  const socials = (user?.socials as Record<string, string>) || {};
-  return {
-    id: user.id,
-    bio: user.bio ?? "",
-    lane_primaria: user.lanePrimary ?? null,
-    lane_secundaria: user.laneSecondary ?? null,
-    is_vip: Boolean(user.isVip),
-    instagram: socials.instagram ?? "",
-    twitch: socials.twitch ?? "",
-    youtube: socials.youtube ?? "",
-    discord: socials.discord ?? "",
-    chave_pix: payout?.pixKey ?? "",
-    tipo_chave_pix: payout?.pixType ?? "",
-    nome_pix: payout?.pixName ?? "",
-  };
-}
+import { toLegacyProfile } from "../lib/profile-shape.js";
 
 // GET /api/profiles/me - Perfil completo do usuário logado (shape legado)
 profilesRouter.get("/me", async (req, res) => {
@@ -245,6 +258,14 @@ profilesRouter.post("/me/riot", async (req, res) => {
       return res.status(400).json({ error: "riot_id (Riot ID) e puuid são obrigatórios" });
     }
 
+    const vinculoValido = await validarRiotIdComPuuid(String(riotId), String(puuid));
+    if (vinculoValido === null) {
+      return res.status(503).json({ error: "Não foi possível validar a conta na Riot agora. Tente novamente." });
+    }
+    if (!vinculoValido) {
+      return res.status(400).json({ error: "Riot ID e PUUID não conferem na Riot" });
+    }
+
     const metadata: Record<string, any> = {
       ...(summoner_id !== undefined ? { summoner_id } : {}),
       ...(level !== undefined ? { level } : {}),
@@ -368,10 +389,9 @@ profilesRouter.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const [riotAccount, payout] = await Promise.all([
-      getRiotAccount(user.id),
-      db.select().from(userPayoutInfo).where(eq(userPayoutInfo.userId, user.id)).limit(1),
-    ]);
+    // Perfil público: NUNCA expõe dados de recebimento/Pix. O dono lê os
+    // próprios dados em GET /api/profiles/me (autenticado).
+    const riotAccount = await getRiotAccount(user.id);
 
     return res.json({
       id: user.id,
@@ -380,7 +400,7 @@ profilesRouter.get("/:id", async (req, res) => {
       bio: user.bio,
       socials: user.socials,
       isVip: user.isVip,
-      profile: toLegacyProfile(user, payout),
+      profile: toLegacyProfile(user, null),
       riotAccount: toLegacyRiot(riotAccount),
     });
   } catch (error: any) {

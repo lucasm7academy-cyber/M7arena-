@@ -607,6 +607,39 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
     }
 
     const membros = Array.isArray(req.body?.p_membros) ? req.body.p_membros : Array.isArray(req.body?.membros) ? req.body.membros : [];
+
+    // Segurança + ADR-087: não mova nem duplique uma conta que já está em outro
+    // time. Antes, um UUID de terceiro no body expulsava a pessoa do time real;
+    // agora a rota só adiciona jogador livre (ou membro já existente neste time).
+    // Para transferir, a própria pessoa precisa sair do time anterior.
+    const atuais = await db
+      .select({ userId: teamMembers.userId })
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, id));
+    const membrosAtuais = new Set(atuais.map((m) => m.userId).filter(Boolean) as string[]);
+    const novos = [...new Set<string>(
+      membros
+        .map((m: any) => (m?.user_id ? String(m.user_id) : null))
+        .filter((uid: string | null): uid is string => !!uid && uid !== user.id && !membrosAtuais.has(uid))
+    )];
+    if (novos.length) {
+      const conflitos = await db
+        .select({ tag: teams.tag })
+        .from(teamMembers)
+        .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+        .where(and(
+          inArray(teamMembers.userId, novos),
+          eq(teamMembers.status, "accepted"),
+          ne(teamMembers.teamId, id)
+        ))
+        .limit(1);
+      if (conflitos.length) {
+        return res.status(409).json({
+          error: `Jogador já pertence ao time #${conflitos[0].tag}. Peça para ele sair do time atual antes de entrar neste.`,
+        });
+      }
+    }
+
     await db.transaction(async (tx) => {
       await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
       for (const m of membros) {
@@ -624,12 +657,17 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
         // verificador de partida) não achavam o jogador — bug da sala 217.
         if (!userId && riotId) {
           const resolvido = await resolverUserIdPorRiotId(tx, riotId);
-          if (resolvido) {
+          if (resolvido && resolvido === user.id) {
             userId = resolvido;
             riotId = null;
           }
+          // Riot ID de terceiro fica como convidado: não vincula a conta nem
+          // mexe no time dela sem uma ação/aceite da própria pessoa.
         }
-        await sairDeOutrosTimes(tx, { userId, riotId }, id);
+        // Só a própria conta pode ser retirada dos outros times por esta rota.
+        if (userId === user.id) {
+          await sairDeOutrosTimes(tx, { userId }, id);
+        }
         await tx.insert(teamMembers).values({
           teamId: id,
           userId,

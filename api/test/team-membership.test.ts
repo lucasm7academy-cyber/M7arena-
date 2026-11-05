@@ -73,16 +73,17 @@ describe("team-membership (ADR-056)", () => {
     assert.equal(nenhum, null, "Riot ID sem conta continua convidado");
   });
 
-  test("ao vincular a conta, vaga de convidado vira membro (se não estiver em outro time)", async () => {
-    // U(2) não tem time. Cria uma vaga de convidado com o Riot ID dele.
+  test("ao vincular a conta, vaga de convidado vira membro só quando o PUUID confere", async () => {
+    // U(2) não tem time. Cria uma vaga de convidado com o PUUID dele.
     await ctx.db.insert(teamMembers).values({
       teamId: T(2),
       userId: null,
       guestRiotId: "Sem Riot#BR1",
+      guestPuuid: "PUUID_SEM_RIOT",
       roleSlot: "sub",
       status: "accepted",
     });
-    const promovidas = await vincularVagasConvidado(ctx.db, U(2), "sem riot#br1", null);
+    const promovidas = await vincularVagasConvidado(ctx.db, U(2), "sem riot#br1", "PUUID_SEM_RIOT");
     assert.equal(promovidas, 1);
     const [vaga] = await ctx.db.select().from(teamMembers).where(eq(teamMembers.userId, U(2)));
     assert.ok(vaga, "vaga promovida para membro");
@@ -94,6 +95,15 @@ describe("team-membership (ADR-056)", () => {
     assert.equal(naoPromovidas, 0);
     const [vagaGhozt] = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(1)));
     assert.equal(vagaGhozt.userId, null);
+  });
+
+  test("handle sozinho não promove vaga de convidado (anti-sequestro)", async () => {
+    // U(4) não tem vaga; a vaga Ghozt#123 pertence a U(1). Sem o PUUID não
+    // pode ser vinculada só porque o handle é público.
+    const promovidas = await vincularVagasConvidado(ctx.db, U(4), "Ghozt#123", null);
+    assert.equal(promovidas, 0);
+    const [vaga] = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(1)));
+    assert.equal(vaga.userId, null);
   });
 
   test("getRiotIdentities devolve PUUID e handle normalizado", async () => {

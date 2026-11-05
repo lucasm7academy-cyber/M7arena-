@@ -10,6 +10,7 @@ import {
   acessoNoCampeonato,
   redigirCodigosDaSerie,
   resolverPermissaoSerie,
+  podeGerenciarCampeonato,
 } from "../src/lib/tournament-access.js";
 
 const U = (n: number) => `aaaaaaab-0000-0000-0000-00000000000${n}`;
@@ -191,5 +192,28 @@ describe("tournament-access (PGlite)", () => {
     const donoBka = await resolverPermissaoSerie(ctx.db, { userId: U(6), organizerId: U(7), tournamentId: torneioId, serie });
     assert.equal(donoBka.isParticipant, true);
     assert.equal(donoBka.isStaff, false);
+  });
+
+  test("podeGerenciarCampeonato: organizador e staff global passam; estranho não", async () => {
+    assert.equal(
+      await podeGerenciarCampeonato(ctx.db, { userId: U(7), organizerId: U(7) }),
+      true,
+      "organizador dono"
+    );
+    assert.equal(
+      await podeGerenciarCampeonato(ctx.db, { userId: U(5), organizerId: U(7) }),
+      true,
+      "admin global"
+    );
+    assert.equal(
+      await podeGerenciarCampeonato(ctx.db, { userId: U(4), organizerId: U(7) }),
+      false,
+      "usuário comum não gerencia"
+    );
+    assert.equal(
+      await podeGerenciarCampeonato(ctx.db, { userId: null, organizerId: U(7) }),
+      false,
+      "anônimo não gerencia"
+    );
   });
 });

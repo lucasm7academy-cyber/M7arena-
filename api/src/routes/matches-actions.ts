@@ -10,7 +10,7 @@ import {
 } from "../lib/match-flow.js";
 import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
-import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
+import { getRoles, eStaffSala, eParticipante } from "../lib/acesso-sala.js";
 import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder, iniciarLiveDaSala, criarSalaTimeVsTime } from "../lib/sala-campeonato.js";
 import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato, aplicarAcaoSalaCampeonato } from "../lib/sala-campeonato-draft.js";
 import { registrarResultadoManualSerie } from "../lib/serie-campeonato.js";
@@ -590,9 +590,18 @@ matchesActionsRouter.post("/:id/recusar", async (req, res) => {
 // POST /api/matches/:id/tick - Reavalia prazos (idempotente, tick preguiçoso)
 matchesActionsRouter.post("/:id/tick", async (req, res) => {
   try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+
     const r = await db.transaction(async (tx: any) => {
       const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+
+      const staff = eStaffSala(await getRoles(tx, user.id));
+      if (!staff && !(await eParticipante(tx, user.id, match.id))) {
+        return { ok: false, erro: "sem_permissao", estado: match.status, mudou: false };
+      }
+
       const trans = await avaliarTransicoes(tx, match.id);
       return { ok: true, erro: null, estado: trans.estado, mudou: trans.mudou };
     });
@@ -601,6 +610,7 @@ matchesActionsRouter.post("/:id/tick", async (req, res) => {
     // ban vazio aplicado pelo tick de um cliente chegava nos demais só pelo
     // polling de 5s.
     if (r.mudou) notifyMatchChange(String(req.params.id));
+    if (!r.ok && r.erro === "sem_permissao") return res.status(403).json(r);
     return res.json(r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
