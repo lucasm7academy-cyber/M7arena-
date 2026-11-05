@@ -103,9 +103,9 @@ export default function ApostaIndividualPage() {
     const delta = betDeltaMc(ticket);
     setResultadoTicket(ticket);
     setResultadoDeltaMc(delta);
-    if (delta > 0) toast.success(`Desafio ganhou! +${delta} MC`);
-    else if (delta < 0) toast.error(`Desafio perdido! ${delta} MC`);
-    else toast(`Desafio ${ticket.status === 'cancelada' ? 'cancelado' : 'anulado'} — MC devolvido.`);
+    if (delta > 0) toast.success(`Desafio ganhou! +${delta} E`);
+    else if (delta < 0) toast.error(`Desafio perdido! ${delta} E`);
+    else toast(`Desafio ${ticket.status === 'cancelada' ? 'cancelado' : 'anulado'} — E devolvido.`);
   }, []);
 
   useEffect(() => {
@@ -185,11 +185,11 @@ export default function ApostaIndividualPage() {
       return;
     }
     if (stakeTotal < catalog.minStake) {
-      toast.error(`Desafio mínimo de ${catalog.minStake} MC por objetivo.`);
+      toast.error(`Desafio mínimo de ${catalog.minStake} E por objetivo.`);
       return;
     }
     if ((perfil?.saldo ?? 0) < stakeTotal) {
-      toast.error('Saldo insuficiente de MC.');
+      toast.error('Saldo insuficiente de E.');
       return;
     }
     setConfirmando(true);
@@ -210,7 +210,7 @@ export default function ApostaIndividualPage() {
       if (cod === 'ja_tem_bilhete_aguardando') toast.error('Você já tem um desafio aguardando entrar em jogo.');
       else if (cod === 'riot_id_obrigatorio' || cod === 'termos_nao_aceitos')
         toast.error('Vincule sua conta Riot e aceite os termos para participar do desafio.');
-      else if (cod === 'saldo_insuficiente') toast.error('Saldo insuficiente de MC.');
+      else if (cod === 'saldo_insuficiente') toast.error('Saldo insuficiente de E.');
       else if (cod === 'ja_em_jogo_ranqueada')
         toast.error('Você já está em partida ranqueada — termine antes de iniciar o desafio.');
       else if (cod === 'mercados_conflitantes')
@@ -291,7 +291,7 @@ export default function ApostaIndividualPage() {
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5">
             <Coins className="w-3.5 h-3.5 text-[#FFB700]" />
-            <span className="text-xs font-black text-white">{perfil?.saldo ?? 0} MC</span>
+            <span className="text-xs font-black text-white">{perfil?.saldo ?? 0} E</span>
           </div>
         </div>
       </motion.div>
@@ -367,14 +367,14 @@ export default function ApostaIndividualPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="text-xs font-black uppercase tracking-widest text-white block">
-                        Valor por Objetivo (MC)
+                        Valor por Objetivo (E)
                       </label>
                       <span className="text-[10px] text-white/40">
-                        Mínimo {catalog.minStake} MC • Máximo {catalog.maxPayout} MC de retorno
+                        Mínimo {catalog.minStake} E • Máximo {catalog.maxPayout} E de retorno
                       </span>
                     </div>
                     <span className="text-xs font-black text-[#FFB700] px-2.5 py-1 rounded-lg bg-[#FFB700]/10 border border-[#FFB700]/30">
-                      {stake} MC / meta
+                      {stake} E / meta
                     </span>
                   </div>
 
@@ -389,7 +389,7 @@ export default function ApostaIndividualPage() {
                         <Minus className="w-4 h-4" />
                       </button>
                       <div className="flex-1 text-center py-2.5 text-white font-black text-sm">
-                        {stake} MC
+                        {stake} E
                       </div>
                       <button
                         type="button"
@@ -412,7 +412,7 @@ export default function ApostaIndividualPage() {
                               : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
                           }`}
                         >
-                          {val} MC
+                          {val} E
                         </button>
                       ))}
                     </div>
@@ -466,7 +466,7 @@ export default function ApostaIndividualPage() {
                 <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-gradient-to-r from-[#FFB700]/10 to-transparent border border-[#FFB700]/20">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
                   <p className="text-[11px] text-white/60 leading-snug">
-                    Teto de retorno: <strong>{catalog.maxPayout} MC</strong> por desafio. O resultado é apurado automaticamente após o término da sua partida ranqueada. Se você não jogar em até {catalog.lockMinutes} min, o valor é estornado integralmente.
+                    Teto de retorno: <strong>{catalog.maxPayout} E</strong> por desafio. O resultado é apurado automaticamente após o término da sua partida ranqueada. Se você não jogar em até {catalog.lockMinutes} min, o valor é estornado integralmente.
                   </p>
                 </div>
 
@@ -474,12 +474,12 @@ export default function ApostaIndividualPage() {
                 <div className="pt-4 border-t border-white/8">
                   <div className="flex items-center justify-between mb-3 text-xs">
                     <span className="font-bold uppercase tracking-widest text-white/50">Valor Total Reservado</span>
-                    <span className="font-black text-white text-sm">{stakeTotal} MC</span>
+                    <span className="font-black text-white text-sm">{stakeTotal} E</span>
                   </div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-black uppercase tracking-widest text-white/70">Recompensa Total Estimada</span>
                     <span className="text-xl font-black text-[#FFB700] drop-shadow">
-                      {payoutTotal} MC
+                      {payoutTotal} E
                     </span>
                   </div>
 
@@ -552,24 +552,24 @@ export default function ApostaIndividualPage() {
                         {catalog && (Object.values(catalog.markets).flat().find((m) => m.key === l.marketKey)?.label ?? l.marketKey)}
                       </span>
                       <span className="text-[10px] font-black text-white/60 shrink-0">
-                        @{l.odd.toFixed(2)} • {l.stake} MC
+                        @{l.odd.toFixed(2)} • {l.stake} E
                       </span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
                     <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Valor Total Reservado</span>
-                    <span className="text-sm font-black text-white">{stakeTotal} MC</span>
+                    <span className="text-sm font-black text-white">{stakeTotal} E</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
                     <span className="text-[11px] font-black uppercase tracking-widest text-white/50">Recompensa Estimada</span>
-                    <span className="text-lg font-black text-[#FFB700]">{payoutTotal} MC</span>
+                    <span className="text-lg font-black text-[#FFB700]">{payoutTotal} E</span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/8 mb-5">
                   <AlertTriangle className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
                   <p className="text-[10px] text-white/50 leading-snug">
-                    O MC é reservado e o resultado será conferido via Riot API na sua próxima partida. Se não houver jogo dentro do tempo limite, o valor retorna à sua carteira.
+                    O E é reservado e o resultado será conferido via Riot API na sua próxima partida. Se não houver jogo dentro do tempo limite, o valor retorna à sua carteira.
                   </p>
                 </div>
 

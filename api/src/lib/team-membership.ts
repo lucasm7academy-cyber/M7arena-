@@ -35,17 +35,15 @@ export async function vincularVagasConvidado(
   handle: string | null | undefined,
   puuid: string | null | undefined
 ): Promise<number> {
-  const alvoHandle = (handle || "").trim().toLowerCase();
-  if (!alvoHandle && !puuid) return 0;
-  const clausulas: any[] = [];
-  if (puuid) clausulas.push(eq(teamMembers.guestPuuid, puuid));
-  if (alvoHandle) clausulas.push(sql`lower(trim(coalesce(${teamMembers.guestRiotId}, ''))) = ${alvoHandle}`);
-  if (!clausulas.length) return 0;
+  // Segurança: só promove vaga de convidado quando o PUUID da Riot confere.
+  // Casar por handle permitiria sequestrar a vaga de outra pessoa apenas
+  // copiando o Riot ID público dela.
+  if (!puuid) return 0;
 
   const candidatas = await d
     .select({ id: teamMembers.id, teamId: teamMembers.teamId })
     .from(teamMembers)
-    .where(and(isNull(teamMembers.userId), or(...clausulas)));
+    .where(and(isNull(teamMembers.userId), eq(teamMembers.guestPuuid, puuid)));
   if (!candidatas.length) return 0;
 
   const minhas = await d

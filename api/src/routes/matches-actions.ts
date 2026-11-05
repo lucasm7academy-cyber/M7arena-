@@ -1,17 +1,16 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers, matchCodes, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
+import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
 import {
   avaliarTransicoes,
   reembolsarSeNecessario,
-  entrarEmRevisao,
   getAuthUser,
   notifyMatchChange,
 } from "../lib/match-flow.js";
 import { aplicarAcaoDraft } from "../lib/draft/index.js";
 import { verificarPartida } from "../lib/verificar-partida.js";
-import { getRoles, eStaffSala } from "../lib/acesso-sala.js";
+import { getRoles, eStaffSala, eParticipante } from "../lib/acesso-sala.js";
 import { entrarNaVaga, sairDaVaga, marcarPronto, escolherLado, escolherPickOrder, iniciarLiveDaSala, criarSalaTimeVsTime } from "../lib/sala-campeonato.js";
 import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato, aplicarAcaoSalaCampeonato } from "../lib/sala-campeonato-draft.js";
 import { registrarResultadoManualSerie } from "../lib/serie-campeonato.js";
@@ -591,9 +590,18 @@ matchesActionsRouter.post("/:id/recusar", async (req, res) => {
 // POST /api/matches/:id/tick - Reavalia prazos (idempotente, tick preguiçoso)
 matchesActionsRouter.post("/:id/tick", async (req, res) => {
   try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
+
     const r = await db.transaction(async (tx: any) => {
       const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
       if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
+
+      const staff = eStaffSala(await getRoles(tx, user.id));
+      if (!staff && !(await eParticipante(tx, user.id, match.id))) {
+        return { ok: false, erro: "sem_permissao", estado: match.status, mudou: false };
+      }
+
       const trans = await avaliarTransicoes(tx, match.id);
       return { ok: true, erro: null, estado: trans.estado, mudou: trans.mudou };
     });
@@ -602,45 +610,15 @@ matchesActionsRouter.post("/:id/tick", async (req, res) => {
     // ban vazio aplicado pelo tick de um cliente chegava nos demais só pelo
     // polling de 5s.
     if (r.mudou) notifyMatchChange(String(req.params.id));
+    if (!r.ok && r.erro === "sem_permissao") return res.status(403).json(r);
     return res.json(r);
   } catch (error: any) {
     return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
   }
 });
 
-// LEGADO — POST /api/matches/:id/report-result. O front não chama mais esta
-// rota: desde a verificação automática via Riot (tasks 3-10), o resultado é
-// decidido no servidor pelo motor de verificação. Mantida apenas para não
-// quebrar salas antigas que já estavam em voo no fluxo de print/revisão.
-matchesActionsRouter.post("/:id/report-result", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) return res.status(401).json({ ok: false, erro: "nao_autenticado", estado: null, mudou: false });
-
-    const r = await db.transaction(async (tx: any) => {
-      const [match] = await tx.select().from(matches).where(eq(matches.salaNum, Number(req.params.id))).limit(1).for("update");
-      if (!match) return { ok: false, erro: "sala_nao_encontrada", estado: null, mudou: false };
-      if (!["partida_iniciada", "iniciando_partida"].includes(match.status)) {
-        return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
-      }
-
-      // Decisão de 2026-08-03: TODAS as salas passam pela revisão do admin —
-      // casuais e apostadas. A votação red/blue no cliente foi removida; o
-      // resultado é decidido por print + aprovação no painel. `pagarPremio` é
-      // no-op para aposta 0, então a decisão de uma casual só marca o resultado.
-      const rv = await entrarEmRevisao(tx, match.id);
-      if (!rv.ok) return { ok: false, erro: rv.erro, estado: match.status, mudou: false };
-      await tx.update(matchPlayers).set({ linked: false }).where(eq(matchPlayers.matchId, match.id));
-      await tx.update(matchCodes).set({ used: false, matchId: null }).where(eq(matchCodes.matchId, match.id));
-      return { ok: true, erro: null, estado: "aguardando_revisao", mudou: true };
-    });
-
-    notifyMatchChange(String(req.params.id));
-    return res.json(r);
-  } catch (error: any) {
-    return res.status(500).json({ ok: false, erro: error?.message || "rpc_falhou", estado: null, mudou: false });
-  }
-});
+// A rota legada /report-result foi removida na simplificação de 2026-11.
+// O resultado é decidido pela verificação automática da Riot.
 
 // POST /api/matches/:id/verificar — Acelerador do polling (spec
 // verificacao-partida-riot): qualquer participante confirmado dispara a mesma

@@ -42,6 +42,25 @@ export async function identidadeAcessoCampeonato(d: any, userId: string): Promis
   return { isStaffRole, teamIds };
 }
 
+/**
+ * Permissão de ESCRITA no campeonato: organizador dono ou cargo staff global
+ * (admin/proprietário/moderador/organizer). Usada por edição, cronograma,
+ * inscrições, PDL, reabertura e aprovação de times.
+ */
+export async function podeGerenciarCampeonato(
+  d: any,
+  opts: { userId?: string | null; organizerId?: string | null }
+): Promise<boolean> {
+  if (!opts.userId) return false;
+  if (opts.organizerId && opts.organizerId === opts.userId) return true;
+
+  const roleRows = await d
+    .select({ role: userRoles.role })
+    .from(userRoles)
+    .where(eq(userRoles.userId, opts.userId));
+  return roleRows.some((r: any) => STAFF_ROLES_CAMPEONATO.includes(r.role));
+}
+
 /** Acesso no contexto de um campeonato: cargo staff OU ser o organizador dele. */
 export function acessoNoCampeonato(
   ident: IdentidadeAcesso | null,

@@ -1,7 +1,6 @@
 import { eq, and, gt } from "drizzle-orm";
 import { db } from "../db.js";
 import { users, userSessions, userRoles } from "../../../db/schema/identidade.js";
-import { news } from "../../../db/schema/conteudo.js";
 
 /** Usuário autenticado pela sessão httpOnly (ADR-011) ou Bearer token. */
 export async function getAuthUser(req: any) {
@@ -21,14 +20,14 @@ export async function getAuthUser(req: any) {
 
 /**
  * Requer usuário autenticado com um dos cargos permitidos em user_roles (regra
- * de negócio no servidor). Admin gerencia highlights; notícias também aceitam
- * organizer, que é o que a tela de Admin já permitia.
+ * de negócio no servidor). Usado hoje por highlights (`content-highlights.ts`)
+ * e pela fila de saques (`withdrawals.ts`), sempre com `["admin"]`.
  *
  * Normalização de cargo legado: `proprietario` é o dono do site e tem poder de
- * admin (mesma regra de wallet.ts/teams.ts/eRevisor), e `organizador` é o
- * equivalente em português de `organizer`. O fork usa `me.roles` e trata
- * `proprietario` como admin (PerfilContext rolesToCargo), então a checagem de
- * servidor precisa aceitar o mesmo conjunto.
+ * admin (mesma regra de wallet.ts/teams.ts), e `organizador` é o equivalente em
+ * português de `organizer`. O fork usa `me.roles` e trata `proprietario` como
+ * admin (PerfilContext rolesToCargo), então a checagem de servidor precisa
+ * aceitar o mesmo conjunto.
  */
 export async function getAdminUser(req: any, res: any, allowed: string[]) {
   const user = await getAuthUser(req);
@@ -49,29 +48,4 @@ export async function getAdminUser(req: any, res: any, allowed: string[]) {
     return null;
   }
   return user;
-}
-
-/** Slug no mesmo formato que a tela de Admin gera no navegador. */
-export function slugify(texto: string): string {
-  return texto
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-}
-
-/** Garante slug único (coluna UNIQUE do schema novo). Em conflito, anexa -1, -2… */
-export async function generateUniqueSlug(base: string, ignoreId?: string): Promise<string> {
-  let slug = base || "noticia";
-  let i = 1;
-  for (;;) {
-    const cond = ignoreId ? and(eq(news.slug, slug), eq(news.id, ignoreId)) : undefined;
-    const rows = cond
-      ? await db.select({ id: news.id }).from(news).where(cond).limit(1)
-      : await db.select({ id: news.id }).from(news).where(eq(news.slug, slug)).limit(1);
-    if (rows.length === 0) return slug;
-    slug = `${base}-${i}`;
-    i++;
-  }
 }

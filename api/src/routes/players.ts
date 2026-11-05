@@ -142,45 +142,10 @@ playersRouter.get("/count", async (req, res) => {
   }
 });
 
-// POST /api/players/refresh-elo — grava elo_cache de contas exibidas (cache Riot).
-// O cliente informa o cache calculado; a API só aceita contas que existem e
-// autentica o chamador — a escrita nunca é "regra de negócio", é refresh de cache.
-playersRouter.post("/refresh-elo", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-    const { updates } = req.body ?? {};
-    if (!Array.isArray(updates)) {
-      return res.status(400).json({ error: "updates deve ser uma lista" });
-    }
-
-    let atualizadas = 0;
-    for (const u of updates) {
-      if (!u?.userId || !u?.eloCache) continue;
-      const [row] = await db
-        .select()
-        .from(gameAccounts)
-        .where(and(eq(gameAccounts.userId, u.userId), eq(gameAccounts.gameId, "lol")))
-        .limit(1);
-      if (!row) continue;
-      const meta = (row.metadata as Record<string, any>) || {};
-      await db
-        .update(gameAccounts)
-        .set({
-          metadata: { ...meta, elo_cache: u.eloCache, stats_updated_at: new Date().toISOString() },
-          updatedAt: new Date(),
-        })
-        .where(eq(gameAccounts.id, row.id));
-      atualizadas++;
-    }
-
-    return res.json({ ok: true, atualizadas });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao atualizar cache de elo" });
-  }
-});
+// O endpoint legado `POST /players/refresh-elo` foi removido: ele aceitava
+// `eloCache` do cliente para qualquer userId e permitia falsificar o cache de
+// terceiros. O refresh correto é server-side em `/players/refresh-elos`
+// (admin/proprietário) e usa a Riot como fonte.
 
 // POST /api/players/refresh-elos — inicia o refresh SERVER-SIDE do elo_cache em
 // BACKGROUND e responde na hora (a varredura completa com pacing leva minutos —
@@ -311,7 +276,6 @@ playersRouter.get("/filtrados", async (req, res) => {
           lane: u?.lanePrimary ?? null,
           lane2: u?.laneSecondary ?? null,
           is_vip: u?.isVip ?? false,
-          mp: 0,
           mc: 0,
           puuid: r.externalId,
           stats_updated_at: meta.stats_updated_at ?? r.syncedAt ?? r.createdAt,

@@ -76,7 +76,7 @@ export const ItemMercado: React.FC<ItemMercadoProps> = ({
           {selecionado ? (
             <span className="text-[10px] font-black uppercase tracking-wider text-[#FFB700] inline-flex items-center gap-1 mt-0.5">
               <span>Retorno:</span>
-              <span className="text-white font-extrabold">{retornoEstimado} MC</span>
+              <span className="text-white font-extrabold">{retornoEstimado} E</span>
             </span>
           ) : (
             <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider block">

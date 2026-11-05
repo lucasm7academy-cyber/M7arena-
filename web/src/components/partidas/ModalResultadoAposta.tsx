@@ -5,7 +5,7 @@ import type { ApiBetTicket } from "../../lib/api";
 
 /**
  * Modal de resultado de um desafio (aposta individual). Mostra o desfecho —
- * ganhou (+X MC), perdeu (–X MC) ou anulado (devolvido) — com o resumo das legs
+ * ganhou (+X E), perdeu (–X E) ou anulado (devolvido) — com o resumo das legs
  * e ações para fechar ou ver o histórico completo no perfil. Puro de exibição:
  * todo o dado vem do bilhete já finalizado.
  */
@@ -84,7 +84,7 @@ export default function ModalResultadoAposta({
               <Coins className="w-6 h-6" style={{ color: cor }} />
             </div>
             <p className="text-[11px] text-white/40 uppercase tracking-widest mt-1">
-              {ganhou ? "para sua carteira" : perdeu ? "da sua carteira" : "MC devolvido"}
+              {ganhou ? "para sua carteira" : perdeu ? "da sua carteira" : "E devolvido"}
             </p>
           </div>
 
@@ -100,7 +100,7 @@ export default function ModalResultadoAposta({
                 <div key={leg.id} className="flex items-center justify-between p-3 rounded-xl bg-[#121217] border border-white/8">
                   <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">{leg.label}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-white/40">{leg.odd}x • {leg.stake} MC</span>
+                    <span className="text-[10px] font-black text-white/40">{leg.odd}x • {leg.stake} E</span>
                     <span
                       className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider"
                       style={{
@@ -118,7 +118,7 @@ export default function ModalResultadoAposta({
             <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-[#0c0c10] border border-white/5">
               <Coins className="w-4 h-4 text-[#FFB700] shrink-0 mt-0.5" />
               <p className="text-[10px] text-white/40 leading-snug">
-                Resultado validado pelo servidor. Confira seu saldo de MC e o histórico completo no perfil.
+                Resultado validado pelo servidor. Confira seu saldo de E e o histórico completo no perfil.
               </p>
             </div>
 

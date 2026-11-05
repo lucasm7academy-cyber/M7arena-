@@ -8,11 +8,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { db } from "../db.js";
 import { userSessions } from "../../../db/schema/identidade.js";
 import { teams, teamMembers } from "../../../db/schema/teams.js";
-import { matches, matchPlayers } from "../../../db/schema/matches.js";
-import { matchPrints } from "../../../db/schema/apostas.js";
-import { entrarEmRevisao, notifyMatchChange } from "../lib/match-flow.js";
-import { notificarRevisao } from "../lib/discord.js";
-import { getRoles, eRevisor } from "../lib/acesso-sala.js";
+import { getRoles } from "../lib/acesso-sala.js";
 
 export const uploadRouter = Router();
 
@@ -23,15 +19,14 @@ function obterUploadDir(): string {
 /**
  * Buckets aceitos. Cada bucket vira uma pasta de primeiro nível no volume
  * (ADR-007): `team-logos` → `/uploads/team-logos/`, `public-images` →
- * `/uploads/public-images/`, `match-prints` → `/uploads/match-prints/`. O
- * servidor restringe a escrita por bucket, então o cliente não decide caminho
- * arbitrário. A escrita também é restrita por dono (ARQUITETURA.md §6):
- * `team-logos` só aceita o dono/capitão do time (a logo cai em
- * `/uploads/team-logos/<team_id>/`), `public-images` só admin/organizador, e
- * `match-prints` é privado (design v3 §6): a URL servida passa por endpoint
- * autenticado, nunca link direto do disco.
+ * `/uploads/public-images/`. O servidor restringe a escrita por bucket, então o
+ * cliente não decide caminho arbitrário. A escrita também é restrita por dono
+ * (ARQUITETURA.md §6): `team-logos` só aceita o dono/capitão do time (a logo
+ * cai em `/uploads/team-logos/<team_id>/`), `public-images` só admin/organizador.
+ * O antigo bucket privado de prints de partida foi removido junto com o fluxo
+ * de revisão; não reintroduza caminho privado aqui sem um endpoint autenticado.
  */
-const BUCKETS = new Set(["team-logos", "public-images", "match-prints"]);
+const BUCKETS = new Set(["team-logos", "public-images"]);
 
 /** Whitelist de MIME aceita pelo multer. */
 const MIMES = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -118,9 +113,6 @@ export function validarArquivoImagem(buffer: Buffer, mimetype: string): Validaca
  * renderiza em ~1400px; guardar o arquivo original (1–2 MB PNG) fazia o card
  * ficar preto por ~1s até o download terminar. 1920 dá folga para telas retina
  * sem carregar o arquivo cru.
- *
- * `match-prints` NÃO passa por aqui de propósito: print é prova de resultado e
- * tem que manter os bytes originais.
  */
 const LADO_MAX_EXIBICAO: Record<string, number> = {
   "public-images": 1920,
@@ -131,13 +123,11 @@ const LADO_LOGO = 1080;
 
 /**
  * Teto por bucket. Logo/banner de time aceita arquivo grande de qualquer
- * tamanho (o servidor redimensiona); print de partida continua em 5 MB porque
- * é prova de resultado e guarda os bytes originais.
+ * tamanho (o servidor redimensiona); os dois buckets públicos têm o mesmo teto.
  */
 const MAX_POR_BUCKET: Record<string, number> = {
   "team-logos": 30 * 1024 * 1024,
   "public-images": 30 * 1024 * 1024,
-  "match-prints": 5 * 1024 * 1024,
 };
 
 /**
@@ -209,9 +199,6 @@ function sanitizeSubpath(subpath: string): string {
  *   pasta de um time alheio.
  * - `public-images`: usado só pelo painel de campeonatos. Só admin,
  *   proprietário ou organizador escreve.
- *
- * `match-prints` não passa por aqui (tem fluxo próprio acima, com participante
- * confirmado/revisor).
  */
 export type PermissaoBucketPublico =
   | { ok: true }
@@ -260,143 +247,8 @@ export async function validarPermissaoBucketPublico(
   return { ok: true };
 }
 
-// ── RATE LIMIT de upload (design v3 §6) ─────────────────────────────────────
-// Simples: um Map de userId → timestamps na janela de 1 min. Suficiente para
-// frear spam de print; o max-3 por partida já é a trava estrutural.
-
-const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_JANELA_MS = 60_000;
-const rateLimits = new Map<string, number[]>();
-
-function rateLimitPermitido(userId: string): boolean {
-  const agora = Date.now();
-  const times = (rateLimits.get(userId) || []).filter((t) => agora - t < RATE_LIMIT_JANELA_MS);
-  if (times.length >= RATE_LIMIT_MAX) {
-    rateLimits.set(userId, times);
-    return false;
-  }
-  times.push(agora);
-  rateLimits.set(userId, times);
-  return true;
-}
-
-/**
- * Valida se o usuário pode enviar print da sala (design v3 §6): participante
- * CONFIRMADO ou revisor (admin/moderador), sala em `partida_iniciada` ou já em
- * `aguardando_revisao`, e ainda menos de 3 prints. Vale para TODAS as salas —
- * casuais e apostadas (decisão de 2026-08-03: o resultado é sempre decidido
- * pelo admin, sem votação no cliente). A checagem de participante e status
- * re-roda dentro da transação de gravação (via `entrarEmRevisao`, que re-locka
- * a linha), então um golpe no intervalo não vira print órfão.
- *
- * No modo `contestacao` a sala aceita prints em `encerrada` (o participante
- * contesta o resultado e anexa a prova do print) em vez de `partida_iniciada`/
- * `aguardando_revisao`. As demais checagens (participante confirmado ou
- * revisor, 1 print por jogador, máximo 3) valem igual nos dois modos.
- */
-export type ValidacaoPrint =
-  | { ok: false; erro: string; estado?: string; sala?: any }
-  | { ok: true; sala: any };
-
-export async function validarPrintDePartida(
-  db: any,
-  userId: string,
-  matchId: string,
-  modo: "revisao" | "contestacao" = "revisao"
-): Promise<ValidacaoPrint> {
-  const [m] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
-  if (!m) return { ok: false, erro: "sala_nao_encontrada" };
-  const estadosPermitidos =
-    modo === "contestacao" ? ["encerrada"] : ["partida_iniciada", "aguardando_revisao"];
-  if (!estadosPermitidos.includes(m.status)) {
-    return { ok: false, erro: "estado_invalido", estado: m.status };
-  }
-  // Revisor (admin/moderador) pode anexar de qualquer sala; participante só se
-  // confirmado (decisão do usuário: "só admin ou quem joga pode anexar").
-  const roles = await getRoles(db, userId);
-  const ehRevisor = eRevisor(roles);
-  if (!ehRevisor) {
-    const [player] = await db
-      .select()
-      .from(matchPlayers)
-      .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, userId)))
-      .limit(1);
-    if (!player) return { ok: false, erro: "nao_participante" };
-    if (!player.confirmed) return { ok: false, erro: "nao_confirmado" };
-  }
-  const prints = await db.select().from(matchPrints).where(eq(matchPrints.matchId, matchId));
-  // Um print por jogador (decisão do usuário 2026-08-10): quem já enviou não
-  // pode anexar de novo — mesmo que ainda não tenha batido o teto da partida.
-  if (prints.some((p: any) => p.userId === userId)) return { ok: false, erro: "print_ja_enviado" };
-  // Teto de 3 prints vale para o resultado (revisao); na CONTESTAÇÃO cada
-  // contestante anexa exatamente 1 print de prova, então o cap da partida não
-  // se aplica — o print_ja_enviado acima já limita a 1 por disputante.
-  if (modo !== "contestacao" && prints.length >= 3) return { ok: false, erro: "limite_prints" };
-  return { ok: true, sala: m };
-}
-
-/**
- * Salva o print de prova de um participante confirmado e, se a sala ainda está
- * em `partida_iniciada`, avança para `aguardando_revisao` (design v3 §6). O nome
- * do arquivo é gerado pelo servidor (uuid + extensão do magic bytes) — o nome
- * do cliente é ignorado, não há como forjar caminho. Exportado para os testes
- * exercerem a mesma função que a rota usa.
- */
-export type ResultadoSalvarPrint =
-  | { ok: false; erro: string; estado?: string; sala?: any }
-  | { ok: true; url: string; printId: string; entrouEmRevisao: boolean; sala: any };
-
-export async function salvarPrintMatch(
-  db: any,
-  params: { userId: string; matchId: string; originalname: string; buffer: Buffer; mimetype: string; modo?: "revisao" | "contestacao" }
-): Promise<ResultadoSalvarPrint> {
-  const modo = params.modo ?? "revisao";
-  const v = await validarPrintDePartida(db, params.userId, params.matchId, modo);
-  if (!v.ok) return v;
-
-  const img = validarArquivoImagem(params.buffer, params.mimetype);
-  if (!img.ok) return { ok: false, erro: img.erro };
-
-  const dir = path.join(obterUploadDir(), "match-prints", params.matchId);
-  await fs.promises.mkdir(dir, { recursive: true });
-  const filename = `${crypto.randomUUID()}${EXT_POR_FORMATO[img.formato]}`;
-  const destino = path.join(dir, filename);
-  await fs.promises.writeFile(destino, params.buffer);
-  const publicUrl = `/uploads/match-prints/${params.matchId}/${filename}`;
-
-  let resultado: any;
-  try {
-    resultado = await db.transaction(async (tx: any) => {
-      const [print] = await tx
-        .insert(matchPrints)
-        .values({ matchId: params.matchId, userId: params.userId, url: publicUrl })
-        .returning();
-      // Modo contestação: a sala já está encerrada — só insere a evidência, o
-      // resultado fica de pé até o admin decidir a disputa (sem entrar em revisão).
-      if (modo === "contestacao") return { print, entrouEmRevisao: false };
-      const t = await entrarEmRevisao(tx, params.matchId);
-      // Já estava em revisão: só insere o print e não transiciona (4º é bloqueado
-      // na validação). Qualquer outro estado inválido aborta e desfaz a escrita.
-      if (!t.ok && t.estado !== "aguardando_revisao") throw new Error(t.erro || "falha_na_transicao");
-      return { print, entrouEmRevisao: t.ok };
-    });
-  } catch (e) {
-    await fs.promises.unlink(destino).catch(() => {});
-    throw e;
-  }
-
-  return {
-    ok: true,
-    url: `/api/prints/${resultado.print.id}/arquivo`,
-    printId: resultado.print.id,
-    entrouEmRevisao: resultado.entrouEmRevisao,
-    sala: v.sala,
-  };
-}
-
 // POST /api/upload - multipart/form-data: campos `file`, `bucket` e `path`
 // (opcional). O multer roda antes do handler; erro de tamanho/tipo vira 400.
-// Para o bucket `match-prints`, `path` é o matchId (uuid) da sala.
 uploadRouter.post(
   "/",
   (req, res, next) => {
@@ -430,7 +282,7 @@ uploadRouter.post(
 
       const bucket = String(req.body?.bucket || "").trim();
       if (!BUCKETS.has(bucket)) {
-        return res.status(400).json({ error: "Bucket inválido. Use team-logos, public-images ou match-prints." });
+        return res.status(400).json({ error: "Bucket inválido. Use team-logos ou public-images." });
       }
 
       const file = req.file;
@@ -443,10 +295,7 @@ uploadRouter.post(
       const limiteBucket = MAX_POR_BUCKET[bucket] ?? MAX_SIZE;
       if (file.size > limiteBucket) {
         return res.status(400).json({
-          error:
-            bucket === "match-prints"
-              ? "Print muito grande. Máximo de 5 MB."
-              : "Imagem muito grande. Máximo de 30 MB.",
+          error: "Imagem muito grande. Máximo de 30 MB.",
         });
       }
 
@@ -462,31 +311,6 @@ uploadRouter.post(
       }
 
       const subpath = sanitizeSubpath(String(req.body?.path || "").trim());
-
-      // ── Bucket privado de prints de partida (design v3 §6) ──
-      if (bucket === "match-prints") {
-        if (!subpath) {
-          return res.status(400).json({ error: "matchId obrigatório para o bucket match-prints." });
-        }
-        if (!rateLimitPermitido(session.userId)) {
-          return res.status(429).json({ error: "Muitos uploads. Aguarde um instante e tente novamente." });
-        }
-        const r = await salvarPrintMatch(db, {
-          userId: session.userId,
-          matchId: subpath,
-          originalname: file.originalname,
-          buffer: file.buffer,
-          mimetype: file.mimetype,
-          modo: req.body?.modo === "contestacao" ? "contestacao" : undefined,
-        });
-        if (!r.ok) return res.status(400).json({ error: r.erro });
-        // Notifica revisores quando a sala entra em revisão nesta escrita.
-        if (r.entrouEmRevisao) notificarRevisao(r.sala);
-        // Real-time: os jogadores da sala veem "em análise" / o novo print sem
-        // refresh (design v3 §6 — o cliente refaz o GET ao receber o aviso).
-        notifyMatchChange(subpath);
-        return res.json({ url: r.url, printId: r.printId });
-      }
 
       // ── Buckets públicos: escrita restrita ao dono/role (ARQUITETURA.md §6) ──
       const permissoes = await validarPermissaoBucketPublico(db, session.userId, bucket, subpath);

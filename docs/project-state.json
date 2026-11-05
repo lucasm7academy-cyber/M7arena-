@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-04T23:41:05.002Z",
+  "updatedAt": "2026-11-05T02:41:38.574Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -441,6 +441,42 @@
       "agent": "deepseek",
       "summary": "Catalogo funcional completo em CATALOGO_FUNCIONALIDADES.md: 84/84 funcionalidades detalhadas, 67 ativas, 5 incompletas, 4 legadas, 5 desconectadas, 3 duplicadas; dossies de M7 Points, Discord, recrutamento, VIP, Tierlist e Time vs Time legado; 16 endpoints sem tela, 17 tabelas/campos orfaos, 10 jobs, 10 integracoes e 10 capacidades de infra. Nenhum codigo alterado.",
       "touched": []
+    },
+    {
+      "at": "2026-11-05T01:39:54.501Z",
+      "agent": "deepseek",
+      "summary": "Inscrevi e aprovei os times Valdreia (VLD) e Tokaman (TKM) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert em tournament_teams como registered e update para approved. Camp. ficou com 15/16 vagas (14 aprovados + Chidori pendente); confirmado pela API publica que os dois aparecem na classificacao. Nenhum codigo alterado.",
+      "touched": []
+    },
+    {
+      "at": "2026-11-05T01:41:24.831Z",
+      "agent": "deepseek",
+      "summary": "Simplificacao local da matriz 84 itens concluida na branch simplificacao-m7arena: removidos revisao/prints/disputas, noticias, player_stats, convites, dashboard financeiro, Time vs Time antigo e M7 Points; saldo MC renomeado para Essencia Azul (E); corrigidos lives de scrim (G04/G06), sino G07, cargo caster/H02 e H01 com reservas; novo ESTRUTURA_ATUALIZADA_2026-11-04.md. Evidencias: web lint/build, api tsc, 279 testes passando, verify-swap 0. Sem deploy, sem migration, main intacta.",
+      "touched": [
+        "web/src",
+        "api/src",
+        "db",
+        "docs",
+        "infra",
+        "scripts",
+        "plano_m7arena_atualizado.md",
+        "CATALOGO_FUNCIONALIDADES.md",
+        "ESTRUTURA_ATUALIZADA_2026-11-04.md"
+      ]
+    },
+    {
+      "at": "2026-11-05T02:41:38.573Z",
+      "agent": "deepseek",
+      "summary": "Homologacao local da simplificacao: stack Docker local com banco isolado m7arena_homolog; navegador testou cadastro/login/perfil, catalogo com OP.GG, times, campeonatos, salas 5v5 e 1v1 completa ate iniciar partida, scrim, carteira E, admin. Corrigidos bugs de homologacao e seguranca: perfil publico sem Pix, saldo de terceiros so admin, escrita de campeonato por staff, inscricao sem autoaprovacao, lineup sem sequestro, tick autenticado, refresh-elo removido, convidado so por PUUID. Auditoria read-only de producao: 0 salas aguardando_revisao, 0 reservas, 13 prints e 2 disputas historicas encerradas. Evidencias: web lint/build, api tsc/build, 283 testes API passando, verify-swap 0. Sem deploy/migration; main intacta.",
+      "touched": [
+        "web/src",
+        "api/src",
+        "api/test",
+        "infra",
+        "docs",
+        "ESTRUTURA_ATUALIZADA_2026-11-04.md",
+        "docs/HOMOLOGACAO_SIMPLIFICACAO.md"
+      ]
     }
   ]
 }

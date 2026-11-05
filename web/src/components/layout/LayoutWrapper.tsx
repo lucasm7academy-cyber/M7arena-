@@ -263,7 +263,7 @@ export default function Layout() {
                   onClick={() => playSound('click')}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#08080a] text-white font-black text-[10px] sm:text-[11px] uppercase tracking-wider group-hover:text-primary transition-all active:scale-95 cursor-pointer"
                   style={{ clipPath: CUT_BADGE_INNER }}
-                  title="Saldo em M7 Coins"
+                  title="Saldo em Essência Azul"
                 >
                   <MCIcon size={16} className="shrink-0 text-primary" />
                   <span className="tabular-nums">{(perfil?.saldo ?? 0).toLocaleString('pt-BR')}</span>
@@ -636,7 +636,7 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* Modal Compra de MC */}
+      {/* Modal Compra de E */}
       <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
 
       {/* Convite de scrim (campanha) — aparece 1x por sessão no Lobby/Jogar. */}

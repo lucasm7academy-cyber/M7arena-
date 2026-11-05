@@ -1,4 +1,4 @@
-// Depósito de MC (PIX) — aba do checkout. Recorte do DepositModal (spec
+// Depósito de E (PIX) — aba do checkout. Recorte do DepositModal (spec
 // saque-mc-pix): conteúdo visual com corte angular e tons suaves.
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
@@ -73,7 +73,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
       const { status } = await api.payments.status(paymentData.orderId);
 
       if (status === 'approved') {
-        toast.success('Pagamento aprovado! MCs creditados.');
+        toast.success('Pagamento aprovado! Essência Azul creditada.');
         onClose();
       } else if (!silent) {
         toast('Pagamento ainda não confirmado. Aguarde alguns instantes e tente novamente.');
@@ -102,7 +102,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
   const handleBuyClick = async () => {
     if (!selectedPackage) return;
     if (!user) {
-      toast.error('Você precisa estar logado para comprar MCs');
+      toast.error('Você precisa estar logado para comprar Essência Azul');
       return;
     }
 
@@ -211,7 +211,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                         <div className="flex items-center gap-2.5">
                           <GoldEssenceIcon size={20} className={isSelected ? 'opacity-100' : 'opacity-80'} />
                           <div className="text-xl font-black text-zinc-100 tracking-tight">
-                            {pkg.mcs.toLocaleString('pt-BR')} <span className="text-[11px] font-bold text-zinc-400 uppercase">MC</span>
+                            {pkg.mcs.toLocaleString('pt-BR')} <span className="text-[11px] font-bold text-zinc-400 uppercase">E</span>
                           </div>
                         </div>
                       </div>
@@ -253,7 +253,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                       <span className="text-zinc-400 text-xs font-bold uppercase">Você Recebe</span>
                       <div className="flex items-center gap-1.5 text-zinc-100">
                         <GoldEssenceIcon size={16} />
-                        <span className="text-base font-black">{selectedPackage.mcs.toLocaleString('pt-BR')} MCs</span>
+                        <span className="text-base font-black">{selectedPackage.mcs.toLocaleString('pt-BR')} E</span>
                       </div>
                     </div>
 
@@ -261,7 +261,7 @@ export default function DepositTab({ onClose }: { onClose: () => void }) {
                       className="bg-[#14141a] px-3 py-2 flex items-center justify-between"
                       style={{ clipPath: CUT_BADGE_INNER }}
                     >
-                      <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Custo por MC</span>
+                      <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Custo por E</span>
                       <span className="text-zinc-200 text-xs font-black">
                         R$ {(selectedPackage.priceInReais / selectedPackage.mcs).toFixed(2).replace('.', ',')}
                       </span>

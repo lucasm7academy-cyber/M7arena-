@@ -7,6 +7,7 @@ import { and, eq, gt, inArray, isNotNull, isNull, not, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { users, userRoles } from "../../../db/schema/identidade.js";
 import { teams } from "../../../db/schema/teams.js";
+import { matches } from "../../../db/schema/matches.js";
 import { tournaments, tournamentMatches } from "../../../db/schema/tournaments.js";
 import { escalasTransmissao, transmissoes } from "../../../db/schema/conteudo.js";
 import { STATUS_JOGO_FINALIZADO } from "./transmissoes.js";
@@ -15,6 +16,15 @@ export const TZ_TRANSMISSAO = "America/Sao_Paulo";
 export const JANELA_ANTES_MS = 30 * 60 * 1000;
 const ATRASO_MAX_MS = 2 * 60 * 60 * 1000;
 const LIMITE_AGENDA = 50;
+
+/**
+ * Status de SALA (`matches`) em que a live de scrim (`sala_id`) não representa
+ * mais um jogo vivo. A live de scrim nasce sem `expira_em` — o fim dela é o fim
+ * da sala, igual à live de campeonato (que termina com a série). Fora destes
+ * estados a sala ainda está de pé (inclusive `finalizacao`, quando o
+ * encerramento ainda está em curso).
+ */
+const STATUS_SALA_ENCERRADA = ["encerrada", "cancelada", "camp_finalizada"];
 
 export type Resultado<T = {}> = ({ ok: true } & T) | { ok: false; erro: string };
 
@@ -280,34 +290,50 @@ export async function entrarNoAr(
   return { ok: true, transmissao: row, codigo_partida: jogo.codigoPartida ?? null };
 }
 
-/** Vitrine pública: live livre não expirada OU live de jogo não finalizado. */
+/**
+ * Vitrine pública: live avulsa não expirada, live de campeonato com a série
+ * ainda não decidida ou live de SCRIM (`sala_id`, sem `expira_em`) enquanto a
+ * sala não estiver encerrada/cancelada.
+ */
 export async function listarVitrine(d: any, agora: Date = new Date()) {
   const rows = await d
-    .select({ t: transmissoes, jogoStatus: tournamentMatches.status })
+    .select({ t: transmissoes, jogoStatus: tournamentMatches.status, salaStatus: matches.status })
     .from(transmissoes)
     .leftJoin(tournamentMatches, eq(transmissoes.matchId, tournamentMatches.id))
+    .leftJoin(matches, eq(transmissoes.salaId, matches.id))
     .where(and(
       eq(transmissoes.ativo, true),
       or(
-        and(isNull(transmissoes.matchId), isNotNull(transmissoes.expiraEm), gt(transmissoes.expiraEm, agora)),
-        and(isNotNull(transmissoes.matchId), not(inArray(tournamentMatches.status, [...STATUS_JOGO_FINALIZADO])))
+        // Avulsa: sem jogo e sem sala — vale a expiração.
+        and(
+          isNull(transmissoes.matchId),
+          isNull(transmissoes.salaId),
+          isNotNull(transmissoes.expiraEm),
+          gt(transmissoes.expiraEm, agora)
+        ),
+        // Campeonato: vinculada a uma série ainda não decidida.
+        and(isNotNull(transmissoes.matchId), not(inArray(tournamentMatches.status, [...STATUS_JOGO_FINALIZADO]))),
+        // Scrim (TIME vs TIME livre): `match_id` é null; o vínculo é a SALA.
+        and(isNotNull(transmissoes.salaId), not(inArray(matches.status, [...STATUS_SALA_ENCERRADA])))
       )
     ));
   return rows.map((r: any) => r.t);
 }
 
-/** Live ativa do usuário; desativa lazy as mortas (expirada ou jogo finalizado). */
+/** Live ativa do usuário; desativa lazy as mortas (expirada, série/sala encerrada). */
 export async function minhaTransmissao(d: any, userId: string, agora: Date = new Date()) {
   const rows = await d
-    .select({ t: transmissoes, jogoStatus: tournamentMatches.status })
+    .select({ t: transmissoes, jogoStatus: tournamentMatches.status, salaStatus: matches.status })
     .from(transmissoes)
     .leftJoin(tournamentMatches, eq(transmissoes.matchId, tournamentMatches.id))
+    .leftJoin(matches, eq(transmissoes.salaId, matches.id))
     .where(and(eq(transmissoes.userId, userId), eq(transmissoes.ativo, true)));
-  const vivas = rows.filter((r: any) =>
-    r.t.matchId
-      ? !STATUS_JOGO_FINALIZADO.includes(r.jogoStatus)
-      : r.t.expiraEm && new Date(r.t.expiraEm) > agora
-  );
+  const vivas = rows.filter((r: any) => {
+    if (r.t.matchId) return !STATUS_JOGO_FINALIZADO.includes(r.jogoStatus);
+    // Scrim: o fim é o fim da SALA — `expira_em` é null de propósito.
+    if (r.t.salaId) return !!r.salaStatus && !STATUS_SALA_ENCERRADA.includes(r.salaStatus);
+    return !!r.t.expiraEm && new Date(r.t.expiraEm) > agora;
+  });
   const mortas = rows.filter((r: any) => !vivas.includes(r));
   if (mortas.length > 0) {
     await d

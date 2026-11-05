@@ -6,7 +6,6 @@ import {
   teams,
   teamMembers,
   teamStats,
-  teamInvites,
 } from "../../../db/schema/teams.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { tournamentMatches, bracketMatches, tournaments } from "../../../db/schema/tournaments.js";
@@ -119,47 +118,12 @@ function toLegacyTeam(t: any, stats: any, capitaoId: string | null = null) {
   };
 }
 
-function toLegacyInvite(i: any) {
-  return {
-    id: i.id,
-    time_id: i.teamId,
-    de_user_id: i.fromUserId,
-    para_user_id: i.toUserId,
-    riot_id: i.riotId ?? null,
-    role: i.role,
-    mensagem: i.message ?? null,
-    tipo: i.type === "request" ? "solicitacao" : "convite",
-    status: i.status === "accepted" ? "aceito" : i.status === "declined" ? "recusado" : "pendente",
-    criado_em: i.createdAt,
-  };
-}
-
-const INVITE_LEGACY_TYPE_TO_NEW: Record<string, string> = {
-  solicitacao: "request",
-  convite: "invite",
-};
-
 async function getStats(teamId: string) {
   const [stats] = await db.select().from(teamStats).where(eq(teamStats.teamId, teamId)).limit(1);
   return stats || null;
 }
 
 /** Valida vaga no time replicando a regra do validarVagaTime do fork. */
-function validateSlot(members: any[], roleLegacy: string): string | null {
-  const nonCoach = members.filter((m) => slotToLegacy(m.roleSlot) !== "COACH").length;
-  if (roleLegacy !== "COACH" && nonCoach >= 8) {
-    return "O time já está cheio (máximo de 8 jogadores).";
-  }
-  if (roleLegacy !== "RES") {
-    if (members.some((m) => slotToLegacy(m.roleSlot) === roleLegacy)) {
-      return "Essa rota já foi preenchida no time.";
-    }
-  } else if (members.filter((m) => slotToLegacy(m.roleSlot) === "RES").length >= 3) {
-    return "O time já tem 3 reservas.";
-  }
-  return null;
-}
-
 // ── GET /api/teams/batch?ids=a,b,c — legenda de times por id (nomes/cores) ──
 teamsRouter.get("/batch", async (req, res) => {
   try {
@@ -304,25 +268,6 @@ teamsRouter.get("/", async (req, res) => {
     });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao listar times" });
-  }
-});
-
-// ── GET /api/teams/invites — convites do usuário logado ────────────────────
-teamsRouter.get("/invites", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-    const rows = await db
-      .select()
-      .from(teamInvites)
-      .where(or(eq(teamInvites.toUserId, user.id), eq(teamInvites.fromUserId, user.id)))
-      .orderBy(desc(teamInvites.createdAt))
-      .limit(50);
-    return res.json(rows.map(toLegacyInvite));
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao listar convites" });
   }
 });
 
@@ -634,155 +579,6 @@ teamsRouter.post("/memberships/remove", async (req, res) => {
   }
 });
 
-// ── POST /api/teams/invites — criar convite/solicitação ────────────────────
-teamsRouter.post("/invites", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const { time_id, para_user_id, riot_id, role, mensagem, tipo } = req.body;
-    if (!time_id || !role) {
-      return res.status(400).json({ error: "time_id e role são obrigatórios" });
-    }
-
-    const [invite] = await db
-      .insert(teamInvites)
-      .values({
-        teamId: time_id,
-        fromUserId: user.id,
-        toUserId: para_user_id ?? null,
-        riotId: riot_id ?? null,
-        role,
-        message: mensagem ?? null,
-        type: INVITE_LEGACY_TYPE_TO_NEW[tipo] || "request",
-        status: "pending",
-      })
-      .returning();
-
-    return res.status(201).json(toLegacyInvite(invite));
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao criar convite" });
-  }
-});
-
-// ── POST /api/teams/invites/clear — limpar convites de status ──────────────
-teamsRouter.post("/invites/clear", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-    const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
-    if (ids.length === 0) return res.json({ ok: true });
-
-    await db
-      .delete(teamInvites)
-      .where(and(inArray(teamInvites.id, ids), eq(teamInvites.fromUserId, user.id)));
-    return res.json({ ok: true });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao limpar convites" });
-  }
-});
-
-// ── POST /api/teams/invites/:id/accept — aceitar convite/solicitação ───────
-teamsRouter.post("/invites/:id/accept", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const [invite] = await db.select().from(teamInvites).where(eq(teamInvites.id, req.params.id)).limit(1);
-    if (!invite) return res.status(404).json({ error: "Convite não encontrado" });
-    if (invite.status !== "pending") return res.status(400).json({ error: "Este convite já foi respondido." });
-
-    const [team] = await db.select().from(teams).where(eq(teams.id, invite.teamId)).limit(1);
-    if (!team) return res.status(404).json({ error: "Time não encontrado" });
-
-    const isRequest = invite.type === "request";
-    const targetUserId = isRequest ? invite.fromUserId : invite.toUserId;
-    if (!targetUserId) {
-      return res.status(400).json({ error: "Este convite não tem destinatário" });
-    }
-
-    if (!isRequest) {
-      if (invite.toUserId !== user.id) {
-        return res.status(403).json({ error: "Este convite não é para você" });
-      }
-    } else {
-      const [cap] = await db
-        .select()
-        .from(teamMembers)
-        .where(and(eq(teamMembers.teamId, team.id), eq(teamMembers.isCaptain, true)))
-        .limit(1);
-      const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
-      const isProprietario = roles.some((r) => r.role === "proprietario");
-      const canManage = team.ownerId === user.id || (cap && cap.userId === user.id) || isProprietario;
-      if (!canManage) {
-        return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode aceitar solicitações" });
-      }
-    }
-
-    // ADR-087 — um time só por jogador. A checagem enxerga o vínculo REAL e a
-    // vaga de CONVIDADO resolvida pelo Riot ID: antes olhava só `user_id`, o
-    // "já pertence a um time" passava batido e o jogador ficava em dois times
-    // (caso real: macoinha07#fck13 no M7W como guest + request na Lula).
-    // Decisão do usuário: entrar em um time ele o do ANTERIOR na hora.
-    const anteriores = await findUserTeamMemberships(db, targetUserId, { onlyAccepted: true });
-    const jaNoTimeAlvo = anteriores.find((m) => m.teamId === team.id);
-    const foraDoTimeAlvo = anteriores.filter((m) => m.teamId !== team.id);
-    if (foraDoTimeAlvo.length) {
-      await db
-        .delete(teamMembers)
-        .where(inArray(teamMembers.id, foraDoTimeAlvo.map((m) => m.id)));
-    }
-
-    // Já está aceito neste time (convite duplicado): não cria linha repetida.
-    if (jaNoTimeAlvo) {
-      await db.update(teamInvites).set({ status: "accepted" }).where(eq(teamInvites.id, invite.id));
-      return res.json({ ok: true });
-    }
-
-    const members = await db.select().from(teamMembers).where(eq(teamMembers.teamId, team.id));
-    const slotErro = validateSlot(members, invite.role);
-    if (slotErro) return res.status(409).json({ error: slotErro });
-
-    await db.insert(teamMembers).values({
-      teamId: team.id,
-      userId: targetUserId,
-      roleSlot: legacyToSlot(invite.role),
-      isCaptain: false,
-      status: "accepted",
-    });
-    await db.update(teamInvites).set({ status: "accepted" }).where(eq(teamInvites.id, invite.id));
-
-    return res.json({ ok: true });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao aceitar convite" });
-  }
-});
-
-// ── POST /api/teams/invites/:id/decline — recusar convite/solicitação ──────
-teamsRouter.post("/invites/:id/decline", async (req, res) => {
-  try {
-    const user = await getAuthUser(req);
-    if (!user) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const [invite] = await db.select().from(teamInvites).where(eq(teamInvites.id, req.params.id)).limit(1);
-    if (!invite) return res.status(404).json({ error: "Convite não encontrado" });
-    if (invite.status !== "pending") return res.status(400).json({ error: "Este convite já foi respondido." });
-
-    await db.update(teamInvites).set({ status: "declined" }).where(eq(teamInvites.id, invite.id));
-    return res.json({ ok: true });
-  } catch (error: any) {
-    return res.status(500).json({ error: error?.message || "Erro ao recusar convite" });
-  }
-});
-
 // ── POST /api/teams/:id/lineup — substitui o lineup inteiro (transação) ────
 // Substitui a RPC salvar_lineup_time (security definer que validava dono/capitão).
 // A API valida o usuário é dono/capitão do time e substitui os membros numa
@@ -811,6 +607,39 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
     }
 
     const membros = Array.isArray(req.body?.p_membros) ? req.body.p_membros : Array.isArray(req.body?.membros) ? req.body.membros : [];
+
+    // Segurança + ADR-087: não mova nem duplique uma conta que já está em outro
+    // time. Antes, um UUID de terceiro no body expulsava a pessoa do time real;
+    // agora a rota só adiciona jogador livre (ou membro já existente neste time).
+    // Para transferir, a própria pessoa precisa sair do time anterior.
+    const atuais = await db
+      .select({ userId: teamMembers.userId })
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, id));
+    const membrosAtuais = new Set(atuais.map((m) => m.userId).filter(Boolean) as string[]);
+    const novos = [...new Set<string>(
+      membros
+        .map((m: any) => (m?.user_id ? String(m.user_id) : null))
+        .filter((uid: string | null): uid is string => !!uid && uid !== user.id && !membrosAtuais.has(uid))
+    )];
+    if (novos.length) {
+      const conflitos = await db
+        .select({ tag: teams.tag })
+        .from(teamMembers)
+        .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+        .where(and(
+          inArray(teamMembers.userId, novos),
+          eq(teamMembers.status, "accepted"),
+          ne(teamMembers.teamId, id)
+        ))
+        .limit(1);
+      if (conflitos.length) {
+        return res.status(409).json({
+          error: `Jogador já pertence ao time #${conflitos[0].tag}. Peça para ele sair do time atual antes de entrar neste.`,
+        });
+      }
+    }
+
     await db.transaction(async (tx) => {
       await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
       for (const m of membros) {
@@ -828,12 +657,17 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
         // verificador de partida) não achavam o jogador — bug da sala 217.
         if (!userId && riotId) {
           const resolvido = await resolverUserIdPorRiotId(tx, riotId);
-          if (resolvido) {
+          if (resolvido && resolvido === user.id) {
             userId = resolvido;
             riotId = null;
           }
+          // Riot ID de terceiro fica como convidado: não vincula a conta nem
+          // mexe no time dela sem uma ação/aceite da própria pessoa.
         }
-        await sairDeOutrosTimes(tx, { userId, riotId }, id);
+        // Só a própria conta pode ser retirada dos outros times por esta rota.
+        if (userId === user.id) {
+          await sairDeOutrosTimes(tx, { userId }, id);
+        }
         await tx.insert(teamMembers).values({
           teamId: id,
           userId,

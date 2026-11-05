@@ -1587,7 +1587,7 @@ export default function AdminPanel() {
                           name="outrosPremios" 
                           value={formData.outrosPremios} 
                           onChange={handleInputChange} 
-                          placeholder="Ex: Skin épica para MVP, 500 Coins para o 2º lugar..." 
+                          placeholder="Ex: Skin épica para MVP, 500 de Essência Azul para o 2º lugar..."
                           className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 font-bold text-xs h-24 resize-none shadow-sm"
                         />
                       )}

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { ArrowLeft, Shield, Search, Edit2, Save, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Shield, Search, Edit2, Save, X } from 'lucide-react';
 import { CARGO_LABELS, CARGO_COLORS, type CargoAdmin } from '../config/adminPermissoes';
-import { usePerfilSafe } from '../contexts/PerfilContext';
 
 interface UsuarioComCargo {
   id: string;
@@ -159,7 +157,7 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
                         onChange={(e) => setNovosCargos({ ...novosCargos, [usuario.user_id]: e.target.value as CargoAdmin })}
                         className={`px-2.5 py-1.5 rounded-lg border font-bold text-xs cursor-pointer ${cargoColorsSelecionado.bg} ${cargoColorsSelecionado.border} ${cargoColorsSelecionado.text} focus:outline-none`}
                       >
-                        {(['proprietario', 'admin', 'organizador', 'streamer', 'coach', 'jogador'] as CargoAdmin[]).map(cargo => (
+                        {(['proprietario', 'admin', 'organizador', 'streamer', 'caster', 'coach', 'jogador'] as CargoAdmin[]).map(cargo => (
                           <option key={cargo} value={cargo} className="bg-[#131a29] text-white">{CARGO_LABELS[cargo]}</option>
                         ))}
                       </select>
@@ -226,30 +224,6 @@ export function AbaCargos({ adminCargo }: { adminCargo: CargoAdmin }) {
         <p className="text-xs text-blue-300">
           <strong>ℹ Informação:</strong> Novos usuários recebem cargo "Jogador" automaticamente.
         </p>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PÁGINA STANDALONE (rota /admin/cargos)
-// ─────────────────────────────────────────────────────────────────────────────
-export default function AdminCargos() {
-  const navigate = useNavigate();
-  const { perfil } = usePerfilSafe();
-  const adminCargo = (perfil?.cargo as CargoAdmin) || 'jogador';
-
-  return (
-    <div className="flex-1 bg-[#0b0f19] min-h-screen text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,184,0,0.08),rgba(255,255,255,0))]">
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        <button
-          onClick={() => navigate('/admin')}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-black uppercase tracking-widest transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar para o painel
-        </button>
-        <AbaCargos adminCargo={adminCargo} />
       </div>
     </div>
   );

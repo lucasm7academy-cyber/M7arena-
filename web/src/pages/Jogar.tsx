@@ -64,7 +64,7 @@ interface UserTeam {
 const heroSlide = {
   title: "PARTICIPE DO",
   subtitle: "DESAFIO INDIVIDUAL",
-  description: "Transforme suas ranqueadas Solo/Duo ou Flex em conquistas reais. Mostre sua habilidade no Rift e ganhe MC direto na sua carteira!",
+  description: "Transforme suas ranqueadas Solo/Duo ou Flex em conquistas reais. Mostre sua habilidade no Rift e ganhe E direto na sua carteira!",
   color: '#4ade80',
   bgGradient: 'from-green-500/20 via-green-500/5 to-transparent',
   bgImage: '/images/heroSlide1.webp',
@@ -280,7 +280,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
             </div>
 
             <div className="space-y-2">
-              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Valor da Partida (M7 Coins)</label>
+              <label className="text-zinc-400 text-[10px] uppercase tracking-widest font-black">Valor da Partida (Essência Azul)</label>
               <div className="grid grid-cols-3 gap-2">
                 {OPCOES_MPOINTS.map((op) => (
                   <button
@@ -301,7 +301,7 @@ const ModalCriarSala = ({ onClose, onCreate, usuarioAtual, userTeam, modoInicial
                       }}
                     >
                       <p className="text-xs font-black uppercase tracking-wider">
-                        {op.valor === 0 ? 'Casual' : `💰 ${op.valor} MC`}
+                        {op.valor === 0 ? 'Casual' : `💰 ${op.valor} E`}
                       </p>
                     </div>
                   </button>
@@ -1131,7 +1131,7 @@ const Jogar = () => {
                           <div className="p-[1px]" style={{ clipPath: CUT_BADGE, background: `${mpInfo.cor}60` }}>
                             <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1"
                               style={{ clipPath: CUT_BADGE_INNER, background: `${mpInfo.cor}20`, color: mpInfo.cor }}>
-                              <Coins className="w-3 h-3" />{sala.mpoints} MP
+                              <Coins className="w-3 h-3" />{sala.mpoints} E
                             </span>
                           </div>
                           {sala.eloMinimo && (
@@ -1301,7 +1301,7 @@ const Jogar = () => {
                             <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>
                               <span className="px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1 bg-white/[0.04] text-zinc-300"
                                 style={{ clipPath: CUT_BADGE_INNER }}>
-                                <MCIcon className="w-3 h-3 text-zinc-400" />{sala.mpoints} {sala.mpoints > 0 ? 'MC' : 'MP'}
+                                <MCIcon className="w-3 h-3 text-zinc-400" />{sala.mpoints} E
                               </span>
                             </div>
                             <div className="p-[1px] bg-white/15" style={{ clipPath: CUT_BADGE }}>

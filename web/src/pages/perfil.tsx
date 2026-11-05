@@ -233,7 +233,7 @@ function ModalPix({ aberto, onFechar, onSalvar, inicial }: any) {
     <ModalShell
       titulo="Configurar PIX"
       badge="Carteira & Premiações"
-      subtitulo="Para recebimento de prêmios e saques de MC"
+      subtitulo="Para recebimento de prêmios e saques de E"
       corBorda="#FFB700"
       icone={<Wallet className="w-6 h-6 text-[#FFB700]" />}
       onClose={onFechar}
@@ -644,7 +644,7 @@ export default function Perfil() {
           suspensaAte={perfilContext?.suspensaAte ?? null}
         />
 
-        {/* HISTÓRICO DE APOSTAS (MC ganho/perdido) */}
+        {/* HISTÓRICO DE APOSTAS (E ganho/perdido) */}
         <HistoricoApostas />
 
         {/* EQUIPE */}

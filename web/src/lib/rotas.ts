@@ -10,6 +10,7 @@
 export function rotaDaSala(modo: string | null | undefined, id: number | string): string {
   if (modo === 'campeonato') return `/campeonato/sala/${id}`;
   if (modo === 'time_vs_time_livre') return `/sala-time/${id}`;
-  if (modo === 'time_vs_time') return `/time_vs_time/${id}`;
+  // Modo legado removido em 2026-11; não existe mais sala para abrir.
+  if (modo === 'time_vs_time') return '/jogar';
   return `/${modo || '5v5'}/${id}`;
 }

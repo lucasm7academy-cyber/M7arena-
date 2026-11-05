@@ -1,44 +1,9 @@
 /**
- * Shape legado do domínio conteúdo (swap app.swap.conteudo). O fork consome
- * snake_case (`titulo`/`resumo`/`thumbnail_url`/`publicado_em`/`destaque`);
- * a API devolve camelCase (`title`/`summary`/`imageUrl`/`publishedAt`). Os
- * adaptadores abaixo convertem nos dois sentidos para o JSX não mudar uma linha.
+ * Shape legado do domínio conteúdo (swap app.swap.conteudo) para highlights.
+ * O fork consome snake_case (`titulo`/`thumbnail_url`/`link`); a API devolve
+ * camelCase (`title`/`thumbnailUrl`/`videoUrl`). Os adaptadores abaixo
+ * convertem nos dois sentidos para o JSX não mudar uma linha.
  */
-
-export interface ApiLegacyNews {
-  id: string;
-  titulo: string;
-  slug: string;
-  resumo: string;
-  conteudo?: string;
-  categoria: string;
-  thumbnail_url: string | null;
-  autor?: string;
-  publicado_em: string;
-  destaque: boolean;
-  ativo?: boolean;
-  link_url?: string | null;
-  link_texto?: string | null;
-}
-
-export interface ApiNewsRow {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  content: string;
-  imageUrl: string | null;
-  authorId: string;
-  published: boolean;
-  publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  categoria: string;
-  destaque: boolean;
-  linkUrl: string | null;
-  linkText: string | null;
-  autor: string | null;
-}
 
 export interface ApiLegacyHighlight {
   id: string;
@@ -61,50 +26,6 @@ export interface ApiHighlightRow {
   createdAt: string;
   ordem: number;
   categoria: string;
-}
-
-export interface ApiPlayerStats {
-  userId: string;
-  modo: string;
-  victories: number;
-  defeats: number;
-  totalGames: number;
-  winrate: number;
-}
-
-export function toLegacyNews(n: ApiNewsRow): ApiLegacyNews {
-  return {
-    id: n.id,
-    titulo: n.title,
-    slug: n.slug,
-    resumo: n.summary ?? '',
-    conteudo: n.content || undefined,
-    categoria: n.categoria,
-    thumbnail_url: n.imageUrl,
-    autor: n.autor ?? undefined,
-    publicado_em: n.publishedAt || n.createdAt,
-    destaque: n.destaque,
-    ativo: n.published,
-    link_url: n.linkUrl,
-    link_texto: n.linkText,
-  };
-}
-
-export function toApiNews(data: Partial<ApiLegacyNews>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  if (data.titulo !== undefined) out.title = data.titulo;
-  if (data.slug !== undefined) out.slug = data.slug;
-  if (data.resumo !== undefined) out.summary = data.resumo;
-  if (data.conteudo !== undefined) out.content = data.conteudo;
-  if (data.categoria !== undefined) out.categoria = data.categoria;
-  if (data.thumbnail_url !== undefined) out.imageUrl = data.thumbnail_url;
-  if (data.autor !== undefined) out.autor = data.autor;
-  if (data.publicado_em !== undefined) out.publishedAt = data.publicado_em;
-  if (data.destaque !== undefined) out.destaque = data.destaque;
-  if (data.ativo !== undefined) out.published = data.ativo;
-  if (data.link_url !== undefined) out.linkUrl = data.link_url;
-  if (data.link_texto !== undefined) out.linkText = data.link_texto;
-  return out;
 }
 
 export function toLegacyHighlight(h: ApiHighlightRow): ApiLegacyHighlight {

@@ -376,7 +376,7 @@ export const FormCriarCampeonato = ({
                   name="outrosPremios"
                   value={formData.outrosPremios}
                   onChange={handleInputChange}
-                  placeholder="Descreva aqui os prêmios extras (Ex: Skin Lendária para o MVP, MP Coins para Top 2...)"
+                  placeholder="Descreva aqui os prêmios extras (Ex: Skin Lendária para o MVP, Essência Azul para Top 2...)"
                   className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-6 focus:outline-none focus:border-teal-500 font-bold text-sm h-32 resize-none shadow-sm"
                 />
               </motion.div>

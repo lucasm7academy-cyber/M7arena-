@@ -40,18 +40,12 @@ function lazyWithRetry(factory: () => Promise<any>) {
 // ✅ Lazy loading para páginas que não são imediatamente necessárias
 const Login = lazyWithRetry(() => import("./pages/Login"));
 const RedefinirSenha = lazyWithRetry(() => import("./pages/RedefinirSenha"));
-const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
-const ResetHandler = lazyWithRetry(() => import("./pages/ResetHandler"));
-const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
 const Lobby = lazyWithRetry(() => import("./pages/Lobby"));
 const Jogar = lazyWithRetry(() => import("./pages/Jogar"));
 
 const ApostaIndividualPage = lazyWithRetry(() => import("./pages/ApostaIndividualPage"));
 
 const SalaMod1 = lazyWithRetry(() => import("./pages/SalaMod1"));
-// Sala de TIME vs TIME — estrutura dedicada (features/sala-time-vs-time).
-// Cópia 1:1 de SalaMod1; o design dela evolui separado dos demais modos.
-const SalaTimeVsTime = lazyWithRetry(() => import("./features/sala-time-vs-time/SalaTimeVsTime"));
 // Sala Campeonato (ADRs 076-085): mesma cara da sala normal + funcionalidades
 // da série (vagas de time, PRONTO, escolha de lado, draft Fearless, código, live).
 const SalaCampeonato = lazyWithRetry(() => import("./features/sala-campeonato/SalaCampeonato"));
@@ -61,8 +55,6 @@ const Equipes = lazyWithRetry(() => import("./pages/equipes"));
 const Players = lazyWithRetry(() => import("./pages/players"));
 const TimePage = lazyWithRetry(() => import("./pages/TimePage"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
-const AdminCargos = lazyWithRetry(() => import("./pages/AdminCargos"));
-const AdminContatos = lazyWithRetry(() => import("./pages/AdminContatos"));
 const Streamers = lazyWithRetry(() => import("./pages/Streamers"));
 const Politicas = lazyWithRetry(() => import("./pages/Politicas"));
 const Tutorial = lazyWithRetry(() => import("./pages/Tutorial"));
@@ -156,7 +148,7 @@ class RootErrorBoundary extends React.Component<{ children: React.ReactNode }, {
  * RootRedirect
  *
  * Na rota "/", verifica se a URL contém parâmetros OAuth (?code=, #access_token=, etc.).
- * Se sim, mostra um loading e deixa o OAuthCallbackHandler / API processar o callback.
+ * Se sim, mostra um loading e deixa a API processar o callback.
  * Se não, redireciona normalmente para /lobby.
  *
  * Isso resolve o problema de o <Navigate to="/lobby"> descartar o ?code= antes
@@ -170,7 +162,7 @@ function RootRedirect() {
     url.includes('#access_token=') || url.includes('#error=') ||
     url.includes('?error=') || url.includes('&error=');
 
-  // Se tem parâmetros OAuth, espera o OAuthCallbackHandler processar
+  // Se tem parâmetros OAuth, espera a API processar o callback
   if (hasOAuthParams) {
     // Se já tem sessão (callback processado com sucesso), redireciona
     if (!isLoading && user) {
@@ -213,12 +205,7 @@ export default function App() {
             {/* Rotas públicas */}
             <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<RouteWithSuspense element={<Login />} />} />
-            <Route path="/reset-password" element={<RouteWithSuspense element={<ResetHandler />} />} />
-            <Route path="/resetpassword" element={<RouteWithSuspense element={<ResetPassword />} />} />
             <Route path="/redefinir-senha" element={<RouteWithSuspense element={<RedefinirSenha />} />} />
-
-                        {/* OAuth Callback */}
-                        <Route path="/auth/callback" element={<RouteWithSuspense element={<AuthCallback />} />} />
 
                         {/* Admin em tela cheia: fora do Layout do site (sem header/sidebar do
                             site, como nas salas). O painel tem sidebar própria + botão voltar. */}
@@ -247,12 +234,11 @@ export default function App() {
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
               <Route path="/admin/criar-campeonato" element={<PrivateRoute><RouteWithSuspense element={<CreateCampPage />} /></PrivateRoute>} />
-              {/* Sala por modo: /5v5/:id, /aram/:id, /1v1/:id, /time_vs_time/:id.
+              {/* Sala por modo: /5v5/:id, /aram/:id, /1v1/:id.
                   O slug reflete o modo real da sala (rota pública — visitante vê sem login). */}
               <Route path="/5v5/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/aram/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
               <Route path="/1v1/:id" element={<RouteWithSuspense element={<SalaMod1 />} />} />
-              <Route path="/time_vs_time/:id" element={<RouteWithSuspense element={<SalaTimeVsTime />} />} />
               <Route path="/campeonato/sala/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
               {/* Sala Time vs Time LIVRE: mesmo componente, sem campeonato (ADR-086). */}
               <Route path="/sala-time/:id" element={<RouteWithSuspense element={<SalaCampeonato />} />} />
@@ -260,8 +246,10 @@ export default function App() {
                   (/time_vs_time_livre/:id) são redirecionados para /sala-time/:id.
                   Antes caíam em "No routes matched" (card de finalizadas). */}
               <Route path="/time_vs_time_livre/:id" element={<RedirecionaSalaLivre />} />
-              <Route path="/admin/cargos" element={<PrivateRoute><RouteWithSuspense element={<AdminCargos />} /></PrivateRoute>} />
-              <Route path="/admin/contatos" element={<PrivateRoute><RouteWithSuspense element={<AdminContatos />} /></PrivateRoute>} />
+              {/* C16: a sala legada `/time_vs_time/:id` foi removida; links
+                  históricos caem na vitrine em vez de tela branca. */}
+              <Route path="/time_vs_time/:id" element={<Navigate to="/jogar" replace />} />
+              <Route path="*" element={<Navigate to="/lobby" replace />} />
             </Route>
           </Routes>
           </RootErrorBoundary>

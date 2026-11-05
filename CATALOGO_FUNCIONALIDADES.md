@@ -4,6 +4,12 @@
 > O objetivo é listar o que o aplicativo faz hoje, inclusive o que existe no
 > backend sem aparecer na tela, para que o usuário decida depois o que manter,
 > corrigir, isolar ou descontinuar.
+>
+> **Nota de 04/11/2026:** este catálogo é a fotografia **anterior** à execução da
+> matriz. Itens como revisão/prints/disputas, notícias, player_stats, convites,
+> dashboard financeiro, Time vs Time antigo e M7 Points foram removidos ou
+> simplificados depois. Para o estado atual, use
+> `ESTRUTURA_ATUALIZADA_2026-11-04.md`; este arquivo permanece como baseline.
 
 **Levantamento:** 04/11/2026
 **Base:** commit `ac36534` (`main`) — código igual a `8e498dc`

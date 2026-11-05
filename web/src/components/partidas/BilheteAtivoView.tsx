@@ -114,14 +114,14 @@ export const BilheteAtivoView: React.FC<BilheteAtivoViewProps> = ({
               <div className="flex items-center gap-3 shrink-0 text-right">
                 <div>
                   <span className="text-xs font-black text-white block">
-                    {leg.stake} MC
+                    {leg.stake} E
                   </span>
                   <span className="text-[10px] font-bold text-[#FFB700] block">
                     @{leg.odd}
                   </span>
                 </div>
                 <div className="px-2.5 py-1 rounded-lg bg-[#FFB700]/10 border border-[#FFB700]/30 text-[11px] font-black text-[#FFB700]">
-                  +{leg.payout} MC
+                  +{leg.payout} E
                 </div>
               </div>
             </div>
@@ -133,12 +133,12 @@ export const BilheteAtivoView: React.FC<BilheteAtivoViewProps> = ({
       <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold uppercase tracking-widest text-white/50">Valor Total do Desafio</span>
-          <span className="font-black text-white">{ticket.stakeTotal} MC</span>
+          <span className="font-black text-white">{ticket.stakeTotal} E</span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="font-black uppercase tracking-widest text-white/70">Recompensa Total em Caso de Sucesso</span>
           <span className="text-base sm:text-lg font-black text-[#FFB700] drop-shadow">
-            {totalPayoutAtivo} MC
+            {totalPayoutAtivo} E
           </span>
         </div>
       </div>
@@ -160,7 +160,7 @@ export const BilheteAtivoView: React.FC<BilheteAtivoViewProps> = ({
       <p className="text-[11px] text-white/40 text-center leading-relaxed px-2">
         {isEmJogo
           ? 'A partida está em andamento. O sistema valida seu desempenho automaticamente através da Riot API.'
-          : 'O desafio perdura até você concluir sua partida ranqueada. Se nenhuma partida acontecer até o prazo, seu MC é estornado integralmente.'}
+          : 'O desafio perdura até você concluir sua partida ranqueada. Se nenhuma partida acontecer até o prazo, seu E é estornado integralmente.'}
       </p>
     </div>
   );

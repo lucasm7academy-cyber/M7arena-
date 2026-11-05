@@ -622,22 +622,6 @@ const TeamTagBadge = ({ tag, color }: { tag: string; color: string }) => (
 const _HIGHLIGHTS_CACHE_TTL = 5 * 60 * 1000;
 let _highlightsCache: { data: Array<{ id: string; titulo: string; link: string; thumbnail_url: string | null; categoria: string }>; ts: number } | null = null;
 
-// ⚡ Cache para notícias do blog (mesmo padrão)
-const _NOTICIAS_CACHE_TTL = 5 * 60 * 1000;
-let _noticiasCache: { data: Noticia[]; ts: number } | null = null;
-
-interface Noticia {
-  id: string;
-  titulo: string;
-  slug: string;
-  resumo: string;
-  categoria: string;
-  thumbnail_url: string | null;
-  autor?: string;
-  publicado_em: string;
-  destaque: boolean;
-}
-
 const Home = () => {
   const navigate = useNavigate();
   const liveScrollRef = React.useRef<HTMLDivElement>(null);
@@ -649,10 +633,7 @@ const Home = () => {
   const [highlights, setHighlights] = React.useState<Array<{ id: string; titulo: string; link: string; thumbnail_url: string | null; categoria: string }>>([]);
   const [upcomingMatches, setUpcomingMatches] = React.useState<UpcomingMatch[]>([]);
   const [upcomingLoaded, setUpcomingLoaded] = React.useState(false);
-  const [noticias, setNoticias] = React.useState<Noticia[]>([]);
   const [openFaqId, setOpenFaqId] = React.useState<number | null>(null);
-  const [selectedNoticia, setSelectedNoticia] = React.useState<any>(null);
-
   // Fetch próximos jogos do cronograma (cache 5 min)
   React.useEffect(() => {
     const fetchUpcoming = async () => {
@@ -807,22 +788,6 @@ const Home = () => {
       })
       .catch((err) => {
         console.error('Erro ao buscar highlights:', err);
-      });
-  }, []);
-
-  // Busca notícias do blog (cache 5min) — usado na seção "Notícias & Atualizações"
-  React.useEffect(() => {
-    if (_noticiasCache && Date.now() - _noticiasCache.ts < _NOTICIAS_CACHE_TTL) {
-      setNoticias(_noticiasCache.data);
-      return;
-    }
-    api.content.news()
-      .then((list) => {
-        setNoticias(list);
-        _noticiasCache = { data: list, ts: Date.now() };
-      })
-      .catch((err) => {
-        console.error('Erro ao buscar notícias:', err);
       });
   }, []);
 
@@ -1357,7 +1322,7 @@ const Home = () => {
               n: '02',
               icone: '/lanes_brancas/icon-position-fillB.png',
               title: 'Monte seu Time',
-              desc: 'Traga seu squad completo ou encontre parceiros de rotas no painel de recrutamento — sem time, a gente ajuda a montar.',
+              desc: 'Traga seu squad completo e organize o lineup do time — o capitão adiciona titulares, reservas e coach.',
               bgImage: '/images/poro_step2.webp',
             },
             {
@@ -1428,157 +1393,6 @@ const Home = () => {
             </CardCorte>
           ))}
         </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          NOTÍCIAS & ATUALIZAÇÕES — Clicáveis com Leitura Completa
-         ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 max-w-[1400px] mx-auto border-t border-white/5">
-        <div className="flex flex-col items-center sm:flex-row sm:items-end justify-between gap-4 mb-12">
-          <div className="text-center sm:text-left">
-            <Eyebrow>Informa e Esportes</Eyebrow>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-3">
-              Fique por <span className="text-[#FFB700]">Dentro</span>
-            </h2>
-          </div>
-          <span className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40">
-            Clique em qualquer matéria para ler na íntegra
-          </span>
-        </div>
-
-        {noticias.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                id: 'demo-1',
-                titulo: 'Salas personalizadas em série: MD1, MD3 e MD5',
-                resumo: 'Agora você pode montar scrims no formato de campeonato: melhor de 1, 3 ou 5, com placar por jogo e draft novo a cada partida.',
-                conteudo:
-                  'A sala personalizada da M7 ARENA agora aceita SÉRIE. Ao criar a sala você escolhe o formato — MD1, MD3 ou MD5 — e o sistema controla tudo sozinho: placar da série, avanço de jogo e um draft novo para cada partida (com draft por jogo, igual aos campeonatos). O resultado de cada jogo entra no histórico da série e o vencedor é quem fechar primeiro o número de vitórias do formato. É o jeito mais próximo de um campeonato oficial para treinar com o seu time — e vale PDL normalmente.',
-                categoria: 'Novidade',
-                date: 'Hoje',
-                image: '/images/fundoCard5v5.webp',
-              },
-              {
-                id: 'demo-2',
-                titulo: 'Seu elo agora atualiza sozinho na plataforma',
-                resumo: 'Vinculou a conta Riot? O elo do seu perfil passa a ser sincronizado automaticamente — sem editar na mão.',
-                conteudo:
-                  'Chega de atualizar elo manualmente. Ao vincular a conta Riot (Nick#TAG), a M7 ARENA busca sua liga direto da API oficial da Riot e mantém o elo do seu perfil sempre em dia: soloQ, flex e o tier usado para separar os campeonatos por nível. A sincronização roda automaticamente, então quando você subir de divisão o site já mostra o novo elo — e as salas passam a considerar o seu tier atual. Se o elo não aparecer, confira se a conta está vinculada em Perfil → Vincular Conta Riot.',
-                categoria: 'Atualização',
-                date: 'Esta semana',
-                image: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Yasuo_0.jpg',
-              },
-              {
-                id: 'demo-3',
-                titulo: 'Copa do Halloween 2026 — inscrições em breve',
-                resumo: 'O torneio mais assustador do ano está chegando: vagas limitadas, premiação em Pix e transmissão ao vivo das finais.',
-                conteudo:
-                  'Prepare o squad: a COPA DO HALLOWEEN 2026 da M7 ARENA está chegando. Será um campeonato 5v5 no formato de chaves, com vagas limitadas, premiação em Pix e as finais transmitidas ao vivo nos canais oficiais. As inscrições abrem em breve e quem estiver com o time completo e a conta Riot vinculada garante prioridade na fila. Fique de olho no Discord e nesta página — o aviso de abertura sai por aqui primeiro.',
-                categoria: 'Evento',
-                date: 'Em breve',
-                image: '/images/copa-halloween-2026.webp',
-              },
-            ].map((n, idx) => (
-              <CardCorte
-                key={n.id}
-                className="group cursor-pointer transition-transform duration-500 hover:scale-[1.02] shadow-2xl"
-                border="rgba(255,255,255,0.10)"
-              >
-                <motion.article
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.08 }}
-                  onClick={() => setSelectedNoticia(n)}
-                  className="flex flex-col h-full"
-                >
-                  <div className="relative aspect-[16/9] overflow-hidden bg-black">
-                    <img
-                      src={n.image}
-                      alt={n.titulo}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-black/20 to-transparent" />
-                    <div className="absolute top-3 left-3">
-                      <TagCorte>{n.categoria}</TagCorte>
-                    </div>
-                  </div>
-
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
-                        {n.titulo}
-                      </h3>
-                      <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">{n.resumo}</p>
-                    </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                      <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">{n.date}</span>
-                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
-                        Ler Matéria <ArrowRight className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </div>
-                </motion.article>
-              </CardCorte>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {noticias.slice(0, 6).map((n, idx) => (
-              <motion.article
-                key={n.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
-                onClick={() => setSelectedNoticia(n)}
-                className="group relative bg-white/[0.02] border border-white/5 hover:border-[#FFB700]/50 rounded-2xl overflow-hidden transition-all duration-500 cursor-pointer hover:scale-[1.02]"
-              >
-                <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[#FFB700]/20 via-black to-black">
-                  <img
-                    src={n.thumbnail_url || 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg'}
-                    alt={n.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 bg-[#FFB700] text-black text-[9px] font-black uppercase tracking-widest rounded shadow-md">
-                      {n.categoria}
-                    </span>
-                  </div>
-                  {n.destaque && (
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2.5 py-1 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest rounded shadow-md">
-                        Destaque
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <h3 className="text-base font-black uppercase tracking-tight text-white line-clamp-2 group-hover:text-[#FFB700] transition-colors leading-tight mb-2">
-                    {n.titulo}
-                  </h3>
-                  <p className="text-white/40 text-xs leading-relaxed line-clamp-3 mb-4">
-                    {n.resumo}
-                  </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
-                      {new Date(n.publicado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFB700] group-hover:translate-x-1 transition-transform">
-                      Ler mais <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* ════════════════════════════════════════════════════════════════
@@ -1910,109 +1724,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════════
-          MODAL DE NOTÍCIAS — Leitura Completa ao Clicar
-         ════════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {selectedNoticia && (
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
-            onClick={() => setSelectedNoticia(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.25 }}
-              onClick={e => e.stopPropagation()}
-              className="relative w-full max-w-2xl bg-[#0d0d0d] border border-white/15 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
-            >
-              {/* Image Header */}
-              <div className="relative aspect-[16/9] bg-black overflow-hidden flex-none">
-                <img
-                  src={selectedNoticia.image || selectedNoticia.thumbnail_url || 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg'}
-                  alt={selectedNoticia.titulo}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-black/40" />
-
-                <button
-                  onClick={() => setSelectedNoticia(null)}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                <div className="absolute bottom-4 left-6 flex items-center gap-2">
-                  <span className="px-3 py-1 bg-[#FFB700] text-black text-[10px] font-black uppercase tracking-widest rounded-md shadow-md">
-                    {selectedNoticia.categoria || 'Notícia'}
-                  </span>
-                  {selectedNoticia.date && (
-                    <span className="px-3 py-1 bg-black/60 border border-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest rounded-md backdrop-blur-sm flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> {selectedNoticia.date}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Body Content */}
-              <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-4">
-                <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white leading-tight">
-                  {selectedNoticia.titulo}
-                </h2>
-
-                <p className="text-[#FFB700] text-xs sm:text-sm font-bold leading-relaxed border-l-2 border-[#FFB700] pl-3 py-1 bg-[#FFB700]/5">
-                  {selectedNoticia.resumo}
-                </p>
-
-                <div className="text-white/70 text-sm leading-relaxed space-y-3 pt-2 border-t border-white/5 whitespace-pre-line">
-                  <p>
-                    {selectedNoticia.conteudo || selectedNoticia.resumo || 'Conteúdo completo da matéria em breve. Fique atento às nossas redes sociais para mais informações.'}
-                  </p>
-                </div>
-
-                {selectedNoticia.link_url && (
-                  <div className="pt-2">
-                    <a
-                      href={selectedNoticia.link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D8E6] text-black font-black text-xs uppercase tracking-wider transition-all shadow-md hover:scale-[1.02]"
-                    >
-                      <span>{selectedNoticia.link_texto || 'Acessar Link'}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="p-4 sm:p-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between gap-4">
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: selectedNoticia.titulo, url: window.location.href });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                    }
-                  }}
-                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-colors"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>Compartilhar</span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedNoticia(null)}
-                  className="px-6 py-2.5 rounded-xl bg-[#FFB700] hover:bg-[#FFA800] text-black font-black text-xs uppercase tracking-wider transition-all"
-                >
-                  Fechar Leitura
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

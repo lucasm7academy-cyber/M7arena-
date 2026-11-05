@@ -9,7 +9,7 @@
 import { Router } from "express";
 import { eq, count } from "drizzle-orm";
 import { db } from "../db.js";
-import { matches, matchPlayers } from "../../../db/schema/matches.js";
+import { matchPlayers } from "../../../db/schema/matches.js";
 import { buscarSalaPorNumero } from "../lib/match-flow.js";
 
 export const ogRouter = Router();
@@ -19,7 +19,16 @@ const IMAGEM_POR_MODO: Record<string, string> = {
   "5v5": "/images/fundoCard5v5.webp",
   aram: "/images/fundoCardAram.webp",
   "1v1": "/images/fundoCard1v1.webp",
-  time_vs_time: "/images/fundoCardTime.webp",
+  "time_vs_time_livre": "/images/fundoCardTime.webp",
+  campeonato: "/images/fundoCardTime.webp",
+};
+
+const ROTA_POR_MODO: Record<string, string> = {
+  "5v5": "5v5",
+  aram: "aram",
+  "1v1": "1v1",
+  "time_vs_time_livre": "sala-time",
+  campeonato: "campeonato/sala",
 };
 
 /** Rotula o estado da sala para a descrição do card (pt-BR). */
@@ -30,7 +39,7 @@ function rotuloEstado(status: string | null): string {
     iniciando_partida: "Iniciando partida",
     partida_iniciada: "Partida em andamento",
     finalizacao: "Finalizando",
-    aguardando_revisao: "Em análise de resultado",
+    aguardando_revisao: "Revisão legada",
     encerrada: "Encerrada",
     cancelada: "Cancelada",
   };
@@ -75,7 +84,7 @@ ogRouter.get("/:modo/:id", async (req, res) => {
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="M7 Arena" />
     <meta property="og:title" content="M7 Arena | Salas de League of Legends" />
-    <meta property="og:description" content="Monte seu time, encontre parceiros e dispute partidas de LoL com premiação em MC." />
+    <meta property="og:description" content="Monte seu time, encontre parceiros e dispute partidas de LoL com premiação em Essência Azul." />
     <meta property="og:url" content="${escapa(baseUrl)}/jogar" />
     <meta property="og:image" content="${escapa(baseUrl)}/images/cropped-cropped-LOGO-M7-PNG-1%20(4).png" />
     <meta property="og:image:width" content="512" />
@@ -94,9 +103,9 @@ ogRouter.get("/:modo/:id", async (req, res) => {
     const jogadores = row?.total ?? 0;
     const maxJogadores = sala.maxJogadores ?? 10;
     const nome = sala.nome || `Sala ${sala.mode} #${String(salaNum).padStart(6, "0")}`;
-    const premio = (sala.apostaMc ?? 0) > 0 ? `${sala.apostaMc} MC` : "Casual";
+    const premio = (sala.apostaMc ?? 0) > 0 ? `${sala.apostaMc} E` : "Casual";
     const elo = sala.eloMinimo ? `Elos ${sala.eloMinimo}+` : "Todos os elos";
-    const urlSala = `${baseUrl}/${modo}/${salaNum}`;
+    const urlSala = `${baseUrl}/${ROTA_POR_MODO[modo] ?? modo}/${salaNum}`;
     const imagem = `${baseUrl}${IMAGEM_POR_MODO[modo]}`;
 
     const descricao = `${jogadores}/${maxJogadores} vagas · ${premio} · ${elo} · ${rotuloEstado(sala.status)}`;

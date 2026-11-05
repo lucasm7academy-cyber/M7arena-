@@ -29,8 +29,8 @@ import { alvoVitorias } from "../lib/serie-livre.js";
 import { matchesActionsRouter } from "./matches-actions.js";
 
 export const matchesRouter = Router();
-// Ações de sala (confirm/leave/recusar/tick/start/report-result) em
-// rota própria para o arquivo não estourar ~400 linhas.
+// Ações de sala (confirm/leave/recusar/tick/start) em rota própria para o
+// arquivo não estourar ~400 linhas.
 matchesRouter.use(matchesActionsRouter);
 
 /** Comparação de strings em tempo constante (CWE-208) — para senhas de sala. */
@@ -92,14 +92,8 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
     __isVip: userMap.get(p.userId)?.isVip ?? false,
   }));
 
-  // Só salas em `aguardando_revisao` levam a contagem de prints (design v3 §6):
-  // é o único estado que o front mostra "prints recebidos X/3". Evita query
-  // extra na listagem pública (vitrine).
-  let printsRecebidos = 0;
-  if (m.status === "aguardando_revisao") {
-    const printsRows = await ctx.select({ id: matchPrints.id }).from(matchPrints).where(eq(matchPrints.matchId, m.id));
-    printsRecebidos = printsRows.length;
-  }
+  // Prints de prova pertenciam ao fluxo de revisão removido (C13); o shape
+  // não expõe mais contagem/limite de prints.
 
   // Salas encerradas verificadas pela Riot levam o resumo da partida real
   // (matchResults.payload) para o front mostrar vencedor + stats.
@@ -198,7 +192,7 @@ async function shapeSala(m: any, ctx: any = db, podeVerCodigo = true, incluirExt
     draft = d ?? null;
   }
 
-  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, printsRecebidos, resultadoRiot, draft);
+  const legacy = toLegacyMatch(m, playersEnriched, criadorNome, resultadoRiot, draft);
   // Extras do DETALHE da sala (a listagem não paga essas queries):
   //  - Série da SALA 5v5 PERSONALIZADA (MD1/MD3/MD5): formato, jogo e placar;
   //  - Cor TEMA de cada time (gradient_from): o brilho dos logos na sala e no
@@ -302,7 +296,8 @@ matchesRouter.get("/", async (req, res) => {
     }
 
     const results = await Promise.all(rows.map((m) => shapeSala(m, db, false)));
-    return res.json(results);  } catch (error: any) {
+    return res.json(results);
+  } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao buscar salas" });
   }
 });
@@ -428,7 +423,7 @@ matchesRouter.post("/", async (req, res) => {
   const maxJogadoresSanitizado = Number.isFinite(maxRaw) ? Math.max(2, Math.min(Math.trunc(maxRaw), 10)) : 10;
   // Allowlist do modo (MORPH-002): mode do body não confiável — um valor
   // inventado quebraria o layout de vagas do front (SalaMod1 usa a lista fixa).
-  const MODOS_VALIDOS = ["5v5", "1v1", "aram", "time_vs_time"];
+  const MODOS_VALIDOS = ["5v5", "1v1", "aram"];
   const modoSanitizado = MODOS_VALIDOS.includes(mode) ? mode : "5v5";
   // SÉRIE da sala 5x5 personalizada (MD1/MD3/MD5): o cliente escolhe na criação
   // e o default é MD3 (pedido do usuário 2026-10-19). Modos sem série ignoram.
@@ -636,7 +631,9 @@ matchesRouter.post("/:id/join", async (req, res) => {
 // DELETE /api/matches/:id - Excluir sala (somente admin/proprietário).
 // A exclusão é administrativa e LIQUIDA tudo: devolve as reservas (escrow) ainda
 // pendentes de cada jogador da sala apostada e remove a sala com todos os dados
-// vinculados (players, prints, resultados, disputas, strikes, revenue, códigos).
+// vinculados (players, resultados, strikes, revenue, códigos). Prints/disputas
+// não são mais gerados pelo fluxo (revisão removida em 2026-11), mas as linhas
+// históricas continuam sendo apagadas junto com a sala para não ficarem órfãs.
 // Não bloqueia por estado — em qualquer estado as reservas pendentes voltam para
 // a carteira do jogador antes do DELETE. `devolverEntrada` é idempotente (no-op
 // quando o jogador não tem mais nada reservado), então liquidar duas vezes é seguro.

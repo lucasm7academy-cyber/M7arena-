@@ -5,21 +5,15 @@
  */
 
 import type {
-  ApiLegacyNews,
   ApiLegacyHighlight,
-  ApiNewsRow,
   ApiHighlightRow,
-  ApiPlayerStats,
 } from "./api-content.js";
-import { toLegacyNews, toApiNews, toLegacyHighlight, toApiHighlight } from "./api-content.js";
+import { toLegacyHighlight, toApiHighlight } from "./api-content.js";
 import type { AgendaJogo } from "../features/streams/types";
 
 export type {
-  ApiLegacyNews,
   ApiLegacyHighlight,
-  ApiNewsRow,
   ApiHighlightRow,
-  ApiPlayerStats,
 } from "./api-content.js";
 
 export interface ApiUser {
@@ -77,19 +71,6 @@ export interface ApiLegacyMember {
   guest_puuid?: string | null;
   guest_profile_icon_id?: number | null;
   guest_elo_cache?: string | null;
-}
-
-export interface ApiLegacyInvite {
-  id: string;
-  time_id: string;
-  de_user_id: string;
-  para_user_id?: string | null;
-  riot_id?: string | null;
-  role: string;
-  mensagem?: string | null;
-  tipo: 'solicitacao' | 'convite';
-  status: 'pendente' | 'aceito' | 'recusado';
-  criado_em: string;
 }
 
 export interface ApiTeamListResult {
@@ -203,18 +184,17 @@ export type ApiLegacyTournamentAgenda = ApiLegacyTournamentCard & {
 /** Seções pesadas do detalhe, carregadas por aba. */
 export type TournamentSection = "cronograma" | "classificacao" | "grupos" | "chaves";
 
-/** Saldo de MP/MC no shape que as telas do fork consomem. */
+/** Saldo de E/E no shape que as telas do fork consomem. */
 export interface ApiWalletBalance {
   userId: string;
-  mp: number;
   mc: number;
-  /** MC travado em salas apostadas ativas (design v3 §11 — "em partida"). */
+  /** E travado em salas apostadas ativas (design v3 §11 — "em partida"). */
   mcReservado?: number;
   /** Salas apostadas ativas que seguram a reserva — valor vira link no perfil. */
   emPartida?: { salaNum: number; apostaMc: number; nome: string | null; modo?: string }[];
 }
 
-/** Pacote de compra de MC vindo de GET /api/payments/packages (ADR-031). */
+/** Pacote de compra de E vindo de GET /api/payments/packages (ADR-031). */
 export interface ApiMcPackage {
   id: string;
   priceBrl: number;
@@ -239,14 +219,6 @@ export interface ApiPaymentStatus {
   status: string;
 }
 
-/** Retorno do POST /api/wallet/admin/adjust (saldos finais calculados no servidor). */
-export interface ApiWalletAdjustResult {
-  ok: boolean;
-  erro: string | null;
-  mc: number;
-  mp: number;
-}
-
 /** Retorno do POST /api/wallet/admin/adjust-mc (exclusivo do proprietário). */
 export interface ApiWalletAdjustMcResult {
   ok: boolean;
@@ -254,7 +226,7 @@ export interface ApiWalletAdjustMcResult {
   mc: number;
 }
 
-/** Pedido de saque de MC via PIX (spec saque-mc-pix). */
+/** Pedido de saque de E via PIX (spec saque-mc-pix). */
 export interface ApiWithdrawal {
   id: string;
   mcAmount: number;
@@ -315,9 +287,6 @@ export interface ApiLegacySala {
   aposta_mc?: number;
   taxa_pct?: string | number;
   match_id?: string;
-  revisao_desde?: string | null;
-  prints_recebidos?: number;
-  prints_necessarios?: number;
   /** Draft (ban/pick) — presente entre `draft` e `iniciando_partida`. */
   draft?: ApiLegacySalaDraft | null;
   /**
@@ -407,82 +376,6 @@ export interface ApiSalaChatMensagem {
   /** Cor do nick no momento do envio (blue/red/gold). Null → dourado. */
   cor?: string | null;
   created_at: string;
-}
-
-/** Print de prova de uma partida apostada (design v3 §6). */
-export interface ApiPrint {
-  id: string;
-  matchId: string;
-  userId: string;
-  nomeJogador: string;
-  /** URL autenticada — passa por GET /api/prints/:id/arquivo, nunca link direto. */
-  url: string;
-  createdAt: string;
-}
-
-/** Contestação de resultado (design v3 §6.1). */
-export interface ApiDisputa {
-  id: string;
-  matchId: string;
-  userId: string;
-  nomeJogador: string;
-  motivo: string;
-  status: string;
-  createdAt: string;
-}
-
-/** Disputa em partida encerrada para o painel do admin (spec verificacao-partida-riot). */
-export interface ApiDisputaAdmin {
-  id: string;
-  matchId: string;
-  userId: string;
-  motivo: string;
-  contestacaoUrl: string | null;
-  status: string;
-  createdAt: string;
-  nomeJogador: string;
-  salaNum: number;
-  mode: string;
-  apostaMc: number;
-  winnerSide: string | null;
-  resultado: string | null;
-}
-
-/** Jogador da sala no painel de revisão. */
-export interface ApiRevisaoJogador {
-  userId: string;
-  nome: string;
-  side: 'blue' | 'red';
-  confirmed: boolean;
-}
-
-/** Sala em `aguardando_revisao` com o que o painel precisa (prints + disputas embutidos). */
-export interface ApiRevisaoSala {
-  id: string;
-  salaNum: number;
-  mode: string;
-  status: string;
-  apostaMc: number;
-  taxaPct: string;
-  maxJogadores: number;
-  timeANome?: string | null;
-  timeATag?: string | null;
-  timeALogo?: string | null;
-  timeBNome?: string | null;
-  timeBTag?: string | null;
-  timeBLogo?: string | null;
-  revisaoDesde?: string | null;
-  createdAt: string;
-  jogadores: ApiRevisaoJogador[];
-  prints: ApiPrint[];
-  disputas: ApiDisputa[];
-}
-
-/** Resultado da decisão do revisor (idempotente via decisionId, §4.3). */
-export interface ApiDecisaoResultado {
-  ok: boolean;
-  erro?: string;
-  estado?: string;
 }
 
 export interface ApiMatchesSdk {
@@ -591,27 +484,6 @@ export interface ApiProfileMe {
   riotAccount: ApiLegacyRiotAccount | null;
 }
 
-/** Ponto da série financeira do painel admin (ADR-032). Valores em R$. */
-export interface ApiFinanceiroPonto {
-  data: string;
-  faturamento: number;
-  saques: number;
-  lucro: number;
-}
-
-/** Retorno de GET /api/admin/financeiro (ADR-032). */
-export interface ApiFinanceiro {
-  periodo: string;
-  totais: {
-    faturamento: number;
-    saques: number;
-    lucro: number;
-    mcEmCirculacao: number;
-    dinheiroNoProjeto: number;
-  };
-  serie: ApiFinanceiroPonto[];
-}
-
 // ── Aposta individual (self-bet) — aposta em si mesmo na próxima ranqueada ──
 
 export type ApiBetQueue = "solo" | "flex";
@@ -681,7 +553,7 @@ export interface ApiBetHistoryItem {
   encerradoEm: string | null;
 }
 
-/** Delta de MC real de um bilhete (mesma regra usada no histórico: ganho = soma
+/** Delta de E real de um bilhete (mesma regra usada no histórico: ganho = soma
  * dos payouts das legs ganhas; perda = stakes das legs não anuladas). */
 export function betDeltaMc(t: ApiBetTicket): number {
   if (t.status !== "finalizada") return 0;
@@ -834,18 +706,6 @@ export const api = {
     }>) => api.put<ApiLegacyTeam>(`/teams/${id}`, data),
     leave: (id: string) => api.post<{ ok: boolean; deleted?: boolean }>(`/teams/${id}/leave`),
     removeMemberships: () => api.post<{ ok: boolean }>("/teams/memberships/remove"),
-    invites: () => api.get<ApiLegacyInvite[]>("/teams/invites"),
-    createInvite: (data: {
-      time_id: string;
-      para_user_id?: string | null;
-      riot_id?: string | null;
-      role: string;
-      mensagem?: string | null;
-      tipo: string;
-    }) => api.post<ApiLegacyInvite>("/teams/invites", data),
-    clearInvites: (ids: string[]) => api.post<{ ok: boolean }>("/teams/invites/clear", { ids }),
-    acceptInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/accept`),
-    declineInvite: (id: string) => api.post<{ ok: boolean }>(`/teams/invites/${id}/decline`),
     /** Substitui o lineup inteiro (substitui RPC salvar_lineup_time). */
     saveLineup: (id: string | number, membros: any[]) =>
       api.post<{ ok: boolean }>(`/teams/${id}/lineup`, { p_membros: membros }),
@@ -922,13 +782,6 @@ export const api = {
       api.get<ApiWalletBalance[]>(
         `/wallet/admin/balances${userIds?.length ? `?userIds=${userIds.join(",")}` : ""}`
       ),
-    adminAdjust: (userId: string, deltaMC: number, deltaMP: number, motivo?: string) =>
-      api.post<ApiWalletAdjustResult>("/wallet/admin/adjust", {
-        userId,
-        deltaMC,
-        deltaMP,
-        motivo: motivo || "ajuste_admin",
-      }),
     adminAdjustMc: (userId: string, deltaMC: number, motivo?: string) =>
       api.post<ApiWalletAdjustMcResult>("/wallet/admin/adjust-mc", {
         userId,
@@ -938,9 +791,9 @@ export const api = {
   },
 
   payments: {
-    /** Pacotes ativos de MC (fonte da verdade: servidor). */
+    /** Pacotes ativos de E (fonte da verdade: servidor). */
     packages: () => api.get<ApiMcPackage[]>("/payments/packages"),
-    /** Cria pedido PIX de MC (autenticado; cliente envia só o packageId). */
+    /** Cria pedido PIX de E (autenticado; cliente envia só o packageId). */
     createMcOrder: (packageId: string) =>
       api.post<ApiMcOrderResult>("/payments/mc/order", { packageId }),
     /** Status do pagamento pelo uuid nosso (paymentId). */
@@ -955,21 +808,12 @@ export const api = {
     mine: () => api.get<ApiWithdrawal[]>('/withdrawals/mine'),
     /** Fila + histórico (admin). */
     admin: () => api.get<ApiWithdrawal[]>('/withdrawals/admin'),
-    /** Admin decide: paid (paga fora e confirma) | rejected (devolve MC). */
+    /** Admin decide: paid (paga fora e confirma) | rejected (devolve E). */
     decide: (id: string, action: 'paid' | 'rejected', decisionId: string) =>
       api.post<{ ok: boolean } & ApiWithdrawal>(`/withdrawals/${id}/decide`, { action, decisionId }),
   },
 
   content: {
-    news: (params: { all?: boolean } = {}) =>
-      api.get<ApiNewsRow[]>(`/content/news${params.all ? "/all" : ""}`).then((rows) =>
-        (rows || []).map(toLegacyNews)
-      ),
-    newsCreate: (data: Partial<ApiLegacyNews>) =>
-      api.post<ApiNewsRow>("/content/news", toApiNews(data)).then(toLegacyNews),
-    newsUpdate: (id: string, data: Partial<ApiLegacyNews>) =>
-      api.put<ApiNewsRow>(`/content/news/${id}`, toApiNews(data)).then(toLegacyNews),
-    newsDelete: (id: string) => api.delete<{ ok: boolean }>(`/content/news/${id}`),
     highlights: (params: { all?: boolean } = {}) =>
       api.get<ApiHighlightRow[]>(`/content/highlights${params.all ? "/all" : ""}`).then((rows) =>
         (rows || []).map(toLegacyHighlight)
@@ -979,10 +823,6 @@ export const api = {
     highlightsUpdate: (id: string, data: Partial<ApiLegacyHighlight>) =>
       api.put<ApiHighlightRow>(`/content/highlights/${id}`, toApiHighlight(data)).then(toLegacyHighlight),
     highlightsDelete: (id: string) => api.delete<{ ok: boolean }>(`/content/highlights/${id}`),
-    playerStats: (userId: string) =>
-      api.get<ApiPlayerStats[]>(`/content/player-stats/${userId}`),
-    recordPlayerStats: (data: { userId: string; modo: string; vitoria: boolean }) =>
-      api.post<ApiPlayerStats>("/content/player-stats", data),
   },
 
   matches: {
@@ -1067,9 +907,6 @@ export const api = {
     byPuuid: (puuid: string) => api.get<ApiLegacyRiotAccount | null>(`/players/by-puuid/${puuid}`),
     /** Total de contas Riot vinculadas (dashboard admin). */
     count: () => api.get<{ count: number }>("/players/count"),
-    /** Grava elo_cache de contas exibidas (refresh de cache, autenticado). */
-    refreshElo: (updates: { userId: string; eloCache: any }[]) =>
-      api.post<{ ok: boolean }>("/players/refresh-elo", { updates }),
     /** Busca paginada com filtros (substitui RPC buscar_jogadores_filtrados). */
     filtrados: (params: { p_offset?: number; p_limit?: number; p_search?: string; p_elo_tier?: string; p_role_lane?: string } = {}) =>
       api.get<Array<ApiLegacyRiotAccount & { total_count: number; rank: number }>>(
@@ -1122,12 +959,6 @@ export const api = {
     /** Atualiza cargo de um usuário (substitui RPC atualizar_cargo_usuario). */
     atualizar: (userId: string, cargo: string) =>
       api.put<{ ok: boolean }>(`/admin/cargos/${userId}`, { p_cargo: cargo }),
-  },
-
-  adminFinanceiro: {
-    /** Visão financeira do painel (ADR-032): faturamento/saques/lucro/MC. */
-    get: (periodo: 'today' | '7' | '30' | 'all' = '30') =>
-      api.get<ApiFinanceiro>(`/admin/financeiro?periodo=${periodo}`),
   },
 
   adminPunicoes: {
@@ -1185,43 +1016,6 @@ export const api = {
       ),
   },
 
-  prints: {
-    /** Envia o print de prova de uma partida apostada (bucket privado match-prints). */
-    upload: (matchId: string, file: File, modo?: 'revisao' | 'contestacao') => {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("bucket", "match-prints");
-      form.append("path", matchId);
-      if (modo) form.append("modo", modo);
-      return api.post<{ url: string; printId: string }>("/upload", form);
-    },
-    /** Lista os prints da partida (participante ou revisor). */
-    list: (matchId: string) => api.get<ApiPrint[]>(`/prints/${matchId}`),
-    /** URL autenticada do arquivo — o <img> reenvia o cookie httpOnly. */
-    file: (id: string) => `/api/prints/${id}/arquivo`,
-  },
-
-  disputas: {
-    /** Abre contestação de resultado (1 por jogador por partida, §6.1). */
-    abrir: (matchId: string, motivo: string, contestacaoUrl?: string) =>
-      api.post<{ ok: boolean }>(`/disputas/${matchId}`, { motivo, contestacao_url: contestacaoUrl }),
-    /** Lista as disputas da partida (participante ou revisor). */
-    list: (matchId: string) => api.get<ApiDisputa[]>(`/disputas/${matchId}`),
-  },
-
-  revisao: {
-    /** Fila de salas em `aguardando_revisao` por antiguidade (design v3 §6). */
-    pendentes: () => api.get<ApiRevisaoSala[]>("/revisao/pendentes"),
-    /** Decide a partida: 'blue' | 'red' | 'draw' | 'cancel', com decisionId idempotente. */
-    decidir: (id: string, data: { winnerSide: 'blue' | 'red' | 'draw' | 'cancel'; decisionId: string }) =>
-      api.post<ApiDecisaoResultado>(`/revisao/${id}/decidir`, data),
-    /** Disputas abertas em partidas encerradas (spec verificacao-partida-riot). */
-    disputas: () => api.get<ApiDisputaAdmin[]>("/revisao/disputas"),
-    /** Decide uma contestação: procedente → estorna e cancela; improcedente → fecha. */
-    decidirDisputa: (id: string, data: { procedente: boolean }) =>
-      api.post<{ ok: boolean; procedente: boolean }>(`/revisao/disputas/${id}/decidir`, data),
-  },
-
   bets: {
     /** Catálogo de mercados agrupados + limites (odd exibida vem daqui). */
     catalog: () => api.get<ApiBetCatalog>("/bets/catalog"),
@@ -1244,7 +1038,7 @@ export const api = {
     list: () => api.get<{ notifications: ApiNotification[]; unreadCount: number }>("/notifications"),
     /** Marca uma notificação como lida. */
     markRead: (id: string) => api.post<{ ok: boolean }>(`/notifications/${id}/read`),
-    /** Marca todas como lidas (usado ao abrir o sino). */
+    /** Marca todas como lidas (botão “Marcar lidas”). */
     markAllRead: () => api.post<{ ok: boolean }>("/notifications/read-all"),
   },
 };

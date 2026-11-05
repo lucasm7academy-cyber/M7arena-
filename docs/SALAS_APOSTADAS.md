@@ -1,5 +1,12 @@
 # Design — Salas Apostadas (M7 Arena) — v3
 
+> **Documento histórico (atualizado em 04/11/2026):** o fluxo de print,
+> contestação e revisão manual descrito abaixo foi removido (C12-C14/H06). O
+> resultado das salas é verificado automaticamente pela Riot; empates,
+> cancelamentos, escrow e reembolsos continuam válidos. Este texto permanece
+> como registro da decisão original — não reintroduza print/revisão sem nova
+> aprovação de produto.
+
 > **Data:** 2026-08-02
 > **Status:** Design revisado, pronto para plano de implementação
 > **Substitui:** v1 (design original) e v2 — esta versão incorpora a revisão de segurança, escala e usabilidade, e corrige o roadmap de validação de resultado após verificação das limitações reais da Riot API (custom games são privados na match-v5; o acesso atual é apenas tournament-stub-v5, cujos códigos não criam lobby real)

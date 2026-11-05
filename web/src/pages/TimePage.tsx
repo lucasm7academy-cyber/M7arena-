@@ -2,22 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Crown, Trophy, Wallet, Users, Send,
+  ArrowLeft, Crown, Trophy, Wallet, Users,
   ChevronRight, ShieldCheck, LogOut, Paintbrush, Settings,
   UserPlus, UserX, Check, Plus, RefreshCw, X, Search, Upload,
-  Copy, Phone, MessageCircle, MessageSquare,
+  Copy, Phone, MessageSquare,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfil } from '../contexts/PerfilContext';
 import { buildProfileIconUrl, buscarJogadorCompleto } from '../api/riot';
+import { opGgUrl } from '../lib/opgg';
 import { useSound } from '../hooks/useSound';
 import { AnimatePresence as AP } from 'motion/react';
 import {
   type Role,
   ROLE_CONFIG,
   TIER_MAP,
-} from '../components/players/PlayerDetailModal';
+} from '../components/players/playerMeta';
 
 // ── tipos ─────────────────────────────────────────────────────────────────────
 // Polígonos Oficiais Cut-Edge
@@ -684,151 +685,6 @@ const InvitePlayerModal = ({
   );
 };
 
-const RequestEntryModal = ({ team, onClose }: { team: TimeData; onClose: () => void }) => {
-  const { playSound } = useSound();
-  const { user } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [message, setMessage] = useState('');
-  const [sent, setSent] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [myRiotAccount, setMyRiotAccount] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchMyAccount = async () => {
-      if (!user) return;
-      try {
-        const data = await api.profiles.getRiot();
-        setMyRiotAccount(data);
-      } catch (err) {
-        console.error('❌ Erro ao buscar conta Riot:', err);
-      }
-    };
-    fetchMyAccount();
-  }, [user]);
-
-  const handleRequest = async () => {
-    if (!selectedRole) return;
-    if (!myRiotAccount) {
-      setError('Você precisa vincular uma conta Riot primeiro.');
-      return;
-    }
-    
-    setSending(true);
-    if (!user) { setSending(false); return; }
-
-    try {
-      await api.teams.createInvite({
-        time_id: String(team.id),
-        para_user_id: team.donoId,
-        riot_id: myRiotAccount.riot_id,
-        role: selectedRole,
-        mensagem: message || null,
-        tipo: 'solicitacao',
-      });
-    } catch {
-      setSending(false);
-      setError('Erro ao enviar solicitação. Tente novamente.');
-      return;
-    }
-
-    setSending(false);
-    playSound('success');
-    setSent(true);
-    setTimeout(onClose, 1800);
-  };
-
-  return (
-    <ModalBase onClose={onClose} gradientFrom={team.gradientFrom}>
-      <div className="space-y-5">
-        <div className="border-b border-white/5 pb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl p-[1px] flex items-center justify-center shrink-0"
-              style={{
-                background: team.gradientFrom
-              }}
-            >
-              <div
-                className="w-full h-full bg-[#08080a] rounded-[11px] flex items-center justify-center"
-              >
-                <Send className="w-5 h-5" style={{ color: team.gradientFrom }} />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-lg font-black uppercase tracking-tight text-white">Solicitar Entrada</h2>
-              <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Envie uma proposta para a liderança</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white p-1 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
-        </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/40 rounded-xl p-3 flex items-center gap-3">
-            <X className="w-4 h-4 text-red-400 shrink-0" />
-            <p className="text-red-400 text-xs font-medium">{error}</p>
-          </div>
-        )}
-        
-        <div className="space-y-2">
-          <label className="text-white/40 text-[10px] uppercase tracking-widest font-black block">1. Selecionar Rota Desejada</label>
-          <div className="grid grid-cols-3 gap-2">
-            {(Object.keys(ROLE_CONFIG) as Role[]).map(role => {
-              const cfg = ROLE_CONFIG[role];
-              const isSelected = selectedRole === role;
-              return (
-                <button
-                  key={role}
-                  onClick={() => { playSound('click'); setSelectedRole(role); setError(null); }}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-                      : 'bg-white/5 border-white/5 hover:border-white/15'
-                  }`}
-                >
-                  <img src={cfg.img} alt={cfg.label} className={`w-5 h-5 object-contain ${isSelected ? 'opacity-100' : 'opacity-40'}`} />
-                  <span className={`text-[10px] font-black ${isSelected ? 'text-white' : 'text-white/40'}`}>{cfg.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-white/40 text-[10px] uppercase tracking-widest font-black block">2. Mensagem (Opcional)</label>
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Conte por que você quer entrar no time..."
-            rows={3}
-            className="w-full bg-[#0c0c10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs placeholder:text-white/20 focus:outline-none focus:border-white/25 resize-none font-medium transition-colors"
-          />
-        </div>
-
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 bg-white/5 border border-white/10 text-white/60 text-xs font-black uppercase tracking-wider hover:bg-white/10 rounded-xl transition-all cursor-pointer"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleRequest}
-            disabled={!selectedRole || sent || sending}
-            className="flex-[1.5] py-3 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              backgroundColor: team.gradientFrom || '#FFB700',
-              boxShadow: `0 0 25px -5px ${team.gradientFrom || '#FFB700'}66`
-            }}
-          >
-            {sending ? <><RefreshCw className="w-4 h-4 animate-spin" /> Enviando...</> : sent ? <><Check className="w-4 h-4" /> Enviado!</> : <><Send className="w-4 h-4" /> Enviar Solicitação</>}
-          </button>
-        </div>
-      </div>
-    </ModalBase>
-  );
-};
-
 const EditTeamModal = ({
   team, onClose, onSave,
 }: {
@@ -1354,7 +1210,6 @@ export default function TimePage() {
 
 
   const [modalConvidar, setModalConvidar] = useState(false);
-  const [modalSolicitar, setModalSolicitar] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
   const [modalLineup, setModalLineup] = useState(false);
   const [modalSair, setModalSair] = useState(false);
@@ -1402,18 +1257,13 @@ export default function TimePage() {
         puuid:    m.guest_puuid ?? undefined,
       }));
 
-    // Buscar dados Riot + wallet de todos os membros em paralelo
+    // Buscar dados Riot de todos os membros
     const userIds = membrosRaw.map(m => m.userId).filter(Boolean);
     if (userIds.length > 0) {
-      const [contas, wallets] = await Promise.all([
-        api.players.byIds(userIds),
-        api.wallet.adminBalances(userIds),
-      ]);
+      const contas = await api.players.byIds(userIds);
 
       const contaMap: Record<string, any> = {};
       (contas ?? []).forEach((c: any) => { contaMap[c.user_id] = c; });
-      const walletMap: Record<string, number> = {};
-      (wallets ?? []).forEach((w: any) => { walletMap[w.userId] = w.mc; });
 
       membrosRaw.forEach(m => {
         if (m.userId) {
@@ -1426,7 +1276,6 @@ export default function TimePage() {
             const solo = c.elo_cache?.soloQ;
             if (solo?.tier) m.elo = TIER_MAP[solo.tier] ?? solo.tier;
           }
-          m.balance = walletMap[m.userId] ?? 0;
         }
       });
     }
@@ -1569,10 +1418,9 @@ export default function TimePage() {
   // Em vez do card padrão, leva direto pro perfil do player no OP.GG.
   // Ex: "One Lucks#BR1" -> https://op.gg/pt/lol/summoners/br/One%20Lucks-br1
   const handlePlayerClick = (m: Membro) => {
-    if (!m.riotId || !m.riotId.includes('#')) return;
+    const url = opGgUrl(m.riotId);
+    if (!url) return;
     playSound('click');
-    const [gameName, tagLine] = m.riotId.split('#');
-    const url = `https://op.gg/pt/lol/summoners/br/${encodeURIComponent(gameName.trim())}-${tagLine.trim().toLowerCase()}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -2037,35 +1885,6 @@ export default function TimePage() {
               </div>
             </motion.div>
 
-            {/* Solicitar entrada (visitante) */}
-            {userRole === 'visitor' && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <button
-                  onClick={() => {
-                    playSound('click');
-                    if (!user) {
-                      navigate('/login');
-                    } else {
-                      setModalSolicitar(true);
-                    }
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                  style={{
-                    background: `${time.gradientFrom}20`,
-                    border: `1px solid ${time.gradientFrom}50`,
-                    color: time.gradientFrom,
-                    boxShadow: `0 0 25px -5px ${time.gradientFrom}40`
-                  }}
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Solicitar Entrada</span>
-                </button>
-              </motion.div>
-            )}
           </div>
 
           {/* STATUS DO TIME */}
@@ -2107,7 +1926,6 @@ export default function TimePage() {
 
       {/* Modais */}
       {modalConvidar && <InvitePlayerModal team={time} onClose={() => setModalConvidar(false)} onAddPlayer={handleUpdatePlayers} />}
-      {modalSolicitar && <RequestEntryModal team={time} onClose={() => setModalSolicitar(false)} />}
       {modalEditar && (
         <EditTeamModal team={time} onClose={() => setModalEditar(false)} onSave={handleUpdateTeam} />
       )}

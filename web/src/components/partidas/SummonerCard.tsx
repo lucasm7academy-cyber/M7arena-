@@ -98,7 +98,7 @@ export const SummonerCard: React.FC<SummonerCardProps> = ({
           </div>
           <div className="text-left">
             <span className="text-[9px] font-black uppercase tracking-widest text-white/40 block">Saldo</span>
-            <span className="text-xs font-black text-white">{saldo} MC</span>
+            <span className="text-xs font-black text-white">{saldo} E</span>
           </div>
         </div>
         <button
@@ -142,7 +142,7 @@ export const SummonerCard: React.FC<SummonerCardProps> = ({
             <Coins className="w-3.5 h-3.5 text-white/40" />
           </div>
           <span className="text-xs font-black text-white">
-            {stakeTotal} MC
+            {stakeTotal} E
           </span>
         </div>
 
@@ -153,7 +153,7 @@ export const SummonerCard: React.FC<SummonerCardProps> = ({
             <Trophy className="w-3.5 h-3.5 text-[#FFB700]" />
           </div>
           <span className="text-xs font-black text-[#FFB700]">
-            {payoutTotal} MC
+            {payoutTotal} E
           </span>
         </div>
       </div>

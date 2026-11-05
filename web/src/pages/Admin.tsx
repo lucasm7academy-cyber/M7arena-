@@ -3,15 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ShieldCheck, Trophy, Coins, Search, Check, X, AlertTriangle,
-  RefreshCw, Ban, Users, Zap, GraduationCap, Mail, ChevronRight, Film,
-  LayoutDashboard, Lock, Gamepad2, Sparkles, Newspaper, BookOpen, Plus,
-  Pencil, Trash2, Eye, EyeOff, Star, ExternalLink, Swords, ArrowLeft, Banknote, KeyRound,
+  ShieldCheck, Trophy, Coins, Search, Check, X,
+  RefreshCw, Ban, Users, GraduationCap, Mail, ChevronRight, Film,
+  LayoutDashboard, Lock, Gamepad2, Sparkles, ArrowLeft, Banknote, KeyRound,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePerfil } from '../contexts/PerfilContext';
-import { ajustarSaldoAdmin } from '../api/wallet';
-import { buscarElo, buscarJogadorCompleto } from '../api/riot';
 import {
   type CargoAdmin,
   CARGO_LABELS, CARGO_COLORS,
@@ -21,72 +18,18 @@ import { AbaCargos } from './AdminCargos';
 import { AbaContatos } from './AdminContatos';
 import { AbaPunicoes } from './AdminPunicoes';
 import { AbaSenhas } from './AdminSenhas';
-import { RevisaoPartidas } from '../components/admin/RevisaoPartidas';
-import { FinanceiroDashboard } from '../components/admin/FinanceiroDashboard';
 import { SaquesPix } from '../components/admin/SaquesPix';
 
 // ── TIPOS ──────────────────────────────────────────
-interface PartidaDisputa {
-  id: number; salaId: number; vencedor: string; vencedorNome?: string;
-  jogadores: Array<{ id: string; nome: string; isTimeA: boolean }>;
-  createdAt: string; modo: string;
-}
-interface SalaAberta {
-  id: number; nome: string; estado: string; criadorNome: string;
-  modo: string; numJogadores: number; maxJogadores: number;
-}
-interface PartidaTravada {
-  id: number; nome: string; estado: string; modo: string; criadorNome: string;
-  timeANome?: string; timeBNome?: string;
-  jogadores: Array<{ id: string; nome: string; isTimeA: boolean; role: string }>;
-}
 interface Jogador {
   userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
 }
-type Aba = 'dashboard' | 'saldos' | 'saldomc' | 'ranking' | 'highlights' | 'noticias' | 'cargos' | 'contatos' | 'revisao' | 'punicoes' | 'saques' | 'senhas';
+type Aba = 'dashboard' | 'saldomc' | 'ranking' | 'highlights' | 'cargos' | 'contatos' | 'punicoes' | 'saques' | 'senhas';
 
 interface Highlight {
   id: string; titulo: string; link: string;
   thumbnail_url: string | null; ativo: boolean; ordem: number; categoria: string;
 }
-
-interface NoticiaAdmin {
-  id: string;
-  titulo: string;
-  slug?: string;
-  resumo: string;
-  conteudo?: string;
-  categoria: string;
-  thumbnail_url: string | null;
-  autor?: string;
-  publicado_em: string;
-  destaque: boolean;
-  ativo?: boolean;
-  link_url?: string | null;
-  link_texto?: string | null;
-}
-
-const NOTICIA_CATEGORIAS = [
-  { value: 'Torneios', label: '🏆 Torneios & Campeonatos' },
-  { value: 'Patch Notes', label: '🛠️ Patch Notes & Atualizações' },
-  { value: 'Dicas', label: '💡 Dicas & Guias' },
-  { value: 'Esportes', label: '⚡ Informa & Esportes' },
-  { value: 'Anúncios', label: '📢 Anúncios Oficiais' },
-  { value: 'Comunidade', label: '👥 Comunidade' },
-  { value: 'Eventos', label: '🎉 Eventos Especiais' },
-];
-
-const INITIAL_NOTICIA_FORM = {
-  titulo: '',
-  resumo: '',
-  conteudo: '',
-  categoria: 'Torneios',
-  thumbnail_url: '',
-  link_url: '',
-  link_texto: '',
-  destaque: false,
-  ativo: true,
-};
 
 const HIGHLIGHT_CATEGORIAS: { value: string; label: string }[] = [
   { value: 'highlight',    label: '🎬 Highlight Geral' },
@@ -112,195 +55,7 @@ function CardStyle() {
   };
 }
 
-// ── ABA: DISPUTAS ──────────────────────────────────
-function AbaSaldos({ adminCargo }: { adminCargo: CargoAdmin }) {
-  const [busca, setBusca] = useState('');
-  const [resultados, setResultados] = useState<Jogador[]>([]);
-  const [buscando, setBuscando] = useState(false);
-  const [selecionado, setSelecionado] = useState<Jogador | null>(null);
-  const [valor, setValor] = useState('');
-  const [operacao, setOperacao] = useState<'adicionar' | 'remover'>('adicionar');
-  const [motivo, setMotivo] = useState('');
-  const [salvando, setSalvando] = useState(false);
-  const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro'; msg: string } | null>(null);
-  const podeMexer = temPermissao(adminCargo, 'gerenciarSaldos');
-
-  const buscarJogadores = useCallback(async () => {
-    if (busca.trim().length < 2) { setResultados([]); return; }
-    setBuscando(true);
-    // ✅ Schema novo: lê de `wallets` (mc) em vez de `saldos`; contas via API própria.
-    const [riotData, balances] = await Promise.all([
-      api.players.search(busca.trim()),
-      api.wallet.adminBalances(),
-    ]);
-    const saldoMap = Object.fromEntries((balances ?? []).map((w: any) => [w.userId, w.mc]));
-    if (riotData) setResultados(riotData.map((r: any) => ({ userId: r.user_id, riotId: r.riot_id ?? '—', nome: (r.riot_id ?? '—').split('#')[0], iconId: r.profile_icon_id, saldo: saldoMap[r.user_id] ?? 0 })));
-    setBuscando(false);
-  }, [busca]);
-
-  useEffect(() => { const t = setTimeout(buscarJogadores, 350); return () => clearTimeout(t); }, [buscarJogadores]);
-
-  const aplicarSaldo = async () => {
-    if (!selecionado || !valor || !podeMexer) return;
-    const qtd = parseInt(valor, 10);
-    if (isNaN(qtd) || qtd <= 0) return;
-    setSalvando(true);
-    // 🔒 Fase 0: `incrementar_saldo` virou exclusiva de service_role.
-    // O painel usa `admin_ajustar_saldo`, que valida o cargo dentro do banco
-    // (proprietario/admin em platform_roles) e devolve os saldos já atualizados.
-    const delta = operacao === 'adicionar' ? qtd : -qtd;
-    const r = await ajustarSaldoAdmin(
-      selecionado.userId,
-      delta,                          // MC — é a coluna que esta aba lê/exibe
-      0,                              // MP — inalterado por esta tela
-      motivo.trim() || 'ajuste_admin',
-    );
-    if (r.ok) {
-      // Fonte da verdade é o retorno da RPC, não um cálculo local.
-      setSelecionado({ ...selecionado, saldo: r.mc });
-      setResultados(prev => prev.map(j => j.userId === selecionado.userId ? { ...j, saldo: r.mc } : j));
-      setValor(''); setMotivo('');
-      setPopup({ tipo: 'sucesso', msg: `${operacao === 'adicionar' ? '+' : '-'}${qtd} MP aplicado.` });
-    } else if (r.erro === 'nao_autorizado') {
-      setPopup({ tipo: 'erro', msg: 'Sem permissão: seu cargo precisa ser admin ou proprietario em platform_roles.' });
-    } else {
-      setPopup({ tipo: 'erro', msg: 'Erro ao atualizar saldo.' });
-    }
-    setSalvando(false);
-    setTimeout(() => setPopup(null), 3000);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-black text-white uppercase">Saldos MPoints</h2>
-        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Adicione ou remova MPoints.' : 'Sem permissão.'}</p>
-      </div>
-      <AnimatePresence>
-        {popup && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
-            {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-            {popup.msg}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl p-6 space-y-4 shadow-xl" style={CardStyle()}>
-          <p className="text-zinc-300 text-xs font-black uppercase tracking-wider">Buscar Jogador</p>
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <input
-              type="text"
-              value={busca}
-              onChange={e => { setBusca(e.target.value); setSelecionado(null); }}
-              placeholder="Nick#TAG..."
-              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
-            />
-            {buscando && <RefreshCw className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 animate-spin" />}
-          </div>
-          {resultados.length > 0 && (
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {resultados.map(j => (
-                <button
-                  key={j.userId}
-                  onClick={() => setSelecionado(j)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
-                    selecionado?.userId === j.userId
-                      ? 'bg-primary/15 border-primary/40 shadow-sm'
-                      : 'bg-[#131a29] border-white/10 hover:bg-[#192236] hover:border-white/20'
-                  }`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/10">
-                    {j.iconId ? (
-                      <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xs font-black">{j.nome[0]}</div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm truncate">{j.riotId}</p>
-                    <p className="text-zinc-400 text-xs">{j.saldo.toLocaleString('pt-BR')} MP</p>
-                  </div>
-                  {selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="rounded-2xl p-6 space-y-5 shadow-xl" style={CardStyle()}>
-          {!selecionado ? (
-            <div className="flex flex-col items-center justify-center h-full py-12">
-              <Users className="w-9 h-9 text-zinc-600 mb-3" />
-              <p className="text-zinc-400 text-sm font-black uppercase tracking-wider">Selecione um jogador</p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                <div className="w-12 h-12 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/15">
-                  {selecionado.iconId ? (
-                    <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-400 font-black">{selecionado.nome[0]}</div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-white font-black">{selecionado.riotId}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Coins className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MP</span>
-                  </div>
-                </div>
-              </div>
-              {podeMexer && (
-                <>
-                  <div className="flex gap-2">
-                    {(['adicionar', 'remover'] as const).map(op => (
-                      <button
-                        key={op}
-                        onClick={() => setOperacao(op)}
-                        className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border transition-all ${
-                          operacao === op
-                            ? op === 'adicionar'
-                              ? 'bg-green-500/20 border-green-500/40 text-green-400 shadow-sm'
-                              : 'bg-red-500/20 border-red-500/40 text-red-400 shadow-sm'
-                            : 'bg-[#0e1320] border-white/10 text-zinc-400 hover:text-white'
-                        }`}
-                      >
-                        {op === 'adicionar' ? '+ Adicionar' : '− Remover'}
-                      </button>
-                    ))}
-                  </div>
-                  <div>
-                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Quantidade (MP)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={valor}
-                      onChange={e => setValor(e.target.value)}
-                      placeholder="Ex: 500"
-                      className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
-                    />
-                  </div>
-                  <button
-                    onClick={aplicarSaldo}
-                    disabled={salvando || !valor || parseInt(valor) <= 0}
-                    className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 transition-all shadow-md ${
-                      operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
-                    }`}
-                  >
-                    {salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MP`}
-                  </button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── ABA: SALDO MC (exclusivo do proprietário) ─────
+// ── ABA: SALDO E (exclusivo do proprietário) ─────
 function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
   const [busca, setBusca] = useState('');
   const [resultados, setResultados] = useState<Jogador[]>([]);
@@ -340,10 +95,10 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
       setSelecionado({ ...selecionado, saldo: r.mc });
       setResultados(prev => prev.map(j => j.userId === selecionado.userId ? { ...j, saldo: r.mc } : j));
       setValor(''); setMotivo('');
-      setPopup({ tipo: 'sucesso', msg: `${operacao === 'adicionar' ? '+' : '-'}${qtd} MC aplicado.` });
+      setPopup({ tipo: 'sucesso', msg: `${operacao === 'adicionar' ? '+' : '-'}${qtd} E aplicado.` });
     } catch (e: any) {
       if (e?.message === 'nao_autorizado') {
-        setPopup({ tipo: 'erro', msg: 'Sem permissão: apenas o proprietário pode ajustar saldo MC.' });
+        setPopup({ tipo: 'erro', msg: 'Sem permissão: apenas o proprietário pode ajustar saldo E.' });
       } else {
         setPopup({ tipo: 'erro', msg: 'Erro ao atualizar saldo.' });
       }
@@ -355,8 +110,8 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-black text-white uppercase">Saldo M7 Coins (MC)</h2>
-        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Adicione ou remova M7 Coins (MC).' : 'Sem permissão.'}</p>
+        <h2 className="text-xl font-black text-white uppercase">Saldo Essência Azul (E)</h2>
+        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Adicione ou remova Essência Azul (E).' : 'Sem permissão.'}</p>
       </div>
       <AnimatePresence>
         {popup && (
@@ -401,7 +156,7 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-black text-sm truncate">{j.riotId}</p>
-                    <p className="text-zinc-400 text-xs">{j.saldo.toLocaleString('pt-BR')} MC</p>
+                    <p className="text-zinc-400 text-xs">{j.saldo.toLocaleString('pt-BR')} E</p>
                   </div>
                   {selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}
                 </button>
@@ -429,7 +184,7 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
                   <p className="text-white font-black">{selecionado.riotId}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Coins className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} MC</span>
+                    <span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} E</span>
                   </div>
                 </div>
               </div>
@@ -453,7 +208,7 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
                     ))}
                   </div>
                   <div>
-                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Quantidade (MC)</label>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Quantidade (E)</label>
                     <input
                       type="number"
                       min="1"
@@ -469,7 +224,7 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
                       type="text"
                       value={motivo}
                       onChange={e => setMotivo(e.target.value)}
-                      placeholder="Ex: teste de saldo MC"
+                      placeholder="Ex: teste de saldo E"
                       className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
                     />
                   </div>
@@ -480,7 +235,7 @@ function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
                       operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
                     }`}
                   >
-                    {salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} MC`}
+                    {salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} E`}
                   </button>
                 </>
               )}
@@ -844,441 +599,11 @@ function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
   );
 }
 
-// ── ABA: NOTÍCIAS & CARDS (Informa & Esportes) ───────
-function AbaNoticias({ adminCargo }: { adminCargo: CargoAdmin }) {
-  const { perfil } = usePerfil();
-  const [list, setList] = useState<NoticiaAdmin[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm] = useState(INITIAL_NOTICIA_FORM);
-  const [salvando, setSalvando] = useState(false);
-  const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro'; msg: string } | null>(null);
-  const podeMexer = temPermissao(adminCargo, 'gerenciarSaldos') || adminCargo === 'organizador';
-
-  const carregar = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await api.content.news({ all: true });
-      setList(data);
-    } catch {
-      setPopup({ tipo: 'erro', msg: 'Erro ao carregar notícias.' });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    carregar();
-  }, [carregar]);
-
-  const resetForm = () => {
-    setForm(INITIAL_NOTICIA_FORM);
-    setEditandoId(null);
-    setMostrarForm(false);
-  };
-
-  const iniciarEdicao = (n: NoticiaAdmin) => {
-    setEditandoId(n.id);
-    setForm({
-      titulo: n.titulo || '',
-      resumo: n.resumo || '',
-      conteudo: n.conteudo || '',
-      categoria: n.categoria || 'Torneios',
-      thumbnail_url: n.thumbnail_url || '',
-      link_url: n.link_url || '',
-      link_texto: n.link_texto || '',
-      destaque: !!n.destaque,
-      ativo: n.ativo !== false,
-    });
-    setMostrarForm(true);
-    window.scrollTo({ top: 300, behavior: 'smooth' });
-  };
-
-  const salvar = async () => {
-    if (!form.titulo.trim() || !form.resumo.trim()) {
-      setPopup({ tipo: 'erro', msg: 'Preencha ao menos o Título e o Resumo da notícia.' });
-      return;
-    }
-    setSalvando(true);
-
-    const slug = form.titulo
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
-
-    const payload: any = {
-      titulo: form.titulo.trim(),
-      slug,
-      resumo: form.resumo.trim(),
-      conteudo: form.conteudo.trim() || null,
-      categoria: form.categoria,
-      thumbnail_url: form.thumbnail_url.trim() || null,
-      link_url: form.link_url.trim() || null,
-      link_texto: form.link_texto.trim() || null,
-      destaque: form.destaque,
-      ativo: form.ativo,
-      autor: perfil?.nome || perfil?.riotId || 'M7 Staff',
-    };
-
-    try {
-      if (editandoId) {
-        await api.content.newsUpdate(editandoId, payload);
-      } else {
-        payload.publicado_em = new Date().toISOString();
-        await api.content.newsCreate(payload);
-      }
-      setPopup({ tipo: 'sucesso', msg: editandoId ? 'Notícia atualizada com sucesso!' : 'Notícia publicada com sucesso!' });
-      resetForm();
-      carregar();
-    } catch (err: any) {
-      setPopup({ tipo: 'erro', msg: 'Erro ao salvar notícia: ' + (err?.message || 'erro desconhecido') });
-    } finally {
-      setSalvando(false);
-    }
-    setTimeout(() => setPopup(null), 3500);
-  };
-  const toggleAtivo = async (n: NoticiaAdmin) => {
-    const novoStatus = !(n.ativo ?? true);
-    await api.content.newsUpdate(n.id, { ativo: novoStatus });
-    setList(prev => prev.map(x => (x.id === n.id ? { ...x, ativo: novoStatus } : x)));
-  };
-
-  const toggleDestaque = async (n: NoticiaAdmin) => {
-    const novoDestaque = !n.destaque;
-    await api.content.newsUpdate(n.id, { destaque: novoDestaque });
-    setList(prev => prev.map(x => (x.id === n.id ? { ...x, destaque: novoDestaque } : x)));
-  };
-
-  const deletar = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta notícia?')) return;
-    await api.content.newsDelete(id);
-    setList(prev => prev.filter(x => x.id !== id));
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-white uppercase flex items-center gap-2">
-            <Newspaper className="w-5 h-5 text-[#00F0FF]" />
-            Gerenciar Informa & Esportes (Notícias da Home)
-          </h2>
-          <p className="text-zinc-400 text-xs mt-1">
-            Publique novidades, regras de campeonatos, patch notes e avisos que aparecem nos cards da página inicial.
-          </p>
-        </div>
-        {podeMexer && (
-          <button
-            onClick={() => {
-              if (mostrarForm && editandoId) {
-                resetForm();
-              } else {
-                setMostrarForm(!mostrarForm);
-              }
-            }}
-            className="px-4 py-2.5 rounded-xl bg-[#00F0FF]/15 border border-[#00F0FF]/40 text-[#00F0FF] font-black text-xs uppercase tracking-widest hover:bg-[#00F0FF]/25 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm"
-          >
-            {mostrarForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {mostrarForm ? 'Fechar Formulário' : '+ Nova Notícia'}
-          </button>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {popup && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className={`p-4 rounded-xl border font-black text-sm ${
-              popup.tipo === 'sucesso'
-                ? 'bg-green-500/15 border-green-500/30 text-green-400'
-                : 'bg-red-500/15 border-red-500/30 text-red-400'
-            }`}
-          >
-            {popup.msg}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Formulário de Adição/Edição */}
-      {podeMexer && mostrarForm && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="rounded-2xl p-6 space-y-4 border border-[#00F0FF]/30 bg-[#00F0FF]/[0.03] shadow-xl"
-          style={CardStyle()}
-        >
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 className="text-[#00F0FF] text-xs font-black uppercase tracking-widest flex items-center gap-2">
-              {editandoId ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              {editandoId ? `Editar Notícia #${editandoId}` : 'Criar Nova Notícia / Card'}
-            </h3>
-            {editandoId && (
-              <button onClick={resetForm} className="text-xs text-zinc-400 hover:text-white underline">
-                Cancelar Edição
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-                Título da Notícia *
-              </label>
-              <input
-                value={form.titulo}
-                onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
-                placeholder="Ex: Grande Torneio M7 de Final de Semana"
-                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-                Categoria
-              </label>
-              <select
-                value={form.categoria}
-                onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}
-                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 transition-all"
-              >
-                {NOTICIA_CATEGORIAS.map(c => (
-                  <option key={c.value} value={c.value} className="bg-[#131a29] text-white">
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-              Resumo curto (Aparece no Card da Home) *
-            </label>
-            <input
-              value={form.resumo}
-              onChange={e => setForm(p => ({ ...p, resumo: e.target.value }))}
-              placeholder="Ex: Premiação recorde em Pix, inscrições abertas para todos os elos..."
-              className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-              Conteúdo Completo (Texto da Matéria ao clicar no card)
-            </label>
-            <textarea
-              rows={4}
-              value={form.conteudo}
-              onChange={e => setForm(p => ({ ...p, conteudo: e.target.value }))}
-              placeholder="Escreva a matéria detalhada ou aviso completo aqui..."
-              className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 resize-none transition-all"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-1">
-              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-                URL da Imagem de Capa
-              </label>
-              <input
-                value={form.thumbnail_url}
-                onChange={e => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
-                placeholder="https://images.unsplash.com/..."
-                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-                Link do Botão (Opcional)
-              </label>
-              <input
-                value={form.link_url}
-                onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))}
-                placeholder="https://... ou /campeonatos"
-                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
-                Texto do Botão
-              </label>
-              <input
-                value={form.link_texto}
-                onChange={e => setForm(p => ({ ...p, link_texto: e.target.value }))}
-                placeholder="Ex: Inscreva-se Agora, Ver Regulamento"
-                className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00F0FF]/60 focus:ring-1 focus:ring-[#00F0FF]/30 placeholder:text-zinc-500 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6 pt-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.destaque}
-                onChange={e => setForm(p => ({ ...p, destaque: e.target.checked }))}
-                className="w-4 h-4 accent-[#FFB700] rounded"
-              />
-              <span className="text-xs font-bold text-zinc-200">Destacar na Home</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.ativo}
-                onChange={e => setForm(p => ({ ...p, ativo: e.target.checked }))}
-                className="w-4 h-4 accent-[#00F0FF] rounded"
-              />
-              <span className="text-xs font-bold text-zinc-200">Ativo / Publicado</span>
-            </label>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={salvar}
-              disabled={salvando || !form.titulo.trim() || !form.resumo.trim()}
-              className="flex-1 py-3 rounded-xl bg-[#00F0FF] text-black font-black text-xs uppercase tracking-widest hover:bg-[#00D8E6] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
-            >
-              {salvando ? 'Salvando...' : editandoId ? 'Atualizar Notícia' : '🚀 Publicar Notícia'}
-            </button>
-            {editandoId && (
-              <button
-                onClick={resetForm}
-                className="px-6 py-3 rounded-xl bg-[#0e1320] border border-white/10 text-zinc-300 font-bold text-xs uppercase hover:bg-white/10 transition-all"
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Lista de Notícias */}
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#00F0FF] border-t-transparent" />
-        </div>
-      ) : list.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl border border-white/10 bg-[#0e1320]/60">
-          <BookOpen className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
-          <p className="text-zinc-400 text-sm font-bold uppercase tracking-wider">
-            Nenhuma notícia cadastrada no banco.
-          </p>
-          <p className="text-zinc-500 text-xs mt-1">
-            Clique no botão acima para adicionar a primeira notícia que aparecerá no site.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {list.map(n => (
-            <div
-              key={n.id}
-              className={`relative flex flex-col justify-between p-4 rounded-xl border transition-all ${
-                n.ativo !== false ? 'border-white/10' : 'border-white/5 opacity-50 bg-[#0e1320]/40'
-              }`}
-              style={CardStyle()}
-            >
-              <div className="flex items-start gap-4">
-                {n.thumbnail_url ? (
-                  <img
-                    src={n.thumbnail_url}
-                    alt={n.titulo}
-                    className="w-24 h-20 object-cover rounded-lg shrink-0 bg-[#0e1320] border border-white/10"
-                  />
-                ) : (
-                  <div className="w-24 h-20 rounded-lg bg-[#0e1320] border border-white/10 flex items-center justify-center shrink-0">
-                    <BookOpen className="w-6 h-6 text-zinc-500" />
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-[#FFB700]/20 text-[#FFB700] border border-[#FFB700]/30">
-                      {n.categoria}
-                    </span>
-                    {n.destaque && (
-                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">
-                        ⭐ Destaque
-                      </span>
-                    )}
-                    <span className="text-[9px] font-bold text-zinc-400 ml-auto">
-                      {new Date(n.publicado_em).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-
-                  <h4 className="text-white font-black text-sm line-clamp-1">{n.titulo}</h4>
-                  <p className="text-zinc-300 text-xs line-clamp-2 mt-0.5 leading-relaxed">{n.resumo}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/10">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleAtivo(n)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center gap-1 ${
-                      n.ativo !== false
-                        ? 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20'
-                        : 'border-white/10 text-zinc-400 hover:bg-white/5'
-                    }`}
-                  >
-                    {n.ativo !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                    {n.ativo !== false ? 'Ativa' : 'Inativa'}
-                  </button>
-
-                  <button
-                    onClick={() => toggleDestaque(n)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center gap-1 ${
-                      n.destaque
-                        ? 'border-[#FFB700]/40 text-[#FFB700] bg-[#FFB700]/10 hover:bg-[#FFB700]/20'
-                        : 'border-white/10 text-zinc-400 hover:bg-white/5'
-                    }`}
-                  >
-                    <Star className="w-3 h-3" />
-                    {n.destaque ? 'Destaque' : 'Normal'}
-                  </button>
-                </div>
-
-                {podeMexer && (
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => iniciarEdicao(n)}
-                      className="p-1.5 rounded-lg border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10 transition-all"
-                      title="Editar Notícia"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => deletar(n.id)}
-                      className="p-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all"
-                      title="Excluir Notícia"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── STATS GLOBAIS DA PLATAFORMA ────────────────────
 interface PlatformStats {
   jogadores: number;
   salasAtivas: number;
   times: number;
-  mpDistribuido: number;
+  eDistribuido: number;
 }
 
 function StatsCards() {
@@ -1293,15 +618,15 @@ function StatsCards() {
         api.players.count(),
         api.matches.list({ status: 'ativas', limit: 200 }).catch(() => []),
         api.teams.list({ limit: 1 }),
-        api.wallet.adminBalances(),
+        api.wallet.adminBalances().catch(() => []),
       ]);
       if (cancelled) return;
-      const totalMP = (wallets ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0), 0);
+      const totalE = (wallets ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0) + (w.mcReservado || 0), 0);
       setStats({
         jogadores: jog?.count ?? 0,
         salasAtivas: Array.isArray(salas) ? salas.length : 0,
         times: timesCount.total ?? 0,
-        mpDistribuido: totalMP,
+        eDistribuido: totalE,
       });
     })();
     return () => { cancelled = true; };
@@ -1311,7 +636,7 @@ function StatsCards() {
     { label: 'Jogadores',        value: stats?.jogadores,      icon: Users,    color: '#A78BFA' },
     { label: 'Salas Ativas',     value: stats?.salasAtivas,    icon: Gamepad2, color: '#00FF41' },
     { label: 'Times',            value: stats?.times,          icon: Trophy,   color: '#FFB800' },
-    { label: 'MC em Circulação', value: stats?.mpDistribuido,  icon: Coins,    color: '#FF4D4D' },
+    { label: 'Essência Azul em Circulação', value: stats?.eDistribuido,  icon: Coins,    color: '#FF4D4D' },
   ];
 
   const fmt = (v?: number) => {
@@ -1348,7 +673,6 @@ function StatsCards() {
 // ── ABA: DASHBOARD (visão geral) ────────────────────
 function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void; adminCargo: CargoAdmin }) {
   const podeRevisar = adminCargo === 'admin' || adminCargo === 'proprietario';
-  const [filaRevisao, setFilaRevisao] = useState<number | null>(null);
   const [filaSaques, setFilaSaques] = useState<number | null>(null);
   const [atualizandoElos, setAtualizandoElos] = useState(false);
   const [msgElos, setMsgElos] = useState<string | null>(null);
@@ -1388,16 +712,6 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
   useEffect(() => {
     if (!podeRevisar) return;
     let ativo = true;
-    api.revisao
-      .pendentes()
-      .then(list => { if (ativo) setFilaRevisao(Array.isArray(list) ? list.length : 0); })
-      .catch(() => { if (ativo) setFilaRevisao(0); });
-    return () => { ativo = false; };
-  }, [podeRevisar]);
-
-  useEffect(() => {
-    if (!podeRevisar) return;
-    let ativo = true;
     api.withdrawals
       .admin()
       .then((rows) => {
@@ -1414,33 +728,10 @@ function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void
         <p className="text-zinc-400 text-xs mt-1">Visão geral operacional da plataforma.</p>
       </div>
 
-      {/* Dashboard financeiro (ADR-032): faturamento/saques/lucro/MC em circulação */}
-      <FinanceiroDashboard />
+      {/* Dashboard financeiro removido na simplificação: H01 mantém a visão
+          operacional; H08 continua com a fila de saques. */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {podeRevisar && (
-          <button
-            onClick={() => onNavigate('revisao')}
-            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] shadow-xl hover:border-white/20"
-            style={CardStyle()}
-          >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-              style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.35)' }}>
-              <Swords className="w-5 h-5 text-[#A78BFA]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-black text-sm uppercase tracking-wide">Revisão de Partidas</p>
-              <p className="text-zinc-400 text-xs mt-0.5">
-                {filaRevisao === null
-                  ? 'Carregando fila...'
-                  : filaRevisao === 0
-                    ? 'Nenhuma partida aguardando revisão'
-                    : `${filaRevisao} ${filaRevisao === 1 ? 'partida aguardando' : 'partidas aguardando'} sua decisão`}
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
-          </button>
-        )}
+      <div className="grid grid-cols-1 gap-3">
         {podeRevisar && (
           <button
             onClick={() => onNavigate('saques')}
@@ -1540,14 +831,11 @@ export default function Admin() {
 
   const abas: { id: Aba; label: string; icon: React.ElementType; bloqueada: boolean }[] = [
     { id: 'dashboard',  label: 'Visão',      icon: LayoutDashboard, bloqueada: false },
-    { id: 'saldos',     label: 'Saldos',     icon: Coins,           bloqueada: !permissoes.gerenciarSaldos },
-    { id: 'saldomc',    label: 'Saldo MC',   icon: Coins,           bloqueada: !permissoes.gerenciarSaldoMc },
+    { id: 'saldomc',    label: 'Saldo E',   icon: Coins,           bloqueada: !permissoes.gerenciarSaldoMc },
     { id: 'ranking',    label: 'Ranking',    icon: Trophy,          bloqueada: !permissoes.gerenciarSaldos },
-    { id: 'noticias',   label: 'Notícias',   icon: Newspaper,       bloqueada: !permissoes.gerenciarSaldos },
     { id: 'highlights', label: 'Highlights', icon: Film,            bloqueada: !permissoes.gerenciarSaldos },
     { id: 'cargos',     label: 'Cargos',     icon: GraduationCap,   bloqueada: !permissoes.gerenciarCargos && adminCargo !== 'proprietario' },
     { id: 'contatos',   label: 'Contatos',   icon: Mail,            bloqueada: !isAdminOuProprietario },
-    { id: 'revisao',    label: 'Revisão',    icon: Swords,          bloqueada: false },
     { id: 'punicoes',   label: 'Punições',   icon: Ban,             bloqueada: !isAdminOuProprietario },
     { id: 'senhas',     label: 'Senhas',     icon: KeyRound,        bloqueada: adminCargo !== 'proprietario' },
     { id: 'saques',     label: 'Saques',     icon: Banknote,        bloqueada: !isAdminOuProprietario },
@@ -1700,14 +988,11 @@ export default function Admin() {
                 transition={{ duration: 0.15 }}
               >
                 {abaAtiva === 'dashboard'  && <AbaDashboard onNavigate={setAbaAtiva} adminCargo={adminCargo} />}
-                {abaAtiva === 'saldos'     && <AbaSaldos adminCargo={adminCargo} />}
                 {abaAtiva === 'saldomc'    && <AbaSaldoMC adminCargo={adminCargo} />}
                 {abaAtiva === 'ranking'    && <AbaRanking adminCargo={adminCargo} />}
-                {abaAtiva === 'noticias'   && <AbaNoticias adminCargo={adminCargo} />}
                 {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
                 {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
                 {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
-                {abaAtiva === 'revisao'    && <RevisaoPartidas />}
                 {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
                 {abaAtiva === 'senhas'     && <AbaSenhas adminCargo={adminCargo} />}
                 {abaAtiva === 'saques'     && <SaquesPix />}

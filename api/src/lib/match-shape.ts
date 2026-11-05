@@ -179,12 +179,10 @@ export function toLegacyMatchCard(m: any, jogadoresCount = 0, criadorNome = "Des
 /**
  * Shape legado de `salas`. `players` são as linhas de `match_players` já
  * enriquecidas com user + isVip pelo chamador. `criadorNome` vem do dono.
- * `printsRecebidos` é opcional (contagem de `match_prints` para o estado
- * `aguardando_revisao` — design v3 §6); só a rota de detalhe/painel envia.
- * `draft` é a linha de `match_drafts` (ou null) — o estado `draft` do fork
+ * `draft` é a linha de `match_drafts` (ou null) - o estado `draft` do fork
  * consome os arrays de ban/pick e o PRAZO DO SERVIDOR `turn_deadline_at`.
  */
-export function toLegacyMatch(m: any, players: any[], criadorNome: string, printsRecebidos = 0, resultadoRiot: any = null, draft: any = null) {
+export function toLegacyMatch(m: any, players: any[], criadorNome: string, resultadoRiot: any = null, draft: any = null) {
   const jogadores = players.map((p) =>
     toLegacyPlayer(p, p.__user, !!p.__isVip, m.salaNum)
   );
@@ -224,10 +222,7 @@ export function toLegacyMatch(m: any, players: any[], criadorNome: string, print
     // ── Salas apostadas (design v3 §5/§11) — campos aditivos para o fork ──
     aposta_mc: m.apostaMc ?? 0,          // 0 = casual
     taxa_pct: m.taxaPct ?? 8.99,          // congelada na criação da sala
-    match_id: m.id,                       // uuid interno (prints/disputas/revisão)
-    revisao_desde: m.revisaoDesde ?? null, // SLA do estado aguardando_revisao
-    prints_recebidos: printsRecebidos,
-    prints_necessarios: 3,                // máx. 3 prints por partida (design v3 §6)
+    match_id: m.id,                       // uuid interno (histórico/front)
     // O fork conta jogadores em `sala.jogadores.length` na listagem.
     jogadores,
     // Draft (ban/pick) — só existe entre `draft` e `iniciando_partida`. O

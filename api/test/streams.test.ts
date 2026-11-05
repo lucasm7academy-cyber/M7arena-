@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { games } from "../../db/schema/games.js";
 import { users, userRoles } from "../../db/schema/identidade.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
+import { matches } from "../../db/schema/matches.js";
 import { tournaments, tournamentMatches } from "../../db/schema/tournaments.js";
 import { transmissoes, escalasTransmissao } from "../../db/schema/conteudo.js";
 import { setupDb } from "./helpers.js";
@@ -239,5 +240,30 @@ describe("transmissões — agenda de jogos", () => {
     assert.ok(ids.includes(futuro.id));
     assert.ok(!ids.includes(combinando.id));
     assert.ok(!ids.includes(antigo.id));
+  });
+
+  test("vitrine/minha: live de scrim vive enquanto a sala está ativa (G04)", async () => {
+    const s = await criaStreamer();
+    const criador = crypto.randomUUID();
+    await db.insert(users).values({ id: criador, email: criador + "@x.com", displayName: "Criador" });
+    await db.insert(games).values({ id: "lol", name: "League of Legends" }).onConflictDoNothing();
+    const [sala] = await db.insert(matches).values({
+      gameId: "lol", mode: "time_vs_time_livre", status: "preenchendo", createdBy: criador,
+    }).returning();
+    const [tx] = await db.insert(transmissoes).values({
+      userId: s, twitchChannel: "canal_teste", salaId: sala.id, ativo: true,
+      modo: "time_vs_time_livre", expiraEm: null,
+    }).returning();
+
+    const vitrine = await listarVitrine(db);
+    assert.ok(vitrine.some((t: any) => t.id === tx.id), "live de scrim ativa aparece na vitrine");
+    assert.equal((await minhaTransmissao(db, s))?.id, tx.id, "minhaTransmissao mantém a live de scrim");
+
+    await db.update(matches).set({ status: "encerrada" }).where(eq(matches.id, sala.id));
+    const depois = await listarVitrine(db);
+    assert.ok(!depois.some((t: any) => t.id === tx.id), "sala encerrada some da vitrine");
+    assert.equal(await minhaTransmissao(db, s), null);
+    const [linha] = await db.select().from(transmissoes).where(eq(transmissoes.id, tx.id));
+    assert.equal(linha.ativo, false, "minhaTransmissao faz lazy cleanup da live de scrim");
   });
 });
