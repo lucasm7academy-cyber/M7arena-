@@ -77,7 +77,7 @@ transporta o id da sala; o cliente refaz `GET /api/matches/:id`.
 | B03 | Endpoints/UI de convite e solicitação de entrada em time | Edição direta do lineup pelo capitão; `team_invites` como tabela histórica |
 | B07 | Anúncio/rotas de recrutamento (LFT/LFP) | `recruitment_posts` como tabela histórica |
 | C12/C13/C14/H06 | Revisão manual, prints, disputas e contestação | Verificação automática Riot, escrow, empate/cancelamento e D04 manual de campeonato |
-| C16 | Sala `/time_vs_time/:id`, `SalaTimeVsTime` e criação do modo antigo | Scrim `time_vs_time_livre`, `/sala-time/:id` e OG atualizado |
+| C16 | Sala antiga `/time_vs_time/:id`, `SalaTimeVsTime` e criação do modo antigo | Scrim `time_vs_time_livre`, `/sala-time/:id`, OG atualizado e redirect de links antigos para `/jogar` |
 | F11/H07 | Dashboard financeiro duplicado | H01 (visão geral) e fila de saques H08 |
 | F12 | Venda/assinatura VIP | Selo e status VIP existentes (A10), sem sistema de assinatura |
 | F13 | Referral | Tabela `referral_events` e `users.referred_by` históricos |
@@ -145,8 +145,8 @@ transporta o id da sala; o cliente refaz `GET /api/matches/:id`.
 
 ### 3.2 Rotas e endpoints removidos
 
-- Front: `/admin/cargos`, `/admin/contatos`, `/time_vs_time/:id` (agora redireciona
-  para `/jogar`).
+- Front: `/admin/cargos` e `/admin/contatos`. A rota `/time_vs_time/:id` não abre
+  mais a sala antiga: redireciona para `/jogar`.
 - API: `/api/revisao/*`, `/api/prints/*`, `/api/disputas/*`, `/api/content/news*`,
   `POST /api/matches/:id/report-result`, `POST /api/wallet/deposit`,
   `POST /api/wallet/admin/adjust`.
@@ -200,7 +200,7 @@ M7arenaSite/
 │   ├── public/                           # 95 assets
 │   └── src/
 │       ├── App.tsx                       # 28 rotas com path
-│       ├── api/                          # riot, salamod1
+│       ├── api/                          # riot, salamod1, player
 │       ├── components/                   # 41 tsx + utilitários
 │       ├── config/
 │       ├── contexts/                     # 4
@@ -217,9 +217,11 @@ M7arenaSite/
 ### 4.1 Pastas de feature
 
 - `web/src/features/sala-campeonato/` — sala de série de campeonato e scrim livre.
-- `web/src/features/draft/` — draft Fearless/ban-pick.
-- `web/src/features/campeonato/` — seções do detalhe de campeonato.
-- `web/src/features/` demais componentes de domínio.
+- `web/src/features/campeonatos/` — seções e contexto do detalhe de campeonato.
+- `web/src/features/streams/` — componentes de transmissão.
+- `web/src/features/m7-academy-tierlist/` — feature de tierlist desconectada.
+- O draft Fearless/ban-pick fica em `web/src/components/draft/` (`DraftRoom.tsx` e
+  componentes auxiliares), não em `features/`.
 
 ### 4.2 Páginas
 
@@ -268,16 +270,19 @@ Há **25 arquivos** em `web/src/pages`:
 | `/time_vs_time/:id` | `Navigate` | público | C16: redireciona para `/jogar` |
 | `*` | `Navigate` | público | Fallback para `/lobby` |
 
-**Removidas:** `/admin/cargos`, `/admin/contatos`, `/time_vs_time/:id` (antiga
-sala), `/reset-password`, `/resetpassword`, `/auth/callback`.
+**Removidas:** `/admin/cargos`, `/admin/contatos`, `/reset-password`,
+`/resetpassword`, `/auth/callback`. A sala antiga de `/time_vs_time/:id` não
+existe mais, mas o path permanece como redirect para `/jogar` (linha acima).
 
 ---
 
 ## 6. API — routers e mounts
 
-`api/src/index.ts` monta **21 caminhos `/api`** a partir de **23 arquivos de
-route**. Dois arquivos são sub-routers (`matches-actions` e
-`content-highlights`); `tierlists.ts` existe mas não está montado.
+`api/src/index.ts` registra **21 chamadas `app.use`** em **18 prefixos distintos**
+(`/api/auth` aparece 3x e `/api/admin` 2x), a partir de **23 arquivos de route**.
+Dois arquivos são sub-routers (`matches-actions` e `content-highlights`);
+`tierlists.ts` existe mas não está montado. `/api/health` é `app.get` inline, não
+um mount — a tabela abaixo lista 19 endpoints-base.
 
 | Mount | Arquivo(s) | Domínio |
 |---|---|---|
@@ -398,10 +403,13 @@ Campos/aliases mantidos de propósito:
 - **Segurança:** a auditoria da Etapa 3 (Pix em endpoint público, autorização de
   campeonato, saldo de terceiros) não foi executada. Apenas endpoints mortos
   foram removidos; não trate este documento como certificação de segurança.
-- **Arquivos grandes:** `TimePage.tsx` (~1.817 linhas), `Admin.tsx` (~950),
-  `CampeonatoDetalhes.tsx` (>5 mil) e `api/src/routes/matches.ts` (~687) ainda
-  violam a meta de ~400 linhas. O recorte deve ser feito dentro do domínio, sem
-  misturar com mudança de comportamento.
+- **Arquivos grandes:** `TimePage.tsx` (~1.817 linhas), `SalaCampeonato.tsx`
+  (~1.657), `Lobby.tsx` (~1.596), `createCampPage.tsx` (~1.572),
+  `CampeonatoContext.tsx` (~1.483), `Admin.tsx` (~951) e
+  `api/src/routes/matches.ts` (~630) ainda violam a meta de ~400 linhas. O
+  recorte deve ser feito dentro do domínio, sem misturar com mudança de
+  comportamento. (`CampeonatoDetalhes.tsx` tem ~456 linhas e **não** entra nessa
+  lista.)
 - **Testes da API sem script:** continuam soltos em `api/test`; o comando manual
   é `npx tsx --test --test-concurrency=1 api/test/*.test.ts`.
 - **Backup automático:** os backups antigos de 20 bytes continuam inválidos; o
