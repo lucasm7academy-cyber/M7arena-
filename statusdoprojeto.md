@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 05/11/2026 00:21 — por `deepseek`
+**Última atualização:** 05/11/2026 02:11 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -179,6 +179,7 @@ _31/10/2026 04:00 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 05/11/2026 02:11 | deepseek | Inscrevi e ja aprovei o time flexqueue (FLEX) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert direto em tournament_teams como approved, discord weedinchat / whatsapp 13974191151. Camp. ficou 16/16 inscritos (15 aprovados + Chidori pendente) e FLEX aparece na classificacao pela API publica. Nenhum codigo alterado. |
 | 05/11/2026 00:21 | deepseek | Deploy da simplificacao aprovada em producao: merge --no-ff na main (8ee9e0a), backup novo do PostgreSQL validado por restore em DB temporario (48 tabelas; users 449/matches 58/wallets 324; mc 13622/reservado 0), uploads 304 arquivos preservados, imagens de rollback salvas. Deploy somente app/nginx; realtime (id 8f2710) e postgres preservados; sem migration. Health publico 200; login/sessao, OP.GG, salas/scrim/campeonato, PDL e privacidade Pix validados; 403 para funcoes admin por usuario comum. Pacote instalado: app sha256:56456f8..., nginx sha256:59a3c6b.... <br>_tocou: `api/src`, `web/src`, `infra`, `docs`, `main`, `deploy-vps`_ |
 | 04/11/2026 23:41 | deepseek | Homologacao local da simplificacao: stack Docker local com banco isolado m7arena_homolog; navegador testou cadastro/login/perfil, catalogo com OP.GG, times, campeonatos, salas 5v5 e 1v1 completa ate iniciar partida, scrim, carteira E, admin. Corrigidos bugs de homologacao e seguranca: perfil publico sem Pix, saldo de terceiros so admin, escrita de campeonato por staff, inscricao sem autoaprovacao, lineup sem sequestro, tick autenticado, refresh-elo removido, convidado so por PUUID. Auditoria read-only de producao: 0 salas aguardando_revisao, 0 reservas, 13 prints e 2 disputas historicas encerradas. Evidencias: web lint/build, api tsc/build, 283 testes API passando, verify-swap 0. Sem deploy/migration; main intacta. <br>_tocou: `web/src`, `api/src`, `api/test`, `infra`, `docs`, `ESTRUTURA_ATUALIZADA_2026-11-04.md`, `docs/HOMOLOGACAO_SIMPLIFICACAO.md`_ |
 | 04/11/2026 22:41 | deepseek | Simplificacao local da matriz 84 itens concluida na branch simplificacao-m7arena: removidos revisao/prints/disputas, noticias, player_stats, convites, dashboard financeiro, Time vs Time antigo e M7 Points; saldo MC renomeado para Essencia Azul (E); corrigidos lives de scrim (G04/G06), sino G07, cargo caster/H02 e H01 com reservas; novo ESTRUTURA_ATUALIZADA_2026-11-04.md. Evidencias: web lint/build, api tsc, 279 testes passando, verify-swap 0. Sem deploy, sem migration, main intacta. <br>_tocou: `web/src`, `api/src`, `db`, `docs`, `infra`, `scripts`, `plano_m7arena_atualizado.md`, `CATALOGO_FUNCIONALIDADES.md`, `ESTRUTURA_ATUALIZADA_2026-11-04.md`_ |
@@ -193,7 +194,6 @@ _31/10/2026 04:00 — deepseek_
 | 31/10/2026 16:39 | deepseek | Scrim: header preto em linha igual ao 5x5, sem moldura branca; titulo + numero da sala na mesma linha e card Serie (MD3 - BLUE x RED) no lugar do JOGO/MD3 empilhado. tsc/build ok; deploy web (SalaCampeonato-DhqY-VPe, index-DcDsj443). <br>_tocou: `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 | 31/10/2026 05:43 | deepseek | Lobby/hero: adicionados fades nas 4 bordas da arte (dois overlays de gradiente — horizontal e vertical) para a imagem dissolver no card em vez de parecer cortada; o gradiente da esquerda tambem reforca a leitura do texto. Funciona para os dois modelos do hero (padrao/halloween). Commit 0026e34, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
 | 31/10/2026 05:34 | deepseek | Lobby/hero: imagem centralizada de verdade — troquei object-[center_12%] por object-center e ajustei o zoom para scale-96 (levemente reduzido, sem barras visiveis). Arte do Halloween continua; modelo padrao (video do Lucian) segue salvo em HERO_PADRAO/HERO_EDICAO. Commit 6fda571, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`_ |
-| 31/10/2026 05:25 | deepseek | Lobby: hero agora tem DOIS modelos trocaveis por HERO_EDICAO em Lobby.tsx — 'padrao' (texto antigo + video animated-highnoon-lucian.webm, arquivo preservado) e 'halloween' (arte Bruxa da Lua/Copa do Halloween 2026 em webp 1920px, titulo 'Copa do Halloween 2026', CTA 'Inscrever meu time' apontando para https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460 e CTA secundario 'Ver campeonatos'). Imagem com zoom reduzido (scale-95) e object-position 12%. Selo do topo virou 'Halloween 2026'. tsc 0, build ok, deploy ok, health 200. <br>_tocou: `web/src/pages/Lobby.tsx`, `web/public/images/hero-halloween-2026.webp`_ |
 
 ---
 

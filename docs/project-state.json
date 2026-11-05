@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-05T03:21:48.714Z",
+  "updatedAt": "2026-11-05T05:11:14.221Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -490,6 +490,12 @@
         "main",
         "deploy-vps"
       ]
+    },
+    {
+      "at": "2026-11-05T05:11:14.211Z",
+      "agent": "deepseek",
+      "summary": "Inscrevi e ja aprovei o time flexqueue (FLEX) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert direto em tournament_teams como approved, discord weedinchat / whatsapp 13974191151. Camp. ficou 16/16 inscritos (15 aprovados + Chidori pendente) e FLEX aparece na classificacao pela API publica. Nenhum codigo alterado.",
+      "touched": []
     }
   ]
 }
