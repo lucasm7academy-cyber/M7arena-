@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 06/11/2026 02:48 — por `deepseek`
+**Última atualização:** 06/11/2026 18:43 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -187,6 +187,7 @@ _06/11/2026 00:48 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 06/11/2026 18:43 | deepseek | COPA HALLOWEEN 2026: substitui CHOP (Chopp Squad) por CDR (Chidori e-Sports) no Grupo C. Chidori: registered -> approved, group_id C; CHOP removido de tournament_teams; os 3 jogos do Grupo C (BKSR x CHOP, CHOP x DLG, CHOP x BLM) viraram BKSR x CDR, CDR x DLG e CDR x BLM; a linha de standings de CHOP foi reaproveitada para CDR (rank 6). Verificado pela API: 16 inscritos/16 aprovados, Grupo C = BKSR, BLM, CDR, DLG, cronograma com CDR x BKSR/DLG/BLM e classificacao com CDR, sem CHOP. Logos: CDR foi para LOGOS GRUPO C e CHOP para LOGOS FORA. Planilha: linha 9 trocada para Chidori, totais e Resumo ajustados para 16 times. Nenhum codigo alterado. |
 | 06/11/2026 02:48 | deepseek | Analise da partida 257 (sala livre MD3): AMATERASU 0x2 CDC. Dados Riot Match-V5 (BR1_3301116049 e BR1_3301147252): jogo 1 35:54 (13x21), jogo 2 31:17 (25x24). Serie: 38x45 abates, 5x20 torres, 0x4 barao, 100.550x199.419 dano a objetivos. Diagnostico: draft de janela curta (Lucian/Rakan vs Xayah/Karma; Olaf vs Darius) + execucao/macro (pick sem reset em 19:20 e 20:33-23:09; 4 baraos cedidos). Documento Word gerado em docs/analises/analise-partida-257-amaterasu-vs-cdc.docx. |
 | 06/11/2026 01:49 | deepseek | COPA HALLOWEEN 2026: a pedido do usuario, troquei CHOP (Chopp Squad) por BLR (BLOOM RED) nos grupos. CHOP: Grupo B -> Grupo C; BLR: Grupo C -> Grupo B. Atualizei tournament_teams.group_id e os 6 confrontos ja sorteados (3 do Grupo B com CHOP -> BLR; 3 do Grupo C com BLR -> CHOP), em DO block com verificacoes. Nenhum jogo tinha sala/serie/resultado. Confirmado pela API: Grupo B = CDC,PHE,BLR,PTGN; Grupo C = BKSR,BLM,CHOP,DLG; cronograma BLR x CDC/PTGN/PHE e CHOP x BKSR/DLG/BLM. Tambem movi as logos BLR/CHOP entre as pastas e atualizei a coluna Grupo na planilha aberta no Excel. Sem mudanca de codigo. |
 | 06/11/2026 01:36 | deepseek | Exportei as 17 logos dos times da COPA HALLOWEEN 2026 para C:\\Users\\78787\\Documents\\LOGOS, organizadas em LOGOS GRUPO A, B, C, D e LOGOS SEM GRUPO (Chidori). Baixei teams.logo_url do site e converti para PNG: 4+4+4+4+1 = 17/17 OK. Nenhum banner ou imagem extra foi salvo; nenhum codigo alterado. |
@@ -201,7 +202,6 @@ _06/11/2026 00:48 — deepseek_
 | 04/11/2026 22:41 | deepseek | Simplificacao local da matriz 84 itens concluida na branch simplificacao-m7arena: removidos revisao/prints/disputas, noticias, player_stats, convites, dashboard financeiro, Time vs Time antigo e M7 Points; saldo MC renomeado para Essencia Azul (E); corrigidos lives de scrim (G04/G06), sino G07, cargo caster/H02 e H01 com reservas; novo ESTRUTURA_ATUALIZADA_2026-11-04.md. Evidencias: web lint/build, api tsc, 279 testes passando, verify-swap 0. Sem deploy, sem migration, main intacta. <br>_tocou: `web/src`, `api/src`, `db`, `docs`, `infra`, `scripts`, `plano_m7arena_atualizado.md`, `CATALOGO_FUNCIONALIDADES.md`, `ESTRUTURA_ATUALIZADA_2026-11-04.md`_ |
 | 04/11/2026 22:39 | deepseek | Inscrevi e aprovei os times Valdreia (VLD) e Tokaman (TKM) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert em tournament_teams como registered e update para approved. Camp. ficou com 15/16 vagas (14 aprovados + Chidori pendente); confirmado pela API publica que os dois aparecem na classificacao. Nenhum codigo alterado. |
 | 04/11/2026 20:41 | deepseek | Catalogo funcional completo em CATALOGO_FUNCIONALIDADES.md: 84/84 funcionalidades detalhadas, 67 ativas, 5 incompletas, 4 legadas, 5 desconectadas, 3 duplicadas; dossies de M7 Points, Discord, recrutamento, VIP, Tierlist e Time vs Time legado; 16 endpoints sem tela, 17 tabelas/campos orfaos, 10 jobs, 10 integracoes e 10 capacidades de infra. Nenhum codigo alterado. |
-| 04/11/2026 19:53 | deepseek | Mapeamento completo da estrutura atual do projeto em ESTRUTURA_ATUAL.md (arvore, rotas, API, banco, features, redundancias, 27 problemas confirmados, 14 suspeitas, 10 redundancias). Nenhum codigo alterado. |
 
 ---
 
