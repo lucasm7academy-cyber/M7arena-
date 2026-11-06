@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-06T04:49:58.784Z",
+  "updatedAt": "2026-11-06T05:48:52.792Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -254,14 +254,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-10-31T07:11:34.611Z",
-      "agent": "deepseek",
-      "summary": "Draft: bans agora CENTRALIZADOS (container max-w-140vmin, left-1/2) — ficam encostados no bloco 'FASE DE BANS/PICKS' em vez de colados nas bordas; tamanho 7.2vmin e top 2.5vmin mantidos. Icones do topo (resetar/verificar/twitch/mudo) voltaram pro canto superior direito (top-1vmin right-1.5vmin) — com o container de 140vmin eles nao sobrepoem mais o ultimo ban. Commit 8b40961, deploy VPS ok, health 200.",
-      "touched": [
-        "web/src/components/draft/DraftRoom.tsx"
-      ]
-    },
-    {
       "at": "2026-10-31T07:15:21.023Z",
       "agent": "deepseek",
       "summary": "Draft: ajuste fino do espacamento. Container dos bans 140->152vmin (max-w), criando ~4-5vmin de respiro entre o ultimo ban e a barra azul/vermelha do timer, mantendo os bans perto do bloco FASE. Icones do topo (resetar/verificar/twitch/mudo) descem para top-12vmin, logo abaixo da linha de bans (continuam no alto, sem colidir com o ultimo ban). tsc 0, build ok, commit 67507fe, deploy ok (DraftRoom-DMCiPsye.js, health 200).",
@@ -506,6 +498,12 @@
       "at": "2026-11-06T04:49:58.783Z",
       "agent": "deepseek",
       "summary": "COPA HALLOWEEN 2026: a pedido do usuario, troquei CHOP (Chopp Squad) por BLR (BLOOM RED) nos grupos. CHOP: Grupo B -> Grupo C; BLR: Grupo C -> Grupo B. Atualizei tournament_teams.group_id e os 6 confrontos ja sorteados (3 do Grupo B com CHOP -> BLR; 3 do Grupo C com BLR -> CHOP), em DO block com verificacoes. Nenhum jogo tinha sala/serie/resultado. Confirmado pela API: Grupo B = CDC,PHE,BLR,PTGN; Grupo C = BKSR,BLM,CHOP,DLG; cronograma BLR x CDC/PTGN/PHE e CHOP x BKSR/DLG/BLM. Tambem movi as logos BLR/CHOP entre as pastas e atualizei a coluna Grupo na planilha aberta no Excel. Sem mudanca de codigo.",
+      "touched": []
+    },
+    {
+      "at": "2026-11-06T05:48:52.787Z",
+      "agent": "deepseek",
+      "summary": "Analise da partida 257 (sala livre MD3): AMATERASU 0x2 CDC. Dados Riot Match-V5 (BR1_3301116049 e BR1_3301147252): jogo 1 35:54 (13x21), jogo 2 31:17 (25x24). Serie: 38x45 abates, 5x20 torres, 0x4 barao, 100.550x199.419 dano a objetivos. Diagnostico: draft de janela curta (Lucian/Rakan vs Xayah/Karma; Olaf vs Darius) + execucao/macro (pick sem reset em 19:20 e 20:33-23:09; 4 baraos cedidos). Documento Word gerado em docs/analises/analise-partida-257-amaterasu-vs-cdc.docx.",
       "touched": []
     }
   ]
