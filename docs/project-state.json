@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-06T03:48:12.830Z",
+  "updatedAt": "2026-11-06T04:24:55.447Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -253,16 +253,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T06:40:11.411Z",
-      "agent": "deepseek",
-      "summary": "Documenta modo local vs VPS no AGENTS.md: padrao sobe na VPS; modo local so sobe com 'pode subir'; aviso quando a main esta a frente da VPS. Registra ADR-094.",
-      "touched": [
-        "AGENTS.md",
-        "docs/project-state.json",
-        "statusdoprojeto.md"
-      ]
-    },
     {
       "at": "2026-10-31T07:00:27.844Z",
       "agent": "deepseek",
@@ -516,6 +506,12 @@
       "at": "2026-11-06T03:48:12.829Z",
       "agent": "deepseek",
       "summary": "Regulamento da COPA HALLOWEEN 2026 reescrito a partir do modelo de 300 pontos e simplificado: 16 times em 4 grupos de 4, top 2 avancam, desempate em MD1, playoffs upper/lower, MD3 e final MD5; Free Elo; sala e draft gerados pela plataforma, sem Drafter.lol e sem X1; sem datas/confrontos fixos; esperar o streamer na sala; alteracoes do regulamento durante o campeonato. Gerados DOCX e PDF (Downloads) e publicados em /uploads/public-images/campeonatos/regulamento-copa-halloween-2026.pdf e .docx. Campo regulamento do torneio 9987c732-db06-4e51-8e39-e09c31fd9460 atualizado para a URL do PDF. Evidencia: HEAD do PDF 200 application/pdf (259239 bytes), HEAD do DOCX 200, e GET /api/tournaments/9987... retorna regulamento com a URL do PDF.",
+      "touched": []
+    },
+    {
+      "at": "2026-11-06T04:24:55.444Z",
+      "agent": "deepseek",
+      "summary": "Planilha Excel 'COPA HALLOWEEN 2026 - Pagamentos e Contratos.xlsx' criada em Downloads com os 17 inscritos (16 aprovados + Chidori pendente): responsavel, Discord, WhatsApp, time, sigla, grupo, status, Pago? e Contrato assinado? com listas suspensas, valores, datas e aba Resumo com totais automaticos. Pagamentos iniciam como pendentes porque o banco nao tem paid=true; aceites de termos de CDC e AMS preenchidos. Nenhum codigo alterado.",
       "touched": []
     }
   ]
