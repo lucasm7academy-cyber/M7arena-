@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-06T04:24:55.447Z",
+  "updatedAt": "2026-11-06T04:36:27.172Z",
   "updatedBy": "deepseek",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -254,16 +254,6 @@
   ],
   "sessions": [
     {
-      "at": "2026-10-31T07:00:27.844Z",
-      "agent": "deepseek",
-      "summary": "AGENTS.md: pasta principal D:\\Aplicativos\\M7arenaSite sempre na main e atualizada; agentes sincronizam no fim. ADR-095 registrada.",
-      "touched": [
-        "AGENTS.md",
-        "docs/project-state.json",
-        "statusdoprojeto.md"
-      ]
-    },
-    {
       "at": "2026-10-31T07:07:58.987Z",
       "agent": "deepseek",
       "summary": "Draft: bans maiores e mais altos. BanSlot 6->7.2vmin, icone interno 3.6->4.3vmin, gap 1->0.9vmin, rotulo 1->1.1vmin; faixa de bans subiu de top-5vmin para top-2.5vmin (encostada na faixa do timer). Icones do topo (resetar/verificar/twitch/mudo) movidos do topo-direita para o canto inferior direito (bottom-2vmin right-4vmin) para nao cobrir o ultimo ban. tsc 0, check-cut-borders ok, commit 8687f6a na main, deploy VPS ok (/api/health 200, chunk DraftRoom-s2IbL3Mn.js com as classes novas).",
@@ -512,6 +502,12 @@
       "at": "2026-11-06T04:24:55.444Z",
       "agent": "deepseek",
       "summary": "Planilha Excel 'COPA HALLOWEEN 2026 - Pagamentos e Contratos.xlsx' criada em Downloads com os 17 inscritos (16 aprovados + Chidori pendente): responsavel, Discord, WhatsApp, time, sigla, grupo, status, Pago? e Contrato assinado? com listas suspensas, valores, datas e aba Resumo com totais automaticos. Pagamentos iniciam como pendentes porque o banco nao tem paid=true; aceites de termos de CDC e AMS preenchidos. Nenhum codigo alterado.",
+      "touched": []
+    },
+    {
+      "at": "2026-11-06T04:36:27.170Z",
+      "agent": "deepseek",
+      "summary": "Exportei as 17 logos dos times da COPA HALLOWEEN 2026 para C:\\\\Users\\\\78787\\\\Documents\\\\LOGOS, organizadas em LOGOS GRUPO A, B, C, D e LOGOS SEM GRUPO (Chidori). Baixei teams.logo_url do site e converti para PNG: 4+4+4+4+1 = 17/17 OK. Nenhum banner ou imagem extra foi salvo; nenhum codigo alterado.",
       "touched": []
     }
   ]
