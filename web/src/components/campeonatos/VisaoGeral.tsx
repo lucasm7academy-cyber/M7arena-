@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { CUT_BADGE, CUT_BADGE_INNER } from "./cut-edge";
 
+// Logo padrão da M7 exibida quando o organizador não cadastrou uma foto.
+const LOGO_M7_URL = "/uploads/public-images/logo-m7.png";
+
 export const VisaoGeral = ({
   campeonato,
   getIcon,
@@ -95,7 +98,7 @@ export const VisaoGeral = ({
         {campeonato.orgPhotoUrl ? (
           <img src={campeonato.orgPhotoUrl} loading="lazy" alt="Logo Org" className="w-full h-full object-cover" />
         ) : (
-          <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400" loading="lazy" alt="Logo Default" className="w-full h-full object-cover opacity-50" />
+          <img src={LOGO_M7_URL} loading="lazy" alt="M7 Arena" className="w-full h-full object-contain" />
         )}
       </div>
       <div className="flex flex-col items-center text-center">
