@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 06/11/2026 00:37 — por `deepseek`
+**Última atualização:** 06/11/2026 00:48 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -175,10 +175,19 @@ _31/10/2026 03:40 — deepseek_
 
 _31/10/2026 04:00 — deepseek_
 
+### ADR-096 — Regulamento do campeonato publicado em PDF no site
+
+**Decisão:** O campo regulamento do campeonato e um link (o formulario admin usa type=url). O Regulamento Oficial da COPA HALLOWEEN 2026 fica em https://m7arena.pro/uploads/public-images/campeonatos/regulamento-copa-halloween-2026.pdf, com DOCX editavel no mesmo diretorio do volume de uploads. O botao Regulamento Oficial abre o PDF em nova aba.
+
+**Por quê:** Manter o documento oficial em PDF preserva a formatacao e evita duplicar um texto longo no campo do banco; o DOCX fica como fonte editavel para a proxima versao.
+
+_06/11/2026 00:48 — deepseek_
+
 ## Histórico de sessões
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 06/11/2026 00:48 | deepseek | Regulamento da COPA HALLOWEEN 2026 reescrito a partir do modelo de 300 pontos e simplificado: 16 times em 4 grupos de 4, top 2 avancam, desempate em MD1, playoffs upper/lower, MD3 e final MD5; Free Elo; sala e draft gerados pela plataforma, sem Drafter.lol e sem X1; sem datas/confrontos fixos; esperar o streamer na sala; alteracoes do regulamento durante o campeonato. Gerados DOCX e PDF (Downloads) e publicados em /uploads/public-images/campeonatos/regulamento-copa-halloween-2026.pdf e .docx. Campo regulamento do torneio 9987c732-db06-4e51-8e39-e09c31fd9460 atualizado para a URL do PDF. Evidencia: HEAD do PDF 200 application/pdf (259239 bytes), HEAD do DOCX 200, e GET /api/tournaments/9987... retorna regulamento com a URL do PDF. |
 | 06/11/2026 00:37 | deepseek | Campeonatos: troquei o fallback da foto do organizador no bloco Responsavel. Antes era uma imagem Unsplash (alt 'Logo Default'); agora, quando o campeonato nao tem orgPhotoUrl, exibe a logo oficial /uploads/public-images/logo-m7.png com object-contain. Validacao: tsc --noEmit exit 0 e vite build OK no web. Deploy do front na VPS a partir da main ab69030, rebuild apenas do container m7arena_nginx. Confirmado: /api/health 200; chunk CampeonatoDetalhes-CyBabsdh.js servido contem logo-m7.png e nao contem mais photo-1542751371. Sem mudanca de API, banco, rig ou export. |
 | 06/11/2026 00:33 | deepseek | COPA HALLOWEEN - 2026: troquei os grupos de AMATERASU E-SPORTS (AMS) e Chopp Squad (CHOP) a pedido do usuario. AMS: Grupo B -> Grupo D; CHOP: Grupo D -> Grupo B. Atualizei tournament_teams.group_id e os 6 confrontos ja sorteados (tags e ids), em transacao com verificacao. Nenhum jogo tinha resultado, sala, live ou serie vinculada. Confirmado pela API publica: Grupo B = CDC,PHE,CHOP,PTGN; Grupo D = LDL,AMS,VLD,EMPA; cronograma com CHOP x CDC/PTGN/PHE e AMS x EMPA/LDL/VLD. Sem mudanca de codigo e sem deploy. |
 | 05/11/2026 23:24 | deepseek | Inscrevi e ja aprovei o Phantom E-Sports (PHE) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert em tournament_teams como approved, discord soul_adc / whatsapp 44999094022. Camp. ficou 17 inscricoes, 16 aprovados (PHE entra como 16o aprovado) + Chidori pendente; condicao de inicio (aprovados == vagas) satisfeita. Confirmado pela API publica que PHE aparece na classificacao. Nenhum codigo alterado. |
@@ -193,7 +202,6 @@ _31/10/2026 04:00 — deepseek_
 | 02/11/2026 21:35 | deepseek | Sala 250: aplicado 1-0 manual para BKSR (AMS 0 x 1 BKSR, jogo 2, camp_prontos) apos a Riot nao fechar. Causa raiz: partida blind BR05116 estava na queue 3100 e o verificador buscava 3130; corrigido em verificar-partida/serie-campeonato. Tambem corrigida a troca de lado no DraftRoom/SalaCampeonato: vaga, jogador, logo, tag, picks, hub central, card Serie e placar ao vivo seguem o lado real. Live web index-B__aKqoy; health 200; tsc/build ok. <br>_tocou: `api/src/lib/verificar-partida.ts`, `api/src/lib/serie-campeonato.ts`, `api/test/riot-queues.test.ts`, `web/src/components/draft/DraftRoom.tsx`, `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 | 01/11/2026 17:48 | deepseek | SalaCampeonato: header de partida finalizada trocado pela titlebar Anton com gradiente na cor do vencedor, igual à SalaMod1. Sem lista de games e sem migration (decisão do usuário). Live: index-D0tVwTiJ.js, SalaCampeonato-D1N5OQNH.js, health 200; chunk contém PARTIDA FINALIZADA/Anton. <br>_tocou: `web/src/features/sala-campeonato/SalaCampeonato.tsx`, `web/src/components/partidas/HeaderFinalizada.tsx`_ |
 | 01/11/2026 16:36 | deepseek | Pool de codigos corrigido: 12 BR-SMOKE-SALA de teste removidos (backup no VPS); 5x5 ficou com os 6 BR04fa2 Tournament Draft reais (mode NULL), 1v1 com 2 e blind com 7. Riot API respondeu 403 (chave sem permissao Tournament API); classificacao confirmada pelos seeds 0007/0014/0020. 5x5 sem draft/placar na bola e Scrim/campeonato blind seguem no ar. <br>_tocou: `db/migrations/0007_matches_salas_swap.sql`, `db/migrations/0014_rodizio_codigos_lru.sql`, `db/migrations/0020_separar_fila_codigos_x1.sql`, `db/migrations/0034_blind_codes.sql`_ |
-| 01/11/2026 16:30 | deepseek | 5x5 sem draft no site: confirmou -> iniciando_partida com o codigo Tournament Draft antigo (mode NULL) e placar 0x0/1x0 na bola; MD1/MD3/MD5 mantidos. Scrim/campeonato: draft no site + codigos blind BR05116 (mode='blind', migration 0034 aplicada, 7 no pool). Testes API ok; tsc/build; web/API deployados (index-BKTUEe0z, SalaMod1-BsVjmLXg). <br>_tocou: `api/src/lib/match-flow.ts`, `api/src/lib/serie-campeonato.ts`, `api/src/lib/sala-campeonato.ts`, `api/src/lib/draft/modos/5v5.ts`, `web/src/pages/SalaMod1.tsx`, `db/migrations/0034_blind_codes.sql`_ |
 
 ---
 
