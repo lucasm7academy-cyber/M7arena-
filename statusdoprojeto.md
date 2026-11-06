@@ -17,7 +17,7 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 06/11/2026 01:36 — por `deepseek`
+**Última atualização:** 06/11/2026 01:49 — por `deepseek`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
@@ -187,6 +187,7 @@ _06/11/2026 00:48 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 06/11/2026 01:49 | deepseek | COPA HALLOWEEN 2026: a pedido do usuario, troquei CHOP (Chopp Squad) por BLR (BLOOM RED) nos grupos. CHOP: Grupo B -> Grupo C; BLR: Grupo C -> Grupo B. Atualizei tournament_teams.group_id e os 6 confrontos ja sorteados (3 do Grupo B com CHOP -> BLR; 3 do Grupo C com BLR -> CHOP), em DO block com verificacoes. Nenhum jogo tinha sala/serie/resultado. Confirmado pela API: Grupo B = CDC,PHE,BLR,PTGN; Grupo C = BKSR,BLM,CHOP,DLG; cronograma BLR x CDC/PTGN/PHE e CHOP x BKSR/DLG/BLM. Tambem movi as logos BLR/CHOP entre as pastas e atualizei a coluna Grupo na planilha aberta no Excel. Sem mudanca de codigo. |
 | 06/11/2026 01:36 | deepseek | Exportei as 17 logos dos times da COPA HALLOWEEN 2026 para C:\\Users\\78787\\Documents\\LOGOS, organizadas em LOGOS GRUPO A, B, C, D e LOGOS SEM GRUPO (Chidori). Baixei teams.logo_url do site e converti para PNG: 4+4+4+4+1 = 17/17 OK. Nenhum banner ou imagem extra foi salvo; nenhum codigo alterado. |
 | 06/11/2026 01:24 | deepseek | Planilha Excel 'COPA HALLOWEEN 2026 - Pagamentos e Contratos.xlsx' criada em Downloads com os 17 inscritos (16 aprovados + Chidori pendente): responsavel, Discord, WhatsApp, time, sigla, grupo, status, Pago? e Contrato assinado? com listas suspensas, valores, datas e aba Resumo com totais automaticos. Pagamentos iniciam como pendentes porque o banco nao tem paid=true; aceites de termos de CDC e AMS preenchidos. Nenhum codigo alterado. |
 | 06/11/2026 00:48 | deepseek | Regulamento da COPA HALLOWEEN 2026 reescrito a partir do modelo de 300 pontos e simplificado: 16 times em 4 grupos de 4, top 2 avancam, desempate em MD1, playoffs upper/lower, MD3 e final MD5; Free Elo; sala e draft gerados pela plataforma, sem Drafter.lol e sem X1; sem datas/confrontos fixos; esperar o streamer na sala; alteracoes do regulamento durante o campeonato. Gerados DOCX e PDF (Downloads) e publicados em /uploads/public-images/campeonatos/regulamento-copa-halloween-2026.pdf e .docx. Campo regulamento do torneio 9987c732-db06-4e51-8e39-e09c31fd9460 atualizado para a URL do PDF. Evidencia: HEAD do PDF 200 application/pdf (259239 bytes), HEAD do DOCX 200, e GET /api/tournaments/9987... retorna regulamento com a URL do PDF. |
@@ -201,7 +202,6 @@ _06/11/2026 00:48 — deepseek_
 | 04/11/2026 20:41 | deepseek | Catalogo funcional completo em CATALOGO_FUNCIONALIDADES.md: 84/84 funcionalidades detalhadas, 67 ativas, 5 incompletas, 4 legadas, 5 desconectadas, 3 duplicadas; dossies de M7 Points, Discord, recrutamento, VIP, Tierlist e Time vs Time legado; 16 endpoints sem tela, 17 tabelas/campos orfaos, 10 jobs, 10 integracoes e 10 capacidades de infra. Nenhum codigo alterado. |
 | 04/11/2026 19:53 | deepseek | Mapeamento completo da estrutura atual do projeto em ESTRUTURA_ATUAL.md (arvore, rotas, API, banco, features, redundancias, 27 problemas confirmados, 14 suspeitas, 10 redundancias). Nenhum codigo alterado. |
 | 02/11/2026 21:48 | deepseek | Sala 250/Scrim: adicionado Inserir Resultado manual para ADM/proprietario. API POST /api/matches/:id/sala-campeonato/resultado escolhe vencedor A/B, soma 1 e decide: serie aberta volta a camp_prontos; serie fechada encerra (Scrim encerrada; campeonato camp_finalizada). UI: botao no DraftRoom e na barra do adm, modal com os dois times. tsc API/web e build ok; rota 401 sem sessao; live index-CQ0si99s; health 200. <br>_tocou: `api/src/lib/serie-campeonato.ts`, `api/src/routes/matches-actions.ts`, `web/src/components/draft/DraftRoom.tsx`, `web/src/features/sala-campeonato/SalaCampeonato.tsx`, `web/src/features/sala-campeonato/ModalResultadoManual.tsx`_ |
-| 02/11/2026 21:35 | deepseek | Sala 250: aplicado 1-0 manual para BKSR (AMS 0 x 1 BKSR, jogo 2, camp_prontos) apos a Riot nao fechar. Causa raiz: partida blind BR05116 estava na queue 3100 e o verificador buscava 3130; corrigido em verificar-partida/serie-campeonato. Tambem corrigida a troca de lado no DraftRoom/SalaCampeonato: vaga, jogador, logo, tag, picks, hub central, card Serie e placar ao vivo seguem o lado real. Live web index-B__aKqoy; health 200; tsc/build ok. <br>_tocou: `api/src/lib/verificar-partida.ts`, `api/src/lib/serie-campeonato.ts`, `api/test/riot-queues.test.ts`, `web/src/components/draft/DraftRoom.tsx`, `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 
 ---
 
