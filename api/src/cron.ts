@@ -46,6 +46,28 @@ export async function verificarSeriesPendentes(d: any = db): Promise<number> {
   return finalizadas;
 }
 
+/**
+ * Acelerador de 60s para salas TIME VS TIME livres (scrim MD1/MD3/MD5).
+ * O runCron de 10min continua sendo a rede de segurança; este loop só olha
+ * partidas em andamento, então é uma query indexada barata quando não há sala.
+ */
+export async function verificarSalasLivrePendentes(d: any = db): Promise<number> {
+  let verificadas = 0;
+  const salas = await d
+    .select({ id: matches.id })
+    .from(matches)
+    .where(and(eq(matches.mode, "time_vs_time_livre"), eq(matches.status, "partida_iniciada")));
+  for (const sala of salas) {
+    try {
+      const r = await verificarPartida(d, sala.id);
+      if (r.ok) verificadas++;
+    } catch (e: any) {
+      console.error(`[cron-series] sala ${sala.id}: ${e?.message ?? e}`);
+    }
+  }
+  return verificadas;
+}
+
 export async function runCron(d: any = db) {
   const agora = new Date();
 

@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { db } from "../db.js";
 import { matches, matchPlayers, campeonatoSalaEstado, matchDrafts } from "../../../db/schema/matches.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import {
   avaliarTransicoes,
   reembolsarSeNecessario,
@@ -621,9 +622,10 @@ matchesActionsRouter.post("/:id/tick", async (req, res) => {
 // O resultado é decidido pela verificação automática da Riot.
 
 // POST /api/matches/:id/verificar — Acelerador do polling (spec
-// verificacao-partida-riot): qualquer participante confirmado dispara a mesma
-// verificação na hora. Achou + nicks batem → finaliza e paga; não achou →
-// segue no polling (3h). Idempotente para salas já encerradas/canceladas.
+// verificacao-partida-riot): participante confirmado, membro do time da sala
+// ou staff dispara a verificação na hora. Achou + nicks batem → finaliza e
+// paga; não achou → segue no polling (3h). Idempotente para salas já
+// encerradas/canceladas.
 matchesActionsRouter.post("/:id/verificar", async (req, res) => {
   try {
     const user = await getAuthUser(req);
@@ -641,14 +643,34 @@ matchesActionsRouter.post("/:id/verificar", async (req, res) => {
       if (match.status !== "partida_iniciada") return { ok: false, erro: "estado_invalido", estado: match.status, mudou: false };
       // Participante CONFIRMADO é o único caso permitido: quem confirmou a vaga
       // (ou a preencheu sem etapa de confirmação) pode disparar o acelerador.
-      // Um pendente (unconfirmed) também é negado com nao_participante — a não
+      // Um pendente (unconfirmed) também é negado com nao_participante - a não
       // ser que seja staff, que audita mesmo fora da vaga.
       const [player] = await tx
         .select()
         .from(matchPlayers)
         .where(and(eq(matchPlayers.matchId, match.id), eq(matchPlayers.userId, user.id), eq(matchPlayers.confirmed, true)))
         .limit(1);
-      if (!player && !staff) return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
+      if (!player && !staff) {
+        // Sala de TIMES (scrim/campeonato): qualquer membro aceito do time da
+        // vaga pode acelerar a verificação, não só o representante que entrou
+        // na sala. A tag do snapshot identifica o time; o vínculo real cobre
+        // titular/reserva/coach.
+        const tags = [match.timeATag, match.timeBTag].filter(Boolean) as string[];
+        if (tags.length) {
+          const [membro] = await tx
+            .select({ id: teamMembers.id })
+            .from(teamMembers)
+            .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+            .where(and(
+              eq(teamMembers.userId, user.id),
+              eq(teamMembers.status, "accepted"),
+              inArray(teams.tag, tags)
+            ))
+            .limit(1);
+          if (membro) return { ok: true, matchId: match.id };
+        }
+        return { ok: false, erro: "nao_participante", estado: match.status, mudou: false };
+      }
       return { ok: true, matchId: match.id };
     });
     if (!r.ok) {

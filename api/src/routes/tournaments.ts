@@ -717,10 +717,11 @@ tournamentsRouter.post("/:id/jogo/:matchId/verificar", async (req, res) => {
       organizerId: t.organizerId,
       tournamentId: id,
       serie: encontrada.serie,
+      permitirStreamer: true,
     });
     if (!isStaff && !isParticipant) {
       return res.status(403).json({
-        error: "Sem permissão. Apenas capitães/jogadores da partida ou organizadores podem verificar a série.",
+        error: "Sem permissão. Apenas membros do time da série, staff ou organizador podem verificar a série.",
       });
     }
 

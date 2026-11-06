@@ -362,7 +362,7 @@ export default function SalaCampeonato() {
 
   // Atualizar Resultado (campeonato): dispara a verificação da SÉRIE na Riot
   // agora — é o mesmo botão do cronograma. Serve para quando o jogo acabou e a
-  // sala não computou sozinha (o servidor também confere a cada 3 min). Quem
+  // sala não computou sozinha (o servidor também confere a cada 60 s). Quem
   // pode: staff do campeonato ou time da série (o servidor valida).
   const atualizarResultado = async () => {
     if (!camp?.serie?.id || !camp?.serie?.campeonato_id) return;
@@ -505,7 +505,7 @@ export default function SalaCampeonato() {
   const eu = perfil?.id ?? '';
   // Staff do campeonato: pode forçar a verificação da SÉRIE (mesma regra da
   // rota do cronograma — staff do campeonato OU time da série).
-  const ehStaffCampeonato = ['admin', 'proprietario', 'organizador'].includes((perfil as any)?.cargo ?? '');
+  const ehStaffCampeonato = ['admin', 'proprietario', 'organizador', 'streamer'].includes((perfil as any)?.cargo ?? '');
   // Admin/proprietário: enxerga o botão TEMPORÁRIO de resetar a sala (pedido 13/10).
   const ehAdm = ['admin', 'proprietario'].includes((perfil as any)?.cargo ?? '');
   const jogadorBlue = jogadorDoLado('blue');
@@ -1319,7 +1319,7 @@ export default function SalaCampeonato() {
             {/* Atualizar Resultado (campeonato): mesmo botão do cronograma —
                 força a verificação da série na Riot AGORA. Visível para staff
                 do campeonato e para os times da série (o servidor valida); o
-                servidor também confere sozinho a cada 3 min. */}
+                servidor também confere sozinho a cada 60 s. */}
             {!!serie && (ehStaffCampeonato || !!meuLado) && (
               <motion.button
                 whileHover={{ scale: 1.05 }}

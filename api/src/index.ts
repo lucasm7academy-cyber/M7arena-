@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { db, pool } from "./db.js";
-import { runCron, verificarSeriesPendentes } from "./cron.js";
+import { runCron, verificarSeriesPendentes, verificarSalasLivrePendentes } from "./cron.js";
 import { runReconciliacaoHandles } from "./lib/reconciliar-handles.js";
 import { criarSalasCampeonatoPendentes } from "./lib/sala-campeonato.js";
 import { runRefreshElos } from "./lib/atualizar-elos.js";
@@ -128,16 +128,27 @@ setInterval(() => {
 }, 60 * 1000);
 criarSalasCampeonatoPendentes(db).catch((e) => console.error("[sala-campeonato] erro inicial:", e?.message));
 
-// Sala Campeonato: RESULTADO da série conferido na Riot a cada 3 min (pedido do
-// usuário) — as salas normais continuam no runCron de 10 min. Só séries em
-// andamento com código; quando não há nenhuma, é uma query indexada barata.
+// Sala Campeonato: RESULTADO da série conferido na Riot a cada 60 s (pedido do
+// usuário). O loop é single-flight: se uma verificação demorar mais que o
+// intervalo, a próxima é ignorada em vez de empilhar chamadas na Riot. O
+// runCron de 10 min continua como rede de segurança.
+let fastResultCheckRunning = false;
 setInterval(() => {
-  verificarSeriesPendentes()
-    .then((n) => {
-      if (n > 0) console.log(`[cron-series] ${n} série(s) finalizada(s)`);
+  if (fastResultCheckRunning) return;
+  fastResultCheckRunning = true;
+  Promise.all([
+    verificarSeriesPendentes(),
+    verificarSalasLivrePendentes(),
+  ])
+    .then(([series, livres]) => {
+      if (series > 0) console.log(`[cron-series] ${series} série(s) finalizada(s)`);
+      if (livres > 0) console.log(`[cron-series] ${livres} sala(s) livre(s) verificada(s)`);
     })
-    .catch((e) => console.error("[cron-series] erro:", e?.message));
-}, 3 * 60 * 1000);
+    .catch((e) => console.error("[cron-series] erro:", e?.message))
+    .finally(() => {
+      fastResultCheckRunning = false;
+    });
+}, 60 * 1000);
 
 // Reconciliação do Riot ID (spec 2026-08-17): atualiza game_accounts.handle +
 // users.riot_id com o nome atual do LoL a cada 3 dias. Timer próprio — o

@@ -216,4 +216,27 @@ describe("tournament-access (PGlite)", () => {
       "anônimo não gerencia"
     );
   });
+
+  test("resolverPermissaoSerie: streamer só acelera quando a rota permite", async () => {
+    await ctx.db.insert(users).values({ id: U(8), email: "streamer@x.com", displayName: "Streamer" });
+    await ctx.db.insert(userRoles).values({ userId: U(8), role: "streamer" });
+    const serie = { teamAId: T(1), teamBId: T(2), teamATag: null, teamBTag: null };
+
+    const semFlag = await resolverPermissaoSerie(ctx.db, {
+      userId: U(8),
+      organizerId: U(7),
+      tournamentId: torneioId,
+      serie,
+    });
+    assert.deepEqual(semFlag, { isStaff: false, isParticipant: false });
+
+    const comFlag = await resolverPermissaoSerie(ctx.db, {
+      userId: U(8),
+      organizerId: U(7),
+      tournamentId: torneioId,
+      serie,
+      permitirStreamer: true,
+    });
+    assert.equal(comFlag.isStaff, true);
+  });
 });

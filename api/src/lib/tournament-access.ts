@@ -10,7 +10,7 @@
  */
 import { and, eq, inArray } from "drizzle-orm";
 import { userRoles } from "../../../db/schema/identidade.js";
-import { teams } from "../../../db/schema/teams.js";
+import { teams, teamMembers } from "../../../db/schema/teams.js";
 import { tournamentTeams } from "../../../db/schema/tournaments.js";
 import { findUserTeamMemberships } from "./team-membership.js";
 
@@ -114,15 +114,18 @@ export function redigirCodigosDaSerie(legacy: any, acesso: { staff: boolean; tea
 /** Permissão para iniciar/verificar a série — mesma regra do botão Iniciar Série. */
 export async function resolverPermissaoSerie(
   d: any,
-  opts: { userId: string; organizerId?: string | null; tournamentId: string; serie: any }
+  opts: { userId: string; organizerId?: string | null; tournamentId: string; serie: any; permitirStreamer?: boolean }
 ): Promise<{ isStaff: boolean; isParticipant: boolean }> {
   const roleRows = await d
     .select({ role: userRoles.role })
     .from(userRoles)
     .where(eq(userRoles.userId, opts.userId));
+  const rolesStaff = opts.permitirStreamer
+    ? [...STAFF_ROLES_CAMPEONATO, "streamer"]
+    : STAFF_ROLES_CAMPEONATO;
   const isStaff =
     opts.organizerId === opts.userId ||
-    roleRows.some((r: any) => STAFF_ROLES_CAMPEONATO.includes(r.role));
+    roleRows.some((r: any) => rolesStaff.includes(r.role));
   if (isStaff) return { isStaff: true, isParticipant: false };
 
   // Resolve os times da série (se não preenchidos, tenta pelas tags do snapshot).
@@ -153,6 +156,20 @@ export async function resolverPermissaoSerie(
     .where(and(inArray(teams.id, relevantTeamIds), eq(teams.ownerId, opts.userId)))
     .limit(1);
   if (owned) return { isStaff: false, isParticipant: true };
+
+  // Qualquer membro aceito do time da série (titular, reserva ou coach) pode
+  // disparar a verificação. A checagem direta por user_id cobre o caso em que
+  // a vaga é real; o fallback abaixo cobre convidado reconhecido por PUUID.
+  const [membro] = await d
+    .select({ id: teamMembers.id })
+    .from(teamMembers)
+    .where(and(
+      inArray(teamMembers.teamId, relevantTeamIds),
+      eq(teamMembers.userId, opts.userId),
+      eq(teamMembers.status, "accepted")
+    ))
+    .limit(1);
+  if (membro) return { isStaff: false, isParticipant: true };
 
   const memberships = await findUserTeamMemberships(d, opts.userId, {
     teamIds: relevantTeamIds,
