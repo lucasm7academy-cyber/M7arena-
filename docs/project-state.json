@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T20:58:13.355Z",
+  "updatedAt": "2026-11-07T21:01:22.253Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "doing",
-      "notes": "Refinar arte Halloween conforme feedback: composicao sem fundo/moldura, titulo colorido, siglas melhores, horario laranja e cenografia mais viva.",
-      "evidence": "web: npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); node scripts/verify-swap.js: 0 ocorrencias. VPS main 3b00358: compose --env-file /root/m7arena/.env build nginx e up -d --no-deps nginx exit 0; nginx -t successful; GET https://m7arena.pro/api/health status ok; home /, Lobby-BIRhq0ef.js e Lobby-AegqBmxy.css HTTP 200; JS publico contem CONFRONTO MARCADO.",
+      "status": "done",
+      "notes": "Refinamento publicado na VPS: arte solta sobre fundo da home, sem moldura/fundo preto nem textos extras; aboboras vivas, lua crescente lateral, morcegos junto dos times e horario laranja. Sem navegador conectado para revisao visual.",
+      "evidence": "npx tsc --noEmit sem erros; npm run build exit 0, 2207 modulos; verify-swap 0 ocorrencias. VPS runtime 587856d: compose --env-file /root/m7arena/.env build nginx/up --no-deps nginx exit 0; nginx -t successful; health status ok; home, Lobby-BSnSw2uN.js e Lobby-hEzxTTJr.css HTTP 200 apos recriacao.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T20:58:13.354Z"
+      "updatedAt": "2026-11-07T21:01:22.186Z"
     },
     {
       "id": "app.api",
@@ -255,14 +255,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T08:05:49.208Z",
-      "agent": "deepseek",
-      "summary": "Draft: linha vermelha fina (1,5px) na diagonal no campeao banido + nome do campeao no slot de ban, no padrao dos picks. Rebase sobre os bans alinhados do outro agente; tsc/build ok; web deployado (DraftRoom-JmJ0hsEl, index-BwMw7xSk).",
-      "touched": [
-        "web/src/components/draft/DraftRoom.tsx"
-      ]
-    },
     {
       "at": "2026-10-31T08:12:34.062Z",
       "agent": "deepseek",
@@ -513,6 +505,14 @@
       "at": "2026-11-07T20:55:21.065Z",
       "agent": "codex",
       "summary": "Criado e publicado poster Halloween para jogos agendados da home: portais nas cores dos times, logos sem moldura angular, lua, morcegos, teias, arvores e aboboras. Data/hora/campeonato e Twitch mantidos. Dominio extraido em componentes e hook menores que 400 linhas; carrossel pausa com hover/foco. Commit runtime 3b00358 na main e VPS. TypeScript/build/verify-swap passaram; health ok, home e chunks HTTP 200. Sem navegador conectado para revisao visual; usuario vera na live.",
+      "touched": [
+        "app.web"
+      ]
+    },
+    {
+      "at": "2026-11-07T21:01:22.252Z",
+      "agent": "codex",
+      "summary": "Refinada arte Halloween apos feedback: removidos quadro, fundo preto, chamada M7/confronto e assinatura; mantidos portais e cores dos times/League of Legends. Aboboras laranja vivas em cantos responsivos, teias, lua crescente lateral, morcegos junto aos times/horario; siglas Outfit 900 e titulo/horario laranja. Main/runtime VPS 587856d. TypeScript/build/swap ok, nginx valido, health/home/chunks HTTP 200 apos recriacao.",
       "touched": [
         "app.web"
       ]
