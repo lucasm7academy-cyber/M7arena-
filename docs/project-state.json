@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T21:27:46.527Z",
+  "updatedAt": "2026-11-07T21:28:56.995Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "doing",
-      "notes": "Substituir morcegos da home pelo SVG 2819770.svg fornecido pelo usuario, preservando geometria, posicoes e cores.",
-      "evidence": "npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0. VPS runtime 6d6239c: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BnfsgjaY.js e Lobby-VCmx6uhq.css HTTP 200.",
+      "status": "done",
+      "notes": "Morcegos da home substituidos pela geometria original do SVG 2819770.svg fornecido pelo usuario, mantendo cores e posicoes. Publicado na VPS.",
+      "evidence": "Comparacao com SVG original: path, transform e viewBox preservados. npx tsc --noEmit exit 0; npm run build exit 0; verify-swap 0. VPS runtime 26e714c build/up nginx com --env-file exit 0 e nginx -t successful; health ok; home, Lobby-DusF0Ade.js e Lobby-VCmx6uhq.css HTTP 200.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T21:27:46.526Z"
+      "updatedAt": "2026-11-07T21:28:56.909Z"
     },
     {
       "id": "app.api",
@@ -255,14 +255,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T08:34:51.302Z",
-      "agent": "deepseek",
-      "summary": "Lobby/hero: imagem centralizada de verdade — troquei object-[center_12%] por object-center e ajustei o zoom para scale-96 (levemente reduzido, sem barras visiveis). Arte do Halloween continua; modelo padrao (video do Lucian) segue salvo em HERO_PADRAO/HERO_EDICAO. Commit 6fda571, deploy ok, health 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
     {
       "at": "2026-10-31T08:43:23.346Z",
       "agent": "deepseek",
@@ -512,6 +504,14 @@
       "at": "2026-11-07T21:22:31.414Z",
       "agent": "codex",
       "summary": "Refino da arte Halloween: CutCard aceita borderWidth mantendo default 1px, home usa 2px; logos sem espaco interno e object-fit cover com clip recortado. Aboboras mais para fora: duas esquerda, so pequena direita; um morcego esquerda e dois (grande/pequeno) direita, acima/fora dos cards, asas finas e pontudas. Lua 62px (34 mobile) com crescente fino. Runtime 6d6239c publicado na main/VPS; tsc/build/swap ok, nginx valido, health/home/chunks HTTP 200. Sem navegador conectado para revisao visual.",
+      "touched": [
+        "app.web"
+      ]
+    },
+    {
+      "at": "2026-11-07T21:28:56.994Z",
+      "agent": "codex",
+      "summary": "Aplicado o morcego do arquivo C:/Users/78787/Downloads/2819770.svg na home; geometria original preservada em HalloweenBat e fill currentColor para laterais pretos e central laranja, mantendo tamanhos/posicoes. Commit runtime 26e714c main/VPS. Comparacao geometrica, TypeScript/build e swap passaram; nginx valido, health/home/chunks HTTP 200. Sem navegador conectado para revisao visual.",
       "touched": [
         "app.web"
       ]

@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/11/2026 18:27 — por `codex`
+**Última atualização:** 07/11/2026 18:28 — por `codex`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
 ## Panorama
 
-`████████████████░░░░░░░░░░░░ 8/14` concluído
+`██████████████████░░░░░░░░░░ 9/14` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 3/3 | — | — |
 | Fase 1 — Schema do banco | ████████████ 1/1 | — | — |
 | Fase 2 — Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Fase 3 — Aplicação (React + Vite + API) | █████░░░░░░░ 3/7 | 1 | 2 |
+| Fase 3 — Aplicação (React + Vite + API) | ███████░░░░░ 4/7 | — | 2 |
 | Fase 4 — Operações da VPS (MCP) | ░░░░░░░░░░░░ 0/1 | — | 1 |
 
 <details><summary>Progresso por área</summary>
@@ -40,7 +40,7 @@
 | Governança & Agentes | ████████████ 3/3 | — | — |
 | Banco de Dados | ████████████ 1/1 | — | — |
 | Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Aplicação (React + Vite) | █████░░░░░░░ 2/5 | 1 | 2 |
+| Aplicação (React + Vite) | ███████░░░░░ 3/5 | — | 2 |
 | MCP de Operações | ░░░░░░░░░░░░ 0/1 | — | 1 |
 | Segurança | ██████░░░░░░ 1/2 | — | — |
 
@@ -62,10 +62,6 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
   <br>_aberto por deepseek em 31/10/2026 03:35_
 - **BLK-009** (`mcpops.server`) — Container m7arena_mcp_ops em restart loop; operações da VPS via MCP indisponíveis.
   <br>_aberto por deepseek em 31/10/2026 03:35_
-
-## Em andamento agora
-
-- `app.web` **Front React + Vite (web/)** — codex · Substituir morcegos da home pelo SVG 2819770.svg fornecido pelo usuario, preservando geometria, posicoes e cores.
 
 ## Componentes
 
@@ -90,7 +86,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 
 **Aplicação (React + Vite)**
 
-- `[~]` **Front React + Vite (web/)** `app.web`<br>  Substituir morcegos da home pelo SVG 2819770.svg fornecido pelo usuario, preservando geometria, posicoes e cores.<br>  _evidência:_ `npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0. VPS runtime 6d6239c: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BnfsgjaY.js e Lobby-VCmx6uhq.css HTTP 200.`
+- `[x]` **Front React + Vite (web/)** `app.web`<br>  Morcegos da home substituidos pela geometria original do SVG 2819770.svg fornecido pelo usuario, mantendo cores e posicoes. Publicado na VPS.<br>  _evidência:_ `Comparacao com SVG original: path, transform e viewBox preservados. npx tsc --noEmit exit 0; npm run build exit 0; verify-swap 0. VPS runtime 26e714c build/up nginx com --env-file exit 0 e nginx -t successful; health ok; home, Lobby-DusF0Ade.js e Lobby-VCmx6uhq.css HTTP 200.`<br>  _concluído 07/11/2026 18:28 por codex_
 - `[x]` **API Node + Express + Drizzle (api/)** `app.api`<br>  Sessão própria, salas, campeonatos, carteira, uploads e pagamentos.<br>  _evidência:_ `npx tsc --noEmit`
 - `[x]` **WebSocket + LISTEN/NOTIFY** `app.realtime`<br>  Serviço próprio de realtime; o socket só avisa que a sala mudou.<br>  _evidência:_ `m7arena_realtime`
 - `[!]` **Pagamentos MC (Mercado Pago PIX)** `app.payments`<br>  BLK-005: chave PIX do collector não habilitada; QR não é gerado.
@@ -191,6 +187,7 @@ _06/11/2026 00:48 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 07/11/2026 18:28 | codex | Aplicado o morcego do arquivo C:/Users/78787/Downloads/2819770.svg na home; geometria original preservada em HalloweenBat e fill currentColor para laterais pretos e central laranja, mantendo tamanhos/posicoes. Commit runtime 26e714c main/VPS. Comparacao geometrica, TypeScript/build e swap passaram; nginx valido, health/home/chunks HTTP 200. Sem navegador conectado para revisao visual. <br>_tocou: `app.web`_ |
 | 07/11/2026 18:22 | codex | Refino da arte Halloween: CutCard aceita borderWidth mantendo default 1px, home usa 2px; logos sem espaco interno e object-fit cover com clip recortado. Aboboras mais para fora: duas esquerda, so pequena direita; um morcego esquerda e dois (grande/pequeno) direita, acima/fora dos cards, asas finas e pontudas. Lua 62px (34 mobile) com crescente fino. Runtime 6d6239c publicado na main/VPS; tsc/build/swap ok, nginx valido, health/home/chunks HTTP 200. Sem navegador conectado para revisao visual. <br>_tocou: `app.web`_ |
 | 07/11/2026 18:15 | codex | Ajuste solicitado na home: circulos das logos substituidos pelo CutCard do site, preservando borda na cor do time; aboboras movidas para a base de cada moldura, morcegos laterais pretos e central laranja preservado. Runtime 23dd8b0 na main e VPS. TypeScript/build/verify-swap passaram; nginx valido e health/home/chunks HTTP 200. Sem navegador conectado para revisao visual. <br>_tocou: `app.web`_ |
 | 07/11/2026 18:01 | codex | Refinada arte Halloween apos feedback: removidos quadro, fundo preto, chamada M7/confronto e assinatura; mantidos portais e cores dos times/League of Legends. Aboboras laranja vivas em cantos responsivos, teias, lua crescente lateral, morcegos junto aos times/horario; siglas Outfit 900 e titulo/horario laranja. Main/runtime VPS 587856d. TypeScript/build/swap ok, nginx valido, health/home/chunks HTTP 200 apos recriacao. <br>_tocou: `app.web`_ |
@@ -205,7 +202,6 @@ _06/11/2026 00:48 — deepseek_
 | 06/11/2026 00:48 | deepseek | Regulamento da COPA HALLOWEEN 2026 reescrito a partir do modelo de 300 pontos e simplificado: 16 times em 4 grupos de 4, top 2 avancam, desempate em MD1, playoffs upper/lower, MD3 e final MD5; Free Elo; sala e draft gerados pela plataforma, sem Drafter.lol e sem X1; sem datas/confrontos fixos; esperar o streamer na sala; alteracoes do regulamento durante o campeonato. Gerados DOCX e PDF (Downloads) e publicados em /uploads/public-images/campeonatos/regulamento-copa-halloween-2026.pdf e .docx. Campo regulamento do torneio 9987c732-db06-4e51-8e39-e09c31fd9460 atualizado para a URL do PDF. Evidencia: HEAD do PDF 200 application/pdf (259239 bytes), HEAD do DOCX 200, e GET /api/tournaments/9987... retorna regulamento com a URL do PDF. |
 | 06/11/2026 00:37 | deepseek | Campeonatos: troquei o fallback da foto do organizador no bloco Responsavel. Antes era uma imagem Unsplash (alt 'Logo Default'); agora, quando o campeonato nao tem orgPhotoUrl, exibe a logo oficial /uploads/public-images/logo-m7.png com object-contain. Validacao: tsc --noEmit exit 0 e vite build OK no web. Deploy do front na VPS a partir da main ab69030, rebuild apenas do container m7arena_nginx. Confirmado: /api/health 200; chunk CampeonatoDetalhes-CyBabsdh.js servido contem logo-m7.png e nao contem mais photo-1542751371. Sem mudanca de API, banco, rig ou export. |
 | 06/11/2026 00:33 | deepseek | COPA HALLOWEEN - 2026: troquei os grupos de AMATERASU E-SPORTS (AMS) e Chopp Squad (CHOP) a pedido do usuario. AMS: Grupo B -> Grupo D; CHOP: Grupo D -> Grupo B. Atualizei tournament_teams.group_id e os 6 confrontos ja sorteados (tags e ids), em transacao com verificacao. Nenhum jogo tinha resultado, sala, live ou serie vinculada. Confirmado pela API publica: Grupo B = CDC,PHE,CHOP,PTGN; Grupo D = LDL,AMS,VLD,EMPA; cronograma com CHOP x CDC/PTGN/PHE e AMS x EMPA/LDL/VLD. Sem mudanca de codigo e sem deploy. |
-| 05/11/2026 23:24 | deepseek | Inscrevi e ja aprovei o Phantom E-Sports (PHE) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert em tournament_teams como approved, discord soul_adc / whatsapp 44999094022. Camp. ficou 17 inscricoes, 16 aprovados (PHE entra como 16o aprovado) + Chidori pendente; condicao de inicio (aprovados == vagas) satisfeita. Confirmado pela API publica que PHE aparece na classificacao. Nenhum codigo alterado. |
 
 ---
 
