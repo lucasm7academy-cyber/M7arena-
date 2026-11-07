@@ -8,9 +8,9 @@
 .halloween-web-left { left: 0; }
 .halloween-web-right { right: 0; transform: scaleX(-1); }
 .halloween-moon { position: absolute; width: 86px; height: 86px; top: 5px; right: 13%; opacity: .8; filter: drop-shadow(0 0 18px #efaa5135); transform: rotate(-15deg); }
-.halloween-pumpkins { position: absolute; width: 145px; height: 112px; bottom: 0; filter: drop-shadow(0 0 18px #f76e2030); }
-.halloween-pumpkins-left { left: 2%; }
-.halloween-pumpkins-right { right: 2%; transform: scaleX(-1); }
+.halloween-pumpkins { position: absolute; width: 105px; height: 81px; bottom: -12px; z-index: 3; pointer-events: none; filter: drop-shadow(0 0 18px #f76e2030); }
+.halloween-pumpkins-left { left: -34px; }
+.halloween-pumpkins-right { right: -34px; transform: scaleX(-1); }
 .halloween-mist { position: absolute; inset: 20% 0 0; z-index: -1; pointer-events: none; opacity: .4; filter: blur(35px); background: radial-gradient(ellipse at 25% 55%, color-mix(in srgb, var(--team-a) 25%, transparent), transparent 42%), radial-gradient(ellipse at 75% 55%, color-mix(in srgb, var(--team-b) 25%, transparent), transparent 42%); }
 .halloween-heading { position: relative; z-index: 1; }
 .halloween-heading h3 { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(26px, 3.5vw, 48px); line-height: 1.15; letter-spacing: .055em; text-transform: uppercase; margin: 10px 0; color: #ff9b46; background: linear-gradient(180deg, #ffd191 10%, #ff963e 55%, #f16b22); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 15px #e8752425); overflow-wrap: anywhere; }
@@ -18,16 +18,14 @@
 .halloween-phase::before, .halloween-phase::after { content: ''; width: 32px; height: 1px; background: #d6ab7760; }
 .halloween-matchup { display: grid; grid-template-columns: minmax(0, 1fr) 180px minmax(0, 1fr); align-items: center; max-width: 900px; margin: 28px auto 15px; }
 .halloween-team { display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.halloween-portal { position: relative; display: grid; place-items: center; width: 186px; height: 186px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--team) 24%, #080910) 0%, #080910 64%, transparent 66%); }
-.halloween-portal::before { content: ''; position: absolute; inset: -16px; border-radius: 50%; background: conic-gradient(from 30deg, transparent, var(--team), transparent 26%, var(--team-end) 45%, transparent 60%, var(--team) 80%, transparent); filter: blur(15px); opacity: .38; }
-.halloween-portal-ring { position: absolute; inset: 0; border: 1px solid color-mix(in srgb, var(--team) 70%, transparent); border-radius: 50%; box-shadow: 0 0 28px color-mix(in srgb, var(--team) 25%, transparent), inset 0 0 20px color-mix(in srgb, var(--team) 20%, transparent); }
-.halloween-portal-ring::before { content: ''; position: absolute; inset: -7px; border: 1px dashed color-mix(in srgb, var(--team) 35%, transparent); border-radius: 50%; transform: rotate(22deg); }
-.halloween-portal-ring::after { content: '✦'; position: absolute; top: -17px; left: calc(50% - 7px); color: var(--team); font-size: 20px; text-shadow: 0 0 12px var(--team); }
-.halloween-portal img { position: relative; width: 148px; height: 148px; border-radius: 50%; object-fit: contain; filter: drop-shadow(0 5px 15px #0008); }
+.halloween-portal { position: relative; width: 186px; height: 186px; }
+.halloween-logo-frame { width: 100%; height: 100%; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--team) 25%, transparent)); }
+.halloween-logo-content { display: grid; place-items: center; width: 100%; height: 100%; padding: 12px; }
+.halloween-portal img { position: relative; width: 100%; height: 100%; min-height: 0; object-fit: contain; filter: drop-shadow(0 5px 15px #0008); }
 .halloween-initial { position: relative; font: 64px 'Anton', Impact, sans-serif; color: var(--team); }
-.halloween-team-tag { color: var(--team); font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 44px; font-style: italic; letter-spacing: -.035em; line-height: 1.2; margin-top: 20px; max-width: 100%; overflow-wrap: anywhere; text-shadow: 0 0 24px color-mix(in srgb, var(--team) 25%, transparent); }
+.halloween-team-tag { color: var(--team); font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 44px; font-style: italic; letter-spacing: -.035em; line-height: 1.2; margin-top: 28px; max-width: 100%; overflow-wrap: anywhere; text-shadow: 0 0 24px color-mix(in srgb, var(--team) 25%, transparent); }
 .halloween-tag-hash { font-size: .58em; opacity: .7; margin-right: 4px; vertical-align: .12em; }
-.halloween-team-bat { position: absolute; width: 66px; height: 36px; left: -43px; top: 0; color: #c18ce0; transform: rotate(-22deg); filter: drop-shadow(0 0 8px #ad61d055); z-index: 2; }
+.halloween-team-bat { position: absolute; width: 66px; height: 36px; left: -43px; top: 0; color: #000; transform: rotate(-22deg); z-index: 2; }
 .halloween-team-B .halloween-team-bat { left: auto; right: -43px; transform: rotate(22deg); }
 .halloween-clock-bat { width: 36px; height: 18px; color: #ff8a32; filter: drop-shadow(0 0 8px #f9731640); }
 .halloween-team-name { font-size: 10px; text-transform: uppercase; font-weight: 600; letter-spacing: .18em; color: #c9c3cd; margin-top: 5px; max-width: 100%; overflow-wrap: anywhere; }
@@ -51,7 +49,6 @@
   .halloween-poster { padding: 28px 22px 26px; min-height: 460px; }
   .halloween-matchup { grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr); margin-top: 35px; }
   .halloween-portal { width: 116px; height: 116px; }
-  .halloween-portal img { width: 90px; height: 90px; }
   .halloween-team-tag { font-size: 30px; }
   .halloween-team-name { font-size: 8px; letter-spacing: .08em; }
   .halloween-vs { font-size: 38px; }
@@ -59,9 +56,9 @@
   .halloween-date { font-size: 9px; letter-spacing: .03em; gap: 3px; }
   .halloween-web { width: 100px; height: 100px; opacity: .18; }
   .halloween-moon { width: 45px; height: 45px; right: 6%; top: -20px; opacity: .65; }
-  .halloween-pumpkins { width: 88px; height: 68px; bottom: -5px; }
-  .halloween-pumpkins-left { left: 0; }
-  .halloween-pumpkins-right { right: 0; }
+  .halloween-pumpkins { width: 68px; height: 52px; bottom: -10px; }
+  .halloween-pumpkins-left { left: -20px; }
+  .halloween-pumpkins-right { right: -20px; }
   .halloween-team-bat { width: 40px; height: 23px; left: -17px; top: -15px; }
   .halloween-team-B .halloween-team-bat { right: -17px; }
   .halloween-footer { margin-top: 35px; }
@@ -70,7 +67,6 @@
   .halloween-poster { padding-left: 18px; padding-right: 18px; }
   .halloween-matchup { grid-template-columns: minmax(0, 1fr) 74px minmax(0, 1fr); }
   .halloween-portal { width: 88px; height: 88px; }
-  .halloween-portal img { width: 68px; height: 68px; }
   .halloween-team-tag { font-size: 26px; }
   .halloween-schedule strong { font-size: 23px; }
   .halloween-initial { font-size: 35px; }

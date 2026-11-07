@@ -13,7 +13,14 @@ export function HalloweenScenery() {
         <defs><linearGradient id="halloween-moon-light" x2="1" y2="1"><stop stopColor="#ffe4a1"/><stop offset="1" stopColor="#d78942"/></linearGradient></defs>
         <path d="M88 12A48 48 0 1 0 104 88A48 48 0 0 1 88 12Z" fill="url(#halloween-moon-light)"/>
       </svg>
-      {['left', 'right'].map(side => <svg key={side} className={`halloween-pumpkins halloween-pumpkins-${side}`} viewBox="0 0 150 115">
+
+    </div>
+  );
+}
+
+export function HalloweenPumpkins({ side }: { side: 'left' | 'right' }) {
+  return (
+    <svg aria-hidden="true" className={`halloween-pumpkins halloween-pumpkins-${side}`} viewBox="0 0 150 115">
         <defs>
           <radialGradient id={`pumpkin-skin-${side}`} cx=".4" cy=".3" r=".8"><stop stopColor="#ff9d28"/><stop offset=".6" stopColor="#e76112"/><stop offset="1" stopColor="#a6370a"/></radialGradient>
           <g id={`pumpkin-${side}`}>
@@ -25,7 +32,6 @@ export function HalloweenScenery() {
         </defs>
         <use href={`#pumpkin-${side}`} transform="translate(55 64) rotate(-9)"/>
         <use href={`#pumpkin-${side}`} transform="translate(115 83) rotate(12) scale(.57)"/>
-      </svg>)}
-    </div>
+      </svg>
   );
 }
