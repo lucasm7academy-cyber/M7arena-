@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T21:20:52.790Z",
+  "updatedAt": "2026-11-07T21:22:31.415Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "doing",
-      "notes": "Refino de bordas/logos preenchidas, aboboras e morcegos assimetricos, asas pontudas e lua menor/mais fina.",
-      "evidence": "web npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0 ocorrencias. VPS runtime 23dd8b0: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BlAoBq_O.js e Lobby-CmYCA0MS.css HTTP 200.",
+      "status": "done",
+      "notes": "Publicado refinamento: bordas 2px, logos preenchendo os cards, duas aboboras/um morcego a esquerda e uma abobora pequena/dois morcegos a direita; morcegos acima das molduras com asas pontudas, lua menor e fina. Sem navegador conectado para revisao visual.",
+      "evidence": "npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0. VPS runtime 6d6239c: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BnfsgjaY.js e Lobby-VCmx6uhq.css HTTP 200.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T21:20:52.788Z"
+      "updatedAt": "2026-11-07T21:22:31.337Z"
     },
     {
       "id": "app.api",
@@ -255,15 +255,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T08:25:04.470Z",
-      "agent": "deepseek",
-      "summary": "Lobby: hero agora tem DOIS modelos trocaveis por HERO_EDICAO em Lobby.tsx — 'padrao' (texto antigo + video animated-highnoon-lucian.webm, arquivo preservado) e 'halloween' (arte Bruxa da Lua/Copa do Halloween 2026 em webp 1920px, titulo 'Copa do Halloween 2026', CTA 'Inscrever meu time' apontando para https://m7arena.pro/campeonato/9987c732-db06-4e51-8e39-e09c31fd9460 e CTA secundario 'Ver campeonatos'). Imagem com zoom reduzido (scale-95) e object-position 12%. Selo do topo virou 'Halloween 2026'. tsc 0, build ok, deploy ok, health 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx",
-        "web/public/images/hero-halloween-2026.webp"
-      ]
-    },
     {
       "at": "2026-10-31T08:34:51.302Z",
       "agent": "deepseek",
@@ -513,6 +504,14 @@
       "at": "2026-11-07T21:15:51.196Z",
       "agent": "codex",
       "summary": "Ajuste solicitado na home: circulos das logos substituidos pelo CutCard do site, preservando borda na cor do time; aboboras movidas para a base de cada moldura, morcegos laterais pretos e central laranja preservado. Runtime 23dd8b0 na main e VPS. TypeScript/build/verify-swap passaram; nginx valido e health/home/chunks HTTP 200. Sem navegador conectado para revisao visual.",
+      "touched": [
+        "app.web"
+      ]
+    },
+    {
+      "at": "2026-11-07T21:22:31.414Z",
+      "agent": "codex",
+      "summary": "Refino da arte Halloween: CutCard aceita borderWidth mantendo default 1px, home usa 2px; logos sem espaco interno e object-fit cover com clip recortado. Aboboras mais para fora: duas esquerda, so pequena direita; um morcego esquerda e dois (grande/pequeno) direita, acima/fora dos cards, asas finas e pontudas. Lua 62px (34 mobile) com crescente fino. Runtime 6d6239c publicado na main/VPS; tsc/build/swap ok, nginx valido, health/home/chunks HTTP 200. Sem navegador conectado para revisao visual.",
       "touched": [
         "app.web"
       ]
