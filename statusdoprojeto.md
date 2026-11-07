@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/11/2026 17:37 — por `codex`
+**Última atualização:** 07/11/2026 17:55 — por `codex`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
 ## Panorama
 
-`████████████████░░░░░░░░░░░░ 8/14` concluído
+`██████████████████░░░░░░░░░░ 9/14` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 3/3 | — | — |
 | Fase 1 — Schema do banco | ████████████ 1/1 | — | — |
 | Fase 2 — Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Fase 3 — Aplicação (React + Vite + API) | █████░░░░░░░ 3/7 | 1 | 2 |
+| Fase 3 — Aplicação (React + Vite + API) | ███████░░░░░ 4/7 | — | 2 |
 | Fase 4 — Operações da VPS (MCP) | ░░░░░░░░░░░░ 0/1 | — | 1 |
 
 <details><summary>Progresso por área</summary>
@@ -40,7 +40,7 @@
 | Governança & Agentes | ████████████ 3/3 | — | — |
 | Banco de Dados | ████████████ 1/1 | — | — |
 | Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Aplicação (React + Vite) | █████░░░░░░░ 2/5 | 1 | 2 |
+| Aplicação (React + Vite) | ███████░░░░░ 3/5 | — | 2 |
 | MCP de Operações | ░░░░░░░░░░░░ 0/1 | — | 1 |
 | Segurança | ██████░░░░░░ 1/2 | — | — |
 
@@ -62,10 +62,6 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
   <br>_aberto por deepseek em 31/10/2026 03:35_
 - **BLK-009** (`mcpops.server`) — Container m7arena_mcp_ops em restart loop; operações da VPS via MCP indisponíveis.
   <br>_aberto por deepseek em 31/10/2026 03:35_
-
-## Em andamento agora
-
-- `app.web` **Front React + Vite (web/)** — codex · Arte Halloween para confrontos agendados na home, preservando cores dos times; deploy autorizado.
 
 ## Componentes
 
@@ -90,7 +86,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 
 **Aplicação (React + Vite)**
 
-- `[~]` **Front React + Vite (web/)** `app.web`<br>  Arte Halloween para confrontos agendados na home, preservando cores dos times; deploy autorizado.<br>  _evidência:_ `npm run build`
+- `[x]` **Front React + Vite (web/)** `app.web`<br>  Poster Halloween dos jogos confirmados publicado; cores dos times preservadas, portais, lua, morcegos, teias e aboboras; agenda extraida do Lobby. Revisao visual pendente do usuario: nenhum navegador conectado nesta sessao.<br>  _evidência:_ `web: npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); node scripts/verify-swap.js: 0 ocorrencias. VPS main 3b00358: compose --env-file /root/m7arena/.env build nginx e up -d --no-deps nginx exit 0; nginx -t successful; GET https://m7arena.pro/api/health status ok; home /, Lobby-BIRhq0ef.js e Lobby-AegqBmxy.css HTTP 200; JS publico contem CONFRONTO MARCADO.`<br>  _concluído 07/11/2026 17:55 por codex_
 - `[x]` **API Node + Express + Drizzle (api/)** `app.api`<br>  Sessão própria, salas, campeonatos, carteira, uploads e pagamentos.<br>  _evidência:_ `npx tsc --noEmit`
 - `[x]` **WebSocket + LISTEN/NOTIFY** `app.realtime`<br>  Serviço próprio de realtime; o socket só avisa que a sala mudou.<br>  _evidência:_ `m7arena_realtime`
 - `[!]` **Pagamentos MC (Mercado Pago PIX)** `app.payments`<br>  BLK-005: chave PIX do collector não habilitada; QR não é gerado.
@@ -191,6 +187,7 @@ _06/11/2026 00:48 — deepseek_
 
 | Quando | Agente | O que fez |
 |---|---|---|
+| 07/11/2026 17:55 | codex | Criado e publicado poster Halloween para jogos agendados da home: portais nas cores dos times, logos sem moldura angular, lua, morcegos, teias, arvores e aboboras. Data/hora/campeonato e Twitch mantidos. Dominio extraido em componentes e hook menores que 400 linhas; carrossel pausa com hover/foco. Commit runtime 3b00358 na main e VPS. TypeScript/build/verify-swap passaram; health ok, home e chunks HTTP 200. Sem navegador conectado para revisao visual; usuario vera na live. <br>_tocou: `app.web`_ |
 | 07/11/2026 14:55 | deepseek | Correção de permissões (pós-deploy 07/11): cronograma liberado para qualquer integrante aceito propor/contrapropor/aceitar o próprio jogo (estado derivado no servidor, aceite só pelo time que recebeu, confirmado trava p/ time); criar/finalizar/best_of/fase seguem só staff. Times: adicionar jogador e editar lineup liberados p/ qualquer integrante; remover e promover capitão só dono/capitão/proprietário; editar time liberado p/ integrante; transferência direta de jogador de outro time (coroa/dono anda no time de origem). Mensagens de erro reais nos modais. 286 testes ok; app/nginx publicados sem tocar realtime/postgres. <br>_tocou: `api/src/lib/team-membership.ts`, `api/src/lib/tournament-access.ts`, `api/src/routes/teams.ts`, `api/src/routes/tournaments.ts`, `api/test/tournament-access.test.ts`, `web/src/pages/TimePage.tsx`_ |
 | 06/11/2026 20:24 | deepseek | Ajuste pos-deploy: atualizar resultado liberado para qualquer membro aceito dos times da serie (titular/reserva/coach), streamer e staff; endpoint de serie usa checagem direta de membership e permite streamer; sala time_vs_time livre valida membro pela tag do time; cron de series e salas livres reduzido de 3/10 min para 60 s com single-flight. 284 testes passando; app/nginx atualizados sem tocar realtime/postgres. <br>_tocou: `api/src/cron.ts`, `api/src/index.ts`, `api/src/lib/tournament-access.ts`, `api/src/routes/matches-actions.ts`, `api/src/routes/tournaments.ts`, `api/test/tournament-access.test.ts`, `web/src/features/sala-campeonato/SalaCampeonato.tsx`_ |
 | 06/11/2026 18:43 | deepseek | COPA HALLOWEEN 2026: substitui CHOP (Chopp Squad) por CDR (Chidori e-Sports) no Grupo C. Chidori: registered -> approved, group_id C; CHOP removido de tournament_teams; os 3 jogos do Grupo C (BKSR x CHOP, CHOP x DLG, CHOP x BLM) viraram BKSR x CDR, CDR x DLG e CDR x BLM; a linha de standings de CHOP foi reaproveitada para CDR (rank 6). Verificado pela API: 16 inscritos/16 aprovados, Grupo C = BKSR, BLM, CDR, DLG, cronograma com CDR x BKSR/DLG/BLM e classificacao com CDR, sem CHOP. Logos: CDR foi para LOGOS GRUPO C e CHOP para LOGOS FORA. Planilha: linha 9 trocada para Chidori, totais e Resumo ajustados para 16 times. Nenhum codigo alterado. |
@@ -205,7 +202,6 @@ _06/11/2026 00:48 — deepseek_
 | 05/11/2026 02:11 | deepseek | Inscrevi e ja aprovei o time flexqueue (FLEX) na COPA HALLOWEEN - 2026 (9987c732-db06-4e51-8e39-e09c31fd9460): insert direto em tournament_teams como approved, discord weedinchat / whatsapp 13974191151. Camp. ficou 16/16 inscritos (15 aprovados + Chidori pendente) e FLEX aparece na classificacao pela API publica. Nenhum codigo alterado. |
 | 05/11/2026 00:21 | deepseek | Deploy da simplificacao aprovada em producao: merge --no-ff na main (8ee9e0a), backup novo do PostgreSQL validado por restore em DB temporario (48 tabelas; users 449/matches 58/wallets 324; mc 13622/reservado 0), uploads 304 arquivos preservados, imagens de rollback salvas. Deploy somente app/nginx; realtime (id 8f2710) e postgres preservados; sem migration. Health publico 200; login/sessao, OP.GG, salas/scrim/campeonato, PDL e privacidade Pix validados; 403 para funcoes admin por usuario comum. Pacote instalado: app sha256:56456f8..., nginx sha256:59a3c6b.... <br>_tocou: `api/src`, `web/src`, `infra`, `docs`, `main`, `deploy-vps`_ |
 | 04/11/2026 23:41 | deepseek | Homologacao local da simplificacao: stack Docker local com banco isolado m7arena_homolog; navegador testou cadastro/login/perfil, catalogo com OP.GG, times, campeonatos, salas 5v5 e 1v1 completa ate iniciar partida, scrim, carteira E, admin. Corrigidos bugs de homologacao e seguranca: perfil publico sem Pix, saldo de terceiros so admin, escrita de campeonato por staff, inscricao sem autoaprovacao, lineup sem sequestro, tick autenticado, refresh-elo removido, convidado so por PUUID. Auditoria read-only de producao: 0 salas aguardando_revisao, 0 reservas, 13 prints e 2 disputas historicas encerradas. Evidencias: web lint/build, api tsc/build, 283 testes API passando, verify-swap 0. Sem deploy/migration; main intacta. <br>_tocou: `web/src`, `api/src`, `api/test`, `infra`, `docs`, `ESTRUTURA_ATUALIZADA_2026-11-04.md`, `docs/HOMOLOGACAO_SIMPLIFICACAO.md`_ |
-| 04/11/2026 22:41 | deepseek | Simplificacao local da matriz 84 itens concluida na branch simplificacao-m7arena: removidos revisao/prints/disputas, noticias, player_stats, convites, dashboard financeiro, Time vs Time antigo e M7 Points; saldo MC renomeado para Essencia Azul (E); corrigidos lives de scrim (G04/G06), sino G07, cargo caster/H02 e H01 com reservas; novo ESTRUTURA_ATUALIZADA_2026-11-04.md. Evidencias: web lint/build, api tsc, 279 testes passando, verify-swap 0. Sem deploy, sem migration, main intacta. <br>_tocou: `web/src`, `api/src`, `db`, `docs`, `infra`, `scripts`, `plano_m7arena_atualizado.md`, `CATALOGO_FUNCIONALIDADES.md`, `ESTRUTURA_ATUALIZADA_2026-11-04.md`_ |
 
 ---
 

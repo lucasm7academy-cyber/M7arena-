@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T20:37:48.208Z",
+  "updatedAt": "2026-11-07T20:55:21.066Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "doing",
-      "notes": "Arte Halloween para confrontos agendados na home, preservando cores dos times; deploy autorizado.",
-      "evidence": "npm run build",
+      "status": "done",
+      "notes": "Poster Halloween dos jogos confirmados publicado; cores dos times preservadas, portais, lua, morcegos, teias e aboboras; agenda extraida do Lobby. Revisao visual pendente do usuario: nenhum navegador conectado nesta sessao.",
+      "evidence": "web: npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); node scripts/verify-swap.js: 0 ocorrencias. VPS main 3b00358: compose --env-file /root/m7arena/.env build nginx e up -d --no-deps nginx exit 0; nginx -t successful; GET https://m7arena.pro/api/health status ok; home /, Lobby-BIRhq0ef.js e Lobby-AegqBmxy.css HTTP 200; JS publico contem CONFRONTO MARCADO.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T20:37:48.205Z"
+      "updatedAt": "2026-11-07T20:55:20.977Z"
     },
     {
       "id": "app.api",
@@ -255,14 +255,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T07:38:42.721Z",
-      "agent": "deepseek",
-      "summary": "Draft: bans agora alinhados HORIZONTALMENTE com a bola do time — o container usa o mesmo px do TeamPanel (max(2vmin,calc((100%-85vmin)/4-12.5vmin))) e cada grupo fica dentro de uma coluna de 25vmin centralizada (mesma largura do painel da bola). Altura mantida (top-6vmin), tamanho 7.2vmin mantido. Assim os bans deixam de ficar por cima do grid de campeoes. Commit 2cb969e, deploy ok, health 200.",
-      "touched": [
-        "web/src/components/draft/DraftRoom.tsx"
-      ]
-    },
     {
       "at": "2026-10-31T08:05:49.208Z",
       "agent": "deepseek",
@@ -515,6 +507,14 @@
         "api/src/routes/tournaments.ts",
         "api/test/tournament-access.test.ts",
         "web/src/pages/TimePage.tsx"
+      ]
+    },
+    {
+      "at": "2026-11-07T20:55:21.065Z",
+      "agent": "codex",
+      "summary": "Criado e publicado poster Halloween para jogos agendados da home: portais nas cores dos times, logos sem moldura angular, lua, morcegos, teias, arvores e aboboras. Data/hora/campeonato e Twitch mantidos. Dominio extraido em componentes e hook menores que 400 linhas; carrossel pausa com hover/foco. Commit runtime 3b00358 na main e VPS. TypeScript/build/verify-swap passaram; health ok, home e chunks HTTP 200. Sem navegador conectado para revisao visual; usuario vera na live.",
+      "touched": [
+        "app.web"
       ]
     }
   ]
