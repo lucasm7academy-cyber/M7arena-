@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T17:55:59.482Z",
-  "updatedBy": "deepseek",
+  "updatedAt": "2026-11-07T20:37:48.208Z",
+  "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
     "Regra de negócio e segredo ficam no servidor. Pagamento, resultado, saldo e permissão são decididos na API.",
@@ -73,9 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "done",
-      "notes": "Design atual em produção; sem Next.js e sem Supabase no runtime.",
-      "evidence": "npm run build"
+      "status": "doing",
+      "notes": "Arte Halloween para confrontos agendados na home, preservando cores dos times; deploy autorizado.",
+      "evidence": "npm run build",
+      "owner": "codex",
+      "updatedAt": "2026-11-07T20:37:48.205Z"
     },
     {
       "id": "app.api",
