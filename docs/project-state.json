@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T21:22:31.415Z",
+  "updatedAt": "2026-11-07T21:27:46.527Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "done",
-      "notes": "Publicado refinamento: bordas 2px, logos preenchendo os cards, duas aboboras/um morcego a esquerda e uma abobora pequena/dois morcegos a direita; morcegos acima das molduras com asas pontudas, lua menor e fina. Sem navegador conectado para revisao visual.",
+      "status": "doing",
+      "notes": "Substituir morcegos da home pelo SVG 2819770.svg fornecido pelo usuario, preservando geometria, posicoes e cores.",
       "evidence": "npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0. VPS runtime 6d6239c: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BnfsgjaY.js e Lobby-VCmx6uhq.css HTTP 200.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T21:22:31.337Z"
+      "updatedAt": "2026-11-07T21:27:46.526Z"
     },
     {
       "id": "app.api",

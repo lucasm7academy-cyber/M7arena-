@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/11/2026 18:22 — por `codex`
+**Última atualização:** 07/11/2026 18:27 — por `codex`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
 ## Panorama
 
-`██████████████████░░░░░░░░░░ 9/14` concluído
+`████████████████░░░░░░░░░░░░ 8/14` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 3/3 | — | — |
 | Fase 1 — Schema do banco | ████████████ 1/1 | — | — |
 | Fase 2 — Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Fase 3 — Aplicação (React + Vite + API) | ███████░░░░░ 4/7 | — | 2 |
+| Fase 3 — Aplicação (React + Vite + API) | █████░░░░░░░ 3/7 | 1 | 2 |
 | Fase 4 — Operações da VPS (MCP) | ░░░░░░░░░░░░ 0/1 | — | 1 |
 
 <details><summary>Progresso por área</summary>
@@ -40,7 +40,7 @@
 | Governança & Agentes | ████████████ 3/3 | — | — |
 | Banco de Dados | ████████████ 1/1 | — | — |
 | Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Aplicação (React + Vite) | ███████░░░░░ 3/5 | — | 2 |
+| Aplicação (React + Vite) | █████░░░░░░░ 2/5 | 1 | 2 |
 | MCP de Operações | ░░░░░░░░░░░░ 0/1 | — | 1 |
 | Segurança | ██████░░░░░░ 1/2 | — | — |
 
@@ -62,6 +62,10 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
   <br>_aberto por deepseek em 31/10/2026 03:35_
 - **BLK-009** (`mcpops.server`) — Container m7arena_mcp_ops em restart loop; operações da VPS via MCP indisponíveis.
   <br>_aberto por deepseek em 31/10/2026 03:35_
+
+## Em andamento agora
+
+- `app.web` **Front React + Vite (web/)** — codex · Substituir morcegos da home pelo SVG 2819770.svg fornecido pelo usuario, preservando geometria, posicoes e cores.
 
 ## Componentes
 
@@ -86,7 +90,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 
 **Aplicação (React + Vite)**
 
-- `[x]` **Front React + Vite (web/)** `app.web`<br>  Publicado refinamento: bordas 2px, logos preenchendo os cards, duas aboboras/um morcego a esquerda e uma abobora pequena/dois morcegos a direita; morcegos acima das molduras com asas pontudas, lua menor e fina. Sem navegador conectado para revisao visual.<br>  _evidência:_ `npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0. VPS runtime 6d6239c: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BnfsgjaY.js e Lobby-VCmx6uhq.css HTTP 200.`<br>  _concluído 07/11/2026 18:22 por codex_
+- `[~]` **Front React + Vite (web/)** `app.web`<br>  Substituir morcegos da home pelo SVG 2819770.svg fornecido pelo usuario, preservando geometria, posicoes e cores.<br>  _evidência:_ `npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0. VPS runtime 6d6239c: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BnfsgjaY.js e Lobby-VCmx6uhq.css HTTP 200.`
 - `[x]` **API Node + Express + Drizzle (api/)** `app.api`<br>  Sessão própria, salas, campeonatos, carteira, uploads e pagamentos.<br>  _evidência:_ `npx tsc --noEmit`
 - `[x]` **WebSocket + LISTEN/NOTIFY** `app.realtime`<br>  Serviço próprio de realtime; o socket só avisa que a sala mudou.<br>  _evidência:_ `m7arena_realtime`
 - `[!]` **Pagamentos MC (Mercado Pago PIX)** `app.payments`<br>  BLK-005: chave PIX do collector não habilitada; QR não é gerado.
