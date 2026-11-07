@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { FaTwitch } from 'react-icons/fa6';
 import { HalloweenBat, HalloweenPumpkins, HalloweenScenery } from './HalloweenScenery';
-import { CutCard } from '../ui/CutCard';
+import { CutCard, cutPolygon } from '../ui/CutCard';
 import { useUpcomingMatches, type UpcomingMatch } from './useUpcomingMatches';
 import './upcoming-matches.css';
 
@@ -15,8 +15,9 @@ function Team({ match, side }: { match: UpcomingMatch; side: 'A' | 'B' }) {
     <div className={`halloween-team halloween-team-${side}`} style={style}>
       <div className="halloween-portal">
         <HalloweenBat className="halloween-team-bat" />
-        <CutCard className="halloween-logo-frame" contentClassName="halloween-logo-content" borderColor={color} background="#0c0c12">
-          {logo ? <img src={logo} alt={`Logo ${match[`name${side}`] || tag}`} /> : <span className="halloween-initial">{tag.replace(/^#/, '').slice(0, 2)}</span>}
+        {side === 'B' && <HalloweenBat className="halloween-team-bat halloween-team-bat-small" />}
+        <CutCard className="halloween-logo-frame" contentClassName="halloween-logo-content" borderWidth={2} borderColor={color} background="#0c0c12">
+          {logo ? <img src={logo} style={{ clipPath: cutPolygon(12, 2) }} alt={`Logo ${match[`name${side}`] || tag}`} /> : <span className="halloween-initial">{tag.replace(/^#/, '').slice(0, 2)}</span>}
         </CutCard>
         <HalloweenPumpkins side={side === 'A' ? 'left' : 'right'} />
       </div>

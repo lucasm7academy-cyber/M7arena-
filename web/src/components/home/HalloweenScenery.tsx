@@ -1,5 +1,5 @@
 export function HalloweenBat({ className }: { className?: string }) {
-  return <svg className={className} viewBox="-38 -22 76 38" fill="currentColor" aria-hidden="true"><path d="M-4-4-6-13 0-9 6-13 4-4Q17-23 35-16Q25-10 27 2Q15-5 10 9L0 5-10 9Q-15-5-27 2Q-25-10-35-16Q-17-23-4-4Z" /></svg>;
+  return <svg className={className} viewBox="-40 -26 80 44" fill="currentColor" aria-hidden="true"><path d="M-4-5-6-15 0-10 6-15 4-5Q18-19 37-23L28-7Q19-12 18 4Q10-5 8 12L0 6-8 12Q-10-5-18 4Q-19-12-28-7L-37-23Q-18-19-4-5Z" /></svg>;
 }
 
 /** Independent corner ornaments keep their proportions on narrow screens. */
@@ -11,7 +11,7 @@ export function HalloweenScenery() {
       </svg>)}
       <svg className="halloween-moon" viewBox="0 0 120 120">
         <defs><linearGradient id="halloween-moon-light" x2="1" y2="1"><stop stopColor="#ffe4a1"/><stop offset="1" stopColor="#d78942"/></linearGradient></defs>
-        <path d="M88 12A48 48 0 1 0 104 88A48 48 0 0 1 88 12Z" fill="url(#halloween-moon-light)"/>
+        <path d="M70 10A50 50 0 1 0 70 110C20 92 20 28 70 10Z" fill="url(#halloween-moon-light)"/>
       </svg>
 
     </div>
@@ -30,8 +30,8 @@ export function HalloweenPumpkins({ side }: { side: 'left' | 'right' }) {
             <path d="M-27-6-9-1-23 5ZM27-6 9-1 23 5ZM-5 9 0 0 5 9ZM-27 15-14 19-10 14-3 23 6 16 12 20 28 12Q13 39-9 29Z" fill="#ffe9a0"/>
           </g>
         </defs>
-        <use href={`#pumpkin-${side}`} transform="translate(55 64) rotate(-9)"/>
-        <use href={`#pumpkin-${side}`} transform="translate(115 83) rotate(12) scale(.57)"/>
+        {side === 'left' && <use href={`#pumpkin-${side}`} transform="translate(55 64) rotate(-9)"/>}
+        <use href={`#pumpkin-${side}`} transform={`translate(${side === 'right' ? 55 : 115} 83) rotate(12) scale(.57)`}/>
       </svg>
   );
 }

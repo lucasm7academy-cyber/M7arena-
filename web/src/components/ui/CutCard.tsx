@@ -25,6 +25,7 @@ interface CutCardProps {
   contentClassName?: string;
   background?: string;
   borderColor?: string;
+  borderWidth?: number;
   children: React.ReactNode;
   [key: string]: any;
 }
@@ -34,13 +35,14 @@ export function CutCard({
   contentClassName = '',
   background = '#0A0A0A',
   borderColor = 'rgba(255,255,255,0.1)',
+  borderWidth = 1,
   children,
   ...rest
 }: CutCardProps) {
   return (
     <motion.div {...rest} className={`relative ${className}`}>
       <div className="absolute inset-0" style={{ backgroundColor: borderColor, clipPath: CUT_OUTER }} />
-      <div className="absolute inset-[1px]" style={{ backgroundColor: background, clipPath: CUT_INNER }} />
+      <div className="absolute" style={{ inset: borderWidth, backgroundColor: background, clipPath: borderWidth === 1 ? CUT_INNER : cutPolygon(12, borderWidth) }} />
       <div className={`relative ${contentClassName}`}>{children}</div>
     </motion.div>
   );
