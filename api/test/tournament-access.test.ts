@@ -1,16 +1,19 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import { eq } from "drizzle-orm";
 import { users, userRoles } from "../../db/schema/identidade.js";
 import { games, gameAccounts } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { tournaments, tournamentTeams } from "../../db/schema/tournaments.js";
 import { setupDb } from "./helpers.js";
+import { transferirJogadorParaTime } from "../src/lib/team-membership.js";
 import {
   identidadeAcessoCampeonato,
   acessoNoCampeonato,
   redigirCodigosDaSerie,
   resolverPermissaoSerie,
   podeGerenciarCampeonato,
+  timeDoUsuarioNaSerie,
 } from "../src/lib/tournament-access.js";
 
 const U = (n: number) => `aaaaaaab-0000-0000-0000-00000000000${n}`;
@@ -238,5 +241,26 @@ describe("tournament-access (PGlite)", () => {
       permitirStreamer: true,
     });
     assert.equal(comFlag.isStaff, true);
+  });
+
+  test("timeDoUsuarioNaSerie: integrante retorna lado; estranho null", async () => {
+    const serie = { teamAId: T(1), teamBId: T(2), teamATag: "M7W", teamBTag: "BKA" };
+
+    assert.equal(await timeDoUsuarioNaSerie(ctx.db, U(2), serie), "A", "membro do M7W");
+    assert.equal(await timeDoUsuarioNaSerie(ctx.db, U(1), serie), "A", "dono do M7W");
+    assert.equal(await timeDoUsuarioNaSerie(ctx.db, U(6), serie), "B", "dono do BKA");
+    assert.equal(await timeDoUsuarioNaSerie(ctx.db, U(4), serie), null, "convite pendente não conta");
+    // Sem teamAId/teamBId: resolve pela tag.
+    assert.equal(await timeDoUsuarioNaSerie(ctx.db, U(3), { teamATag: "M7W", teamBTag: "BKA" }), "A", "convidado por PUUID");
+  });
+
+  test("transferirJogadorParaTime move o dono e dissolve time de origem vazio", async () => {
+    await transferirJogadorParaTime(ctx.db, U(6), T(1));
+
+    const membrosBka = await ctx.db.select().from(teamMembers).where(eq(teamMembers.teamId, T(2)));
+    assert.equal(membrosBka.length, 0, "U(6) saiu do BKA");
+
+    const bka = await ctx.db.select().from(teams).where(eq(teams.id, T(2)));
+    assert.equal(bka.length, 0, "time de origem dissolvido quando fica sem ninguém");
   });
 });

@@ -22,7 +22,7 @@ import {
 import { storeLegacyWrites, storeTimesInscritos, storeCronograma, storeBracket, jogoConfirmadoSemHorario, removerInscricao } from "../lib/tournament-store.js";
 import { appendTiebreakers } from "../lib/tournament-tiebreakers.js";
 import { atribuirCodigoSerie, normalizarBestOf, verificarSerieCampeonato } from "../lib/serie-campeonato.js";
-import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie, podeGerenciarCampeonato } from "../lib/tournament-access.js";
+import { identidadeAcessoCampeonato, acessoNoCampeonato, redigirCodigosDaSerie, resolverPermissaoSerie, podeGerenciarCampeonato, timeDoUsuarioNaSerie } from "../lib/tournament-access.js";
 import { recalcularPdlGlobal } from "../lib/tournament-pdl.js";
 import { criarSalaCampeonato } from "../lib/sala-campeonato.js";
 
@@ -568,20 +568,98 @@ tournamentsRouter.put("/:id/cronograma/merge", async (req, res) => {
     const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id)).limit(1);
     if (!t) return res.status(404).json({ error: "Campeonato não encontrado" });
 
-    if (!(await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId }))) {
-      return res.status(403).json({ error: "Apenas o organizador ou staff pode alterar o cronograma" });
-    }
-
     const jogos = req.body?.jogos || req.body?.cronograma || [];
-    // Confirmação exige data/hora: o aceite do agendamento não pode criar um
-    // jogo confirmado sem horário (bug do 20:00).
-    const semHorario = jogos.find(jogoConfirmadoSemHorario);
-    if (semHorario) {
-      return res.status(400).json({ error: "Jogo confirmado sem data/horário definidos. Proponha um horário antes de confirmar." });
+
+    // Staff/organizador: comportamento atual (criar/finalizar/mudar best_of/fase).
+    if (await podeGerenciarCampeonato(db, { userId: user.id, organizerId: t.organizerId })) {
+      const semHorario = jogos.find(jogoConfirmadoSemHorario);
+      if (semHorario) {
+        return res.status(400).json({ error: "Jogo confirmado sem data/horário definidos. Proponha um horário antes de confirmar." });
+      }
+      await storeCronograma(id, jogos, true);
+      await applyAutoTiebreakers(id, jogos);
+      return res.json(await shapeComAcesso(req, id));
     }
 
-    await storeCronograma(id, jogos, true);
-    await applyAutoTiebreakers(id, jogos);
+    // Integrante do time: só propõe/contrapropõe/aceita o PRÓPRIO jogo.
+    if (!jogos.length) return res.status(400).json({ error: "Nenhum jogo enviado." });
+
+    const sanitizados: any[] = [];
+    for (const j of jogos) {
+      const key = j.id || j.matchKey;
+      if (!key) return res.status(403).json({ error: "Jogo sem identificação." });
+
+      const [atual] = await db
+        .select()
+        .from(tournamentMatches)
+        .where(and(eq(tournamentMatches.tournamentId, id), eq(tournamentMatches.matchKey, key)))
+        .limit(1);
+      if (!atual) {
+        return res.status(403).json({ error: "Você não pode criar jogos — apenas organizador/staff." });
+      }
+
+      const lado = await timeDoUsuarioNaSerie(db, user.id, {
+        teamAId: atual.teamAId,
+        teamBId: atual.teamBId,
+        teamATag: atual.teamATag,
+        teamBTag: atual.teamBTag,
+      });
+      if (!lado) {
+        return res.status(403).json({ error: "Você não pertence a um dos times desta partida." });
+      }
+      const meuTag = lado === "A" ? atual.teamATag : atual.teamBTag;
+
+      const statusAtual = atual.status ?? "combinando";
+      const dataNova = j.data ?? j.displayDate ?? atual.displayDate;
+      const horaNova = j.hora ?? j.displayTime ?? atual.displayTime;
+      const mudouHorario = dataNova !== atual.displayDate || horaNova !== atual.displayTime;
+      const semHorario = !dataNova || dataNova === "A COMBINAR" || !horaNova || horaNova === "--:--";
+
+      // Estado derivado no servidor (não confia em status/proposedBy do cliente).
+      let novoStatus: string;
+      let proposedBy = atual.proposedBy ?? "";
+
+      if (statusAtual === "combinando" || !atual.proposedBy) {
+        if (semHorario) return res.status(400).json({ error: "Defina a data e o horário para enviar a proposta." });
+        novoStatus = "proposto";
+        proposedBy = meuTag ?? "";
+      } else if (statusAtual === "proposto") {
+        const euPropus = (atual.proposedBy ?? "").trim().toLowerCase() === (meuTag ?? "").trim().toLowerCase();
+        if (euPropus) {
+          if (semHorario) return res.status(400).json({ error: "Defina a data e o horário para enviar a contra-proposta." });
+          novoStatus = "proposto";
+          proposedBy = meuTag ?? "";
+        } else {
+          if (semHorario) return res.status(400).json({ error: "Defina a data e o horário antes de responder." });
+          if (mudouHorario) {
+            novoStatus = "proposto";
+            proposedBy = meuTag ?? "";
+          } else {
+            novoStatus = "confirmado";
+          }
+        }
+      } else if (statusAtual === "confirmado") {
+        return res.status(403).json({ error: "Jogo já confirmado. Apenas o organizador/staff pode reabrir." });
+      } else {
+        return res.status(403).json({ error: "Você não pode alterar este jogo no estado atual." });
+      }
+
+      sanitizados.push({
+        id: key,
+        matchKey: key,
+        fase: atual.phaseLabel,
+        timeA: atual.teamATag,
+        timeB: atual.teamBTag,
+        data: dataNova,
+        hora: horaNova,
+        placar: atual.scoreDisplay ?? "0 - 0",
+        status: novoStatus,
+        proposedBy,
+        lastActionBy: meuTag ?? "",
+      });
+    }
+
+    await storeCronograma(id, sanitizados, true);
     return res.json(await shapeComAcesso(req, id));
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || "Erro ao mesclar cronograma" });

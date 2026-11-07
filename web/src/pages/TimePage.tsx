@@ -240,7 +240,7 @@ const InvitePlayerModal = ({
 }: {
   team: TimeData;
   onClose: () => void;
-  onAddPlayer: (players: Membro[]) => Promise<boolean>;
+  onAddPlayer: (players: Membro[]) => Promise<{ ok: boolean; error?: string }>;
 }) => {
   const { playSound } = useSound();
   const [query, setQuery] = useState('');
@@ -436,10 +436,10 @@ const InvitePlayerModal = ({
 
     setSending(true);
 
-    const ok = await onAddPlayer(finalMembers);
+    const res = await onAddPlayer(finalMembers);
     setSending(false);
-    if (!ok) {
-      setError('Erro ao salvar no banco de dados. Verifique a conexão.');
+    if (!res?.ok) {
+      setError(res?.error || 'Erro ao salvar no banco de dados. Verifique a conexão.');
       return;
     }
 
@@ -939,13 +939,19 @@ const EditTeamModal = ({
 
 const ManageLineupModal = ({
   team, onClose, onUpdateTeam, isProprietario = false,
+  podeRemover = false,
+  podePromover = false,
 }: {
   team: TimeData;
   onClose: () => void;
-  onUpdateTeam: (players: Membro[]) => Promise<boolean> | void;
+  onUpdateTeam: (players: Membro[]) => Promise<{ ok: boolean; error?: string }> | void;
   /** Cargo proprietário DO SITE (não do time): vê a coroa em qualquer membro,
       mesmo convidado sem conta (que vira capitão, não dono). */
   isProprietario?: boolean;
+  /** Remove/expulsa jogador: dono, capitão ou proprietário do site. */
+  podeRemover?: boolean;
+  /** Promove/transfere a coroa: dono, capitão ou proprietário do site. */
+  podePromover?: boolean;
 }) => {
   const { playSound } = useSound();
   const [membros, setMembros] = useState<Membro[]>(sortPlayers(team.membros));
@@ -1010,10 +1016,10 @@ const ManageLineupModal = ({
       return;
     }
     setSalvando(true);
-    const ok = await onUpdateTeam(membros);
+    const res = await onUpdateTeam(membros);
     setSalvando(false);
-    if (ok === false) {
-      setError('Não foi possível salvar o lineup. Tente novamente.');
+    if (res && res.ok === false) {
+      setError(res.error || 'Não foi possível salvar o lineup. Tente novamente.');
       playSound('click');
       return;
     }
@@ -1119,7 +1125,7 @@ const ManageLineupModal = ({
                           O PROPRIETÁRIO DO SITE vê a coroa em qualquer membro
                           — até convidado sem conta (vira capitão; o dono só
                           muda para quem tem conta, regra do servidor). */}
-                      {!m.isLeader && (m.userId || isProprietario) && (
+                      {podePromover && !m.isLeader && (m.userId || isProprietario) && (
                         <button
                           onClick={() => handlePromote(mId)}
                           className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-yellow-400/20 text-white/30 hover:text-yellow-400 transition-all cursor-pointer"
@@ -1131,13 +1137,15 @@ const ManageLineupModal = ({
                       {/* Retirar da equipe vale para TODOS, inclusive o líder —
                           o proprietário pode kitar o dono e a coroa anda
                           sozinha (handleRemove promove o primeiro restante). */}
-                      <button
-                        onClick={() => setConfirmRemove(mId)}
-                        className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all cursor-pointer"
-                        title={m.isLeader ? 'Expulsar (a coroa vai para o próximo)' : 'Expulsar'}
-                      >
-                        <UserX className="w-3.5 h-3.5" />
-                      </button>
+                      {podeRemover && (
+                        <button
+                          onClick={() => setConfirmRemove(mId)}
+                          className="p-1.5 border border-white/10 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all cursor-pointer"
+                          title={m.isLeader ? 'Expulsar (a coroa vai para o próximo)' : 'Expulsar'}
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -1353,8 +1361,8 @@ export default function TimePage() {
     });
   };
 
-  const handleUpdatePlayers = async (membros: Membro[]): Promise<boolean> => {
-    if (!time) return false;
+  const handleUpdatePlayers = async (membros: Membro[]): Promise<{ ok: boolean; error?: string }> => {
+    if (!time) return { ok: false, error: 'Time não carregado.' };
 
     // A API substitui o lineup inteiro numa ÚNICA transação (substitui a RPC).
     // Se qualquer insert falhar, ROLLBACK — o time NUNCA fica zerado.
@@ -1371,7 +1379,7 @@ export default function TimePage() {
       })));
     } catch (error: any) {
       console.error('❌ Erro ao salvar lineup:', error.message, error);
-      return false;
+      return { ok: false, error: error?.message || 'Erro ao salvar o lineup.' };
     }
 
     // Atualiza apenas membros no estado, sem recarregar o time inteiro
@@ -1379,7 +1387,7 @@ export default function TimePage() {
       if (!prev) return prev;
       return { ...prev, membros };
     });
-    return true;
+    return { ok: true };
   };
 
   const handleSairTime = async () => {
@@ -1400,7 +1408,7 @@ export default function TimePage() {
   };
 
   const handleSidebarLineup = () => {
-    if (userRole === 'leader') {
+    if (userRole === 'leader' || userRole === 'member') {
       playSound('click');
       setModalLineup(true);
     } else {
@@ -1930,7 +1938,14 @@ export default function TimePage() {
         <EditTeamModal team={time} onClose={() => setModalEditar(false)} onSave={handleUpdateTeam} />
       )}
       {modalLineup && (
-        <ManageLineupModal team={time} onClose={() => setModalLineup(false)} onUpdateTeam={handleUpdatePlayers} isProprietario={isProprietario} />
+        <ManageLineupModal
+          team={time}
+          onClose={() => setModalLineup(false)}
+          onUpdateTeam={handleUpdatePlayers}
+          isProprietario={isProprietario}
+          podeRemover={userRole === 'leader'}
+          podePromover={userRole === 'leader'}
+        />
       )}
       {modalSair && (
         <ConfirmLeaveModal onClose={() => setModalSair(false)} onConfirm={handleSairTime} />

@@ -1,8 +1,8 @@
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "../db.js";
 import { users } from "../../../db/schema/identidade.js";
 import { gameAccounts } from "../../../db/schema/games.js";
-import { teamMembers } from "../../../db/schema/teams.js";
+import { teams, teamMembers, teamStats } from "../../../db/schema/teams.js";
 
 /**
  * ADR-056 — participação no time de convidado sem conta.
@@ -211,6 +211,50 @@ export async function sairDeOutrosTimes(
 
   await d.delete(teamMembers).where(inArray(teamMembers.id, alvos));
   return alvos.length;
+}
+
+/**
+ * Transferência direta (pedido do usuário): ao adicionar um jogador que já está
+ * em outro time, remove-o do(s) time(s) de origem — movendo a coroa/dono para o
+ * próximo membro quando necessário, com a mesma regra do /leave (ADR-089).
+ * Dissolve o time de origem se ele ficar sem ninguém.
+ */
+export async function transferirJogadorParaTime(d: any, userId: string, paraTeamId: string): Promise<void> {
+  // Vínculos do jogador (real + vaga de convidado resolvida pelo Riot) em OUTROS times.
+  const vagas = await findUserTeamMemberships(d, userId, { onlyAccepted: true });
+  const outras = vagas.filter((v: any) => v.teamId !== paraTeamId);
+
+  for (const vaga of outras) {
+    const origemId = vaga.teamId;
+    const [origem] = await d.select().from(teams).where(eq(teams.id, origemId)).limit(1);
+    const isOwnerOrigem = origem?.ownerId === userId;
+
+    const restantes = await d
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, origemId), eq(teamMembers.status, "accepted"), ne(teamMembers.id, vaga.id)))
+      .orderBy(sql`(${teamMembers.userId} IS NULL) ASC`);
+
+    // Time de origem ficou sem ninguém: dissolve (mesma saga do /leave).
+    if (restantes.length === 0) {
+      await d.delete(teamMembers).where(eq(teamMembers.teamId, origemId));
+      await d.delete(teamStats).where(eq(teamStats.teamId, origemId));
+      await d.delete(teams).where(eq(teams.id, origemId));
+      continue;
+    }
+
+    const proximoComConta = restantes.find((r: any) => r.userId);
+    const proximo = proximoComConta ?? restantes[0];
+
+    if (vaga.isCaptain && proximo) {
+      await d.update(teamMembers).set({ isCaptain: true }).where(eq(teamMembers.id, proximo.id));
+    }
+    if (isOwnerOrigem && proximoComConta) {
+      await d.update(teams).set({ ownerId: proximoComConta.userId, updatedAt: new Date() }).where(eq(teams.id, origemId));
+    }
+
+    await d.delete(teamMembers).where(eq(teamMembers.id, vaga.id));
+  }
 }
 
 /** Riot ID ("nick#tag") -> user_id da conta, por users.riot_id ou handle da conta LoL. */

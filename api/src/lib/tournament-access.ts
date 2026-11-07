@@ -111,6 +111,32 @@ export function redigirCodigosDaSerie(legacy: any, acesso: { staff: boolean; tea
   return legacy;
 }
 
+/**
+ * Devolve "A" | "B" | null: o lado da série a que o usuário pertence (dono ou
+ * membro aceito do time A/B). Usado para liberar propostas/aceites de cronograma
+ * a qualquer integrante do time, sem dar poderes de staff.
+ */
+export async function timeDoUsuarioNaSerie(
+  d: any,
+  userId: string,
+  serie: { teamAId?: string | null; teamBId?: string | null; teamATag?: string | null; teamBTag?: string | null }
+): Promise<"A" | "B" | null> {
+  const ident = await identidadeAcessoCampeonato(d, userId);
+  let aId = serie.teamAId ?? null;
+  let bId = serie.teamBId ?? null;
+  if (!aId && serie.teamATag) {
+    const [t] = await d.select({ id: teams.id }).from(teams).where(eq(teams.tag, serie.teamATag)).limit(1);
+    aId = t?.id ?? null;
+  }
+  if (!bId && serie.teamBTag) {
+    const [t] = await d.select({ id: teams.id }).from(teams).where(eq(teams.tag, serie.teamBTag)).limit(1);
+    bId = t?.id ?? null;
+  }
+  if (aId && ident.teamIds.has(aId)) return "A";
+  if (bId && ident.teamIds.has(bId)) return "B";
+  return null;
+}
+
 /** Permissão para iniciar/verificar a série — mesma regra do botão Iniciar Série. */
 export async function resolverPermissaoSerie(
   d: any,

@@ -9,7 +9,7 @@ import {
 } from "../../../db/schema/teams.js";
 import { gameAccounts } from "../../../db/schema/games.js";
 import { tournamentMatches, bracketMatches, tournaments } from "../../../db/schema/tournaments.js";
-import { findUserTeamMemberships, sairDeOutrosTimes, resolverUserIdPorRiotId } from "../lib/team-membership.js";
+import { findUserTeamMemberships, sairDeOutrosTimes, resolverUserIdPorRiotId, transferirJogadorParaTime } from "../lib/team-membership.js";
 import { resolverNovoDono } from "../lib/team-ownership.js";
 
 export const teamsRouter = Router();
@@ -405,8 +405,15 @@ teamsRouter.put("/:id", async (req, res) => {
       .where(and(eq(teamMembers.teamId, id), eq(teamMembers.isCaptain, true)))
       .limit(1);
     const isCaptain = !isOwner && Boolean(cap && cap.userId === user.id);
-    if (!isOwner && !isCaptain && !isProprietario) {
-      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode editar o time" });
+    // Qualquer integrante aceito pode editar o time (nome, tag, logo, cores,
+    // contatos) — pedido do usuário.
+    const [membro] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.status, "accepted")))
+      .limit(1);
+    if (!isOwner && !isCaptain && !isProprietario && !membro) {
+      return res.status(403).json({ error: "Você não é integrante deste time." });
     }
 
     const { nome, tag, logo_url, gradient_from, gradient_to, whatsapp, discord } = req.body;
@@ -602,82 +609,111 @@ teamsRouter.post("/:id/lineup", async (req, res) => {
     const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
     const isProprietario = roles.some((r) => r.role === "proprietario");
 
-    if (!isOwner && !cap && !isProprietario) {
-      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode editar o lineup" });
+    // Qualquer integrante aceito (dono, membro ou capitão) pode editar o lineup
+    // (adicionar jogador / trocar posição). Remover/expulsar e promover a coroa
+    // ficam restritos a quem gerencia o time (dono, capitão ou proprietário).
+    const [meuVinculo] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.status, "accepted")))
+      .limit(1);
+    const isIntegrante = isOwner || !!meuVinculo || isProprietario;
+    if (!isIntegrante) {
+      return res.status(403).json({ error: "Você não é integrante deste time." });
     }
+    const podeGerenciar = isOwner || !!cap || isProprietario;
 
     const membros = Array.isArray(req.body?.p_membros) ? req.body.p_membros : Array.isArray(req.body?.membros) ? req.body.membros : [];
 
-    // Segurança + ADR-087: não mova nem duplique uma conta que já está em outro
-    // time. Antes, um UUID de terceiro no body expulsava a pessoa do time real;
-    // agora a rota só adiciona jogador livre (ou membro já existente neste time).
-    // Para transferir, a própria pessoa precisa sair do time anterior.
     const atuais = await db
-      .select({ userId: teamMembers.userId })
+      .select()
       .from(teamMembers)
-      .where(eq(teamMembers.teamId, id));
-    const membrosAtuais = new Set(atuais.map((m) => m.userId).filter(Boolean) as string[]);
-    const novos = [...new Set<string>(
-      membros
-        .map((m: any) => (m?.user_id ? String(m.user_id) : null))
-        .filter((uid: string | null): uid is string => !!uid && uid !== user.id && !membrosAtuais.has(uid))
-    )];
-    if (novos.length) {
-      const conflitos = await db
-        .select({ tag: teams.tag })
-        .from(teamMembers)
-        .innerJoin(teams, eq(teams.id, teamMembers.teamId))
-        .where(and(
-          inArray(teamMembers.userId, novos),
-          eq(teamMembers.status, "accepted"),
-          ne(teamMembers.teamId, id)
-        ))
-        .limit(1);
-      if (conflitos.length) {
-        return res.status(409).json({
-          error: `Jogador já pertence ao time #${conflitos[0].tag}. Peça para ele sair do time atual antes de entrar neste.`,
-        });
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.status, "accepted")));
+
+    const chaveDe = (userId: string | null, riotId: string | null, puuid: string | null) =>
+      userId ? `u:${userId}` : riotId ? `g:${String(riotId).trim().toLowerCase()}` : `g:${puuid || ""}`;
+
+    // Normaliza a entrada resolvendo Riot ID → conta (vincula e transfere).
+    type EntradaMembro = {
+      userId: string | null;
+      riotId: string | null;
+      puuid: string | null;
+      iconId: number | null;
+      elo: string | null;
+      slot: string;
+      isCaptain: boolean;
+      resolvido: string | null;
+    };
+    const entrada: EntradaMembro[] = membros.map((m: any): EntradaMembro => {
+      let userId: string | null = m.user_id || null;
+      let riotId: string | null = userId ? null : (m.guest_riot_id ?? null);
+      const resolvido = !userId && riotId ? riotId : null;
+      return {
+        userId,
+        riotId,
+        puuid: m.guest_puuid ?? null,
+        iconId: m.guest_profile_icon_id ?? null,
+        elo: m.guest_elo_cache ?? null,
+        slot: legacyToSlot(m.lane),
+        isCaptain: !!m.is_capitao,
+        resolvido,
+      };
+    });
+
+    // Resolve Riot IDs de terceiros ANTES de calcular remoções/promoções.
+    for (const e of entrada) {
+      if (e.resolvido) {
+        const uid = await resolverUserIdPorRiotId(db, e.resolvido);
+        if (uid) {
+          e.userId = uid;
+          e.riotId = null;
+          e.resolvido = null;
+        }
       }
     }
 
+    const keysEntrada = new Set(entrada.map((e) => chaveDe(e.userId, e.riotId, e.puuid)));
+    const removidos = atuais.filter((a) => {
+      const k = chaveDe(a.userId, a.guestRiotId, a.guestPuuid);
+      return !keysEntrada.has(k);
+    });
+    const mudouCapitao = atuais.some((a) => {
+      const k = chaveDe(a.userId, a.guestRiotId, a.guestPuuid);
+      const novo = entrada.find((e) => chaveDe(e.userId, e.riotId, e.puuid) === k);
+      return novo ? novo.isCaptain !== a.isCaptain : false;
+    });
+
+    if (!podeGerenciar && removidos.length > 0) {
+      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode remover jogador do time." });
+    }
+    if (!podeGerenciar && mudouCapitao) {
+      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode promover/transferir a coroa." });
+    }
+
     await db.transaction(async (tx) => {
+      // Transferência direta: quem está em outro time sai de lá (com coroa/dono
+      // andando) antes de entrar neste.
+      for (const e of entrada) {
+        if (e.userId && e.userId !== user.id && !atuais.some((a) => a.userId === e.userId)) {
+          await transferirJogadorParaTime(tx, e.userId, id);
+        }
+      }
+      // O próprio usuário (se aparecer) também é limpo dos outros times (legado).
+      const self = entrada.find((e) => e.userId === user.id);
+      if (self) await sairDeOutrosTimes(tx, { userId: user.id }, id);
+
       await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
-      for (const m of membros) {
-        const slot = legacyToSlot(m.lane);
-        // ADR-087 — um time só: quem entra neste lineup sai dos outros times na
-        // mesma gravação. O Riot ID resolve o dono da vaga quando ela é de
-        // convidado (metade dos rosters é guest) — sem isso o jogador seguia
-        // pendurado no time anterior sem ninguém ver.
-        let userId: string | null = m.user_id || null;
-        let riotId: string | null = userId ? null : m.guest_riot_id ?? null;
-        // Decisão 24/10: o capitão adiciona a pessoa pelo Riot ID → se esse
-        // Riot ID tem conta na plataforma, a vaga é de MEMBRO (user_id,
-        // accepted), não "convidado". "Convidado" fica só para Riot ID sem
-        // conta. Sem isso o roster ficava guest e checagens por user_id (ex.:
-        // verificador de partida) não achavam o jogador — bug da sala 217.
-        if (!userId && riotId) {
-          const resolvido = await resolverUserIdPorRiotId(tx, riotId);
-          if (resolvido && resolvido === user.id) {
-            userId = resolvido;
-            riotId = null;
-          }
-          // Riot ID de terceiro fica como convidado: não vincula a conta nem
-          // mexe no time dela sem uma ação/aceite da própria pessoa.
-        }
-        // Só a própria conta pode ser retirada dos outros times por esta rota.
-        if (userId === user.id) {
-          await sairDeOutrosTimes(tx, { userId }, id);
-        }
+      for (const e of entrada) {
         await tx.insert(teamMembers).values({
           teamId: id,
-          userId,
-          guestHandle: userId ? null : riotId,
-          guestRiotId: userId ? null : riotId,
-          guestPuuid: userId ? null : m.guest_puuid ?? null,
-          guestProfileIconId: userId ? null : m.guest_profile_icon_id ?? null,
-          guestEloCache: userId ? null : m.guest_elo_cache ?? null,
-          roleSlot: slot,
-          isCaptain: !!m.is_capitao,
+          userId: e.userId,
+          guestHandle: e.userId ? null : e.riotId,
+          guestRiotId: e.userId ? null : e.riotId,
+          guestPuuid: e.userId ? null : e.puuid,
+          guestProfileIconId: e.userId ? null : e.iconId,
+          guestEloCache: e.userId ? null : e.elo,
+          roleSlot: e.slot,
+          isCaptain: e.isCaptain,
           status: "accepted",
         });
       }
