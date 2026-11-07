@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T21:14:11.517Z",
+  "updatedAt": "2026-11-07T21:15:51.197Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "doing",
-      "notes": "Logos com CutCard no padrao do site, aboboras na base das molduras e morcegos dos times pretos; manter morcego central laranja.",
-      "evidence": "npx tsc --noEmit sem erros; npm run build exit 0, 2207 modulos; verify-swap 0 ocorrencias. VPS runtime 587856d: compose --env-file /root/m7arena/.env build nginx/up --no-deps nginx exit 0; nginx -t successful; health status ok; home, Lobby-BSnSw2uN.js e Lobby-hEzxTTJr.css HTTP 200 apos recriacao.",
+      "status": "done",
+      "notes": "Publicado: logos em CutCard quadrado com cantos recortados e cor do time, aboboras na base de cada moldura e morcegos laterais pretos. Morcego central laranja mantido. Sem navegador conectado para revisao visual.",
+      "evidence": "web npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); verify-swap 0 ocorrencias. VPS runtime 23dd8b0: build/up nginx com --env-file exit 0; nginx -t successful; health ok; home, Lobby-BlAoBq_O.js e Lobby-CmYCA0MS.css HTTP 200.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T21:14:11.516Z"
+      "updatedAt": "2026-11-07T21:15:51.123Z"
     },
     {
       "id": "app.api",
@@ -255,14 +255,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T08:12:34.062Z",
-      "agent": "deepseek",
-      "summary": "Ajuste fino da linha do ban: SVG 1px de canto a canto (barra invertida), cobrindo o card todo; nome do campeao mantido. tsc/build ok; web deployado (DraftRoom-agJsbyUU, index-Bkef1JKM).",
-      "touched": [
-        "web/src/components/draft/DraftRoom.tsx"
-      ]
-    },
     {
       "at": "2026-10-31T08:25:04.470Z",
       "agent": "deepseek",
@@ -513,6 +505,14 @@
       "at": "2026-11-07T21:01:22.252Z",
       "agent": "codex",
       "summary": "Refinada arte Halloween apos feedback: removidos quadro, fundo preto, chamada M7/confronto e assinatura; mantidos portais e cores dos times/League of Legends. Aboboras laranja vivas em cantos responsivos, teias, lua crescente lateral, morcegos junto aos times/horario; siglas Outfit 900 e titulo/horario laranja. Main/runtime VPS 587856d. TypeScript/build/swap ok, nginx valido, health/home/chunks HTTP 200 apos recriacao.",
+      "touched": [
+        "app.web"
+      ]
+    },
+    {
+      "at": "2026-11-07T21:15:51.196Z",
+      "agent": "codex",
+      "summary": "Ajuste solicitado na home: circulos das logos substituidos pelo CutCard do site, preservando borda na cor do time; aboboras movidas para a base de cada moldura, morcegos laterais pretos e central laranja preservado. Runtime 23dd8b0 na main e VPS. TypeScript/build/verify-swap passaram; nginx valido e health/home/chunks HTTP 200. Sem navegador conectado para revisao visual.",
       "touched": [
         "app.web"
       ]
