@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { FaTwitch } from 'react-icons/fa6';
-import { HalloweenScenery } from './HalloweenScenery';
+import { HalloweenBat, HalloweenScenery } from './HalloweenScenery';
 import { useUpcomingMatches, type UpcomingMatch } from './useUpcomingMatches';
 import './upcoming-matches.css';
 
@@ -13,10 +13,11 @@ function Team({ match, side }: { match: UpcomingMatch; side: 'A' | 'B' }) {
   return (
     <div className={`halloween-team halloween-team-${side}`} style={style}>
       <div className="halloween-portal">
+        <HalloweenBat className="halloween-team-bat" />
         <div className="halloween-portal-ring" />
         {logo ? <img src={logo} alt={`Logo ${match[`name${side}`] || tag}`} /> : <span className="halloween-initial">{tag.replace(/^#/, '').slice(0, 2)}</span>}
       </div>
-      <strong className="halloween-team-tag">{tag}</strong>
+      <strong className="halloween-team-tag"><span className="halloween-tag-hash">#</span>{tag.replace(/^#/, '')}</strong>
       <span className="halloween-team-name">{match[`name${side}`]}</span>
     </div>
   );
@@ -29,7 +30,6 @@ export function MatchPoster({ match }: { match: UpcomingMatch }) {
       <HalloweenScenery />
       <div className="halloween-mist" aria-hidden="true" />
       <header className="halloween-heading">
-        <span className="halloween-eyebrow">M7 ARENA <span>·</span> CONFRONTO MARCADO</span>
         <h3>{match.campTitle || 'Campeonato'}</h3>
         {match.fase && <span className="halloween-phase">{match.fase}</span>}
       </header>
@@ -38,6 +38,7 @@ export function MatchPoster({ match }: { match: UpcomingMatch }) {
         <div className="halloween-versus">
           <span className="halloween-vs">VS</span>
           <div className="halloween-schedule">
+            <HalloweenBat className="halloween-clock-bat" />
             <span className="halloween-date"><CalendarDays size={13} /> {match.date}</span>
             <strong>{match.time}</strong>
           </div>
@@ -49,7 +50,6 @@ export function MatchPoster({ match }: { match: UpcomingMatch }) {
         {match.streamer ? <a href={`https://twitch.tv/${match.streamer.twitch.replace(/^[@/]/, '')}`} target="_blank" rel="noopener noreferrer"><FaTwitch /> {match.streamer.twitch || match.streamer.nome}</a> : <span>LEAGUE OF LEGENDS</span>}
         <span className="halloween-footer-line" />
       </footer>
-      <span className="halloween-signature">M7ARENA.PRO</span>
     </article>
   );
 }

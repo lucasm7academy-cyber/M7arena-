@@ -17,20 +17,20 @@
 
 # Status do Projeto M7Arena
 
-**Última atualização:** 07/11/2026 17:55 — por `codex`
+**Última atualização:** 07/11/2026 17:58 — por `codex`
 
 **Objetivo:** M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.
 
 ## Panorama
 
-`██████████████████░░░░░░░░░░ 9/14` concluído
+`████████████████░░░░░░░░░░░░ 8/14` concluído
 
 | Fase | Progresso | Em andamento | Bloqueado |
 |---|---|---|---|
 | Fase 0 — Governança multi-agente | ████████████ 3/3 | — | — |
 | Fase 1 — Schema do banco | ████████████ 1/1 | — | — |
 | Fase 2 — Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Fase 3 — Aplicação (React + Vite + API) | ███████░░░░░ 4/7 | — | 2 |
+| Fase 3 — Aplicação (React + Vite + API) | █████░░░░░░░ 3/7 | 1 | 2 |
 | Fase 4 — Operações da VPS (MCP) | ░░░░░░░░░░░░ 0/1 | — | 1 |
 
 <details><summary>Progresso por área</summary>
@@ -40,7 +40,7 @@
 | Governança & Agentes | ████████████ 3/3 | — | — |
 | Banco de Dados | ████████████ 1/1 | — | — |
 | Infraestrutura (VPS/Docker/Nginx) | ██████░░░░░░ 1/2 | — | 1 |
-| Aplicação (React + Vite) | ███████░░░░░ 3/5 | — | 2 |
+| Aplicação (React + Vite) | █████░░░░░░░ 2/5 | 1 | 2 |
 | MCP de Operações | ░░░░░░░░░░░░ 0/1 | — | 1 |
 | Segurança | ██████░░░░░░ 1/2 | — | — |
 
@@ -62,6 +62,10 @@ Componentes com todas as dependências satisfeitas. Marque como `doing` antes de
   <br>_aberto por deepseek em 31/10/2026 03:35_
 - **BLK-009** (`mcpops.server`) — Container m7arena_mcp_ops em restart loop; operações da VPS via MCP indisponíveis.
   <br>_aberto por deepseek em 31/10/2026 03:35_
+
+## Em andamento agora
+
+- `app.web` **Front React + Vite (web/)** — codex · Refinar arte Halloween conforme feedback: composicao sem fundo/moldura, titulo colorido, siglas melhores, horario laranja e cenografia mais viva.
 
 ## Componentes
 
@@ -86,7 +90,7 @@ Legenda: `[ ]` A fazer · `[~]` Em andamento · `[x]` Concluído · `[!]` Bloque
 
 **Aplicação (React + Vite)**
 
-- `[x]` **Front React + Vite (web/)** `app.web`<br>  Poster Halloween dos jogos confirmados publicado; cores dos times preservadas, portais, lua, morcegos, teias e aboboras; agenda extraida do Lobby. Revisao visual pendente do usuario: nenhum navegador conectado nesta sessao.<br>  _evidência:_ `web: npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); node scripts/verify-swap.js: 0 ocorrencias. VPS main 3b00358: compose --env-file /root/m7arena/.env build nginx e up -d --no-deps nginx exit 0; nginx -t successful; GET https://m7arena.pro/api/health status ok; home /, Lobby-BIRhq0ef.js e Lobby-AegqBmxy.css HTTP 200; JS publico contem CONFRONTO MARCADO.`<br>  _concluído 07/11/2026 17:55 por codex_
+- `[~]` **Front React + Vite (web/)** `app.web`<br>  Refinar arte Halloween conforme feedback: composicao sem fundo/moldura, titulo colorido, siglas melhores, horario laranja e cenografia mais viva.<br>  _evidência:_ `web: npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); node scripts/verify-swap.js: 0 ocorrencias. VPS main 3b00358: compose --env-file /root/m7arena/.env build nginx e up -d --no-deps nginx exit 0; nginx -t successful; GET https://m7arena.pro/api/health status ok; home /, Lobby-BIRhq0ef.js e Lobby-AegqBmxy.css HTTP 200; JS publico contem CONFRONTO MARCADO.`
 - `[x]` **API Node + Express + Drizzle (api/)** `app.api`<br>  Sessão própria, salas, campeonatos, carteira, uploads e pagamentos.<br>  _evidência:_ `npx tsc --noEmit`
 - `[x]` **WebSocket + LISTEN/NOTIFY** `app.realtime`<br>  Serviço próprio de realtime; o socket só avisa que a sala mudou.<br>  _evidência:_ `m7arena_realtime`
 - `[!]` **Pagamentos MC (Mercado Pago PIX)** `app.payments`<br>  BLK-005: chave PIX do collector não habilitada; QR não é gerado.

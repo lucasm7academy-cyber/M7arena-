@@ -1,18 +1,19 @@
 .halloween-section { max-width: 1400px; margin: 64px auto 32px; padding: 0 16px; }
 .halloween-poster {
-  position: relative; isolation: isolate; overflow: hidden; min-height: 540px;
+  position: relative; isolation: isolate; min-height: 500px;
   padding: 35px 64px 30px; color: #f5f0e9; text-align: center;
-  background: radial-gradient(ellipse at 15% 60%, color-mix(in srgb, var(--team-a) 19%, transparent), transparent 46%), radial-gradient(ellipse at 85% 60%, color-mix(in srgb, var(--team-b) 19%, transparent), transparent 46%), #0c0b13;
-  border: 1px solid #a27a4d40; border-radius: 4px;
-  box-shadow: 0 20px 70px #0005, inset 0 0 90px #0007;
 }
-.halloween-poster::after { content: ''; position: absolute; inset: 10px; border: 1px solid #c2a47d1c; pointer-events: none; z-index: -1; }
 .halloween-scenery { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; pointer-events: none; }
-.halloween-mist { position: absolute; inset: 50% -10% -25%; z-index: -1; pointer-events: none; opacity: .5; filter: blur(28px); background: radial-gradient(ellipse at 20% 65%, color-mix(in srgb, var(--team-a) 35%, transparent), transparent 48%), radial-gradient(ellipse at 80% 65%, color-mix(in srgb, var(--team-b) 35%, transparent), transparent 48%); }
+.halloween-web { position: absolute; top: 0; width: 185px; height: 185px; color: #cab8d4; opacity: .23; }
+.halloween-web-left { left: 0; }
+.halloween-web-right { right: 0; transform: scaleX(-1); }
+.halloween-moon { position: absolute; width: 86px; height: 86px; top: 5px; right: 13%; opacity: .8; filter: drop-shadow(0 0 18px #efaa5135); transform: rotate(-15deg); }
+.halloween-pumpkins { position: absolute; width: 145px; height: 112px; bottom: 0; filter: drop-shadow(0 0 18px #f76e2030); }
+.halloween-pumpkins-left { left: 2%; }
+.halloween-pumpkins-right { right: 2%; transform: scaleX(-1); }
+.halloween-mist { position: absolute; inset: 20% 0 0; z-index: -1; pointer-events: none; opacity: .4; filter: blur(35px); background: radial-gradient(ellipse at 25% 55%, color-mix(in srgb, var(--team-a) 25%, transparent), transparent 42%), radial-gradient(ellipse at 75% 55%, color-mix(in srgb, var(--team-b) 25%, transparent), transparent 42%); }
 .halloween-heading { position: relative; z-index: 1; }
-.halloween-eyebrow { font-size: 9px; font-weight: 800; letter-spacing: .3em; color: #c5b8aa; }
-.halloween-eyebrow span { color: #eb9c4e; margin: 0 8px; }
-.halloween-heading h3 { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(26px, 3.5vw, 48px); line-height: 1.15; letter-spacing: .055em; text-transform: uppercase; margin: 10px 0; text-shadow: 0 3px 20px #000; overflow-wrap: anywhere; }
+.halloween-heading h3 { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(26px, 3.5vw, 48px); line-height: 1.15; letter-spacing: .055em; text-transform: uppercase; margin: 10px 0; color: #ff9b46; background: linear-gradient(180deg, #ffd191 10%, #ff963e 55%, #f16b22); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 15px #e8752425); overflow-wrap: anywhere; }
 .halloween-phase { display: inline-flex; align-items: center; gap: 12px; color: #d6ab77; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .22em; }
 .halloween-phase::before, .halloween-phase::after { content: ''; width: 32px; height: 1px; background: #d6ab7760; }
 .halloween-matchup { display: grid; grid-template-columns: minmax(0, 1fr) 180px minmax(0, 1fr); align-items: center; max-width: 900px; margin: 28px auto 15px; }
@@ -24,17 +25,20 @@
 .halloween-portal-ring::after { content: '✦'; position: absolute; top: -17px; left: calc(50% - 7px); color: var(--team); font-size: 20px; text-shadow: 0 0 12px var(--team); }
 .halloween-portal img { position: relative; width: 148px; height: 148px; border-radius: 50%; object-fit: contain; filter: drop-shadow(0 5px 15px #0008); }
 .halloween-initial { position: relative; font: 64px 'Anton', Impact, sans-serif; color: var(--team); }
-.halloween-team-tag { color: var(--team); font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 42px; letter-spacing: .04em; line-height: 1.2; margin-top: 20px; max-width: 100%; overflow-wrap: anywhere; text-shadow: 0 0 24px color-mix(in srgb, var(--team) 35%, transparent); }
+.halloween-team-tag { color: var(--team); font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 44px; font-style: italic; letter-spacing: -.035em; line-height: 1.2; margin-top: 20px; max-width: 100%; overflow-wrap: anywhere; text-shadow: 0 0 24px color-mix(in srgb, var(--team) 25%, transparent); }
+.halloween-tag-hash { font-size: .58em; opacity: .7; margin-right: 4px; vertical-align: .12em; }
+.halloween-team-bat { position: absolute; width: 66px; height: 36px; left: -43px; top: 0; color: #c18ce0; transform: rotate(-22deg); filter: drop-shadow(0 0 8px #ad61d055); z-index: 2; }
+.halloween-team-B .halloween-team-bat { left: auto; right: -43px; transform: rotate(22deg); }
+.halloween-clock-bat { width: 36px; height: 18px; color: #ff8a32; filter: drop-shadow(0 0 8px #f9731640); }
 .halloween-team-name { font-size: 10px; text-transform: uppercase; font-weight: 600; letter-spacing: .18em; color: #c9c3cd; margin-top: 5px; max-width: 100%; overflow-wrap: anywhere; }
 .halloween-versus { display: flex; flex-direction: column; align-items: center; gap: 20px; padding-bottom: 30px; }
 .halloween-vs { font-family: 'Anton', Impact, sans-serif; font-size: 56px; font-style: italic; line-height: 1; color: #e9dac8; text-shadow: 0 4px 25px #000; }
 .halloween-schedule { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .halloween-date { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; letter-spacing: .15em; color: #d0bc9f; }
-.halloween-schedule strong { font-family: 'Anton', Impact, sans-serif; font-size: 38px; font-weight: 400; letter-spacing: .05em; color: #ffd399; text-shadow: 0 0 20px #dd782d50; }
+.halloween-schedule strong { font-family: 'Anton', Impact, sans-serif; font-size: 38px; font-weight: 400; letter-spacing: .05em; color: #ff8b32; text-shadow: 0 0 22px #f9731650; }
 .halloween-footer { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 26px; position: relative; font-size: 9px; font-weight: 700; letter-spacing: .22em; color: #b8a78f; }
 .halloween-footer a { display: flex; align-items: center; gap: 8px; color: #ceb3ef; letter-spacing: .06em; overflow-wrap: anywhere; }
 .halloween-footer-line { width: 65px; height: 1px; background: linear-gradient(90deg, transparent, #bd976c70, transparent); }
-.halloween-signature { display: block; margin-top: 13px; font-size: 8px; font-weight: 700; letter-spacing: .25em; color: #a9a0ae; }
 .halloween-navigation { display: flex; align-items: center; justify-content: center; gap: 20px; padding-top: 18px; }
 .halloween-navigation button { display: grid; place-items: center; min-width: 32px; min-height: 32px; border-radius: 50%; color: #c5b8aa; cursor: pointer; }
 .halloween-navigation button:hover { background: #ffffff0a; color: #ffd399; }
@@ -53,7 +57,13 @@
   .halloween-vs { font-size: 38px; }
   .halloween-schedule strong { font-size: 26px; }
   .halloween-date { font-size: 9px; letter-spacing: .03em; gap: 3px; }
-  .halloween-eyebrow { font-size: 8px; letter-spacing: .16em; }
+  .halloween-web { width: 100px; height: 100px; opacity: .18; }
+  .halloween-moon { width: 45px; height: 45px; right: 6%; top: -20px; opacity: .65; }
+  .halloween-pumpkins { width: 88px; height: 68px; bottom: -5px; }
+  .halloween-pumpkins-left { left: 0; }
+  .halloween-pumpkins-right { right: 0; }
+  .halloween-team-bat { width: 40px; height: 23px; left: -17px; top: -15px; }
+  .halloween-team-B .halloween-team-bat { right: -17px; }
   .halloween-footer { margin-top: 35px; }
 }
 @media (max-width: 420px) {

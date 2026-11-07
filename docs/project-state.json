@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T20:55:21.066Z",
+  "updatedAt": "2026-11-07T20:58:13.355Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -73,11 +73,11 @@
       "phase": "fase-3",
       "area": "app",
       "name": "Front React + Vite (web/)",
-      "status": "done",
-      "notes": "Poster Halloween dos jogos confirmados publicado; cores dos times preservadas, portais, lua, morcegos, teias e aboboras; agenda extraida do Lobby. Revisao visual pendente do usuario: nenhum navegador conectado nesta sessao.",
+      "status": "doing",
+      "notes": "Refinar arte Halloween conforme feedback: composicao sem fundo/moldura, titulo colorido, siglas melhores, horario laranja e cenografia mais viva.",
       "evidence": "web: npx tsc --noEmit exit 0; npm run build exit 0 (2207 modulos); node scripts/verify-swap.js: 0 ocorrencias. VPS main 3b00358: compose --env-file /root/m7arena/.env build nginx e up -d --no-deps nginx exit 0; nginx -t successful; GET https://m7arena.pro/api/health status ok; home /, Lobby-BIRhq0ef.js e Lobby-AegqBmxy.css HTTP 200; JS publico contem CONFRONTO MARCADO.",
       "owner": "codex",
-      "updatedAt": "2026-11-07T20:55:20.977Z"
+      "updatedAt": "2026-11-07T20:58:13.354Z"
     },
     {
       "id": "app.api",
