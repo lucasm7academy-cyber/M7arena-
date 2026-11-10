@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "project": "M7Arena",
   "goal": "M7Arena em produção (m7arena.pro): front React + Vite em web/, API Node + Drizzle em api/, PostgreSQL/Docker/Nginx na VPS. Projeto atual, sem migração pendente e sem Supabase no runtime.",
-  "updatedAt": "2026-11-07T21:28:56.995Z",
+  "updatedAt": "2026-11-10T15:08:00.188Z",
   "updatedBy": "codex",
   "invariants": [
     "O design atual é a referência. Não redesenhe sem o usuário pedir; cantos recortados usam CutCard.",
@@ -39,8 +39,10 @@
       "area": "governanca",
       "name": "Repositório git e main",
       "status": "done",
-      "notes": "main é a fonte da verdade; não deixar trabalho só no worktree.",
-      "evidence": "origin/main"
+      "notes": "Documentada a validacao da ponte e proxima instrucao recebida. Nenhuma execucao 21 ou deploy.",
+      "evidence": "ask_chatgpt new_chat=false retornou isError=false, sessao chatgpt-default, duration_ms=16136 e resposta contextual; chat_bridge_status cdpConnected=true, pending=0, running=false; registro documental validado com 4 marcadores, git diff --check exit 0. Os 117 testes sao relato do usuario, nao reexecutados.",
+      "owner": "codex",
+      "updatedAt": "2026-11-10T15:08:00.120Z"
     },
     {
       "id": "db.postgres",
@@ -255,14 +257,6 @@
     }
   ],
   "sessions": [
-    {
-      "at": "2026-10-31T08:43:23.346Z",
-      "agent": "deepseek",
-      "summary": "Lobby/hero: adicionados fades nas 4 bordas da arte (dois overlays de gradiente — horizontal e vertical) para a imagem dissolver no card em vez de parecer cortada; o gradiente da esquerda tambem reforca a leitura do texto. Funciona para os dois modelos do hero (padrao/halloween). Commit 0026e34, deploy ok, health 200.",
-      "touched": [
-        "web/src/pages/Lobby.tsx"
-      ]
-    },
     {
       "at": "2026-10-31T19:39:19.885Z",
       "agent": "deepseek",
@@ -514,6 +508,15 @@
       "summary": "Aplicado o morcego do arquivo C:/Users/78787/Downloads/2819770.svg na home; geometria original preservada em HalloweenBat e fill currentColor para laterais pretos e central laranja, mantendo tamanhos/posicoes. Commit runtime 26e714c main/VPS. Comparacao geometrica, TypeScript/build e swap passaram; nginx valido, health/home/chunks HTTP 200. Sem navegador conectado para revisao visual.",
       "touched": [
         "app.web"
+      ]
+    },
+    {
+      "at": "2026-11-10T15:08:00.187Z",
+      "agent": "codex",
+      "summary": "Registrada validacao da ponte apresentada pelo usuario (117 testes; Execucao 20 aprovada). Consulta real via MCP ask_chatgpt concluida em 16136 ms, isError=false; ChatGPT pediu finalizar manutencao das conexoes antigas, confirmar versao e teste por conexao, depois solicitar autorizacao explicita para Execucao 21. Execucao 21 segue em espera. Sem alteracao de runtime/deploy. Pasta principal suja preservada; documentacao em worktree isolado.",
+      "touched": [
+        "gov.repo",
+        "docs/PONTE_MCP_VALIDACAO_2026-11-10.md"
       ]
     }
   ]
