@@ -563,7 +563,7 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(m.scoreB, 0);
     assert.equal(m.scoreDisplay, "2 - 0");
 
-    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const { toLegacyTournament } = await import("../src/modules/tournaments/tournament-shape.js");
     const leg = await toLegacyTournament(torneio.id, db);
     const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
     assert.equal(jogoLeg?.placar, "2 - 0");
@@ -671,7 +671,7 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(m.irregular, true);
     assert.equal(m.status, "finalizada");
 
-    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const { toLegacyTournament } = await import("../src/modules/tournaments/tournament-shape.js");
     const leg = await toLegacyTournament(torneio.id, db);
     const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
     assert.equal(jogoLeg?.irregular, true);
@@ -679,8 +679,8 @@ describe("serie-campeonato (persistência no banco)", () => {
 
   test("storeCronograma libera código de partida quando ADM finaliza série manualmente (W.O.)", async () => {
     const { db, torneio, serie } = await criaCenario();
-    const { storeCronograma } = await import("../src/lib/tournament-store.js");
-    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const { storeCronograma } = await import("../src/modules/tournaments/tournament-store.js");
+    const { toLegacyTournament } = await import("../src/modules/tournaments/tournament-shape.js");
 
     const [code] = await db
       .insert(matchCodes)
@@ -728,7 +728,7 @@ describe("serie-campeonato (persistência no banco)", () => {
 
   test("storeCronograma grava best_of (MD1/MD3/MD5) e merge sem o campo não zera", async () => {
     const { db, torneio, serie } = await criaCenario();
-    const { storeCronograma } = await import("../src/lib/tournament-store.js");
+    const { storeCronograma } = await import("../src/modules/tournaments/tournament-store.js");
 
     const jogo = (extra: any = {}) => ({
       id: serie.matchKey,
@@ -764,7 +764,7 @@ describe("serie-campeonato (persistência no banco)", () => {
     assert.equal(m.bestOf, 1);
 
     // O shape que o front consome devolve o formato escolhido.
-    const { toLegacyTournament } = await import("../src/lib/tournament-shape.js");
+    const { toLegacyTournament } = await import("../src/modules/tournaments/tournament-shape.js");
     const leg = await toLegacyTournament(torneio.id, db);
     const jogoLeg = leg.cronograma.find((j: any) => j.match_id === serie.id);
     assert.equal(jogoLeg?.best_of, 1);

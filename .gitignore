@@ -15,8 +15,7 @@ build/
 *.pem
 *.key
 
-# runtime do MCP de status
-docs/.status.lock
+# arquivos temporários
 docs/*.tmp
 *.tmp
 

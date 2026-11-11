@@ -1,0 +1,786 @@
+import { Router } from "express";
+import { eq, and, or, ilike, desc, asc, inArray, count, gt, ne, sql } from "drizzle-orm";
+import { db } from "../../db.js";
+import { users, userSessions, userRoles } from "../../../../db/schema/identidade.js";
+import {
+  teams,
+  teamMembers,
+  teamStats,
+} from "../../../../db/schema/teams.js";
+import { gameAccounts } from "../../../../db/schema/games.js";
+import { tournamentMatches, bracketMatches, tournaments } from "../../../../db/schema/tournaments.js";
+import { findUserTeamMemberships, sairDeOutrosTimes, resolverUserIdPorRiotId, transferirJogadorParaTime } from "./team-membership.js";
+import { resolverNovoDono } from "./team-ownership.js";
+
+export const teamsRouter = Router();
+
+async function getAuthUser(req: any) {
+  const token = req.cookies?.m7_session || req.headers.authorization?.replace("Bearer ", "");
+  if (!token) return null;
+
+  const [session] = await db
+    .select()
+    .from(userSessions)
+    .where(and(eq(userSessions.sessionToken, token), gt(userSessions.expires, new Date())))
+    .limit(1);
+
+  if (!session) return null;
+  const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+  return user || null;
+}
+
+// ── Tradução entre o vocabulário do fork (legado) e o schema novo ──────────
+// O fork do front (ADR-010) lê lançamentos `lane` TOP/JG/MID/ADC/SUP/RES/COACH,
+// `tipo` jogador/coach e `status` ativo/saiu. O schema novo usa role_slot
+// top/jungle/mid/adc/support/sub/coach e status accepted/declined. A tradução
+// vive aqui, na API, para as telas não mudarem uma linha de JSX (ADR-005).
+
+const ROLE_LEGACY_TO_SLOT: Record<string, string> = {
+  TOP: "top",
+  JG: "jungle",
+  MID: "mid",
+  ADC: "adc",
+  SUP: "support",
+  RES: "sub",
+  COACH: "coach",
+};
+
+const ROLE_SLOT_TO_LEGACY: Record<string, string> = {
+  top: "TOP",
+  jungle: "JG",
+  mid: "MID",
+  adc: "ADC",
+  support: "SUP",
+  sub: "RES",
+  coach: "COACH",
+};
+
+function slotToLegacy(slot: string | null): string {
+  if (!slot) return "TOP";
+  // Aceita o vocabulário do schema novo (top/jungle/...) e o legado do dump
+  // (TOP/JG/...) — a migração gravou os dois na VPS.
+  const legacy = ROLE_SLOT_TO_LEGACY[slot] ?? ROLE_SLOT_TO_LEGACY[ROLE_LEGACY_TO_SLOT[slot]];
+  return legacy || "TOP";
+}
+
+function legacyToSlot(role: string | null | undefined): string {
+  if (!role) return "top";
+  const slot = ROLE_LEGACY_TO_SLOT[role] ?? (ROLE_LEGACY_TO_SLOT[ROLE_SLOT_TO_LEGACY[role]] as string | undefined);
+  return slot || "top";
+}
+
+function memberStatusToLegacy(status: string): string {
+  if (status === "declined") return "saiu";
+  if (status === "pending") return "pendente";
+  return "ativo";
+}
+
+function toLegacyMember(m: any, elo?: string | null) {
+  return {
+    id: m.id,
+    time_id: m.teamId,
+    user_id: m.userId,
+    tipo: m.roleSlot === "coach" ? "coach" : "jogador",
+    lane: slotToLegacy(m.roleSlot),
+    is_capitao: Boolean(m.isCaptain),
+    status: memberStatusToLegacy(m.status),
+    guest_riot_id: m.guestRiotId ?? m.guestHandle ?? null,
+    guest_puuid: m.guestPuuid ?? null,
+    guest_profile_icon_id: m.guestProfileIconId ?? null,
+    guest_elo_cache: m.guestEloCache ?? null,
+    elo: elo ?? null,
+  };
+}
+
+function toLegacyTeam(t: any, stats: any, capitaoId: string | null = null) {
+  const wins = stats?.wins ?? 0;
+  const losses = stats?.losses ?? 0;
+  const gamesPlayed = wins + losses;
+  const winrate = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0;
+  const contacts = (t.contacts as Record<string, string>) || {};
+  return {
+    id: t.id,
+    nome: t.name,
+    tag: t.tag,
+    logo_url: t.logoUrl ?? null,
+    gradient_from: t.gradientFrom || "#FFB700",
+    gradient_to: t.gradientTo || "#FF6600",
+    pdl: stats?.pdl ?? 0,
+    winrate,
+    ranking: stats?.ranking ?? 999,
+    wins,
+    games_played: gamesPlayed,
+    dono_id: t.ownerId,
+    capitao_id: capitaoId,
+    whatsapp: contacts.whatsapp ?? null,
+    discord: contacts.discord ?? null,
+    status: t.status,
+  };
+}
+
+async function getStats(teamId: string) {
+  const [stats] = await db.select().from(teamStats).where(eq(teamStats.teamId, teamId)).limit(1);
+  return stats || null;
+}
+
+/** Valida vaga no time replicando a regra do validarVagaTime do fork. */
+// ── GET /api/teams/batch?ids=a,b,c — legenda de times por id (nomes/cores) ──
+teamsRouter.get("/batch", async (req, res) => {
+  try {
+    const ids = String(req.query.ids || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (ids.length === 0) return res.json([]);
+
+    const rows = await db.select().from(teams).where(inArray(teams.id, ids));
+    return res.json(
+      rows.map((t) => ({
+        id: t.id,
+        nome: t.name,
+        tag: t.tag,
+        logo_url: t.logoUrl ?? null,
+        gradient_from: t.gradientFrom || "#FFB700",
+        gradient_to: t.gradientTo || "#FF6600",
+      }))
+    );
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar times" });
+  }
+});
+
+// ── GET /api/teams/members?user_ids=a,b&guest_riot_ids=x,y — membros lote ──
+teamsRouter.get("/members", async (req, res) => {
+  try {
+    const userIds = String(req.query.user_ids || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const guestRiotIds = String(req.query.guest_riot_ids || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const clauses = [];
+    if (userIds.length) clauses.push(inArray(teamMembers.userId, userIds));
+    // Riot ID casado sem depender de caixa/espaço — mesmo critério da lib de
+    // membership (ADR-056/092). Um "macoinha07#fck13" salvo com outro casing
+    // no roster deixa de sumir da listagem de jogadores.
+    if (guestRiotIds.length) {
+      const alvos = guestRiotIds.map((s) => s.toLowerCase()).filter(Boolean);
+      if (alvos.length)
+        clauses.push(
+          or(...alvos.map((h) => sql`lower(trim(coalesce(${teamMembers.guestRiotId}, ''))) = ${h}`))!
+        );
+    }
+    if (clauses.length === 0) return res.json([]);
+
+    // user_id por último: o chamador que mantém "o último wins" (players.tsx)
+    // prefere o vínculo real sobre a vaga de convidado do mesmo jogador.
+    const rows = await db
+      .select()
+      .from(teamMembers)
+      .where(or(...clauses))
+      .orderBy(sql`(${teamMembers.userId} IS NULL) ASC`);
+    return res.json(
+      rows.map((m) => ({
+        user_id: m.userId,
+        time_id: m.teamId,
+        guest_riot_id: m.guestRiotId ?? null,
+        status: m.status,
+      }))
+    );
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar membros" });
+  }
+});
+
+// ── GET /api/teams/by-user/:userId — times de um usuário (público) ─────────
+teamsRouter.get("/by-user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    // Inclui vagas de convidado reconhecidas pelo vínculo Riot da conta
+    // (ADR-056) — sem isso o jogador com conta não enxergava o próprio time.
+    const rows = await findUserTeamMemberships(db, userId);
+
+    const memberships = rows.map((m) => ({ time_id: m.teamId, status: memberStatusToLegacy(m.status) }));
+
+    const teamIds = [...new Set(rows.map((m) => m.teamId).filter(Boolean))];
+    let teamsList: any[] = [];
+    if (teamIds.length) {
+      const trows = await db.select().from(teams).where(inArray(teams.id, teamIds));
+      teamsList = trows.map((t) => ({
+        id: t.id,
+        nome: t.name,
+        tag: t.tag,
+        logo_url: t.logoUrl ?? null,
+        gradient_from: t.gradientFrom || "#FFB700",
+        gradient_to: t.gradientTo || "#FF6600",
+      }));
+    }
+
+    return res.json({ memberships, teams: teamsList });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar times do usuário" });
+  }
+});
+
+// ── GET /api/teams — lista com busca + paginação ───────────────────────────
+teamsRouter.get("/", async (req, res) => {
+  try {
+    const page = Math.max(0, parseInt(String(req.query.page || "0"), 10) || 0);
+    const limit = Math.min(1000, Math.max(1, parseInt(String(req.query.limit || "20"), 10) || 20));
+    const search = String(req.query.search || "").trim();
+    const sort = String(req.query.sort || "pdl");
+    const dir = String(req.query.dir || "desc");
+
+    const filters = search
+      ? and(eq(teams.status, "active"), or(ilike(teams.name, `%${search}%`), ilike(teams.tag, `%${search}%`)))
+      : eq(teams.status, "active");
+
+    const orderBy =
+      sort === "ranking"
+        ? [dir === "asc" ? asc(teamStats.ranking) : desc(teamStats.ranking), desc(teamStats.pdl)]
+        : sort === "nome"
+          ? [asc(teams.name)]
+          : [desc(teamStats.pdl), desc(teamStats.wins)];
+
+    const [countRow] = await db.select({ total: count() }).from(teams).where(filters);
+
+    const rows = await db
+      .select()
+      .from(teams)
+      .leftJoin(teamStats, and(eq(teamStats.teamId, teams.id), eq(teamStats.seasonId, "s1")))
+      .where(filters)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(page * limit);
+
+    const statsByTeam = new Map<string, any>();
+    for (const row of rows) {
+      const stats = row.team_stats || (await getStats(row.teams.id));
+      statsByTeam.set(row.teams.id, stats);
+    }
+
+    return res.json({
+      teams: rows.map((r) => toLegacyTeam(r.teams, statsByTeam.get(r.teams.id))),
+      total: countRow?.total ?? 0,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao listar times" });
+  }
+});
+
+// ── GET /api/teams/:id — detalhe com membros (shape que a TimePage consome) ─
+teamsRouter.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) {
+      return res.status(404).json({ error: "Time não encontrado" });
+    }
+
+    const [stats] = await db.select().from(teamStats).where(eq(teamStats.teamId, team.id)).limit(1);
+    const members = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, team.id));
+
+    // Elo dos membros direto do cache do banco (metadata.elo_cache) — evita N
+    // chamadas à Riot por página de time (item #8 do plano de performance).
+    const memberUserIds = [...new Set(members.map((m) => m.userId).filter((id): id is string => !!id))];
+    const contas = memberUserIds.length
+      ? await db
+          .select()
+          .from(gameAccounts)
+          .where(and(eq(gameAccounts.gameId, "lol"), inArray(gameAccounts.userId, memberUserIds)))
+      : [];
+    const eloPorMembro = new Map<string, string>();
+    for (const conta of contas) {
+      const meta = (conta.metadata as Record<string, any>) || {};
+      const soloQ = (meta.elo_cache as Record<string, any>)?.soloQ as
+        | Record<string, any>
+        | null
+        | undefined;
+      if (soloQ?.tier) eloPorMembro.set(conta.userId, `${soloQ.tier} ${soloQ.rank ?? ""}`.trim());
+    }
+
+    const capitao = members.find((m) => m.isCaptain);
+    return res.json({
+      ...toLegacyTeam(team, stats || null, capitao?.userId ?? team.ownerId),
+      time_membros: members.map((m) => toLegacyMember(m, m.userId ? eloPorMembro.get(m.userId) : null)),
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao buscar detalhes do time" });
+  }
+});
+
+// ── POST /api/teams — criar time (dono vira capitão, stats zeradas) ────────
+teamsRouter.post("/", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    const { nome, tag, logo_url, gradient_from, gradient_to, whatsapp, discord } = req.body;
+    if (!nome || !tag) {
+      return res.status(400).json({ error: "Nome e TAG do time são obrigatórios" });
+    }
+
+    const tagLimpa = String(tag).trim().toUpperCase();
+    if (tagLimpa.length > 4) {
+      return res.status(400).json({ error: "A TAG do time pode ter no máximo 4 caracteres" });
+    }
+
+    const [existing] = await db
+      .select()
+      .from(teams)
+      .where(and(eq(teams.gameId, "lol"), eq(teams.tag, tagLimpa)))
+      .limit(1);
+    if (existing) {
+      return res.status(409).json({ error: `A tag #${tagLimpa} já está em uso. Escolha outra tag.` });
+    }
+
+    const [newTeam] = await db
+      .insert(teams)
+      .values({
+        gameId: "lol",
+        name: String(nome).trim(),
+        tag: tagLimpa,
+        logoUrl: logo_url ?? null,
+        gradientFrom: gradient_from || "#FFB700",
+        gradientTo: gradient_to || "#FF6600",
+        ownerId: user.id,
+        contacts: { whatsapp: whatsapp ?? undefined, discord: discord ?? undefined },
+      })
+      .returning();
+
+    await db.insert(teamStats).values({
+      teamId: newTeam.id,
+      seasonId: "s1",
+      pdl: 0,
+      wins: 0,
+      losses: 0,
+    });
+
+    // ADR-087 — um time só: o dono que cria um time sai de qualquer outro.
+    await sairDeOutrosTimes(db, { userId: user.id }, newTeam.id);
+
+    await db.insert(teamMembers).values({
+      teamId: newTeam.id,
+      userId: user.id,
+      roleSlot: "top",
+      isCaptain: true,
+      status: "accepted",
+    });
+
+    return res.status(201).json(toLegacyTeam(newTeam, { pdl: 0, wins: 0, losses: 0, ranking: null }, user.id));
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao criar time" });
+  }
+});
+
+// ── PUT /api/teams/:id — atualizar cadastro (dono ou capitão) ──────────────
+teamsRouter.put("/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    const { id } = req.params;
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) {
+      return res.status(404).json({ error: "Time não encontrado" });
+    }
+
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isProprietario = roles.some((r) => r.role === "proprietario");
+
+    const isOwner = team.ownerId === user.id;
+    const [cap] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.isCaptain, true)))
+      .limit(1);
+    const isCaptain = !isOwner && Boolean(cap && cap.userId === user.id);
+    // Qualquer integrante aceito pode editar o time (nome, tag, logo, cores,
+    // contatos) — pedido do usuário.
+    const [membro] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.status, "accepted")))
+      .limit(1);
+    if (!isOwner && !isCaptain && !isProprietario && !membro) {
+      return res.status(403).json({ error: "Você não é integrante deste time." });
+    }
+
+    const { nome, tag, logo_url, gradient_from, gradient_to, whatsapp, discord } = req.body;
+    const tagLimpa = tag !== undefined ? String(tag).trim().toUpperCase() : undefined;
+    if (tagLimpa !== undefined && tagLimpa.length > 4) {
+      return res.status(400).json({ error: "A TAG do time pode ter no máximo 4 caracteres" });
+    }
+    const [updated] = await db
+      .update(teams)
+      .set({
+        ...(nome !== undefined ? { name: String(nome).trim() } : {}),
+        ...(tagLimpa !== undefined ? { tag: tagLimpa } : {}),
+        ...(logo_url !== undefined ? { logoUrl: logo_url || null } : {}),
+        ...(gradient_from !== undefined ? { gradientFrom: gradient_from || null } : {}),
+        ...(gradient_to !== undefined ? { gradientTo: gradient_to || null } : {}),
+        ...(whatsapp !== undefined || discord !== undefined
+          ? { contacts: { ...(team.contacts || {}), ...(whatsapp !== undefined ? { whatsapp: whatsapp || undefined } : {}), ...(discord !== undefined ? { discord: discord || undefined } : {}) } }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(teams.id, id))
+      .returning();
+
+    // ADR-016: cronograma e chaveamento guardam a tag do time como snapshot de
+    // exibição, gravada no agendamento. Ao renomear a tag, propaga para os
+    // snapshots por id — senão o cronograma mostra a tag velha e o front não
+    // acha o time em times_inscritos (perde logo e cor, que resolvem por tag).
+    if (updated && updated.tag !== team.tag) {
+      await db.update(tournamentMatches).set({ teamATag: updated.tag }).where(eq(tournamentMatches.teamAId, id));
+      await db.update(tournamentMatches).set({ teamBTag: updated.tag }).where(eq(tournamentMatches.teamBId, id));
+      await db.update(bracketMatches).set({ teamATag: updated.tag }).where(eq(bracketMatches.teamAId, id));
+      await db.update(bracketMatches).set({ teamBTag: updated.tag }).where(eq(bracketMatches.teamBId, id));
+      await db
+        .update(tournaments)
+        .set({ seedOrder: sql`array_replace(${tournaments.seedOrder}, ${team.tag}, ${updated.tag})` })
+        .where(sql`${team.tag} = ANY(${tournaments.seedOrder})`);
+    }
+
+    return res.json(toLegacyTeam(updated, await getStats(id), cap?.userId ?? team.ownerId));
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao atualizar time" });
+  }
+});
+
+// ── POST /api/teams/:id/leave — sair do time (saga do handleSairTime) ──────
+teamsRouter.post("/:id/leave", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    const { id } = req.params;
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) {
+      return res.status(404).json({ error: "Time não encontrado" });
+    }
+
+    const [my] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id)))
+      .limit(1);
+    // DONO sem vínculo de membro também pode "sair" (dado legado: saiu da
+    // equipe e a posse ficou presa — ex.: Neon Eclipse). Só barra quem não é
+    // nem dono nem membro.
+    if (!my && team.ownerId !== user.id) {
+      return res.status(400).json({ error: "Você não é membro deste time" });
+    }
+
+    const todos = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.status, "accepted")));
+    const restantes = todos.filter((m) => m.userId !== user.id);
+
+    if (restantes.length === 0) {
+      await db.delete(teamMembers).where(eq(teamMembers.teamId, id));
+      await db.delete(teamStats).where(eq(teamStats.teamId, id));
+      await db.delete(teams).where(eq(teams.id, id));
+      return res.json({ ok: true, deleted: true });
+    }
+
+    const isOwner = team.ownerId === user.id;
+    const isLeader = Boolean(my?.isCaptain) || isOwner;
+    if (isLeader) {
+      const proximo = restantes.find((m) => !m.isCaptain) || restantes[0];
+      await db
+        .update(teamMembers)
+        .set({ isCaptain: true })
+        .where(eq(teamMembers.id, proximo.id));
+      // A COROA ANDA JUNTO: se quem sai é o DONO, `teams.owner_id` passa pro
+      // próximo de verdade — antes só o capitão mudava e a posse ficava presa
+      // com quem saiu (bug real: time continuava sendo "do" ex-membro).
+      if (isOwner && proximo.userId) {
+        await db.update(teams).set({ ownerId: proximo.userId, updatedAt: new Date() }).where(eq(teams.id, id));
+      }
+    }
+
+    const aposPromocao = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.status, "accepted"), ne(teamMembers.userId, user.id)));
+
+    if (aposPromocao.length > 0 && aposPromocao.every((m: any) => !m.isCaptain)) {
+      await db
+        .update(teamMembers)
+        .set({ isCaptain: true })
+        .where(eq(teamMembers.id, aposPromocao[0].id));
+    }
+
+    if (my) await db.delete(teamMembers).where(eq(teamMembers.id, my.id));
+    return res.json({ ok: true });  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao sair do time" });
+  }
+});
+
+// ── POST /api/teams/:id/transferir-dono — "passar a coroa" pra um membro ────
+// Só o dono atual chama; o alvo precisa ser MEMBRO ACEITO do time. O novo dono
+// vira dono de verdade (`teams.owner_id`) e capitão. Se o dono apenas SAIR, a
+// coroa anda sozinha (ver /leave) — e sem ninguém, o time é apagado.
+teamsRouter.post("/:id/transferir-dono", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+    const { id } = req.params;
+    const targetUserId = typeof req.body?.userId === "string" ? req.body.userId : null;
+    if (!targetUserId) return res.status(400).json({ error: "userId_obrigatorio" });
+
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) return res.status(404).json({ error: "Time não encontrado" });
+
+    // ADR-089: além do dono atual, o PROPRIETÁRIO (cargo da plataforma) pode
+    // passar a coroa para quem quiser.
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isProprietario = roles.some((r) => r.role === "proprietario");
+    if (team.ownerId !== user.id && !isProprietario) {
+      return res.status(403).json({ error: "Só o dono (ou o proprietário) pode passar a coroa" });
+    }
+    if (targetUserId === user.id) return res.status(400).json({ error: "escolha_outro_membro" });
+
+    const [alvo] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, targetUserId), eq(teamMembers.status, "accepted")))
+      .limit(1);
+    if (!alvo) return res.status(400).json({ error: "O novo dono precisa ser membro aceito do time" });
+
+    await db.transaction(async (tx: any) => {
+      await tx.update(teams).set({ ownerId: targetUserId, updatedAt: new Date() }).where(eq(teams.id, id));
+      await tx.update(teamMembers).set({ isCaptain: true }).where(eq(teamMembers.id, alvo.id));
+    });
+    return res.json({ ok: true, dono_id: targetUserId });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao transferir a coroa" });
+  }
+});
+
+// ── POST /api/teams/memberships/remove — remove todas as associações do user ─
+teamsRouter.post("/memberships/remove", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    await db.delete(teamMembers).where(eq(teamMembers.userId, user.id));
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao remover associações" });
+  }
+});
+
+// ── POST /api/teams/:id/lineup — substitui o lineup inteiro (transação) ────
+// Substitui a RPC salvar_lineup_time (security definer que validava dono/capitão).
+// A API valida o usuário é dono/capitão do time e substitui os membros numa
+// ÚNICA transação — se qualquer insert falhar, rollback (o time nunca fica zerado).
+teamsRouter.post("/:id/lineup", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const { id } = req.params;
+    const [team] = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!team) return res.status(404).json({ error: "Time não encontrado" });
+
+    const isOwner = team.ownerId === user.id;
+    const [cap] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.isCaptain, true)))
+      .limit(1);
+
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isProprietario = roles.some((r) => r.role === "proprietario");
+
+    // Qualquer integrante aceito (dono, membro ou capitão) pode editar o lineup
+    // (adicionar jogador / trocar posição). Remover/expulsar e promover a coroa
+    // ficam restritos a quem gerencia o time (dono, capitão ou proprietário).
+    const [meuVinculo] = await db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.userId, user.id), eq(teamMembers.status, "accepted")))
+      .limit(1);
+    const isIntegrante = isOwner || !!meuVinculo || isProprietario;
+    if (!isIntegrante) {
+      return res.status(403).json({ error: "Você não é integrante deste time." });
+    }
+    const podeGerenciar = isOwner || !!cap || isProprietario;
+
+    const membros = Array.isArray(req.body?.p_membros) ? req.body.p_membros : Array.isArray(req.body?.membros) ? req.body.membros : [];
+
+    const atuais = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, id), eq(teamMembers.status, "accepted")));
+
+    const chaveDe = (userId: string | null, riotId: string | null, puuid: string | null) =>
+      userId ? `u:${userId}` : riotId ? `g:${String(riotId).trim().toLowerCase()}` : `g:${puuid || ""}`;
+
+    // Normaliza a entrada resolvendo Riot ID → conta (vincula e transfere).
+    type EntradaMembro = {
+      userId: string | null;
+      riotId: string | null;
+      puuid: string | null;
+      iconId: number | null;
+      elo: string | null;
+      slot: string;
+      isCaptain: boolean;
+      resolvido: string | null;
+    };
+    const entrada: EntradaMembro[] = membros.map((m: any): EntradaMembro => {
+      let userId: string | null = m.user_id || null;
+      let riotId: string | null = userId ? null : (m.guest_riot_id ?? null);
+      const resolvido = !userId && riotId ? riotId : null;
+      return {
+        userId,
+        riotId,
+        puuid: m.guest_puuid ?? null,
+        iconId: m.guest_profile_icon_id ?? null,
+        elo: m.guest_elo_cache ?? null,
+        slot: legacyToSlot(m.lane),
+        isCaptain: !!m.is_capitao,
+        resolvido,
+      };
+    });
+
+    // Resolve Riot IDs de terceiros ANTES de calcular remoções/promoções.
+    for (const e of entrada) {
+      if (e.resolvido) {
+        const uid = await resolverUserIdPorRiotId(db, e.resolvido);
+        if (uid) {
+          e.userId = uid;
+          e.riotId = null;
+          e.resolvido = null;
+        }
+      }
+    }
+
+    const keysEntrada = new Set(entrada.map((e) => chaveDe(e.userId, e.riotId, e.puuid)));
+    const removidos = atuais.filter((a) => {
+      const k = chaveDe(a.userId, a.guestRiotId, a.guestPuuid);
+      return !keysEntrada.has(k);
+    });
+    const mudouCapitao = atuais.some((a) => {
+      const k = chaveDe(a.userId, a.guestRiotId, a.guestPuuid);
+      const novo = entrada.find((e) => chaveDe(e.userId, e.riotId, e.puuid) === k);
+      return novo ? novo.isCaptain !== a.isCaptain : false;
+    });
+
+    if (!podeGerenciar && removidos.length > 0) {
+      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode remover jogador do time." });
+    }
+    if (!podeGerenciar && mudouCapitao) {
+      return res.status(403).json({ error: "Apenas o dono, capitão ou proprietário pode promover/transferir a coroa." });
+    }
+
+    await db.transaction(async (tx) => {
+      // Transferência direta: quem está em outro time sai de lá (com coroa/dono
+      // andando) antes de entrar neste.
+      for (const e of entrada) {
+        if (e.userId && e.userId !== user.id && !atuais.some((a) => a.userId === e.userId)) {
+          await transferirJogadorParaTime(tx, e.userId, id);
+        }
+      }
+      // O próprio usuário (se aparecer) também é limpo dos outros times (legado).
+      const self = entrada.find((e) => e.userId === user.id);
+      if (self) await sairDeOutrosTimes(tx, { userId: user.id }, id);
+
+      await tx.delete(teamMembers).where(eq(teamMembers.teamId, id));
+      for (const e of entrada) {
+        await tx.insert(teamMembers).values({
+          teamId: id,
+          userId: e.userId,
+          guestHandle: e.userId ? null : e.riotId,
+          guestRiotId: e.userId ? null : e.riotId,
+          guestPuuid: e.userId ? null : e.puuid,
+          guestProfileIconId: e.userId ? null : e.iconId,
+          guestEloCache: e.userId ? null : e.elo,
+          roleSlot: e.slot,
+          isCaptain: e.isCaptain,
+          status: "accepted",
+        });
+      }
+
+      // ADR-089 — quem tiver a coroa é o dono do time (regra em lib).
+      const gravados = await tx.select().from(teamMembers).where(eq(teamMembers.teamId, id));
+      const novoDono = resolverNovoDono(
+        gravados.map((m) => ({ userId: m.userId, isCaptain: m.isCaptain })),
+        team.ownerId
+      );
+      if (novoDono) {
+        await tx.update(teams).set({ ownerId: novoDono, updatedAt: new Date() }).where(eq(teams.id, id));
+      }
+    });
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao salvar lineup" });
+  }
+});
+
+// ── POST /api/teams/:id/stats/adjust — ajusta PDL/V/D de um time ───────────
+// Substitui a RPC ajustar_stats_time (admin no sistema antigo, agora valida cargo na API).
+teamsRouter.post("/:id/stats/adjust", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Não autenticado" });
+
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    const isAdmin = roles.some((r) => r.role === "admin" || r.role === "proprietario");
+    if (!isAdmin) return res.status(403).json({ error: "Apenas admin pode ajustar stats" });
+
+    const { id } = req.params;
+    // Aceita uuid OU tag (o Admin.tsx ajusta stats por tag).
+    const isUuid = /^[0-9a-fA-F-]{36}$/.test(id);
+    const [team] = isUuid
+      ? await db.select().from(teams).where(eq(teams.id, id)).limit(1)
+      : await db.select().from(teams).where(eq(teams.tag, id)).limit(1);
+    if (!team) return res.status(404).json({ error: "Time não encontrado" });
+
+    const deltaPdl = Number(req.body?.p_delta_pdl ?? 0) || 0;
+    const deltaWins = Number(req.body?.p_delta_wins ?? 0) || 0;
+    const deltaLosses = Number(req.body?.p_delta_losses ?? 0) || 0;
+
+    const teamId = team.id;
+    const [stats] = await db.select().from(teamStats).where(eq(teamStats.teamId, teamId)).limit(1);
+    const current = stats || { pdl: 0, wins: 0, losses: 0 };
+    if (stats) {
+      await db.update(teamStats)
+        .set({
+          pdl: Math.max(0, (current.pdl ?? 0) + deltaPdl),
+          wins: Math.max(0, (current.wins ?? 0) + deltaWins),
+          losses: Math.max(0, (current.losses ?? 0) + deltaLosses),
+          updatedAt: new Date(),
+        })
+        .where(eq(teamStats.teamId, teamId));
+    } else {
+      await db.insert(teamStats).values({
+        teamId,
+        pdl: Math.max(0, deltaPdl),
+        wins: Math.max(0, deltaWins),
+        losses: Math.max(0, deltaLosses),
+      });
+    }
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || "Erro ao ajustar stats" });
+  }
+});

@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { storeBracket } from "../src/lib/tournament-store.js";
-import { buildBracket } from "../src/lib/tournament-shape.js";
+import { storeBracket } from "../src/modules/tournaments/tournament-store.js";
+import { buildBracket } from "../src/modules/tournaments/tournament-shape.js";
 
 const empty = { t1: "", t2: "", s1: 0, s2: 0, winner: null };
 const mk = (n: number) => Array(n).fill(null).map(() => ({ ...empty }));

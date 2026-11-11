@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { buildClassificacao } from "../src/lib/tournament-shape.js";
+import { buildClassificacao } from "../src/modules/tournaments/tournament-shape.js";
 
 const team = (id: string, name: string, tag: string, status = "approved") => ({
   teams: { id, name, tag, logoUrl: `/${tag}.png` },

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { appendTiebreakers } from "../src/lib/tournament-tiebreakers.js";
+import { appendTiebreakers } from "../src/modules/tournaments/tournament-tiebreakers.js";
 
 test("gera desempate quando ha empate na fronteira de classificacao", () => {
   const campeonato: any = {

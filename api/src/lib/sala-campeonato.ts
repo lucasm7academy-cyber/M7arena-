@@ -20,8 +20,8 @@ import { teams } from "../../../db/schema/teams.js";
 import { users, userRoles } from "../../../db/schema/identidade.js";
 import { transmissoes } from "../../../db/schema/conteudo.js";
 import { atribuirCodigoSerie, normalizarBestOf } from "./serie-campeonato.js";
-import { findUserTeamMemberships } from "./team-membership.js";
-import { instanteJogo, validarStreamer, montarTituloJogo } from "./streams.js";
+import { findUserTeamMemberships } from "../modules/teams/team-membership.js";
+import { instanteJogo, validarStreamer, montarTituloJogo } from "../modules/streams/streams.js";
 import { notifyMatchChange } from "./match-flow.js";
 import { getRoles, eStaffSala } from "./acesso-sala.js";
 import {

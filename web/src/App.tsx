@@ -38,31 +38,31 @@ function lazyWithRetry(factory: () => Promise<any>) {
 }
 
 // ✅ Lazy loading para páginas que não são imediatamente necessárias
-const Login = lazyWithRetry(() => import("./pages/Login"));
-const RedefinirSenha = lazyWithRetry(() => import("./pages/RedefinirSenha"));
-const Lobby = lazyWithRetry(() => import("./pages/Lobby"));
-const Jogar = lazyWithRetry(() => import("./pages/Jogar"));
+const Login = lazyWithRetry(() => import("./features/identity/pages/Login"));
+const RedefinirSenha = lazyWithRetry(() => import("./features/identity/pages/RedefinirSenha"));
+const Lobby = lazyWithRetry(() => import("./features/home/pages/Lobby"));
+const Jogar = lazyWithRetry(() => import("./features/salas/pages/Jogar"));
 
-const ApostaIndividualPage = lazyWithRetry(() => import("./pages/ApostaIndividualPage"));
+const ApostaIndividualPage = lazyWithRetry(() => import("./features/apostas/pages/ApostaIndividualPage"));
 
-const SalaMod1 = lazyWithRetry(() => import("./pages/SalaMod1"));
+const SalaMod1 = lazyWithRetry(() => import("./features/salas/pages/SalaMod1"));
 // Sala Campeonato (ADRs 076-085): mesma cara da sala normal + funcionalidades
 // da série (vagas de time, PRONTO, escolha de lado, draft Fearless, código, live).
 const SalaCampeonato = lazyWithRetry(() => import("./features/sala-campeonato/SalaCampeonato"));
-const Vincular = lazyWithRetry(() => import("./pages/Vincular"));
-const Perfil = lazyWithRetry(() => import("./pages/perfil"));
-const Equipes = lazyWithRetry(() => import("./pages/equipes"));
-const Players = lazyWithRetry(() => import("./pages/players"));
-const TimePage = lazyWithRetry(() => import("./pages/TimePage"));
-const Admin = lazyWithRetry(() => import("./pages/Admin"));
-const Streamers = lazyWithRetry(() => import("./pages/Streamers"));
-const Politicas = lazyWithRetry(() => import("./pages/Politicas"));
-const Tutorial = lazyWithRetry(() => import("./pages/Tutorial"));
-const Campeonatos = lazyWithRetry(() => import('./pages/campeonatos'));
-const CampeonatoDetalhes = lazyWithRetry(() => import('./pages/CampeonatoDetalhes'));
-const CreateCampPage = lazyWithRetry(() => import('./pages/createCampPage'));
-const MinhasPartidas = lazyWithRetry(() => import("./pages/MinhasPartidas"));
-const QuemSomos = lazyWithRetry(() => import("./pages/QuemSomos"));
+const Vincular = lazyWithRetry(() => import("./features/profile/pages/Vincular"));
+const Perfil = lazyWithRetry(() => import("./features/profile/pages/Perfil"));
+const Equipes = lazyWithRetry(() => import("./features/teams/pages/equipes"));
+const Players = lazyWithRetry(() => import("./features/players/pages/Players"));
+const TimePage = lazyWithRetry(() => import("./features/teams/pages/TimePage"));
+const Admin = lazyWithRetry(() => import("./features/admin/pages/Admin"));
+const Streamers = lazyWithRetry(() => import("./features/streams/pages/Streamers"));
+const Politicas = lazyWithRetry(() => import("./features/institutional/pages/Politicas"));
+const Tutorial = lazyWithRetry(() => import("./features/institutional/pages/Tutorial"));
+const Campeonatos = lazyWithRetry(() => import('./features/campeonatos/pages/campeonatos'));
+const CampeonatoDetalhes = lazyWithRetry(() => import('./features/campeonatos/pages/CampeonatoDetalhes'));
+const CreateCampPage = lazyWithRetry(() => import('./features/campeonatos/pages/createCampPage'));
+const MinhasPartidas = lazyWithRetry(() => import("./features/salas/pages/MinhasPartidas"));
+const QuemSomos = lazyWithRetry(() => import("./features/institutional/pages/QuemSomos"));
 
 // ✅ Componente para inicializar o cache do DDragon (seguro)
 function DDRagonInitializer() {

@@ -7,7 +7,7 @@ import { notifyMatchChange } from "./match-flow.js";
 import { avancarSerieLivre } from "./serie-livre.js";
 import { avancarSerie5v5 } from "./serie-sala.js";
 import { resolverRosterPuuids, ladoVencedorDaJogada } from "./serie-campeonato.js";
-import { findUserTeamMemberships } from "./team-membership.js";
+import { findUserTeamMemberships } from "../modules/teams/team-membership.js";
 import { riotRaw } from "../routes/riot.js";
 
 export const FANTASMA_MS = 3 * 60 * 60 * 1000;

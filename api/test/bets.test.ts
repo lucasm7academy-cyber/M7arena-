@@ -17,8 +17,8 @@ import {
   BET_MIN_STAKE,
   QUEUE_SOLO,
   QUEUE_FLEX,
-} from "../src/lib/bets.js";
-import { detectarPartida, liquidarPartida, jogadorEmJogo } from "../src/lib/live-bets.js";
+} from "../src/modules/bets/bets.js";
+import { detectarPartida, liquidarPartida, jogadorEmJogo } from "../src/modules/bets/live-bets.js";
 import { walletTransactions } from "../../db/schema/economia.js";
 
 let seq = 0;

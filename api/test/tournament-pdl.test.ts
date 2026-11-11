@@ -6,7 +6,7 @@ import { games } from "../../db/schema/games.js";
 import { teams, teamStats } from "../../db/schema/teams.js";
 import { tournaments, tournamentMatches } from "../../db/schema/tournaments.js";
 import { setupDb } from "./helpers.js";
-import { recalcularPdlGlobal } from "../src/lib/tournament-pdl.js";
+import { recalcularPdlGlobal } from "../src/modules/tournaments/tournament-pdl.js";
 
 const U = (n: number) => `aaaaaaa7-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbb7-0000-0000-0000-00000000000${n}`;

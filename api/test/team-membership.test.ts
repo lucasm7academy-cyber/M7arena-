@@ -5,7 +5,7 @@ import { users } from "../../db/schema/identidade.js";
 import { games, gameAccounts } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { setupDb } from "./helpers.js";
-import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes, resolverUserIdPorRiotId, vincularVagasConvidado } from "../src/lib/team-membership.js";
+import { findUserTeamMemberships, getRiotIdentities, sairDeOutrosTimes, resolverUserIdPorRiotId, vincularVagasConvidado } from "../src/modules/teams/team-membership.js";
 
 const U = (n: number) => `aaaaaaa6-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbb6-0000-0000-0000-00000000000${n}`;

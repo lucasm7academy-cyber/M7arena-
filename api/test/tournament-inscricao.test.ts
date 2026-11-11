@@ -6,7 +6,7 @@ import { games } from "../../db/schema/games.js";
 import { teams } from "../../db/schema/teams.js";
 import { tournaments, tournamentTeams, tournamentStandings } from "../../db/schema/tournaments.js";
 import { setupDb } from "./helpers.js";
-import { removerInscricao } from "../src/lib/tournament-store.js";
+import { removerInscricao } from "../src/modules/tournaments/tournament-store.js";
 
 const U = (n: number) => `aaaaaaa8-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbb8-0000-0000-0000-00000000000${n}`;

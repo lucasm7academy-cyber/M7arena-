@@ -6,7 +6,7 @@
 // (logo do time no /perfil, setas das partidas finalizadas no /jogar, botões
 // Last/Last Pick, pills MD1/MD3/MD5...).
 //
-// Como corrigir: docs/CANTOS_RECORTADOS.md.
+// Como corrigir: web/src/components/ui/README.md.
 //   ❌ <div className="border border-white/10" style={{ clipPath: CUT }} />
 //   ✅ <div className="p-[1px] bg-white/10" style={{ clipPath: CUT }}>
 //        <div style={{ clipPath: CUT_INNER }}>...</div>
@@ -106,5 +106,5 @@ for (const f of findings) {
   console.error(`  ${f.file}:${f.line}  [${f.reason}]`);
   console.error(`      ${f.snippet}`);
 }
-console.error('\nUse moldura: p-[Npx] + clip externo, fill com clip interno (docs/CANTOS_RECORTADOS.md).\n');
+console.error('\nUse moldura: p-[Npx] + clip externo, fill com clip interno (web/src/components/ui/README.md).\n');
 process.exit(1);

@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { resolverNovoDono } from "../src/lib/team-ownership.js";
+import { resolverNovoDono } from "../src/modules/teams/team-ownership.js";
 
 const U = (n: number) => `ccccccc8-0000-0000-0000-00000000000${n}`;
 

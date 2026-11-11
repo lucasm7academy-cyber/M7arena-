@@ -21,7 +21,7 @@ function obterUploadDir(): string {
  * (ADR-007): `team-logos` → `/uploads/team-logos/`, `public-images` →
  * `/uploads/public-images/`. O servidor restringe a escrita por bucket, então o
  * cliente não decide caminho arbitrário. A escrita também é restrita por dono
- * (ARQUITETURA.md §6): `team-logos` só aceita o dono/capitão do time (a logo
+ * (README.md — Uploads e autorização): `team-logos` só aceita o dono/capitão do time (a logo
  * cai em `/uploads/team-logos/<team_id>/`), `public-images` só admin/organizador.
  * O antigo bucket privado de prints de partida foi removido junto com o fluxo
  * de revisão; não reintroduza caminho privado aqui sem um endpoint autenticado.
@@ -189,7 +189,7 @@ function sanitizeSubpath(subpath: string): string {
 }
 
 /**
- * Restrição por dono dos buckets públicos (ARQUITETURA.md §6 — "Autorização por
+ * Restrição por dono dos buckets públicos (README.md — Uploads e autorização — "Autorização por
  * dono, com limite de tamanho e MIME"). Não é só "estar autenticado": a escrita
  * tem que pertencer ao dono do recurso.
  *
@@ -312,7 +312,7 @@ uploadRouter.post(
 
       const subpath = sanitizeSubpath(String(req.body?.path || "").trim());
 
-      // ── Buckets públicos: escrita restrita ao dono/role (ARQUITETURA.md §6) ──
+      // ── Buckets públicos: escrita restrita ao dono/role (README.md — Uploads e autorização) ──
       const permissoes = await validarPermissaoBucketPublico(db, session.userId, bucket, subpath);
       if (!permissoes.ok) {
         return res.status(permissoes.status).json({ error: permissoes.erro });

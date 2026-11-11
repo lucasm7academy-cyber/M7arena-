@@ -8,7 +8,7 @@ import { avaliarTransicoes, notifyMatchChange } from "./lib/match-flow.js";
 import { verificarPartida, FANTASMA_MS } from "./lib/verificar-partida.js";
 import { verificarSerieCampeonato } from "./lib/serie-campeonato.js";
 import { garantirDraftSalaCampeonato, avaliarDraftSalaCampeonato } from "./lib/sala-campeonato-draft.js";
-import { runBetsCron } from "./lib/live-bets.js";
+import { runBetsCron } from "./modules/bets/live-bets.js";
 
 /**
  * Job único a cada 10 min (design v3 §8): verificação automática de partidas +

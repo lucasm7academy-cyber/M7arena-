@@ -29,12 +29,12 @@ import toast from 'react-hot-toast';
 import { useSound } from '../../hooks/useSound';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerfil } from '../../contexts/PerfilContext';
-import DepositModal from '../modals/deposit/DepositModal';
+import DepositModal from '../../features/economy/components/DepositModal';
 import ConviteScrim from '../ConviteScrim';
 import { MCIcon } from '../ui/MCIcon';
 
 // ✅ Lazy loading para componentes carregados sob demanda
-const NotificationBell = lazy(() => import('../notifications/NotificationBell'));
+const NotificationBell = lazy(() => import('../../features/notifications/components/NotificationBell'));
 
 // Link de convite do servidor Discord da M7
 const DISCORD_URL = 'https://discord.gg/E5crDcKqnt';

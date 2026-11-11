@@ -32,8 +32,8 @@ import {
 } from "../../../db/schema/tournaments.js";
 import { riotRaw } from "../routes/riot.js";
 import { RiotMatch, QUEUE_SUMMONERS_RIFT, QUEUE_HOWLING_ABYSS, queueDoCodigo } from "./verificar-partida.js";
-import { recalcularPdlGlobal } from "./tournament-pdl.js";
-import { encerrarTransmissoesDoJogo } from "./transmissoes.js";
+import { recalcularPdlGlobal } from "../modules/tournaments/tournament-pdl.js";
+import { encerrarTransmissoesDoJogo } from "../modules/streams/transmissoes.js";
 import { avancarSalaCampeonatoAposJogada, encerrarSalaCampeonato } from "./sala-campeonato.js";
 
 /** Peso de cada jogada em número de vitórias (usado para a fileira de melhor-de). */

@@ -1,0 +1,1006 @@
+// src/pages/Admin.tsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  ShieldCheck, Trophy, Coins, Search, Check, X,
+  RefreshCw, Ban, Users, GraduationCap, Mail, ChevronRight, Film,
+  LayoutDashboard, Lock, Gamepad2, Sparkles, ArrowLeft, Banknote, KeyRound,
+} from 'lucide-react';
+import { api } from '../../../lib/api';
+import { usePerfil } from '../../../contexts/PerfilContext';
+import {
+  type CargoAdmin,
+  CARGO_LABELS, CARGO_COLORS,
+  PERMISSOES_POR_CARGO, temPermissao,
+} from '../../../config/adminPermissoes';
+import { AbaCargos } from '../components/AdminCargos';
+import { AbaContatos } from '../components/AdminContatos';
+import { AbaPunicoes } from '../components/AdminPunicoes';
+import { AbaSenhas } from '../components/AdminSenhas';
+import { SaquesPix } from '../../economy/components/SaquesPix';
+
+// ── TIPOS ──────────────────────────────────────────
+interface Jogador {
+  userId: string; riotId: string; nome: string; iconId?: number; saldo: number;
+}
+type Aba = 'dashboard' | 'saldomc' | 'ranking' | 'highlights' | 'cargos' | 'contatos' | 'punicoes' | 'saques' | 'senhas';
+
+interface Highlight {
+  id: string; titulo: string; link: string;
+  thumbnail_url: string | null; ativo: boolean; ordem: number; categoria: string;
+}
+
+const HIGHLIGHT_CATEGORIAS: { value: string; label: string }[] = [
+  { value: 'highlight',    label: '🎬 Highlight Geral' },
+  { value: 'clutch',       label: '🔥 Clutch' },
+  { value: 'jogada',       label: '⚔️ Jogada Incrível' },
+  { value: 'engracado',    label: '😂 Engraçado' },
+  { value: 'top5',         label: '🏆 Top 5' },
+  { value: 'compilacao',   label: '📽️ Compilação' },
+  { value: 'semana',       label: '📅 Highlights da Semana' },
+];
+
+// ── HELPERS ────────────────────────────────────────
+function BadgeCargo({ cargo }: { cargo: CargoAdmin }) {
+  const c = CARGO_COLORS[cargo];
+  return <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${c.text} ${c.bg} ${c.border}`}>{CARGO_LABELS[cargo]}</span>;
+}
+function CardStyle() {
+  return {
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'linear-gradient(180deg, rgba(22, 28, 44, 0.8) 0%, rgba(15, 19, 30, 0.9) 100%)',
+    backdropFilter: 'blur(16px)',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.35)',
+  };
+}
+
+// ── ABA: SALDO E (exclusivo do proprietário) ─────
+function AbaSaldoMC({ adminCargo }: { adminCargo: CargoAdmin }) {
+  const [busca, setBusca] = useState('');
+  const [resultados, setResultados] = useState<Jogador[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [selecionado, setSelecionado] = useState<Jogador | null>(null);
+  const [valor, setValor] = useState('');
+  const [operacao, setOperacao] = useState<'adicionar' | 'remover'>('adicionar');
+  const [motivo, setMotivo] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro'; msg: string } | null>(null);
+  const podeMexer = temPermissao(adminCargo, 'gerenciarSaldoMc');
+
+  const buscarJogadores = useCallback(async () => {
+    if (busca.trim().length < 2) { setResultados([]); return; }
+    setBuscando(true);
+    // ✅ Schema novo: lê de `wallets` (mc) em vez de `saldos`; contas via API própria.
+    const [riotData, balances] = await Promise.all([
+      api.players.search(busca.trim()),
+      api.wallet.adminBalances(),
+    ]);
+    const saldoMap = Object.fromEntries((balances ?? []).map((w: any) => [w.userId, w.mc]));
+    if (riotData) setResultados(riotData.map((r: any) => ({ userId: r.user_id, riotId: r.riot_id ?? '—', nome: (r.riot_id ?? '—').split('#')[0], iconId: r.profile_icon_id, saldo: saldoMap[r.user_id] ?? 0 })));
+    setBuscando(false);
+  }, [busca]);
+
+  useEffect(() => { const t = setTimeout(buscarJogadores, 350); return () => clearTimeout(t); }, [buscarJogadores]);
+
+  const aplicarSaldo = async () => {
+    if (!selecionado || !valor || !podeMexer) return;
+    const qtd = parseInt(valor, 10);
+    if (isNaN(qtd) || qtd <= 0) return;
+    setSalvando(true);
+    const delta = operacao === 'adicionar' ? qtd : -qtd;
+    try {
+      // Fonte da verdade é o retorno do servidor, não um cálculo local.
+      const r = await api.wallet.adminAdjustMc(selecionado.userId, delta, motivo.trim() || 'ajuste_admin');
+      setSelecionado({ ...selecionado, saldo: r.mc });
+      setResultados(prev => prev.map(j => j.userId === selecionado.userId ? { ...j, saldo: r.mc } : j));
+      setValor(''); setMotivo('');
+      setPopup({ tipo: 'sucesso', msg: `${operacao === 'adicionar' ? '+' : '-'}${qtd} E aplicado.` });
+    } catch (e: any) {
+      if (e?.message === 'nao_autorizado') {
+        setPopup({ tipo: 'erro', msg: 'Sem permissão: apenas o proprietário pode ajustar saldo E.' });
+      } else {
+        setPopup({ tipo: 'erro', msg: 'Erro ao atualizar saldo.' });
+      }
+    }
+    setSalvando(false);
+    setTimeout(() => setPopup(null), 3000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-black text-white uppercase">Saldo Essência Azul (E)</h2>
+        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Adicione ou remova Essência Azul (E).' : 'Sem permissão.'}</p>
+      </div>
+      <AnimatePresence>
+        {popup && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
+            {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {popup.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl p-6 space-y-4 shadow-xl" style={CardStyle()}>
+          <p className="text-zinc-300 text-xs font-black uppercase tracking-wider">Buscar Jogador</p>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input
+              type="text"
+              value={busca}
+              onChange={e => { setBusca(e.target.value); setSelecionado(null); }}
+              placeholder="Nick#TAG..."
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+            />
+            {buscando && <RefreshCw className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 animate-spin" />}
+          </div>
+          {resultados.length > 0 && (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {resultados.map(j => (
+                <button
+                  key={j.userId}
+                  onClick={() => setSelecionado(j)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                    selecionado?.userId === j.userId
+                      ? 'bg-primary/15 border-primary/40 shadow-sm'
+                      : 'bg-[#131a29] border-white/10 hover:bg-[#192236] hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/10">
+                    {j.iconId ? (
+                      <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${j.iconId}.png`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xs font-black">{j.nome[0]}</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-sm truncate">{j.riotId}</p>
+                    <p className="text-zinc-400 text-xs">{j.saldo.toLocaleString('pt-BR')} E</p>
+                  </div>
+                  {selecionado?.userId === j.userId && <Check className="w-4 h-4 text-primary shrink-0" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="rounded-2xl p-6 space-y-5 shadow-xl" style={CardStyle()}>
+          {!selecionado ? (
+            <div className="flex flex-col items-center justify-center h-full py-12">
+              <Users className="w-9 h-9 text-zinc-600 mb-3" />
+              <p className="text-zinc-400 text-sm font-black uppercase tracking-wider">Selecione um jogador</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                <div className="w-12 h-12 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-white/15">
+                  {selecionado.iconId ? (
+                    <img src={`https://ddragon.leagueoflegends.com/cdn/15.8.1/img/profileicon/${selecionado.iconId}.png`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-zinc-400 font-black">{selecionado.nome[0]}</div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white font-black">{selecionado.riotId}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Coins className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-primary font-black text-sm">{selecionado.saldo.toLocaleString('pt-BR')} E</span>
+                  </div>
+                </div>
+              </div>
+              {podeMexer && (
+                <>
+                  <div className="flex gap-2">
+                    {(['adicionar', 'remover'] as const).map(op => (
+                      <button
+                        key={op}
+                        onClick={() => setOperacao(op)}
+                        className={`flex-1 py-2 rounded-xl font-black text-sm uppercase border transition-all ${
+                          operacao === op
+                            ? op === 'adicionar'
+                              ? 'bg-green-500/20 border-green-500/40 text-green-400 shadow-sm'
+                              : 'bg-red-500/20 border-red-500/40 text-red-400 shadow-sm'
+                            : 'bg-[#0e1320] border-white/10 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        {op === 'adicionar' ? '+ Adicionar' : '− Remover'}
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Quantidade (E)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={valor}
+                      onChange={e => setValor(e.target.value)}
+                      placeholder="Ex: 500"
+                      className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-wider block mb-2">Motivo</label>
+                    <input
+                      type="text"
+                      value={motivo}
+                      onChange={e => setMotivo(e.target.value)}
+                      placeholder="Ex: teste de saldo E"
+                      className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all"
+                    />
+                  </div>
+                  <button
+                    onClick={aplicarSaldo}
+                    disabled={salvando || !valor || parseInt(valor) <= 0}
+                    className={`w-full py-3 rounded-xl font-black text-sm uppercase disabled:opacity-30 transition-all shadow-md ${
+                      operacao === 'adicionar' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
+                    }`}
+                  >
+                    {salvando ? 'Aplicando...' : `${operacao === 'adicionar' ? 'Adicionar' : 'Remover'} ${valor || '—'} E`}
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ABA: RANKING PDL ──────────────────────────────
+interface TimePDL { id: string; nome: string; tag: string; logo_url: string | null; pdl: number; wins: number; games_played: number; winrate: number; ranking: number; }
+
+function AbaRanking({ adminCargo }: { adminCargo: CargoAdmin }) {
+  const [times, setTimes] = useState<TimePDL[]>([]);
+  const [busca, setBusca] = useState('');
+  const [selecionado, setSelecionado] = useState<TimePDL | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
+  const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro'; msg: string } | null>(null);
+  // Campos de ajuste individuais
+  const [deltaPdl, setDeltaPdl]       = useState('');
+  const [opPdl, setOpPdl]             = useState<'adicionar' | 'remover'>('adicionar');
+  const [deltaWins, setDeltaWins]     = useState('');
+  const [opWins, setOpWins]           = useState<'adicionar' | 'remover'>('adicionar');
+  const [deltaLosses, setDeltaLosses] = useState('');
+  const [opLosses, setOpLosses]       = useState<'adicionar' | 'remover'>('adicionar');
+  const podeMexer = temPermissao(adminCargo, 'gerenciarSaldos');
+
+  const carregarTimes = useCallback(async () => {
+    setCarregando(true);
+    try {
+      const { teams: data } = await api.teams.list({ sort: 'ranking', dir: 'asc', limit: 1000 });
+      setTimes(data as TimePDL[]);
+    } catch {
+      setTimes([]);
+    }
+    setCarregando(false);
+  }, []);
+
+  useEffect(() => { carregarTimes(); }, [carregarTimes]);
+
+  const timesFiltrados = times.filter(t =>
+    !busca.trim() ||
+    t.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    t.tag.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  const aplicarAjuste = async () => {
+    if (!selecionado || !podeMexer) return;
+    const pdlQtd  = parseInt(deltaPdl,   10) || 0;
+    const winsQtd = parseInt(deltaWins,  10) || 0;
+    const lossQtd = parseInt(deltaLosses,10) || 0;
+    if (pdlQtd === 0 && winsQtd === 0 && lossQtd === 0) return;
+    setSalvando(true);
+    const dPdl  = opPdl    === 'adicionar' ?  pdlQtd  : -pdlQtd;
+    const dWins = opWins   === 'adicionar' ?  winsQtd : -winsQtd;
+    const dLoss = opLosses === 'adicionar' ?  lossQtd : -lossQtd;
+    try {
+      await api.teams.adjustStats(selecionado.tag, { p_delta_pdl: dPdl, p_delta_wins: dWins, p_delta_losses: dLoss });
+      setDeltaPdl(''); setDeltaWins(''); setDeltaLosses('');
+      const parts: string[] = [];
+      if (pdlQtd  > 0) parts.push(`${dPdl  > 0 ? '+' : ''}${dPdl} PDL`);
+      if (winsQtd > 0) parts.push(`${dWins > 0 ? '+' : ''}${dWins} V`);
+      if (lossQtd > 0) parts.push(`${dLoss > 0 ? '+' : ''}${dLoss} D`);
+      setPopup({ tipo: 'sucesso', msg: `${parts.join(' · ')} aplicado para ${selecionado.nome}.` });
+      carregarTimes();
+      // Atualiza o card selecionado localmente
+      setSelecionado(prev => prev ? {
+        ...prev,
+        pdl:          Math.max(0, prev.pdl + dPdl),
+        wins:         Math.max(0, prev.wins + dWins),
+        games_played: Math.max(0, prev.games_played + dWins + dLoss),
+      } : null);
+    } catch (error: any) {
+      console.error('❌ Erro ao ajustar stats:', error.message);
+      setPopup({ tipo: 'erro', msg: `Falha ao ajustar stats: ${error.message || 'erro'}` });
+    }
+    setSalvando(false);
+    setTimeout(() => setPopup(null), 3500);
+  };
+
+  const losses = selecionado ? Math.max(0, selecionado.games_played - selecionado.wins) : 0;
+  const temAlgo = (parseInt(deltaPdl)||0) > 0 || (parseInt(deltaWins)||0) > 0 || (parseInt(deltaLosses)||0) > 0;
+
+  const ToggleOp = ({ op, setOp }: { op: 'adicionar'|'remover'; setOp: (v:'adicionar'|'remover')=>void }) => (
+    <div className="flex gap-1">
+      {(['adicionar','remover'] as const).map(o => (
+        <button key={o} type="button" onClick={() => setOp(o)}
+          className={`flex-1 py-1.5 rounded-lg font-black text-[10px] uppercase border transition-all ${op === o ? (o === 'adicionar' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400') : 'bg-white/5 border-white/5 text-white/20'}`}>
+          {o === 'adicionar' ? '+' : '−'}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-black text-white uppercase">Ranking — Times</h2>
+        <p className="text-zinc-400 text-xs mt-1">{podeMexer ? 'Ajuste PDL, vitórias e derrotas manualmente.' : 'Sem permissão para editar.'}</p>
+      </div>
+      <AnimatePresence>
+        {popup && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-bold ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
+            {popup.tipo === 'sucesso' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {popup.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Lista de times */}
+        <div className="rounded-2xl p-6 space-y-4 shadow-xl" style={CardStyle()}>
+          <p className="text-zinc-300 text-xs font-black uppercase tracking-wider">Times ({times.length})</p>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input type="text" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar por nome ou TAG..."
+              className="w-full bg-[#0e1320] border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+          </div>
+          {carregando ? (
+            <div className="flex justify-center py-8"><RefreshCw className="w-5 h-5 text-zinc-400 animate-spin" /></div>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+              {timesFiltrados.map(t => (
+                <button key={t.id} onClick={() => { setSelecionado(t); setDeltaPdl(''); setDeltaWins(''); setDeltaLosses(''); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${selecionado?.id === t.id ? 'bg-primary/15 border-primary/40 shadow-sm' : 'bg-[#131a29] border-white/10 hover:bg-[#192236] hover:border-white/20'}`}>
+                  <span className="text-zinc-400 font-black text-xs w-6 text-center shrink-0">#{t.ranking}</span>
+                  <div className="w-8 h-8 rounded-lg bg-[#0e1320] overflow-hidden shrink-0 flex items-center justify-center border border-white/10">
+                    {t.logo_url ? <img src={t.logo_url} className="w-full h-full object-cover" alt="" /> : <ShieldCheck className="w-4 h-4 text-zinc-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-sm truncate">{t.nome} <span className="text-zinc-400 text-[10px]">[{t.tag}]</span></p>
+                    <p className="text-zinc-400 text-xs">{t.pdl.toLocaleString('pt-BR')} PDL · {t.wins}V {Math.max(0, t.games_played - t.wins)}D</p>
+                  </div>
+                  {selecionado?.id === t.id && <Check className="w-4 h-4 text-primary shrink-0" />}
+                </button>
+              ))}
+              {timesFiltrados.length === 0 && <p className="text-zinc-500 text-sm text-center py-8 font-bold">Nenhum time encontrado.</p>}
+            </div>
+          )}
+        </div>
+        {/* Painel de ajuste */}
+        <div className="rounded-2xl p-6 space-y-5 shadow-xl" style={CardStyle()}>
+          {!selecionado ? (
+            <div className="flex flex-col items-center justify-center h-full py-12 gap-3">
+              <Trophy className="w-9 h-9 text-zinc-600" />
+              <p className="text-zinc-400 text-sm font-black uppercase tracking-wider">Selecione um time</p>
+            </div>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                <div className="w-12 h-12 rounded-xl bg-[#0e1320] overflow-hidden shrink-0 flex items-center justify-center border border-white/15">
+                  {selecionado.logo_url ? <img src={selecionado.logo_url} className="w-full h-full object-cover" alt="" /> : <ShieldCheck className="w-6 h-6 text-zinc-400" />}
+                </div>
+                <div>
+                  <p className="text-white font-black">{selecionado.nome} <span className="text-zinc-400 text-xs">[{selecionado.tag}]</span></p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-primary font-black text-sm">{selecionado.pdl.toLocaleString('pt-BR')} PDL</span>
+                    <span className="text-zinc-400 text-xs">· #{selecionado.ranking}</span>
+                  </div>
+                </div>
+              </div>
+              {/* Stats atuais */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Vitórias', value: selecionado.wins, color: '#00FF41' },
+                  { label: 'Derrotas', value: losses,           color: '#FF3131' },
+                  { label: 'Win Rate', value: `${selecionado.winrate}%`, color: '#FFB700' },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-[#0e1320] rounded-xl p-3 text-center border border-white/10 shadow-inner">
+                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                    <p className="text-lg font-black" style={{ color: stat.color }}>{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+              {podeMexer && (
+                <>
+                  {/* Linha PDL */}
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">PDL</label>
+                    <div className="flex gap-2">
+                      <ToggleOp op={opPdl} setOp={setOpPdl} />
+                      <input type="number" min="1" value={deltaPdl} onChange={e => setDeltaPdl(e.target.value)} placeholder="Qtd."
+                        className="flex-1 bg-[#0e1320] border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+                    </div>
+                  </div>
+                  {/* Linha Vitórias */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#00FF41' }}>Vitórias</label>
+                    <div className="flex gap-2">
+                      <ToggleOp op={opWins} setOp={setOpWins} />
+                      <input type="number" min="1" value={deltaWins} onChange={e => setDeltaWins(e.target.value)} placeholder="Qtd."
+                        className="flex-1 bg-[#0e1320] border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+                    </div>
+                  </div>
+                  {/* Linha Derrotas */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#FF3131' }}>Derrotas</label>
+                    <div className="flex gap-2">
+                      <ToggleOp op={opLosses} setOp={setOpLosses} />
+                      <input type="number" min="1" value={deltaLosses} onChange={e => setDeltaLosses(e.target.value)} placeholder="Qtd."
+                        className="flex-1 bg-[#0e1320] border border-white/15 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+                    </div>
+                  </div>
+                  <button onClick={aplicarAjuste} disabled={salvando || !temAlgo}
+                    className="w-full py-3 rounded-xl font-black text-sm uppercase bg-gradient-to-r from-primary to-yellow-500 text-black hover:brightness-110 disabled:opacity-30 transition-all shadow-lg shadow-primary/20">
+                    {salvando ? 'Aplicando...' : `Aplicar ajuste em ${selecionado.tag}`}
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ABA: HIGHLIGHTS ────────────────────────────────
+function AbaHighlights({ adminCargo }: { adminCargo: CargoAdmin }) {
+  const [list, setList] = useState<Highlight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ titulo: '', link: '', thumbnail_url: '', categoria: 'highlight' });
+  const [salvando, setSalvando] = useState(false);
+  const [popup, setPopup] = useState<{ tipo: 'sucesso' | 'erro'; msg: string } | null>(null);
+  const podeMexer = temPermissao(adminCargo, 'gerenciarSaldos');
+
+  const carregar = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.content.highlights({ all: true });
+      setList(data);
+    } catch {
+      setPopup({ tipo: 'erro', msg: 'Erro ao carregar highlights.' });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const salvar = async () => {
+    if (!form.titulo.trim() || !form.link.trim()) return;
+    setSalvando(true);
+    try {
+      await api.content.highlightsCreate({
+        titulo: form.titulo.trim(),
+        link: form.link.trim(),
+        thumbnail_url: form.thumbnail_url.trim() || null,
+        categoria: form.categoria,
+      });
+      setForm({ titulo: '', link: '', thumbnail_url: '', categoria: 'highlight' });
+      setPopup({ tipo: 'sucesso', msg: 'Highlight adicionado!' });
+      carregar();
+    } catch {
+      setPopup({ tipo: 'erro', msg: 'Erro ao salvar.' });
+    } finally {
+      setSalvando(false);
+    }
+    setTimeout(() => setPopup(null), 3000);
+  };
+
+  const toggleAtivo = async (h: Highlight) => {
+    await api.content.highlightsUpdate(h.id, { ativo: !h.ativo });
+    setList(prev => prev.map(x => x.id === h.id ? { ...x, ativo: !x.ativo } : x));
+  };
+
+  const deletar = async (id: string) => {
+    if (!window.confirm('Remover este highlight?')) return;
+    await api.content.highlightsDelete(id);
+    setList(prev => prev.filter(x => x.id !== id));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-black text-white uppercase">Highlights da Comunidade</h2>
+        <p className="text-zinc-400 text-xs mt-1">Clipes que aparecem no Lobby quando não há lives ativas. As lives sempre aparecem primeiro.</p>
+      </div>
+
+      <AnimatePresence>
+        {popup && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className={`p-4 rounded-xl border font-black text-sm ${popup.tipo === 'sucesso' ? 'bg-green-500/15 border-green-500/30 text-green-400' : 'bg-red-500/15 border-red-500/30 text-red-400'}`}>
+            {popup.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Formulário de adição */}
+      {podeMexer && (
+        <div className="rounded-2xl p-6 space-y-3 shadow-xl" style={CardStyle()}>
+          <h3 className="text-zinc-300 text-xs font-black uppercase tracking-widest">Adicionar Clipe</h3>
+          <input value={form.titulo} onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
+            placeholder="Título  (ex: Top 5 jogadas da semana)"
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+          <input value={form.link} onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
+            placeholder="Link do clipe  (twitch.tv/channel/clip/...)"
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+          <input value={form.thumbnail_url} onChange={e => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
+            placeholder="URL da thumbnail  (opcional — imagem de capa do card)"
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-zinc-500 transition-all" />
+          <select value={form.categoria} onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}
+            className="w-full bg-[#0e1320] border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all">
+            {HIGHLIGHT_CATEGORIAS.map(c => (
+              <option key={c.value} value={c.value} className="bg-[#131a29] text-white">{c.label}</option>
+            ))}
+          </select>
+          <button onClick={salvar} disabled={salvando || !form.titulo.trim() || !form.link.trim()}
+            className="w-full py-3 rounded-xl bg-[#FFB700]/20 border border-[#FFB700]/40 text-[#FFB700] font-black text-sm uppercase tracking-widest hover:bg-[#FFB700]/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
+            {salvando ? 'Salvando...' : '+ Adicionar Highlight'}
+          </button>
+        </div>
+      )}
+
+      {/* Lista */}
+      {loading ? (
+        <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-2 border-[#FFB700] border-t-transparent" /></div>
+      ) : list.length === 0 ? (
+        <p className="text-zinc-500 text-sm text-center py-8 uppercase tracking-widest font-bold">Nenhum highlight cadastrado.</p>
+      ) : (
+        <div className="space-y-3">
+          {list.map(h => (
+            <div key={h.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${h.ativo ? 'border-white/10' : 'border-white/5 opacity-50'}`} style={CardStyle()}>
+              {h.thumbnail_url ? (
+                <img src={h.thumbnail_url} alt={h.titulo} className="w-24 h-14 object-cover rounded-lg shrink-0 bg-[#0e1320] border border-white/10" />
+              ) : (
+                <div className="w-24 h-14 rounded-lg bg-[#0e1320] border border-white/10 flex items-center justify-center shrink-0">
+                  <Film className="w-5 h-5 text-zinc-500" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-black text-sm truncate">{h.titulo}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-[#9146FF]/20 text-[#A78BFA] border border-[#9146FF]/30">
+                    {HIGHLIGHT_CATEGORIAS.find(c => c.value === h.categoria)?.label ?? h.categoria}
+                  </span>
+                  <p className="text-zinc-400 text-xs truncate">{h.link}</p>
+                </div>
+              </div>
+              {podeMexer && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => toggleAtivo(h)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all ${h.ativo ? 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-white/10 text-zinc-400 hover:bg-white/5'}`}>
+                    {h.ativo ? 'Ativo' : 'Inativo'}
+                  </button>
+                  <button onClick={() => deletar(h.id)}
+                    className="p-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface PlatformStats {
+  jogadores: number;
+  salasAtivas: number;
+  times: number;
+  eDistribuido: number;
+}
+
+function StatsCards() {
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Salas ativas vêm da API própria (lista ativa); saldo agregado e
+      // contagem de jogadores seguem nos domínios carteira/identidade.
+      const [jog, salas, timesCount, wallets] = await Promise.all([
+        api.players.count(),
+        api.matches.list({ status: 'ativas', limit: 200 }).catch(() => []),
+        api.teams.list({ limit: 1 }),
+        api.wallet.adminBalances().catch(() => []),
+      ]);
+      if (cancelled) return;
+      const totalE = (wallets ?? []).reduce((acc: number, w: any) => acc + (w.mc || 0) + (w.mcReservado || 0), 0);
+      setStats({
+        jogadores: jog?.count ?? 0,
+        salasAtivas: Array.isArray(salas) ? salas.length : 0,
+        times: timesCount.total ?? 0,
+        eDistribuido: totalE,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const cards = [
+    { label: 'Jogadores',        value: stats?.jogadores,      icon: Users,    color: '#A78BFA' },
+    { label: 'Salas Ativas',     value: stats?.salasAtivas,    icon: Gamepad2, color: '#00FF41' },
+    { label: 'Times',            value: stats?.times,          icon: Trophy,   color: '#FFB800' },
+    { label: 'Essência Azul em Circulação', value: stats?.eDistribuido,  icon: Coins,    color: '#FF4D4D' },
+  ];
+
+  const fmt = (v?: number) => {
+    if (v === undefined) return '—';
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(1)}k`;
+    return v.toLocaleString('pt-BR');
+  };
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {cards.map(({ label, value, icon: Icon, color }) => (
+        <div key={label} className="rounded-2xl p-4 lg:p-5 shadow-xl" style={CardStyle()}>
+          <div className="flex items-start justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+              style={{ background: `${color}18`, border: `1px solid ${color}35` }}>
+              <Icon className="w-5 h-5" style={{ color }} />
+            </div>
+          </div>
+          {stats === null ? (
+            <div className="h-8 w-20 bg-white/5 rounded-md animate-pulse mb-1" />
+          ) : (
+            <p className="text-2xl lg:text-3xl font-black text-white tracking-tighter" style={{ color }}>
+              {fmt(value)}
+            </p>
+          )}
+          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">{label}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── ABA: DASHBOARD (visão geral) ────────────────────
+function AbaDashboard({ onNavigate, adminCargo }: { onNavigate: (a: Aba) => void; adminCargo: CargoAdmin }) {
+  const podeRevisar = adminCargo === 'admin' || adminCargo === 'proprietario';
+  const [filaSaques, setFilaSaques] = useState<number | null>(null);
+  const [atualizandoElos, setAtualizandoElos] = useState(false);
+  const [msgElos, setMsgElos] = useState<string | null>(null);
+
+  const atualizarElosAgora = async () => {
+    if (!podeRevisar || atualizandoElos) return;
+    setAtualizandoElos(true);
+    setMsgElos('Atualização iniciada — rodando em background, pode levar alguns minutos...');
+    try {
+      await api.players.refreshElos(true);
+      // O refresh roda em background no servidor (pacing anti-429); aqui
+      // acompanhamos o status até concluir (teto de 40min por segurança).
+      const limite = Date.now() + 40 * 60 * 1000;
+      for (;;) {
+        await new Promise((ok) => setTimeout(ok, 5000));
+        if (Date.now() > limite) {
+          setMsgElos('Atualização ainda em andamento — abra o painel de novo em instantes para ver o resultado.');
+          break;
+        }
+        const st = await api.players.refreshElosStatus();
+        if (!st.emAndamento) {
+          setMsgElos(
+            st.resultado
+              ? `${st.resultado.atualizadas} conta(s) com elo atualizado · ${st.resultado.erros} erro(s).`
+              : 'Atualização concluída.'
+          );
+          break;
+        }
+      }
+    } catch (e: any) {
+      setMsgElos('Falha ao atualizar elos: ' + (e?.message ?? 'desconhecido'));
+    } finally {
+      setAtualizandoElos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!podeRevisar) return;
+    let ativo = true;
+    api.withdrawals
+      .admin()
+      .then((rows) => {
+        if (ativo) setFilaSaques(Array.isArray(rows) ? rows.filter((r: any) => r.status === 'pending').length : 0);
+      })
+      .catch(() => { if (ativo) setFilaSaques(0); });
+    return () => { ativo = false; };
+  }, [podeRevisar]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-black text-white uppercase">Bem-vindo ao painel</h2>
+        <p className="text-zinc-400 text-xs mt-1">Visão geral operacional da plataforma.</p>
+      </div>
+
+      {/* Dashboard financeiro removido na simplificação: H01 mantém a visão
+          operacional; H08 continua com a fila de saques. */}
+
+      <div className="grid grid-cols-1 gap-3">
+        {podeRevisar && (
+          <button
+            onClick={() => onNavigate('saques')}
+            className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] shadow-xl hover:border-white/20"
+            style={CardStyle()}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ background: 'rgba(255,184,0,0.12)', border: '1px solid rgba(255,184,0,0.35)' }}>
+              <Banknote className="w-5 h-5 text-[#FFB800]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-black text-sm uppercase tracking-wide">Saques PIX</p>
+              <p className="text-zinc-400 text-xs mt-0.5">
+                {filaSaques === null
+                  ? 'Carregando...'
+                  : filaSaques === 0
+                    ? 'Nenhum saque aguardando pagamento'
+                    : `${filaSaques} ${filaSaques === 1 ? 'saque aguardando' : 'saques aguardando'} pagamento`}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
+          </button>
+        )}
+      </div>
+
+      {/* Atualizar elos dos jogadores (ADM): força o refresh server-side de
+          todas as contas agora, fora do cron semanal. Leve: uma chamada → a
+          API busca na Riot em lote e grava elo_cache no banco. */}
+      {podeRevisar && (
+        <button
+          onClick={atualizarElosAgora}
+          disabled={atualizandoElos}
+          className="group relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:scale-[1.01] shadow-xl hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed"
+          style={CardStyle()}
+        >
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+            style={{ background: 'rgba(255,183,0,0.12)', border: '1px solid rgba(255,183,0,0.35)' }}>
+            <RefreshCw className={`w-5 h-5 text-[#FFB700] ${atualizandoElos ? 'animate-spin' : ''}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-black text-sm uppercase tracking-wide">
+              {atualizandoElos ? 'Atualizando elos...' : 'Atualizar Elos Agora'}
+            </p>
+            <p className="text-zinc-400 text-xs mt-0.5">
+              {msgElos ?? 'Puxa o elo de todos os jogadores da Riot agora (fora do cron semanal).'}
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
+        </button>
+      )}
+
+      <div className="rounded-2xl p-6 flex items-center gap-4 border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent shadow-xl backdrop-blur-md">
+        <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0 shadow-sm">
+          <Sparkles className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <p className="text-white font-black text-sm">M7 Arena — Painel Administrativo</p>
+          <p className="text-zinc-300 text-xs mt-0.5">
+            Você está logado como <span className="text-primary font-black">{CARGO_LABELS[adminCargo]}</span>.
+            Use as abas laterais para gerenciar usuários, transações e partidas.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PÁGINA PRINCIPAL ───────────────────────────────
+export default function Admin() {
+  const { perfil } = usePerfil();
+  const navigate = useNavigate();
+  const [abaAtiva, setAbaAtiva] = useState<Aba>('dashboard');
+
+  if (!perfil) {
+    return (
+      <div className="flex-1 bg-[#0b0f19] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  const adminCargo = (perfil.cargo as CargoAdmin) || 'jogador';
+  if (adminCargo === 'jogador') {
+    return (
+      <div className="flex-1 bg-[#0b0f19] flex flex-col items-center justify-center gap-4 p-8">
+        <div className="w-16 h-16 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shadow-lg">
+          <ShieldCheck className="w-8 h-8 text-red-400" />
+        </div>
+        <h1 className="text-white font-black text-xl uppercase">Acesso Restrito</h1>
+        <p className="text-zinc-400 text-sm text-center max-w-xs">Você não tem permissão para acessar esta área.</p>
+      </div>
+    );
+  }
+
+  const permissoes = PERMISSOES_POR_CARGO[adminCargo];
+  const isAdminOuProprietario = adminCargo === 'admin' || adminCargo === 'proprietario';
+
+  const abas: { id: Aba; label: string; icon: React.ElementType; bloqueada: boolean }[] = [
+    { id: 'dashboard',  label: 'Visão',      icon: LayoutDashboard, bloqueada: false },
+    { id: 'saldomc',    label: 'Saldo E',   icon: Coins,           bloqueada: !permissoes.gerenciarSaldoMc },
+    { id: 'ranking',    label: 'Ranking',    icon: Trophy,          bloqueada: !permissoes.gerenciarSaldos },
+    { id: 'highlights', label: 'Highlights', icon: Film,            bloqueada: !permissoes.gerenciarSaldos },
+    { id: 'cargos',     label: 'Cargos',     icon: GraduationCap,   bloqueada: !permissoes.gerenciarCargos && adminCargo !== 'proprietario' },
+    { id: 'contatos',   label: 'Contatos',   icon: Mail,            bloqueada: !isAdminOuProprietario },
+    { id: 'punicoes',   label: 'Punições',   icon: Ban,             bloqueada: !isAdminOuProprietario },
+    { id: 'senhas',     label: 'Senhas',     icon: KeyRound,        bloqueada: adminCargo !== 'proprietario' },
+    { id: 'saques',     label: 'Saques',     icon: Banknote,        bloqueada: !isAdminOuProprietario },
+  ];
+
+  return (
+    <div className="flex h-screen bg-[#0b0f19] text-white overflow-hidden bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,184,0,0.08),rgba(255,255,255,0))]">
+      {/* ── SIDEBAR PRÓPRIA ───────────────────────── */}
+      <aside className="hidden md:flex w-[230px] xl:w-[250px] shrink-0 flex-col border-r border-white/10 bg-[#0f1422]/95 backdrop-blur-xl relative z-20 shadow-2xl">
+        {/* Logo / marca */}
+        <div className="flex items-center gap-3 px-5 pt-6 pb-5 border-b border-white/10">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/35 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,184,0,0.15)]">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-black text-white uppercase tracking-tighter leading-tight">Painel Admin</h1>
+            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">M7 Arena</p>
+          </div>
+        </div>
+
+        {/* Navegação vertical */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 custom-scrollbar">
+          {abas.map(({ id, label, icon: Icon, bloqueada }) => {
+            const ativa = abaAtiva === id;
+            return (
+              <button
+                key={id}
+                onClick={() => !bloqueada && setAbaAtiva(id)}
+                disabled={bloqueada}
+                className={`group relative w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-left ${
+                  ativa
+                    ? 'bg-gradient-to-r from-primary to-yellow-500 text-black shadow-lg shadow-primary/20 font-black'
+                    : bloqueada
+                    ? 'text-zinc-600 cursor-not-allowed'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${ativa ? 'text-black' : bloqueada ? 'text-zinc-600' : 'text-primary/80 group-hover:text-primary'}`} />
+                <span className="flex-1">{label}</span>
+                {bloqueada && <Lock className="w-3 h-3 shrink-0" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Usuário + voltar ao site */}
+        <div className="px-4 py-5 border-t border-white/10 space-y-3 bg-[#0d121e]/80">
+          <div className="flex items-center gap-3 px-1">
+            <div className="w-9 h-9 rounded-full bg-[#0e1320] overflow-hidden shrink-0 border border-primary/40 shadow-sm">
+              {perfil.avatar ? (
+                <img src={perfil.avatar} className="w-full h-full object-cover" alt="" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xs font-black">
+                  {(perfil.riotId || perfil.nome || '?')[0].toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-black text-xs truncate">{perfil.riotId || perfil.nome}</p>
+              <BadgeCargo cargo={adminCargo} />
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/lobby')}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-zinc-300 hover:text-white hover:bg-white/10 transition-all font-black text-[10px] uppercase tracking-widest shadow-sm"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Voltar ao site
+          </button>
+        </div>
+      </aside>
+
+      {/* ── CONTEÚDO ─────────────────────────────── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Header mobile: voltar + título + tópicos horizontais */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-4 border-b border-white/10 bg-[#0f1422]/95 backdrop-blur-xl">
+          <button
+            onClick={() => navigate('/lobby')}
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-300 hover:text-white hover:bg-white/20 transition-all shrink-0"
+            aria-label="Voltar ao site"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="min-w-0">
+            <h1 className="text-base font-black text-white uppercase tracking-tighter leading-tight">Painel Admin</h1>
+            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">{perfil.riotId || perfil.nome}</p>
+          </div>
+        </div>
+
+        {/* Tópicos em scroll horizontal no mobile */}
+        <div className="md:hidden flex gap-1.5 p-2.5 bg-[#0f1422]/80 border-b border-white/10 overflow-x-auto">
+          {abas.map(({ id, label, icon: Icon, bloqueada }) => (
+            <button
+              key={id}
+              onClick={() => !bloqueada && setAbaAtiva(id)}
+              disabled={bloqueada}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
+                abaAtiva === id
+                  ? 'bg-gradient-to-r from-primary to-yellow-500 text-black font-black shadow-md'
+                  : bloqueada
+                  ? 'text-zinc-600 cursor-not-allowed'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              {bloqueada && <Lock className="w-2.5 h-2.5" />}
+            </button>
+          ))}
+        </div>
+
+        {/* Corpo rolável */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {/* Header (gradient + glow) */}
+          <div className="relative border-b border-white/10 bg-gradient-to-b from-primary/[0.08] via-white/[0.02] to-transparent">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,184,0,0.12),transparent_70%)] pointer-events-none" />
+            <div className="relative max-w-6xl mx-auto px-4 py-8 lg:py-10">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/35 flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(255,184,0,0.15)]">
+                    <ShieldCheck className="w-7 h-7 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <h1 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter">Painel Admin</h1>
+                      <BadgeCargo cargo={adminCargo} />
+                    </div>
+                    <p className="text-zinc-400 text-sm font-medium mt-1">M7 Arena · gerenciamento da plataforma</p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex flex-col items-end gap-1">
+                  <p className="text-white font-black text-sm">{perfil.riotId || perfil.nome}</p>
+                  <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Logado como admin</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 space-y-6 lg:space-y-8">
+            {/* ── STATS CARDS ────────────────────────── */}
+            <StatsCards />
+
+            {/* ── CONTEÚDO DA ABA ─────────────────────── */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={abaAtiva}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+              >
+                {abaAtiva === 'dashboard'  && <AbaDashboard onNavigate={setAbaAtiva} adminCargo={adminCargo} />}
+                {abaAtiva === 'saldomc'    && <AbaSaldoMC adminCargo={adminCargo} />}
+                {abaAtiva === 'ranking'    && <AbaRanking adminCargo={adminCargo} />}
+                {abaAtiva === 'highlights' && <AbaHighlights adminCargo={adminCargo} />}
+                {abaAtiva === 'cargos'     && <AbaCargos adminCargo={adminCargo} />}
+                {abaAtiva === 'contatos'   && <AbaContatos adminCargo={adminCargo} />}
+                {abaAtiva === 'punicoes'   && <AbaPunicoes adminCargo={adminCargo} />}
+                {abaAtiva === 'senhas'     && <AbaSenhas adminCargo={adminCargo} />}
+                {abaAtiva === 'saques'     && <SaquesPix />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

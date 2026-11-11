@@ -30,6 +30,7 @@ import { invalidateTournament, loadShell, loadSection } from "./tournamentCache"
 import { INITIAL_BRACKET_DATA, migrateBracketData, advanceTeamsInBracket } from "./domain/bracket";
 import { History, Eye, List, Clock, GitBranch, type LucideIcon } from "lucide-react";
 import { sameTeamRef } from "./domain/team-ref";
+import { semHorario } from "./domain/agendamento";
 
 export interface CampeonatoContextType {
   id: string;
@@ -1149,8 +1150,6 @@ export function CampeonatoProvider({
         : editFormData.action;
     // Arbitragem é ato do admin: define data/hora e confirma na hora.
     if (acao === "arbitrate" && !isAdmin) acao = "propose";
-    const semHorario = (data?: string, hora?: string) =>
-      !data || data === "A COMBINAR" || !hora || hora === "--:--";
 
     if (acao === "accept") {
       if (semHorario(match.data, match.hora)) {

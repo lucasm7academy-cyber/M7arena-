@@ -12,8 +12,8 @@ import {
   toLegacyTournamentShell,
   toLegacyTournamentSection,
   buildTimesInscritosResumo,
-} from "../src/lib/tournament-shape.js";
-import { redigirCodigosDaSerie } from "../src/lib/tournament-access.js";
+} from "../src/modules/tournaments/tournament-shape.js";
+import { redigirCodigosDaSerie } from "../src/modules/tournaments/tournament-access.js";
 
 const U = (n: number) => `cccccccc-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `dddddddd-0000-0000-0000-00000000000${n}`;

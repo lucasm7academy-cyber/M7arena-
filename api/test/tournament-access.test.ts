@@ -6,7 +6,7 @@ import { games, gameAccounts } from "../../db/schema/games.js";
 import { teams, teamMembers } from "../../db/schema/teams.js";
 import { tournaments, tournamentTeams } from "../../db/schema/tournaments.js";
 import { setupDb } from "./helpers.js";
-import { transferirJogadorParaTime } from "../src/lib/team-membership.js";
+import { transferirJogadorParaTime } from "../src/modules/teams/team-membership.js";
 import {
   identidadeAcessoCampeonato,
   acessoNoCampeonato,
@@ -14,7 +14,7 @@ import {
   resolverPermissaoSerie,
   podeGerenciarCampeonato,
   timeDoUsuarioNaSerie,
-} from "../src/lib/tournament-access.js";
+} from "../src/modules/tournaments/tournament-access.js";
 
 const U = (n: number) => `aaaaaaab-0000-0000-0000-00000000000${n}`;
 const T = (n: number) => `bbbbbbbb-0000-0000-0000-00000000000${n}`;

@@ -6,7 +6,7 @@ import { setupDb } from "./helpers.js";
 import { validarPermissaoBucketPublico } from "../src/routes/upload.js";
 
 /**
- * Restrição por dono nos buckets públicos (ARQUITETURA.md §6 — "Autorização por
+ * Restrição por dono nos buckets públicos (README.md — Uploads e autorização — "Autorização por
  * dono"). A função é a mesma que a rota /api/upload usa: o teste exercita a
  * regra sem precisar subir o HTTP.
  */

@@ -8,11 +8,11 @@ import { matches } from "../../db/schema/matches.js";
 import { tournaments, tournamentMatches } from "../../db/schema/tournaments.js";
 import { transmissoes, escalasTransmissao } from "../../db/schema/conteudo.js";
 import { setupDb } from "./helpers.js";
-import { encerrarTransmissoesDoJogo } from "../src/lib/transmissoes.js";
+import { encerrarTransmissoesDoJogo } from "../src/modules/streams/transmissoes.js";
 import {
   listarAgenda, pegarVaga, soltarVaga, entrarNoAr, listarVitrine, minhaTransmissao,
   instanteJogo, dataLabelSP, montarTituloJogo, dentroDaJanela, diaSP,
-} from "../src/lib/streams.js";
+} from "../src/modules/streams/streams.js";
 
 describe("transmissões — encerramento automático", () => {
   let ctx: any;
@@ -59,7 +59,7 @@ describe("transmissões — encerramento automático", () => {
     const [tx] = await db.insert(transmissoes).values({
       userId: u, twitchChannel: "canal", matchId: jogo.id, ativo: true, modo: "campeonato",
     }).returning();
-    const { storeCronograma } = await import("../src/lib/tournament-store.js");
+    const { storeCronograma } = await import("../src/modules/tournaments/tournament-store.js");
     await storeCronograma(camp.id, [{
       id: jogo.matchKey, fase: "Grupo A", timeA: "AAA", timeB: "BBB",
       status: "finalizado", data: "2026-12-03", hora: "20:00", placar: "2 - 0",

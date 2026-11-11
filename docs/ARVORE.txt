@@ -1,0 +1,680 @@
+M7arenaSite/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── api/
+│   ├── scripts/
+│   │   ├── test-guest-recebe-previa.mjs
+│   │   └── test-realtime.mjs
+│   ├── src/
+│   │   ├── lib/
+│   │   │   ├── draft/
+│   │   │   │   ├── modos/
+│   │   │   │   │   ├── 1v1.ts
+│   │   │   │   │   ├── 5v5.ts
+│   │   │   │   │   ├── aram.ts
+│   │   │   │   │   └── time-vs-time.ts
+│   │   │   │   ├── flow.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── regras.ts
+│   │   │   │   └── tipos.ts
+│   │   │   ├── acesso-sala.ts
+│   │   │   ├── atualizar-elos.ts
+│   │   │   ├── content.ts
+│   │   │   ├── ddragon.ts
+│   │   │   ├── elegibilidade.ts
+│   │   │   ├── escrow.ts
+│   │   │   ├── match-flow.ts
+│   │   │   ├── match-shape.ts
+│   │   │   ├── mercado-pago.ts
+│   │   │   ├── notifications.ts
+│   │   │   ├── pagamentos.ts
+│   │   │   ├── password-reset.ts
+│   │   │   ├── profile-shape.ts
+│   │   │   ├── README.md
+│   │   │   ├── reconciliar-handles.ts
+│   │   │   ├── sala-campeonato-draft.ts
+│   │   │   ├── sala-campeonato.ts
+│   │   │   ├── serie-campeonato.ts
+│   │   │   ├── serie-livre.ts
+│   │   │   ├── serie-sala.ts
+│   │   │   ├── session.ts
+│   │   │   ├── tierlist.ts
+│   │   │   ├── verificar-partida.ts
+│   │   │   └── withdrawals.ts
+│   │   ├── modules/
+│   │   │   ├── admin/
+│   │   │   │   ├── password-reset-routes.ts
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── bets/
+│   │   │   │   ├── bets.ts
+│   │   │   │   ├── live-bets.ts
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── content/
+│   │   │   │   ├── highlights-routes.ts
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── economy/
+│   │   │   │   ├── payments-routes.ts
+│   │   │   │   ├── README.md
+│   │   │   │   ├── wallet-routes.ts
+│   │   │   │   └── withdrawals-routes.ts
+│   │   │   ├── identity/
+│   │   │   │   ├── google-routes.ts
+│   │   │   │   ├── password-reset-routes.ts
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── matches/
+│   │   │   │   ├── actions-routes.ts
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── notifications/
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── players/
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── profiles/
+│   │   │   │   ├── README.md
+│   │   │   │   └── routes.ts
+│   │   │   ├── streams/
+│   │   │   │   ├── README.md
+│   │   │   │   ├── routes.ts
+│   │   │   │   ├── streams.ts
+│   │   │   │   └── transmissoes.ts
+│   │   │   ├── teams/
+│   │   │   │   ├── README.md
+│   │   │   │   ├── routes.ts
+│   │   │   │   ├── team-membership.ts
+│   │   │   │   └── team-ownership.ts
+│   │   │   └── tournaments/
+│   │   │       ├── README.md
+│   │   │       ├── routes.ts
+│   │   │       ├── tournament-access.ts
+│   │   │       ├── tournament-pdl.ts
+│   │   │       ├── tournament-shape.ts
+│   │   │       ├── tournament-store.ts
+│   │   │       └── tournament-tiebreakers.ts
+│   │   ├── realtime/
+│   │   │   ├── index.ts
+│   │   │   └── README.md
+│   │   ├── routes/
+│   │   │   ├── og.ts
+│   │   │   ├── README.md
+│   │   │   ├── riot.ts
+│   │   │   ├── tierlists.ts
+│   │   │   └── upload.ts
+│   │   ├── cron.ts
+│   │   ├── db.ts
+│   │   └── index.ts
+│   ├── test/
+│   │   ├── admin-router.test.ts
+│   │   ├── atualizar-elos.test.ts
+│   │   ├── bets.test.ts
+│   │   ├── classificacao.test.ts
+│   │   ├── cron.test.ts
+│   │   ├── draft-rules.test.ts
+│   │   ├── draft.test.ts
+│   │   ├── elegibilidade.test.ts
+│   │   ├── escrow-timeout.test.ts
+│   │   ├── escrow.test.ts
+│   │   ├── estados.test.ts
+│   │   ├── helpers.ts
+│   │   ├── match-card.test.ts
+│   │   ├── password-reset.test.ts
+│   │   ├── payments.test.ts
+│   │   ├── profile-privacidade.test.ts
+│   │   ├── reconciliar-handles.test.ts
+│   │   ├── riot-queues.test.ts
+│   │   ├── sala-campeonato-draft.test.ts
+│   │   ├── sala-campeonato-schema.test.ts
+│   │   ├── sala-campeonato.test.ts
+│   │   ├── serie-5v5.test.ts
+│   │   ├── serie-campeonato.test.ts
+│   │   ├── smoke-serie-5v5.test.ts
+│   │   ├── streams.test.ts
+│   │   ├── team-membership.test.ts
+│   │   ├── team-ownership.test.ts
+│   │   ├── tiebreakers.test.ts
+│   │   ├── tournament-access.test.ts
+│   │   ├── tournament-agendamento.test.ts
+│   │   ├── tournament-bracket.test.ts
+│   │   ├── tournament-inscricao.test.ts
+│   │   ├── tournament-pdl.test.ts
+│   │   ├── tournament-shape.test.ts
+│   │   ├── upload-otimizacao.test.ts
+│   │   ├── upload-permissao.test.ts
+│   │   ├── verificar-endpoint.test.ts
+│   │   ├── verificar-partida.test.ts
+│   │   ├── webhook.test.ts
+│   │   └── withdrawals.test.ts
+│   ├── .env.example
+│   ├── package-lock.json
+│   ├── package.json
+│   └── tsconfig.json
+├── db/
+│   ├── migrations/
+│   │   ├── meta/
+│   │   │   ├── 0000_snapshot.json
+│   │   │   ├── 0001_snapshot.json
+│   │   │   ├── 0002_snapshot.json
+│   │   │   ├── 0003_snapshot.json
+│   │   │   ├── 0004_snapshot.json
+│   │   │   ├── 0005_snapshot.json
+│   │   │   ├── 0006_snapshot.json
+│   │   │   ├── 0007_snapshot.json
+│   │   │   ├── 0008_snapshot.json
+│   │   │   ├── 0009_snapshot.json
+│   │   │   ├── 0010_snapshot.json
+│   │   │   ├── 0012_snapshot.json
+│   │   │   ├── 0013_snapshot.json
+│   │   │   ├── 0014_snapshot.json
+│   │   │   ├── 0015_snapshot.json
+│   │   │   ├── 0016_snapshot.json
+│   │   │   ├── 0017_snapshot.json
+│   │   │   ├── 0018_snapshot.json
+│   │   │   ├── 0019_snapshot.json
+│   │   │   ├── 0020_snapshot.json
+│   │   │   ├── 0021_snapshot.json
+│   │   │   ├── 0022_snapshot.json
+│   │   │   ├── 0024_snapshot.json
+│   │   │   ├── 0025_snapshot.json
+│   │   │   ├── 0026_snapshot.json
+│   │   │   ├── 0028_snapshot.json
+│   │   │   ├── 0032_snapshot.json
+│   │   │   ├── 0033_snapshot.json
+│   │   │   └── _journal.json
+│   │   ├── 0000_brave_korg.sql
+│   │   ├── 0001_robust_the_phantom.sql
+│   │   ├── 0002_teams_swap.sql
+│   │   ├── 0003_seed_games.sql
+│   │   ├── 0004_shiny_sumo.sql
+│   │   ├── 0005_campeonatos_normalize.sql
+│   │   ├── 0006_content_swap.sql
+│   │   ├── 0007_matches_salas_swap.sql
+│   │   ├── 0008_matches_sala_num.sql
+│   │   ├── 0009_white_wallflower.sql
+│   │   ├── 0010_slimy_dragon_man.sql
+│   │   ├── 0011_ledger_refund_repeat.sql
+│   │   ├── 0012_magical_sharon_ventura.sql
+│   │   ├── 0013_advertencias_ban.sql
+│   │   ├── 0014_rodizio_codigos_lru.sql
+│   │   ├── 0015_disputa_contestacao_url.sql
+│   │   ├── 0016_transmissoes.sql
+│   │   ├── 0017_vitoria_motivo_1v1.sql
+│   │   ├── 0018_workable_clea.sql
+│   │   ├── 0019_gifted_mac_gargan.sql
+│   │   ├── 0020_separar_fila_codigos_x1.sql
+│   │   ├── 0021_campeonato_verificacao_serie.sql
+│   │   ├── 0022_bet_individual.sql
+│   │   ├── 0023_bet_champion.sql
+│   │   ├── 0024_gray_gressill.sql
+│   │   ├── 0025_glamorous_dormammu.sql
+│   │   ├── 0026_amused_king_cobra.sql
+│   │   ├── 0027_quick_mesmero.sql
+│   │   ├── 0028_sorteio_forcado.sql
+│   │   ├── 0029_formato_sala_livre.sql
+│   │   ├── 0030_serie_livre_placar.sql
+│   │   ├── 0031_live_sala_id.sql
+│   │   ├── 0032_amused_santa_claus.sql
+│   │   ├── 0033_stiff_hemingway.sql
+│   │   └── 0034_blind_codes.sql
+│   ├── schema/
+│   │   ├── apostas.ts
+│   │   ├── bets.ts
+│   │   ├── conteudo.ts
+│   │   ├── economia.ts
+│   │   ├── games.ts
+│   │   ├── identidade.ts
+│   │   ├── index.ts
+│   │   ├── matches.ts
+│   │   ├── retencao.ts
+│   │   ├── teams.ts
+│   │   ├── tierlist.ts
+│   │   └── tournaments.ts
+│   ├── index.ts
+│   └── README.md
+├── docs/
+│   ├── historico/
+│   ├── modules/
+│   │   └── INDEX.md
+│   ├── planos/
+│   ├── superpowers/
+│   │   ├── plans/
+│   │   └── specs/
+│   ├── ARVORE.txt
+│   └── INDEX.md
+├── infra/
+│   ├── docker-compose.local.yml
+│   ├── docker-compose.yml
+│   ├── Dockerfile.nginx
+│   ├── nginx.conf
+│   ├── nginx.local.conf
+│   ├── pgbouncer.ini
+│   ├── postgresql.conf
+│   └── userlist.txt
+├── mcp/
+│   ├── browser-server/
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   └── server.js
+│   ├── ops-server/
+│   │   ├── index.js
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   └── security.js
+│   └── status-server/
+│       ├── lib/
+│       └── scripts/
+├── scripts/
+│   ├── campeonatos/
+│   │   └── sortear-semana.mjs
+│   ├── tests/
+│   │   └── gerar-arvore.test.mjs
+│   ├── gerar-arvore.mjs
+│   ├── gerar-posicoes-campeoes.mjs
+│   ├── README.md
+│   ├── smoke-clock-sync-vps.mjs
+│   ├── smoke-clock-sync.mjs
+│   ├── smoke-confirmacao-concorrente.mjs
+│   ├── smoke-draft.mjs
+│   ├── smoke-vps-codigo.mjs
+│   ├── smoke-vps-draft.mjs
+│   ├── smoke-vps-sala-campeonato.mjs
+│   ├── smoke-vps-salas.mjs
+│   └── verify-swap.js
+├── tools/
+│   └── graph-rag/
+│       ├── tests/
+│       │   ├── browser-smoke.mjs
+│       │   ├── fixtures.mjs
+│       │   ├── graph.test.mjs
+│       │   ├── real-cases.mjs
+│       │   ├── real-queries.test.mjs
+│       │   ├── relevance.test.mjs
+│       │   ├── search.test.mjs
+│       │   ├── storage.test.mjs
+│       │   └── visualize.test.mjs
+│       ├── viewer/
+│       │   ├── app.js
+│       │   ├── model.mjs
+│       │   ├── render.mjs
+│       │   └── style.css
+│       ├── cli.mjs
+│       ├── documents.mjs
+│       ├── extract.mjs
+│       ├── indexer.mjs
+│       ├── model.mjs
+│       ├── README.md
+│       ├── relevance.mjs
+│       ├── scope.mjs
+│       ├── search.mjs
+│       ├── storage.mjs
+│       └── visualize.mjs
+├── web/
+│   ├── public/
+│   │   ├── images/
+│   │   │   ├── patrocinadores/
+│   │   │   │   ├── m7-arena.png
+│   │   │   │   └── mobyle-store.svg
+│   │   │   ├── ranking/
+│   │   │   │   ├── top1.webp
+│   │   │   │   ├── top2.webp
+│   │   │   │   └── top3.webp
+│   │   │   ├── tierlist/
+│   │   │   │   └── jhin.png
+│   │   │   ├── 25947-5-twisted-fate-picture_800x800.webp
+│   │   │   ├── animated-battle-academia.webm
+│   │   │   ├── animated-highnoon-lucian.webm
+│   │   │   ├── be-icon.png
+│   │   │   ├── copa-halloween-2026.webp
+│   │   │   ├── cropped-cropped-LOGO-M7-PNG-1 (4).png
+│   │   │   ├── fundo fanaticaaa.webp
+│   │   │   ├── fundo_elite.jpg
+│   │   │   ├── fundoCard1v1.webp
+│   │   │   ├── fundoCard5v5.webp
+│   │   │   ├── fundoCardAram.webp
+│   │   │   ├── fundoCardTime.webp
+│   │   │   ├── fundoryzecortado.webp
+│   │   │   ├── hero-halloween-2026.webp
+│   │   │   ├── heroSlide1.webp
+│   │   │   ├── howling_abyss_night.webp
+│   │   │   ├── icon-poro.png
+│   │   │   ├── lucasEdu.webp
+│   │   │   ├── mapa2.webp
+│   │   │   ├── poro1.webp
+│   │   │   ├── poro_step1.webp
+│   │   │   ├── poro_step2.webp
+│   │   │   ├── poro_step3.webp
+│   │   │   ├── poro_step4.webp
+│   │   │   └── tutorial-codigo.webp
+│   │   ├── lanes/
+│   │   │   ├── Bottom_icon.png
+│   │   │   ├── icon-position-fill.png
+│   │   │   ├── Jungle_icon.png
+│   │   │   ├── Middle_icon.png
+│   │   │   ├── Support_icon.png
+│   │   │   └── Top_icon.png
+│   │   ├── lanes_brancas/
+│   │   │   ├── Bottom_iconB.png
+│   │   │   ├── coach_iconB.svg
+│   │   │   ├── icon-position-fillB.png
+│   │   │   ├── Jungle_iconB.png
+│   │   │   ├── Middle_iconB.png
+│   │   │   ├── Support_iconB.png
+│   │   │   └── Top_iconB.png
+│   │   ├── ranks/
+│   │   │   ├── crests/
+│   │   │   │   ├── bronze.png
+│   │   │   │   ├── bronze.svg
+│   │   │   │   ├── challenger.png
+│   │   │   │   ├── challenger.svg
+│   │   │   │   ├── diamond.png
+│   │   │   │   ├── diamond.svg
+│   │   │   │   ├── emerald.png
+│   │   │   │   ├── emerald.svg
+│   │   │   │   ├── gold.png
+│   │   │   │   ├── gold.svg
+│   │   │   │   ├── grandmaster.png
+│   │   │   │   ├── grandmaster.svg
+│   │   │   │   ├── iron.png
+│   │   │   │   ├── iron.svg
+│   │   │   │   ├── master.png
+│   │   │   │   ├── master.svg
+│   │   │   │   ├── platinum.png
+│   │   │   │   ├── platinum.svg
+│   │   │   │   ├── silver.png
+│   │   │   │   └── silver.svg
+│   │   │   ├── molduras/
+│   │   │   │   ├── challenger.webp
+│   │   │   │   ├── grandmaster.webp
+│   │   │   │   └── master.webp
+│   │   │   ├── bronze.png
+│   │   │   ├── challenger.png
+│   │   │   ├── diamond.png
+│   │   │   ├── emerald.png
+│   │   │   ├── gold.png
+│   │   │   ├── grandmaster.png
+│   │   │   ├── master.png
+│   │   │   ├── platinum.png
+│   │   │   └── silver.png
+│   │   ├── sounds/
+│   │   │   ├── draft/
+│   │   │   │   ├── ban-do-time-aliado.ogg
+│   │   │   │   ├── ban-do-time-inimigo.ogg
+│   │   │   │   ├── bans-travados.ogg
+│   │   │   │   ├── draft-finalizado.ogg
+│   │   │   │   ├── grid-clique.ogg
+│   │   │   │   ├── inicio-do-ban.ogg
+│   │   │   │   ├── lock-in-clique.ogg
+│   │   │   │   ├── lock-in-hover.ogg
+│   │   │   │   ├── pick-negado.ogg
+│   │   │   │   ├── relogio-tick-curto.ogg
+│   │   │   │   ├── seu-ban.ogg
+│   │   │   │   └── sua-vez-de-escolher.ogg
+│   │   │   ├── click.mp3
+│   │   │   ├── click1.mp3
+│   │   │   ├── confirmacao-abertura.mp3
+│   │   │   ├── confirmacao-musica.mp3
+│   │   │   └── confirmacao-tick.mp3
+│   │   ├── robots.txt
+│   │   └── sitemap.xml
+│   ├── scripts/
+│   │   ├── check-cut-borders.mjs
+│   │   ├── optimize-images.mjs
+│   │   └── README.md
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── player.ts
+│   │   │   ├── riot.ts
+│   │   │   └── salamod1.ts
+│   │   ├── components/
+│   │   │   ├── admin/
+│   │   │   ├── draft/
+│   │   │   │   ├── championPositions.ts
+│   │   │   │   ├── DraftRoom.tsx
+│   │   │   │   ├── draftSounds.ts
+│   │   │   │   └── draftTypes.ts
+│   │   │   ├── home/
+│   │   │   ├── icons/
+│   │   │   │   └── GoldEssenceIcon.tsx
+│   │   │   ├── layout/
+│   │   │   │   └── LayoutWrapper.tsx
+│   │   │   ├── modals/
+│   │   │   │   └── deposit/
+│   │   │   ├── notifications/
+│   │   │   │   └── VerificacaoStatus.tsx
+│   │   │   ├── partidas/
+│   │   │   │   ├── HeaderFinalizada.tsx
+│   │   │   │   ├── ModaisElegibilidade.tsx
+│   │   │   │   └── VagaSlot.tsx
+│   │   │   ├── perfil/
+│   │   │   ├── players/
+│   │   │   │   └── playerMeta.ts
+│   │   │   ├── ui/
+│   │   │   │   ├── CutCard.tsx
+│   │   │   │   ├── MCIcon.tsx
+│   │   │   │   ├── README.md
+│   │   │   │   └── VipBadge.tsx
+│   │   │   ├── ConviteScrim.tsx
+│   │   │   └── Toast.tsx
+│   │   ├── config/
+│   │   │   └── adminPermissoes.ts
+│   │   ├── contexts/
+│   │   │   ├── AuthContext.tsx
+│   │   │   ├── PerfilContext.tsx
+│   │   │   ├── RoleContext.tsx
+│   │   │   └── VerificacaoContext.tsx
+│   │   ├── features/
+│   │   │   ├── admin/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── AdminCargos.tsx
+│   │   │   │   │   ├── AdminContatos.tsx
+│   │   │   │   │   ├── AdminPunicoes.tsx
+│   │   │   │   │   └── AdminSenhas.tsx
+│   │   │   │   ├── pages/
+│   │   │   │   │   └── Admin.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── apostas/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── BilheteAtivoView.tsx
+│   │   │   │   │   ├── FilaSelector.tsx
+│   │   │   │   │   ├── HistoricoApostas.tsx
+│   │   │   │   │   ├── ItemMercado.tsx
+│   │   │   │   │   ├── ModalResultadoAposta.tsx
+│   │   │   │   │   └── SummonerCard.tsx
+│   │   │   │   ├── pages/
+│   │   │   │   │   └── ApostaIndividualPage.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── campeonatos/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── modals/
+│   │   │   │   │   │   ├── AdminMatchModal.tsx
+│   │   │   │   │   │   ├── AgendamentoModal.tsx
+│   │   │   │   │   │   ├── BracketModal.tsx
+│   │   │   │   │   │   ├── ConfiguracoesCampeonatoModal.tsx
+│   │   │   │   │   │   ├── InscricaoModal.tsx
+│   │   │   │   │   │   └── RegrasModal.tsx
+│   │   │   │   │   ├── AdminCriarJogo.tsx
+│   │   │   │   │   ├── BracketMatch.tsx
+│   │   │   │   │   ├── Chaves.tsx
+│   │   │   │   │   ├── Cronograma.tsx
+│   │   │   │   │   ├── cut-edge.ts
+│   │   │   │   │   ├── dates.ts
+│   │   │   │   │   ├── DoubleEliminationBracket.tsx
+│   │   │   │   │   ├── DoubleSideBracket.tsx
+│   │   │   │   │   ├── FormCriarCampeonato.tsx
+│   │   │   │   │   ├── GroupStage.tsx
+│   │   │   │   │   ├── Grupos.tsx
+│   │   │   │   │   ├── Historico.tsx
+│   │   │   │   │   ├── icons.ts
+│   │   │   │   │   ├── ListaCampeonatosAdmin.tsx
+│   │   │   │   │   ├── ListaCronograma.tsx
+│   │   │   │   │   ├── LowerRound.tsx
+│   │   │   │   │   ├── MeusJogosPendentes.tsx
+│   │   │   │   │   ├── TodosJogosPendentes.tsx
+│   │   │   │   │   ├── UpperRound.tsx
+│   │   │   │   │   └── VisaoGeral.tsx
+│   │   │   │   ├── domain/
+│   │   │   │   │   ├── agendamento.test.ts
+│   │   │   │   │   ├── agendamento.ts
+│   │   │   │   │   ├── bracket.ts
+│   │   │   │   │   ├── imagem.ts
+│   │   │   │   │   └── team-ref.ts
+│   │   │   │   ├── pages/
+│   │   │   │   │   ├── CampeonatoDetalhes.tsx
+│   │   │   │   │   ├── campeonatos.tsx
+│   │   │   │   │   └── createCampPage.tsx
+│   │   │   │   ├── CampeonatoContext.tsx
+│   │   │   │   ├── mappers.ts
+│   │   │   │   ├── README.md
+│   │   │   │   ├── tournamentCache.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── economy/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── CarteiraEStrikes.tsx
+│   │   │   │   │   ├── DepositModal.tsx
+│   │   │   │   │   ├── DepositTab.tsx
+│   │   │   │   │   ├── SaquesPix.tsx
+│   │   │   │   │   └── SaqueTab.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── home/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── HalloweenScenery.tsx
+│   │   │   │   │   ├── TopTeamsStickers.tsx
+│   │   │   │   │   ├── upcoming-matches.css
+│   │   │   │   │   └── UpcomingMatches.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useUpcomingMatches.ts
+│   │   │   │   ├── pages/
+│   │   │   │   │   └── Lobby.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── identity/
+│   │   │   │   ├── pages/
+│   │   │   │   │   ├── Login.tsx
+│   │   │   │   │   └── RedefinirSenha.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── institutional/
+│   │   │   │   ├── pages/
+│   │   │   │   │   ├── Politicas.tsx
+│   │   │   │   │   ├── QuemSomos.tsx
+│   │   │   │   │   └── Tutorial.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── m7-academy-tierlist/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── AvailabilityEditor.tsx
+│   │   │   │   │   ├── ChampionPicker.tsx
+│   │   │   │   │   ├── Field.tsx
+│   │   │   │   │   ├── PlayerForm.tsx
+│   │   │   │   │   ├── ProgressPanel.tsx
+│   │   │   │   │   ├── RiotLookup.tsx
+│   │   │   │   │   ├── SubmitPanel.tsx
+│   │   │   │   │   ├── SuccessScreen.tsx
+│   │   │   │   │   ├── TierlistBoard.tsx
+│   │   │   │   │   └── TierlistSection.tsx
+│   │   │   │   ├── data/
+│   │   │   │   │   └── champions.ts
+│   │   │   │   ├── api.ts
+│   │   │   │   ├── constants.ts
+│   │   │   │   ├── README.md
+│   │   │   │   ├── TierListExperience.tsx
+│   │   │   │   ├── TierlistPage.tsx
+│   │   │   │   ├── types.ts
+│   │   │   │   └── utils.ts
+│   │   │   ├── notifications/
+│   │   │   │   ├── components/
+│   │   │   │   │   └── NotificationBell.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── players/
+│   │   │   │   ├── pages/
+│   │   │   │   │   └── Players.tsx
+│   │   │   │   ├── services/
+│   │   │   │   │   └── catalog.ts
+│   │   │   │   └── README.md
+│   │   │   ├── profile/
+│   │   │   │   ├── pages/
+│   │   │   │   │   ├── Perfil.tsx
+│   │   │   │   │   └── Vincular.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── sala-campeonato/
+│   │   │   │   ├── ModalResultadoManual.tsx
+│   │   │   │   ├── README.md
+│   │   │   │   └── SalaCampeonato.tsx
+│   │   │   ├── salas/
+│   │   │   │   ├── components/
+│   │   │   │   │   └── ChatDaSala.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useSalaChat.ts
+│   │   │   │   ├── pages/
+│   │   │   │   │   ├── Jogar.tsx
+│   │   │   │   │   ├── MinhasPartidas.dom.test.tsx
+│   │   │   │   │   ├── MinhasPartidas.tsx
+│   │   │   │   │   └── SalaMod1.tsx
+│   │   │   │   └── README.md
+│   │   │   ├── streams/
+│   │   │   │   ├── components/
+│   │   │   │   │   └── AgendaTransmissoes.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useTransmissoesAtivas.ts
+│   │   │   │   ├── pages/
+│   │   │   │   │   └── Streamers.tsx
+│   │   │   │   ├── README.md
+│   │   │   │   └── types.ts
+│   │   │   └── teams/
+│   │   │       ├── components/
+│   │   │       │   ├── modals/
+│   │   │       │   │   ├── ConfirmLeaveModal.tsx
+│   │   │       │   │   ├── CreateTeamModal.tsx
+│   │   │       │   │   ├── EditTeamModal.tsx
+│   │   │       │   │   ├── InvitePlayerModal.tsx
+│   │   │       │   │   ├── ManageLineupModal.tsx
+│   │   │       │   │   └── ModalBase.tsx
+│   │   │       │   ├── TeamCard.tsx
+│   │   │       │   └── TeamRoster.tsx
+│   │   │       ├── pages/
+│   │   │       │   ├── equipes.tsx
+│   │   │       │   └── TimePage.tsx
+│   │   │       ├── README.md
+│   │   │       ├── roster.ts
+│   │   │       └── types.ts
+│   │   ├── hooks/
+│   │   │   ├── useSalaRealtime.ts
+│   │   │   ├── useSalaSimples.ts
+│   │   │   └── useSound.ts
+│   │   ├── lib/
+│   │   │   ├── api-content.ts
+│   │   │   ├── api.ts
+│   │   │   ├── clockSync.ts
+│   │   │   ├── notification-sound.ts
+│   │   │   ├── opgg.ts
+│   │   │   ├── rotas.ts
+│   │   │   ├── salaSenhaStore.ts
+│   │   │   └── somSala.ts
+│   │   ├── pages/
+│   │   ├── test/
+│   │   │   ├── infra.dom.test.tsx
+│   │   │   ├── README.md
+│   │   │   └── setup.ts
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── README.md
+│   │   └── vite-env.d.ts
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.mjs
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   └── vitest.config.ts
+├── .gitignore
+├── AGENTS.md
+├── Dockerfile
+├── drizzle.config.ts
+├── opencode.json
+├── package-lock.json
+├── package.json
+├── README.md
+└── tsconfig.json

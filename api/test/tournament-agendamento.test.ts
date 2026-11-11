@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { jogoConfirmadoSemHorario } from "../src/lib/tournament-store.js";
+import { jogoConfirmadoSemHorario } from "../src/modules/tournaments/tournament-store.js";
 
 describe("jogoConfirmadoSemHorario (agendamento)", () => {
   test("confirmado com data e hora válidas → ok", () => {

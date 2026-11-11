@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
-import { DoubleEliminationBracket } from "../../../../components/campeonatos/DoubleEliminationBracket";
-import { DoubleSideBracket } from "../../../../components/campeonatos/DoubleSideBracket";
+import { DoubleEliminationBracket } from "../DoubleEliminationBracket";
+import { DoubleSideBracket } from "../DoubleSideBracket";
 import { useCampeonato } from "../../CampeonatoContext";
 
 export const BracketModal = ({
