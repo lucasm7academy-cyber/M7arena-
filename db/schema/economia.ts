@@ -8,7 +8,9 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { users } from "./identidade.js";
 import { matches } from "./matches.js";
 
@@ -30,6 +32,8 @@ export const walletTransactions = pgTable(
   (table) => [
     index("wallet_tx_user_idx").on(table.userId),
     index("wallet_tx_created_at_idx").on(table.createdAt),
+    uniqueIndex("idx_ledger_match_unico").on(table.refId, table.userId, table.kind)
+      .where(sql`${table.kind} in ('match_prize'::varchar, 'match_loss'::varchar) and ${table.refType} = 'match'`),
   ]
 );
 

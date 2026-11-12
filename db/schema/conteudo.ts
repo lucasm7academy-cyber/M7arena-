@@ -10,6 +10,7 @@ import {
   integer,
   primaryKey,
   doublePrecision,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
 import { tournamentMatches } from "./tournaments.js";
@@ -121,8 +122,7 @@ export const transmissoes = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .notNull(),
     twitchChannel: varchar("twitch_channel", { length: 100 }).notNull(),
     titulo: text("titulo"),
     campeonatoId: uuid("campeonato_id"),
@@ -136,12 +136,14 @@ export const transmissoes = pgTable(
     matchId: uuid("match_id").references(() => tournamentMatches.id, { onDelete: "cascade" }),
     // Sala de origem quando a live é de uma SALA (scrim TIME vs TIME livre —
     // sem série/campeonato). O `match_id` fica reservado às séries.
-    salaId: uuid("sala_id").references(() => matches.id, { onDelete: "cascade" }),
+    salaId: uuid("sala_id"),
   },
   (table) => [
     index("transmissoes_ativo_idx").on(table.ativo),
     index("transmissoes_user_idx").on(table.userId),
     index("transmissoes_match_idx").on(table.matchId),
+    foreignKey({ name: "transmissoes_user_id_fkey", columns: [table.userId], foreignColumns: [users.id] }).onDelete("cascade"),
+    foreignKey({ name: "transmissoes_sala_id_fkey", columns: [table.salaId], foreignColumns: [matches.id] }).onDelete("cascade"),
   ]
 );
 

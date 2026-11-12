@@ -1,1 +1,0 @@
-ALTER TABLE "campeonato_sala_estado" ADD COLUMN "primeira_escolha" varchar(10);

@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -49,7 +50,10 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
-});
+}, (table) => [
+  uniqueIndex("idx_users_riot_id").on(sql`lower(${table.riotId})`)
+    .where(sql`${table.riotId} is not null`),
+]);
 
 export const userIdentities = pgTable(
   "user_identities",

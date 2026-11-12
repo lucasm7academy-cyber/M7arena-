@@ -54,8 +54,11 @@ os dois consumidores, sem confundir estado de transporte com autorização.
 
 ## Verificação e limites
 
-Não há suíte de integração dedicada a este processo/handshake/NOTIFY na árvore
-atual. Os testes backend de sala/série/Draft exercitam serviços com PGlite; não
+Há scripts manuais em [api/scripts](../../scripts/): `test-realtime.mjs` e
+`test-guest-recebe-previa.mjs`. Exigem serviço, sessão/sala de teste e, em parte,
+PostgreSQL; não participam da suíte automatizada nem foram homologados neste lote.
+Não executá-los contra jogos reais. Não há suíte automatizada dedicada ao
+processo/handshake/NOTIFY. Os testes backend de sala/série/Draft usam PGlite; não
 validam PostgreSQL LISTEN, limites de socket, protocolo ou reconexão em rede.
 Os testes DOM bloqueiam WebSocket real. Build/lint também não homologam o serviço.
 

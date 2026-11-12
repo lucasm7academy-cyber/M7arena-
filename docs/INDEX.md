@@ -27,7 +27,7 @@ Ela complementa o mapa funcional; não substitui índices ou READMEs.
 | Salas, séries, Draft, elegibilidade e outros serviços comuns | [Serviços da API](../api/src/lib/README.md) |
 | Proxy Riot, uploads e preview social | [Integrações HTTP](../api/src/routes/README.md) |
 | WebSocket, chat e preview de Draft | [Realtime](../api/src/realtime/README.md) |
-| Schemas e migrations | [Dados](../db/README.md) |
+| Schemas, baseline e migrations | [Dados](../db/README.md), [baseline e evolução](../db/migrations/README.md) |
 | Componentes visuais, recortes e VIP | [UI](../web/src/components/ui/README.md) |
 | Scripts operacionais e sorteio de copas | [Scripts](../scripts/README.md); contrato do sorteio em [Campeonatos](../api/src/modules/tournaments/README.md#sorteio-operacional-de-copas) |
 | Otimização de imagens e diagnóstico de bordas | [Ferramentas frontend](../web/scripts/README.md) |

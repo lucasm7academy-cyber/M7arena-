@@ -42,6 +42,17 @@ node --test scripts/tests/gerar-arvore.test.mjs
 
 ## Operação do produto
 
+Há oito smokes manuais nesta pasta e dois de Realtime em `api/scripts/`.
+Eles não são carregados pelo aplicativo nem executados automaticamente pela suíte.
+Os que criam salas/usuários ou usam WebSocket exigem ambiente isolado e autorização;
+não os use durante jogos reais. Antes de executá-los, confira o contrato atual.
+
+**Legados incompatíveis:** `smoke-draft.mjs` e `smoke-vps-draft.mjs` ainda esperam
+draft de 20 turnos na sala 5v5 comum. O [modo atual](../api/src/lib/draft/modos/5v5.ts)
+tem `ativo: false`; o draft no site pertence às salas de times/campeonato.
+Esses dois scripts não são validações vigentes nem referência para reintroduzir
+o fluxo antigo. Precisam de revisão/deduplicação antes de qualquer uso.
+
 Ferramentas transversais ao produto. Os comandos e efeitos abaixo correspondem
 aos cabeçalhos dos scripts atuais; não são uma fila de execução. Scripts que
 criam salas, usuários, partidas ou lançamentos exigem ambiente isolado e escopo
@@ -54,9 +65,9 @@ autorizado. Não rode smokes de VPS contra produção como validação de docume
 | [smoke-clock-sync.mjs](smoke-clock-sync.mjs) | Em `api/`, `.\node_modules\.bin\tsx.cmd ../scripts/smoke-clock-sync.mjs`. Simula relógios no processo, sem stack/banco. |
 | [smoke-clock-sync-vps.mjs](smoke-clock-sync-vps.mjs) | Mesmo launcher tsx, apontado para esse arquivo; usa a API configurada no script e cria dados de sala. |
 | [smoke-confirmacao-concorrente.mjs](smoke-confirmacao-concorrente.mjs) | `node scripts/smoke-confirmacao-concorrente.mjs`. API local e Docker/PostgreSQL; cria dados e confirmações concorrentes. |
-| [smoke-draft.mjs](smoke-draft.mjs) | `node scripts/smoke-draft.mjs`. API local ou `SMOKE_BASE`, Docker/PostgreSQL; revisar espelho dos turnos ao alterar o registry. |
+| [smoke-draft.mjs](smoke-draft.mjs) | Legado incompatível com o 5v5 atual; não executar como validação vigente. |
 | [smoke-vps-codigo.mjs](smoke-vps-codigo.mjs) | No container `/app`, `node smoke-codigo.mjs`, após cópia conforme cabeçalho. Banco/HTTP, criação de dados e checagem da redação de códigos. |
-| [smoke-vps-draft.mjs](smoke-vps-draft.mjs) | No container, `node smoke-draft.mjs`; cobre modos, turnos, prazos e códigos com dados de teste. |
+| [smoke-vps-draft.mjs](smoke-vps-draft.mjs) | Legado incompatível com o 5v5 atual; não executar como validação vigente. |
 | [smoke-vps-sala-campeonato.mjs](smoke-vps-sala-campeonato.mjs) | No container, `node smoke-sala.mjs`; criação e participação em séries. |
 | [smoke-vps-salas.mjs](smoke-vps-salas.mjs) | No container, `node smoke2.mjs`; fluxo de salas, relógios e polling. |
 | [campeonatos/sortear-semana.mjs](campeonatos/sortear-semana.mjs) | Sorteio com PostgreSQL; `--dry-run` faz prévia e a execução sem flag grava jogos em transação. Contrato no [README de Campeonatos](../api/src/modules/tournaments/README.md#sorteio-operacional-de-copas). |

@@ -110,8 +110,11 @@ M7arenaSite/
 │   │   ├── db.ts
 │   │   └── index.ts
 │   ├── test/
+│   │   ├── fixtures/
+│   │   │   └── reference-data.ts
 │   │   ├── admin-router.test.ts
 │   │   ├── atualizar-elos.test.ts
+│   │   ├── baseline.test.ts
 │   │   ├── bets.test.ts
 │   │   ├── classificacao.test.ts
 │   │   ├── cron.test.ts
@@ -158,69 +161,9 @@ M7arenaSite/
 │   ├── migrations/
 │   │   ├── meta/
 │   │   │   ├── 0000_snapshot.json
-│   │   │   ├── 0001_snapshot.json
-│   │   │   ├── 0002_snapshot.json
-│   │   │   ├── 0003_snapshot.json
-│   │   │   ├── 0004_snapshot.json
-│   │   │   ├── 0005_snapshot.json
-│   │   │   ├── 0006_snapshot.json
-│   │   │   ├── 0007_snapshot.json
-│   │   │   ├── 0008_snapshot.json
-│   │   │   ├── 0009_snapshot.json
-│   │   │   ├── 0010_snapshot.json
-│   │   │   ├── 0012_snapshot.json
-│   │   │   ├── 0013_snapshot.json
-│   │   │   ├── 0014_snapshot.json
-│   │   │   ├── 0015_snapshot.json
-│   │   │   ├── 0016_snapshot.json
-│   │   │   ├── 0017_snapshot.json
-│   │   │   ├── 0018_snapshot.json
-│   │   │   ├── 0019_snapshot.json
-│   │   │   ├── 0020_snapshot.json
-│   │   │   ├── 0021_snapshot.json
-│   │   │   ├── 0022_snapshot.json
-│   │   │   ├── 0024_snapshot.json
-│   │   │   ├── 0025_snapshot.json
-│   │   │   ├── 0026_snapshot.json
-│   │   │   ├── 0028_snapshot.json
-│   │   │   ├── 0032_snapshot.json
-│   │   │   ├── 0033_snapshot.json
 │   │   │   └── _journal.json
-│   │   ├── 0000_brave_korg.sql
-│   │   ├── 0001_robust_the_phantom.sql
-│   │   ├── 0002_teams_swap.sql
-│   │   ├── 0003_seed_games.sql
-│   │   ├── 0004_shiny_sumo.sql
-│   │   ├── 0005_campeonatos_normalize.sql
-│   │   ├── 0006_content_swap.sql
-│   │   ├── 0007_matches_salas_swap.sql
-│   │   ├── 0008_matches_sala_num.sql
-│   │   ├── 0009_white_wallflower.sql
-│   │   ├── 0010_slimy_dragon_man.sql
-│   │   ├── 0011_ledger_refund_repeat.sql
-│   │   ├── 0012_magical_sharon_ventura.sql
-│   │   ├── 0013_advertencias_ban.sql
-│   │   ├── 0014_rodizio_codigos_lru.sql
-│   │   ├── 0015_disputa_contestacao_url.sql
-│   │   ├── 0016_transmissoes.sql
-│   │   ├── 0017_vitoria_motivo_1v1.sql
-│   │   ├── 0018_workable_clea.sql
-│   │   ├── 0019_gifted_mac_gargan.sql
-│   │   ├── 0020_separar_fila_codigos_x1.sql
-│   │   ├── 0021_campeonato_verificacao_serie.sql
-│   │   ├── 0022_bet_individual.sql
-│   │   ├── 0023_bet_champion.sql
-│   │   ├── 0024_gray_gressill.sql
-│   │   ├── 0025_glamorous_dormammu.sql
-│   │   ├── 0026_amused_king_cobra.sql
-│   │   ├── 0027_quick_mesmero.sql
-│   │   ├── 0028_sorteio_forcado.sql
-│   │   ├── 0029_formato_sala_livre.sql
-│   │   ├── 0030_serie_livre_placar.sql
-│   │   ├── 0031_live_sala_id.sql
-│   │   ├── 0032_amused_santa_claus.sql
-│   │   ├── 0033_stiff_hemingway.sql
-│   │   └── 0034_blind_codes.sql
+│   │   ├── 0000_baseline.sql
+│   │   └── README.md
 │   ├── schema/
 │   │   ├── apostas.ts
 │   │   ├── bets.ts

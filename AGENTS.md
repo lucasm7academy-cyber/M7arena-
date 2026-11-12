@@ -68,6 +68,11 @@ de um site antigo.
   de organização. Testes de dados/economia usam ambiente isolado.
 - Não expor segredos/dados pessoais, usar credenciais no cliente ou operar produção
   sem autorização específica. Mudança de schema exige migration que preserve dados.
+- A [baseline do banco](db/migrations/README.md) é a origem de reconstrução.
+  Novas tabelas/colunas exigem schema, migration incremental e README sincronizados;
+  banco novo usa baseline + incrementos. Não reescreva baseline já aplicada nem
+  apague metadados ativos. Nova consolidação exige reconstrução isolada e
+  compatibilidade comprovada com os bancos existentes, sem alterar seus dados.
 - Build/lint não homologam UI, WebSocket, gateway ou produção. Registre limitações.
   [Testes da API](README.md#testes-da-api) e [DOM](web/src/test/README.md).
 
@@ -95,6 +100,12 @@ conteúdo de arquivos existentes não exigem regeneração. Para verificar sem g
 use `node scripts/gerar-arvore.mjs --check`. Detalhes no [README dos scripts](scripts/README.md#árvore-de-arquivos).
 
 Confira diff pertinente, `git diff --check` e estado final, incluindo não rastreados.
+Em deploy autorizado, publique a revisão atual e confira a pasta versionada da VPS:
+remova arquivos obsoletos ausentes da versão publicada, validando os caminhos.
+Não deixe patches, dumps ou scripts avulsos no projeto nem os copie para outro
+lugar como rotina. Preserve banco/volumes, uploads e configuração de produção;
+remoção de dados ou backup operacional exige escopo próprio.
+
 Não crie checkpoints/backups por execução, instale dependências, faça operações
 Git de escrita ou deploy fora do escopo autorizado. Procedimento de implantação
 no [README raiz](README.md#implantação-autorizada). Preserve a ponte externa;

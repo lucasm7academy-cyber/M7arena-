@@ -10,6 +10,7 @@ import {
   primaryKey,
   index,
   uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
 import { games } from "./games.js";
@@ -153,6 +154,7 @@ export const tournamentMatches = pgTable(
     index("tournament_matches_group_idx").on(table.groupId),
     index("tournament_matches_scheduled_idx").on(table.tournamentId, table.phase, table.scheduledAt),
     index("tournament_matches_match_key_idx").on(table.matchKey),
+    unique("tournament_matches_match_key_unique").on(table.tournamentId, table.matchKey),
   ]
 );
 

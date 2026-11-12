@@ -47,7 +47,7 @@ mantém as autorizações de cada endpoint. Os READMEs backend enumeram os méto
   sessão, motores econômicos, cache Riot e produtores de notificação.
 - [Integrações HTTP](../../api/src/routes/README.md): `/api/riot`, `/api/upload` e `/api/og`.
   `/api/health` fica no bootstrap; `/ws` em [Realtime](../../api/src/realtime/README.md).
-- [Dados](../../db/README.md): schemas/migrations e fronteiras persistidas.
+- [Dados](../../db/README.md): schemas, [baseline e evolução](../../db/migrations/README.md) e fronteiras persistidas.
 - [Projeto/infraestrutura](../../README.md), [scripts](../../scripts/README.md),
   [ferramentas frontend](../../web/scripts/README.md) e
   [Graph RAG](../../tools/graph-rag/README.md): suporte ao desenvolvimento/operação.

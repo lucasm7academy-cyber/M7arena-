@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, varchar, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, varchar, timestamp, index, uniqueIndex, primaryKey } from "drizzle-orm/pg-core";
 import { users } from "./identidade.js";
 import { matches } from "./matches.js";
 
@@ -17,7 +17,7 @@ import { matches } from "./matches.js";
 export const userAdvertencias = pgTable(
   "user_advertencias",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").notNull().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -33,6 +33,7 @@ export const userAdvertencias = pgTable(
   },
   (table) => [
     index("advertencias_user_recentes_idx").on(table.userId, table.createdAt),
+    primaryKey({ name: "user_strikes_pkey", columns: [table.id] }),
   ]
 );
 
@@ -75,5 +76,6 @@ export const matchDisputas = pgTable(
   },
   (table) => [
     index("disputas_match_idx").on(table.matchId),
+    uniqueIndex("idx_disputas_match_user").on(table.matchId, table.userId),
   ]
 );

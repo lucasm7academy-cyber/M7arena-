@@ -11,6 +11,7 @@ import {
   bigserial,
   primaryKey,
   index,
+  uniqueIndex,
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -25,7 +26,7 @@ export const matches = pgTable(
     // Número público da sala (herdado de `salas.id` bigint). O fork navega em
     // `/sala-mod1/:id` e deriva o código de exibição `#${String(id).padStart(6,'0')}`,
     // então o id público precisa ser numérico — o uuid fica interno.
-    salaNum: integer("sala_num").generatedByDefaultAsIdentity().notNull().unique(),
+    salaNum: integer("sala_num").generatedByDefaultAsIdentity().notNull(),
     gameId: varchar("game_id", { length: 50 })
       .notNull()
       .references(() => games.id, { onDelete: "restrict" }),
@@ -82,6 +83,10 @@ export const matches = pgTable(
     index("matches_status_idx").on(table.status),
     index("matches_game_idx").on(table.gameId),
     index("matches_created_by_idx").on(table.createdBy),
+    uniqueIndex("matches_sala_num_unique").on(table.salaNum),
+    index("idx_matches_status_updated").on(table.status, table.updatedAt),
+    index("idx_matches_revisao").on(table.status, table.revisaoDesde)
+      .where(sql`${table.status} = 'aguardando_revisao'`),
     // Sala campeonato: buscar a sala pela série (criação T-10 / shape).
     index("matches_tournament_match_idx").on(table.tournamentMatchId),
     index("matches_bracket_match_idx").on(table.bracketMatchId),

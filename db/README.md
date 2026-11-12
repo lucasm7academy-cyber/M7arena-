@@ -1,7 +1,7 @@
 # Dados — contratos persistidos compartilhados
 
-Schemas Drizzle ficam em `schema/`; migrations SQL versionadas e seus metadados
-em `migrations/`. Não pertencem a uma única página nem devem acompanhar uma
+Schemas Drizzle ficam em `schema/`; a baseline, migrations posteriores e metadados
+atuais ficam em [migrations/](migrations/README.md). Não pertencem a uma única página nem devem acompanhar uma
 movimentação de router. Conexão da API em `api/src/db.ts`; Realtime usa pg próprio.
 
 | Schema | Responsabilidade / domínios consumidores |
@@ -22,11 +22,27 @@ O índice de [funcionalidades](../docs/modules/INDEX.md) aponta os serviços/rou
 que usam esses contratos. Schema define armazenamento; README do domínio descreve
 a regra efetivamente aplicada. Não inferir autorização ou atomicidade só da tabela.
 
-Mudança de schema exige migration versionada que preserve dados e reconstrua o
-banco. Metadados `*_snapshot.json` são artefatos de migrations, não checkpoints
-de desenvolvimento nem documentação antiga a excluir. Não editar ou executar
-migrations em produção como parte de organização/documentação.
+## Baseline e manutenção
 
-Testes de serviço usam [helper PGlite](../api/test/helpers.ts) isolado e um conjunto
-de migrations selecionado pelo helper; isso não homologa toda a cadeia de deploy
-ou concorrência PostgreSQL. [Orientação de testes](../README.md#testes-da-api).
+[0000_baseline.sql](migrations/0000_baseline.sql) cria a estrutura de referência,
+com o catálogo inicial LoL/pacotes. Não contém usuários, saldos, partidas, Pix ou
+códigos Riot reais. O [README das migrations](migrations/README.md) explica a
+âncora do histórico, uso em banco vazio e evolução de bancos existentes.
+
+Uma baseline não é backup de dados. O snapshot JSON atual descreve o schema para
+o Drizzle calcular a próxima mudança; o journal ordena as migrations. Há apenas
+um snapshot inicial e uma entrada inicial, sem a antiga sequência consolidada.
+São metadados ativos da ferramenta, não checkpoints de desenvolvimento.
+
+Ao criar/modificar tabela, atualize o schema TypeScript e gere/revise uma migration
+incremental; a reconstrução usa baseline + incrementos. Não sobrescrever a baseline
+aplicada a cada alteração, pois o banco existente precisa receber apenas o delta.
+Outra consolidação pode reduzir o histórico novamente após prova de equivalência.
+Não executar migrations na produção durante organização/documentação.
+
+Testes usam o [helper PGlite](../api/test/helpers.ts) com o migrador real do Drizzle
+e o journal, seguido de códigos fictícios em [fixtures](../api/test/fixtures/reference-data.ts).
+[baseline.test.ts](../api/test/baseline.test.ts) verifica o catálogo estrutural de
+referência, ausência de dados reais, consistência do snapshot e evolução sem
+reaplicar a baseline ou perder registros existentes. Não homologa concorrência
+PostgreSQL nem autoriza uma migration em produção. [Orientação](../README.md#testes-da-api).

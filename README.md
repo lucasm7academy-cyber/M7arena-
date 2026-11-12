@@ -120,7 +120,8 @@ Build/lint não homologam navegador, WebSocket ou produção.
 ## Testes da API
 
 Os testes de serviço usam [helpers.ts](api/test/helpers.ts), que reconstrói PGlite
-em memória. Conexões auxiliares do código global também precisam de isolamento.
+em memória pela [baseline e migrations posteriores](db/migrations/README.md),
+com fixtures fictícias. Conexões auxiliares do código global também precisam de isolamento.
 Em `api/`, com dependências já instaladas, um exemplo direcionado é:
 
 ```powershell
