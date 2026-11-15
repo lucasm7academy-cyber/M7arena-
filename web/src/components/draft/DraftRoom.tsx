@@ -17,7 +17,7 @@
 //    jogo, ADR-072 — não há StreamModal na sala).
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, Ban, Check, Copy, PlusCircle, RefreshCw, RotateCcw, Search, Twitch, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SiRiotgames } from 'react-icons/si';
@@ -25,11 +25,36 @@ import { getDDRVersion, buildChampionIconUrl } from '../../api/riot';
 import { ROLE_CONFIG, traduzirErroSala, type ResultadoSalaRpc } from '../../api/salamod1';
 import type { Champion, SalaDraft } from './draftTypes';
 import { CHAMPION_POSITIONS, type RoleFiltro } from './championPositions';
-import { alternarSomMudo, desbloquearSonsDraft, pararSom, pararSonsDraft, precarregarSons, somMudo, tocarSom } from './draftSounds';
+import { TeamBall } from './TeamBall';
+import { FADE_FIM_DRAFT_MS, alternarSomMudo, desbloquearSonsDraft, pararSom, pararSonsDraft, precarregarSons, somMudo, tocarSom } from './draftSounds';
 
 /** Nome de time no confronto: o hífen não pode virar ponto de quebra de linha
  *  (U+2011 é o hífen "não separável" — mesma regra da sala normal). */
 const nomeSemQuebra = (n?: string | null) => (n ?? '').replace(/-/g, '\u2011');
+
+/**
+ * Orientação da janela — espelha o variant `landscape:` usado pelo desenho.
+ * Serve só para decidir QUAL bola carrega o `layoutId` da viagem até o centro:
+ * as composições do celular e do desktop vivem as duas no DOM (uma delas com
+ * `display: none`), então o id não pode existir nas duas ao mesmo tempo.
+ */
+function usePaisagem(): boolean {
+  const consultar = () =>
+    typeof window === 'undefined' || typeof window.matchMedia !== 'function'
+      ? true
+      : window.matchMedia('(orientation: landscape)').matches;
+  const [paisagem, setPaisagem] = useState(consultar);
+  useEffect(() => {
+    // Ambiente sem `matchMedia` (jsdom/SSR): fica em paisagem, sem listener.
+    if (typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(orientation: landscape)');
+    const aoMudar = () => setPaisagem(mq.matches);
+    setPaisagem(mq.matches);
+    mq.addEventListener('change', aoMudar);
+    return () => mq.removeEventListener('change', aoMudar);
+  }, []);
+  return paisagem;
+}
 
 interface DraftRoomProps {
   draft: SalaDraft;
@@ -116,6 +141,13 @@ export interface AcoesTopo {
   resultado?: { aoClicar: () => void; carregando?: boolean } | null;
   /** Seta de sair da sala — canto oposto (esquerda). */
   sair?: (() => void) | null;
+  /**
+   * Slot para UMA ação extra da página (ex.: "Atualizar resultado" da série na
+   * tela ao vivo). Entra na mesma linha dos ícones no celular e no canto
+   * esquerdo do desktop, na posição que a página usava — assim a barra do topo
+   * do celular mantém o espaçamento uniforme sem sobrepor botão nenhum.
+   */
+  extra?: React.ReactNode | null;
 }
 
 // ── Slots ────────────────────────────────────────────────────────────────────
@@ -126,9 +158,12 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
 }) {
   const champ = champion ? champions[champion] : null;
   return (
-    <div className="flex flex-col items-center gap-[0.3vmin]">
+    /* A raiz divide a linha com os outros bans (celular: `flex-1`); no desktop
+       volta ao item flex sem tamanho próprio do original. */
+    <div className="flex min-w-0 flex-1 max-w-[40px] flex-col items-center gap-[0.3vmin] landscape:max-w-none landscape:min-w-[auto] landscape:flex-initial">
       <div className={`
-        relative w-[7.2vmin] h-[7.2vmin] border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
+        relative aspect-square w-full border bg-black/60 flex items-center justify-center overflow-hidden transition-all duration-300
+        landscape:aspect-auto landscape:h-[7.2vmin] landscape:w-[7.2vmin]
         ${jaBaniu ? 'border-red-600/80 shadow-[0_0_8px_rgba(220,38,38,0.3)]' : 'border-white/15'}
       `}>
         {champ ? (
@@ -155,8 +190,10 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
               />
             </svg>
 
-            {/* Nome do campeão no rodapé do slot, no mesmo padrão dos picks. */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex h-[1.8vmin] items-end justify-center bg-gradient-to-t from-black/95 to-transparent pb-[0.15vmin]">
+            {/* Nome do campeão no rodapé do slot (só no desktop: no celular o
+                slot tem ~25 px e o nome não caberia legível; o ícone em P&B com
+                o corte vermelho identifica o ban). */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden h-[1.8vmin] items-end justify-center bg-gradient-to-t from-black/95 to-transparent pb-[0.15vmin] landscape:flex">
               <span className="max-w-full truncate px-[0.15vmin] text-[0.9vmin] font-bold uppercase tracking-wider text-[#f0e6d2] drop-shadow-md">
                 {champ.name}
               </span>
@@ -169,7 +206,7 @@ function BanSlot({ champion, preview, active, jaBaniu, champions, version }: {
             className="w-full h-full object-cover grayscale opacity-45" referrerPolicy="no-referrer" />
         ) : (
           <div className={jaBaniu ? 'opacity-40' : 'opacity-15'}>
-            <Ban className="w-[4.3vmin] h-[4.3vmin] text-white" />
+            <Ban className="w-3 h-3 text-white landscape:w-[4.3vmin] landscape:h-[4.3vmin]" />
           </div>
         )}
 
@@ -204,22 +241,23 @@ function PickSlot({ champion, preview, active, naFila, hidden, champions, versio
   const rgbLado = lado === 'blue' ? '59,130,246' : '239,68,68';
   const corLado = lado === 'blue' ? '#3b82f6' : '#ef4444';
   return (
-    <div className="flex flex-col items-center gap-[0.3vmin]">
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-[0.3vmin] landscape:min-w-[auto] landscape:flex-initial">
       <div className={`
-        w-[11vmin] h-[11vmin] border bg-black/50 overflow-hidden shadow-inner relative group transition-all duration-300
+        w-full aspect-square border bg-black/50 overflow-hidden shadow-inner relative group transition-all duration-300
+        landscape:aspect-auto landscape:w-[11vmin] landscape:h-[11vmin]
         ${champ ? 'border-white/20' : 'border-white/10'}
       `}>
         {hidden ? (
           <div className="w-full h-full flex items-center justify-center opacity-40">
-            <span className="text-[3vmin] font-black text-white/60">?</span>
+            <span className="text-xl font-black text-white/60 landscape:text-[3vmin]">?</span>
           </div>
         ) : champ ? (
           <>
             <img src={buildChampionIconUrl(champ.id, version)} alt={champ.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               referrerPolicy="no-referrer" />
-            <div className="absolute bottom-0 left-0 right-0 h-[3vmin] bg-gradient-to-t from-black/90 to-transparent flex items-end justify-center pb-[0.3vmin]">
-              <span className="text-[0.9vmin] font-bold text-[#f0e6d2] uppercase tracking-wider drop-shadow-md">
+            <div className="absolute bottom-0 left-0 right-0 flex h-[26%] min-h-[14px] items-end justify-center bg-gradient-to-t from-black/90 to-transparent pb-0.5 landscape:h-[3vmin] landscape:min-h-0 landscape:pb-[0.3vmin]">
+              <span className="px-0.5 text-[10px] font-bold text-[#f0e6d2] uppercase tracking-wider drop-shadow-md portrait:min-w-0 portrait:truncate portrait:leading-none landscape:px-0 landscape:text-[0.9vmin]">
                 {champ.name}
               </span>
             </div>
@@ -231,7 +269,7 @@ function PickSlot({ champion, preview, active, naFila, hidden, champions, versio
             className="w-full h-full object-cover opacity-55 saturate-50" referrerPolicy="no-referrer" />
         ) : (
           <div className="w-full h-full flex items-center justify-center opacity-50 text-white/30">
-            <SiRiotgames className="w-[5vmin] h-[5vmin]" />
+            <SiRiotgames className="w-[45%] h-[45%] landscape:w-[5vmin] landscape:h-[5vmin]" />
           </div>
         )}
 
@@ -268,7 +306,7 @@ function PickSlot({ champion, preview, active, naFila, hidden, champions, versio
 
 // ── Painel do time (círculo central de cada lado) ───────────────────────────
 
-function TeamPanel({ ladoJogo, emTurno, jogadorNome, logoTime, textoAbaixo, feedback }: {
+function TeamPanel({ ladoJogo, emTurno, jogadorNome, logoTime, textoAbaixo, feedback, saindo, bolaLayoutId }: {
   ladoJogo: 'blue' | 'red'; emTurno: boolean;
   jogadorNome: string;
   /** Logo do time do lado — fundo da bola. Apagada; ACESA na cor do time na vez. */
@@ -277,96 +315,39 @@ function TeamPanel({ ladoJogo, emTurno, jogadorNome, logoTime, textoAbaixo, feed
   textoAbaixo?: string | null;
   /** "Killcam" da última ação confirmada deste lado (ban = P&B + corte; pick = dourado). */
   feedback?: { championId: string; tipo: 'ban' | 'pick'; nonce: number } | null;
+  /** Fim do draft: a bola SAI daqui — ela viaja para o centro (layoutId); no
+   *  painel ficam só o nome e o texto do turno, que saem no fade da camada. */
+  saindo?: boolean;
+  /** Id compartilhado da bola NESTA composição (ver usePaisagem). */
+  bolaLayoutId?: string;
 }) {
   // A cor da VEZ é a cor do LADO (azul/vermelho) — nunca mais por fase.
   const corLado = ladoJogo === 'blue' ? '#3B82F6' : '#ef4444';
-  const corLadoClaro = ladoJogo === 'blue' ? '#60A5FA' : '#f87171';
-  const corLadoRgb = ladoJogo === 'blue' ? '59,130,246' : '239,68,68';
   return (
-    <div className="w-[25vmin] flex flex-col items-center gap-[1.5vmin] pointer-events-auto">
-      <div className="text-center w-full truncate px-[1vmin]">
-        <span className="text-[2vmin] font-black text-white/90 tracking-widest drop-shadow-md">
+    <div className="flex w-full min-w-0 max-w-[180px] flex-1 flex-col items-center gap-1.5 pointer-events-auto landscape:w-[25vmin] landscape:max-w-none landscape:min-w-[auto] landscape:flex-initial landscape:gap-[1.5vmin]">
+      <div className="text-center w-full truncate px-2 landscape:px-[1vmin]">
+        <span className="text-[11px] font-black text-white/90 tracking-widest drop-shadow-md landscape:text-[2vmin]">
           {jogadorNome}
         </span>
       </div>
 
-      <div className="relative">
-        <motion.div
-          initial={false}
-          animate={emTurno ? {
-            boxShadow: [
-              `0 0 15px rgba(${corLadoRgb},0.3)`,
-              `0 0 32px rgba(${corLadoRgb},0.9)`,
-              `0 0 15px rgba(${corLadoRgb},0.3)`,
-            ],
-            borderColor: [corLado, corLadoClaro, corLado],
-          } : { boxShadow: '0 0 0px rgba(0,0,0,0)', borderColor: 'rgba(255,255,255,0.1)' }}
-          transition={emTurno ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
-          className={`relative w-[32vmin] h-[32vmin] rounded-full border-[0.8vmin] overflow-hidden bg-black transition-all duration-300 ${emTurno ? '' : 'border-white/10'}`}
-          style={emTurno ? { borderColor: corLado } : undefined}
-        >
-          {/* LOGO DO TIME no fundo da bola. Apagada no normal; ACESA (cor cheia)
-              quando é a vez deste lado banir/escolher. */}
-          {logoTime ? (
-            <img
-              src={logoTime}
-              alt=""
-              className={`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${emTurno ? 'opacity-100' : 'opacity-25'}`}
-              referrerPolicy="no-referrer"
-            />
-          ) : null}
+      {/* A BOLA (círculo com a logo de fundo, borda na cor do lado e killcam) —
+          desenho único em `TeamBall`. Em paisagem ela mantém 32vmin mesmo com a
+          coluna do painel em 25vmin: o `landscape:w-[32vmin]` da bola vence o
+          `w-full`, então o diâmetro não encolhe. */}
+      {!saindo && (
+        <TeamBall
+          logo={logoTime}
+          lado={ladoJogo}
+          acesa={emTurno}
+          feedback={feedback}
+          layoutId={bolaLayoutId}
+        />
+      )}
 
-          {/* (O "Aguardando" com as 3 bolinhas saiu do meio da bola — pedido do
-              usuário 2026-10-17: quando não é a vez, a borda não acende, então
-              a bola fica só com a logo do time de fundo, sem texto.) */}
-
-          {/* (A prévia/seleção do campeão saiu da bola — pedido do usuário
-              2026-10-24: o campeão na mira aparece nos slots de ban/pick, e a
-              bola fica só com a logo do time.) */}
-
-          {/* (O tint azul/vermelho por dentro da bola na vez saiu — pedido do
-              usuário 2026-10-17: "fica feio demais esse azul/vermelho mais
-              claro dentro". Na vez fica só a BORDA acesa na cor do lado; o
-              centro é a logo do time de fundo, igual aos demais estados.) */}
-
-          {/* "Killcam" da confirmação: quando um ban/pick é CONFIRMADO, o
-              campeão pisca NA BOLA do lado que agiu e some sozinho (~2s).
-              Cresce e assenta de volta; depois SAI com fade. Ban = a imagem
-              desbota de cor para preto e branco no próprio lugar. A bola em si
-              fica só com a logo do time (pedido do usuário 2026-10-24). */}
-          <AnimatePresence>
-            {feedback ? (
-              <motion.div
-                key={feedback.nonce}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: 0.12 } }}
-                exit={{ opacity: 0, transition: { duration: 0.5 } }}
-                className="absolute inset-0 z-20"
-              >
-                <motion.img
-                  src={buildChampionIconUrl(feedback.championId)}
-                  alt=""
-                  initial={{ filter: 'grayscale(0) brightness(1)' }}
-                  animate={{
-                    scale: [1.25, 1.42, 1.12],
-                    filter: feedback.tipo === 'ban' ? 'grayscale(1) brightness(0.7)' : 'grayscale(0) brightness(1)',
-                  }}
-                  transition={{
-                    scale: { duration: 0.55, times: [0, 0.28, 1], ease: 'easeOut' },
-                    filter: feedback.tipo === 'ban' ? { duration: 0.45, ease: 'easeOut', delay: 0.15 } : { duration: 0.1 },
-                  }}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </motion.div>
-      </div>
-
-      <div className="text-center min-h-[3.5vmin]">
+      <div className="text-center min-h-[18px] landscape:min-h-[3.5vmin]">
         <h2
-          className="text-[2.5vmin] font-bold tracking-tighter mb-[0.5vmin]"
+          className="text-xs font-bold tracking-tighter mb-0 landscape:mb-[0.5vmin] landscape:text-[2.5vmin]"
           style={emTurno && textoAbaixo ? { color: corLado } : undefined}
         >
           {emTurno ? textoAbaixo ?? '' : ''}
@@ -386,29 +367,29 @@ function TimeRecap({ time, picks, lado, champions, version }: {
   version: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-[1.2vmin] w-[44vmin]">
+    <div className="flex w-full flex-col items-center gap-2 landscape:w-[44vmin] landscape:gap-[1.2vmin]">
       {time?.logo ? (
         <img
           src={time.logo}
           alt=""
-          className={`w-[12vmin] h-[12vmin] object-contain ${
+          className={`w-[18vw] h-[18vw] max-w-[96px] max-h-[96px] object-contain landscape:w-[12vmin] landscape:h-[12vmin] landscape:max-w-none landscape:max-h-none ${
             lado === 'blue' ? 'drop-shadow-[0_0_30px_rgba(59,130,246,0.4)]' : 'drop-shadow-[0_0_30px_rgba(239,68,68,0.4)]'
           }`}
         />
       ) : null}
-      <span className={`text-[2.2vmin] font-black uppercase tracking-[0.25em] truncate max-w-full ${lado === 'blue' ? 'text-[#60A5FA]' : 'text-[#f87171]'}`}>
+      <span className={`text-sm font-black uppercase tracking-[0.25em] truncate max-w-full landscape:text-[2.2vmin] ${lado === 'blue' ? 'text-[#60A5FA]' : 'text-[#f87171]'}`}>
         {time?.nome ?? ''}
       </span>
-      <div className="flex items-center justify-center gap-[1vmin] mt-[0.4vmin]">
+      <div className="flex items-center justify-center gap-1.5 mt-0 landscape:gap-[1vmin] landscape:mt-[0.4vmin]">
         {picks.map((c, i) => (
-          <div key={`${c}-${i}`} className="flex flex-col items-center gap-[0.4vmin]">
+          <div key={`${c}-${i}`} className="flex flex-col items-center gap-1 landscape:gap-[0.4vmin]">
             <img
               src={buildChampionIconUrl(c, version)}
               alt={c}
-              className="w-[10vmin] h-[10vmin] object-cover border border-white/15"
+              className="w-[15vw] h-[15vw] max-w-[64px] max-h-[64px] object-cover border border-white/15 landscape:w-[10vmin] landscape:h-[10vmin] landscape:max-w-none landscape:max-h-none"
               referrerPolicy="no-referrer"
             />
-            <span className="text-[1.1vmin] font-bold text-white/70 uppercase text-center leading-tight max-w-[10vmin] truncate">
+            <span className="text-[10px] font-bold text-white/70 uppercase text-center leading-tight max-w-[15vw] truncate landscape:text-[1.1vmin] landscape:max-w-[10vmin]">
               {champions[c]?.name ?? c}
             </span>
           </div>
@@ -461,6 +442,22 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   // TELA AO VIVO (partida em andamento): mesma casca do draft com os dados do
   // jogo no lugar do relógio — sem grid e sem botão de confirmar.
   const aoVivoAtivo = !!aoVivo;
+  // Sem viagem de bola para quem pediu menos movimento (`prefers-reduced-motion`).
+  const reduzirMovimento = useReducedMotion();
+  // Qual composição está visível (a do celular ou a do desktop): decide onde o
+  // `layoutId` da bola mora — o id não pode existir nas duas.
+  const paisagem = usePaisagem();
+  // FIM DO DRAFT (transição para a partida): o servidor marca `finished` no
+  // mesmo update do último pick e a sala SEGURA esta tela por ~3,4s
+  // (`posDraftAtivo`, em SalaCampeonato) — nessa janela o chrome do draft sai
+  // com fade, as duas bolas viajam para o centro já acesas (layoutId) e o tema
+  // de finalização entra em fade-out. Sem estado local: é derivado do draft.
+  const fimDoDraft = draft.status === 'finished' && !aoVivoAtivo;
+  // O chrome do draft (timer, fase, bans, picks, grid, confirmar) some com um
+  // fade curto; a camada das bolas não usa essa classe (as bolas continuam).
+  const chromeSaindo = fimDoDraft
+    ? ' pointer-events-none opacity-0 transition-opacity duration-300'
+    : ' transition-opacity duration-300';
   // Espectador do Time vs Time vê o grid (mesma visão de quem picka).
   const mostraGrid = !aoVivoAtivo && (possoJogar || !!espectadorCompleto);
 
@@ -683,6 +680,16 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     };
   }, []);
 
+  // Tema de finalização em FADE-OUT: ele começa no último pick e a tela troca
+  // em ~3s, então o som sai em rampa junto com a transição (não corta no meio
+  // do arquivo). O timer da rampa é do `draftSounds` — limpo no fim, em mute,
+  // em novo play ou quando esta tela desmonta.
+  useEffect(() => {
+    if (!fimDoDraft) return;
+    const t = window.setTimeout(() => pararSom('draftFinalizado', FADE_FIM_DRAFT_MS), 350);
+    return () => window.clearTimeout(t);
+  }, [fimDoDraft]);
+
   // Intro de fase: o draft abre banindo (turno 0 do template é ban) e cada
   // virada ban→pick→ban avisa. No ban→pick os bans do momento acabaram de
   // travar — o som desta virada é o "bans travados", não uma intro de pick
@@ -723,20 +730,86 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
     if (segundos <= 10) tocarSom('tickCurto');
   }, [segundos, emTurno]);
 
-  // Coluna de picks de uma EQUIPE, rotulada pelo lado EM JOGO dela.
-  const colunaPicks = (equipe: 'A' | 'B', direita: boolean) => {
+  // ── Peças do desenho, compartilhadas pelo DESKTOP (paisagem, layout
+  //    absoluto em `vmin`) e pelo CELULAR (retrato, coluna em fluxo) ──────────
+  // A ordem horizontal segue os LADOS em jogo: esquerda = time que joga de azul.
+  const ordemTimes = equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const);
+
+  // BARRA DE TURNO: metade azul (esquerda) / metade vermelha (direita). O lado
+  // que está agindo preenche a metade dele com a cor do lado, e o
+  // preenchimento recua do lado (borda externa) para o CENTRO conforme o tempo
+  // passa — o tick vai do lado da ação até o centro. Mesmo componente no
+  // desktop (`w-[60vmin]`) e no celular (linha com o timer).
+  const barraTurno = (className: string) => (
+    <div className={`relative flex ${className}`}>
+      {/* Metade azul — preenchimento ancorado no centro, recua p/ ele */}
+      <div className="relative flex-1 bg-[#3B82F6]/15 overflow-hidden">
+        <motion.div
+          className="absolute top-0 right-0 h-full bg-[#3B82F6]"
+          initial={false}
+          animate={{ width: emTurno && ladoEmTurno === 'blue' ? `${(segundos / duracaoSeg) * 100}%` : '0%' }}
+          transition={{ duration: 1, ease: 'linear' }}
+        />
+      </div>
+      {/* Metade vermelha — espelho */}
+      <div className="relative flex-1 bg-[#ef4444]/15 overflow-hidden">
+        <motion.div
+          className="absolute top-0 left-0 h-full bg-[#ef4444]"
+          initial={false}
+          animate={{ width: emTurno && ladoEmTurno === 'red' ? `${(segundos / duracaoSeg) * 100}%` : '0%' }}
+          transition={{ duration: 1, ease: 'linear' }}
+        />
+      </div>
+      {/* Divisória central */}
+      <div className="absolute left-1/2 top-0 h-full w-[1px] bg-white/40 -translate-x-1/2" />
+    </div>
+  );
+
+  // Slots de pick de uma EQUIPE. A prévia vai só para o slot da vez (o próximo
+  // vazio do lado que está agindo) e os próximos slots do PICK DUPLO ganham a
+  // barra na cor do lado (sem pulso) — mostra que vêm dois picks no turno.
+  const slotsPicks = (equipe: 'A' | 'B') => {
     const ehA = equipe === 'A';
     const lado = ehA ? ladoEquipeA : ladoEquipeB;
     const picks = ehA ? draft.blue_picks : draft.red_picks;
-    // Prévia vai só para o slot da vez (o próximo vazio do lado que está agindo).
-    const previa = emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick'
+    const doTurno = emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick';
+    const previa = doTurno ? previewDoTime(ehA) : null;
+    const restantes = doTurno ? Math.max(1, draft.restantes_no_turno ?? 1) : 1;
+    return [...Array(maxPicks)].map((_, i) => (
+      <PickSlot
+        key={`${equipe}-${i}`}
+        champion={picks[i] ?? null}
+        preview={i === picks.length ? previa : null}
+        active={doTurno && i === picks.length}
+        naFila={i > picks.length && i < picks.length + restantes}
+        hidden={esconderPickAdversario(ehA ? 'blue' : 'red', picks[i] ?? null)}
+        champions={champions}
+        version={version}
+        lado={lado}
+      />
+    ));
+  };
+
+  // Slots de ban de uma EQUIPE (mesma regra de prévia/turno dos picks).
+  const slotsBans = (equipe: 'A' | 'B') => {
+    const ehA = equipe === 'A';
+    const dataSide = ehA ? 'blue' : 'red';
+    const bans = ehA ? draft.blue_bans : draft.red_bans;
+    const previaBan = emTurno && draft.current_team === dataSide && fase === 'ban'
       ? previewDoTime(ehA)
       : null;
-    // Turnos de PICK DUPLO: além do slot aberto, os próximos do MESMO turno
-    // ganham a barra na cor do lado (sem pulso) — mostra que vêm dois picks.
-    const restantes = emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick'
-      ? Math.max(1, draft.restantes_no_turno ?? 1)
-      : 1;
+    return [...Array(maxBans)].map((_, i) => (
+      <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
+        preview={i === bans.length ? previaBan : null}
+        active={emTurno && draft.current_team === dataSide && fase === 'ban' && i === bans.length}
+        jaBaniu={i < bans.length} champions={champions} version={version} />
+    ));
+  };
+
+  // Coluna de picks de uma EQUIPE no rodapé do desktop, rotulada pelo lado EM
+  // JOGO dela.
+  const colunaPicks = (equipe: 'A' | 'B', direita: boolean) => {
+    const lado = equipe === 'A' ? ladoEquipeA : ladoEquipeB;
     return (
       <div className={`flex flex-col gap-[1vmin] ${direita ? 'items-end' : ''}`}>
         <span
@@ -746,31 +819,443 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         >
           PICKS {lado.toUpperCase()}
         </span>
-        <div className="flex gap-[0.8vmin]">
-          {[...Array(maxPicks)].map((_, i) => (
-            <PickSlot
-              key={`${equipe}-${i}`}
-              champion={picks[i] ?? null}
-              preview={i === picks.length ? previa : null}
-              active={emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick' && i === picks.length}
-              naFila={i > picks.length && i < picks.length + restantes}
-              hidden={esconderPickAdversario(ehA ? 'blue' : 'red', picks[i] ?? null)}
-              champions={champions}
-              version={version}
-              lado={lado}
-            />
-          ))}
+        <div className="flex gap-[0.8vmin]">{slotsPicks(equipe)}</div>
+      </div>
+    );
+  };
+
+  // CELULAR (retrato) — linha de BANS: os dois lados na MESMA linha, com uma
+  // divisória no centro. Metade esquerda = lado azul, direita = vermelho; cada
+  // slot divide a metade (`flex-1`), então a linha nunca estoura a largura.
+  const linhaBans = () => {
+    const metade = (equipe: 'A' | 'B', alinhamento: string) => {
+      const ehA = equipe === 'A';
+      const azul = (ehA ? ladoEquipeA : ladoEquipeB) === 'blue';
+      return (
+        <div
+          key={equipe}
+          className={`flex min-w-0 max-w-[240px] flex-1 items-center gap-1 border-t pt-1 ${alinhamento} ${
+            azul ? 'border-[#3b82f6]/40' : 'border-[#ef4444]/40'
+          }`}
+        >
+          {slotsBans(equipe)}
+        </div>
+      );
+    };
+    return (
+      <div className="flex w-full min-w-0 flex-col items-center gap-1">
+        <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/30">Bans</span>
+        <div className="flex w-full min-w-0 items-center justify-center gap-2">
+          {metade(ordemTimes[0], 'justify-end')}
+          <div className="h-6 w-px shrink-0 bg-white/20" />
+          {metade(ordemTimes[1], 'justify-start')}
         </div>
       </div>
     );
   };
+
+  // CELULAR (retrato) — linha de PICKS de um lado: rótulo curto + os 5 slots,
+  // todos dividindo a largura. Azul primeiro, vermelho depois (ordem pedida).
+  const linhaPicks = (equipe: 'A' | 'B', rotulo: string) => {
+    const ehA = equipe === 'A';
+    const azul = (ehA ? ladoEquipeA : ladoEquipeB) === 'blue';
+    const doTurno = emTurno && draft.current_team === (ehA ? 'blue' : 'red') && fase === 'pick';
+    return (
+      <div className="flex w-full min-w-0 items-center justify-center gap-2">
+        <span
+          className={`flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] ${
+            azul ? 'text-[#60A5FA]' : 'text-[#f87171]'
+          } ${doTurno ? '' : 'opacity-80'}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${azul ? 'bg-[#3b82f6]' : 'bg-[#ef4444]'}`} />
+          {rotulo}
+        </span>
+        <div className="flex min-w-0 max-w-[380px] flex-1 items-start gap-1">{slotsPicks(equipe)}</div>
+      </div>
+    );
+  };
+
+  // Bola do time (com o nome, o logo e o "Banindo…/Escolhendo…" da vez).
+  // `composicao` = qual das duas cópias está na tela (celular em retrato ou
+  // desktop em paisagem); só a visível carrega o `layoutId` da viagem.
+  const painelDoTime = (equipe: 'A' | 'B', composicao: 'celular' | 'desktop') => {
+    const ehA = equipe === 'A';
+    const dataSide = ehA ? 'blue' : 'red';
+    const lado = ehA ? ladoEquipeA : ladoEquipeB;
+    const visivel = paisagem ? composicao === 'desktop' : composicao === 'celular';
+    return (
+      <TeamPanel key={`${composicao}-${equipe}`}
+        ladoJogo={lado}
+        emTurno={emTurno && draft.current_team === dataSide}
+        jogadorNome={ehA ? labelEquipeA : labelEquipeB}
+        logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)}
+        textoAbaixo={fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
+        feedback={feedback && feedback.lado === dataSide ? feedback : null}
+        saindo={fimDoDraft}
+        bolaLayoutId={visivel && !reduzirMovimento ? `bola-${lado}` : undefined} />
+    );
+  };
+
+  // Filtro de rota (igual ao client do LoL) + busca do grid. No celular a busca
+  // fica em cima e o filtro rola na horizontal; no desktop seguem na mesma
+  // linha, como sempre.
+  const filtrosEBusca = () => (
+    <div className="flex flex-col gap-2 landscape:mb-[0.5vmin] landscape:flex-row landscape:items-center landscape:justify-between landscape:gap-[1vmin]">
+      <div className="flex w-full min-w-0 items-center justify-center gap-1 landscape:w-auto landscape:min-w-[auto] landscape:justify-start landscape:gap-[0.35vmin]">
+        {(['TOP', 'JG', 'MID', 'ADC', 'SUP'] as const).map((r) => {
+          const ativo = roleFiltro === r;
+          return (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRoleFiltro(ativo ? null : r)}
+              title={`Filtrar por ${ROLE_CONFIG[r].label}`}
+              className={`group flex h-9 min-w-0 flex-1 items-center justify-center gap-1 border px-1 transition-colors cursor-pointer landscape:h-auto landscape:min-w-[auto] landscape:flex-initial landscape:justify-start landscape:gap-[0.4vmin] landscape:px-[0.6vmin] landscape:py-[0.45vmin] ${
+                ativo ? 'border-[#c89b3c] bg-[#c89b3c]/15' : 'border-white/10 bg-black/70 hover:border-white/30'
+              }`}
+            >
+              <img
+                src={ROLE_CONFIG[r].img}
+                alt={ROLE_CONFIG[r].label}
+                className={`h-4 w-4 shrink-0 object-contain landscape:h-[1.8vmin] landscape:w-[1.8vmin] ${ativo ? '' : 'opacity-60 group-hover:opacity-90'}`}
+              />
+              <span className={`min-w-0 truncate text-[10px] font-bold uppercase tracking-wide landscape:text-[1vmin] ${ativo ? 'text-[#c89b3c]' : 'text-white/55 group-hover:text-white/80'}`}>
+                {ROLE_CONFIG[r].label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="relative w-full landscape:w-[30vmin]">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#c89b3c] landscape:left-[1vmin] landscape:h-[1.8vmin] landscape:w-[1.8vmin]" />
+        <input
+          type="text"
+          placeholder="Buscar campeão..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-black/80 border border-[#c89b3c]/40 rounded-sm py-2.5 pl-10 pr-3 text-base outline-none focus:border-[#c89b3c] transition-colors placeholder:text-[#c89b3c]/30 text-white landscape:py-[0.8vmin] landscape:pl-[3.5vmin] landscape:pr-[1.5vmin] landscape:text-[1.6vmin]"
+        />
+      </div>
+    </div>
+  );
+
+  // Carta de campeão do grid (desktop e celular) — usada/apagada/selecionada.
+  const cartaCampeao = (champ: Champion) => {
+    const usado = indisponivel(champ.id);
+    const selecionado = selectedChamp?.id === champ.id;
+    return (
+      <div
+        key={champ.id}
+        onClick={() => handleChampionClick(champ)}
+        className={`flex flex-col items-center gap-1 group landscape:gap-[0.3vmin] ${isMeuTurno ? 'cursor-pointer' : 'cursor-default'}`}
+      >
+        <div className={`
+          relative w-full aspect-square border-2 transition-all duration-200
+          landscape:aspect-auto landscape:h-[11.5vmin] landscape:w-[11.5vmin]
+          ${selecionado ? 'border-[#c89b3c] scale-110 shadow-[0_0_15px_rgba(200,155,60,0.5)]' : 'border-white/10 group-hover:border-white/40'}
+          ${usado ? 'opacity-30 grayscale cursor-not-allowed' : ''}
+        `}>
+          <img src={buildChampionIconUrl(champ.id, version)} alt={champ.name}
+            className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          {(draft.blue_bans.includes(champ.id) || draft.red_bans.includes(champ.id)) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-grayscale overflow-hidden">
+              <div className="absolute inset-0 border-t-4 border-red-600/80 -rotate-45 origin-center scale-150" />
+            </div>
+          )}
+        </div>
+        <span className={`w-full truncate text-center text-[10px] font-bold landscape:text-[1.2vmin] ${selecionado ? 'text-[#c89b3c]' : 'text-white/60'}`}>
+          {champ.name}
+        </span>
+      </div>
+    );
+  };
+
+  // BANIR / CONFIRMAR — mesma pílula recortada; no celular ocupa a largura toda
+  // da barra de ação, no desktop mantém o tamanho do rodapé.
+  const botaoConfirmar = (className: string) => {
+    // Cor do "aguardando você escolher": ban = vermelho; pick = cor do MEU lado
+    // como aparece na tela (azul/vermelho). Ação dos outros = botão apagado.
+    const meuLadoVisual = meuTime === 'blue' ? ladoEquipeA : meuTime === 'red' ? ladoEquipeB : null;
+    const aguardando = isMeuTurno && !selectedChamp && !enviando;
+    const pronto = !!selectedChamp && isMeuTurno && !enviando;
+    // Só a BORDA muda de cor (texto e fundo seguem o padrão do botão).
+    const corVez = fase === 'ban' || meuLadoVisual !== 'blue'
+      ? { linha: '#ef4444', brilho: 'rgba(239,68,68,0.6)' }
+      : { linha: '#3b82f6', brilho: 'rgba(59,130,246,0.6)' };
+    return (
+      <div className={`relative ${className}`}>
+        <button
+          disabled={!selectedChamp || !isMeuTurno || enviando}
+          onMouseEnter={() => {
+            if (selectedChamp && isMeuTurno && !enviando) tocarSom('lockInHover');
+          }}
+          onClick={confirmarAcao}
+          className={`
+            relative w-full px-6 py-3 font-bold text-sm tracking-[0.15em] uppercase transition-all duration-300 group
+            landscape:w-auto landscape:px-[12vmin] landscape:py-[2.5vmin] landscape:text-[2.2vmin]
+            ${pronto ? 'text-[#f0e6d2] hover:text-white cursor-pointer' : 'text-white/20 cursor-not-allowed'}
+          `}
+        >
+          <div className={`absolute inset-0 z-0 ${aguardando ? 'animate-pulse [animation-duration:2.8s]' : ''}`}>
+            <svg
+              viewBox="0 0 300 80"
+              preserveAspectRatio="none"
+              className="w-full h-full"
+              style={{
+                filter: pronto
+                  ? 'drop-shadow(0 0 15px rgba(200,155,60,0.35))'
+                  : aguardando
+                    ? `drop-shadow(0 0 16px ${corVez.brilho})`
+                    : 'drop-shadow(0 0 15px rgba(200,155,60,0.1))',
+              }}
+            >
+              <path d="M40,5 L260,5 L295,60 Q150,85 5,60 Z" fill="none"
+                stroke={pronto ? '#c89b3c' : aguardando ? corVez.linha : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
+              <path d="M42,7 L258,7 L292,59 Q150,83 8,59 Z"
+                fill={pronto ? '#1e2328' : '#0a0a0a'}
+                className="transition-colors duration-300 group-hover:fill-[#252a30]" />
+            </svg>
+          </div>
+          <span className="relative z-10 drop-shadow-md">
+            {enviando ? '...' : fase === 'ban' ? 'BANIR' : 'CONFIRMAR'}
+          </span>
+        </button>
+      </div>
+    );
+  };
+
+  // Código da partida (tela ao vivo): MESMO painel da sala ("Prepare-se para a
+  // batalha" + "Copiar Código"). Só chega aqui quem o servidor deixa ver.
+  const painelCodigo = (className = '') => (
+    <div className={`flex flex-col items-center gap-1.5 landscape:gap-[1.5vmin] ${className}`}>
+      <p className="text-[10px] font-black text-white uppercase tracking-[0.25em] landscape:text-[1.4vmin] landscape:tracking-[0.5em]">
+        Prepare-se para a batalha
+      </p>
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={copiarCodigoAoVivo}
+        className="relative w-full landscape:w-auto p-[1.5px] bg-black cursor-pointer"
+        style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
+      >
+        <span
+          className="flex w-full landscape:w-auto items-center justify-center gap-2 bg-[#FFB700] px-5 py-2.5 font-black uppercase tracking-[0.25em] text-[11px] text-black hover:bg-yellow-400 transition-colors landscape:gap-[1.2vmin] landscape:px-[8vmin] landscape:py-[1.6vmin] landscape:text-[1.5vmin] landscape:tracking-[0.4em]"
+          style={{ clipPath: 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)' }}
+        >
+          {codigoCopiado
+            ? <Check className="h-4 w-4 landscape:h-[1.8vmin] landscape:w-[1.8vmin]" />
+            : <Copy className="h-4 w-4 landscape:h-[1.8vmin] landscape:w-[1.8vmin]" />}
+          {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
+        </span>
+      </motion.button>
+    </div>
+  );
+
+  // Patrocinadores (telespectador): no lugar do botão de confirmar.
+  const patrocinadores = (className = '') => (
+    <div className={`flex flex-col items-center gap-1 landscape:gap-[0.8vmin] ${className}`}>
+      <div className="h-[1px] w-full max-w-[440px] bg-gradient-to-r from-transparent via-[#c89b3c]/70 to-transparent landscape:w-[42vmin] landscape:max-w-none" />
+      <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/45 landscape:text-[1.1vmin] landscape:tracking-[0.5em]">Patrocinadores</span>
+      <div className="mt-1 flex items-center justify-center gap-6 landscape:mt-[0.6vmin] landscape:gap-[7vmin]">
+        <img
+          src="/images/patrocinadores/m7-arena.png"
+          alt="M7 Arena"
+          className="h-7 object-contain opacity-95 landscape:h-[6vmin]"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+        />
+        <img
+          src="/images/patrocinadores/mobyle-store.svg"
+          alt="Mobyle Store"
+          className="h-7 object-contain opacity-95 landscape:h-[6vmin]"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+        />
+      </div>
+    </div>
+  );
+
+  // ── CENTRO DA PARTIDA (tela AO VIVO e fim do draft) ────────────────────────
+  // UMA composição para os dois momentos: as duas bolas do time (TeamBall — o
+  // MESMO círculo do draft), os nomes, o placar da série, a legenda e o status.
+  // O fim do draft usa a mesma peça no MESMO wrapper da tela ao vivo, então a
+  // bola chega ao centro exatamente onde ela vai ficar: a troca de tela não
+  // tem salto. `chegando` = ainda no fim do draft: o nome entra depois que o
+  // chrome do draft apagou (evita o nome duplicado por 300ms) e o placar/status
+  // ficam FORA do fluxo que centraliza as bolas, então texto nenhum empurra as
+  // bolas para cima quando a partida assume.
+  const confrontoCentral = (chegando: boolean) => {
+    type TimeDaSala = { nome?: string | null; logo?: string | null; cor?: string | null } | null | undefined;
+    // Lado de DADOS de cada coluna (esquerda = quem joga de azul).
+    const ladoDadosEsquerda: 'blue' | 'red' = equipeEsquerda === 'A' ? 'blue' : 'red';
+    const ladoDadosDireita: 'blue' | 'red' = ladoDadosEsquerda === 'blue' ? 'red' : 'blue';
+    // Fim do draft: o placar da série já está no shape do draft (`placar`), e é
+    // o MESMO número que a tela ao vivo mostra — nada pisca na troca.
+    const placarCentro = placarAoVivo ?? placarVisivel;
+    const coluna = (time: TimeDaSala, label: string, ladoJogo: 'blue' | 'red', ladoDados: 'blue' | 'red') => (
+      <div className="flex w-[34vw] max-w-[170px] flex-col items-center gap-2 landscape:w-[32vmin] landscape:max-w-none landscape:gap-[1.1vmin]">
+        <TeamBall
+          logo={time?.logo ?? null}
+          lado={ladoJogo}
+          acesa
+          feedback={feedback && feedback.lado === ladoDados ? feedback : null}
+          layoutId={reduzirMovimento ? undefined : `bola-${ladoJogo}`}
+        />
+        <motion.span
+          initial={chegando ? { opacity: 0 } : false}
+          animate={{ opacity: 1 }}
+          transition={{ delay: chegando ? 0.22 : 0, duration: 0.3 }}
+          className="max-w-full text-center text-[10px] font-black uppercase tracking-[0.18em] leading-snug text-white/90 line-clamp-2 landscape:text-[1.8vmin] landscape:tracking-[0.2em]"
+        >
+          {nomeSemQuebra(label)}
+        </motion.span>
+      </div>
+    );
+    return (
+      <div className="relative flex flex-col items-center">
+        <div className="flex items-start justify-center gap-5 landscape:gap-[7vmin]">
+          {coluna(timeNaEsquerda, labelNaEsquerda, 'blue', ladoDadosEsquerda)}
+          {/* O X fica na ALTURA DO CENTRO DA BOLA: metade do diâmetro (34vw no
+              celular / 32vmin no desktop) menos metade da letra. */}
+          <span className="mt-[calc(17vw-12px)] text-2xl font-black leading-none text-white/50 landscape:mt-[14.4vmin] landscape:text-[3.2vmin]">X</span>
+          {coluna(timeNaDireita, labelNaDireita, 'red', ladoDadosDireita)}
+        </div>
+        <div className="absolute top-full mt-2 flex flex-col items-center gap-1.5 landscape:mt-[1.6vmin] landscape:gap-[1.4vmin]">
+          <span className="text-3xl font-black tabular-nums leading-none text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.25)] landscape:text-[6vmin]">
+            {placarCentro?.esquerda ?? 0} <span className="text-white/40">-</span> {placarCentro?.direita ?? 0}
+          </span>
+          {!!aoVivo?.legenda && (
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 landscape:text-[1.2vmin] landscape:tracking-[0.4em]">
+              {aoVivo.legenda}
+            </span>
+          )}
+          {!!aoVivo?.status && (
+            <span className="inline-flex items-center gap-1.5 text-base font-black uppercase tracking-[0.2em] text-[#00FF41] landscape:gap-[0.8vmin] landscape:text-[2.4vmin] landscape:tracking-[0.25em]">
+              {aoVivo.pulsante && <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500 landscape:h-[1.1vmin] landscape:w-[1.1vmin]" />}
+              {aoVivo.status}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Ícones do topo: no desktop ficam absolutos nos cantos; no celular entram na
+  // barra do topo do conteúdo. Alvos de toque de 40px no celular.
+  const botoesTopo = (className: string) => (
+    <div className={`flex items-center ${className}`}>
+      {acoesTopo?.resultado && (
+        <button
+          type="button"
+          disabled={acoesTopo.resultado.carregando}
+          onClick={() => acoesTopo?.resultado?.aoClicar()}
+          title="Inserir resultado manual (adm)"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center border border-[#FFB700]/60 text-[#FFB700] transition-colors duration-200 hover:text-white hover:border-[#FFB700] disabled:opacity-50 landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+        >
+          <PlusCircle className={`h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin] ${acoesTopo.resultado.carregando ? 'animate-spin' : ''}`} />
+        </button>
+      )}
+      {acoesTopo?.resetar && (
+        <button
+          type="button"
+          disabled={acoesTopo.resetar.carregando}
+          onClick={() => acoesTopo?.resetar?.aoClicar()}
+          title="Resetar sala (adm) — volta para o PRONTO"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center border border-[#ef4444]/50 text-[#ff8a8a] transition-colors duration-200 hover:text-white hover:border-[#ef4444] disabled:opacity-50 landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+        >
+          <RotateCcw className={`h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin] ${acoesTopo.resetar.carregando ? 'animate-spin' : ''}`} />
+        </button>
+      )}
+      {acoesTopo?.twitch && (
+        acoesTopo.twitch.aoEncerrar ? (
+          /* Sua live está no ar: clicar ENCERRA — o card "Assista ao vivo"
+             (canto inferior esquerdo) já leva para a Twitch (pedido do
+             usuário 18/10). */
+          <button
+            type="button"
+            disabled={acoesTopo.twitch.carregando}
+            onClick={() => acoesTopo?.twitch?.aoEncerrar?.()}
+            title="Encerrar sua live"
+            className="relative flex h-10 w-10 cursor-pointer items-center justify-center border border-white/60 text-white transition-colors duration-200 hover:text-red-400 hover:border-red-500/60 disabled:opacity-50 landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+          >
+            {acoesTopo.twitch.carregando
+              ? <RefreshCw className="h-[18px] w-[18px] animate-spin landscape:h-[2vmin] landscape:w-[2vmin]" />
+              : <Twitch className="h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin]" />}
+            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse landscape:right-[0.2vmin] landscape:top-[0.2vmin] landscape:h-[0.9vmin] landscape:w-[0.9vmin]" />
+          </button>
+        ) : acoesTopo.twitch.assistirHref ? (
+          <a
+            href={acoesTopo.twitch.assistirHref}
+            target="_blank"
+            rel="noreferrer"
+            title="Abrir live na Twitch"
+            className="relative flex h-10 w-10 cursor-pointer items-center justify-center border border-[#9146FF]/60 text-[#a866ff] transition-colors duration-200 hover:text-white hover:border-[#9146FF] landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+          >
+            <Twitch className="h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin]" />
+            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse landscape:right-[0.2vmin] landscape:top-[0.2vmin] landscape:h-[0.9vmin] landscape:w-[0.9vmin]" />
+          </a>
+        ) : (
+          <button
+            type="button"
+            disabled={acoesTopo.twitch.carregando}
+            onClick={() => acoesTopo?.twitch?.aoIniciar?.()}
+            title="Iniciar live na Twitch"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center border border-[#9146FF]/60 text-[#9146FF] transition-colors duration-200 hover:text-[#c9a7ff] hover:border-[#9146FF] disabled:opacity-50 landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+          >
+            {acoesTopo.twitch.carregando
+              ? <RefreshCw className="h-[18px] w-[18px] animate-spin landscape:h-[2vmin] landscape:w-[2vmin]" />
+              : <Twitch className="h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin]" />}
+          </button>
+        )
+      )}
+      {acoesTopo?.verificar && (
+        <button
+          type="button"
+          disabled={acoesTopo.verificar.carregando}
+          onClick={() => acoesTopo?.verificar?.aoClicar()}
+          title="Verificar partida — confere na Riot agora"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center border border-[#00F0FF]/40 text-[#00F0FF] transition-colors duration-200 hover:text-white hover:border-[#00F0FF] disabled:opacity-50 landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+        >
+          <RefreshCw className={`h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin] ${acoesTopo.verificar.carregando ? 'animate-spin' : ''}`} />
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => setMudo(alternarSomMudo())}
+        title={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
+        aria-label={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
+        aria-pressed={mudo}
+        className={`
+          flex h-10 w-10 cursor-pointer items-center justify-center border transition-colors duration-200
+          landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block
+          ${mudo
+            ? 'border-white/10 text-white/30 hover:text-white/60'
+            : 'border-[#c89b3c]/40 text-[#c89b3c] hover:text-[#e6c469]'}
+        `}
+      >
+        {mudo
+          ? <VolumeX className="h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin]" />
+          : <Volume2 className="h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin]" />}
+      </button>
+    </div>
+  );
+
+  // Seta de sair da sala — canto esquerdo no desktop, início da barra no
+  // celular.
+  const botaoSair = () => (
+    <button
+      type="button"
+      onClick={() => acoesTopo?.sair?.()}
+      title="Sair da sala"
+      className="flex h-10 w-10 cursor-pointer items-center justify-center border border-white/15 text-white/70 transition-colors duration-200 hover:text-red-400 hover:border-red-500/50 landscape:h-auto landscape:w-auto landscape:p-[0.7vmin] landscape:block"
+    >
+      <ArrowLeft className="h-[18px] w-[18px] landscape:h-[2vmin] landscape:w-[2vmin]" />
+    </button>
+  );
 
   // ── RESUMO (10s após a última escolha): times + campeões escolhidos ────────
   if (recap) {
     const picksEsq = (ladoEquipeA === 'blue' ? draft.blue_picks : draft.red_picks).filter(Boolean) as string[];
     const picksDir = (ladoEquipeA === 'blue' ? draft.red_picks : draft.blue_picks).filter(Boolean) as string[];
     return (
-      <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
+      <div className="relative w-full h-[calc(100dvh-68px)] landscape:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-y-auto landscape:overflow-hidden select-none">
         <img src="/images/fundo_elite.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
@@ -779,13 +1264,13 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="relative z-10 h-full flex flex-col items-center justify-center gap-[4vmin] px-[3vmin]"
+          className="relative z-10 flex min-h-full flex-col items-center justify-center gap-6 px-4 py-6 landscape:h-full landscape:gap-[4vmin] landscape:px-[3vmin] landscape:py-0"
         >
-          <span className="text-[2vmin] font-black uppercase tracking-[0.5em] text-[#FFB700] text-center">
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FFB700] text-center landscape:text-[2vmin] landscape:tracking-[0.5em]">
             Escolhas concluídas
           </span>
 
-          <div className="flex items-center justify-center gap-[5vmin] w-full">
+          <div className="flex flex-col items-center justify-center gap-4 w-full landscape:flex-row landscape:gap-[5vmin]">
             <TimeRecap
               time={timeNaEsquerda}
               picks={picksEsq}
@@ -793,7 +1278,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
               champions={champions}
               version={version}
             />
-            <span className="text-[6vmin] font-black text-white/60 leading-none drop-shadow-lg">X</span>
+            <span className="text-2xl font-black text-white/60 leading-none drop-shadow-lg landscape:text-[6vmin]">X</span>
             <TimeRecap
               time={timeNaDireita}
               picks={picksDir}
@@ -807,7 +1292,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="text-[1.3vmin] font-bold uppercase tracking-[0.35em] text-white/50"
+            className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50 landscape:text-[1.3vmin] landscape:tracking-[0.35em]"
           >
             Voltando para a sala…
           </motion.span>
@@ -817,7 +1302,7 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
   }
 
   return (
-    <div className="relative w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
+    <div className="relative flex w-full flex-col h-[calc(100dvh-68px)] landscape:block landscape:h-[calc(100vh-4rem)] bg-black text-[#f0e6d2] font-sans overflow-hidden select-none">
       {/* (O brilho azul/vermelho por fase foi removido — pedido do usuário:
           fundo agora é o padrão das salas/lobby, sem tint de cor) */}
       {/* Fundo padrão das salas/lobby — MESMA composição do LayoutWrapper
@@ -827,10 +1312,22 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(255,183,0,0.05)_0%,#050505_100%)]" />
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
 
+      {/* BARRA DO TOPO DO CELULAR — sair + ícones de ação (live, resetar,
+          verificar, mudo) numa linha só, centralizada e com espaçamento
+          uniforme. Alvos de 40px. No desktop os mesmos ícones continuam nos
+          cantos, como sempre (ver o bloco absoluto mais abaixo). */}
+      <div className="relative z-40 flex shrink-0 items-center justify-center gap-1.5 px-3 pt-2 landscape:hidden">
+        {acoesTopo?.sair && botaoSair()}
+        {botoesTopo('gap-1.5')}
+        {acoesTopo?.extra}
+      </div>
+
       {/* HEADER SECTION - TIMER + FASE. Na TELA AO VIVO o topo fica limpo: o
-          confronto desce para o CENTRO da tela (pedido do usuário 18/10). */}
+          confronto desce para o CENTRO da tela (pedido do usuário 18/10).
+          (No celular existe um cabeçalho próprio, compacto e em linha — ver o
+          bloco do celular abaixo; este aqui é o do desktop, sem mudança.) */}
       {!aoVivoAtivo && (
-      <div className="relative pt-[2vmin] flex flex-col items-center z-40">
+      <div className={`relative pt-[2vmin] flex flex-col items-center z-40 hidden landscape:flex${chromeSaindo}`}>
         <>
         <h1 className="text-[3.5vmin] font-bold tracking-[0.2em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">
           {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
@@ -847,32 +1344,9 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
 
         {/* (A prévia agora aparece DENTRO da bola do time — ver TeamPanel) */}
 
-        {/* BARRA DE TURNO: metade azul (esquerda) / metade vermelha (direita).
-            O lado que está agindo preenche a metade dele com a cor do lado, e
-            o preenchimento recua do lado (borda externa) para o CENTRO
-            conforme o tempo passa — o tick vai do lado da ação até o centro. */}
-        <div className="relative w-[60vmin] h-[1.1vmin] mt-[1vmin] flex">
-          {/* Metade azul — preenchimento ancorado no centro, recua p/ ele */}
-          <div className="relative flex-1 bg-[#3B82F6]/15 overflow-hidden">
-            <motion.div
-              className="absolute top-0 right-0 h-full bg-[#3B82F6]"
-              initial={false}
-              animate={{ width: emTurno && ladoEmTurno === 'blue' ? `${(segundos / duracaoSeg) * 100}%` : '0%' }}
-              transition={{ duration: 1, ease: 'linear' }}
-            />
-          </div>
-          {/* Metade vermelha — espelho */}
-          <div className="relative flex-1 bg-[#ef4444]/15 overflow-hidden">
-            <motion.div
-              className="absolute top-0 left-0 h-full bg-[#ef4444]"
-              initial={false}
-              animate={{ width: emTurno && ladoEmTurno === 'red' ? `${(segundos / duracaoSeg) * 100}%` : '0%' }}
-              transition={{ duration: 1, ease: 'linear' }}
-            />
-          </div>
-          {/* Divisória central */}
-          <div className="absolute left-1/2 top-0 h-full w-[1px] bg-white/40 -translate-x-1/2" />
-        </div>
+        {/* BARRA DE TURNO — metade azul (esquerda) / metade vermelha (direita),
+            com o preenchimento recuando do lado da ação até o centro. */}
+        {barraTurno('w-[60vmin] h-[1.1vmin] mt-[1vmin]')}
 
         {/* Números do timer — visíveis para TODOS, telespectador incluído
             (pedido do usuário 2026-10-12). */}
@@ -883,46 +1357,109 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
       </div>
       )}
 
-      {/* TELA AO VIVO — CONFRONTO NO CENTRO da altura (pedido do usuário
-          18/10): logos grandes, nomes em até 2 linhas CENTRALIZADOS, placar e
-          status — mesma composição do miolo da sala, agora no meio da tela. */}
-      {aoVivoAtivo && (
-        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-[1.4vmin] pointer-events-none">
-          <div className="flex items-start justify-center gap-[7vmin]">
-            <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
-              {timeNaEsquerda?.logo
-                ? <img src={timeNaEsquerda.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
-                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeNaEsquerda.cor || '#3B82F6'} 70%, transparent))` }} />
-                : <div className="w-[14vmin] h-[14vmin]" />}
-              <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
-                {nomeSemQuebra(labelNaEsquerda)}
-              </span>
+      {/* ══════════════ CELULAR (retrato) ══════════════
+          Ordem pedida pelo dono, de cima para baixo e tudo centralizado:
+          bans dos dois lados na MESMA linha → temporizador (fase + barra +
+          número) → as duas bolas → picks do lado azul → picks do lado
+          vermelho → grid de campeões. O BANIR/CONFIRMAR fica fixo no rodapé.
+          Em paisagem (desktop/notebook) este bloco não existe — lá vale o
+          layout absoluto original, sem nenhuma mudança. */}
+      <div className={`relative z-10 mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-1 pb-3 landscape:hidden custom-scrollbar${chromeSaindo}`}>
+        {!aoVivoAtivo && (
+          <>
+            {/* 1. BANS: os dois lados na mesma linha (azul à esquerda). */}
+            {maxBans > 0 && linhaBans()}
+
+            {/* 2. TEMPORIZADOR: fase + barra de turno + número na mesma linha;
+                a série (quando a sala tem) fica na linha de baixo, centralizada
+                e truncada, para nenhum texto empurrar a linha. */}
+            <div className="flex w-full min-w-0 flex-col items-center gap-1">
+              <div className="flex w-full min-w-0 items-center justify-center gap-2">
+                <span className="shrink-0 whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.15em] text-white/85">
+                  {fase === 'ban' ? 'FASE DE BANS' : 'FASE DE PICKS'}
+                </span>
+                {barraTurno('h-2 min-w-0 flex-1')}
+                <span className={`w-7 shrink-0 text-right text-lg font-black tabular-nums leading-none drop-shadow-lg ${segundos <= 10 ? 'text-red-500' : 'text-white'}`}>
+                  {segundos}
+                </span>
+              </div>
+              {serieLabel && (
+                <span className="max-w-full truncate text-center text-[10px] font-black uppercase tracking-[0.2em] text-[#c89b3c]">
+                  {serieLabel}
+                </span>
+              )}
             </div>
-            <span className="text-[3.2vmin] font-black text-white/50 leading-none mt-[5.4vmin]">X</span>
-            <div className="flex flex-col items-center gap-[1.1vmin] w-[24vmin]">
-              {timeNaDireita?.logo
-                ? <img src={timeNaDireita.logo} alt="" className="w-[14vmin] h-[14vmin] object-contain"
-                    style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeNaDireita.cor || '#ef4444'} 70%, transparent))` }} />
-                : <div className="w-[14vmin] h-[14vmin]" />}
-              <span className="text-[1.8vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-snug line-clamp-2 max-w-full text-center">
-                {nomeSemQuebra(labelNaDireita)}
-              </span>
+
+            {/* 3. AS DUAS BOLAS lado a lado (esquerda = lado azul). */}
+            <div className="flex w-full min-w-0 items-start justify-center gap-3">
+              {ordemTimes.map((equipe) => painelDoTime(equipe, 'celular'))}
             </div>
+
+            {/* 4. Visão de transmissão: o placar da série embaixo das bolas, no
+                lugar do confronto grande que ocupa o centro do desktop. */}
+            {!possoJogar && !espectadorCompleto && placarVisivel && (
+              <div className="flex items-center justify-center gap-2 text-lg font-black tabular-nums">
+                <span className="text-[#60A5FA]">{placarVisivel.esquerda}</span>
+                <span className="text-white/30">-</span>
+                <span className="text-[#f87171]">{placarVisivel.direita}</span>
+              </div>
+            )}
+
+            {/* 5 e 6. PICKS: uma linha por lado, azul primeiro. */}
+            {maxPicks > 0 && (
+              <div className="flex w-full min-w-0 flex-col gap-2">
+                {linhaPicks(equipeEsquerda, 'AZUL')}
+                {linhaPicks(equipeDireita, 'VERMELHO')}
+              </div>
+            )}
+
+            {/* 7. GRID DE CAMPEÕES: busca/filtro grudados no topo da rolagem;
+                o BANIR/CONFIRMAR fica sempre visível na barra de ação. */}
+            {mostraGrid && (
+              <div className="flex w-full min-w-0 flex-col gap-2">
+                <div className="sticky top-0 z-20 -mx-3 flex flex-col gap-2 border-b border-white/5 bg-black/95 px-3 py-2 backdrop-blur-sm">
+                  {filtrosEBusca()}
+                </div>
+                <div className="grid grid-cols-4 gap-x-2 gap-y-2 sm:grid-cols-6">
+                  {filteredChampions.map(cartaCampeao)}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* BARRA DE AÇÃO DO CELULAR — fixa no rodapé: confirmar (quem joga),
+          código da partida (tela ao vivo) ou patrocinadores (espectador).
+          O relógio fica ao lado do botão para não sumir quando o grid rola. */}
+      {(!aoVivoAtivo || !!aoVivo?.codigo || !possoJogar) && (
+        <div className={`relative z-30 shrink-0 border-t border-white/10 bg-black/85 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm landscape:hidden${chromeSaindo}`}>
+          <div className="mx-auto w-full max-w-[560px]">
+            {aoVivoAtivo
+              ? (aoVivo?.codigo ? painelCodigo('w-full') : patrocinadores('w-full pt-1'))
+              : (possoJogar
+                ? (
+                  <div className="flex items-center gap-2.5">
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center border text-base font-black tabular-nums ${segundos <= 10 ? 'border-red-500/60 text-red-500' : 'border-white/15 text-white'}`}>
+                      {segundos}
+                    </div>
+                    {botaoConfirmar('flex-1')}
+                  </div>
+                )
+                : patrocinadores('w-full pt-1'))}
           </div>
-          <span className="text-[6vmin] font-black tabular-nums leading-none text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-            {placarAoVivo?.esquerda ?? 0} <span className="text-white/40">-</span> {placarAoVivo?.direita ?? 0}
-          </span>
-          {!!aoVivo?.legenda && (
-            <span className="text-[1.2vmin] font-black uppercase tracking-[0.4em] text-white/50">
-              {aoVivo.legenda}
-            </span>
-          )}
-          {!!aoVivo?.status && (
-            <span className="inline-flex items-center gap-[0.8vmin] text-[2.4vmin] font-black text-[#00FF41] uppercase tracking-[0.25em]">
-              {aoVivo.pulsante && <span className="w-[1.1vmin] h-[1.1vmin] rounded-full bg-red-500 animate-pulse shrink-0" />}
-              {aoVivo.status}
-            </span>
-          )}
+        </div>
+      )}
+
+      {/* CENTRO DA PARTIDA — a MESMA composição no fim do draft e na tela ao
+          vivo, no MESMO wrapper: as bolas viajam do painel para cá (layoutId) e
+          já param onde vão ficar; a troca de tela não tem salto. O chrome do
+          draft some por cima (fade) e o centro assume. No celular vale o mesmo
+          bloco (tamanhos proporcionais), por isso ele não fica dentro da
+          coluna que rola. */}
+      {(aoVivoAtivo || fimDoDraft) && (
+        <div className="pointer-events-none absolute inset-0 z-[60] flex flex-col items-center justify-center">
+          {confrontoCentral(!aoVivoAtivo)}
         </div>
       )}
 
@@ -931,142 +1468,41 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           (pedido do usuário 18/10): Trocar/Encerrar live do streamer, Resetar
           Sala (SÓ adm), Verificar Partida (só na tela ao vivo) e o mudo; no
           canto oposto, a seta de sair da sala. Absoluto de propósito: não
-          empurra a linha de bans nem muda a altura dela. */}
-      <div className="absolute top-[1vmin] right-[1.5vmin] z-50 flex items-center gap-[0.8vmin]">
-        {acoesTopo?.resultado && (
-          <button
-            type="button"
-            disabled={acoesTopo.resultado.carregando}
-            onClick={() => acoesTopo?.resultado?.aoClicar()}
-            title="Inserir resultado manual (adm)"
-            className="p-[0.7vmin] border border-[#FFB700]/60 text-[#FFB700] hover:text-white hover:border-[#FFB700] transition-colors duration-200 cursor-pointer disabled:opacity-50"
-          >
-            <PlusCircle className={`w-[2vmin] h-[2vmin] ${acoesTopo.resultado.carregando ? 'animate-spin' : ''}`} />
-          </button>
-        )}
-        {acoesTopo?.resetar && (
-          <button
-            type="button"
-            disabled={acoesTopo.resetar.carregando}
-            onClick={() => acoesTopo?.resetar?.aoClicar()}
-            title="Resetar sala (adm) — volta para o PRONTO"
-            className="p-[0.7vmin] border border-[#ef4444]/50 text-[#ff8a8a] hover:text-white hover:border-[#ef4444] transition-colors duration-200 cursor-pointer disabled:opacity-50"
-          >
-            <RotateCcw className={`w-[2vmin] h-[2vmin] ${acoesTopo.resetar.carregando ? 'animate-spin' : ''}`} />
-          </button>
-        )}
-        {acoesTopo?.twitch && (
-          acoesTopo.twitch.aoEncerrar ? (
-            /* Sua live está no ar: clicar ENCERRA — o card "Assista ao vivo"
-               (canto inferior esquerdo) já leva para a Twitch (pedido do
-               usuário 18/10). */
-            <button
-              type="button"
-              disabled={acoesTopo.twitch.carregando}
-              onClick={() => acoesTopo?.twitch?.aoEncerrar?.()}
-              title="Encerrar sua live"
-              className="relative p-[0.7vmin] border border-white/60 text-white hover:text-red-400 hover:border-red-500/60 transition-colors duration-200 cursor-pointer disabled:opacity-50"
-            >
-              {acoesTopo.twitch.carregando
-                ? <RefreshCw className="w-[2vmin] h-[2vmin] animate-spin" />
-                : <Twitch className="w-[2vmin] h-[2vmin]" />}
-              <span className="absolute top-[0.2vmin] right-[0.2vmin] w-[0.9vmin] h-[0.9vmin] rounded-full bg-red-600 animate-pulse" />
-            </button>
-          ) : acoesTopo.twitch.assistirHref ? (
-            <a
-              href={acoesTopo.twitch.assistirHref}
-              target="_blank"
-              rel="noreferrer"
-              title="Abrir live na Twitch"
-              className="relative p-[0.7vmin] border border-[#9146FF]/60 text-[#a866ff] hover:text-white hover:border-[#9146FF] transition-colors duration-200 cursor-pointer"
-            >
-              <Twitch className="w-[2vmin] h-[2vmin]" />
-              <span className="absolute top-[0.2vmin] right-[0.2vmin] w-[0.9vmin] h-[0.9vmin] rounded-full bg-red-600 animate-pulse" />
-            </a>
-          ) : (
-            <button
-              type="button"
-              disabled={acoesTopo.twitch.carregando}
-              onClick={() => acoesTopo?.twitch?.aoIniciar?.()}
-              title="Iniciar live na Twitch"
-              className="p-[0.7vmin] border border-[#9146FF]/60 text-[#9146FF] hover:text-[#c9a7ff] hover:border-[#9146FF] transition-colors duration-200 cursor-pointer disabled:opacity-50"
-            >
-              {acoesTopo.twitch.carregando
-                ? <RefreshCw className="w-[2vmin] h-[2vmin] animate-spin" />
-                : <Twitch className="w-[2vmin] h-[2vmin]" />}
-            </button>
-          )
-        )}
-        {acoesTopo?.verificar && (
-          <button
-            type="button"
-            disabled={acoesTopo.verificar.carregando}
-            onClick={() => acoesTopo?.verificar?.aoClicar()}
-            title="Verificar partida — confere na Riot agora"
-            className="p-[0.7vmin] border border-[#00F0FF]/40 text-[#00F0FF] hover:text-white hover:border-[#00F0FF] transition-colors duration-200 cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-[2vmin] h-[2vmin] ${acoesTopo.verificar.carregando ? 'animate-spin' : ''}`} />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setMudo(alternarSomMudo())}
-          title={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
-          aria-label={mudo ? 'Ligar sons do draft' : 'Mutar sons do draft'}
-          aria-pressed={mudo}
-          className={`
-            cursor-pointer p-[0.7vmin] border transition-colors duration-200
-            ${mudo
-              ? 'border-white/10 text-white/30 hover:text-white/60'
-              : 'border-[#c89b3c]/40 text-[#c89b3c] hover:text-[#e6c469]'}
-          `}
-        >
-          {mudo
-            ? <VolumeX className="w-[2vmin] h-[2vmin]" />
-            : <Volume2 className="w-[2vmin] h-[2vmin]" />}
-        </button>
+          empurra a linha de bans nem muda a altura dela. (No celular os mesmos
+          botões ficam na barra do topo — ver `botoesTopo`.) */}
+      <div className="absolute top-[1vmin] right-[1.5vmin] z-50 hidden items-center gap-[0.8vmin] landscape:flex">
+        {botoesTopo('gap-[0.8vmin]')}
       </div>
 
       {/* SAIR DA SALA (draft e tela ao vivo) — mesma linguagem dos ícones do
           topo, no canto oposto: volta para /jogar como a seta da sala normal. */}
       {acoesTopo?.sair && (
-        <button
-          type="button"
-          onClick={() => acoesTopo?.sair?.()}
-          title="Sair da sala"
-          className="absolute top-[1vmin] left-[1.5vmin] z-50 p-[0.7vmin] border border-white/15 text-white/70 hover:text-red-400 hover:border-red-500/50 transition-colors duration-200 cursor-pointer"
-        >
-          <ArrowLeft className="w-[2vmin] h-[2vmin]" />
-        </button>
+        <div className="absolute top-[1vmin] left-[1.5vmin] z-50 hidden landscape:block">
+          {botaoSair()}
+        </div>
+      )}
+
+      {/* AÇÃO EXTRA DA PÁGINA (ex.: "Atualizar resultado") — no desktop fica no
+          mesmo canto de antes, logo depois da seta de sair. */}
+      {acoesTopo?.extra && (
+        <div className="absolute top-[0.5vmin] left-[6vmin] z-[80] hidden landscape:block">
+          {acoesTopo.extra}
+        </div>
       )}
 
       {/* BANS SECTION — cada EQUIPE no lado em jogo dela (esquerda = azul).
           Alinhado HORIZONTALMENTE com a bola do time (mesmo px do TeamPanel)
-          para não invadir o grid de campeões — pedido do usuário 31/10. */}
-      <div className="absolute top-[6vmin] inset-x-0 flex justify-between px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] z-40">
-        {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
-            const ehA = equipe === 'A';
-            const dataSide = ehA ? 'blue' : 'red';
-            const bans = ehA ? draft.blue_bans : draft.red_bans;
-            const previaBan = emTurno && draft.current_team === dataSide && fase === 'ban'
-              ? previewDoTime(ehA)
-              : null;
-            return (
-              <div key={equipe} className="w-[25vmin] flex justify-center">
-                <div className="flex flex-col gap-[0.5vmin] items-start">
-                  <span className="text-[1.1vmin] font-bold text-white/25 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
-                  <div className="flex flex-row gap-[0.9vmin]">
-                    {[...Array(maxBans)].map((_, i) => (
-                      <BanSlot key={`${equipe}-${i}`} champion={bans[i] ?? null}
-                        preview={i === bans.length ? previaBan : null}
-                        active={emTurno && draft.current_team === dataSide && fase === 'ban' && i === bans.length}
-                        jaBaniu={i < bans.length} champions={champions} version={version} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          para não invadir o grid de campeões — pedido do usuário 31/10.
+          (No celular os bans descem para a faixa do lado, abaixo dos picks.) */}
+      <div className={`absolute top-[6vmin] inset-x-0 hidden justify-between px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] z-40 landscape:flex${chromeSaindo}`}>
+        {ordemTimes.map((equipe) => (
+          <div key={equipe} className="w-[25vmin] flex justify-center">
+            <div className="flex flex-col gap-[0.5vmin] items-start">
+              <span className="text-[1.1vmin] font-bold text-white/25 uppercase tracking-[0.3em] ml-[0.5vmin]">Bans</span>
+              <div className="flex flex-row gap-[0.9vmin]">{slotsBans(equipe)}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* MAIN CONTENT AREA — painéis no lado em jogo de cada equipe.
@@ -1076,106 +1512,33 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
           Na TELA AO VIVO as bolas SAEM: sem ban/pick elas não têm função — o
           confronto (logos + placar + status) fica no topo (pedido do usuário). */}
       {!aoVivoAtivo && (
-      <div className="absolute inset-0 flex items-center justify-between px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] pointer-events-none z-30">
-        {(equipeEsquerda === 'A' ? (['A', 'B'] as const) : (['B', 'A'] as const)).map((equipe) => {
-          const ehA = equipe === 'A';
-          const dataSide = ehA ? 'blue' : 'red';
-          return (
-            <TeamPanel key={equipe}
-              ladoJogo={ehA ? ladoEquipeA : ladoEquipeB}
-              emTurno={emTurno && draft.current_team === dataSide}
-              jogadorNome={ehA ? labelEquipeA : labelEquipeB}
-              logoTime={ehA ? (timeA?.logo ?? null) : (timeB?.logo ?? null)}
-              textoAbaixo={fase === 'ban' ? 'Banindo...' : 'Escolhendo...'}
-              feedback={feedback && feedback.lado === dataSide ? feedback : null} />
-          );
-        })}
+      <div className={`absolute inset-0 hidden items-center justify-between px-[max(2vmin,calc((100%_-_85vmin)/4_-_12.5vmin))] pointer-events-none z-30 landscape:flex${chromeSaindo}`}>
+        {ordemTimes.map((equipe) => painelDoTime(equipe, 'desktop'))}
       </div>
       )}
 
       {/* CENTER - CHAMPION GRID — SÓ para quem está na sala como JOGADOR. O
           telespectador não escolhe nada: fica sem grid, sem busca e sem o
           botão de confirmar (fase + timer + picks/bans continuam visíveis).
-          O espaço liberado é o lugar natural da visão de transmissão. */}
+          O espaço liberado é o lugar natural da visão de transmissão.
+          (No celular o mesmo grid entra na coluna em fluxo — ver o bloco do
+          celular acima; a busca/filtro e as cartas são as mesmas funções.) */}
       {mostraGrid && (
-      <div className="absolute top-[12vmin] left-1/2 -translate-x-1/2 w-full max-w-[85vmin] flex flex-col gap-[1vmin] z-40">
-        <div className="flex items-center justify-between gap-[1vmin] mb-[0.5vmin]">
-          {/* Filtro de rota (igual ao client do LoL) — ícones do ROLE_CONFIG
-              (/perfil). Clicar filtra; clicar de novo limpa o filtro. */}
-          <div className="flex items-center gap-[0.35vmin]">
-            {(['TOP', 'JG', 'MID', 'ADC', 'SUP'] as const).map((r) => {
-              const ativo = roleFiltro === r;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRoleFiltro(ativo ? null : r)}
-                  title={`Filtrar por ${ROLE_CONFIG[r].label}`}
-                  className={`group flex items-center gap-[0.4vmin] px-[0.6vmin] py-[0.45vmin] border transition-colors cursor-pointer ${
-                    ativo ? 'border-[#c89b3c] bg-[#c89b3c]/15' : 'border-white/10 bg-black/70 hover:border-white/30'
-                  }`}
-                >
-                  <img
-                    src={ROLE_CONFIG[r].img}
-                    alt={ROLE_CONFIG[r].label}
-                    className={`w-[1.8vmin] h-[1.8vmin] object-contain ${ativo ? '' : 'opacity-60 group-hover:opacity-90'}`}
-                  />
-                  <span className={`text-[1vmin] font-bold uppercase tracking-wide ${ativo ? 'text-[#c89b3c]' : 'text-white/55 group-hover:text-white/80'}`}>
-                    {ROLE_CONFIG[r].label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="relative w-[30vmin]">
-            <Search className="absolute left-[1vmin] top-1/2 -translate-y-1/2 w-[1.8vmin] h-[1.8vmin] text-[#c89b3c]" />
-            <input
-              type="text"
-              placeholder="Buscar campeão..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-black/80 border border-[#c89b3c]/40 rounded-sm py-[0.8vmin] pl-[3.5vmin] pr-[1.5vmin] text-[1.6vmin] outline-none focus:border-[#c89b3c] transition-colors placeholder:text-[#c89b3c]/30 text-white"
-            />
-          </div>
-        </div>
+      <div className={`absolute top-[12vmin] left-1/2 -translate-x-1/2 w-full max-w-[85vmin] hidden flex-col gap-[1vmin] z-40 landscape:flex${chromeSaindo}`}>
+        {filtrosEBusca()}
 
         <div className="grid grid-cols-6 gap-x-[0.8vmin] gap-y-[1.2vmin] max-h-[58vmin] overflow-y-auto custom-scrollbar pr-[1vmin]">
-          {filteredChampions.map(champ => {
-            const usado = indisponivel(champ.id);
-            const selecionado = selectedChamp?.id === champ.id;
-            return (
-              <div
-                key={champ.id}
-                onClick={() => handleChampionClick(champ)}
-                className={`flex flex-col items-center gap-[0.3vmin] group ${isMeuTurno ? 'cursor-pointer' : 'cursor-default'}`}
-              >
-                <div className={`
-                  relative w-[11.5vmin] h-[11.5vmin] border-2 transition-all duration-200
-                  ${selecionado ? 'border-[#c89b3c] scale-110 shadow-[0_0_15px_rgba(200,155,60,0.5)]' : 'border-white/10 group-hover:border-white/40'}
-                  ${usado ? 'opacity-30 grayscale cursor-not-allowed' : ''}
-                `}>
-                  <img src={buildChampionIconUrl(champ.id, version)} alt={champ.name}
-                    className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  {(draft.blue_bans.includes(champ.id) || draft.red_bans.includes(champ.id)) && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-grayscale overflow-hidden">
-                      <div className="absolute inset-0 border-t-4 border-red-600/80 -rotate-45 origin-center scale-150" />
-                    </div>
-                  )}
-                </div>
-                <span className={`text-[1.2vmin] font-bold truncate w-full text-center ${selecionado ? 'text-[#c89b3c]' : 'text-white/60'}`}>
-                  {champ.name}
-                </span>
-              </div>
-            );
-          })}
+          {filteredChampions.map(cartaCampeao)}
         </div>
       </div>
       )}
 
       {/* CENTRO — VISÃO DE TRANSMISSÃO (telespectador): Time A X Time B grande
-          + placar da série embaixo (o grid de escolha não existe aqui). */}
+          + placar da série embaixo (o grid de escolha não existe aqui).
+          No celular o confronto grande sai de cena: as mesmas informações ficam
+          nas duas bolas + placar logo abaixo delas (ver o bloco do celular). */}
       {!possoJogar && !espectadorCompleto && (timeA || timeB || placar) && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[110vmin] flex flex-col items-center gap-[2.5vmin] z-40 pointer-events-none">
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[110vmin] hidden flex-col items-center gap-[2.5vmin] z-40 pointer-events-none landscape:flex${chromeSaindo}`}>
           <div className="flex items-center justify-center gap-[6vmin] w-full">
             <div className="flex flex-col items-center gap-[1vmin] w-[30vmin]">
               {timeNaEsquerda?.logo ? (
@@ -1207,112 +1570,23 @@ export const DraftRoom: React.FC<DraftRoomProps> = ({
         </div>
       )}
 
-      {/* FOOTER PICKS & ACTION BUTTON */}
-      <div className="absolute bottom-[2vmin] left-0 right-0 flex items-end justify-between px-[4vmin] z-50">
+      {/* FOOTER PICKS & ACTION BUTTON (desktop/paisagem) — no celular os picks
+          sobem para a faixa de cada lado e o botão/código/patrocinadores vão
+          para a barra de ação fixa. */}
+      <div className={`absolute bottom-[2vmin] left-0 right-0 hidden items-end justify-between px-[4vmin] z-50 landscape:flex${chromeSaindo}`}>
         {colunaPicks(equipeEsquerda, false)}
 
-        {!aoVivoAtivo && possoJogar && (() => {
-          // Cor do "aguardando você escolher": ban = vermelho; pick = cor do
-          // MEU lado como aparece na tela (azul/vermelho). Ação dos outros =
-          // botão apagado, como sempre.
-          const meuLadoVisual = meuTime === 'blue' ? ladoEquipeA : meuTime === 'red' ? ladoEquipeB : null;
-          const aguardando = isMeuTurno && !selectedChamp && !enviando;
-          const pronto = !!selectedChamp && isMeuTurno && !enviando;
-          // Só a BORDA muda de cor (texto e fundo seguem o padrão do botão).
-          const corVez = fase === 'ban' || meuLadoVisual !== 'blue'
-            ? { linha: '#ef4444', brilho: 'rgba(239,68,68,0.6)' }
-            : { linha: '#3b82f6', brilho: 'rgba(59,130,246,0.6)' };
-          return (
-            <div className="mb-[2vmin] relative">
-              <button
-                disabled={!selectedChamp || !isMeuTurno || enviando}
-                onMouseEnter={() => {
-                  if (selectedChamp && isMeuTurno && !enviando) tocarSom('lockInHover');
-                }}
-                onClick={confirmarAcao}
-                className={`
-                  relative px-[12vmin] py-[2.5vmin] font-bold text-[2.2vmin] tracking-[0.15em] uppercase transition-all duration-300 group
-                  ${pronto ? 'text-[#f0e6d2] hover:text-white cursor-pointer' : 'text-white/20 cursor-not-allowed'}
-                `}
-              >
-                <div className={`absolute inset-0 z-0 ${aguardando ? 'animate-pulse [animation-duration:2.8s]' : ''}`}>
-                  <svg
-                    viewBox="0 0 300 80"
-                    preserveAspectRatio="none"
-                    className="w-full h-full"
-                    style={{
-                      filter: pronto
-                        ? 'drop-shadow(0 0 15px rgba(200,155,60,0.35))'
-                        : aguardando
-                          ? `drop-shadow(0 0 16px ${corVez.brilho})`
-                          : 'drop-shadow(0 0 15px rgba(200,155,60,0.1))',
-                    }}
-                  >
-                    <path d="M40,5 L260,5 L295,60 Q150,85 5,60 Z" fill="none"
-                      stroke={pronto ? '#c89b3c' : aguardando ? corVez.linha : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
-                    <path d="M42,7 L258,7 L292,59 Q150,83 8,59 Z"
-                      fill={pronto ? '#1e2328' : '#0a0a0a'}
-                      className="transition-colors duration-300 group-hover:fill-[#252a30]" />
-                  </svg>
-                </div>
-                <span className="relative z-10 drop-shadow-md">
-                  {enviando ? '...' : fase === 'ban' ? 'BANIR' : 'CONFIRMAR'}
-                </span>
-              </button>
-            </div>
-          );
-        })()}
+        {!aoVivoAtivo && possoJogar && botaoConfirmar('mb-[2vmin]')}
 
         {/* CÓDIGO DA PARTIDA (tela ao vivo): no lugar do botão de confirmar —
             MESMO painel da sala ("Prepare-se para a batalha" + "Copiar
             Código"), sem mudar nada. Só chega aqui quem o servidor deixa ver
             (staff ou time da vaga); o espectador continua com os patrocínios. */}
-        {aoVivoAtivo && aoVivo?.codigo && (
-          <div className="mb-[2vmin] flex flex-col items-center gap-[1.5vmin]">
-            <p className="text-[1.4vmin] font-black text-white uppercase tracking-[0.5em]">
-              Prepare-se para a batalha
-            </p>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={copiarCodigoAoVivo}
-              className="relative p-[1.5px] bg-black cursor-pointer"
-              style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
-            >
-              <span
-                className="block bg-[#FFB700] px-[8vmin] py-[1.6vmin] font-black uppercase tracking-[0.4em] text-[1.5vmin] text-black hover:bg-yellow-400 flex items-center justify-center gap-[1.2vmin] transition-colors"
-                style={{ clipPath: 'polygon(11.8px 0, 100% 0, 100% calc(100% - 11.8px), calc(100% - 11.8px) 100%, 0 100%, 0 11.8px)' }}
-              >
-                {codigoCopiado
-                  ? <Check className="w-[1.8vmin] h-[1.8vmin]" />
-                  : <Copy className="w-[1.8vmin] h-[1.8vmin]" />}
-                {codigoCopiado ? 'Código Copiado!' : 'Copiar Código'}
-              </span>
-            </motion.button>
-          </div>
-        )}
+        {aoVivoAtivo && aoVivo?.codigo && painelCodigo('mb-[2vmin]')}
 
         {/* PATROCINADORES (telespectador): no lugar do botão de confirmar —
             linha fina, selo "PATROCINADORES" e os logos centralizados. */}
-        {!possoJogar && !(aoVivoAtivo && aoVivo?.codigo) && (
-          <div className="mb-[1vmin] flex flex-col items-center gap-[0.8vmin] pointer-events-none">
-            <div className="w-[42vmin] h-[1px] bg-gradient-to-r from-transparent via-[#c89b3c]/70 to-transparent" />
-            <span className="text-[1.1vmin] font-bold uppercase tracking-[0.5em] text-white/45">Patrocinadores</span>
-            <div className="flex items-center justify-center gap-[7vmin] mt-[0.6vmin]">
-              <img
-                src="/images/patrocinadores/m7-arena.png"
-                alt="M7 Arena"
-                className="h-[6vmin] object-contain opacity-95"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-              />
-              <img
-                src="/images/patrocinadores/mobyle-store.svg"
-                alt="Mobyle Store"
-                className="h-[6vmin] object-contain opacity-95"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-              />
-            </div>
-          </div>
-        )}
+        {!possoJogar && !(aoVivoAtivo && aoVivo?.codigo) && patrocinadores('mb-[1vmin] pointer-events-none')}
 
         {colunaPicks(equipeDireita, true)}
       </div>

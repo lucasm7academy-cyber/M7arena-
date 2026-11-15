@@ -5,10 +5,11 @@
 // idêntica. O servidor é a autoridade; esta tela só desenha e pede ações.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, RotateCcw, Share2, Shield, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DraftRoom, type AcoesTopo } from '../../components/draft/DraftRoom';
+import { TeamBall } from '../../components/draft/TeamBall';
 import { VagaSlot } from '../../components/partidas/VagaSlot';
 import { HeaderFinalizada } from '../../components/partidas/HeaderFinalizada';
 import { ModalResultadoManual } from './ModalResultadoManual';
@@ -151,6 +152,9 @@ export default function SalaCampeonato() {
     };
   }, []);
   const [, setTick] = useState(0);
+  // prefers-reduced-motion: as entradas das telas de fase (pós-draft/finalizada)
+  // perdem o deslocamento e ficam num fade instantâneo.
+  const reduzirMovimento = useReducedMotion();
 
   const carregar = useCallback(async () => {
     try {
@@ -597,6 +601,32 @@ export default function SalaCampeonato() {
     ? { aoClicar: () => setResultadoAberto(true), carregando: String(ocupado ?? '').includes('resultado') }
     : null;
   const acaoTopoSair = () => navigate('/jogar');
+
+  // "Atualizar resultado" da série (staff/time): vai pelo slot
+  // `acoesTopo.extra` do DraftRoom — no celular entra na mesma linha dos
+  // ícones do topo, no desktop fica no canto esquerdo como sempre.
+  const botaoAtualizarResultado = serie && (ehStaffCampeonato || !!meuLado) ? (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.94 }}
+      disabled={!!ocupado}
+      onClick={atualizarResultado}
+      className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+      style={{ clipPath: CUT_BUTTON }}
+      title="Atualizar resultado — verifica a série na Riot agora"
+    >
+      <div
+        className="h-10 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
+        style={{ clipPath: CUT_BUTTON_INNER }}
+      >
+        <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
+        <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
+          Atualizar Resultado
+        </span>
+      </div>
+    </motion.button>
+  ) : null;
+
   const modalResultado = (
     <ModalResultadoManual
       aberto={resultadoAberto}
@@ -689,40 +719,18 @@ export default function SalaCampeonato() {
             resetar: acaoTopoResetar,
             resultado: acaoTopoResultado,
             sair: acaoTopoSair,
+            extra: botaoAtualizarResultado,
           }}
         />
 
         {modalResultado}
 
         {/* A tela ao vivo não tem a top bar da sala: os gatilhos que ainda
-            importam com a partida rolando ficam neste canto, DEPOIS da seta de
-            sair (que ocupa a ponta esquerda). O Verificar Partida e o Resetar
-            Sala (adm) viraram ícones do topo direito, ao lado do mudo (pedido
-            do usuário 18/10). O automático (polling/cron) continua rodando por
-            trás de qualquer jeito. */}
-        <div className="absolute left-[6vmin] top-[0.5vmin] z-[80] flex items-center gap-[0.8vmin]">
-          {!!serie && (ehStaffCampeonato || !!meuLado) && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.94 }}
-              disabled={!!ocupado}
-              onClick={atualizarResultado}
-              className="relative p-[1px] bg-[#00F0FF]/30 hover:bg-[#00F0FF]/60 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
-              style={{ clipPath: CUT_BUTTON }}
-              title="Atualizar resultado — verifica a série na Riot agora"
-            >
-              <div
-                className="h-8 sm:h-9 md:h-[4.4vmin] px-3 md:px-[1.6vmin] bg-[#001418] hover:bg-[#002229] flex items-center justify-center gap-1.5 text-[#00F0FF] transition-colors"
-                style={{ clipPath: CUT_BUTTON_INNER }}
-              >
-                <RefreshCw className={`w-4 h-4 md:w-[1.8vmin] md:h-[1.8vmin] ${ocupado === 'verificar-serie' ? 'animate-spin' : ''}`} />
-                <span className="text-[10.5px] md:text-[1.15vmin] font-black uppercase tracking-wider hidden sm:inline">
-                  Atualizar Resultado
-                </span>
-              </div>
-            </motion.button>
-          )}
-        </div>
+            importam com a partida rolando vão pelo slot `acoesTopo.extra` do
+            DraftRoom (mesma linha dos ícones no celular, canto esquerdo no
+            desktop). O Verificar Partida e o Resetar Sala (adm) são ícones do
+            topo direito, ao lado do mudo (pedido do usuário 18/10). O
+            automático (polling/cron) continua rodando por trás.
 
         {/* Notificação "Assista ao vivo" — vale igual na tela ao vivo, mas
             SUBIU para não ficar atrás dos campeões dos picks (pedido do
@@ -1075,22 +1083,13 @@ export default function SalaCampeonato() {
       const venceu = finalizada && ((isA && vencedorSerie === 'A') || (!isA && vencedorSerie === 'B'));
       return (
         <div className="flex flex-col items-center gap-2 md:gap-[1.6vmin] w-[46vmin] max-w-full">
-          <div className="relative">
-            {logo ? (
-              <img
-                src={logo}
-                alt=""
-                className={`w-16 h-16 md:w-[12vmin] md:h-[12vmin] object-contain ${
-                  venceu
-                    ? 'drop-shadow-[0_0_45px_rgba(255,183,0,0.6)]'
-                    : posicao === 'blue'
-                      ? 'drop-shadow-[0_0_30px_rgba(59,130,246,0.35)]'
-                      : 'drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]'
-                }`}
-              />
-            ) : (
-              <div className="w-16 h-16 md:w-[12vmin] md:h-[12vmin]" />
-            )}
+          {/* BOLA DO TIME — a MESMA bola do draft (TeamBall): círculo com a
+              logo de fundo e a borda acesa na cor do lado em jogo. A caixa é do
+              tamanho do draft (até 150px no celular em retrato, 32vmin em
+              paisagem/desktop), então a bola que sai do draft chega aqui sem
+              mudar de tamanho. */}
+          <div className="relative w-full max-w-[150px] landscape:max-w-none landscape:w-[32vmin]">
+            <TeamBall logo={logo} lado={posicao} acesa />
             {venceu && (
               <span className="absolute -top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 md:px-[1vmin] md:py-[0.3vmin] bg-[#FFB700] text-black text-[9px] md:text-[1.05vmin] font-black uppercase tracking-[0.25em] whitespace-nowrap shadow-[0_0_18px_rgba(255,183,0,0.5)]">
                 Vencedor
@@ -1138,23 +1137,40 @@ export default function SalaCampeonato() {
             subtitulo={subtituloSerie}
           />
         )}
-        <div className="w-full flex items-center justify-center gap-3 md:gap-[6vmin]">
+        {/* ENTRADA curta (fade + 10px de baixo para cima): a composição já
+            nasce com as bolas nas posições finais, então o movimento é só o
+            "assentar" da tela — nada de deslizar as bolas de novo (quem as
+            trouxe para o centro foi o fim do draft). O placar entra um passo
+            depois para dar ordem de leitura. */}
+        <motion.div
+          initial={{ opacity: 0, y: reduzirMovimento ? 0 : 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduzirMovimento ? 0 : 0.45, ease: 'easeOut' }}
+          className="w-full flex items-center justify-center gap-3 md:gap-[6vmin]"
+        >
           {bloco('blue')}
           <span className="text-3xl md:text-[5vmin] font-black text-white/50 leading-none drop-shadow-lg">X</span>
           {bloco('red')}
-        </div>
-        {(serie || finalizada) && (
-          <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
-            {placarEsquerda} <span className="text-white/40">-</span> {placarDireita}
-          </span>
-        )}
-        <span
-          className={`text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] ${
-            finalizada ? 'text-[#FFB700]' : 'text-[#00FF41]'
-          }`}
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduzirMovimento ? 0 : 0.4, delay: reduzirMovimento ? 0 : 0.18 }}
+          className="flex flex-col items-center gap-1 md:gap-[0.8vmin]"
         >
-          {finalizada ? 'Série Finalizada' : 'Série em Andamento'}
-        </span>
+          {(serie || finalizada) && (
+            <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
+              {placarEsquerda} <span className="text-white/40">-</span> {placarDireita}
+            </span>
+          )}
+          <span
+            className={`text-[10px] md:text-[1.1vmin] font-black uppercase tracking-[0.4em] ${
+              finalizada ? 'text-[#FFB700]' : 'text-[#00FF41]'
+            }`}
+          >
+            {finalizada ? 'Série Finalizada' : 'Série em Andamento'}
+          </span>
+        </motion.div>
       </div>
     );
   };

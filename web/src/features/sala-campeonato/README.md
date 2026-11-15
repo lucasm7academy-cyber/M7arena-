@@ -7,6 +7,18 @@
 `/time_vs_time_livre/:id` redireciona para a sala livre. O componente também
 apresenta a fase final dessas salas; os estados e permissões vêm do servidor.
 
+A composição pós-draft (`renderPosDraft`) desenha cada time na
+[bola compartilhada do draft](../../components/draft/TeamBall.tsx): círculo com
+a logo ao fundo e borda acesa na cor do lado em jogo, no mesmo tamanho e com o
+mesmo brilho da bola do draft, centralizada sobre os campeões escolhidos. A
+entrada é um fade curto (sem reposicionar as bolas: quem as leva ao centro é a
+transição do fim do draft) e respeita `prefers-reduced-motion`. Ela atende a
+partida finalizada da sala livre; no campeonato, `camp_jogo` com draft no
+payload segue na casca ao vivo do DraftRoom, que exibe essas mesmas bolas no
+centro. A transição até lá (fade do relógio, dos slots, do grid e do confirmar,
+bolas ao centro e som de finalização em rampa) roda dentro da janela
+`posDraftAtivo` deste arquivo.
+
 A página concentra consulta e transformação da resposta, polling, ligação com
 Realtime, catálogo de campeões, vagas dos times, escolha de lado/ordem, Draft,
 código, transmissão, verificação de resultado e telas de encerramento.
@@ -49,8 +61,11 @@ Não interpretar a prévia WebSocket como ban/pick persistido.
   consumida também por Draft/verificação, não um substituto dos outros motores.
 - [Realtime](../../../../api/src/realtime/README.md),
   [DraftRoom](../../components/draft/DraftRoom.tsx),
+  [TeamBall](../../components/draft/TeamBall.tsx),
   [VagaSlot](../../components/partidas/VagaSlot.tsx), identidade, relógio e áudio
-  são compartilhados com outros fluxos.
+  são compartilhados com outros fluxos. A ação "Atualizar resultado" desta
+  página entra no DraftRoom pelo slot `acoesTopo.extra`: fica na linha do topo
+  no celular e no canto esquerdo no desktop, sem o componente conhecer a ação.
 - O [módulo Campeonato](../../../../api/src/modules/tournaments/README.md) mantém
   inscrição, cronograma, classificação e persistência da série; Streams mantém
   transmissão. Autorização, elegibilidade e economia continuam no servidor.

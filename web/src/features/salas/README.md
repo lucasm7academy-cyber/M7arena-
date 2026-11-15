@@ -82,6 +82,22 @@ Homologação visual/interativa em navegador e integração real permanecem pend
   [VagaSlot](../../components/partidas/VagaSlot.tsx) são usados pelas duas salas;
   regras/prazos do draft vêm do servidor, e ações chegam por callbacks.
   Tipos, áudio e componentes de draft permanecem compartilhados.
+  O desenho do DraftRoom tem duas composições a partir das mesmas peças: em
+  paisagem (desktop/notebook, tablet deitado, celular deitado) vale o layout
+  absoluto em `vmin`; em retrato o conteúdo vira uma coluna centralizada e
+  rolável, na ordem menu em linha, bans dos dois lados na mesma linha, fase +
+  barra de turno + relógio, bolas dos dois times, picks do lado azul, picks do
+  lado vermelho e grid de campeões com busca/filtro — com a barra de confirmar
+  fixa no rodapé. As linhas dividem a largura (`flex-1`/`min-w-0`) para não
+  estourar em telas estreitas. A troca é por orientação da tela (`landscape`),
+  não por jogador ou modo. Quando o servidor marca o draft como `finished`, o
+  chrome (relógio, fase, bans, picks, grid e confirmar) sai em fade de 300ms, as
+  duas bolas viajam para o centro por `layoutId` e o tema de finalização sai em
+  rampa; a tela de partida (`aoVivo`) usa a mesma composição central com
+  [TeamBall](../../components/draft/TeamBall.tsx), então as bolas não saltam na
+  troca. Essa transição só aparece enquanto a página mantém o DraftRoom montado
+  depois do fim — hoje a sala de campeonato (janela pós-draft); em `/5v5` e
+  `/aram` o componente sai de cena no mesmo update.
 - SDK, contextos, `api/salamod1`, relógio/som e serviços backend continuam nos
   locais atuais. Procure entrada/saída/confirmação/tick em useSalaSimples e seus
   helpers HTTP; estado do chat em useSalaChat; conexão/eventos em useSalaRealtime.

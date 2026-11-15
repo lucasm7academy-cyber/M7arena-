@@ -82,22 +82,80 @@ export function alternarSomMudo(): boolean {
   return mudo;
 }
 
-/** Para um som específico (ex.: a notificação cumpriu o papel na ação confirmada). */
-export function pararSom(nome: SomDraft): void {
+// ── Fade-out ────────────────────────────────────────────────────────────────
+// O tema de finalização toca 34s, mas a tela troca em ~3s: o som tem que SAIR
+// junto com a animação do draft, não ser cortado. O timer da rampa fica num
+// Map por som e é SEMPRE limpo — fim da rampa, novo play do mesmo som, mute ou
+// desmontagem da tela (pararSonsDraft) — então nenhum intervalo vaza.
+
+/** Duração da saída do som quando o draft fecha (mesma janela da transição). */
+export const FADE_FIM_DRAFT_MS = 900;
+const PASSOS_FADE = 24;
+
+const fades = new Map<SomDraft, number>();
+
+function cancelarFade(nome: SomDraft): void {
+  const timer = fades.get(nome);
+  if (timer === undefined) return;
+  window.clearInterval(timer);
+  fades.delete(nome);
+}
+
+/** Corte seco: pausa, rebobina e devolve o volume padrão (a próxima reprodução
+ *  nunca herda a rampa de um fade interrompido). Som é acessório: erro de áudio
+ *  jamais sobe pela limpeza de um efeito. */
+function pararAgora(nome: SomDraft): void {
+  cancelarFade(nome);
   const som = cache.get(nome);
-  if (som && !som.paused) {
-    som.pause();
+  if (!som) return;
+  try {
+    if (!som.paused) som.pause();
     som.currentTime = 0;
+    som.volume = FONTES[nome].volume;
+  } catch (erro) {
+    console.warn('[draft] falha ao parar som', nome, erro);
   }
+}
+
+/** Para um som específico. `fadeMs` > 0 faz uma rampa de volume até o silêncio
+ *  (fim do draft) em vez do corte seco de sempre. */
+export function pararSom(nome: SomDraft, fadeMs = 0): void {
+  const som = cache.get(nome);
+  if (!som || fadeMs <= 0 || som.paused) {
+    pararAgora(nome);
+    return;
+  }
+  cancelarFade(nome);
+  const de = som.volume > 0 ? som.volume : FONTES[nome].volume;
+  const inicio = Date.now();
+  const timer = window.setInterval(() => {
+    const atual = cache.get(nome);
+    // O áudio parou por fora (mute, nova reprodução, tela trocada): encerra o
+    // timer e não mexe no volume — quem parou já restaurou o padrão.
+    if (!atual || atual !== som || atual.paused) {
+      cancelarFade(nome);
+      return;
+    }
+    const progresso = Math.min(1, (Date.now() - inicio) / fadeMs);
+    if (progresso >= 1) {
+      pararAgora(nome);
+      return;
+    }
+    // Rampa quadrática: cai rápido no início e alisa o final, sem o "corte"
+    // audível de uma rampa linear em arquivo com cauda longa.
+    som.volume = de * (1 - progresso) ** 2;
+  }, Math.max(16, Math.round(fadeMs / PASSOS_FADE)));
+  fades.set(nome, timer);
 }
 
 function pararCamas(): void {
   for (const nome of CAMAS) pararSom(nome);
 }
 
-/** Para TODOS os sons do draft (a tela desmontou: nada vaza pra sala). */
-export function pararSonsDraft(): void {
-  for (const nome of cache.keys()) pararSom(nome);
+/** Para TODOS os sons do draft (a tela desmontou: nada vaza pra sala). Com
+ *  `fadeMs` > 0, todos saem em rampa (fim do draft). */
+export function pararSonsDraft(fadeMs = 0): void {
+  for (const nome of [...cache.keys()]) pararSom(nome, fadeMs);
 }
 
 function obterSom(nome: SomDraft): HTMLAudioElement | null {
@@ -121,6 +179,9 @@ export function tocarSom(nome: SomDraft): void {
     if (EVENTOS.has(nome) || CAMAS.has(nome)) pararCamas();
     const som = obterSom(nome);
     if (!som) return;
+    // Fade em andamento desse som é descartado: ele recomeça no volume padrão.
+    cancelarFade(nome);
+    som.volume = FONTES[nome].volume;
     som.currentTime = 0;
     som.play().catch(() => {
       // Autoplay bloqueado (esperado antes do primeiro gesto): avisa uma vez
