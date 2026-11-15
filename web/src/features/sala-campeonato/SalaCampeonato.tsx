@@ -925,51 +925,59 @@ export default function SalaCampeonato() {
     const placarEquipeB = serie ? (serie.placar_b ?? 0) : (camp?.placar_b ?? 0);
     const placarEsquerda = ladoJogoA === 'blue' ? placarEquipeA : placarEquipeB;
     const placarDireita = ladoJogoA === 'blue' ? placarEquipeB : placarEquipeA;
-    // BOLA DO TIME no lugar da logo (pedido do usuário): a VAGA do time daquela
-    // coluna é a fonte da verdade (`jogadorNaPosicao` — com os lados trocados
-    // quem joga de azul é o time B) e o time pode estar definido pela série com
-    // a vaga ainda livre. Vaga livre = bola sem logo, borda neutra e o "entrar"
-    // discreto no meio (é a sala recém-criada); vaga ocupada = logo do time
-    // DENTRO da bola, borda acesa na cor do lado, igual ao draft e à tela de
-    // partida.
+    // A BOLA (tamanho único, o mesmo do draft e da tela de partida) fica no
+    // lugar da logo: a VAGA do time daquela coluna é a fonte da verdade
+    // (`jogadorNaPosicao` — com os lados trocados quem joga de azul é o time B)
+    // e o time pode estar definido pela série com a vaga ainda livre. Vaga
+    // livre = bola sem logo, borda neutra e o "entrar" discreto no meio (é a
+    // sala recém-criada); vaga ocupada = logo do time DENTRO da bola, borda
+    // acesa na cor do lado.
     const bolaDoLado = (
       posicao: 'blue' | 'red',
       time: { nome?: string | null; logo?: string | null },
       ocupada: boolean,
     ) => (
-      <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-        <div className="relative">
-          <TeamBall
-            lado={posicao}
-            acesa={ocupada}
-            logo={ocupada ? time.logo ?? null : null}
-            tamanho="compacta"
-          />
-          {!ocupada && (
-            /* Mesmo desenho da vaga vazia (VagaSlot): o ícone de entrar bem
-               apagado dentro da bola — lê como lugar livre, não como quebrado. */
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <UserPlus className="h-1/3 w-1/3 text-white/15" />
-            </span>
-          )}
-        </div>
-        <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-          {nomeSemQuebra(time.nome)}
-        </span>
+      /* A caixa é do MESMO tamanho da bola (w-full até 150px no celular em
+         retrato, 32vmin em paisagem): ela centraliza a bola na coluna do grid e
+         é a referência do ícone da vaga livre. */
+      <div
+        className={`relative ${posicao === 'blue' ? 'col-start-1' : 'col-start-3'} row-start-1 mx-auto w-full max-w-[150px] landscape:max-w-none landscape:w-[32vmin]`}
+      >
+        <TeamBall
+          lado={posicao}
+          acesa={ocupada}
+          logo={ocupada ? time.logo ?? null : null}
+        />
+        {!ocupada && (
+          /* Mesmo desenho da vaga vazia (VagaSlot): o ícone de entrar bem
+             apagado dentro da bola — lê como lugar livre, não como quebrado. */
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <UserPlus className="h-1/3 w-1/3 text-white/15" />
+          </span>
+        )}
       </div>
     );
     return (
-    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
+    <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[74vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
       <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent" />
       <span className="text-[10px] md:text-[0.9vmin] font-black text-[#FFB700]/60 uppercase tracking-[0.6em] md:tracking-[0.8em]">
         Summoner's Rift
       </span>
 
-      {/* Bolas dos times + nomes e o placar da série (estilo resumo pós-draft) */}
-      <div className="flex items-center justify-center gap-3 md:gap-[3vmin] mt-1 md:mt-[0.5vmin]">
+      {/* Bolas dos times + nomes, com o X entre elas. Grid de 3 colunas: as
+          bolas dividem a largura e o X ocupa uma célula própria na MESMA linha
+          — por isso ele fica sempre na altura do centro da bola (nenhuma
+          margem calculada acompanhando o diâmetro). */}
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-1.5 gap-y-1 md:gap-x-[2.4vmin] md:gap-y-[0.8vmin] mt-1 md:mt-[0.5vmin]">
         {bolaDoLado('blue', timeEsquerda, !!jogadorNaPosicao('blue'))}
-        <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
+        <span className="col-start-2 row-start-1 self-center text-xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
         {bolaDoLado('red', timeDireita, !!jogadorNaPosicao('red'))}
+        <span className="col-start-1 row-start-2 min-w-0 break-words text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2">
+          {nomeSemQuebra(timeEsquerda.nome)}
+        </span>
+        <span className="col-start-3 row-start-2 min-w-0 break-words text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2">
+          {nomeSemQuebra(timeDireita.nome)}
+        </span>
       </div>
       {serie && (
         <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
@@ -1507,7 +1515,7 @@ export default function SalaCampeonato() {
               {renderPosDraft(!serie && estado === 'encerrada')}
             </div>
           ) : (
-          <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[70vmin] py-2 md:py-0">
+          <div className="w-full flex items-center justify-start md:justify-center z-20 flex-col md:flex-row gap-4 md:gap-[80vmin] py-2 md:py-0">
             {renderTimeColumn('blue')}
             {renderHub()}
             {renderTimeColumn('red')}
