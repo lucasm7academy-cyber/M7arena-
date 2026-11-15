@@ -25,6 +25,14 @@ código, transmissão, verificação de resultado e telas de encerramento.
 [ModalResultadoManual](ModalResultadoManual.tsx) recebe estado e callbacks da
 página; ele não persiste resultado por conta própria.
 
+O centro da sala (`renderHub`) também usa a bola, no tamanho `compacta`: cada
+lado mostra um [TeamBall](../../components/draft/TeamBall.tsx) no lugar da logo
+do time. A vaga do TIME daquela coluna é a fonte da verdade — com os lados
+trocados (jogo 2+ da série), quem joga de azul é o time B. Sem jogador a bola
+fica vazia (sem logo, borda neutra e o ícone de entrar apagado, que é a sala
+recém-criada); com jogador, a logo do time entra dentro da bola com a borda
+acesa na cor do lado. Nome do time, placar da série e avisos de estado não mudam.
+
 ## Contratos e fluxo de dados
 
 | Operação | Entrada atual |

@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, RotateCcw, Share2, Shield, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Loader2, Radio, RefreshCw, RotateCcw, Share2, Shield, Trophy, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DraftRoom, type AcoesTopo } from '../../components/draft/DraftRoom';
 import { TeamBall } from '../../components/draft/TeamBall';
@@ -766,10 +766,15 @@ export default function SalaCampeonato() {
   const ladoJogoA: 'blue' | 'red' = camp?.lado_time_a === 'red' ? 'red' : 'blue';
   const equipeNoLado = (posicao: 'blue' | 'red'): 'blue' | 'red' =>
     (ladoJogoA === posicao ? 'blue' : 'red');
-  // Cor TEMA de cada time (gradient_from escolhido no time): manda no brilho
-  // dos logos. Sem cor cadastrada, cai na cor do lado em jogo.
-  const corLogoA = sala.time_a_cor || (ladoJogoA === 'blue' ? '#3B82F6' : '#ef4444');
-  const corLogoB = sala.time_b_cor || (ladoJogoA === 'blue' ? '#ef4444' : '#3B82F6');
+  // Vaga do TIME que joga numa POSIÇÃO. `jogadorBlue`/`jogadorRed` são as vagas
+  // por TIME (o `side` que o servidor grava é o do time: entrar na vaga `blue`
+  // é do time A), não por posição. Com os lados trocados (jogo 2+ da série)
+  // quem ocupa a coluna azul é o time B — a vaga a consultar é a dele. Fica
+  // junto do swap para essa regra existir num lugar só.
+  const jogadorNaPosicao = (posicao: 'blue' | 'red') =>
+    equipeNoLado(posicao) === 'blue' ? jogadorBlue : jogadorRed;
+  // (A cor TEMA do time saiu do centro da sala: o brilho da logo era dela; a
+  // bola passou a acender na cor do LADO, como no draft e na tela de partida.)
 
   // A VAGA só aparece quando ela SERVE: ocupar (camp_vagas), marcar PRONTO
   // (camp_prontos — inclusive o PRONTO de novo dos jogos 2+ da série) e na
@@ -905,21 +910,54 @@ export default function SalaCampeonato() {
     );
   };
 
-  // ── CENTRO NO ESTILO TRANSMISSÃO (pós-draft): logos dos times X placar da
+  // ── CENTRO NO ESTILO TRANSMISSÃO (pós-draft): bolas dos times X placar da
   //    série — SEM o display redondo (pedido do usuário). Todos os avisos de
   //    estado continuam aqui, no formato limpo. Desktop: absoluto no meio;
   //    Mobile: entra no fluxo vertical.
   const renderHub = () => {
     const timeEsquerda = ladoJogoA === 'blue'
-      ? { nome: sala.time_a_nome, logo: sala.time_a_logo, cor: corLogoA }
-      : { nome: sala.time_b_nome, logo: sala.time_b_logo, cor: corLogoB };
+      ? { nome: sala.time_a_nome, logo: sala.time_a_logo }
+      : { nome: sala.time_b_nome, logo: sala.time_b_logo };
     const timeDireita = ladoJogoA === 'blue'
-      ? { nome: sala.time_b_nome, logo: sala.time_b_logo, cor: corLogoB }
-      : { nome: sala.time_a_nome, logo: sala.time_a_logo, cor: corLogoA };
+      ? { nome: sala.time_b_nome, logo: sala.time_b_logo }
+      : { nome: sala.time_a_nome, logo: sala.time_a_logo };
     const placarEquipeA = serie ? (serie.placar_a ?? 0) : (camp?.placar_a ?? 0);
     const placarEquipeB = serie ? (serie.placar_b ?? 0) : (camp?.placar_b ?? 0);
     const placarEsquerda = ladoJogoA === 'blue' ? placarEquipeA : placarEquipeB;
     const placarDireita = ladoJogoA === 'blue' ? placarEquipeB : placarEquipeA;
+    // BOLA DO TIME no lugar da logo (pedido do usuário): a VAGA do time daquela
+    // coluna é a fonte da verdade (`jogadorNaPosicao` — com os lados trocados
+    // quem joga de azul é o time B) e o time pode estar definido pela série com
+    // a vaga ainda livre. Vaga livre = bola sem logo, borda neutra e o "entrar"
+    // discreto no meio (é a sala recém-criada); vaga ocupada = logo do time
+    // DENTRO da bola, borda acesa na cor do lado, igual ao draft e à tela de
+    // partida.
+    const bolaDoLado = (
+      posicao: 'blue' | 'red',
+      time: { nome?: string | null; logo?: string | null },
+      ocupada: boolean,
+    ) => (
+      <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
+        <div className="relative">
+          <TeamBall
+            lado={posicao}
+            acesa={ocupada}
+            logo={ocupada ? time.logo ?? null : null}
+            tamanho="compacta"
+          />
+          {!ocupada && (
+            /* Mesmo desenho da vaga vazia (VagaSlot): o ícone de entrar bem
+               apagado dentro da bola — lê como lugar livre, não como quebrado. */
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <UserPlus className="h-1/3 w-1/3 text-white/15" />
+            </span>
+          )}
+        </div>
+        <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
+          {nomeSemQuebra(time.nome)}
+        </span>
+      </div>
+    );
     return (
     <div className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full max-w-[440px] md:w-[40vmin] md:max-w-none z-10 flex flex-col items-center justify-center gap-2 md:gap-[1.4vmin] shrink-0 my-4 md:my-0 px-3 md:px-0 text-center">
       <div className="w-12 md:w-[6vmin] h-[2px] bg-gradient-to-r from-transparent via-[#FFB700]/40 to-transparent" />
@@ -927,39 +965,11 @@ export default function SalaCampeonato() {
         Summoner's Rift
       </span>
 
-      {/* Logos + nomes dos times e placar da série (estilo resumo pós-draft) */}
+      {/* Bolas dos times + nomes e o placar da série (estilo resumo pós-draft) */}
       <div className="flex items-center justify-center gap-3 md:gap-[3vmin] mt-1 md:mt-[0.5vmin]">
-        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-          {timeEsquerda.logo ? (
-            <img
-              src={timeEsquerda.logo}
-              alt=""
-              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain"
-              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeEsquerda.cor} 70%, transparent))` }}
-            />
-          ) : (
-            <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
-          )}
-          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-            {nomeSemQuebra(timeEsquerda.nome)}
-          </span>
-        </div>
+        {bolaDoLado('blue', timeEsquerda, !!jogadorNaPosicao('blue'))}
         <span className="text-2xl md:text-[3.2vmin] font-black text-white/50 leading-none">X</span>
-        <div className="flex flex-col items-center gap-1 md:gap-[0.8vmin] w-[18vmin]">
-          {timeDireita.logo ? (
-            <img
-              src={timeDireita.logo}
-              alt=""
-              className="w-20 h-20 md:w-[14vmin] md:h-[14vmin] object-contain"
-              style={{ filter: `drop-shadow(0 0 28px color-mix(in srgb, ${timeDireita.cor} 70%, transparent))` }}
-            />
-          ) : (
-            <div className="w-20 h-20 md:w-[14vmin] md:h-[14vmin]" />
-          )}
-          <span className="text-[10px] md:text-[1.3vmin] font-black uppercase tracking-[0.2em] text-white/90 leading-tight line-clamp-2 max-w-full">
-            {nomeSemQuebra(timeDireita.nome)}
-          </span>
-        </div>
+        {bolaDoLado('red', timeDireita, !!jogadorNaPosicao('red'))}
       </div>
       {serie && (
         <span className="text-3xl md:text-[5vmin] font-black tabular-nums text-white leading-none drop-shadow-[0_0_20px_rgba(255,255,255,0.25)]">
