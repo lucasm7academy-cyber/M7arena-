@@ -8,6 +8,20 @@
       "when": 1785556094468,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794979041873,
+      "tag": "0001_medical_quentin_quire",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794980248222,
+      "tag": "0002_low_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

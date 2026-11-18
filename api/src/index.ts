@@ -26,6 +26,8 @@ import { adminRouter } from "./modules/admin/routes.js";
 import { adminPasswordResetRouter } from "./modules/admin/password-reset-routes.js";
 import { betsRouter } from "./modules/bets/routes.js";
 import { notificationsRouter } from "./modules/notifications/routes.js";
+import { aimRouter } from "./modules/aim/routes.js";
+import { pokerRouter } from "./modules/poker/routes.js";
 import { ogRouter } from "./routes/og.js";
 
 dotenv.config();
@@ -86,6 +88,10 @@ app.use("/api/admin", adminPasswordResetRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/bets", betsRouter);
 app.use("/api/notifications", notificationsRouter);
+// Sala M7 (essência EA) e ranking de mira: só buy-in/cashout e o ranking têm
+// autoridade do servidor; a mesa e o alvo rodam no cliente.
+app.use("/api/aim", aimRouter);
+app.use("/api/poker", pokerRouter);
 
 // Página de preview social (OG) de uma sala — servida só para crawlers
 // (o Nginx desvia bots de /:modo/:id para cá). Ver routes/og.ts.

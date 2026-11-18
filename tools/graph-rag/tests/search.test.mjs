@@ -19,6 +19,10 @@ test('consulta nome, caminho, símbolo, heading e alias documental explícito', 
     assert(result.results.some(n => n.path === 'web/src/features/alpha/README.md'));
     assert(result.results.some(n => n.path === 'web/src/features/alpha/main.ts'));
     assert(queryGraph(graph, 'file:web/src/shared.ts').results[0].id === 'file:web/src/shared.ts');
+    const shared = queryGraph(graph, 'serviços compartilhados');
+    assert(shared.results.some(n => n.path === 'api/src/lib/README.md'));
+    const sharedContext = contextGraph(graph, 'serviços compartilhados', { files: 3, lines: 40, bytes: 18000 });
+    assert(sharedContext.snippets.some(s => s.path === 'api/src/lib/README.md'));
   } finally { f.cleanup(); }
 });
 

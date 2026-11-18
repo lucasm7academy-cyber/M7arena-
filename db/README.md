@@ -17,6 +17,8 @@ movimentação de router. Conexão da API em `api/src/db.ts`; Realtime usa pg pr
 | [apostas](schema/apostas.ts) | Inclui advertências usadas pela elegibilidade/Admin; nome não significa domínio exclusivo de desafios. |
 | [retencao](schema/retencao.ts) | Estruturas persistidas de retenção; presença no schema não prova uma página/fluxo ativo. |
 | [tierlist](schema/tierlist.ts) | Submissões do código Tierlist sem rota ativa. Não remover dados/migrations pelo estado da UI. |
+| [aim](schema/aim.ts) | Scores do treino de mira; ranking geral do servidor, um registro por jogador. |
+| [poker](schema/poker.ts) | Mesas de jogadores e sessões da Sala M7 (treino ou buy-in/cashout em EA). Regras em [Sala M7](../api/src/modules/poker/README.md). |
 
 O índice de [funcionalidades](../docs/modules/INDEX.md) aponta os serviços/routers
 que usam esses contratos. Schema define armazenamento; README do domínio descreve

@@ -132,8 +132,8 @@ export const matchCodes = pgTable("match_codes", {
   matchId: uuid("match_id").references(() => matches.id, { onDelete: "set null" }),
   used: boolean("used").default(false).notNull(),
   // Fila do código por modo (ADR-041): '1v1' = só usado em salas 1v1 (ARAM x1);
-  // NULL = genérico, entra em qualquer modo que não tenha fila própria
-  // (os 6 códigos 5v5 Tournament Draft servem 5v5/aram/time_vs_time).
+  // 'blind' = time_vs_time, time_vs_time_livre e campeonato; NULL = genérico,
+  // usado por 5v5/aram (qualquer modo sem fila própria).
   mode: varchar("mode", { length: 50 }),
   // Rodízio LRU (ADR-040): ao liberar, `last_used_at` fica salvo; a atribuição
   // pega o código livre usado há MAIS tempo (nulls first = nunca usado primeiro).

@@ -8,7 +8,7 @@ e Salas; não pertence exclusivamente a uma dessas páginas.
 
 | Arquivo / prefixo | Método e caminho relativo | Contrato |
 |---|---|---|
-| [wallet-routes.ts](wallet-routes.ts), `/api/wallet` | `GET /balance` | Próprio saldo mc/mcReservado e salas ativas que retêm reserva. |
+| [wallet-routes.ts](wallet-routes.ts), `/api/wallet` | `GET /balance` | Próprio saldo mc/mcReservado, `ea` (essência da Sala M7) e salas ativas que retêm reserva. |
 | Carteira | `GET /admin/balances` | Admin/proprietario; userIds opcional, até 500 ids. |
 | Carteira | `POST /admin/adjust-mc` | Somente proprietario; userId/deltaMC/motivo, recusa saldo final negativo e lança ledger. |
 | [payments-routes.ts](payments-routes.ts), `/api/payments` | `GET /packages` | Catálogo público de pacotes ativos. |
@@ -38,6 +38,11 @@ e Salas; não pertence exclusivamente a uma dessas páginas.
 - Autenticação continua nos helpers existentes: wallet tem helper local,
   payments usa match-flow, saques usa match-flow/content. Schemas permanecem em
   `db/schema/identidade.ts` e `economia.ts`. Pix privado é mantido por Perfis.
+- Essência (EA) é moeda de jogo separada: fica em `user_wallets.ea`, não é
+  sacável, não entra em `mc_reservado` e não participa de Pix. O buy-in/cashout
+  da Sala M7 debita/credita EA com os kinds `poker_buyin`/`poker_cashout`
+  (`currency 'ea'`) e o grant inicial usa `kind 'poker_grant'`, documentado em
+  [Sala M7](../poker/README.md). Nenhum desses caminhos altera MC.
 
 ## Consumidores e verificação proporcional
 

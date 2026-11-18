@@ -188,6 +188,11 @@ export type TournamentSection = "cronograma" | "classificacao" | "grupos" | "cha
 export interface ApiWalletBalance {
   userId: string;
   mc: number;
+  /**
+   * Essência (EA) — moeda de jogo da Sala M7. Besteira separada de MC: não é
+   * sacável, não entra em `mcReservado` e não participa do Pix.
+   */
+  ea?: number;
   /** E travado em salas apostadas ativas (design v3 §11 — "em partida"). */
   mcReservado?: number;
   /** Salas apostadas ativas que seguram a reserva — valor vira link no perfil. */
@@ -618,6 +623,76 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
   return data as T;
 }
 
+/**
+ * Treino de mira — tipos do ranking do servidor. O modo e a nota são os mesmos
+ * do motor em `features/aim/domain/engine.ts`; o servidor recalcula a nota.
+ */
+export type ApiAimMode = "flick" | "track" | "precision";
+
+export interface ApiAimScore {
+  id: string;
+  name: string;
+  mode: ApiAimMode;
+  score: number;
+  accuracy: number;
+  apm: number;
+  grade: string;
+  at: string;
+  hero?: boolean;
+}
+
+export interface ApiAimRanking {
+  rows: ApiAimScore[];
+}
+
+export interface ApiAimSubmitResult {
+  ok: boolean;
+  row: ApiAimScore | null;
+  position: number | null;
+  erro?: string;
+}
+
+/** Buy-in da Sala M7 (essência EA; nunca MC). */
+export interface ApiPokerBuyInResult {
+  ok: boolean;
+  sessionId?: string;
+  ea?: number;
+  erro?: string;
+}
+
+/** Mesa da Sala M7 (casa ou criada por jogador) como o lobby desenha. */
+export interface ApiPokerRoom {
+  id: string;
+  name: string;
+  sb: number;
+  bb: number;
+  buyIn: number;
+  seats: number;
+  seated: number;
+  isPrivate: boolean;
+  ownerName: string;
+  tag?: string;
+}
+
+/** Body do POST /api/poker/rooms. */
+export interface ApiPokerRoomInput {
+  name: string;
+  sb: number;
+  bb: number;
+  buyIn: number;
+  seats: number;
+  isPrivate: boolean;
+  password?: string;
+}
+
+/** Caixa da mesa de poker de volta para a essência. */
+export interface ApiPokerCashOutResult {
+  ok: boolean;
+  ea?: number;
+  payout?: number;
+  erro?: string;
+}
+
 export const api = {
   get: <T = any>(endpoint: string) => request<T>(endpoint, { method: "GET" }),
   post: <T = any>(endpoint: string, body?: any) =>
@@ -1040,5 +1115,38 @@ export const api = {
     markRead: (id: string) => api.post<{ ok: boolean }>(`/notifications/${id}/read`),
     /** Marca todas como lidas (botão “Marcar lidas”). */
     markAllRead: () => api.post<{ ok: boolean }>("/notifications/read-all"),
+  },
+
+  /**
+   * Sala M7 (poker Texas Hold'em) — a mesa roda no cliente com o motor de
+   * `features/salas/poker/domain`; aqui só o que precisa de autoridade do
+   * servidor: buy-in e caixa da essência (EA), sempre separada de MC.
+   */
+  poker: {
+    /** Mesas da casa + mesas criadas por jogadores (privadas só para o dono). */
+    rooms: () => api.get<{ rooms: ApiPokerRoom[] }>("/poker/rooms"),
+    /** Cria a própria mesa (pública/privada, valendo essência ou não). */
+    createRoom: (data: ApiPokerRoomInput) =>
+      api.post<{ ok: boolean; room: ApiPokerRoom; erro?: string }>("/poker/rooms", data),
+    /** Debita o buy-in da mesa e abre uma sessão de poker. */
+    buyIn: (roomId: string, buyIn: number, password?: string) =>
+      api.post<ApiPokerBuyInResult>("/poker/buyin", { roomId, buyIn, password }),
+    /** Fecha a sessão e devolve o stack restante para a essência. */
+    cashOut: (sessionId: string, stack: number) =>
+      api.post<ApiPokerCashOutResult>("/poker/cashout", { sessionId, stack }),
+  },
+
+  /** Treino de mira — ranking geral é do servidor (nada de só localStorage). */
+  aim: {
+    leaderboard: (mode: ApiAimMode | "all" = "all", limit = 25) =>
+      api.get<ApiAimRanking>(`/aim/leaderboard?mode=${mode}&limit=${limit}`),
+    submitScore: (data: {
+      mode: ApiAimMode;
+      score: number;
+      accuracy: number;
+      apm: number;
+      combo: number;
+      durationMs: number;
+    }) => api.post<ApiAimSubmitResult>("/aim/scores", data),
   },
 };

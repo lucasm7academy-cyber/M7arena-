@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy, Play, Users, Shield, Target,
@@ -7,7 +7,7 @@ import {
   Cpu, MousePointer2, Medal, Tv2,
   Instagram, BookOpen, Megaphone, ArrowRight, UserPlus, Swords as SwordsIcon,
   HelpCircle, ChevronDown, CheckCircle2, Sparkles, TrendingUp, Gamepad2,
-  X, Calendar, Clock, Share2
+  X, Calendar, Clock, Share2, ArrowUpRight, Crosshair, Spade
 } from 'lucide-react';
 import { FaDiscord, FaTwitch } from "react-icons/fa6";
 import { ImWhatsapp } from "react-icons/im";
@@ -538,6 +538,140 @@ const Home = () => {
           </div>
           </div>
         </motion.div>
+      </section>
+
+      {/* NOVIDADES — Sala M7 (poker de essência) + Treino de Mira */}
+      <section className="py-10 md:py-12 px-4 max-w-[1400px] mx-auto">
+        <div className="flex flex-col gap-5 border-b border-white/5 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Eyebrow>Novidades da arena</Eyebrow>
+            <h2 className="mt-3 text-3xl md:text-5xl font-black uppercase tracking-tighter">
+              Chegou agora na <span className="text-[#FFB700]">M7</span>
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/treino-mira')}
+            aria-label="GO! Ir para o treino de mira"
+            className="group relative self-start px-8 py-3.5 text-[12px] font-black uppercase tracking-[0.25em] text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFB700] sm:self-auto"
+          >
+            <span
+              className="absolute inset-0 bg-[#FFB700] transition group-hover:brightness-110"
+              style={{ clipPath: 'polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%)' }}
+              aria-hidden="true"
+            />
+            <span className="relative z-10 flex items-center gap-2">
+              GO!
+              <ArrowUpRight className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </span>
+          </button>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Sala M7 — poker de essência */}
+          <Link
+            to="/sala-m7"
+            className="group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFB700]"
+          >
+            <div
+              className="relative h-full p-[1px] bg-white/10 transition-colors group-hover:bg-[#c8aa6e]/40"
+              style={{ clipPath: CUT_CARD }}
+            >
+              <div
+                className="relative flex h-full flex-col gap-4 overflow-hidden bg-[#08080a] p-6"
+                style={{ clipPath: CUT_CARD_IN }}
+              >
+                <div className="pointer-events-none absolute -right-5 -top-8 opacity-[0.05] transition-opacity group-hover:opacity-[0.1]">
+                  <Spade className="w-44 h-44" />
+                </div>
+
+                <div className="relative flex items-center justify-between gap-3">
+                  <TagCorte color="#c8aa6e">Mesa aberta</TagCorte>
+                  <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/25">Poker · Essência</span>
+                </div>
+
+                <div className="relative">
+                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white transition-colors group-hover:text-[#c8aa6e]">
+                    Sala M7
+                  </h3>
+                  <p className="mt-2 max-w-md text-xs md:text-sm leading-relaxed text-white/45">
+                    Texas Hold'em na mesa principal da casa: buy-in em essência (EA), caixa de volta para a carteira
+                    e nada em MC.
+                  </p>
+                </div>
+
+                <div className="relative mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {["6 lugares", "10 / 20", "Texas Hold'em"].map((chip) => (
+                      <span
+                        key={chip}
+                        className="border border-white/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white/40"
+                      >
+                        {chip}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#c8aa6e]">
+                    Entrar na sala
+                    <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Treino de Mira */}
+          <Link
+            to="/treino-mira"
+            className="group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFB700]"
+          >
+            <div
+              className="relative h-full p-[1px] bg-white/10 transition-colors group-hover:bg-[#FFB700]/40"
+              style={{ clipPath: CUT_CARD }}
+            >
+              <div
+                className="relative flex h-full flex-col gap-4 overflow-hidden bg-[#08080a] p-6"
+                style={{ clipPath: CUT_CARD_IN }}
+              >
+                <div className="pointer-events-none absolute -right-5 -top-8 opacity-[0.05] transition-opacity group-hover:opacity-[0.1]">
+                  <Crosshair className="w-44 h-44" />
+                </div>
+
+                <div className="relative flex items-center justify-between gap-3">
+                  <TagCorte>Novo</TagCorte>
+                  <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/25">Treino · Mira</span>
+                </div>
+
+                <div className="relative">
+                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white transition-colors group-hover:text-[#FFB700]">
+                    Treino de Mira
+                  </h3>
+                  <p className="mt-2 max-w-md text-xs md:text-sm leading-relaxed text-white/45">
+                    Três modos, alvos que encolhem e nota de SS a D. Trinta segundos para medir o reflexo e entrar no
+                    ranking da casa.
+                  </p>
+                </div>
+
+                <div className="relative mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {['3 modos', '30s', 'ranking do servidor'].map((chip) => (
+                      <span
+                        key={chip}
+                        className="border border-white/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white/40"
+                      >
+                        {chip}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#FFB700]">
+                    Ver meu ranking
+                    <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
       </section>
 
       {/* AO VIVO AGORA - LIVE STREAMS */}

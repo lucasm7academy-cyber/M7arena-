@@ -9,13 +9,14 @@ const require = createRequire(import.meta.url);
 export const ts = require('typescript');
 const toolRoot = path.dirname(fileURLToPath(import.meta.url));
 const codeExtension = /\.(?:[cm]?[jt]s|[jt]sx)$/;
-const blocked = new Set(['node_modules', 'dist', '.git', 'cache', 'caches', 'historico', 'historical', 'assets', 'images']);
+const documentName = /^(?:AGENTS|INDEX|README)\.md$/;
+const blocked = new Set(['node_modules', 'dist', '.git', 'cache', 'caches', 'historico', 'historical', 'assets', 'images', 'mcp']);
 const sensitive = name => /^\.env(?:\.|$)|^(?:credentials?|secrets?)(?:\.|$)/i.test(name);
 export function allowedSource(rel) {
   if (path.isAbsolute(rel) || rel.includes('\\') || rel.split('/').some(p => p === '..' || blocked.has(p) || sensitive(p))) return false;
-  if (['docs/INDEX.md', 'docs/modules/INDEX.md'].includes(rel)) return true;
+  if (documentName.test(path.posix.basename(rel))) return true;
   if (!/^(?:web\/src\/|api\/src\/|api\/test\/|db\/schema\/)/.test(rel)) return false;
-  return codeExtension.test(rel) || (/\/README\.md$/.test(rel) && /^(web\/src\/features\/|api\/src\/modules\/|web\/src\/test\/)/.test(rel));
+  return codeExtension.test(rel);
 }
 export const inside = (base, target) => {
   const rel = path.relative(base, target);
@@ -35,8 +36,7 @@ function walk(root, rel, files) {
     if (entry.isSymbolicLink() || blocked.has(entry.name) || sensitive(entry.name)) continue;
     const name = slash(path.join(rel, entry.name));
     if (entry.isDirectory()) walk(root, name, files);
-    else if (entry.isFile() && (codeExtension.test(name) ||
-      (entry.name === 'README.md' && /^(web\/src\/features\/|api\/src\/modules\/|web\/src\/test\/)/.test(name)))) files.add(name);
+    else if (entry.isFile() && (codeExtension.test(name) || documentName.test(entry.name))) files.add(name);
   }
 }
 
@@ -88,8 +88,7 @@ export function projectSettings(root, area, configurations) {
 
 export function scan(rootInput) {
   const root = canonicalRoot(rootInput), names = new Set();
-  for (const rel of ['web/src', 'api/src', 'api/test', 'db/schema']) walk(root, rel, names);
-  for (const rel of ['docs/INDEX.md', 'docs/modules/INDEX.md']) if (fs.existsSync(path.join(root, rel))) names.add(rel);
+  walk(root, '', names);
   const files = [...names].filter(allowedSource).sort();
   const hashes = Object.fromEntries(files.map(p => [p, hash(readSource(root, p))]));
   const configurations = {};

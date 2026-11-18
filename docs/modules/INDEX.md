@@ -4,7 +4,7 @@ Mapa do produto atual, confirmado nas rotas de [App](../../web/src/App.tsx) e no
 registros do [bootstrap HTTP](../../api/src/index.ts). Comece pela funcionalidade
 e leia seu README. Nomes de diretórios técnicos não são funcionalidades extras.
 
-## Produto em 12 áreas
+## Produto em 13 áreas
 
 | Área | Rotas / entrada de interface | Contexto frontend | Dono HTTP / contexto backend |
 |---|---|---|---|
@@ -13,8 +13,9 @@ e leia seu README. Nomes de diretórios técnicos não são funcionalidades extr
 | Jogadores | `/players`, público | [Catálogo](../../web/src/features/players/README.md) | [Jogadores](../../api/src/modules/players/README.md), `/api/players`. |
 | Times | `/times`, `/times/:id`, públicos; gestão exige identidade/permissão | [Times](../../web/src/features/teams/README.md) | [Times](../../api/src/modules/teams/README.md), `/api/teams`. |
 | Campeonatos | `/campeonatos`, `/campeonato/:id`; privada `/admin/criar-campeonato` | [Campeonatos](../../web/src/features/campeonatos/README.md) | [Campeonatos](../../api/src/modules/tournaments/README.md), `/api/tournaments`. |
-| Salas e partidas | `/jogar`, `/5v5/:id`, `/aram/:id`, `/1v1/:id`, `/campeonato/sala/:id`, `/sala-time/:id`; privada `/partidas` | [Salas comuns/histórico](../../web/src/features/salas/README.md), [sala de times/campeonato](../../web/src/features/sala-campeonato/README.md) | [Partidas](../../api/src/modules/matches/README.md), `/api/matches`; séries/Draft compartilhados. |
+| Salas e partidas | `/jogar`, `/5v5/:id`, `/aram/:id`, `/1v1/:id`, `/campeonato/sala/:id`, `/sala-time/:id`, `/sala-m7`, `/sala-m7/:roomId`; privada `/partidas` | [Salas comuns/histórico e Sala M7 (poker)](../../web/src/features/salas/README.md), [sala de times/campeonato](../../web/src/features/sala-campeonato/README.md) | [Partidas](../../api/src/modules/matches/README.md), `/api/matches`; séries/Draft compartilhados. A Sala M7 usa [Poker](../../api/src/modules/poker/README.md) em `/api/poker` só para buy-in/cashout. |
 | Desafios individuais | Privada `/aposta-individual`; histórico também no Perfil | [Desafios/Apostas](../../web/src/features/apostas/README.md) | [Apostas](../../api/src/modules/bets/README.md), `/api/bets`; consome carteira, sem possuir Pix. |
+| Treino de mira | `/treino-mira`, público; ranking também público | [Treino de mira](../../web/src/features/aim/README.md) | [Mira](../../api/src/modules/aim/README.md), `/api/aim`; o motor do cliente só faz a prévia, o servidor recalcula a nota e a posição. |
 | Transmissões | `/streamers`; lives também no Início/Salas | [Streams](../../web/src/features/streams/README.md) | [Streams](../../api/src/modules/streams/README.md), `/api/streams`. |
 | Administração | Privada `/admin`, fora do layout público | [Admin](../../web/src/features/admin/README.md) | [Admin](../../api/src/modules/admin/README.md), `/api/admin`; outras abas consomem os domínios de Economia, Conteúdo, Jogadores e Times. |
 | Carteira e Pix | Modal no layout, carteira no Perfil e saques no Admin; sem rota de página própria | [Economia](../../web/src/features/economy/README.md) | [Economia](../../api/src/modules/economy/README.md), `/api/wallet`, `/api/payments`, `/api/withdrawals`. |

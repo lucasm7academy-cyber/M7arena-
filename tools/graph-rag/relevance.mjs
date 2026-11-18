@@ -2,12 +2,16 @@ import { readSource } from './scope.mjs';
 import { hash, fail } from './model.mjs';
 
 const stop = new Set('onde alterar corrigir localizar modificar investigar como para uma um na no de do da das dos em e ou por a o as os'.split(' '));
+const singular = t => {
+  if (t.length > 5) t = t.replace(/coes$/, 'cao').replace(/oes$/, 'ao').replace(/ais$/, 'al');
+  return t.length > 3 ? t.replace(/s$/, '') : t;
+};
 export function terms(text) {
-  return [...new Set(String(text).replace(/([a-z\d])([A-Z])/g, '$1 $2').normalize('NFD').replace(/\p{M}/gu, '')
-    .toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length > 1 && !stop.has(t)).map(t => {
-      if (t.length > 5) t = t.replace(/coes$/, 'cao').replace(/oes$/, 'ao').replace(/ais$/, 'al');
-      return t.length > 3 ? t.replace(/s$/, '') : t;
-    }))];
+  const plain = String(text).normalize('NFD').replace(/\p{M}/gu, '');
+  // Preserva também a forma colada de compostos camelCase (WebSocket → web socket + websocket).
+  const joined = [...plain.matchAll(/\b[A-Za-z\d]*[a-z][A-Z][A-Za-z\d]*\b/g)].map(m => m[0].toLowerCase());
+  return [...new Set([...plain.replace(/([a-z\d])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9]+/), ...joined]
+    .filter(t => t.length > 1 && !stop.has(t)).map(singular))];
 }
 const canonical = text => String(text).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 function matches(a, b) {
@@ -61,7 +65,7 @@ function topology(graph) {
   return { modules, associations };
 }
 
-function metadataScore(item, p) {
+function metadataScore(item, p, bodyTokens) {
   if (item.id === p.raw) return 1000;
   const name = terms(item.name), path = terms(item.path), heads = terms((item.headings || []).map(h => h.title).join(' '));
   let value = 0, covered = 0;
@@ -71,7 +75,8 @@ function metadataScore(item, p) {
     if (p.topics.length > 1 && p.topics.every(key => has(tokens, key)) && tokens.length <= p.topics.length * 2) focusedAlias = true;
   }
   for (const key of p.topics) {
-    const weights = [has(name, key) ? 5 : 0, has(path, key) ? 1.5 : 0, has(heads, key) ? 2 : 0];
+    const weights = [has(name, key) ? 5 : 0, has(path, key) ? 1.5 : 0, has(heads, key) ? 2 : 0,
+      bodyTokens && has(bodyTokens, key) ? 1.5 : 0];
     let alias = 0;
     for (const label of item.aliases || []) {
       const tokens = terms(label);
@@ -100,6 +105,14 @@ export function rankGraph(graph, query) {
   if (exactSymbols.length && !graph.nodes.some(n => n.kind === 'Module' && canonical(n.name) === p.exact)) return { rows: exactSymbols.map(item => ({ item, score: 1000 })),
     regions: new Map(exactSymbols.map(item => [item.path, { item, score: 1000 }])), profile: p };
   const { modules, associations } = topology(graph);
+  // Documentos são pequenos e curtos como navegação: o corpo conta como sinal,
+  // sem competir com nome/caminho/heading do código.
+  const documentText = new Map();
+  for (const item of graph.nodes) if (item.kind === 'Document') {
+    const text = readSource(graph.manifest.root, item.path);
+    if (hash(text) !== graph.manifest.sourceHashes[item.path]) throw fail('INDEX_STALE', 'Fonte mudou durante a busca.', { path: item.path });
+    documentText.set(item.id, terms(text));
+  }
   const affinities = modules.map(m => ({ id: m.id, value: p.topics.filter(t => has(terms([m.name, ...(m.aliases || [])].join(' ')), t)).length }));
   const bestAffinity = Math.max(0, ...affinities.map(m => m.value));
   const domains = new Set(affinities.filter(m => m.value > 0 && m.value >= bestAffinity * 0.75).map(m => m.id));
@@ -112,7 +125,7 @@ export function rankGraph(graph, query) {
     if (p.ui && item.path.startsWith('api/')) weight *= 0.3;
     return weight;
   };
-  const rows = graph.nodes.map(item => ({ item, score: metadataScore(item, p) * factor(item) }));
+  const rows = graph.nodes.map(item => ({ item, score: metadataScore(item, p, documentText.get(item.id)) * factor(item) }));
   const files = new Map();
   for (const row of rows) if (Object.hasOwn(graph.manifest.sourceHashes, row.item.path)) files.set(row.item.path, Math.max(files.get(row.item.path) || 0, row.score));
   const candidates = [...files].filter(([rel, score]) => score > 0 && !rel.endsWith('.md')).sort((a, b) => b[1] - a[1]).slice(0, 48);

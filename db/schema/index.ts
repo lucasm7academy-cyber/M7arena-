@@ -14,3 +14,5 @@ export * from "./tournaments.js";
 export * from "./apostas.js";
 export * from "./bets.js";
 export * from "./tierlist.js";
+export * from "./aim.js";
+export * from "./poker.js";

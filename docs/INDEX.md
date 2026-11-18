@@ -39,12 +39,14 @@ Ela complementa o mapa funcional; não substitui índices ou READMEs.
 
 O índice de funcionalidades foi organizado por rotas/consumidores atuais, sem
 transformar cada arquivo/símbolo em uma funcionalidade. O visualizador técnico
-ainda trabalha com diretórios, arquivos e símbolos; sua simplificação visual e a
-revisão de cobertura do RAG constituem a etapa posterior ao mapa documental.
+ainda trabalha com diretórios, arquivos e símbolos; sua simplificação visual
+continua sendo etapa separada deste mapa.
 
-O escopo atual do indexador não inclui todos os READMEs transversais. Eles estão
-acessíveis por estes links; `fresh` só significa que as fontes incluídas estão
-atualizadas. Não anunciar o RAG como completo antes de conferir esse escopo.
+O indexador cobre o código de `web/src`, `api/src`, `api/test` e `db/schema` e a
+documentação Markdown do projeto (`AGENTS.md`, `INDEX.md` e `README.md`) em
+diretórios não excluídos. `fresh` confirma essas fontes, não o repositório
+inteiro: scripts executáveis, configuração, infraestrutura e SQL ficam fora do
+grafo e exigem leitura direta.
 
 Para consultas, use `status` e reconstrua com `build` quando necessário; depois
 `query`/`context` seletivos. Ausência de resultado exige consulta direta ao código,

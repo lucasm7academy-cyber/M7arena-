@@ -20,6 +20,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { usePerfil } from '../../../contexts/PerfilContext';
 import { rotaDaSala as rotaDaSalaPorModo } from '../../../lib/rotas';
 import { MCIcon } from '../../../components/ui/MCIcon';
+import { ExtraGamesAccordion } from '../components/ExtraGamesAccordion';
 import {
   ModalLoginVitrine,
   ModalVincularConta,
@@ -1375,6 +1376,8 @@ const Jogar = () => {
             </div>
           )}
         </div>
+
+        <ExtraGamesAccordion />
       </div>
 
         {/* ============================================ */}

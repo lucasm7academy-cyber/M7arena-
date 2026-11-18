@@ -123,6 +123,9 @@ export const userWallets = pgTable("user_wallets", {
   // mc nunca fica negativo. O reservado só sai por payout, empate, cancelamento
   // ou saída antes do início da partida.
   mcReservado: integer("mc_reservado").default(0).notNull(),
+  // Essência (EA) — moeda de jogo da Sala M7. NÃO é sacável, não se mistura com
+  // mc/mc_reservado e não participa de Pix (ledger usa currency 'ea').
+  ea: integer("ea").default(0).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 

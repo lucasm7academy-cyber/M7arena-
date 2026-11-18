@@ -62,6 +62,12 @@ const Campeonatos = lazyWithRetry(() => import('./features/campeonatos/pages/cam
 const CampeonatoDetalhes = lazyWithRetry(() => import('./features/campeonatos/pages/CampeonatoDetalhes'));
 const CreateCampPage = lazyWithRetry(() => import('./features/campeonatos/pages/createCampPage'));
 const MinhasPartidas = lazyWithRetry(() => import("./features/salas/pages/MinhasPartidas"));
+// Sala M7 (poker Texas Hold'em com essência). Lobby público; a mesa pede
+// buy-in e por isso exige conta — o próprio hook trata o estado "login".
+const PokerLobby = lazyWithRetry(() => import("./features/salas/poker/pages/PokerLobby"));
+const PokerTable = lazyWithRetry(() => import("./features/salas/poker/pages/PokerTable"));
+// Treino de mira (estilo osu!): jogo no cliente, ranking geral na API.
+const TreinoMira = lazyWithRetry(() => import("./features/aim/pages/TreinoMira"));
 const QuemSomos = lazyWithRetry(() => import("./features/institutional/pages/QuemSomos"));
 
 // ✅ Componente para inicializar o cache do DDragon (seguro)
@@ -232,6 +238,12 @@ export default function App() {
               <Route path="/aposta-individual" element={<PrivateRoute><RouteWithSuspense element={<ApostaIndividualPage />} /></PrivateRoute>} />
               <Route path="/perfil" element={<PrivateRoute><RouteWithSuspense element={<Perfil />} /></PrivateRoute>} />
               <Route path="/partidas" element={<PrivateRoute><RouteWithSuspense element={<MinhasPartidas />} /></PrivateRoute>} />
+              {/* Sala M7: lobby público (vitrine das mesas) e mesa com buy-in em
+                  essência. Não é sala de LoL: motor próprio, sem Realtime. */}
+              <Route path="/sala-m7" element={<RouteWithSuspense element={<PokerLobby />} />} />
+              <Route path="/sala-m7/:roomId" element={<RouteWithSuspense element={<PokerTable />} />} />
+              {/* Treino de mira: pública para jogar; enviar nota ao ranking pede conta. */}
+              <Route path="/treino-mira" element={<RouteWithSuspense element={<TreinoMira />} />} />
               <Route path="/vincular" element={<PrivateRoute><RouteWithSuspense element={<Vincular />} /></PrivateRoute>} />
               <Route path="/admin/criar-campeonato" element={<PrivateRoute><RouteWithSuspense element={<CreateCampPage />} /></PrivateRoute>} />
               {/* Sala por modo: /5v5/:id, /aram/:id, /1v1/:id.

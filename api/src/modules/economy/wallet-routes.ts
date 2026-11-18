@@ -51,6 +51,9 @@ walletRouter.get("/balance", async (req, res) => {
     return res.json({
       userId: user.id,
       mc: wallet?.mc || 0,
+      // Essência (EA): moeda de jogo da Sala M7. Aditivo — não substitui mc nem
+      // mcReservado, não é sacável e não participa de Pix.
+      ea: wallet?.ea || 0,
       mcReservado: wallet?.mcReservado || 0,
       emPartida: emPartida.map((s) => ({ salaNum: s.salaNum, apostaMc: s.apostaMc ?? 0, nome: s.nome, modo: s.modo })),
     });

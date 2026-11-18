@@ -106,10 +106,30 @@ HTML nesse cache, sem criar versões ou checkpoints. Nomes/caminhos são tratado
 como dados (JSON escapado e `textContent`); CSP restringe scripts ao bundle local
 com hash e bloqueia conexões de rede.
 
+## Como o grafo se organiza
+
+Cada área vira um `Module`; abaixo dele, `File` contém `Symbol` (declarações,
+imports e exports) ou `Document`. `README.md`, `INDEX.md` e `AGENTS.md` são
+`Document`; cada link do documento para um arquivo gera `DOCUMENTED_BY` do
+arquivo para o documento, e a linha/tabela do link vira alias consultável.
+
+```
+Module (web/src/features/<domínio>, api/src/modules/<domínio>)
+└─ CONTAINS → File
+              ├─ CONTAINS → Symbol
+              └─ CONTAINS → Document (README.md, INDEX.md, AGENTS.md)
+File ──DOCUMENTED_BY──→ Document   (o documento cita o arquivo)
+```
+
+Assim, partir do README chega ao código e partir do código chega ao README.
+O código troca `IMPORTS`, `IMPORTS_TYPE`, `IMPORTS_DYNAMIC`, `EXPORTS` e `ALIASES`.
+
 ## O que é indexado
 
 - Código TS/TSX/JS em `web/src`, `api/src`, `api/test` e `db/schema`.
-- `docs/INDEX.md`, `docs/modules/INDEX.md`, READMEs de features/módulos e de testes frontend.
+- Documentação Markdown do projeto — `AGENTS.md`, `INDEX.md` e `README.md` — em
+  qualquer diretório não excluído: raiz, `docs`, `web/src`, `api/src`, `db`,
+  `scripts`, `tools` e `web/scripts`.
 - Configurações TypeScript reais para resolução, inclusive aliases e imports
   `.js` da API com fonte `.ts`. Hashes de configs/manifests/locks são metadados
   de frescor; esses arquivos não viram contexto de código.
@@ -132,8 +152,10 @@ de testes, callbacks ou WebSocket, nem relações CALLS inferidas por nomes.
 
 ## Recuperação e limites
 
-Busca nomes, caminhos, símbolos, headings e aliases documentais explícitos, com
-normalização de acentos, plurais e separadores. Usa afinidade de módulo comprovada
+Busca nomes, caminhos, símbolos, headings, corpo de documentos e aliases
+documentais explícitos, com normalização de acentos, plurais e separadores.
+Compostos camelCase são consultáveis separados ou colados (`WebSocket` responde
+a `web socket` e a `websocket`). Usa afinidade de módulo comprovada
 por diretório e referências documentais, especificidade dos aliases e intenção
 genérica de criação/remoção/atualização/apresentação. Não contém caminhos de
 resposta para perguntas conhecidas. Declarações relevantes são selecionadas no

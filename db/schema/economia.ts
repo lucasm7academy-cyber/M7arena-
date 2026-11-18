@@ -34,6 +34,11 @@ export const walletTransactions = pgTable(
     index("wallet_tx_created_at_idx").on(table.createdAt),
     uniqueIndex("idx_ledger_match_unico").on(table.refId, table.userId, table.kind)
       .where(sql`${table.kind} in ('match_prize'::varchar, 'match_loss'::varchar) and ${table.refType} = 'match'`),
+    // Concessão inicial de 2.000 EA (Sala M7): uma linha por jogador, para
+    // sempre. A migration faz o crédito; este índice garante que reexecutar o
+    // SQL não gere segundo `poker_grant` em `ea`.
+    uniqueIndex("idx_ledger_poker_grant_unico").on(table.userId, table.kind)
+      .where(sql`${table.kind} = 'poker_grant' and ${table.currency} = 'ea'`),
   ]
 );
 

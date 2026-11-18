@@ -47,6 +47,10 @@ M7arenaSite/
 │   │   │   │   ├── password-reset-routes.ts
 │   │   │   │   ├── README.md
 │   │   │   │   └── routes.ts
+│   │   │   ├── aim/
+│   │   │   │   ├── README.md
+│   │   │   │   ├── routes.ts
+│   │   │   │   └── service.ts
 │   │   │   ├── bets/
 │   │   │   │   ├── bets.ts
 │   │   │   │   ├── live-bets.ts
@@ -76,6 +80,10 @@ M7arenaSite/
 │   │   │   ├── players/
 │   │   │   │   ├── README.md
 │   │   │   │   └── routes.ts
+│   │   │   ├── poker/
+│   │   │   │   ├── README.md
+│   │   │   │   ├── routes.ts
+│   │   │   │   └── service.ts
 │   │   │   ├── profiles/
 │   │   │   │   ├── README.md
 │   │   │   │   └── routes.ts
@@ -113,6 +121,7 @@ M7arenaSite/
 │   │   ├── fixtures/
 │   │   │   └── reference-data.ts
 │   │   ├── admin-router.test.ts
+│   │   ├── aim-ranking.test.ts
 │   │   ├── atualizar-elos.test.ts
 │   │   ├── baseline.test.ts
 │   │   ├── bets.test.ts
@@ -128,6 +137,8 @@ M7arenaSite/
 │   │   ├── match-card.test.ts
 │   │   ├── password-reset.test.ts
 │   │   ├── payments.test.ts
+│   │   ├── poker-essencia.test.ts
+│   │   ├── poker-rooms.test.ts
 │   │   ├── profile-privacidade.test.ts
 │   │   ├── reconciliar-handles.test.ts
 │   │   ├── riot-queues.test.ts
@@ -161,10 +172,15 @@ M7arenaSite/
 │   ├── migrations/
 │   │   ├── meta/
 │   │   │   ├── 0000_snapshot.json
+│   │   │   ├── 0001_snapshot.json
+│   │   │   ├── 0002_snapshot.json
 │   │   │   └── _journal.json
 │   │   ├── 0000_baseline.sql
+│   │   ├── 0001_medical_quentin_quire.sql
+│   │   ├── 0002_low_blazing_skull.sql
 │   │   └── README.md
 │   ├── schema/
+│   │   ├── aim.ts
 │   │   ├── apostas.ts
 │   │   ├── bets.ts
 │   │   ├── conteudo.ts
@@ -173,6 +189,7 @@ M7arenaSite/
 │   │   ├── identidade.ts
 │   │   ├── index.ts
 │   │   ├── matches.ts
+│   │   ├── poker.ts
 │   │   ├── retencao.ts
 │   │   ├── teams.ts
 │   │   ├── tierlist.ts
@@ -421,6 +438,21 @@ M7arenaSite/
 │   │   │   │   ├── pages/
 │   │   │   │   │   └── Admin.tsx
 │   │   │   │   └── README.md
+│   │   │   ├── aim/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── AimCanvas.tsx
+│   │   │   │   │   ├── AimHud.tsx
+│   │   │   │   │   ├── AimLeaderboard.tsx
+│   │   │   │   │   ├── AimResult.tsx
+│   │   │   │   │   ├── drawAim.ts
+│   │   │   │   │   └── frames.ts
+│   │   │   │   ├── domain/
+│   │   │   │   │   └── engine.ts
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useAimGame.ts
+│   │   │   │   ├── pages/
+│   │   │   │   │   └── TreinoMira.tsx
+│   │   │   │   └── README.md
 │   │   │   ├── apostas/
 │   │   │   │   ├── components/
 │   │   │   │   │   ├── BilheteAtivoView.tsx
@@ -548,7 +580,8 @@ M7arenaSite/
 │   │   │   │   └── SalaCampeonato.tsx
 │   │   │   ├── salas/
 │   │   │   │   ├── components/
-│   │   │   │   │   └── ChatDaSala.tsx
+│   │   │   │   │   ├── ChatDaSala.tsx
+│   │   │   │   │   └── ExtraGamesAccordion.tsx
 │   │   │   │   ├── hooks/
 │   │   │   │   │   └── useSalaChat.ts
 │   │   │   │   ├── pages/
@@ -556,6 +589,25 @@ M7arenaSite/
 │   │   │   │   │   ├── MinhasPartidas.dom.test.tsx
 │   │   │   │   │   ├── MinhasPartidas.tsx
 │   │   │   │   │   └── SalaMod1.tsx
+│   │   │   │   ├── poker/
+│   │   │   │   │   ├── components/
+│   │   │   │   │   │   ├── ActionBar.tsx
+│   │   │   │   │   │   ├── EssenceIcon.tsx
+│   │   │   │   │   │   ├── EssenceShop.tsx
+│   │   │   │   │   │   ├── HandLog.tsx
+│   │   │   │   │   │   ├── PlayingCard.tsx
+│   │   │   │   │   │   ├── PokerDealer.tsx
+│   │   │   │   │   │   ├── PokerRoomModal.tsx
+│   │   │   │   │   │   ├── PokerSeat.tsx
+│   │   │   │   │   │   └── RoomCard.tsx
+│   │   │   │   │   ├── domain/
+│   │   │   │   │   │   ├── engine.ts
+│   │   │   │   │   │   └── lobby-data.ts
+│   │   │   │   │   ├── hooks/
+│   │   │   │   │   │   └── usePokerRoom.ts
+│   │   │   │   │   └── pages/
+│   │   │   │   │       ├── PokerLobby.tsx
+│   │   │   │   │       └── PokerTable.tsx
 │   │   │   │   └── README.md
 │   │   │   ├── streams/
 │   │   │   │   ├── components/

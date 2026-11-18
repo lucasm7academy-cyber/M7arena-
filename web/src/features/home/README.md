@@ -1,9 +1,17 @@
 # Home
 
 Página e componentes exclusivos da Home. [Lobby](pages/Lobby.tsx), com export
-default `Home`, compõe hero, lives/highlights, partidas futuras, ranking, jornada,
-depoimentos, comunidade e FAQ. O [App](../../App.tsx) carrega a página por import
-lazy na rota `/lobby`; layout e condições de montagem permanecem no App.
+default `Home`, compõe hero, novidades, lives/highlights, partidas futuras,
+ranking, jornada, depoimentos, comunidade e FAQ. O [App](../../App.tsx) carrega a
+página por import lazy na rota `/lobby`; layout e condições de montagem
+permanecem no App.
+
+O bloco "Novidades" fica logo depois do hero e antes de "Assista Agora": dois
+cartões anunciam a Sala M7 (poker de essência, link `/sala-m7`) e o
+[Treino de Mira](../aim/README.md) (link `/treino-mira`), com o botão "GO!" que
+navega para o treino. Os cartões são links (`react-router-dom`), mantêm o recorte
+de canto da casa e não duplicam regras dos dois destinos — a sala e o jogo vivem
+nos seus próprios módulos.
 
 - [UpcomingMatches](components/UpcomingMatches.tsx): carrossel e `MatchPoster`,
   com pausa por mouse/foco, navegação e intervalo de oito segundos.

@@ -42,8 +42,11 @@ export function fixture() {
   write('db/schema/entity.ts', 'export const row = { id: 1 };\n');
   write('docs/INDEX.md', '# Índice\n\n[Módulos](modules/INDEX.md).\n');
   write('docs/modules/INDEX.md', '# Módulos\n\n[Alpha](../../web/src/features/alpha/README.md).\n');
+  write('README.md', '# Projeto\n\n[Operação e implantação](docs/INDEX.md).\n');
+  write('api/src/lib/README.md', '# Serviços compartilhados\n\n[Entidade](../../db/schema/entity.ts).\n');
   for (const name of ['web/src/.env.ts', 'web/src/credentials.ts', 'web/src/assets/hidden.ts',
-    'web/src/dist/hidden.ts', 'web/src/node_modules/hidden.ts', 'mcp/old.ts', 'docs/historico/README.md', 'statusdoprojeto.md']) {
+    'web/src/dist/hidden.ts', 'web/src/node_modules/hidden.ts', 'mcp/old.ts', 'mcp/README.md',
+    'docs/historico/README.md', 'statusdoprojeto.md']) {
     write(name, 'SENSITIVE_CANARY_DO_NOT_INDEX');
   }
   return { root, cache, base, write, cleanup() {

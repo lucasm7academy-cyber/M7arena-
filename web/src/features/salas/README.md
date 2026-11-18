@@ -1,10 +1,58 @@
 # Salas — vitrine, participação, histórico e chat
 
 O módulo contém a vitrine [Jogar](pages/Jogar.tsx), rota pública `/jogar`,
-o histórico [MinhasPartidas](pages/MinhasPartidas.tsx), rota privada `/partidas`, e
-a composição [SalaMod1](pages/SalaMod1.tsx) para `/5v5/:id`, `/aram/:id`, `/1v1/:id`.
-As três páginas têm export default e import lazy no [App](../../App.tsx) com suspense;
-somente o histórico usa `PrivateRoute`. Não é a consolidação completa de Salas.
+o histórico [MinhasPartidas](pages/MinhasPartidas.tsx), rota privada `/partidas`,
+a composição [SalaMod1](pages/SalaMod1.tsx) para `/5v5/:id`, `/aram/:id`, `/1v1/:id`
+e a Sala M7 de poker em [poker/pages](poker/pages/PokerLobby.tsx) para
+`/sala-m7` e `/sala-m7/:roomId`. As páginas têm export default e import lazy no
+[App](../../App.tsx) com suspense; somente o histórico usa `PrivateRoute`.
+Não é a consolidação completa de Salas.
+
+## Sala M7 — poker e entradas extras
+
+[ExtraGamesAccordion](components/ExtraGamesAccordion.tsx) apresenta Sala M7 e
+Treino de Mira abaixo das partidas finalizadas em `/jogar`. Só um item abre por
+vez; botões nativos têm `aria-expanded`/`aria-controls`, foco visível e expansão
+de 240ms (sem animação com redução de movimento). O componente não interfere
+em polling, cache, refs, observer ou query `view=finalizadas`.
+
+- [PokerLobby](poker/pages/PokerLobby.tsx) lista a única mesa da casa `m7` e
+  mesas de jogadores retornadas por `api.poker.rooms()`. Cada item mostra nome,
+  blinds SB/BB, ocupação, dono, pública/privada e entrada em EA ou treino grátis.
+  Não existem níveis, tiers ou tags de mesa. Falha na API mantém somente a mesa
+  oficial com aviso discreto e botão de atualizar. Mesas privadas só aparecem
+  para o dono, conforme filtro do servidor.
+- [RoomCard](poker/components/RoomCard.tsx) adapta a leitura HTTP para o modelo
+  de apresentação do motor. Cards seguem bordas/recortes da vitrine: verde para
+  essência, azul para treino e roxo para privada, sem classificação por valor.
+- [PokerRoomModal](poker/components/PokerRoomModal.tsx) cria mesa pelo SDK HTTP
+  genérico (`api.post('/poker/rooms', body)`): nome, blinds 5/10, 10/20, 25/50 ou
+  50/100, 2–6 lugares, pública/privada com senha e `valendoEssencia`. O cliente
+  apenas informa o toggle; o servidor calcula entrada de 100 BB ou zero. Inputs
+  usam o mesmo vidro/borda da vitrine. O modal controla foco, Escape e retorno
+  de foco; falha de criação mantém os campos e exibe aviso.
+- Mesa privada usa `ModalSenhaSala` compartilhado. A senha segue no estado da
+  navegação para `usePokerRoom(room, password)` e `api.poker.buyIn`; não entra em
+  query string nem armazenamento local. O servidor valida a senha.
+- [PokerTable](poker/pages/PokerTable.tsx) resolve a mesa pela lista HTTP, recebe
+  `room.buyIn` e cobre o layout público com portal em tela cheia. Buy-in/cashout
+  continuam em [usePokerRoom](poker/hooks/usePokerRoom.ts), com confirmação de
+  saída, tratamento de erro e proteção de sessão já existentes. Mesa grátis
+  recebe 100 BB de fichas locais para viabilizar as mãos, sem débito de EA;
+  a API decide o resgate permitido. O motor de poker não mudou.
+- A mesa mantém pote central, blinds no topo, aposta/pagar no HUD flutuante,
+  feltro verde com ribalta dourada discreta, avatar com anel e stack em pill,
+  dealer button dourado e verso com brasão M7. [PokerDealer](poker/components/PokerDealer.tsx)
+  preserva Twisted Fate e os quatro estados `idle/deal/showdown/result`.
+  Fundo preto, halos ciano/rosa e vidro dão continuidade às entradas neon.
+- Loja de cosméticos fica recolhida em uma seção secundária “em breve”; nenhuma
+  compra é simulada e os botões permanecem desabilitados.
+
+Contratos de saldo, reserva e ranking pertencem ao servidor. A rodada de poker
+continua local contra bots; criar uma sala não implementa multiplayer humano.
+Verificações desta camada: `npm run lint` e `npm run build` em `web`.
+Canvas, toque, aparência responsiva, imagens remotas do crupiê e integração real
+de criação/senha/caixa precisam de homologação em navegador; build não os comprova.
 
 Jogar lista salas por `api.matches.listCards` e carrega finalizadas por
 `api.matches.list` quando a seção entra na área observada. Cache em memória

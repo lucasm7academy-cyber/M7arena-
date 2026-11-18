@@ -45,6 +45,16 @@ test('pergunta inédita prioriza cadastro no domínio e distingue homônimos', (
   } finally { f.cleanup(); }
 });
 
+test('composto camelCase no corpo de documento continua consultável colado', () => {
+  const f = fixture();
+  try {
+    f.write('api/src/lib/README.md', '# Serviços compartilhados\n\nTransporta WebSocket e chat.\n\n[Entidade](../../db/schema/entity.ts).\n');
+    const graph = construct(f.root);
+    const result = queryGraph(graph, 'websocket');
+    assert(result.results.some(n => n.path === 'api/src/lib/README.md'));
+  } finally { f.cleanup(); }
+});
+
 test('documentação incompleta não cria alvo e ausência confiável não inventa resultado', () => {
   const f = orders();
   try {

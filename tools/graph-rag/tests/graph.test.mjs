@@ -51,6 +51,7 @@ test('allowlist exclui credenciais, assets, dependências, legado e histórico',
     assert(!paths.some(p => /\.env|credentials|assets|node_modules|dist\/|historico|^mcp\/|statusdoprojeto/.test(p)));
     assert(!JSON.stringify(graph).includes('SENSITIVE_CANARY_DO_NOT_INDEX'));
     assert(paths.includes('docs/INDEX.md')); assert(paths.includes('db/schema/entity.ts'));
+    assert(paths.includes('README.md')); assert(paths.includes('api/src/lib/README.md'));
     assert(graph.nodes.every(n => ['Module', 'File', 'Symbol', 'Document'].includes(n.kind)));
     assert(!graph.edges.some(e => /CALLS|ENDPOINT|SCHEMA|TESTED_BY/.test(e.type)));
   } finally { f.cleanup(); }

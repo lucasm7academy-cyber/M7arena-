@@ -28,6 +28,10 @@ de um site antigo.
 - Cada funcionalidade nova precisa de README em sua pasta e entrada no índice.
   Em uma mudança existente, atualize o README quando seu conteúdo for afetado;
   não acrescente uma linha de histórico para toda edição trivial.
+- Descrição que mudou é substituída no lugar, em README e INDEX: o texto antigo
+  sai e não entra "antes era/agora é". O que continua verdadeiro fica; o
+  histórico está no Git e o relato no chat. O grafo não é editado à mão: `build`
+  o reconstrói a partir do estado atual.
 - README deve explicar responsabilidade, entradas/arquivos, fluxo, contratos,
   dependências compartilhadas, consumidores e verificações pertinentes/limites.
   Documente o que existe e identifique limitações; não apresente plano como pronto.
@@ -88,6 +92,11 @@ node tools/graph-rag/cli.mjs build
 
 Reconstrua se ausente/desatualizado e após mudanças nas fontes indexadas.
 Confirme `fresh` antes da consulta; use o mesmo `--cache` quando customizado.
+O índice cobre o código de `web/src`, `api/src`, `api/test` e `db/schema` e a
+documentação `AGENTS.md`, `INDEX.md` e `README.md` do repositório. Toda
+implementação nova e todo README/índice criado ou alterado exigem `build` e
+`status` fresh antes de concluir; scripts executáveis, SQL, configuração e
+infraestrutura ficam fora do grafo.
 O grafo complementa o mapa de funcionalidades, não o substitui. Cache fresh
 não comprova cobertura documental; mapa de símbolos não é a visão de produto.
 Consulte o [escopo e limites atuais](tools/graph-rag/README.md); complete lacunas

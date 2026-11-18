@@ -5,7 +5,11 @@
 | Arquivo | Responsabilidade |
 |---|---|
 | [0000_baseline.sql](0000_baseline.sql) | Origem consolidada: 48 tabelas públicas, 530 colunas, 139 restrições, 134 índices e duas sequências; catálogo inicial de jogos e pacotes. |
+| [0001_medical_quentin_quire.sql](0001_medical_quentin_quire.sql) | Incremento da Sala M7 e do treino de mira: `aim_scores`, `poker_sessions`, coluna `user_wallets.ea`, o índice único parcial `idx_ledger_poker_grant_unico` e a concessão idempotente de 2.000 EA por jogador já cadastrado (`poker_grant`). |
+| [0002_low_blazing_skull.sql](0002_low_blazing_skull.sql) | Mesas criadas por jogadores (`poker_rooms`), dono com FK cascade, limite de 2..6 lugares e índice de status/data decrescente. |
 | [meta/0000_snapshot.json](meta/0000_snapshot.json) | Modelo estrutural inicial usado pelo gerador do Drizzle para calcular mudanças seguintes. |
+| [meta/0001_snapshot.json](meta/0001_snapshot.json) | Modelo estrutural após o incremento de Sala M7/mira. |
+| [meta/0002_snapshot.json](meta/0002_snapshot.json) | Modelo estrutural com `poker_rooms`; base para as próximas gerações. |
 | [meta/_journal.json](meta/_journal.json) | Ordem e timestamp das migrations ativas. |
 
 A baseline reconstrói estrutura; não copia registros de produção. Usuários,
